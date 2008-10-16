@@ -429,7 +429,8 @@ bool GenericTree::initialize_Tree( string &topology_spec, list< string > &hosts 
     Tree::Node * cur_node, *next_child;
     unsigned int child_spec_multiplier=1;
 
-    list<string>::iterator next_orphan_iter=hosts.begin();
+    list<string>::iterator next_orphan_iter = hosts.begin();
+    map<string, int> host_counts;
 
     for( cur_pos_ptr = topology_spec.c_str(); ;
          cur_pos_ptr++ ){
@@ -492,12 +493,21 @@ bool GenericTree::initialize_Tree( string &topology_spec, list< string > &hosts 
         cur_level_nodes = next_level_nodes;
         next_level_nodes.clear();
         string next_orphan;
+        char cur_host[256];
         for( unsigned int i=0; i<cur_level_num_children.size(); i++ ){
             cur_num_children = cur_level_num_children[ i ];
 
             if( !root ){
                 next_orphan = *next_orphan_iter;
-                root = get_Node( next_orphan );
+		unsigned count = 0;
+		if( host_counts.find(next_orphan) == host_counts.end() )
+		   host_counts[next_orphan] = count;
+		else {
+		   count = host_counts[next_orphan] + 1;
+                   host_counts[next_orphan] = count;
+		}
+		snprintf(cur_host, sizeof(cur_host), "%s:%u", next_orphan.c_str(), count);
+                root = get_Node( cur_host );
                 next_orphan_iter++;
                 cur_node = root;
             }
@@ -507,7 +517,15 @@ bool GenericTree::initialize_Tree( string &topology_spec, list< string > &hosts 
 
             for( unsigned int j=0; j<cur_num_children; j++ ){
                 next_orphan = *next_orphan_iter;
-                next_child = get_Node( next_orphan );
+		unsigned count = 0;
+		if( host_counts.find(next_orphan) == host_counts.end() )
+		   host_counts[next_orphan] = count;
+		else {
+		   count = host_counts[next_orphan] + 1;
+                   host_counts[next_orphan] = count;
+		}
+		snprintf(cur_host, sizeof(cur_host), "%s:%u", next_orphan.c_str(), count);
+                next_child = get_Node( cur_host );
                 next_orphan_iter++;
 
                 cur_node->add_Child( next_child );
