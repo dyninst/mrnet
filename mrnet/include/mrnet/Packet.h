@@ -1,21 +1,20 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined(packet_h)
-#define packet_h 1
+#if !defined(__packet_h)
+#define __packet_h 1
 
 #include <stdarg.h>
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
-#include "Error.h"
-#include "pdr.h"
-#include "refCounter.h"
-#include "DataElement.h"
-
+#include "mrnet/DataElement.h"
+#include "mrnet/Error.h"
 #include "xplat/Mutex.h"
+
+struct PDR;
 
 namespace MRN
 {
@@ -23,12 +22,6 @@ namespace MRN
 class Packet;
 typedef boost::shared_ptr<Packet> PacketPtr;
 
-/************************************************************************
-  Packet Buffer Format:
-    ____________________________________________
-    | streamid | tag | src_rank | fmtstr | data|
-    --------------------------------------------
-**************************************************************************/
 class Packet: public Error{
     friend class ParentNode;
     friend class BackEndNode;
@@ -73,7 +66,7 @@ class Packet: public Error{
     void DataElementArray2ArgList( va_list arg_list ) const;
     void ArgVec2DataElementArray( const void **data );
     void DataElementArray2ArgVec( void **data ) const;
-    static bool_t pdr_packet( PDR *, Packet * );
+    static bool_t pdr_packet( struct PDR *, Packet * );
 
     //Data Members
     uint16_t stream_id;
@@ -86,6 +79,13 @@ class Packet: public Error{
     bool destroy_data;
     std::vector < const DataElement * >data_elements;
     mutable XPlat::Mutex data_sync;
+
+    /************************************************************************
+       Packet Buffer Format:
+        ___________________________________________
+       | streamid | tag | src_rank | fmtstr | data |
+        -------------------------------------------
+     ************************************************************************/
 };
 
 

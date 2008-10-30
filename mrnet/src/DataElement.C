@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "DataElement.h"
+#include "mrnet/DataElement.h"
 
 namespace MRN
 {

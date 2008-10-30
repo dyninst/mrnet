@@ -7,7 +7,7 @@
 #include <set>
 
 #include "mrnet/MRNet.h"
-#include "mrnet/FailureManagement.h"
+#include "FailureManagement.h"
 #include "CommunicationNode.h"
 #include "Message.h"
 #include "PeerNode.h"

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -9,7 +9,7 @@
 #include <list>
 #include <vector>
 
-#include "Error.h"
+#include "mrnet/Error.h"
 #include "mrnet/Types.h"
 #include "mrnet/Packet.h"
 #include "xplat/Monitor.h"

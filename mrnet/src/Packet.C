@@ -1,18 +1,17 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "mrnet/MRNet.h"
+#include "mrnet/Packet.h"
+#include "xplat/Tokenizer.h"
+#include "xplat/NetUtils.h"
 
-#include "DataElement.h"
 #include "PeerNode.h"
 #include "ParentNode.h"
 #include "ChildNode.h"
+#include "pdr.h"
 #include "utils.h"
-#include "mrnet/MRNet.h"
-#include "xplat/Tokenizer.h"
-#include "xplat/NetUtils.h"
 
 namespace MRN
 {
@@ -302,8 +301,6 @@ int Packet::ExtractArgList( const char *ifmt_str, ... ) const
 }
 
 
-
-
 bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
 {
     unsigned int i;
@@ -319,13 +316,7 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
         op_str="FREEING";
     mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op_str.c_str() ));
 
-    /* Process Packet Header into/out of the pdr mem */
-    /********************************************************************
-  Packet Buffer Format:
-    _____________________________________________________
-    | streamid | tag | src_rank |  fmtstr | packed_data |
-    -----------------------------------------------------
-    *********************************************************************/
+    /* Process Packet Header into/out of the pdr mem (see Packet.h for header layout) */
 
     if( pdr_uint16( pdrs, &( pkt->stream_id ) ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint16() failed\n" ));
