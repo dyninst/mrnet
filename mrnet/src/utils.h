@@ -1,12 +1,15 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
 #ifndef utils_h
 #define utils_h 1
 
+#include "mrnet/Types.h"
 #include "xplat/Types.h"
+#include "xplat/TLSKey.h"
+#include "xplat/Thread.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -46,10 +49,7 @@ inline int gettimeofday( struct timeval *tv, struct timezone *tz )
 #include <vector>
 #include <string>
 
-#include "xplat/TLSKey.h"
-#include "xplat/Thread.h"
-
-#include "mrnet/Types.h"
+#define MRN_RELEASE_DATE_SECS 1208100000
 
 using namespace MRN;
 namespace MRN

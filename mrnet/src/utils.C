@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright  2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -420,7 +420,7 @@ int mrn_printf( const char *file, int line, const char * func,
         }
             
         fprintf( fp, "%ld.%ld: %s(0x%lx): %d %s: %s(): %d: ",
-                 tv.tv_sec-1208100000, tv.tv_usec,
+                 tv.tv_sec-MRN_RELEASE_DATE_SECS, tv.tv_usec,
                  ( thread_name != NULL ) ? thread_name : "<unknown thread>",
                  XPlat::Thread::GetId(), XPlat::Process::GetProcessId(), 
                  XPlat::PathUtils::GetFilename( file ).c_str(), func, line );
