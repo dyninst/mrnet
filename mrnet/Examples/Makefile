@@ -17,15 +17,18 @@ LDFLAGS = -rdynamic
 
 BA_TARGETS = BackendAttach_FE BackendAttach_BE
 IA_TARGETS = IntegerAddition_FE IntegerAddition_BE IntegerAdditionFilter.so
-TARGETS = $(BA_TARGETS) $(IA_TARGETS)
+PD_TARGETS = PerfData_FE PerfData_BE PerfDataFilter.so
+TARGETS = $(BA_TARGETS) $(IA_TARGETS) $(PD_TARGETS)
 
-.PHONY: all backend-attach integer-add clean
+.PHONY: all backend-attach integer-add perf-data clean
 
 all: $(TARGETS)
 
 backend-attach: $(BA_TARGETS) 
 
 integer-add: $(IA_TARGETS)
+
+perf-data: $(PD_TARGETS)
 
 BackendAttach_FE: NoBackEndInstantiation/FE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ NoBackEndInstantiation/FE.C $(LIBS)
@@ -41,6 +44,15 @@ IntegerAddition_BE: IntegerAddition/IntegerAddition_BE.C
 
 IntegerAdditionFilter.so: IntegerAddition/IntegerAdditionFilter.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ IntegerAddition/IntegerAdditionFilter.C
+
+PerfData_FE: PerformanceData/FE.C
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ PerformanceData/FE.C $(LIBS)
+
+PerfData_BE: PerformanceData/BE.C
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ PerformanceData/BE.C $(LIBS)
+
+PerfDataFilter.so: PerformanceData/PerfDataFilter.C
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ PerformanceData/PerfDataFilter.C
 
 clean:
 	/bin/rm -f *.o *~ $(TARGETS)
