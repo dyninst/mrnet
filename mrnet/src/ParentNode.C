@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright  2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -557,7 +557,6 @@ int ParentNode::proc_UpstreamFilterParams( PacketPtr &ipacket ) const
     mrn_dbg_func_end();
     return 0;
 }
-
 
 int ParentNode::proc_deleteStream( PacketPtr ipacket ) const
 {

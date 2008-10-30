@@ -1,17 +1,16 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
 #if !defined(__byte_order_h)
 #define __byte_order_h
 
+#include "mrnet/Types.h"
 
 #if defined(__cplusplus)
 extern "C" {
 #endif /* defined(__cplusplus) */
-
-#include "mrnet/Types.h"
 
 #define ntoh_bytes hton_bytes
 void hton_bytes(char * out, char * in, uint32_t elsize);

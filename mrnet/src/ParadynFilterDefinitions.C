@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -12,14 +12,13 @@
 #endif
 
 #include "mrnet/MRNet.h"
+#include "mrnet/DataElement.h"
 
 #include "FilterDefinitions.h"
-#include "utils.h"
-#include "DataElement.h"
 #include "ParadynFilterDefinitions.h"
+#include "utils.h"
 
 #define MAXDOUBLE   1.701411834604692293e+308
-
 
 double
 TimeVal2Double( const timeval& tv )

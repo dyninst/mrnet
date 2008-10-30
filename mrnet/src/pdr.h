@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -7,11 +7,12 @@
 #define __PDR_HEADER__
 
 
+#include "mrnet/Types.h"
+
+
 #if defined(__cplusplus)
 extern "C" {
 #endif /* defined(__cplusplus) */
-
-#include "mrnet/Types.h"
 
 enum pdr_op {
     PDR_FREE=0,
