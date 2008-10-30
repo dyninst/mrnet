@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -10,12 +10,14 @@
 #include <vector>
 #include <time.h>
 
+#include "mrnet/CommunicationNode.h"
 #include "mrnet/NetworkTopology.h"
 #include "mrnet/MRNet.h"
-#include "CommunicationNode.h"
+#include "Router.h"
+#include "SerialGraph.h"
 #include "utils.h"
 #include "config.h"
-#include "mrnet/FailureManagement.h"
+#include "FailureManagement.h"
 #include "xplat/Tokenizer.h"
 
 using namespace std;
@@ -263,7 +265,8 @@ NetworkTopology::NetworkTopology( Network *inetwork,  string &ihostname, Port ip
                                   Rank irank, bool iis_backend /*=false*/ )
     : _network(inetwork),
       _root( new Node( ihostname, iport, irank, iis_backend ) ),
-      _router( new Router( inetwork ) )
+      _router( new Router( inetwork ) ),
+      _serial_graph(NULL)
 {
     _nodes[ irank ] = _root;
     mrn_dbg( 3, mrn_printf(FLF, stderr,
@@ -272,7 +275,8 @@ NetworkTopology::NetworkTopology( Network *inetwork,  string &ihostname, Port ip
 }
 
 NetworkTopology::NetworkTopology( Network *inetwork, SerialGraph & isg )
-    : _network(inetwork), _root( NULL ), _router( new Router( inetwork ) )
+    : _network(inetwork), _root( NULL ), _router( new Router( inetwork ) ),
+      _serial_graph(NULL)
 {
     string sg_str = isg.get_ByteArray();
     //fprintf(stderr, "Resetting topology to \"%s\"\n", sg_str.c_str() );
@@ -611,11 +615,14 @@ void NetworkTopology::print( FILE * f ) const
 char * NetworkTopology::get_TopologyStringPtr( )
 {
     _sync.Lock();
-    _serial_graph="";
+
+    if( _serial_graph != NULL )
+        delete _serial_graph;
+    _serial_graph = new SerialGraph("");
 
     serialize( _root );
 
-    char * retval = strdup( _serial_graph.get_ByteArray().c_str() );
+    char * retval = strdup( _serial_graph->get_ByteArray().c_str() );
     _sync.Unlock();
 
     return retval;
@@ -625,7 +632,9 @@ char * NetworkTopology::get_LocalSubTreeStringPtr( )
 {
     _sync.Lock();
 
-    _serial_graph="";
+    if( _serial_graph != NULL )
+        delete _serial_graph;
+    _serial_graph = new SerialGraph("");
     serialize( _root );
 
     ostringstream my_subtree;
@@ -634,7 +643,7 @@ char * NetworkTopology::get_LocalSubTreeStringPtr( )
                << _network->get_LocalPort() << ":"
                << _network->get_LocalRank() << ":";
 
-    string sgba = _serial_graph.get_ByteArray();
+    string sgba = _serial_graph->get_ByteArray();
     const char * buf = sgba.c_str();
     
     size_t begin, end, cur;    
@@ -652,7 +661,7 @@ char * NetworkTopology::get_LocalSubTreeStringPtr( )
             num_rightbrackets++;
     }
 
-    char * retval = strdup( _serial_graph.get_ByteArray()
+    char * retval = strdup( _serial_graph->get_ByteArray()
                             .substr(begin, end).c_str() );
     
     mrn_dbg( 5, mrn_printf(FLF, stderr, "returned:\"%s\"\n", retval ));
@@ -667,15 +676,15 @@ void NetworkTopology::serialize(Node * inode)
     _sync.Lock();
     if( inode->is_BackEnd() ){
         // Leaf node, just add my name to serial representation and return
-        _serial_graph.add_Leaf( inode->get_HostName(), inode->get_Port(),
-                                inode->get_Rank() );
+        _serial_graph->add_Leaf( inode->get_HostName(), inode->get_Port(),
+                                 inode->get_Rank() );
         _sync.Unlock();
         return;
     }
     else{
         //Starting new sub-tree component in graph serialization:
-        _serial_graph.add_SubTreeRoot(inode->get_HostName(), inode->get_Port(),
-                                      inode->get_Rank() );
+        _serial_graph->add_SubTreeRoot( inode->get_HostName(), inode->get_Port(),
+                                        inode->get_Rank() );
     }
 
     set < Node * > ::iterator iter;
@@ -684,7 +693,7 @@ void NetworkTopology::serialize(Node * inode)
     }
 
     //Ending sub-tree component in graph serialization:
-    _serial_graph.end_SubTree();
+    _serial_graph->end_SubTree();
     _sync.Unlock();
 }
 
@@ -904,7 +913,9 @@ bool NetworkTopology::reset( string itopology_str, bool iupdate /* =true */ )
     _sync.Lock();
     mrn_dbg( 5, mrn_printf( FLF, stderr, "Reseting topology to \"%s\"\n",
                             itopology_str.c_str() ));
-    _serial_graph = SerialGraph( itopology_str );
+    if( _serial_graph != NULL )
+        delete _serial_graph;
+    _serial_graph = new SerialGraph( itopology_str );
     _root = NULL;
 
     map<Rank, Node*>::iterator iter = _nodes.begin();
@@ -920,18 +931,18 @@ bool NetworkTopology::reset( string itopology_str, bool iupdate /* =true */ )
         return true;
     }
 
-    _serial_graph.set_ToFirstChild( );
+    _serial_graph->set_ToFirstChild( );
     
     mrn_dbg( 5, mrn_printf( FLF, stderr, "Root: %s:%d:%d\n",
-                            _serial_graph.get_RootHostName().c_str(),
-                            _serial_graph.get_RootRank(),
-                            _serial_graph.get_RootPort() ));
+                            _serial_graph->get_RootHostName().c_str(),
+                            _serial_graph->get_RootRank(),
+                            _serial_graph->get_RootPort() ));
 
-    _root = new Node( _serial_graph.get_RootHostName(),
-                      _serial_graph.get_RootPort(),
-                      _serial_graph.get_RootRank(),
-                      _serial_graph.is_RootBackEnd() );
-    _nodes[ _serial_graph.get_RootRank() ] = _root;
+    _root = new Node( _serial_graph->get_RootHostName(),
+                      _serial_graph->get_RootPort(),
+                      _serial_graph->get_RootRank(),
+                      _serial_graph->is_RootBackEnd() );
+    _nodes[ _serial_graph->get_RootRank() ] = _root;
 
     if( _network )
         _network->set_FailureManager ( new CommunicationNode ( _root->get_HostName(),
@@ -939,8 +950,8 @@ bool NetworkTopology::reset( string itopology_str, bool iupdate /* =true */ )
                                                                UnknownRank ));
 
     SerialGraph *cur_sg;
-    for( cur_sg = _serial_graph.get_NextChild( ); cur_sg;
-         cur_sg = _serial_graph.get_NextChild( ) ) {
+    for( cur_sg = _serial_graph->get_NextChild( ); cur_sg;
+         cur_sg = _serial_graph->get_NextChild( ) ) {
         if( !add_SubGraph( _root, *cur_sg, false ) ){
             mrn_dbg( 1, mrn_printf(FLF, stderr, "add_SubTreeRoot() failed\n" ));
             _sync.Unlock();

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -13,20 +13,19 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "mrnet/Error.h"
+#include "mrnet/Network.h"
 #include "mrnet/Types.h"
 #include "xplat/Monitor.h"
-#include "utils.h"
-#include "Error.h"
-#include "SerialGraph.h"
-#include "Router.h"
-#include "PeerNode.h"
 
 namespace MRN
 {
 
 typedef enum{ ALG_RANDOM=0, ALG_WRS, ALG_SORTED_RR } ALGORITHM_T;
 
-class Network;
+class Router;
+class SerialGraph;
+
 class NetworkTopology: public Error {
     friend class Router;
 
@@ -146,7 +145,7 @@ class NetworkTopology: public Error {
     std::set< Node * > _backend_nodes;
     std::set< Node * > _parent_nodes;
     mutable XPlat::Monitor _sync;
-    SerialGraph _serial_graph;
+    SerialGraph *_serial_graph;
 
     void find_PotentialAdopters( Node * iadoptee,
                                  Node * ipotential_adopter,
