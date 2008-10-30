@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -9,10 +9,12 @@
 #include <map>
 #include <boost/shared_ptr.hpp>
 
-#include "CommunicationNode.h"
 #include "Message.h"
-#include "Error.h"
+#include "Protocol.h"
+#include "mrnet/CommunicationNode.h"
+#include "mrnet/Error.h"
 #include "mrnet/Types.h"
+#include "mrnet/Network.h"
 #include "xplat/Thread.h"
 #include "xplat/Monitor.h"
 #include "xplat/Mutex.h"
@@ -23,13 +25,9 @@ namespace MRN
 class ChildNode;
 class ParentNode;
 class Network;
-
 class Packet;
 
-class PeerNode;
-typedef boost::shared_ptr<PeerNode> PeerNodePtr;
-
-class PeerNode:public CommunicationNode, public Error {
+class PeerNode: public CommunicationNode, public Error {
     friend class Network;
  public:
     static PeerNodePtr NullPeerNode;

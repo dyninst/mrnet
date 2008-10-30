@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright  2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -10,11 +10,12 @@
 #include <list>
 #include <string>
 
-#include "Error.h"
+#include "mrnet/CommunicationNode.h"
+#include "mrnet/Error.h"
+#include "mrnet/Packet.h"
 #include "xplat/Monitor.h"
 #include "xplat/Mutex.h"
-#include "mrnet/Packet.h"
-#include "CommunicationNode.h"
+#include "Protocol.h"
 #include "PeerNode.h"
 
 namespace MRN

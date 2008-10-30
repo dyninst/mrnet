@@ -1,14 +1,14 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
 #if !defined(__frontendnode_h)
 #define __frontendnode_h 1
 
-#include "CommunicationNode.h"
 #include "ParentNode.h"
 #include "Message.h"
+#include "Protocol.h"
 
 namespace MRN
 {

@@ -9,6 +9,7 @@
 #include <set>
 #include <string>
 
+#include "mrnet/CommunicationNode.h"
 #include "mrnet/Types.h"
 #include "xplat/Mutex.h"
 
@@ -16,7 +17,6 @@ namespace MRN
 {
 
 class Network;
-class CommunicationNode;
 
 class Communicator{
     friend class Stream;
@@ -25,20 +25,20 @@ class Communicator{
  public:
     bool add_EndPoint(Rank _rank);
     bool add_EndPoint(CommunicationNode *);
-    const std::set <CommunicationNode *>& get_EndPoints() const;
+    const std::set<CommunicationNode *>& get_EndPoints() const;
 
  private:
     Network * _network;
-    std::set <CommunicationNode *> _back_ends;
+    std::set<CommunicationNode *> _back_ends;
     XPlat::Mutex _mutex;
 
     Communicator( Network * );
     Communicator( Network *, Communicator &);
-    Communicator( Network *, const std::set<CommunicationNode*>& eps );
+    Communicator( Network *, const std::set<CommunicationNode *>& );
+    Communicator( Network *, const std::set<Rank>& );
 };
 
 
 } // namespace MRN
 
 #endif /* __communicator_h */
-

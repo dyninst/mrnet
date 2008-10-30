@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -9,10 +9,10 @@
 #include <string>
 #include <list>
 
-#include "CommunicationNode.h"
 #include "ParentNode.h"
 #include "ChildNode.h"
 #include "Message.h"
+#include "Protocol.h"
 
 namespace MRN
 {

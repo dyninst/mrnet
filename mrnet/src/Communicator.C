@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #include "mrnet/MRNet.h"
-#include "CommunicationNode.h"
+#include "mrnet/CommunicationNode.h"
 #include "utils.h"
 
 namespace MRN
@@ -21,6 +21,21 @@ Communicator::Communicator( Network * inetwork,
                             const std::set<CommunicationNode*>& iback_ends )
     : _network(inetwork), _back_ends( iback_ends )
 {
+}
+
+Communicator::Communicator( Network * inetwork,
+                            const std::set<Rank>& iranks )
+    : _network(inetwork)
+{
+    _mutex.Lock();
+
+    std::set<Rank>::const_iterator ci = iranks.begin();
+    for( ; ci != iranks.end(); ci++ ) {
+       CommunicationNode * new_endpoint = _network->get_EndPoint(*ci);
+       _back_ends.insert( new_endpoint );
+    }
+
+    _mutex.Unlock();
 }
 
 Communicator::Communicator( Network * inetwork, Communicator &icomm)

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -8,7 +8,7 @@
 
 
 #include "ParsedGraph.h"
-#include "CommunicationNode.h"
+#include "Protocol.h"
 #include "utils.h"
 #include "config.h"
 #include "xplat/Tokenizer.h"
