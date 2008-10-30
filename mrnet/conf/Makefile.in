@@ -188,13 +188,10 @@ install-local: all
 	@echo Installing libraries
 	$(INSTALL) -p -m 555 $(LIBMRNET) $(ILIBDIR)/
 	if [ "$(BUILD_SHARED_LIBS)" == "yes" ] ; then \
-            $(INSTALL) -p -m 555 $(LIBMRNET_SO) $(ILIBDIR)/ \
+            $(INSTALL) -p -m 555 $(LIBMRNET_SO) $(ILIBDIR)/ ; \
 	fi
 	@echo Installing headers
 	for hdr in @srcdir@/include/mrnet/*.h ; do \
-	    $(INSTALL) -p -m 444 $$hdr $(IINCDIR)/mrnet/ ; \
-	done
-	for hdr in @srcdir@/src/*.h ; do \
 	    $(INSTALL) -p -m 444 $$hdr $(IINCDIR)/mrnet/ ; \
 	done
 
