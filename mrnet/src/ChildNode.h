@@ -26,12 +26,16 @@ class ChildNode: public Error, public CommunicationNode {
     virtual int proc_DataFromParent(PacketPtr)const=0;
     virtual int proc_FailureReportFromParent( PacketPtr ipacket ) const=0;
     virtual int proc_NewParentReportFromParent( PacketPtr ipacket ) const=0;
-    int proc_CollectPerfData( PacketPtr ipacket ) const;
+
     int proc_TopologyReport( PacketPtr ipacket ) const;
     int proc_RecoveryReport( PacketPtr ipacket ) const;
     int send_NewSubTreeReport( void )const;
     bool ack_DeleteSubTree( void ) const ;
 
+    int proc_EnablePerfData( PacketPtr ipacket ) const;
+    int proc_DisablePerfData( PacketPtr ipacket ) const;
+    int proc_CollectPerfData( PacketPtr ipacket ) const;
+    int proc_PrintPerfData( PacketPtr ipacket ) const;
 
     int recv_PacketsFromParent( std::list <PacketPtr> &packet_list ) const;
     int send_EventsToParent( ) const;

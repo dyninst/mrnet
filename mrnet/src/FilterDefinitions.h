@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -55,6 +55,12 @@ void tfilter_IntEqClass( const std::vector < PacketPtr >&,
                          std::vector < PacketPtr >&, 
                          std::vector < PacketPtr >&, 
                          void**, PacketPtr& );
+
+extern const char * TFILTER_PERFDATA_FORMATSTR;
+void tfilter_PerfData( const std::vector < PacketPtr >&, 
+                       std::vector < PacketPtr >&, 
+                       std::vector < PacketPtr >&, 
+                       void**, PacketPtr& );
 
 // synchronization filters
 void sfilter_WaitForAll( const std::vector < PacketPtr >&, 

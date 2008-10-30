@@ -20,6 +20,7 @@ extern FilterId TFILTER_MAX;
 extern FilterId TFILTER_ARRAY_CONCAT;
 extern FilterId TFILTER_INT_EQ_CLASS;
 extern FilterId TFILTER_EPK_UNIFY;
+extern FilterId TFILTER_PERFDATA;
 
 // IDs for built-in synchronization filters
 extern FilterId SFILTER_DONTWAIT;

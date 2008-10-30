@@ -97,9 +97,6 @@ Network::Network( const char * itopology, const char * ibackend_exe,
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
 
-    _network_lifetime.start();
-    getrusage(RUSAGE_SELF, &_network_rusage);
-
     if( parse_Configuration( itopology, iusing_mem_buf ) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: parse_Configuration( \"%s\" )!\n",
                               ( iusing_mem_buf ? "memory buffer" : itopology )));
@@ -209,9 +206,6 @@ Network::Network( const char *iphostname, Port ipport, Rank iprank,
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
 
-    _network_lifetime.start();
-    getrusage(RUSAGE_SELF, &_network_rusage);
-
     init_BackEnd( iphostname, ipport, iprank, imyhostname, imyrank );
 }
 
@@ -228,9 +222,6 @@ Network::Network( int argc, char **argv )
     set_OutputLevelFromEnvironment();
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
-
-    _network_lifetime.start();
-    getrusage(RUSAGE_SELF, &_network_rusage);
 
     const char * phostname = argv[argc-5];
     Port pport = (Port) strtoul( argv[argc-4], NULL, 10 );
@@ -252,10 +243,7 @@ Network::Network( )
     init_local();
     network=this;
     set_OutputLevelFromEnvironment();
-    node_type="comm";
-    
-    _network_lifetime.start();
-    getrusage(RUSAGE_SELF, &_network_rusage);
+    node_type="comm";    
 }
 
 Network::~Network( )
@@ -893,63 +881,114 @@ void Network::clear_DataNotificationFd( void )
 }
 
 
-void Network::collect_PerformanceData( void )
+bool Network::enable_PerformanceData( perfdata_metric_t metric, 
+                                      perfdata_context_t context )
 {
-    if( is_LocalNodeFrontEnd() ) {
-        PacketPtr packet( new Packet( 0, PROT_COLLECT_PERFDATA, "" ) );
-        if( send_PacketToChildren( packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
-            return;
+    mrn_dbg_func_begin();
+    if( metric >= PERFDATA_MAX_MET )
+        return false;
+    if( context >= PERFDATA_MAX_CTX )
+        return false;
+
+    map<unsigned int, Stream*>::iterator iter; 
+    _streams_sync.Lock();
+    for( iter = _streams.begin(); iter != _streams.end(); iter++ ) {
+        bool rc = (*iter).second->enable_PerformanceData( metric, context );
+        if( rc == false ) {
+           mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                    "strm->enable_PerformanceData() failed, cancelling prior enables\n" ));
+           while( iter != _streams.begin() ) {
+              iter--;
+              (*iter).second->disable_PerformanceData( metric, context );
+           }
+           _streams_sync.Unlock();
+           return false;
         }
     }
-    collect_PerfData();
+    _streams_sync.Unlock();
+
+    mrn_dbg_func_end();
+    return true;
 }
 
-void Network::collect_PerfData( void )
+bool Network::disable_PerformanceData( perfdata_metric_t metric, 
+                                       perfdata_context_t context )
 {
-    struct rusage last_usage;
-    double user_pctcpu = 0, sys_pctcpu = 0;
-    uint64_t total_send, total_recv;
-
     mrn_dbg_func_begin();
+    if( metric >= PERFDATA_MAX_MET )
+        return false;
+    if( context >= PERFDATA_MAX_CTX )
+        return false;
 
-    // collect
-    _network_lifetime.stop();
-    getrusage(RUSAGE_SELF, &last_usage);
-    total_send = MRN::get_TotalBytesSend();
-    total_recv = MRN::get_TotalBytesRecv();
+    bool ret = true;
+    map<unsigned int, Stream*>::iterator iter; 
+    _streams_sync.Lock();
+    for( iter = _streams.begin(); iter != _streams.end(); iter++ ) {
+        bool rc = (*iter).second->disable_PerformanceData( metric, context );
+        if( rc == false ) {
+            ret = false;
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                     "strm->disable_PerformanceData() failed for strm %d\n", iter->first));
+        }
+    }
+    _streams_sync.Unlock();
 
-    // calculate totals
-    double secs = _network_lifetime.get_latency_secs();
+    mrn_dbg_func_end();
+    return ret;
+}
 
-    double user_secs = MRN::tv2dbl( last_usage.ru_utime );
-    user_secs -= MRN::tv2dbl( _network_rusage.ru_utime );
-    user_pctcpu = 100.0 * user_secs / secs;
+bool Network::collect_PerformanceData( map< int, rank_perfdata_map >& results,
+                                       perfdata_metric_t metric, 
+                                       perfdata_context_t context,
+                                       int aggr_filter_id /*=TFILTER_CONCAT*/
+                                       )
+{
+    mrn_dbg_func_begin();
+    if( metric >= PERFDATA_MAX_MET )
+        return false;
+    if( context >= PERFDATA_MAX_CTX )
+        return false;
 
-    double sys_secs = MRN::tv2dbl( last_usage.ru_stime );
-    sys_secs -= MRN::tv2dbl( _network_rusage.ru_stime );
-    sys_pctcpu = 100.0 * sys_secs / secs;
+    bool ret = true;
 
-    // report performance data
-    mrn_dbg( 1, mrn_printf(0,0,0, stderr, "MRNET PERFDATA: CPU User%% %.2lf Sys%% %.2lf\n",
-                           user_pctcpu, sys_pctcpu));
+    map<unsigned int, Stream*>::const_iterator citer;
+    _streams_sync.Lock();
+    for( citer = _streams.begin(); citer != _streams.end(); citer++ ) {
 
-    mrn_dbg( 1, mrn_printf(0,0,0, stderr, "MRNET PERFDATA: Network Lifetime: %.2lf secs\n", 
-                           secs));
+        rank_perfdata_map& strm_results = results[citer->first];
+        
+        bool rc = (*citer).second->collect_PerformanceData( strm_results, metric, context, 
+                                                            aggr_filter_id );
+        if( rc == false ) {
+            ret = false;
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                     "strm->collect_PerformanceData() failed for strm %d\n", citer->first));
+        }
+    }
+    _streams_sync.Unlock();
 
-    mrn_dbg( 1, mrn_printf(0,0,0, stderr, "MRNET PERFDATA: Network Send: %.2lf KB\n", 
-                           (double)total_send / 1024.0));
-    mrn_dbg( 1, mrn_printf(0,0,0, stderr, "MRNET PERFDATA: Network Recv: %.2lf KB\n", 
-                           (double)total_recv / 1024.0));
-    mrn_dbg( 1, mrn_printf(0,0,0, stderr, "MRNET PERFDATA: Network Utilization: %.2lf KB/sec\n",
-                           ((double)(total_send + total_recv) / secs) / 1024.0));
+    mrn_dbg_func_end();
+    return ret;
+}
 
+void Network::print_PerformanceData( perfdata_metric_t metric, 
+                                     perfdata_context_t context )
+{
+    mrn_dbg_func_begin();
+    if( metric >= PERFDATA_MAX_MET )
+        return;
+    if( context >= PERFDATA_MAX_CTX )
+        return;
 
-    fflush(stderr);
+    map<unsigned int, Stream*>::const_iterator citer; 
+    _streams_sync.Lock();
+    for( citer = _streams.begin(); citer != _streams.end(); citer++ ) {
+        (*citer).second->print_PerformanceData( metric, context );
+    }
+    _streams_sync.Unlock();
 
     mrn_dbg_func_end();
 }
-
 
 
 int Network::load_FilterFunc( const char *so_file, const char *func )

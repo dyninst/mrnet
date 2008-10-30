@@ -11,7 +11,7 @@
 #include <map>
 #include <vector>
 #include <set>
-#include "Error.h"
+#include "mrnet/Error.h"
 #include "Message.h"
 #include "FilterDefinitions.h"
 #include "xplat/Mutex.h"
@@ -77,6 +77,9 @@ inline void Filter::initialize_static_stuff( )
 
     TFILTER_INT_EQ_CLASS = register_Filter( (void(*)())tfilter_IntEqClass, NULL,
                                             TFILTER_INT_EQ_CLASS_FORMATSTR);
+
+    TFILTER_PERFDATA = register_Filter( (void(*)())tfilter_PerfData, NULL,
+                                        TFILTER_PERFDATA_FORMATSTR);
 
     TFILTER_SAVE_LOCAL_CLOCK_SKEW_UPSTREAM =
         register_Filter( (void(*)())save_LocalClockSkewUpstream, NULL,

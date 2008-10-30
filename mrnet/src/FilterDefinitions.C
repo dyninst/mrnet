@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -9,11 +9,12 @@
 #include <string>
 
 #include "mrnet/MRNet.h"
+#include "mrnet/DataElement.h"
 
 #include "FilterDefinitions.h"
 #include "utils.h"
-#include "DataElement.h"
 #include "PeerNode.h"
+#include "PerfDataEvent.h"
 
 using namespace std;
 
@@ -40,6 +41,9 @@ const char * TFILTER_ARRAY_CONCAT_FORMATSTR=""; // "" => "Don't check fmt string
 
 FilterId TFILTER_INT_EQ_CLASS=0;
 const char * TFILTER_INT_EQ_CLASS_FORMATSTR="%aud %aud %aud";
+
+FilterId TFILTER_PERFDATA=0;
+const char * TFILTER_PERFDATA_FORMATSTR=""; // "" => "Don't check fmt string"
 
 FilterId SFILTER_WAITFORALL=0;
 FilterId SFILTER_DONTWAIT=0;
@@ -135,8 +139,9 @@ void tfilter_Sum( const vector< PacketPtr >& ipackets,
             case STRING_T:
             case UNKNOWN_T:
             default:
-                fprintf(stderr, "ERROR: tfilter_Sum() - invalid packet type: %d (%s)\n", type,
-                        cur_packet->get_FormatString() );
+                mrn_printf(FLF, stderr, 
+                           "ERROR: tfilter_Sum() - invalid packet type: %d (%s)\n", type,
+                           cur_packet->get_FormatString() );
                 return;
             }
         }
@@ -278,8 +283,9 @@ void tfilter_Max( const vector< PacketPtr >& ipackets,
             case STRING_T:
             case UNKNOWN_T:
             default:
-                fprintf(stderr, "ERROR: tfilter_Max() - invalid packet type: %d (%s)\n", type,
-                        cur_packet->get_FormatString() );
+                mrn_printf(FLF, stderr, 
+                           "ERROR: tfilter_Max() - invalid packet type: %d (%s)\n", type,
+                           cur_packet->get_FormatString() );
                 return;
             }
             mrn_max( &((*cur_packet)[0]->val.p), &((*cur_packet)[0]->val.p), result, type );
@@ -425,8 +431,9 @@ void tfilter_Min( const vector< PacketPtr >& ipackets,
             case STRING_T:
             case UNKNOWN_T:
             default:
-                fprintf(stderr, "ERROR: tfilter_Min() - invalid packet type: %d (%s)\n", type,
-                        cur_packet->get_FormatString() );
+                mrn_printf(FLF, stderr, 
+                           "ERROR: tfilter_Min() - invalid packet type: %d (%s)\n", type,
+                           cur_packet->get_FormatString() );
                 return;
             }
             mrn_min( &((*cur_packet)[0]->val.p), &((*cur_packet)[0]->val.p), result, type );
@@ -555,8 +562,9 @@ void tfilter_Avg( const vector < PacketPtr >& ipackets,
             else if( format_string == "%lf %d" )
                 type = DOUBLE_T;
             else {
-                fprintf(stderr, "ERROR: tfilter_Avg() - invalid packet type: %d (%s)\n", 
-                        type, cur_packet->get_FormatString() );
+                mrn_printf(FLF, stderr, 
+                           "ERROR: tfilter_Avg() - invalid packet type: %d (%s)\n", 
+                           type, cur_packet->get_FormatString() );
                 return;
             }
         }
@@ -732,15 +740,17 @@ void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
             case STRING_T:
             case UNKNOWN_T:
             default:
-                fprintf(stderr, "ERROR: tfilter_ArrayConcat() - invalid packet type: %d (%s)\n", 
-                        type, cur_packet->get_FormatString() );
+                mrn_printf(FLF, stderr, 
+                           "ERROR: tfilter_ArrayConcat() - invalid packet type: %d (%s)\n", 
+                           type, cur_packet->get_FormatString() );
                 return;
             }
         }
         if( cur_packet->unpack( format_string.c_str(), 
                                 &tmp_arr, &tmp_arr_len ) == -1 ) {
-            fprintf(stderr, "ERROR: tfilter_ArrayConcat() - unpack(%s) failure\n", 
-                    cur_packet->get_FormatString() );
+            mrn_printf(FLF, stderr, 
+                       "ERROR: tfilter_ArrayConcat() - unpack(%s) failure\n", 
+                       cur_packet->get_FormatString() );
         }
         else {
            iarrays.push_back( tmp_arr );
@@ -868,9 +878,339 @@ void tfilter_IntEqClass( const vector< PacketPtr >& ipackets,
     }
 }
 
-/*==========================================*
- *    Default SyncFilter Definitions        *
- *==========================================*/
+void tfilter_PerfData( const vector< PacketPtr >& ipackets,
+                       vector< PacketPtr >& opackets,
+                       vector< PacketPtr >& /* opackets_reverse */,
+                       void ** /* client data */, PacketPtr& params )
+{
+    // fast path when no aggregation necessary
+    bool is_BE = network->is_LocalNodeBackEnd();
+    if( (ipackets.size() == 1) && is_BE ) {
+        opackets.push_back( ipackets[0] );
+        return;
+    }
+
+    // check configuration
+    int metric, context, aggr_id, strm_id;
+    if( params == Packet::NullPacket ) {
+        mrn_printf(FLF, stderr, "ERROR: configuration params not set\n" );
+        return;
+    }
+    params->unpack( "%d %d %d %d", &metric, &context, &aggr_id, &strm_id );
+    Stream* strm = network->get_Stream( strm_id );
+
+    // determine type of data
+    int data_size=0;
+    DataType typ;
+    perfdata_mettype_t mettype = PerfDataMgr::get_MetricType( (perfdata_metric_t)metric );
+    
+    switch( mettype ) {
+     case PERFDATA_TYPE_UINT:
+         data_size = sizeof(uint64_t);
+         typ = UINT64_T;
+         break;
+     case PERFDATA_TYPE_INT:
+         data_size = sizeof(int64_t);
+         typ = INT64_T;
+         break;
+     case PERFDATA_TYPE_FLOAT:
+         data_size = sizeof(double);
+         typ = DOUBLE_T;
+         break;
+     default:
+         mrn_printf(FLF, stderr, "ERROR: bad metric type\n" );
+         return;
+    }
+
+    vector< pair<const int*, unsigned> > input_rank_arrays;
+    vector< pair<const int*, unsigned> > input_nelems_arrays;
+    vector< pair<const void*, unsigned> > input_data_arrays;
+    unsigned total_ndatums=0, total_nranks=0;
+    vector< perfdata_t > aggr_results;
+    vector< int > aggr_ranks;
+    perfdata_t init;
+    if( aggr_id == (int)TFILTER_MIN )
+        memset(&init, 0xFF, sizeof(init));
+    else
+        memset(&init, 0, sizeof(init));
+
+    const int* rank_arr;
+    const int* nelems_arr;
+    const void* data_arr;
+    unsigned rank_len, nelems_len, data_len;
+    
+    // aggregate input packets
+    int i = 0;
+    PacketPtr local_data, cur_packet;
+
+    if( ! is_BE ) {
+        // kludge for collecting data on non-BE nodes
+        i = -1;
+        local_data = strm->collect_PerfData( (perfdata_metric_t)metric, 
+                                             (perfdata_context_t)context, 
+                                             ipackets[0]->get_StreamId() );
+    }        
+
+    for( ; i < (int)ipackets.size(); i++ ) {
+
+        if( i == -1 ) {
+            // kludge for non-BE nodes
+            cur_packet = local_data;
+        }
+        else
+            cur_packet = ipackets[i];
+
+        DataType tmptyp;
+        rank_arr = (const int*) (*cur_packet)[0]->get_array(&tmptyp, &rank_len);
+        nelems_arr = (const int*) (*cur_packet)[1]->get_array(&tmptyp, &nelems_len);
+        data_arr = (*cur_packet)[2]->get_array(&tmptyp, &data_len);
+
+        if( data_len ) {
+
+            // concat is easy
+            if( aggr_id == (int)TFILTER_ARRAY_CONCAT ) {
+                input_rank_arrays.push_back( make_pair(rank_arr, rank_len) );
+                input_nelems_arrays.push_back( make_pair(nelems_arr, nelems_len) );
+                input_data_arrays.push_back( make_pair(data_arr, data_len) );
+                total_ndatums += data_len;
+                total_nranks += rank_len;
+                continue;
+            }
+
+            int nrank;
+            int rank = *rank_arr;
+            if( rank < 0 ) {
+                // aggregations track number of ranks aggregated using negative total
+                nrank = -rank;
+                total_nranks += nrank;
+            }
+            else {
+                // a positive rank id
+                total_nranks++;
+                nrank = 1;
+            }
+            
+            unsigned sz = aggr_results.size();
+            if( sz < data_len )
+                aggr_results.insert( aggr_results.end(), data_len - sz, init );            
+
+            if( aggr_id == (int)TFILTER_SUM ) {
+
+                for( unsigned u=0; u < data_len; u++ ) {
+                    perfdata_t& ag = aggr_results[u];
+                    switch( typ ) {
+                    case UINT64_T:
+                        sum( &(ag.u), ((uint64_t*)data_arr)+u, &(ag.u), typ );
+                        break;
+                    case INT64_T:
+                        sum( &(ag.i), ((int64_t*)data_arr)+u, &(ag.i), typ );
+                        break;
+                    case DOUBLE_T:
+                        sum( &(ag.d), ((double*)data_arr)+u, &(ag.d), typ );
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            else if( aggr_id == (int)TFILTER_MIN ) {
+
+                for( unsigned u=0; u < data_len; u++ ) {
+                    perfdata_t& ag = aggr_results[u];
+                    switch( typ ) {
+                    case UINT64_T:
+                        mrn_min( &(ag.u), ((uint64_t*)data_arr)+u, &(ag.u), typ );
+                        break;
+                    case INT64_T:
+                        mrn_min( &(ag.i), ((int64_t*)data_arr)+u, &(ag.i), typ );
+                        break;
+                    case DOUBLE_T:
+                        mrn_min( &(ag.d), ((double*)data_arr)+u, &(ag.d), typ );
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            else if( aggr_id == (int)TFILTER_MAX ) {
+
+                for( unsigned u=0; u < data_len; u++ ) {
+                    perfdata_t& ag = aggr_results[u];
+                    switch( typ ) {
+                    case UINT64_T:
+                        mrn_max( &(ag.u), ((uint64_t*)data_arr)+u, &(ag.u), typ );
+                        break;
+                    case INT64_T:
+                        mrn_max( &(ag.i), ((int64_t*)data_arr)+u, &(ag.i), typ );
+                        break;
+                    case DOUBLE_T:
+                        mrn_max( &(ag.d), ((double*)data_arr)+u, &(ag.d), typ );
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            else if( aggr_id == (int)TFILTER_AVG ) {
+
+                for( unsigned u=0; u < data_len; u++ ) {
+                    perfdata_t& ag = aggr_results[u];
+                    switch( typ ) {
+                    case UINT64_T: {
+                        uint64_t u64 = ((uint64_t*)data_arr)[u];
+                        u64 *= nrank;
+                        ag.u += u64;
+                        break;
+                    }
+                    case INT64_T: {
+                        int64_t i64 = ((int64_t*)data_arr)[u];
+                        i64 *= nrank;
+                        ag.i += i64;
+                        break;
+                    }
+                    case DOUBLE_T: {
+                        double dbl = ((double*)data_arr)[u];
+                        dbl *= nrank;
+                        ag.d += dbl;
+                        break;
+                    }
+                    default:
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if( data_len && (aggr_id == (int)TFILTER_AVG) ) {
+        // divide each sum by number of ranks
+        for( unsigned u=0; u < data_len; u++ ) {
+            perfdata_t& ag = aggr_results[u];
+            switch( typ ) {
+             case UINT64_T:
+                 ag.u /= total_nranks;
+                 break;
+             case INT64_T:
+                 ag.i /= total_nranks;
+                 break;
+             case DOUBLE_T:
+                 ag.d /= total_nranks;
+                 break;
+             default:
+                 break;
+            }
+        }
+    }
+
+    // allocate for output arrays
+    int* orank_arr = NULL;
+    int* onelems_arr = NULL;
+    void* odata_arr = NULL;
+    unsigned orank_len=0, onelems_len=0, odata_len=0;
+    if( aggr_id == (int)TFILTER_ARRAY_CONCAT ) {
+        orank_len = onelems_len = total_nranks;
+        odata_len = total_ndatums;
+    }
+    else {
+        orank_len = onelems_len = 1;
+        odata_len = aggr_results.size();
+    }
+
+    if( orank_len ) {
+        orank_arr = (int*) malloc( orank_len * sizeof(int) );
+        if( orank_arr == NULL ) {
+            mrn_printf(FLF, stderr, "ERROR: malloc output rank array failed\n" );
+            return;
+        }
+    }
+    if( onelems_len ) {
+        onelems_arr = (int*) malloc( onelems_len * sizeof(int) );
+        if( onelems_arr == NULL ) {
+            mrn_printf(FLF, stderr, "ERROR: malloc output nelems array failed\n" );
+            return;
+        }
+    }
+    if( odata_len ) {
+        odata_arr = malloc( odata_len * data_size );
+        if( odata_arr == NULL ) {
+            mrn_printf(FLF, stderr, "ERROR: malloc output data array failed\n" );
+            return;
+        }
+    }
+
+    // fill output arrays
+    if( aggr_id == (int)TFILTER_ARRAY_CONCAT ) {
+        int* curr_rank = orank_arr;
+        int* curr_nelems = onelems_arr;
+        void* curr_data = odata_arr;
+        for( unsigned u=0; u < input_rank_arrays.size(); u++ ) {
+ 
+            pair< const int*, unsigned >& r = input_rank_arrays[u];
+            memcpy( curr_rank, r.first, r.second * sizeof(int) );
+            curr_rank += r.second;
+
+            pair< const int*, unsigned >& n = input_nelems_arrays[u];
+            memcpy( curr_nelems, n.first, n.second * sizeof(int) );
+            curr_nelems += n.second;
+      
+            pair< const void*, unsigned >& d = input_data_arrays[u];           
+            switch( typ ) { 
+             case UINT64_T:
+                 memcpy( curr_data, d.first, d.second * sizeof(uint64_t) );
+                 curr_data = ((uint64_t*)curr_data) + d.second;
+                 break;
+             case INT64_T:
+                 memcpy( curr_data, d.first, d.second * sizeof(int64_t) );
+                 curr_data = ((int64_t*)curr_data) + d.second;
+                 break;
+             case DOUBLE_T:
+                 memcpy( curr_data, d.first, d.second * sizeof(double) );
+                 curr_data = ((double*)curr_data) + d.second;
+                 break;
+             default:
+                 break;
+            }
+        }
+    }
+    else {
+        orank_arr[0] = -total_nranks;
+        onelems_arr[0] = aggr_results.size();
+        for( unsigned u=0; u < aggr_results.size(); u++ ) {
+            switch( typ ) { 
+             case UINT64_T:
+                 ((uint64_t*)odata_arr)[u] = aggr_results[u].u;
+                 break;
+             case INT64_T:
+                 ((uint64_t*)odata_arr)[u] = aggr_results[u].i;
+                 break;
+             case DOUBLE_T:
+                 ((double*)odata_arr)[u] = aggr_results[u].d;
+                 break;
+             default:
+                 break;
+            }
+        }
+    }
+
+    // generate output packet
+    PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
+                                      ipackets[0]->get_Tag( ),
+                                      ipackets[0]->get_FormatString( ),
+                                      orank_arr, orank_len,
+                                      onelems_arr, onelems_len,
+                                      odata_arr, odata_len ) );
+    if( new_packet->has_Error() ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+        return;
+    }
+    // tell MRNet to free output arrays
+    new_packet->set_DestroyData(true);
+
+    opackets.push_back( new_packet );
+}
+
+/*================================================*
+ *    Default Synchronization Filter Definitions  *
+ *================================================*/
 
 typedef struct {
     map < Rank, vector< PacketPtr >* > packets_by_rank;
@@ -1018,6 +1358,10 @@ void sfilter_TimeOut( const vector< PacketPtr > &,
                       void **, PacketPtr& )
 {
 }
+
+/*====================================*
+ *    Support Function Definitions    *
+ *====================================*/
 
 static inline void sum(const void *in1, const void *in2, void* out, DataType type)
 {

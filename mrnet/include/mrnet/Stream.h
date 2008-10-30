@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -15,17 +15,15 @@
 #include "xplat/Mutex.h"
 #include "mrnet/FilterIds.h"
 #include "mrnet/Packet.h"
-#include "Filter.h"
+#include "mrnet/Network.h"
 
 namespace MRN
 {
 
-class Network;
+class Filter;
 class FrontEndNode;
 class BackEndNode;
-
-class PeerNode;
-typedef boost::shared_ptr<PeerNode> PeerNodePtr;
+class PerfDataMgr;
 
 class Stream{
     friend class Network;
@@ -33,6 +31,7 @@ class Stream{
     friend class BackEndNode;
     friend class InternalNode;
     friend class ParentNode;
+    friend class ChildNode;
 
  public:
     Stream( Network * inetwork, int iid, Rank *ibackends, unsigned int inum_backends,
@@ -62,17 +61,37 @@ class Stream{
     const std::set<Rank> & get_ClosedPeers( void ) const ;
     std::set < Rank > get_ChildPeers() const;
 
+    bool enable_PerformanceData( perfdata_metric_t metric, 
+                                 perfdata_context_t context );
+    bool disable_PerformanceData( perfdata_metric_t metric, 
+                                  perfdata_context_t context );
+    bool collect_PerformanceData( rank_perfdata_map& results,
+                                  perfdata_metric_t metric, 
+                                  perfdata_context_t context,
+                                  int aggr_filter_id = TFILTER_ARRAY_CONCAT );
+    void print_PerformanceData( perfdata_metric_t metric, 
+                                perfdata_context_t context );
+
+    // NOT IN PUBLIC API
+    PacketPtr collect_PerfData( perfdata_metric_t metric, 
+                                perfdata_context_t context, 
+                                int aggr_strm_id );
+
  private:
     int send_aux( int tag, const char *format_str, PacketPtr &packet );
     void add_IncomingPacket( PacketPtr );
     PacketPtr get_IncomingPacket( void );
-    int push_Packet( PacketPtr, std::vector<PacketPtr> &, std::vector<PacketPtr> &, bool going_upstream );
+    int push_Packet( PacketPtr, std::vector<PacketPtr> &, std::vector<PacketPtr> &, 
+                     bool going_upstream );
 
     int send_FilterStateToParent( void ) const;
     PacketPtr get_FilterState( ) const;
 
     void set_FilterParams( bool, PacketPtr& ) const;
 
+    bool enable_PerfData( perfdata_metric_t metric, perfdata_context_t context );
+    bool disable_PerfData( perfdata_metric_t metric, perfdata_context_t context );
+    void print_PerfData( perfdata_metric_t metric, perfdata_context_t context );
 
     bool remove_Node( Rank irank );
     bool recompute_ChildrenNodes( void );
@@ -93,6 +112,7 @@ class Stream{
     std::set < Rank > _end_points;  //end-points of stream
 
     //Dynamic Data Members
+    PerfDataMgr * _perf_data;
     bool _us_closed;
     bool _ds_closed;
     std::set< Rank > _peers; //peers in stream

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2007 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -11,14 +11,14 @@
 #include <set>
 
 #include "mrnet/MRNet.h"
-#include "CommunicationNode.h"
 #include "PeerNode.h"
 #include "mrnet/Stream.h"
 #include "FrontEndNode.h"
 #include "BackEndNode.h"
 #include "Filter.h"
 #include "Router.h"
-
+#include "PerfDataEvent.h"
+#include "Protocol.h"
 #include "utils.h"
 
 using namespace std;
@@ -41,6 +41,7 @@ Stream::Stream( Network * inetwork,
     _us_filter ( new Filter(ius_filter_id) ),
     _ds_filter_id(ids_filter_id),
     _ds_filter( new Filter(ids_filter_id) ),
+    _perf_data( new PerfDataMgr() ),
     _us_closed(false),
     _ds_closed(false)
 {
@@ -127,28 +128,44 @@ int Stream::send(int itag, const void **idata, const char *iformat_str)
 
 int Stream::send_aux(int itag, char const *ifmt, PacketPtr &ipacket )
 {
-    Timer tagg, tsend;
 
+
+    mrn_dbg_func_begin();
     mrn_dbg(3, mrn_printf(FLF, stderr,
                           "stream_id: %d, tag:%d, fmt=\"%s\"\n", _id, itag, ifmt));
 
-    vector<PacketPtr> ipackets, opackets, opackets_reverse;
-    
-    mrn_dbg_func_begin();
+    Timer tagg, tsend;
+    vector<PacketPtr> opackets, opackets_reverse;
 
-    ipackets.push_back(ipacket);
+    bool upstream = true;
+    if( _network->is_LocalNodeFrontEnd() )
+        upstream = false;
 
-    Filter* cur_agg = ( _network->is_LocalNodeBackEnd() ? _us_filter : _ds_filter );
+    // performance data update for STREAM_SEND
+    if( _perf_data->is_Enabled( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_SEND ) ) {
+        perfdata_t val = _perf_data->get_DataValue( PERFDATA_MET_NUM_PKTS, 
+                                                   PERFDATA_CTX_SEND );
+        val.u += 1;
+        _perf_data->set_DataValue( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_SEND,
+                                  val );
+    }
+    if( _perf_data->is_Enabled( PERFDATA_MET_NUM_BYTES, PERFDATA_CTX_SEND ) ) {
+        perfdata_t val = _perf_data->get_DataValue( PERFDATA_MET_NUM_BYTES, 
+                                                  PERFDATA_CTX_SEND );
+        val.u += ipacket->get_BufferLen();
+        _perf_data->set_DataValue( PERFDATA_MET_NUM_BYTES, PERFDATA_CTX_SEND,
+                                  val );
+    }
 
+    // filter packet
     tagg.start();
-    if( cur_agg->push_Packets( ipackets, opackets, opackets_reverse ) == -1){
-        mrn_dbg(1, mrn_printf(FLF, stderr, "aggr.push_packets() failed\n"));
+    if( push_Packet( ipacket, opackets, opackets_reverse, upstream ) == -1){
+        mrn_dbg(1, mrn_printf(FLF, stderr, "push_Packet() failed\n"));
         return -1;
     }
     tagg.stop();
 
-    ipackets.clear();
-
+    // send filtered result packets
     tsend.start();
     if( !opackets.empty() ) {
         if( _network->is_LocalNodeFrontEnd() ) {
@@ -439,10 +456,67 @@ int Stream::push_Packet( PacketPtr ipacket,
     }
 
     if( ipackets.size() > 0 ) {
-        Filter* cur_agg = (igoing_upstream ? _us_filter : _ds_filter );
+
+        /* NOTE: Performance data on filter CPU usage is currently not available, since
+           getrusage doesn't play nicely with threads - need a better option */ 
+        /* struct rusage before, after; */
+        Timer tagg;
+        Filter* cur_agg = _ds_filter;
+
+        if( igoing_upstream ) {
+            cur_agg = _us_filter;
+
+            // performance data update for FILTER_IN
+            if( _perf_data->is_Enabled( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_IN ) ) {
+                perfdata_t val;
+                val.u = ipackets.size();
+                _perf_data->add_DataInstance( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_IN,
+                                             val);
+            }
+            /* getrusage( RUSAGE_SELF, &before); */
+            tagg.start();
+        }
+
+        // run transformation filter
         if( cur_agg->push_Packets(ipackets, opackets, opackets_reverse ) == -1){
             mrn_dbg(1, mrn_printf(FLF, stderr, "aggr.push_packets() failed\n"));
             return -1;
+        }
+
+        if( igoing_upstream ) {
+            tagg.stop();
+            /* getrusage( RUSAGE_SELF, &after); */
+        
+            // performance data update for FILTER_OUT
+            if( _perf_data->is_Enabled( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_OUT ) ) {
+                perfdata_t val;
+                val.u = opackets.size() + opackets_reverse.size();
+                _perf_data->add_DataInstance( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_OUT,
+                                             val );
+            }
+            if( _perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_FILT_OUT ) ) {
+                perfdata_t val;
+                val.d = tagg.get_latency_secs();
+                _perf_data->add_DataInstance( PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_FILT_OUT,
+                                             val );
+            }
+            /* if( _perf_data->is_Enabled( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT ) ) {
+                perfdata_t val;
+                val.d = 0.0;
+                double diff = tv2dbl(after.ru_utime) - tv2dbl(before.ru_utime);
+                if( diff < tagg.get_latency_secs )
+                    val.d = ( diff / tagg.get_latency_secs() ) * 100.0;
+                _perf_data->add_DataInstance( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT,
+                                             val );
+            }
+            if( _perf_data->is_Enabled( PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT ) ) {
+                perfdata_t val;
+                double diff = tv2dbl(after.ru_stime) - tv2dbl(before.ru_time);
+                if( diff < tagg.get_latency_secs )
+                    val.d = ( diff / tagg.get_latency_secs() ) * 100.0;
+                _perf_data->add_DataInstance( PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT,
+                                             val );
+            } */
         }
     }
 
@@ -458,6 +532,22 @@ PacketPtr Stream::get_IncomingPacket( )
     if( !_incoming_packet_buffer.empty() ){
         cur_packet = *( _incoming_packet_buffer.begin() );
         _incoming_packet_buffer.pop_front();
+
+        // performance data update for STREAM_RECV
+        if( _perf_data->is_Enabled( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_RECV ) ) {
+            perfdata_t val = _perf_data->get_DataValue( PERFDATA_MET_NUM_PKTS, 
+                                                       PERFDATA_CTX_RECV );
+            val.u += 1;
+            _perf_data->set_DataValue( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_RECV,
+                                      val );
+        }
+        if( _perf_data->is_Enabled( PERFDATA_MET_NUM_BYTES, PERFDATA_CTX_RECV ) ) {
+            perfdata_t val = _perf_data->get_DataValue( PERFDATA_MET_NUM_BYTES, 
+                                                       PERFDATA_CTX_RECV );
+            val.u += cur_packet->get_BufferLen();
+            _perf_data->set_DataValue( PERFDATA_MET_NUM_BYTES, PERFDATA_CTX_RECV,
+                                      val );
+        }
     }
     _incoming_packet_buffer_sync.Unlock();
 
@@ -505,13 +595,14 @@ int Stream::set_FilterParameters( const char *iparams_fmt, va_list iparams, bool
     if( iupstream )
        tag = PROT_SET_FILTERPARAMS_UPSTREAM;
     
-    PacketPtr packet( new Packet(true, _id, tag, iparams_fmt, iparams) );
-    if( packet->has_Error() ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
-        return -1;
-    }
-
     if( _network->is_LocalNodeFrontEnd() ) {
+
+        PacketPtr packet( new Packet(true, _id, tag, iparams_fmt, iparams) );
+        if( packet->has_Error() ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+            return -1;
+        }
+
         ParentNode *parent = _network->get_LocalParentNode();
         if( parent == NULL ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "local parent is NULL\n"));
@@ -620,5 +711,369 @@ set < Rank > Stream::get_ChildPeers() const
 {
     return _peers;
 }
+
+
+bool Stream::enable_PerfData( perfdata_metric_t metric, 
+                              perfdata_context_t context )
+{
+    _perf_data->enable( metric, context );
+    return true;
+}
+
+bool Stream::enable_PerformanceData( perfdata_metric_t metric, 
+                                     perfdata_context_t context )
+{
+    bool rc = false;
+
+    mrn_dbg_func_begin();
+
+    if( metric >= PERFDATA_MAX_MET )
+        return false;
+    if( context >= PERFDATA_MAX_CTX )
+        return false;
+
+    // send enable request
+    if( _network->is_LocalNodeFrontEnd() ) {
+
+        int tag = PROT_ENABLE_PERFDATA;
+        PacketPtr packet( new Packet( _id, tag, "%d %d", (int)metric, (int)context) );
+        if( packet->has_Error() ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+            return false;
+        }
+
+        if( _network->is_LocalNodeParent() ) {
+            if( _network->send_PacketToChildren( packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+                return false;
+            }
+        }
+
+        // local enable
+        rc = enable_PerfData( metric, context );
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                 "enable_PerformanceData() can only be used by Network front-end\n" )); 
+        return false;
+    }
+
+    mrn_dbg_func_end();
+    return rc;
+}
+
+bool Stream::disable_PerfData( perfdata_metric_t metric, 
+                               perfdata_context_t context )
+{
+    _perf_data->disable( metric, context );
+    return true;
+}
+
+bool Stream::disable_PerformanceData( perfdata_metric_t metric, 
+                                      perfdata_context_t context )
+{
+    bool rc = false;
+
+    mrn_dbg_func_begin();
+    
+    if( metric >= PERFDATA_MAX_MET )
+        return false;
+    if( context >= PERFDATA_MAX_CTX )
+        return false;
+
+    // send disable request
+    if( _network->is_LocalNodeFrontEnd() ) {
+
+        int tag = PROT_DISABLE_PERFDATA;
+        PacketPtr packet( new Packet( _id, tag, "%d %d", (int)metric, (int)context) );
+        if( packet->has_Error() ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+            return false;
+        }
+
+        if( _network->is_LocalNodeParent() ) {
+            if( _network->send_PacketToChildren( packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+                return false;
+            }
+        }
+
+        // local disable
+        rc = disable_PerfData( metric, context );
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                 "disable_PerformanceData() can only be used by Network front-end\n" )); 
+        return false;
+    }
+
+    mrn_dbg_func_end();
+    return rc;
+}
+
+PacketPtr Stream::collect_PerfData( perfdata_metric_t metric, 
+                                    perfdata_context_t context,
+				    int aggr_strm_id )
+{
+    vector< perfdata_t > data;
+    vector< perfdata_t >::iterator iter;
+    _perf_data->collect( metric, context, data );
+    iter = data.begin();
+
+    Rank my_rank = _network->get_LocalRank();
+    unsigned num_elems = data.size();
+    void* data_arr = NULL;
+    const char* fmt = NULL;
+
+    switch( PerfDataMgr::get_MetricType(metric) ) {
+
+     case PERFDATA_TYPE_UINT: {
+         fmt = "%ad %ad %auld";
+         if( num_elems ) {
+             uint64_t* u64_arr = (uint64_t*)malloc(sizeof(uint64_t) * num_elems);
+             if( u64_arr == NULL ) {
+                 mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() data array failed\n"));
+                 return Packet::NullPacket;
+             }
+             for( unsigned u=0; iter != data.end(); u++, iter++ )
+                 u64_arr[u] = (*iter).u;
+             data_arr = u64_arr;
+         } 
+         break;
+     }
+
+     case PERFDATA_TYPE_INT: {
+         fmt = "%ad %ad %ald"; 
+         if( num_elems ) {
+             int64_t* i64_arr = (int64_t*)malloc(sizeof(int64_t) * num_elems);
+             if( i64_arr == NULL ) {
+                 mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() data array failed\n"));
+                 return Packet::NullPacket;
+             }
+             for( unsigned u=0; iter != data.end(); u++, iter++ )
+                 i64_arr[u] = (*iter).i;
+             data_arr = i64_arr;
+         } 
+         break;
+     }
+
+     case PERFDATA_TYPE_FLOAT: {
+         fmt = "%ad %ad %alf"; 
+         if( num_elems ) {
+             double* dbl_arr = (double*)malloc(sizeof(double) * num_elems);
+             if( dbl_arr == NULL ) {
+                 mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() data array failed\n"));
+                 return Packet::NullPacket;
+             }
+             for( unsigned u=0; iter != data.end(); u++, iter++ )
+                 dbl_arr[u] = (*iter).d;
+             data_arr = dbl_arr;
+         }
+         break;
+     }
+     default:
+         mrn_dbg(1, mrn_printf(FLF, stderr, "bad metric type\n"));  
+         return Packet::NullPacket;          
+    }
+
+    // create output packet
+    int* rank_arr = (int*) malloc( sizeof(int) );
+    int* nelems_arr = (int*) malloc( sizeof(int) );
+    *rank_arr = my_rank;
+    *nelems_arr = num_elems;
+    PacketPtr packet( new Packet( aggr_strm_id, PROT_COLLECT_PERFDATA, fmt, 
+                                  rank_arr, 1, nelems_arr, 1, data_arr, num_elems ) );
+    if( packet->has_Error() ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+        return Packet::NullPacket;
+    }
+    packet->set_DestroyData(true); // free arrays when Packet no longer in use
+    
+    return packet;
+}
+
+bool Stream::collect_PerformanceData( rank_perfdata_map& results,
+                                      perfdata_metric_t metric, 
+                                      perfdata_context_t context,
+                                      int aggr_filter_id /*=TFILTER_ARRAY_CONCAT*/
+                                    )
+{
+    mrn_dbg_func_begin();
+    if( metric >= PERFDATA_MAX_MET )
+        return false;
+    if( context >= PERFDATA_MAX_CTX )
+        return false;
+
+    // create stream to aggregate performance data
+    Communicator* comm = new Communicator( _network, _end_points );
+    Stream* aggr_strm = _network->new_Stream( comm, TFILTER_PERFDATA );
+    aggr_strm->set_FilterParameters( true, "%d %d %d %d", 
+                                     (int)metric, (int)context, 
+                                     aggr_filter_id, _id );
+    int aggr_strm_id = aggr_strm->get_Id();
+
+    if( _network->is_LocalNodeFrontEnd() ) {
+
+        // send collect request
+        int tag = PROT_COLLECT_PERFDATA;
+        PacketPtr packet( new Packet( _id, tag, "%d %d %d", 
+                                      (int)metric, (int)context, aggr_strm_id ) );
+        if( packet->has_Error() ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+            return false;
+        }
+
+        if( _network->is_LocalNodeParent() ) {
+            if( _network->send_PacketToChildren( packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+                return false;
+            }
+        }
+
+        // receive data
+        int rtag;
+        PacketPtr resp_packet;
+        aggr_strm->recv( &rtag, resp_packet );
+        
+        // unpack data
+	int* rank_arr;
+	int* nelems_arr;
+        unsigned rank_len, nelems_len, data_len;
+        unsigned data_elem_sz;
+        void* data_arr;
+        const char* fmt = NULL;
+        perfdata_mettype_t mettype = PerfDataMgr::get_MetricType(metric);
+        switch( mettype ) {
+         case PERFDATA_TYPE_UINT: {
+             fmt = "%ad %ad %auld";
+             data_elem_sz = sizeof(uint64_t);
+             uint64_t* u64_arr;
+	     resp_packet->unpack( fmt, &rank_arr, &rank_len, 
+                                  &nelems_arr, &nelems_len,
+                                  &u64_arr, &data_len );
+             data_arr = u64_arr;
+             break;
+         }
+         case PERFDATA_TYPE_INT: {
+             fmt = "%ad %ad %ald"; 
+             data_elem_sz = sizeof(int64_t);
+             int64_t* i64_arr;
+	     resp_packet->unpack( fmt, &rank_arr, &rank_len, 
+                                  &nelems_arr, &nelems_len,
+                                  &i64_arr, &data_len );
+             data_arr = i64_arr;
+             break;
+         }
+         case PERFDATA_TYPE_FLOAT: {
+             fmt = "%ad %ad %alf"; 
+             data_elem_sz = sizeof(double);
+             double* dbl_arr;
+	     resp_packet->unpack( fmt, &rank_arr, &rank_len, 
+                                  &nelems_arr, &nelems_len,
+                                  &dbl_arr, &data_len );
+             data_arr = dbl_arr;
+             break;
+         }
+         default:
+             mrn_dbg(1, mrn_printf(FLF, stderr, "bad metric type\n"));  
+             return Packet::NullPacket;          
+        }
+        
+        // add data to result map
+        unsigned data_ndx = 0;
+        for( unsigned u=0; u < rank_len ; u++ ) {
+            unsigned nelems = nelems_arr[u];
+            int rank = rank_arr[u];
+            vector<perfdata_t>& rank_data = results[ rank ];
+            rank_data.clear();
+            rank_data.reserve( nelems );
+
+            perfdata_t datum;
+            switch( mettype ) {
+             case PERFDATA_TYPE_UINT: {
+                 uint64_t* u64_arr = (uint64_t*)data_arr + data_ndx;
+                 for( unsigned v=0; v < nelems; v++ ) {
+                     datum.u = u64_arr[v];
+                     rank_data.push_back( datum );
+                 }
+                 break;
+             }
+             case PERFDATA_TYPE_INT: {
+                 int64_t* i64_arr = (int64_t*)data_arr + data_ndx;
+                 for( unsigned v=0; v < nelems; v++ ) {
+                     datum.i = i64_arr[v];
+                     rank_data.push_back( datum );
+                 }
+                 break;
+             }
+             case PERFDATA_TYPE_FLOAT: {
+                 double* dbl_arr = (double*)data_arr + data_ndx;
+                 for( unsigned v=0; v < nelems; v++ ) {
+                     datum.d = dbl_arr[v];
+                     rank_data.push_back( datum );
+                 }
+                 break;
+             }
+            }
+            data_ndx += nelems;
+        }
+        if( rank_arr != NULL ) free( rank_arr );
+        if( nelems_arr != NULL ) free( nelems_arr );
+        if( data_arr != NULL ) free( data_arr );
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                 "collect_PerformanceData() can only be used by Network front-end\n" )); 
+        return false;
+    }
+
+    mrn_dbg_func_end();
+    return true;
+}
+
+void Stream::print_PerfData( perfdata_metric_t metric, 
+                             perfdata_context_t context )
+{
+    _perf_data->print( metric, context );
+}
+
+void Stream::print_PerformanceData( perfdata_metric_t metric, 
+                                    perfdata_context_t context )
+{
+    mrn_dbg_func_begin();
+    if( metric >= PERFDATA_MAX_MET )
+        return;
+    if( context >= PERFDATA_MAX_CTX )
+        return;
+    
+    // send print request
+    if( _network->is_LocalNodeFrontEnd() ) {
+
+        int tag = PROT_PRINT_PERFDATA;
+        PacketPtr packet( new Packet( _id, tag, "%d %d", (int)metric, (int)context) );
+        if( packet->has_Error() ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+            return;
+        }
+
+        if( _network->is_LocalNodeParent() ) {
+            if( _network->send_PacketToChildren( packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+                return;
+            }
+        }
+
+        // local print
+        print_PerfData( metric, context );
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                 "print_PerformanceData() can only be used by Network front-end\n" )); 
+        return;
+    }
+
+    mrn_dbg_func_end();
+}
+    
 
 } // namespace MRN

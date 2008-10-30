@@ -185,8 +185,29 @@ int ChildNode::proc_PacketsFromParent( std::list < PacketPtr >&packets ) const
                 retval = -1;
             }
             break;
+        case PROT_ENABLE_PERFDATA:
+            if( proc_EnablePerfData( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                            "proc_CollectPerfData() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_DISABLE_PERFDATA:
+            if( proc_DisablePerfData( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                            "proc_CollectPerfData() failed\n" ));
+                retval = -1;
+            }
+            break;
         case PROT_COLLECT_PERFDATA:
             if( proc_CollectPerfData( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                            "proc_CollectPerfData() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_PRINT_PERFDATA:
+            if( proc_PrintPerfData( cur_packet ) == -1 ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
                             "proc_CollectPerfData() failed\n" ));
                 retval = -1;
@@ -209,22 +230,120 @@ int ChildNode::proc_PacketsFromParent( std::list < PacketPtr >&packets ) const
     return retval;
 }
 
-int ChildNode::proc_CollectPerfData( PacketPtr ipacket ) const
+int ChildNode::proc_EnablePerfData( PacketPtr ipacket ) const
 {
+    int stream_id;
+
     mrn_dbg_func_begin();
 
+    stream_id = ipacket->get_StreamId();
+    Stream* strm = _network->get_Stream( stream_id );
+
     if( _network->is_LocalNodeParent() ) {
+        // forward packet to children nodes
         if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
             return -1;
         }
     }
 
-    _network->collect_PerfData();
+    // local update
+    int metric, context;
+    ipacket->unpack( "%d %d", &metric, &context );
+    strm->enable_PerfData( (perfdata_metric_t)metric, (perfdata_context_t)context );
 
     mrn_dbg_func_end();
     return 0;
 }
+
+int ChildNode::proc_DisablePerfData( PacketPtr ipacket ) const
+{
+    int stream_id;
+
+    mrn_dbg_func_begin();
+
+    stream_id = ipacket->get_StreamId();
+    Stream* strm = _network->get_Stream( stream_id );
+
+    if( _network->is_LocalNodeParent() ) {
+        // forward packet to children nodes
+        if( _network->send_PacketToChildren( ipacket ) == -1 ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            return -1;
+        }
+    }
+
+    // local update
+    int metric, context;
+    ipacket->unpack( "%d %d", &metric, &context );
+    strm->disable_PerfData( (perfdata_metric_t)metric, (perfdata_context_t)context );
+
+    mrn_dbg_func_end();
+    return 0;
+}
+
+int ChildNode::proc_CollectPerfData( PacketPtr ipacket ) const
+{
+    int stream_id;
+
+    mrn_dbg_func_begin();
+
+    stream_id = ipacket->get_StreamId();
+    Stream* strm = _network->get_Stream( stream_id );
+
+    if( _network->is_LocalNodeParent() ) {
+        // forward packet to children nodes
+        if( _network->send_PacketToChildren( ipacket ) == -1 ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            return -1;
+        }
+    }
+    else if( _network->is_LocalNodeBackEnd() ) { 
+        int metric, context, aggr_strm_id;
+        ipacket->unpack( "%d %d %d", &metric, &context, &aggr_strm_id );
+    
+
+        // collect
+        PacketPtr pkt = strm->collect_PerfData( (perfdata_metric_t)metric, 
+                                                (perfdata_context_t)context,
+						aggr_strm_id );
+        
+        // send
+        Stream* aggr_strm = _network->get_Stream( aggr_strm_id );
+        aggr_strm->send_aux( pkt->get_Tag(), pkt->get_FormatString(), pkt );
+    }
+
+    mrn_dbg_func_end();
+    return 0;
+}
+
+int ChildNode::proc_PrintPerfData( PacketPtr ipacket ) const
+{
+    int stream_id;
+
+    mrn_dbg_func_begin();
+
+    stream_id = ipacket->get_StreamId();
+    Stream* strm = _network->get_Stream( stream_id );
+
+    if( _network->is_LocalNodeParent() ) {
+        // forward packet to children nodes
+        if( _network->send_PacketToChildren( ipacket ) == -1 ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            return -1;
+        }
+    }
+
+    // local print
+    int metric, context;
+    ipacket->unpack( "%d %d", &metric, &context );
+    strm->print_PerfData( (perfdata_metric_t)metric, (perfdata_context_t)context );
+
+    mrn_dbg_func_end();
+    return 0;
+}
+
+
 
 int ChildNode::proc_TopologyReport( PacketPtr ipacket ) const 
 {
