@@ -266,7 +266,8 @@ bool handle_PerfDataCPU( PacketPtr& connect_pkt, Rank my_rank )
         long long currNice = 0;
         long long currKernel = 0;
         long long currIdle = 0;
-        long long currTotal = 0;/* The very first line should be cpu */
+        long long currTotal = 0;
+        /* The very first line should be cpu */
         if((fscanf(f, "cpu %lld %lld %lld %lld",
                    &currUser, &currNice, &currKernel, &currIdle)) != 4) {
             cout << "parse /proc/stat failed\n";

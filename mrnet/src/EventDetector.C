@@ -418,7 +418,7 @@ int EventDetector::recover_FromChildFailure( Network *inetwork, Rank ifailed_ran
     return 0;
 }
 
-int  EventDetector::recover_FromParentFailure( Network *inetwork )
+int EventDetector::recover_FromParentFailure( Network *inetwork )
 {
     Timer new_parent_timer, cleanup_timer, connection_timer, filter_state_timer,
         overall_timer;

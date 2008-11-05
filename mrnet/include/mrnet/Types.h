@@ -76,7 +76,7 @@ namespace MRN
     extern const Port UnknownPort;
     extern const Rank UnknownRank;
 
-    /* performance data types */
+    /* ------------- Performance Data types ------------- */
     typedef union { 
         int64_t i;
         uint64_t u;
