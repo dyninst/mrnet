@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     comm_node->waitfor_NetworkTermination();
 
     delete comm_node;
-    free( (char *)(local_data->thread_name) );
+    free( const_cast<char*>(local_data->thread_name) );
     delete local_data;
 
     return 0;
