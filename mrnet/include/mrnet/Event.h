@@ -7,39 +7,78 @@
 #define __event_h  1
 
 #include <string>
+#include <list>
+#include <map>
+#include <algorithm>
 
 #include "mrnet/Types.h"
+#include "xplat/Monitor.h"
 
 namespace MRN {
 
 typedef enum {
-    EBADCONFIG,
-    ESYSTEM,
-    EPACKING,
-    EFMTSTR,
-    EPROTOCOL,
+    ERROR_EVENT=0,
+    DATA_EVENT,
+    TOPOLOGY_EVENT,
     UNKNOWN_EVENT
 } EventType;
 
-class Event{
+typedef int EventId;
+
+typedef void (*EventCallbackFunction)( EventType, EventId, Rank, const char*, void* );
+
+void PipeNotifyCallbackFn( EventType, EventId, Rank, const char*, void* );
+
+class EventPipe {
  private:
-    Event(){} //explicitly disallow creation without "new_Event()"
+    int _pipe_fds[2];
+    bool _has_data;
+    XPlat::Monitor _sync;
+
+    inline int get_WriteFd(void) { return _pipe_fds[1]; }
+    inline void set_ReadFd( int i ) { _pipe_fds[0] = i; }
+    inline void set_WriteFd( int i) { _pipe_fds[1] = i; }
 
  public:
-    virtual ~Event(){};
-    static Event * new_Event( EventType t, Rank irank, std::string desc="" );
-    static bool have_Event();
-    static bool have_RemoteEvent();
-    static void add_Event( Event & );
-    static Event * get_NextEvent();
-    static Event * get_NextRemoteEvent();
-    static unsigned int get_NumEvents();
-    static unsigned int get_NumRemoteEvents();
+    EventPipe();
+    ~EventPipe();
 
-    virtual EventType get_Type( )=0;
-    virtual const std::string & get_HostName( )=0;
-    virtual Port get_Port( )=0;
-    virtual const std::string & get_Description( )=0;
+    void signal(void);
+    void clear(void);
+    inline int get_ReadFd(void) { return _pipe_fds[0]; }
+};
+
+
+class Event {
+ private:
+    static std::map< EventType, std::pair< EventCallbackFunction, void* > > evt_cb_fns;
+    static std::list< Event* > events;
+
+    EventType typ;
+    EventId id;
+    Rank rank;
+    std::string desc;
+
+    //explicitly disallow creation without "new_Event()"
+    Event( EventType ityp, EventId iid, Rank irank, std::string& idesc )
+        : typ(ityp), id(iid), rank(irank), desc(idesc) {} 
+
+ public:
+    ~Event() {}
+
+    static void new_Event( EventType ityp, EventId iid, Rank irank, std::string idesc="" );
+    static bool have_Event();
+    static unsigned int get_NumEvents();
+    static Event* get_NextEvent(void);
+    static void clear_Events(void);
+
+    static bool register_EventCallback( EventType, EventCallbackFunction, void* );
+    static bool remove_EventCallback( EventType );
+
+    inline EventType get_Type() const { return typ; }
+    inline EventId get_Id() const { return id; }
+    inline Rank get_Rank() const { return rank; }
+    inline const std::string& get_Description() const { return desc; } 
 };
 
 } /* namespace MRN */

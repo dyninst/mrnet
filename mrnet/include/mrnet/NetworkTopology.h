@@ -21,7 +21,16 @@
 namespace MRN
 {
 
-typedef enum{ ALG_RANDOM=0, ALG_WRS, ALG_SORTED_RR } ALGORITHM_T;
+typedef enum{ ALG_RANDOM=0, 
+              ALG_WRS,
+              ALG_SORTED_RR
+} ALGORITHM_T;
+
+typedef enum{ TOPOL_RESET=0,
+              TOPOL_ADD_SUBGRAPH,
+              TOPOL_REMOVE_NODE,
+              TOPOL_PARENT_CHANGE
+} TopologyEvent;
 
 class Router;
 class SerialGraph;

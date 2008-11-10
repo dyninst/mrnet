@@ -304,6 +304,8 @@ bool NetworkTopology::add_SubGraph( Rank irank, SerialGraph & isg, bool iupdate 
     _sync.Lock();
     bool retval;
 
+    Event::new_Event( TOPOLOGY_EVENT, TOPOL_ADD_SUBGRAPH, irank );
+    
     Node * node = find_Node( irank );
 
     if( node == NULL ) {
@@ -418,6 +420,8 @@ bool NetworkTopology::remove_Node(  Rank irank, bool iupdate /* = false */ )
 {
     _sync.Lock();
 
+    Event::new_Event( TOPOLOGY_EVENT, TOPOL_REMOVE_NODE, irank );
+    
     NetworkTopology::Node *node_to_remove = find_Node( irank );
 
     if( node_to_remove == NULL ){
@@ -466,8 +470,10 @@ bool NetworkTopology::set_Parent( Rank ichild_rank, Rank inew_parent_rank, bool 
     child_node->_ascendants = new_parent_node->_ascendants;
     child_node->_ascendants.insert( new_parent_node );
 
-    if( iupdate )
+    if( iupdate ) {
         _router->update_Table();
+        Event::new_Event( TOPOLOGY_EVENT, TOPOL_PARENT_CHANGE, ichild_rank );
+    }
 
     _sync.Unlock();
     mrn_dbg_func_end();
@@ -926,6 +932,8 @@ bool NetworkTopology::reset( string itopology_str, bool iupdate /* =true */ )
     _orphans.clear();
     _backend_nodes.clear();
 
+    Event::new_Event( TOPOLOGY_EVENT, TOPOL_RESET, _network->get_LocalRank() );
+    
     if( itopology_str == "" ) {
         _sync.Unlock();
         return true;

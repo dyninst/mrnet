@@ -121,8 +121,9 @@ LIBMRNET_SRCS = \
 	         $(SRCDIR)/src/CommunicationNode.C \
 	         $(SRCDIR)/src/Communicator.C \
 	         $(SRCDIR)/src/DataElement.C \
-	         $(SRCDIR)/src/EventDetector.C \
 	         $(SRCDIR)/src/Error.C \
+	         $(SRCDIR)/src/Event.C \
+	         $(SRCDIR)/src/EventDetector.C \
 	         $(SRCDIR)/src/Filter.C \
 	         $(SRCDIR)/src/FilterDefinitions.C \
 	         $(SRCDIR)/src/FrontEndNode.C \
