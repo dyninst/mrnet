@@ -381,9 +381,10 @@ bool KnomialTree::initialize_Tree( std::string &topology_spec,
 
         for( ; (used_iter != stop_iter) && (curr_step_nodes < num_nodes); used_iter++) {
             vector< string >& children = tree[ *used_iter ];
-            for(int i=0; (i < kfactor-1) && 
-                         (avail_iter != hosts.end()) && 
-                         (curr_step_nodes < num_nodes) ; i++, avail_iter++, curr_step_nodes++) {
+            for(unsigned int i=0; (i < kfactor-1) && 
+                                  (avail_iter != hosts.end()) && 
+                                  (curr_step_nodes < num_nodes) ; 
+                i++, avail_iter++, curr_step_nodes++) {
                 children.push_back( *avail_iter );
             }
         }
