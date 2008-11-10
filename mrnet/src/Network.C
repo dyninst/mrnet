@@ -87,8 +87,7 @@ Network::Network( const char * itopology, const char * ibackend_exe,
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
       _local_internal_node(NULL), _threaded(true),
-      _recover_from_failures(true), _terminate_backends(true),
-      _notificationFDOutput(-1), _notificationFDInput(-1), _FDneedsPolling(false)
+      _recover_from_failures(true), _terminate_backends(true)
 {
     init_local();
     network=this;
@@ -132,7 +131,7 @@ Network::Network( const char * itopology, const char * ibackend_exe,
     status = tsd_key.Set( local_data );
 
     if( status != 0 ) {
-        error( MRN_ESYSTEM, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
+        error( ERR_SYSTEM, rootRank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
         return;
     }
 
@@ -164,12 +163,12 @@ Network::Network( const char * itopology, const char * ibackend_exe,
     mrn_dbg(5, mrn_printf(FLF, stderr, "Instantiating network ... \n" ));
     if( get_LocalFrontEndNode()->proc_newSubTree( packet ) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: FrontEndNode::proc_newSubTree()!\n" ));
-        error( MRN_EINTERNAL, "");
+        error( ERR_INTERNAL, rootRank, "");
     }
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
     if( get_LocalFrontEndNode()->waitfor_SubTreeReports( ) == -1 ) {
-        error( MRN_EINTERNAL, "");
+        error( ERR_INTERNAL, rootRank, "");
     }
   
     //We should have a topology available after subtrees report
@@ -181,7 +180,7 @@ Network::Network( const char * itopology, const char * ibackend_exe,
     mrn_dbg(5, mrn_printf(FLF, stderr, "Broadcasting topology ... \n" ));
     if( send_PacketToChildren( packet, false ) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: send_DownStream()!\n" ));
-        error( MRN_EINTERNAL, "");
+        error( ERR_INTERNAL, rootRank, "");
     }
     free( topology );
   
@@ -197,8 +196,7 @@ Network::Network( const char *iphostname, Port ipport, Rank iprank,
       _failure_manager(NULL), _bcast_communicator(NULL),
       _local_front_end_node(NULL), _local_back_end_node(NULL),
       _local_internal_node(NULL), _threaded(true),
-      _recover_from_failures( true ),
-      _notificationFDOutput(-1), _notificationFDInput(-1), _FDneedsPolling(false)
+      _recover_from_failures( true )
 {
     init_local();
     network=this;
@@ -214,8 +212,7 @@ Network::Network( int argc, char **argv )
       _failure_manager(NULL), _bcast_communicator(NULL),
       _local_front_end_node(NULL), _local_back_end_node(NULL),
       _local_internal_node(NULL), _threaded(true),
-      _recover_from_failures( true ),
-      _notificationFDOutput(-1), _notificationFDInput(-1), _FDneedsPolling(false)
+      _recover_from_failures( true )
 {
     init_local();
     network=this;
@@ -237,8 +234,7 @@ Network::Network( )
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL),
       _local_internal_node(NULL), _threaded(true),
-      _recover_from_failures(true),
-      _notificationFDOutput(-1), _notificationFDInput(-1), _FDneedsPolling(false)
+      _recover_from_failures(true)
 {
     init_local();
     network=this;
@@ -318,7 +314,7 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
     local_data->thread_name = strdup( name.c_str(  ) );
     if( ( status = tsd_key.Set( local_data ) ) != 0 ) {
         //TODO: add event to notify upstream
-        error(MRN_ESYSTEM, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
+        error( ERR_SYSTEM, imyrank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
         mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
                     strerror( status ) ));
     }
@@ -327,7 +323,7 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
                                                  iphostname, ipport, iprank ) );
 
     if( get_LocalBackEndNode()->has_Error() ){
-        error( MRN_ESYSTEM, "Failed to initialize via BackEndNode()\n" );
+        error( ERR_SYSTEM, imyrank, "Failed to initialize via BackEndNode()\n" );
     }
 }
 
@@ -343,13 +339,11 @@ int Network::parse_Configuration( const char* itopology, bool iusing_mem_buf )
         mrnBufRemaining = strlen( itopology );
     }
     else {
-        // set up to parse config from teh file named by our
+        // set up to parse config from the file named by our
         // 'filename' member variable
         mrnin = fopen( itopology, "r" );
         if( mrnin == NULL ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "Failure: fopen(\"%s\") failed: %s",
-                                   itopology, strerror( errno ) ));
-            error( MRN_EBADCONFIG_IO, "fopen() failed: %s: %s", itopology,
+            error( ERR_SYSTEM, get_LocalRank(), "fopen(%s): %s", itopology,
                    strerror( errno ) );
             return -1;
         }
@@ -360,8 +354,7 @@ int Network::parse_Configuration( const char* itopology, bool iusing_mem_buf )
     if( status != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "Failure: mrnparse(\"%s\"): Parse Error\n",
                                itopology ));
-        error( MRN_EBADCONFIG_FMT, "Failure: mrnparse(\"%s\"): Parse Error\n",
-               itopology );
+        error( ERR_TOPOLOGY_FORMAT, get_LocalRank(), "%s", itopology );
         return -1;
     }
 
@@ -814,72 +807,58 @@ int Network::get_DataSocketFds( int **ofds, unsigned int *onum_fds ) const
     return 0;
 }
 
-int Network::get_DataNotificationFd( void )
+int Network::get_EventNotificationFd( EventType etyp )
 {
 #if !defined(os_windows)
-    _notification_mutex.Lock();
-    if( _notificationFDOutput == -1 ) {
-        int pipeFDs[2];
-        pipeFDs[0] = pipeFDs[1] = -1;
-        int ret = pipe(pipeFDs);
-        if( ret == 0 ) {
-            _notificationFDOutput = pipeFDs[0];
-            _notificationFDInput = pipeFDs[1];
+    EventPipe* ep;
+    map< EventType, EventPipe* >::iterator iter = _evt_pipes.find( etyp );
+    if( iter == _evt_pipes.end() ) {
+        ep = new EventPipe();
+        bool rc = Event::register_EventCallback( etyp, PipeNotifyCallbackFn, (void*)ep );
+        if( ! rc ) {
+            mrn_printf(FLF, stderr, "failed to register PipeNotifyCallbackFn");
+            delete ep;
+            return -1;
         }
+        _evt_pipes[etyp] = ep;
     }
-    _notification_mutex.Unlock();
-    return _notificationFDOutput;
+    else
+        ep = iter->second;
+
+    return ep->get_ReadFd();
 #else
     return -1;
 #endif
 }
 
-void Network::signal_DataNotificationFd( void )
+void Network::clear_EventNotificationFd( EventType etyp )
 {
 #if !defined(os_windows)
-    // If the FDs are set up, write a byte to the input side.
-    _notification_mutex.Lock();
-    if((_notificationFDInput == -1 ) || _FDneedsPolling ) {
-        _notification_mutex.Unlock();
-        return;
+    map< EventType, EventPipe* >::iterator iter = _evt_pipes.find( etyp );
+    if( iter != _evt_pipes.end() ) {
+        EventPipe* ep = iter->second;
+        ep->clear();
     }
-    _notification_mutex.Unlock();
-    
-    char f = (char) 42;
-    int ret = write(_notificationFDInput, &f, sizeof(char));
-    if( ret == -1 )
-        perror("Notification write");
-    else {
-        _notification_mutex.Lock();
-        _FDneedsPolling = true;
-        _notification_mutex.Unlock();
-    }
-
 #endif
-    return;
 }
 
-void Network::clear_DataNotificationFd( void )
+void Network::close_EventNotificationFd( EventType etyp )
 {
 #if !defined(os_windows)
-    _notification_mutex.Lock();
-    if(( _notificationFDOutput == -1 ) || ( ! _FDneedsPolling )) {
-        _notification_mutex.Unlock();
-        return;
+    map< EventType, EventPipe* >::iterator iter = _evt_pipes.find( etyp );
+    if( iter != _evt_pipes.end() ) {
+        EventPipe* ep = iter->second;
+        bool rc = Event::remove_EventCallback( etyp );
+        if( ! rc ) {
+            mrn_printf(FLF, stderr, "failed to remove PipeNotifyCallbackFn");
+        }
+        else {
+            delete ep;
+            _evt_pipes.erase( iter );
+        }
     }
-    _notification_mutex.Unlock();
-
-
-    char buf;
-    read(_notificationFDOutput, &buf, sizeof(char));
-
-    _notification_mutex.Lock();
-    _FDneedsPolling = false;
-    _notification_mutex.Unlock();
 #endif
-    return;
 }
-
 
 bool Network::enable_PerformanceData( perfdata_metric_t metric, 
                                       perfdata_context_t context )
@@ -1052,7 +1031,7 @@ void Network::signal_NonEmptyStream( void )
     _streams_sync.Lock();
     mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling CV[STREAMS_NONEMPTY] ...\n"));
     _streams_sync.SignalCondition( STREAMS_NONEMPTY );
-    signal_DataNotificationFd();
+    Event::new_Event( DATA_EVENT, STREAMS_NONEMPTY, _local_rank );
     _streams_sync.Unlock();
 }
 

@@ -13,6 +13,7 @@
 
 #include "mrnet/Communicator.h"
 #include "mrnet/Error.h"
+#include "mrnet/Event.h"
 #include "mrnet/FilterIds.h"
 #include "mrnet/Packet.h"
 #include "mrnet/Stream.h"
@@ -81,9 +82,10 @@ class Network: public Error {
                                   int aggr_filter_id = TFILTER_ARRAY_CONCAT );
     void print_PerformanceData( perfdata_metric_t metric, perfdata_context_t context );
 
-    int get_DataSocketFds( int **oarray, unsigned int * oarray_size ) const;
-    int get_DataNotificationFd( void );
-    void clear_DataNotificationFd( void );
+    int get_DataSocketFds( int **oarray, unsigned int *oarray_size ) const;
+    int get_EventNotificationFd( EventType etyp );
+    void clear_EventNotificationFd( EventType etyp );
+    void close_EventNotificationFd( EventType etyp );
 
     void set_BlockingTimeOut( int timeout );
     int get_BlockingTimeOut( void );
@@ -194,8 +196,6 @@ class Network: public Error {
     void enable_FailureRecovery( void );
     bool recover_FromFailures( void ) const ;
 
-    void signal_DataNotificationFd( void );
-
     void collect_PerfData( void );
 
     //Data Members
@@ -219,11 +219,8 @@ class Network: public Error {
     bool _recover_from_failures;
     bool _terminate_backends;
 
-    /* Internal notification file descriptor - a pipe */
-    int _notificationFDOutput;
-    int _notificationFDInput;
-    bool _FDneedsPolling; // there is either 1 byte in the pipe or 0.
-    mutable XPlat::Mutex _notification_mutex;
+    /* EventPipe notifications */
+    std::map< EventType, EventPipe* > _evt_pipes;
 
     mutable XPlat::Monitor _parent_sync;
     mutable XPlat::Monitor _streams_sync;
