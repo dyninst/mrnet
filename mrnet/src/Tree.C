@@ -4,8 +4,10 @@
  ****************************************************************************/
 
 #include <ctype.h>
+#include <stdio.h>
+#include <errno.h>
 
-#include "mrnet/MRNet.h"
+#include "mrnet/Tree.h"
 #include "utils.h"
 
 #include "xplat/Tokenizer.h"
@@ -101,7 +103,7 @@ bool Tree::create_TopologyFile( const char * ifilename )
     FILE * f = fopen( ifilename, "w" );
 
     if( f == NULL ) {
-        perror( "fopen()" );
+        ::perror( "fopen()" );
         return false;
     }
     root->print_ToFile( f );
@@ -118,7 +120,7 @@ bool Tree::get_HostsFromFile( const char* ifilename, list< string >& hosts )
 {
     FILE * f = fopen( ifilename, "r" );
     if( f == NULL ) {
-        perror( "fopen()" );
+        ::perror( "fopen()" );
         return false;
     }
     else {

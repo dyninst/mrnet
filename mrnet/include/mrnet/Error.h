@@ -9,39 +9,36 @@
 #include <list>
 #include <errno.h>
 
+#include "mrnet/Types.h"
+
 namespace MRN
 {
 
-typedef enum {
-    MRN_ENONE=0,
-    MRN_EBADCONFIG_IO,
-    MRN_EBADCONFIG_FMT,
-    MRN_EBADCONFIG_CYCLE,
-    MRN_EBADCONFIG_NOTCONNECTED,
-    MRN_ENETWORK_FAILURE,
-    MRN_EOUTOFMEMORY,
-    MRN_EFMTSTR,
-    MRN_ECREATPROCFAILURE,
-    MRN_ECANNOTBINDPORT,
-    MRN_ESOCKETCONNECT,
-    MRN_EPACKING,
-    MRN_EINTERNAL,
-    MRN_ESYSTEM
-} ErrorCode;
-
 typedef enum{
-    MRN_INFO=0,
-    MRN_WARN,
-    MRN_ERR,
-    MRN_CRIT
+    ERR_INFO=0,
+    ERR_WARN,
+    ERR_ERR,
+    ERR_CRIT
 } ErrorLevel;
 
 typedef enum {
-    MRN_IGNORE=0,
-    MRN_ALERT,
-    MRN_RETRY,
-    MRN_ABORT
+    ERR_IGNORE=0,
+    ERR_ALERT,
+    ERR_RETRY,
+    ERR_ABORT
 } ErrorResponse;
+
+typedef enum {
+    ERR_NONE=0,
+    ERR_TOPOLOGY_FORMAT,
+    ERR_TOPOLOGY_CYCLE,
+    ERR_TOPOLOGY_NOTCONNECTED,
+    ERR_NETWORK_FAILURE,
+    ERR_FORMATSTR,
+    ERR_PACKING,
+    ERR_INTERNAL,
+    ERR_SYSTEM
+} ErrorCode;
 
 typedef struct 
 {
@@ -49,7 +46,7 @@ typedef struct
     ErrorLevel level;
     ErrorResponse response;
     const char *msg;
-}ErrorDef;
+} ErrorDef;
 
 extern ErrorDef errors[];
 
@@ -58,19 +55,18 @@ class Error{
     mutable ErrorCode MRN_errno;
 
  public:
-    Error(): MRN_errno(MRN_ENONE) { }
+    Error(): MRN_errno(ERR_NONE) { }
     virtual ~Error() { }
 
     inline bool has_Error() const {
-        return (MRN_errno != MRN_ENONE);
+        return (MRN_errno != ERR_NONE);
     }
 
     inline void perror(const char *str) const {
-        fprintf(stderr, "%s: %s\n", str, errors[MRN_errno].msg);
-        return;
+        fprintf(stderr, "%s: %s\n", errors[MRN_errno].msg, str );
     }
 
-    virtual void error( ErrorCode, const char *, ... ) const;
+    virtual void error( ErrorCode, Rank, const char *, ... ) const;
 };
 
 } // namespace MRN

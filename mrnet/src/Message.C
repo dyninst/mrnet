@@ -62,7 +62,7 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
     if( ( retval = MRN::read( sock_fd, buf, buf_len ) ) != buf_len ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "read returned %d\n", retval ));
         _perror( "MRN::read()" );
-        error( MRN_ESYSTEM, "MRN::read() %d of %d bytes received: %s",
+        error( ERR_SYSTEM, iinlet_rank, "MRN::read() %d of %d bytes received: %s",
                retval, buf_len, strerror(errno) );
         free( buf );
         return -1;
@@ -77,7 +77,7 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
     pdrmem_create( &pdrs, buf, buf_len, op );
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling uint32 ...\n" ));
     if( !pdr_uint32( &pdrs, &no_packets ) ) {
-        error( MRN_EPACKING, "pdr_uint32() failed\n");
+        error( ERR_PACKING, iinlet_rank, "pdr_uint32() failed\n");
         free( buf );
         return -1;
     }
@@ -118,7 +118,7 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
     int readRet = MRN::read( sock_fd, buf, buf_len );
     if( readRet != buf_len ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "MRN::read() failed\n" );
-        error( MRN_ESYSTEM, "MRN::read() %d of %d bytes received: %s",
+        error( ERR_SYSTEM, iinlet_rank, "MRN::read() %d of %d bytes received: %s",
                readRet, buf_len, strerror(errno) ));
         free( buf );
         free( packet_sizes );
@@ -135,7 +135,7 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
     if( !pdr_vector ( &pdrs, ( char * )( packet_sizes ), no_packets,
                       sizeof( uint32_t ), ( pdrproc_t ) pdr_uint32 ) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_vector() failed\n" ));
-        error( MRN_EPACKING, "pdr_uint32() failed\n");
+        error( ERR_PACKING, iinlet_rank, "pdr_uint32() failed\n");
         free( buf );
         free( packet_sizes );
         return -1;
@@ -163,7 +163,7 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
     if( retval != total_bytes ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "%s\n", "" ));
         _perror( "XPlat::NCRecv()" );
-        error( MRN_ESYSTEM, "XPlat::NCRecv() %d of %d bytes received: %s",
+        error( ERR_SYSTEM, iinlet_rank, "XPlat::NCRecv() %d of %d bytes received: %s",
                retval, buf_len, strerror(errno) );
 
         for( i = 0; i < no_packets; i++ )
@@ -268,7 +268,7 @@ int Message::send( int sock_fd )
 
 
     if( !pdr_uint32( &pdrs, &no_packets ) ) {
-        error( MRN_EPACKING, "pdr_uint32() failed\n" );
+        error( ERR_PACKING, UnknownRank, "pdr_uint32() failed\n" );
         free( buf );
         delete[] ncbufs;
         free( packet_sizes );
@@ -300,7 +300,7 @@ int Message::send( int sock_fd )
         ( &pdrs, ( char * )( packet_sizes ), no_packets, sizeof( uint32_t ),
           ( pdrproc_t ) pdr_uint32 ) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_vector() failed\n" ));
-        error( MRN_EPACKING, "pdr_vector() failed\n" );
+        error( ERR_PACKING, UnknownRank, "pdr_vector() failed\n" );
         free( buf );
         delete[] ncbufs;
         free( packet_sizes );
@@ -340,8 +340,8 @@ int Message::send( int sock_fd )
                         i, ncbufs[i].len ));
         }
         _perror( "XPlat::NCSend()" );
-        error( MRN_ESYSTEM, "XPlat::NCSend() returned %d of %d bytes: %s\n",
-                    sret, total_bytes, strerror(errno) );
+        error( ERR_SYSTEM, UnknownRank, "XPlat::NCSend() returned %d of %d bytes: %s\n",
+               sret, total_bytes, strerror(errno) );
         delete[] ncbufs;
         _packet_sync.Unlock( );
         return -1;

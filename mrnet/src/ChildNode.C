@@ -404,7 +404,7 @@ int ChildNode::send_EventsToParent( ) const
     */
 }
 
-void ChildNode::error( ErrorCode e, const char *fmt, ... ) const
+void ChildNode::error( ErrorCode e, Rank r, const char *fmt, ... ) const
 {
     char buf[1024];
 

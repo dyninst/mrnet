@@ -27,10 +27,6 @@ class BackEndNode: public ChildNode{
     virtual int proc_FailureReportFromParent( PacketPtr ) const;
     virtual int proc_NewParentReportFromParent( PacketPtr  ) const;
 
-    //int send( PacketPtr ) const;
-    //int flush() const;
-    //int recv( bool blocking=true ) const;
-
     int proc_newStream( PacketPtr ) const;
     int proc_DeleteSubTree( PacketPtr ) const;
     int proc_newFilter( PacketPtr ) const;

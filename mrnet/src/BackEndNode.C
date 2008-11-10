@@ -41,7 +41,7 @@ BackEndNode::BackEndNode( Network * inetwork,
     //start event detection thread
     if( ! EventDetector::start( _network ) ) {
       mrn_dbg( 1, mrn_printf(FLF, stderr, "start_EventDetector() failed\n" ));
-      error( MRN_ESYSTEM, "start_EventDetector failed\n" );
+      error( ERR_INTERNAL, _rank, "start_EventDetector failed\n" );
       return;
     }
 
@@ -191,7 +191,6 @@ int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
     }
 
     retval = Filter::load_FilterFunc( so_file, func );
-
     if( retval != ( int )fid ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                     "Filter::load_FilterFunc() failed.\n" ));

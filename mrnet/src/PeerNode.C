@@ -46,7 +46,7 @@ int PeerNode::connect_DataSocket( void )
 
     if(connectHost(&_data_sock_fd, _hostname.c_str(), _port) == -1){
         mrn_dbg(1, mrn_printf(FLF, stderr, "connect_to_host() failed\n"));
-        error( MRN_ESYSTEM, "connect(): %s\n", strerror(errno) );
+        error( ERR_SYSTEM, _rank, "connect(): %s\n", strerror(errno) );
         return -1;
     }
     
@@ -62,7 +62,7 @@ int PeerNode::connect_EventSocket( void )
 
     if(connectHost(&_event_sock_fd, _hostname.c_str(), _port) == -1){
         mrn_dbg(1, mrn_printf(FLF, stderr, "connect_to_host() failed\n"));
-        error( MRN_ESYSTEM, "connect(): %s\n", strerror(errno) );
+        error( ERR_SYSTEM, _rank, "connect(): %s\n", strerror(errno) );
         return -1;
     }
     
@@ -79,7 +79,7 @@ int PeerNode::start_CommunicationThreads( void )
     retval = XPlat::Thread::Create( recv_thread_main, &_rank, &recv_thread_id  );
     mrn_dbg(3, mrn_printf(FLF, stderr, "id: 0x%x\n", recv_thread_id));
     if(retval != 0){
-        error( MRN_ESYSTEM, "XPlat::Thread::Create() failed: %s\n",
+        error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s\n",
                strerror(errno) );
         mrn_dbg(1, mrn_printf(FLF, stderr, "recv_thread creation failed...\n"));
     }
@@ -88,7 +88,7 @@ int PeerNode::start_CommunicationThreads( void )
     retval = XPlat::Thread::Create( send_thread_main, &_rank, &send_thread_id );
     mrn_dbg(3, mrn_printf(FLF, stderr, "id: 0x%x\n", send_thread_id));
     if(retval != 0){
-        error( MRN_ESYSTEM, "XPlat::Thread::Create() failed: %s\n",
+        error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s\n",
                strerror(errno) );
         mrn_dbg(1, mrn_printf(FLF, stderr, "send_thread creation failed...\n"));
     }
@@ -173,7 +173,7 @@ int PeerNode::connect_to_leaf( Rank myRank )
         mrn_dbg(1, mrn_printf(FLF, stderr, 
             "leaf handshake failed: send failed: %d: %s \n", 
             errno, strerror(errno) ));
-        error( MRN_ESYSTEM, "send(): %s\n", strerror( errno ) );
+        error( ERR_SYSTEM, _rank, "send(): %s\n", strerror( errno ) );
         XPlat::SocketUtils::Close( _data_sock_fd );
         _data_sock_fd = -1;
         return -1;

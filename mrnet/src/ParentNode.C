@@ -38,7 +38,7 @@ ParentNode::ParentNode( Network * inetwork, std::string const& ihostname, Rank i
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling bind_to_port(%d)\n", _port ));
     if( bindPort( &listening_sock_fd, &_port ) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "bind_to_port() failed\n" ));
-        error( MRN_ESYSTEM, "bindPort(%d): %s\n", _port, strerror(errno) );
+        error( ERR_SYSTEM, _rank, "bindPort(%d): %s\n", _port, strerror(errno) );
         return;
     }
 
@@ -120,8 +120,7 @@ int ParentNode::recv_PacketsFromChildren( std::list< PacketPtr >&pkt_list,
                     ret = -1;
                     mrn_dbg( 1, mrn_printf(FLF, stderr,
                                            "PN: recv() from ready node failed\n" ));
-                    cur_node->error( MRN_ENETWORK_FAILURE, "recv() failed");
-                    //TODO: handle error
+                    cur_node->error( ERR_NETWORK_FAILURE, _rank, "recv() failed");
                 }
             }
         }
@@ -743,7 +742,7 @@ int ParentNode::launch_InternalNode( std::string ihostname, Rank irank,
     if( XPlat::Process::Create( ihostname, icommnode_exe, args ) != 0 ){
         int err = XPlat::Process::GetLastError();
         
-        error( MRN_ESYSTEM, "XPlat::Process::Create(%s %s): %s\n",
+        error( ERR_SYSTEM, _rank, "XPlat::Process::Create(%s %s): %s\n",
                ihostname.c_str(), icommnode_exe.c_str(),
                XPlat::Error::GetErrorString( err ).c_str() );
         mrn_dbg(1, mrn_printf(FLF, stderr,
@@ -794,7 +793,7 @@ int ParentNode::launch_Application( std::string ihostname, Rank irank, std::stri
     if( XPlat::Process::Create( ihostname, ibackend_exe, new_args ) != 0 ){
         mrn_dbg(1, mrn_printf(FLF, stderr, "XPlat::Process::Create() failed\n"));
         int err = XPlat::Process::GetLastError();
-        error( MRN_ESYSTEM, "XPlat::Process::Create(%s %s): %s\n",
+        error( ERR_SYSTEM, _rank, "XPlat::Process::Create(%s %s): %s\n",
                ihostname.c_str(), ibackend_exe.c_str(),
                XPlat::Error::GetErrorString( err ).c_str() );
         return -1;

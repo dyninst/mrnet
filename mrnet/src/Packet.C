@@ -42,7 +42,7 @@ Packet::Packet( bool, // to disambiguate function prototype from public construc
     pdrmem_create( &pdrs, buf, buf_len, PDR_ENCODE );
 
     if( !Packet::pdr_packet( &pdrs, this ) ) {
-        error( MRN_EPACKING, "pdr_packet() failed\n" );
+        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
         return;
     }
 
@@ -75,7 +75,7 @@ Packet::Packet( unsigned short istream_id, int itag, const char *ifmt_str, ... )
     pdrmem_create( &pdrs, buf, buf_len, PDR_ENCODE );
 
     if( !Packet::pdr_packet( &pdrs, this ) ) {
-        error( MRN_EPACKING, "pdr_packet() failed\n" );
+        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
         return;
     }
 
@@ -106,7 +106,7 @@ Packet::Packet( unsigned short istream_id, int itag,
     pdrmem_create( &pdrs, buf, buf_len, PDR_ENCODE );
 
     if( !Packet::pdr_packet( &pdrs, this ) ) {
-        error( MRN_EPACKING, "pdr_packet() failed\n" );
+        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
         return;
     }
 
@@ -132,7 +132,7 @@ Packet::Packet( unsigned int ibuf_len, char * ibuf, Rank iinlet_rank )
 
     if( !Packet::pdr_packet( &pdrs, this ) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet() failed\n" ));
-        MRN_errno = MRN_EPACKING;
+        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
     }
 
     mrn_dbg( 3, mrn_printf(FLF, stderr,

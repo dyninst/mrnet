@@ -6,46 +6,48 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-
 #include "mrnet/Error.h"
 
 namespace MRN
 {
 
-ErrorDef errors[]= {
-    { MRN_ENONE, MRN_INFO, MRN_IGNORE, "No Error"},
-    { MRN_EBADCONFIG_IO, MRN_CRIT, MRN_ABORT, "Config File Input Error"},
-    { MRN_EBADCONFIG_FMT, MRN_CRIT, MRN_ABORT, "Config File Format Error"},
-    { MRN_EBADCONFIG_CYCLE, MRN_CRIT, MRN_ABORT,
-      "Config File Error: Network cycle exists"},
-    { MRN_EBADCONFIG_NOTCONNECTED, MRN_CRIT, MRN_ABORT,
-      "Config File Error: Network not fully connected"},
-    { MRN_ENETWORK_FAILURE, MRN_CRIT, MRN_ABORT, "Network Failure"}, 
-    { MRN_EOUTOFMEMORY, MRN_CRIT, MRN_ABORT, "Out of Memory"}, 
-    { MRN_EFMTSTR, MRN_ERR, MRN_ALERT, "Format string mismatch"}, 
-    { MRN_ECREATPROCFAILURE, MRN_ERR, MRN_ALERT, "Cannot create process"}, 
-    { MRN_ECANNOTBINDPORT, MRN_ERR, MRN_ABORT, "Cannot bind to port"}, 
-    { MRN_ESOCKETCONNECT, MRN_ERR, MRN_ABORT, "Cannot connect to socket"}, 
-    { MRN_EPACKING, MRN_CRIT, MRN_ABORT, "PDR encoding/decoding failure"},
-    { MRN_EINTERNAL, MRN_CRIT, MRN_ABORT, "Internal protocol failure"}, 
-    { MRN_ESYSTEM, MRN_ERR, MRN_ABORT, "system/library call failure"}
+ErrorDef errors[] = {
+    { ERR_NONE, ERR_INFO, ERR_IGNORE, "No Error"},
+    { ERR_TOPOLOGY_FORMAT, ERR_CRIT, ERR_ABORT, "Topology error: file format"},
+    { ERR_TOPOLOGY_CYCLE, ERR_CRIT, ERR_ABORT, "Topology error: cycle exists"},
+    { ERR_TOPOLOGY_NOTCONNECTED, ERR_CRIT, ERR_ABORT, "Topology error: not fully connected"},
+    { ERR_NETWORK_FAILURE, ERR_CRIT, ERR_ABORT, "Network failure"},
+    { ERR_FORMATSTR, ERR_ERR, ERR_ALERT, "Format string mismatch"},
+    { ERR_PACKING, ERR_CRIT, ERR_ABORT, "Packet encoding/decoding failure"},
+    { ERR_INTERNAL, ERR_CRIT, ERR_ABORT, "Internal failure"},
+    { ERR_SYSTEM, ERR_ERR, ERR_ABORT, "System/library call failure"}
 };
 
 
-void Error::error( ErrorCode e, const char * fmt, ... ) const
+void Error::error( ErrorCode e, Rank r, const char * fmt, ... ) const
 {
     static char buf[1024];
 
-    va_list arglist;
-
     MRN_errno = e;
+
+    va_list arglist;
     va_start( arglist, fmt );
-    vsprintf( buf, fmt, arglist );
+    vsnprintf( buf, 1024, fmt, arglist );
     va_end( arglist );
 
-    //Event * event = Event::new_Event( t, buf );
-    //Event::add_Event( *event );
-    //delete event;
+    ErrorResponse resp = errors[e].response;
+    switch( resp ) {
+    case ERR_ABORT:
+        perror( buf );
+        //TODO: really abort? exit(-1);
+        break;
+    case ERR_ALERT:
+        perror( buf );
+        //TODO: really report? Event::new_Event( ERROR_EVENT, e, r, string(buf) );
+        break;
+    default:
+        break;
+    }
 }
 
 } // namespace MRN

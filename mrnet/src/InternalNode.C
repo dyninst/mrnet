@@ -50,15 +50,16 @@ InternalNode::InternalNode( Network * inetwork,
     //start event detection thread
     if( EventDetector::start( ParentNode::_network ) == -1 ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "start_EventDetectionThread() failed\n" ));
-        ParentNode::error( MRN_ESYSTEM, "start_EventDetectionThread failed\n" );
-        ChildNode::error( MRN_ESYSTEM, "start_EventDetectionThread failed\n" );
+        ParentNode::error( ERR_INTERNAL, ParentNode::_rank, "start_EventDetectionThread failed\n" );
+        ChildNode::error( ERR_INTERNAL, ParentNode::_rank, "start_EventDetectionThread failed\n" );
         return;
     }
 
     //request subtree information
     if( request_SubTreeInfo() == -1 ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "request_SubTreeInfo() failed\n" ));
-        ChildNode::error( MRN_ESYSTEM, "request_SubTreeInfofailed\n" );
+        ParentNode::error( ERR_INTERNAL, ParentNode::_rank, "request_SubTreeInfofailed\n" );
+        ChildNode::error( ERR_INTERNAL, ParentNode::_rank, "request_SubTreeInfofailed\n" );
         return;
     }
 

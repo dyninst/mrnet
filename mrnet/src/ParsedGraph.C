@@ -90,6 +90,7 @@ bool ParsedGraph::validate()
         mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: "
                               "visited nodes(%d) != total nodes(%d)!\n",
                               visited_nodes, _nodes.size() ));
+        error( ERR_TOPOLOGY_NOTCONNECTED, UnknownRank, "parsed graph not connected" );
         _fully_connected = false;
     }
 
@@ -104,7 +105,7 @@ unsigned int ParsedGraph::preorder_traversal(Node * node)
     if( node->visited() == true ){
         mrn_dbg(1, mrn_printf(FLF, stderr, "%s:%u: Node is own ancestor",
                               node->_hostname.c_str(), node->_local_rank ) );
-        error( MRN_EBADCONFIG_CYCLE, "%s:%u: Node is own ancestor",
+        error( ERR_TOPOLOGY_CYCLE, UnknownRank, "%s:%u: Node is own ancestor",
                node->_hostname.c_str(), node->_local_rank );
         _cycle_free=false;
         return 0;

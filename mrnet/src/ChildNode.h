@@ -41,7 +41,7 @@ class ChildNode: public Error, public CommunicationNode {
     int send_EventsToParent( ) const;
     bool has_PacketsFromParent( ) const;
 
-    virtual void error( ErrorCode, const char *, ... ) const;
+    void error( ErrorCode, Rank, const char *, ... ) const;
 
     int init_newChildDataConnection( PeerNodePtr iparent,
                                      Rank ifailed_rank = UnknownRank );
