@@ -1,13 +1,15 @@
 // Copyright Paradyn, 2008: contact jolly@cs.wisc.edu for details
 
-#include "FilterDefinitions.h"
-#include "mrnet/Packet.h"
-
 #include <string>
 using std::string;
 
 #include <vector>
 using std::vector;
+
+#include "FilterDefinitions.h"
+#include "mrnet/Packet.h"
+
+#include "message_processing.h"
 
 using namespace MRN;
 
@@ -27,28 +29,35 @@ superfilter(
 {
     char * buf;
     string serialized_tuple;
+    vector<string> filter_outputs;
     vector<string> serialized_tuples;
+    vector<tuple> foo;
     for(unsigned int i = 0; i < packets_in.size(); ++i)
     {
         PacketPtr cur_packet = packets_in[i];
         cur_packet->unpack(superfilter_format_string, &buf);
-        serialized_tuple = buf;        
+        serialized_tuple = buf;
         serialized_tuples.push_back(serialized_tuple);
+        tuple input_tuple = unserialize(serialized_tuple);
+
+        // TODO: process each tuple
+
+        string new_serialized_tuple = serialize(input_tuple);
+        filter_outputs.push_back(new_serialized_tuple);
     }
 
-    // TODO:
-    // unserialize tuples
-    // inject them into vertical pipelines for processing
-    // serialize the processed result tuples
-
-    for(unsigned int i = 0; i < serialized_tuples.size(); ++i)
+    for(unsigned int i = 0; i < filter_outputs.size(); ++i)
     {
-        PacketPtr new_packet(
-            new Packet(packets_in[0]->get_StreamId(), packets_in[0]->get_Tag(), "%s", serialized_tuples[i].c_str())
+        PacketPtr new_packet(new Packet(
+                                packets_in[0]->get_StreamId(),
+                                packets_in[0]->get_Tag(),
+                                "%s",
+                                filter_outputs[i].c_str()
+                                )
             );
         packets_out.push_back(new_packet);
     }
 }
 
-} /* extern "C" */
+} // extern "C"
 

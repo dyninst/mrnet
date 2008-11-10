@@ -88,7 +88,7 @@ main(
             ERROR << "stream::unpack()\n";
             return -1;
         }
-        INFO << "frontend received tuple " << buf << "\n";
+        INFO << "frontend received tuple {" << buf << "}\n";
     }    
 
 	delete network; // force all nodes to exit

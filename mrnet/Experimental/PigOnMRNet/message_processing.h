@@ -3,36 +3,57 @@
 #if !defined( message_processing_h )
 #define message_processing_h 1
 
-#include "boar.h"
-
 #include <string>
 using std::string;
+
+#include <sstream>
+using std::stringstream;
 
 #include <vector>
 using std::vector;
 
-inline string
+#include "boar.h"
+
+inline
+string
 serialize(
-    tuple& to_serialize
+    const tuple& to_serialize
     )
 {
-    string to_return("{");
-    for(unsigned int i = 0; i < to_serialize.size(); ++i)
+    string to_return;
+    for(uint32_t i = 0; i < to_serialize.size(); ++i)
     {
         to_return += " ";
         to_return += to_serialize[i];
     }
-    to_return += " }\n";
+    to_return += " ";
     return to_return;
 }
 
-inline const char *
+inline
+tuple
+unserialize(
+    const string& to_unserialize
+    )
+{
+    string token;
+    tuple to_return;
+    stringstream token_stream(to_unserialize);
+    while(token_stream >> token)
+    {
+        to_return.push_back(token);
+    }
+    return to_return;
+}
+
+inline
+const char *
 get_shard_filename(
-    string startup_string
+    const string& startup_string
     )
 {
     return startup_string.c_str(); 
 }
 
-#endif
+#endif // message_processing_h
 

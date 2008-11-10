@@ -1,16 +1,16 @@
 // Copyright Paradyn, 2008: contact jolly@cs.wisc.edu for details
 
-#include "mrnet/MRNet.h"
-#include "boar.h"
-
-#include "message_processing.h"
-#include "input_reader.h"
-
 #include <string>
 using std::string;
 
 #include <vector>
 using std::vector;
+
+#include "mrnet/MRNet.h"
+#include "boar.h"
+
+#include "message_processing.h"
+#include "input_reader.h"
 
 using namespace MRN;
 
@@ -44,7 +44,7 @@ main(
             vector<tuple> input_tuples;
             input_tuples = read_input(get_shard_filename(startup_string), num_fields);
 
-            for(unsigned int i = 0; i < input_tuples.size(); ++i)
+            for(uint32_t i = 0; i < input_tuples.size(); ++i)
             {               
                 if(-1 == stream->send(DATA, "%s", serialize(input_tuples[i]).c_str()))
                 {

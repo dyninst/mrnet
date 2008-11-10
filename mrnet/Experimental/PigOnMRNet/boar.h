@@ -3,8 +3,6 @@
 #if !defined( boar_h )
 #define boar_h 1
 
-#include "mrnet/Types.h"
-
 #include <iostream>
 using std::cerr;
 
@@ -13,6 +11,8 @@ using std::string;
 
 #include <vector>
 using std::vector;
+
+#include "mrnet/Types.h"
 
 // boar-specific defines, types, etc...
 
@@ -31,5 +31,5 @@ Protocol;
 
 typedef vector<string> tuple;
 
-#endif /* boar_h */
+#endif // boar_h
 

@@ -28,7 +28,7 @@ $(EXEC_NAME)_filter.so: $(EXEC_NAME)_filter.C
 $(EXEC_NAME)_backend: $(EXEC_NAME)_backend.C boar.h message_processing.h input_reader.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) input_reader.o -o $@ $(EXEC_NAME)_backend.C $(LIBS)
 
-input_reader.o: input_reader.C
+input_reader.o: input_reader.C input_reader.h
 	$(CXX) $(CXXFLAGS) -c input_reader.C
 
 clean:
