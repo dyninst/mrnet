@@ -6,12 +6,18 @@
 #if !defined( __tree_h )
 #define __tree_h  1
 
+#include <list>
+#include <string>
+#include <set>
+#include <map>
+
 namespace MRN {
+
 class BalancedTree;
 class KnomialTree;
 class GenericTree;
 
-class Tree{
+class Tree {
     friend class BalancedTree;
     friend class GenericTree;
 
