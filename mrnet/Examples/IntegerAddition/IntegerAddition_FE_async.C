@@ -41,14 +41,14 @@ int main(int argc, char **argv)
 
     // Create a stream that will use the Integer_Add filter for aggregation
     Stream * stream = net->new_Stream( comm_BC, filter_id,
-                                           SFILTER_WAITFORALL);
+                                       SFILTER_WAITFORALL);
 
     int num_backends = comm_BC->get_EndPoints().size();
 
-    // Broadcast a control message to back-ends to send us "num_iters"
-    // waves of integers
     tag = PROT_SUM;
     unsigned int num_iters=5;
+    // Broadcast a control message to back-ends to send us "num_iters"
+    // waves of integers
     if( stream->send( tag, "%d %d", send_val, num_iters ) == -1 ){
         fprintf( stderr, "stream::send() failure\n");
         return -1;
@@ -58,29 +58,66 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    // Clear events up until this point
+    Event::clear_Events();
+
+    // Request notification of data events
+    int data_fd = net->get_EventNotificationFd( DATA_EVENT );
+
     // We expect "num_iters" aggregated responses from all back-ends
-    for( unsigned int i=0; i<num_iters; i++ ){
+    unsigned int i=0;
+    while( i < num_iters ) {
 
-        retval = stream->recv(&tag, p);
-        assert( retval != 0 ); //shouldn't be 0, either error or block till data
-        if( retval == -1){
-            //recv error
-            return -1;
-        }
+        // Wait using five second intervals
+        struct timeval timeout;
+        timeout.tv_sec = 5;
+        timeout.tv_usec = 0;
 
-        if( p->unpack( "%d", &recv_val ) == -1 ){
-            fprintf( stderr, "stream::unpack() failure\n");
-            return -1;
-        }
+        // Initialize read fd set
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(data_fd, &readfds);
 
-        int expected_val = num_backends * i * send_val;
-        if( recv_val != expected_val ){
-            fprintf(stderr, "Iteration %d: Failure! recv_val(%d) != %d*%d*%d=%d (send_val*i*num_backends)\n",
-                    i, recv_val, send_val, i, num_backends, expected_val );
-        }
-        else{
-            fprintf(stderr, "Iteration %d: Success! recv_val(%d) == %d*%d*%d=%d (send_val*i*num_backends)\n",
-                    i, recv_val, send_val, i, num_backends, expected_val );
+        int retval = select(data_fd, &readfds, NULL, NULL, &timeout);
+        if( retval < 0 )
+            perror("select");
+        else if(retval > 0) {
+
+            if( FD_ISSET(data_fd, &readfds) ) {
+
+                // Handle data events
+                net->clear_EventNotificationFd( DATA_EVENT );
+                while(1) {
+                    retval = stream->recv(&tag, p, false);
+                    if( retval == -1){
+                        //recv error
+                        return -1;
+                    }
+                    else if( retval == 0 )
+                        break;
+
+                    if( p->unpack( "%d", &recv_val ) == -1 ){
+                        fprintf( stderr, "stream::unpack() failure\n");
+                        return -1;
+                    }
+
+                    int expected_val = num_backends * i * send_val;
+                    if( recv_val != expected_val ){
+                        fprintf(stderr, "Iteration %d: Failure! recv_val(%d) != %d*%d*%d=%d (send_val*i*num_backends)\n",
+                                i, recv_val, send_val, i, num_backends, expected_val );
+                    }
+                    else{
+                        fprintf(stderr, "Iteration %d: Success! recv_val(%d) == %d*%d*%d=%d (send_val*i*num_backends)\n",
+                                i, recv_val, send_val, i, num_backends, expected_val );
+                    }
+
+                    i++;
+                }
+                
+            }
+            
+            // Clear events up until this point
+            Event::clear_Events();
         }
     }
 

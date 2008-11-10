@@ -36,6 +36,7 @@ int main(int argc, char **argv)
                     fprintf(stderr, "stream::flush() failure\n");
                     return -1;
                 }
+                sleep(3);
             }
             break;
 

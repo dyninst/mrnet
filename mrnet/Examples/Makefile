@@ -9,14 +9,14 @@ LIBMRNET = $(LIBDIR)/libmrnet.a
 LIBXPLAT = $(MRNET_ROOT)/xplat/libxplat.a
 LIBS     = $(LIBMRNET) $(LIBXPLAT) -lfl -lm -lpthread -ldl
 
-INCDIR   = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include -I$(MRNET_ROOT)/src
+INCDIR   = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include
 
 CXXFLAGS = -g $(INCDIR)
 SOFLAGS = -fPIC -shared -rdynamic
 LDFLAGS = -rdynamic
 
 BA_TARGETS = BackendAttach_FE BackendAttach_BE
-IA_TARGETS = IntegerAddition_FE IntegerAddition_BE IntegerAdditionFilter.so
+IA_TARGETS = IntegerAddition_FE IntegerAddition_FE_async IntegerAddition_BE IntegerAdditionFilter.so
 PD_TARGETS = PerfData_FE PerfData_BE PerfDataFilter.so
 TARGETS = $(BA_TARGETS) $(IA_TARGETS) $(PD_TARGETS)
 
@@ -38,6 +38,9 @@ BackendAttach_BE: NoBackEndInstantiation/BE.C
 
 IntegerAddition_FE: IntegerAddition/IntegerAddition_FE.C
 	$(CXX) $(CXXFLAGS) -IIntegerAddition $(LDFLAGS) -o $@ IntegerAddition/IntegerAddition_FE.C $(LIBS)
+
+IntegerAddition_FE_async: IntegerAddition/IntegerAddition_FE_async.C
+	$(CXX) $(CXXFLAGS) -IIntegerAddition $(LDFLAGS) -o $@ IntegerAddition/IntegerAddition_FE_async.C $(LIBS)
 
 IntegerAddition_BE: IntegerAddition/IntegerAddition_BE.C
 	$(CXX) $(CXXFLAGS) -IIntegerAddition $(LDFLAGS) -o $@ IntegerAddition/IntegerAddition_BE.C $(LIBS)
