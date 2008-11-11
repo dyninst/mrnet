@@ -1,7 +1,7 @@
 /****************************************************************************
- * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ *  Copyright 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
- ***************************************************************************/
+ ****************************************************************************/
 
 #ifndef MRN_FILTERS_H
 #define MRN_FILTERS_H
