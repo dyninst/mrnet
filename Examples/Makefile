@@ -1,5 +1,5 @@
-MRNET_ROOT     = ?PLEASE SET TO YOUR MRNET DISTRIBUTION DIRECTORY?
-MRNET_PLATFORM = ?PLEASE SET TO YOUR PLATFORM?
+MRNET_ROOT     = /home/jolly/mrnet
+MRNET_PLATFORM = i686-pc-linux-gnu
 CXX = g++
 
 # Only edit below this line if you really need to
@@ -9,7 +9,7 @@ LIBMRNET = $(LIBDIR)/libmrnet.a
 LIBXPLAT = $(MRNET_ROOT)/xplat/libxplat.a
 LIBS     = $(LIBMRNET) $(LIBXPLAT) -lfl -lm -lpthread -ldl
 
-INCDIR   = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include
+INCDIR   = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include -I$(MRNET_ROOT)/src
 
 CXXFLAGS = -g $(INCDIR)
 SOFLAGS = -fPIC -shared -rdynamic
