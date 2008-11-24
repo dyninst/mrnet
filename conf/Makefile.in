@@ -185,15 +185,15 @@ install-local: all
 	    chmod +x `echo $(INSTALL) | sed 's/ .*$$//'` ; \
 	fi
 	@echo Installing binaries
-	$(INSTALL) -p -m 555 $(COMMNODE) $(BINDIR)/mrnet_topgen $(IBINDIR)/
+	$(INSTALL) -p -m 755 $(COMMNODE) $(BINDIR)/mrnet_topgen $(IBINDIR)/
 	@echo Installing libraries
-	$(INSTALL) -p -m 555 $(LIBMRNET) $(ILIBDIR)/
-	if [ "$(BUILD_SHARED_LIBS)" == "yes" ] ; then \
-            $(INSTALL) -p -m 555 $(LIBMRNET_SO) $(ILIBDIR)/ ; \
+	$(INSTALL) -p -m 755 $(LIBMRNET) $(ILIBDIR)/
+	if [ -f $(LIBMRNET_SO) ] ; then \
+            $(INSTALL) -p -m 755 $(LIBMRNET_SO) $(ILIBDIR)/ ; \
 	fi
 	@echo Installing headers
 	for hdr in @srcdir@/include/mrnet/*.h ; do \
-	    $(INSTALL) -p -m 444 $$hdr $(IINCDIR)/mrnet/ ; \
+	    $(INSTALL) -p -m 644 $$hdr $(IINCDIR)/mrnet/ ; \
 	done
 
 install-tests: mrnet-tests $(BINDIR)/mrnet_tests.sh

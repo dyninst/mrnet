@@ -80,12 +80,12 @@ install: $(TARGETS)
 	if [ ! -x `echo $(INSTALL) | sed 's/ .*$$//'` ] ; then \
 	    chmod +x `echo $(INSTALL) | sed 's/ .*$$//'` ; \
 	fi
-	$(INSTALL) -p -m 555 $(TARGET) $(libdir)/
-	if [ "$(BUILD_SHARED_LIBS)" == "yes" ] ; then \
-            $(INSTALL) -p -m 555 $(TARGET_SO) $(libdir)/ ; \
+	$(INSTALL) -p -m 755 $(TARGET) $(libdir)/
+	if [ -f $(TARGET_SO) ] ; then \
+            $(INSTALL) -p -m 755 $(TARGET_SO) $(libdir)/ ; \
         fi
 	for hdr in @srcdir@/include/xplat/*.h ; do \
-	    $(INSTALL) -p -m 444 $$hdr $(includedir)/xplat/ ; \
+	    $(INSTALL) -p -m 644 $$hdr $(includedir)/xplat/ ; \
 	done
 
 clean:
