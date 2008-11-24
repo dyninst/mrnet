@@ -24,17 +24,15 @@ all: .READY $(TARGETS)
 
 .READY:
     ifeq ($(MRNET_ROOT), SET_TO_YOUR_MRNET_DIR)
-	@rm -f .set_mrnet_dir
 	@echo ' * You must set MRNET_ROOT in this Makefile to your MRNET distribution directory.'
     else
-	@touch .set_mrnet_dir
+	@touch -a .set_mrnet_dir
     endif
     ifeq ($(MRNET_PLATFORM), SET_TO_YOUR_MRNET_PLATFORM)
-	@rm -f .set_mrnet_dir
 	@echo ' * You must set MRNET_PLATFORM in this Makefile; see MRNET README for details.'
 	@echo ' -- NOTE: This should be the same as MRNET_PLATFORM in your MRNET Makefile.'
     else
-	@touch .set_platform
+	@touch -a .set_platform
     endif
 
 backend-attach: $(BA_TARGETS) 
@@ -71,5 +69,5 @@ PerfDataFilter.so: PerformanceData/PerfDataFilter.C $(PREREQS)
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ PerformanceData/PerfDataFilter.C
 
 clean:
-	/bin/rm -f *.o *~ $(TARGETS)
+	/bin/rm -f *.o *~ $(TARGETS) $(PREREQS)
 

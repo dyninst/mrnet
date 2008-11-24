@@ -105,6 +105,12 @@ class Network: public Error {
     const std::set < PeerNodePtr > get_ChildPeers() const;
     Network( void ); // internal node constructor
 
+    // jolly: moved these to public 11/23/08
+    std::string get_LocalHostName( void ) const ;
+    Port get_LocalPort( void ) const ;
+    Rank get_LocalRank( void ) const ;
+    // jolly: end moved
+
  private:
     friend class Stream;
     friend class FrontEndNode;
@@ -174,9 +180,7 @@ class Network: public Error {
     BackEndNode * get_LocalBackEndNode( void ) const ;
     ChildNode * get_LocalChildNode( void ) const ;
     ParentNode * get_LocalParentNode( void ) const ;
-    std::string get_LocalHostName( void ) const ;
-    Port get_LocalPort( void ) const ;
-    Rank get_LocalRank( void ) const ;
+
     int get_ListeningSocket( void ) const ;
     CommunicationNode * get_FailureManager( void ) const ;
     bool is_LocalNodeThreaded( void ) const ;

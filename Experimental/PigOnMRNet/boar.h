@@ -12,13 +12,17 @@ using std::string;
 #include <vector>
 using std::vector;
 
+#include <sstream>
+using std::stringstream;
+
+#include <fstream>
+using std::ofstream;
+
 #include "mrnet/Types.h"
 
-// boar-specific defines, types, etc...
+#define uint uint32_t
 
-#define  INFO cerr << " INFO: " 
-#define  WARN cerr << " WARN: " 
-#define ERROR cerr << "ERROR: " 
+// boar-specific defines, types, etc...
 
 typedef enum
 {
@@ -28,6 +32,22 @@ typedef enum
     DONE
 }
 Protocol;
+
+typedef enum
+{
+    LOAD,
+    FILTER,
+    ORDER,
+    CROSS,
+    DISTINCT,
+    COGROUP,
+    UNION,
+    SPLIT,
+    GENERATE,
+    FLATTEN,
+    LIMIT
+}
+physical_op_type;
 
 typedef vector<string> tuple;
 

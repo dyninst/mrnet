@@ -25,27 +25,30 @@ all: .READY $(TARGETS)
 	@rm -f .set_mrnet_dir
 	@echo ' * You must set MRNET_ROOT in this Makefile to your MRNET distribution directory.'
     else
-	@touch .set_mrnet_dir
+	@touch -a .set_mrnet_dir
     endif
     ifeq ($(MRNET_PLATFORM), SET_TO_YOUR_MRNET_PLATFORM)
 	@rm -f .set_mrnet_dir
 	@echo ' * You must set MRNET_PLATFORM in this Makefile; see MRNET README for details.'
 	@echo ' -- NOTE: This should be the same as MRNET_PLATFORM in your MRNET Makefile.'
     else
-	@touch .set_platform
+	@touch -a .set_platform
     endif
 
-$(EXEC_NAME)_frontend: $(EXEC_NAME)_frontend.C boar.h $(PREREQS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(EXEC_NAME)_frontend.C $(LIBS)
+$(EXEC_NAME)_frontend: $(EXEC_NAME)_frontend.C boar.h logger.h physical_plan.o $(PREREQS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) physical_plan.o -o $@ $(EXEC_NAME)_frontend.C $(LIBS)
 
-$(EXEC_NAME)_filter.so: $(EXEC_NAME)_filter.C $(PREREQS)
+$(EXEC_NAME)_filter.so: $(EXEC_NAME)_filter.C logger.h $(PREREQS)
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(EXEC_NAME)_filter.C
   
-$(EXEC_NAME)_backend: $(EXEC_NAME)_backend.C boar.h message_processing.h input_reader.o $(PREREQS)
+$(EXEC_NAME)_backend: $(EXEC_NAME)_backend.C boar.h message_processing.h logger.h input_reader.o physical_plan.o $(PREREQS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) input_reader.o -o $@ $(EXEC_NAME)_backend.C $(LIBS)
 
 input_reader.o: input_reader.C input_reader.h $(PREREQS)
 	$(CXX) $(CXXFLAGS) -c input_reader.C
+
+physical_plan.o: physical_plan.C physical_plan.h physical_operator.h $(PREREQS)
+	$(CXX) $(CXXFLAGS) -c physical_plan.C
 
 clean:
 	/bin/rm -f *.o *~ $(TARGETS)

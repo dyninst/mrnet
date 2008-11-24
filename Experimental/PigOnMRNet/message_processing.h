@@ -20,8 +20,9 @@ serialize(
     const tuple& to_serialize
     )
 {
+    uint i;
     string to_return;
-    for(uint32_t i = 0; i < to_serialize.size(); ++i)
+    for(i = 0; i < to_serialize.size(); ++i)
     {
         to_return += " ";
         to_return += to_serialize[i];
@@ -53,6 +54,18 @@ get_shard_filename(
     )
 {
     return startup_string.c_str(); 
+}
+
+inline
+string
+to_string(
+    int i
+    )
+{
+    stringstream ss;
+    ss << i;
+    string result = ss.str();
+    return result;
 }
 
 #endif // message_processing_h

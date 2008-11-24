@@ -15,7 +15,6 @@ vector<tuple> read_input(
     infile.open(filename.c_str());
     if(!infile.is_open())
     {
-      ERROR << "file open failed\n";
       return results;
     }
     while(1)
@@ -36,4 +35,6 @@ vector<tuple> read_input(
     infile.close();
     return results;
 }
+
+
 

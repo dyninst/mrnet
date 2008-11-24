@@ -1,13 +1,21 @@
 // Copyright Paradyn, 2008: contact jolly@cs.wisc.edu for details
 
+#include <fstream>
+using std::ofstream;
+
 #include <string>
 using std::string;
 
 #include <vector>
 using std::vector;
 
+#include <sstream>
+using std::stringstream;
+
 #include "mrnet/MRNet.h"
+#include "mrnet/NetworkTopology.h"
 #include "boar.h"
+#include "logger.h"
 
 #include "message_processing.h"
 #include "input_reader.h"
@@ -20,10 +28,14 @@ main(
     char ** argv
     )
 {
+    logger log("backend");
+    
 	Stream * stream = NULL;
 	PacketPtr p;
 	int tag = 0;
 	Network * network = new Network(argc, argv);
+    uint node_rank = network->get_LocalRank();
+    INFO << "backend started on node " << node_rank << "\n";
 
 	do
 	{
@@ -42,10 +54,14 @@ main(
             INFO << "backend got START message '" << startup_string << "'\n";
 
             vector<tuple> input_tuples;
-            input_tuples = read_input(get_shard_filename(startup_string), num_fields);
+            input_tuples = read_input(
+                get_shard_filename(startup_string),
+                num_fields
+                );
 
-            for(uint32_t i = 0; i < input_tuples.size(); ++i)
-            {               
+            uint i;
+            for(i = 0; i < input_tuples.size(); ++i)
+            {
                 if(-1 == stream->send(DATA, "%s", serialize(input_tuples[i]).c_str()))
                 {
                     ERROR << "stream::send()\n";
@@ -56,6 +72,7 @@ main(
                     ERROR << "stream::flush()\n";
                     return -1;
                 }
+                INFO << "backend sending {" << serialize(input_tuples[i]).c_str() << "}\n";
             }
 
             if(-1 == stream->send(DONE, ""))
@@ -68,7 +85,9 @@ main(
                 ERROR << "stream::flush()\n";
                 return -1;
             }
+
 			INFO << "backend done sending\n";
+            break;
         }
         else
         {

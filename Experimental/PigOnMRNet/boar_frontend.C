@@ -2,6 +2,14 @@
 
 #include "mrnet/MRNet.h"
 #include "boar.h"
+#include "logger.h"
+#include "physical_plan.h"
+
+#include <fstream>
+using std::ofstream;
+
+#include <sstream>
+using std::stringstream;
 
 using namespace MRN;
 
@@ -15,6 +23,8 @@ main(
     char ** argv
     )
 {
+    logger log("frontend");
+
 	if(6 != argc)
 	{
 		ERROR
@@ -38,10 +48,20 @@ main(
 		return -1;
 	}
 
+    uint node_rank = network->get_LocalRank();
+    INFO << "frontend started on node " << node_rank << "\n";    
+
 	Communicator * comm_BC = network->get_BroadcastCommunicator();
-	Stream * stream = network->new_Stream(comm_BC, filter_id, SFILTER_WAITFORALL);
+	Stream * stream = network->new_Stream(comm_BC, filter_id, SFILTER_DONTWAIT);
     int num_backends = comm_BC->get_EndPoints().size();
     INFO << "attempting to fetch data from " << num_backends << " backends\n";
+
+    // TODO:
+    // get logical plan from Hadoop
+    // translate into a physical_plan for given MRNet TBON
+    // send a description of the plan to all the nodes so they can act accordingly 
+    physical_plan plan;
+    stream->set_FilterParameters(true, "%s", plan.get_manifest().c_str());
 
     // TODO:
     // nail down the format of a START message that contains:
@@ -61,14 +81,21 @@ main(
 		ERROR << "stream::flush()\n";
 		return -1;
 	}
-
+    
+    char * buf;
+    PacketPtr p;
+    int tag;
     int num_replies(0);
+
     while(1)
     {
-        char * buf;
-        PacketPtr p;
-        int tag;
         int recv_status = stream->recv(&tag, p);
+        if(0 == recv_status || -1 == recv_status)
+        {
+            ERROR << "bad recv_status\n";
+            return -1;
+        }
+
         if(DONE == tag)
         {
             ++num_replies;
@@ -77,19 +104,16 @@ main(
                 INFO << "received DONE message from all backends\n";
                 break;
             }
+            continue;
         }
 
-        if(0 == recv_status || -1 == recv_status)
-        {
-            return -1;
-        }
         if(-1 == p->unpack("%s", &buf))
         {
             ERROR << "stream::unpack()\n";
             return -1;
         }
         INFO << "frontend received tuple {" << buf << "}\n";
-    }    
+    }
 
 	delete network; // force all nodes to exit
 	INFO << "network closed at frontend\n";
