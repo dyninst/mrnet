@@ -7,6 +7,7 @@
 #ifndef XPLAT_ERROR_H
 #define XPLAT_ERROR_H
 
+#include <cstring>
 #include <string>
 
 namespace XPlat

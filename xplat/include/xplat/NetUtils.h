@@ -7,6 +7,8 @@
 #ifndef XPLAT_NETUTILS_H
 #define XPLAT_NETUTILS_H
 
+#include <cstdlib>
+#include <cstring>
 #include <string>
 #include <vector>
 

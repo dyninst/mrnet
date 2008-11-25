@@ -7,7 +7,6 @@
 #include <assert.h>
 #include "xplat/Process.h"
 
-
 namespace XPlat
 {
 

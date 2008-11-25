@@ -7,10 +7,10 @@
 #ifndef XPLAT_PROCESS_H
 #define XPLAT_PROCESS_H
 
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include "xplat/NetUtils.h"
-
 
 namespace XPlat
 {

@@ -4,13 +4,12 @@
  ****************************************************************************/
 
 // $Id: Process-unix.C,v 1.5 2007/01/24 19:34:19 darnold Exp $
-#include <stdlib.h>
+#include <cstring>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
 #include "xplat/Process.h"
-
 
 namespace XPlat
 {

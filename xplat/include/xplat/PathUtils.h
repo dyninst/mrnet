@@ -7,6 +7,7 @@
 #ifndef XPLAT_PATH_UTILS_H
 #define XPLAT_PATH_UTILS_H
 
+#include <cstring>
 #include <string>
 
 namespace XPlat

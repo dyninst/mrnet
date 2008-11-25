@@ -6,7 +6,7 @@
 #if !defined(test_h)
 #define test_h
 
-#include "DataElement.h"
+#include "mrnet/DataElement.h"
 #include "utils.h"
 #include "mrnet/MRNet.h"
 using namespace MRN;
@@ -32,12 +32,12 @@ class Timer{
     double d_start, d_end;
 
     void start(){
-        while(gettimeofday(&tv_start, NULL) == -1);
+        while(gettimeofday(&tv_start, NULL) == -1) ;
         d_start = ( (double(tv_start.tv_sec))
                     + ((double)tv_start.tv_usec)/1000000.0 );
     }
     void end(){
-        while(gettimeofday(&tv_end, NULL) == -1);
+        while(gettimeofday(&tv_end, NULL) == -1) ;
         d_end = ( (double(tv_end.tv_sec))
                     + ((double)tv_end.tv_usec)/1000000.0 );
     }
