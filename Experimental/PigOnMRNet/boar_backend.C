@@ -29,13 +29,13 @@ main(
     )
 {
     logger log("backend");
-    
-	Stream * stream = NULL;
-	PacketPtr p;
-	int tag = 0;
 	Network * network = new Network(argc, argv);
     uint node_rank = network->get_LocalRank();
     INFO << "backend started on node " << node_rank << "\n";
+
+	Stream * stream = NULL;
+	PacketPtr p;
+	int tag = 0;
 
 	do
 	{
@@ -54,10 +54,7 @@ main(
             INFO << "backend got START message '" << startup_string << "'\n";
 
             vector<tuple> input_tuples;
-            input_tuples = read_input(
-                get_shard_filename(startup_string),
-                num_fields
-                );
+            input_tuples = read_input(get_shard_filename(startup_string), num_fields);
 
             uint i;
             for(i = 0; i < input_tuples.size(); ++i)
@@ -75,7 +72,7 @@ main(
                 INFO << "backend sending {" << serialize(input_tuples[i]).c_str() << "}\n";
             }
 
-            if(-1 == stream->send(DONE, ""))
+            if(-1 == stream->send(DONE, "%s", ""))
             {
                 ERROR << "stream::send()\n";
                 return -1;

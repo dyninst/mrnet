@@ -1,6 +1,6 @@
 
-MRNET_ROOT = SET_TO_YOUR_MRNET_DIR
-MRNET_PLATFORM = SET_TO_YOUR_MRNET_PLATFORM
+MRNET_ROOT = /home/jolly/mrnet
+MRNET_PLATFORM = i686-pc-linux-gnu
 
 CXX        = g++
 CXXFLAGS   = -g -pedantic -Wall $(INCDIR)
@@ -22,13 +22,11 @@ all: .READY $(TARGETS)
 
 .READY:
     ifeq ($(MRNET_ROOT), SET_TO_YOUR_MRNET_DIR)
-	@rm -f .set_mrnet_dir
 	@echo ' * You must set MRNET_ROOT in this Makefile to your MRNET distribution directory.'
     else
 	@touch -a .set_mrnet_dir
     endif
     ifeq ($(MRNET_PLATFORM), SET_TO_YOUR_MRNET_PLATFORM)
-	@rm -f .set_mrnet_dir
 	@echo ' * You must set MRNET_PLATFORM in this Makefile; see MRNET README for details.'
 	@echo ' -- NOTE: This should be the same as MRNET_PLATFORM in your MRNET Makefile.'
     else
@@ -51,5 +49,5 @@ physical_plan.o: physical_plan.C physical_plan.h physical_operator.h $(PREREQS)
 	$(CXX) $(CXXFLAGS) -c physical_plan.C
 
 clean:
-	/bin/rm -f *.o *~ $(TARGETS)
+	/bin/rm -f *.txt *.o *~ $(TARGETS) $(PREREQS)
 

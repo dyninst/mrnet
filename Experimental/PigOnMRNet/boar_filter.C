@@ -33,42 +33,44 @@ superfilter(
     )
 {
     logger log("filter");
-    int node_rank = 42; // TEMP: Setting static filter rank across all filters.
-                        //       How do we properly discover rank within a filter?
+    uint node_rank = network->get_LocalRank();
     INFO << "filter started on node " << node_rank << "\n";
 
     uint i;
-    char * buf;
+    char * in_buffer = NULL;
+    char * out_buffer = NULL;
     string serialized_tuple;
-    vector<string> filter_outputs;
-    vector<string> serialized_tuples;
-    vector< tuple > input_tuples;
+    vector< tuple > output_tuples;
 
-    params->unpack("%s", &buf);
-    INFO << "filter params: " << buf << "\n";
+    params->unpack("%s", &in_buffer);
+    INFO << "filter params: " << in_buffer << "\n";
 
     for(i = 0; i < packets_in.size(); ++i)
     {
         PacketPtr cur_packet = packets_in[i];
-        cur_packet->unpack(superfilter_format_string, &buf);
-        serialized_tuple = buf;
-        INFO << "adding {" << serialized_tuple << "}\n";
-        input_tuples.push_back(unserialize(serialized_tuple));
+        cur_packet->unpack(superfilter_format_string, &in_buffer);
+        serialized_tuple = in_buffer;
+        if(" " != serialized_tuple)
+        {
+            INFO << "filter received {" << serialized_tuple << "}\n";
+        }
+        output_tuples.push_back(unserialize(serialized_tuple));
+        free(in_buffer);
     }
     
     // TODO:
-    //
     // feed tuples for processing into microfilters here
 
-    for(i = 0; i < input_tuples.size(); ++i)
+    for(i = 0; i < output_tuples.size(); ++i)
     {
-        filter_outputs.push_back(serialize(input_tuples[i]));
+        out_buffer = copy_into_new_buffer(serialize(output_tuples[i]));
         PacketPtr new_packet( new Packet(
                                 packets_in[0]->get_StreamId(),
                                 packets_in[0]->get_Tag(),
                                 superfilter_format_string,
-                                filter_outputs[i].c_str()
+                                out_buffer
                               ) );
+        new_packet->set_DestroyData(true);
         if(new_packet->has_Error())
         {
             ERROR << "new_packet() failed, dropping tuple\n";

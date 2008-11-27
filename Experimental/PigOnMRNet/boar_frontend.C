@@ -47,7 +47,6 @@ main(
 		delete network;
 		return -1;
 	}
-
     uint node_rank = network->get_LocalRank();
     INFO << "frontend started on node " << node_rank << "\n";    
 
@@ -82,7 +81,7 @@ main(
 		return -1;
 	}
     
-    char * buf;
+    char * in_buffer;
     PacketPtr p;
     int tag;
     int num_replies(0);
@@ -107,12 +106,12 @@ main(
             continue;
         }
 
-        if(-1 == p->unpack("%s", &buf))
+        if(-1 == p->unpack("%s", &in_buffer))
         {
             ERROR << "stream::unpack()\n";
             return -1;
         }
-        INFO << "frontend received tuple {" << buf << "}\n";
+        INFO << "frontend received tuple {" << in_buffer << "}\n";
     }
 
 	delete network; // force all nodes to exit

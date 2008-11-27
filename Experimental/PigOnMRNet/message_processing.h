@@ -68,5 +68,22 @@ to_string(
     return result;
 }
 
+inline
+char*
+copy_into_new_buffer(
+    const string& to_convert
+    )
+{
+    uint i;
+    char* buf;
+    buf = (char*)malloc(to_convert.size() + 1);  
+    for(i = 0; i < to_convert.size(); ++i)
+    {
+        buf[i] = to_convert[i];
+    }
+    buf[i] = '\0';
+    return buf;
+}
+
 #endif // message_processing_h
 
