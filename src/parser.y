@@ -9,6 +9,8 @@
 
 #if defined(os_windows)
 #include <malloc.h>
+#else
+#include <cstdlib>
 #endif
 
 static std::list <MRN::ParsedGraph::Node *> hostlist;
@@ -109,7 +111,6 @@ host: HOSTNAME COLON MRN_UINT
 ;
 
 %%
-
 
 void yyerror(const char * /* s */)
 {
