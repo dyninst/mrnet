@@ -95,6 +95,10 @@ class Network: public Error {
     void print_error( const char * );
     bool node_Failed( Rank );
 
+    std::string get_LocalHostName( void ) const ;
+    Port get_LocalPort( void ) const ;
+    Rank get_LocalRank( void ) const ;
+
     bool is_LocalNodeChild( void ) const ;
     bool is_LocalNodeParent( void ) const ;
     bool is_LocalNodeInternal( void ) const ;
@@ -104,12 +108,6 @@ class Network: public Error {
     //NOT IN PUBLIC API
     const std::set < PeerNodePtr > get_ChildPeers() const;
     Network( void ); // internal node constructor
-
-    // jolly: moved these to public 11/23/08
-    std::string get_LocalHostName( void ) const ;
-    Port get_LocalPort( void ) const ;
-    Rank get_LocalRank( void ) const ;
-    // jolly: end moved
 
  private:
     friend class Stream;
