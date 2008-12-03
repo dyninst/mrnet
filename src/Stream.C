@@ -448,11 +448,12 @@ int Stream::push_Packet( PacketPtr ipacket,
             mrn_dbg(1, mrn_printf(FLF, stderr, "Sync.push_packets() failed\n"));
             return -1;
         }
-
+        // NOTE: ipackets is cleared by Filter::push_Packets()
         if( opackets.size() != 0 ){
             ipackets = opackets;
             opackets.clear();
         }
+        
     }
 
     if( ipackets.size() > 0 ) {
