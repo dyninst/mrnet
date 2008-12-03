@@ -26,7 +26,11 @@ int main(int argc, char **argv)
     // This Network() cnstr instantiates the MRNet internal nodes, according to the
     // organization in "topology_file," and the application back-end with any
     // specified cmd line args
-    Network * net = new Network( topology_file, backend_exe, &dummy_argv  );
+    Network * net = new Network( topology_file, backend_exe, &dummy_argv );
+    if( net->has_Error() ) {
+        net->perror("Network creation failed");
+        exit(-1);
+    }
 
     // Make sure path to "so_file" is in LD_LIBRARY_PATH
     int filter_id = net->load_FilterFunc( so_file, "IntegerAdd" );
