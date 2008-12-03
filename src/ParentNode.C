@@ -267,7 +267,7 @@ int ParentNode::proc_newSubTree( PacketPtr ipacket )
     //use "UnknownPort" in lookup since this is what serialgraph was created w/
     my_sg = sg.get_MySubTree( _hostname, UnknownPort, _rank );
     if( my_sg == NULL ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "get_MySuBTree() failed\n" ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "get_MySubTree() failed\n" ));
         return -1;
     }
     my_sg->set_ToFirstChild( );

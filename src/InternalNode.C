@@ -21,8 +21,8 @@ namespace MRN
 InternalNode::InternalNode( Network * inetwork,
                             std::string const& ihostname, Rank irank,
                             std::string const& iphostname, Port ipport, Rank iprank )
-    :ParentNode( inetwork, ihostname, irank ),
-     ChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank )
+    : ParentNode( inetwork, ihostname, irank ),
+      ChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank )
 {
     _sync.RegisterCondition( NETWORK_TERMINATION );
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Local[%u]: %s:%u, parent[%u]: %s:%u\n",
@@ -34,11 +34,10 @@ InternalNode::InternalNode( Network * inetwork,
     ParentNode::_network->set_LocalPort( ParentNode::_port );
     ParentNode::_network->set_LocalRank( ParentNode::_rank );
     ParentNode::_network->set_InternalNode( this );
-    ParentNode::_network->set_NetworkTopology
-        ( new NetworkTopology( inetwork,
-                               ParentNode::_hostname,
-                               ParentNode::_port,
-                               ParentNode::_rank) );
+    ParentNode::_network->set_NetworkTopology( new NetworkTopology( inetwork,
+                                                                    ParentNode::_hostname,
+                                                                    ParentNode::_port,
+                                                                    ParentNode::_rank ) );
 
     //establish data connection w/ parent
     if( init_newChildDataConnection( ParentNode::_network->get_ParentNode() ) == -1 ) {

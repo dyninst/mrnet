@@ -29,9 +29,9 @@ PeerNodePtr PeerNode::NullPeerNode;
 XPlat::Mutex PeerNode::poll_timeout_mutex;
 int PeerNode::poll_timeout=0;
 
-PeerNode::PeerNode(Network * inetwork, std::string const& ihostname, Port iport,
-                       Rank irank, bool iis_parent, bool iis_internal )
-    :CommunicationNode(ihostname, iport, irank ), _network(inetwork),
+PeerNode::PeerNode( Network * inetwork, std::string const& ihostname, Port iport,
+                    Rank irank, bool iis_parent, bool iis_internal )
+    : CommunicationNode(ihostname, iport, irank ), _network(inetwork),
      _data_sock_fd(0), _event_sock_fd(0),
      _is_internal_node(iis_internal), _is_parent(iis_parent), _available(true)
 {
