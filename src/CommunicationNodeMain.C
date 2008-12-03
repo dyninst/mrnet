@@ -43,13 +43,12 @@ int main(int argc, char **argv)
 
     // become a daemon
     BeDaemon();
-
-    std::string hostname;
-    std::string parent_hostname;
-    XPlat::NetUtils::GetHostName( argv[1], hostname );
+    std::string pretty_hostname;
+    std::string hostname( argv[1] );
+    XPlat::NetUtils::GetHostName( hostname, pretty_hostname );
     Rank rank = (Rank)strtoul( argv[2], NULL, 10 );
     setrank( rank );
-    XPlat::NetUtils::GetHostName( argv[3], parent_hostname );
+    std::string parent_hostname( argv[3] );
     Port parent_port = (Port)strtoul( argv[4], NULL, 10 );
     Rank parent_rank = (Rank)strtoul( argv[5], NULL, 10 );
 
@@ -57,7 +56,7 @@ int main(int argc, char **argv)
     //I am "CommNodeMain(hostname:port)"
 
     std::string name("COMM(");
-    name += hostname;
+    name += pretty_hostname;
     name += ":";
     name += argv[2];
     name += ")";
@@ -74,7 +73,7 @@ int main(int argc, char **argv)
     mrn_dbg( 5, mrn_printf(FLF, stderr,
                            "InternalNode(local[%u]:\"%s\", parent[%u]:\"%s:%u\")\n",
                            rank, hostname.c_str(),
-                           parent_rank, parent_hostname.c_str(), parent_port ));
+                           parent_rank, parent_hostname.c_str(), parent_port ) );
     comm_node = new InternalNode( network, hostname, rank,
                                   parent_hostname, parent_port, parent_rank );
 

@@ -17,69 +17,83 @@
 namespace XPlat
 {
 
+static bool checked_resolve_env = false;
+static bool use_resolve = true;
+static bool use_canonical = false;
+
+void get_resolve_env(void)
+{
+    if( ! checked_resolve_env ) {
+        const char* varval = getenv( "XPLAT_RESOLVE_HOSTS" );
+        if( varval != NULL ) {
+            if( strcmp("0", varval) )
+                use_resolve = true;
+            else
+                use_resolve = false;
+        }
+
+        if( use_resolve ) {
+            varval = getenv( "XPLAT_RESOLVE_CANONICAL" );
+            if( varval != NULL ) {               
+                if( strcmp("0", varval) )
+                    use_canonical = true;
+                else
+                    use_canonical = false;
+            }
+        }
+        checked_resolve_env = true;
+    }
+}
+
+#define XPLAT_MAX_HOSTNAME_LEN 256
+
 int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
 {
-    struct addrinfo *addrs, hints, *tmp;
+    struct addrinfo *addrs, hints;
     int error;
 
-    if( ihostname == "" ){
+    if( ihostname == "" )
         return -1;
-    }
 
-    const char* varval = getenv( "XPLAT_USE_CANONICAL_NAMES" );
-    if( varval != NULL )
-    {
+    get_resolve_env();
+
+    if( use_resolve ) {
         // do the lookup
         memset(&hints, 0, sizeof(hints));
-        hints.ai_flags = AI_CANONNAME;
+        if( use_canonical )
+            hints.ai_flags = AI_CANONNAME;
         hints.ai_socktype = SOCK_STREAM;
-        if ( error = getaddrinfo(ihostname.c_str(), NULL, NULL, &addrs)) {
+        if( error = getaddrinfo(ihostname.c_str(), NULL, &hints, &addrs) ) {
             fprintf(stderr, "%s[%d]: getaddrinfo(%s): %s\n", 
                     __FILE__, __LINE__,
                     ihostname.c_str(), gai_strerror(error));
             return -1;
         }
 
-        char hostname[256];
-        if( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr), hostname, sizeof(hostname), NULL,0,0) ){
-            fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
-            return -1;
+        char hostname[XPLAT_MAX_HOSTNAME_LEN];
+        if( use_canonical && (addrs->ai_canonname != NULL) ) {
+            strncpy( hostname, addrs->ai_canonname, sizeof(hostname) );
+            hostname[XPLAT_MAX_HOSTNAME_LEN-1] = '\0';
         }
-
+        else {
+            if( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr), 
+                                    hostname, sizeof(hostname), NULL,0,0) ) {
+                fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
+                return -1;
+            }
+        }
         ohostname = hostname;
 
         freeaddrinfo(addrs);
     }
-    else {
+    else
         ohostname = ihostname;
-    }
-    return 0;
-}
-
-int NetUtils::FindHostName( std::string ihostname, std::string & ohostname)
-{
-    std::string fqdn;
-    if( GetNetworkName( ihostname, fqdn ) == -1 ){
-        return -1;
-    }
-
-    // extract host name from the fully-qualified domain name
-    std::string::size_type firstDotPos = fqdn.find_first_of( '.' );
-    if( firstDotPos != std::string::npos ) {
-        ohostname = fqdn.substr( 0, firstDotPos );
-    }
-    else {
-        ohostname = fqdn;
-    }
 
     return 0;
 }
 
-
-bool
-NetUtils::IsLocalHost( const std::string& ihostname )
+bool NetUtils::IsLocalHost( const std::string& ihostname )
 {
-
     std::vector< NetworkAddress > local_addresses;
     GetLocalNetworkInterfaces( local_addresses );
 
@@ -100,43 +114,27 @@ NetUtils::IsLocalHost( const std::string& ihostname )
 
 int NetUtils::GetHostName( std::string ihostname, std::string &ohostname )
 {
-    static std::string cachedName;
-
-    // check if we've already looked up our host name
-    if( ihostname == "") {
-        if(cachedName.length() == 0 ) {
-            if( FindHostName( ihostname, cachedName ) == -1 ){
-                return -1;
-            }
-        }
-
-        ohostname = cachedName;
-        return 0;
+    std::string fqdn;
+    if( FindNetworkName( ihostname, fqdn ) == -1 ){
+        return -1;
     }
-    else{
-        return FindHostName( ihostname, ohostname );
+
+    // extract host name from the fully-qualified domain name
+    std::string::size_type firstDotPos = fqdn.find_first_of( '.' );
+    if( firstDotPos != std::string::npos ) {
+        ohostname = fqdn.substr( 0, firstDotPos );
     }
+    else {
+        ohostname = fqdn;
+    }
+
+    return 0;
 }
 
 
 int NetUtils::GetNetworkName( std::string ihostname, std::string & ohostname )
 {
-    static std::string cachedName;
-
-    // check if we've already looked up our fully qualified domain name
-    if( ihostname == "" ){
-        if ( cachedName.length() == 0 ) {
-            if( FindNetworkName( ihostname, cachedName ) == -1 ){
-                return -1;
-            }
-        }
-
-        ohostname = cachedName;
-        return 0;
-    }
-    else{
-        return FindNetworkName( ihostname, ohostname );
-    }
+    return FindNetworkName( ihostname, ohostname );
 }
 
 
@@ -212,18 +210,20 @@ int NetUtils::FindNetworkAddress( std::string ihostname, NetUtils::NetworkAddres
     struct addrinfo *addrs, hints;
     int error;
 
-    if( ihostname == "" ){
+    if( ihostname == "" )
         return -1;
-    }
+
+    get_resolve_env();
 
     // do the lookup
     memset( &hints, 0, sizeof(hints) );
-    hints.ai_flags = AI_CANONNAME;
+    if( use_canonical )
+        hints.ai_flags = AI_CANONNAME;
     hints.ai_socktype = SOCK_STREAM;
-    if ( error = getaddrinfo(ihostname.c_str(), NULL, NULL, &addrs)) {
-		fprintf(stderr, "%s[%d]: getaddrinfo(%s): %s\n", 
-			    __FILE__, __LINE__,
-			    ihostname.c_str(), gai_strerror(error));
+    if( error = getaddrinfo(ihostname.c_str(), NULL, &hints, &addrs) ) {
+        fprintf(stderr, "%s[%d]: getaddrinfo(%s): %s\n", 
+                __FILE__, __LINE__,
+                ihostname.c_str(), gai_strerror(error));
         return -1;
     }
 
@@ -232,7 +232,7 @@ int NetUtils::FindNetworkAddress( std::string ihostname, NetUtils::NetworkAddres
     memcpy( &in.s_addr, ( void * )&( sinptr->sin_addr ), sizeof( in.s_addr ) );
     oaddr = NetworkAddress( ntohl(in.s_addr) );
 
-	freeaddrinfo(addrs);
+    freeaddrinfo(addrs);
 
     return 0;
 }

@@ -12,12 +12,20 @@
 #include "utils.h"
 #include "config.h"
 #include "xplat/Tokenizer.h"
+#include "xplat/NetUtils.h"
 
 namespace MRN
 {
 
 ParsedGraph * parsed_graph=NULL;
 Rank ParsedGraph::_next_node_rank=0;
+
+ParsedGraph::Node::Node( const char *ihostname, Rank ilocal_rank )
+    : _local_rank(ilocal_rank), _rank(UnknownRank), _parent(NULL), _visited(false)
+{
+    std::string hostname( ihostname );
+    XPlat::NetUtils::GetNetworkName( hostname, _hostname );
+}
 
 void ParsedGraph::Node::remove_Child( Node * c ) 
 {
@@ -69,13 +77,15 @@ void ParsedGraph::add_Node(Node* new_node)
     }
 }
 
-ParsedGraph::Node * ParsedGraph::find_Node(char * ihostname, Rank ilocal_rank)
+ParsedGraph::Node * ParsedGraph::find_Node( char * ihostname, Rank ilocal_rank )
 {
     char local_rank_str[128];
     sprintf(local_rank_str, "%d", ilocal_rank);
-    std::string key = std::string(ihostname) + ":"
-        + std::string(local_rank_str);
 
+    std::string hostname;
+    XPlat::NetUtils::GetNetworkName( std::string(ihostname), hostname );
+
+    std::string key = hostname + ":" + std::string(local_rank_str);
     std::map<std::string, Node*>::iterator iter = _nodes.find(key);
     if( iter == _nodes.end() ){
         return NULL;
@@ -98,7 +108,7 @@ bool ParsedGraph::validate()
     return ( _cycle_free && _fully_connected );
 }
 
-unsigned int ParsedGraph::preorder_traversal(Node * node)
+unsigned int ParsedGraph::preorder_traversal( Node * node )
 {
     unsigned int nodes_visited=0;
 
@@ -168,7 +178,7 @@ SerialGraph & ParsedGraph::get_SerializedGraph( )
     return _serial_graph;
 }
 
-void ParsedGraph::serialize(Node * inode)
+void ParsedGraph::serialize( Node * inode )
 {
     if(inode->_children.size() == 0){
         // Leaf node, just add my name to serial representation and return

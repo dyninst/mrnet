@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright Â© 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -50,7 +50,7 @@ public:
             }
             return *this;
         }
-            
+
         bool operator==( const NetworkAddress & in )
             { return iaddr == in.iaddr; }
 
@@ -59,7 +59,6 @@ public:
     };
 private:
     static int FindNetworkName( std::string ihostname, std::string & );
-    static int FindHostName( std::string ihostname, std::string & );
     static int FindNetworkAddress( std::string ihostname, NetworkAddress & );
     static int FindNumberOfLocalNetworkInterfaces( void ); 
     static int FindLocalNetworkInterfaces( std::vector<NetworkAddress> & );
@@ -71,7 +70,7 @@ public:
     static int GetNumberOfNetworkInterfaces( void );
     static int GetLocalNetworkInterfaces( std::vector<NetworkAddress> & );
 
-    // check whether given host is local 
+    // check whether given host is local
     static bool IsLocalHost( const std::string& host );
 
     static int GetLastError( void );

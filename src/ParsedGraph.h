@@ -34,9 +34,7 @@ class ParsedGraph: public Error {
         bool _visited;
         
     public:
-        Node( const char *ihostname, Rank ilocal_rank )
-            :_hostname(ihostname), _local_rank(ilocal_rank),
-            _rank(UnknownRank), _parent(NULL), _visited(false) {}
+        Node( const char *ihostname, Rank ilocal_rank );
         std::string const& get_HostName( ) const { return _hostname; }
         Rank get_LocalRank( ) const { return _local_rank; }
         Rank get_Rank( ) const { return _rank; }
@@ -66,7 +64,7 @@ class ParsedGraph: public Error {
         : _root(NULL), _fully_connected(true), _cycle_free(true) { }
     void set_Root( Node * r ) { _root = r; }
     Node *get_Root( ) const  { return _root; }
-    Node *find_Node( char *hostname, Rank ilocal_rank );
+    Node *find_Node( char *ihostname, Rank ilocal_rank );
     bool validate( );
     void add_Node( Node * );
     int get_Size ( ) const { return _nodes.size(); }
