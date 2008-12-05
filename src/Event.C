@@ -65,6 +65,7 @@ void EventPipe::signal(void)
     }
     _sync.Unlock();
 
+    mrn_dbg(5, mrn_printf(FLF, stderr, "writing pipefd\n" ));
     char c = '!';
     int ret = write( get_WriteFd(), &c, sizeof(char) );
     if( ret == -1 )
@@ -87,6 +88,7 @@ void EventPipe::clear(void)
     }
     _sync.Unlock();
 
+    mrn_dbg(5, mrn_printf(FLF, stderr, "clearing pipefd\n" ));
     char c;
     int ret = read( get_ReadFd(), &c, sizeof(char) );
     if( ret == -1 )
