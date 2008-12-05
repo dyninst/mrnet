@@ -102,8 +102,8 @@ Network::Network( const char * itopology, const char * ibackend_exe,
         return;
     }
 
-    if( !parsed_graph->validate( ) ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: ParsedGraph::validate()!\n" ));
+    if( ! parsed_graph->validate( ) ) {
+        parsed_graph->perror( "ParsedGraph not valid." );
         return;
     }
 
@@ -123,6 +123,19 @@ Network::Network( const char * itopology, const char * ibackend_exe,
     name += ":";
     name += port_str;
     name += ")";
+
+    // check that topology root is same host we're on
+    char this_host[256];
+    gethostname( this_host, 256 );
+    string this_pretty;
+    XPlat::NetUtils::GetHostName( string(this_host), this_pretty );
+    if( this_pretty != prettyHost ) {
+        char warnmsg[1024];
+        sprintf( warnmsg, "FE host (%s) != Topology Root (%s)",
+                 this_pretty.c_str(), prettyHost.c_str() );
+        error( ERR_TOPOLOGY_FORMAT, UnknownRank, warnmsg );
+        return;
+    }
 
     int status;
     tsd_t *local_data = new tsd_t;
