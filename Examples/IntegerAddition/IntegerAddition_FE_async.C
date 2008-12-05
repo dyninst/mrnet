@@ -44,8 +44,8 @@ int main(int argc, char **argv)
     Communicator * comm_BC = net->get_BroadcastCommunicator( );
 
     // Create a stream that will use the Integer_Add filter for aggregation
-    Stream * stream = net->new_Stream( comm_BC, filter_id,
-                                       SFILTER_WAITFORALL);
+    Stream * add_stream = net->new_Stream( comm_BC, filter_id,
+                                           SFILTER_WAITFORALL );
 
     int num_backends = comm_BC->get_EndPoints().size();
 
@@ -53,11 +53,11 @@ int main(int argc, char **argv)
     unsigned int num_iters=5;
     // Broadcast a control message to back-ends to send us "num_iters"
     // waves of integers
-    if( stream->send( tag, "%d %d", send_val, num_iters ) == -1 ){
+    if( add_stream->send( tag, "%d %d", send_val, num_iters ) == -1 ){
         fprintf( stderr, "stream::send() failure\n");
         return -1;
     }
-    if( stream->flush( ) == -1 ){
+    if( add_stream->flush( ) == -1 ){
         fprintf( stderr, "stream::flush() failure\n");
         return -1;
     }
@@ -67,6 +67,7 @@ int main(int argc, char **argv)
 
     // Request notification of data events
     int data_fd = net->get_EventNotificationFd( DATA_EVENT );
+    int max_fd = data_fd + 1;
 
     // We expect "num_iters" aggregated responses from all back-ends
     unsigned int i=0;
@@ -82,17 +83,23 @@ int main(int argc, char **argv)
         FD_ZERO(&readfds);
         FD_SET(data_fd, &readfds);
 
-        int retval = select(data_fd, &readfds, NULL, NULL, &timeout);
+        fprintf(stderr, "FE: Waiting for data to arrive...\n");
+	fflush(stderr);
+        int retval = select(max_fd, &readfds, NULL, NULL, &timeout);
         if( retval < 0 )
             perror("select");
         else if(retval > 0) {
 
+            fprintf(stderr, "FE: Checking for data ... ");
+	
             if( FD_ISSET(data_fd, &readfds) ) {
+
+                fprintf(stderr, "found\n");
 
                 // Handle data events
                 net->clear_EventNotificationFd( DATA_EVENT );
                 while(1) {
-                    retval = stream->recv(&tag, p, false);
+                    retval = add_stream->recv(&tag, p, false);
                     if( retval == -1){
                         //recv error
                         return -1;
@@ -109,34 +116,56 @@ int main(int argc, char **argv)
                     if( recv_val != expected_val ){
                         fprintf(stderr, "Iteration %d: Failure! recv_val(%d) != %d*%d*%d=%d (send_val*i*num_backends)\n",
                                 i, recv_val, send_val, i, num_backends, expected_val );
+                        fflush(stderr);
                     }
                     else{
                         fprintf(stderr, "Iteration %d: Success! recv_val(%d) == %d*%d*%d=%d (send_val*i*num_backends)\n",
                                 i, recv_val, send_val, i, num_backends, expected_val );
+                        fflush(stderr);
                     }
 
                     i++;
                 }
                 
             }
+            else
+                fprintf(stderr, "not found\n");
+            fflush(stderr);
+                
             
             // Clear events up until this point
             Event::clear_Events();
         }
+        else {
+            fprintf(stderr, "FE: Timed out.\n");
+            fflush(stderr);
+        }
     }
+    delete add_stream;
+
 
     // Tell back-ends to exit
-    if(stream->send(PROT_EXIT, "") == -1){
+    Stream * ctl_stream = net->new_Stream( comm_BC, TFILTER_MAX,
+                                           SFILTER_WAITFORALL );
+    if(ctl_stream->send(PROT_EXIT, "") == -1){
         fprintf( stderr, "stream::send(exit) failure\n");
         return -1;
     }
-    if(stream->flush() == -1){
+    if(ctl_stream->flush() == -1){
         fprintf( stderr, "stream::flush() failure\n");
         return -1;
     }
-
-    // The Network destructor will cause all internal and leaf tree nodes to exit
-    delete net;
+    retval = ctl_stream->recv(&tag, p);
+    if( retval == -1){
+        //recv error
+        fprintf( stderr, "stream::recv() failure\n");
+        return -1;
+    }
+    delete ctl_stream;
+    if( tag == PROT_EXIT ) {
+        // The Network destructor will cause all internal and leaf tree nodes to exit
+        delete net;
+    }
 
     return 0;
 }

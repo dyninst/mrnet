@@ -28,6 +28,7 @@ int main(int argc, char **argv)
 
             // Send num_iters waves of integers
             for( unsigned int i=0; i<num_iters; i++ ){
+                fprintf( stdout, "Sending wave %u ...\n", i);
                 if( stream->send(tag, "%d", recv_val*i) == -1 ){
                     fprintf(stderr, "stream::send(%%d) failure\n");
                     return -1;
@@ -36,19 +37,30 @@ int main(int argc, char **argv)
                     fprintf(stderr, "stream::flush() failure\n");
                     return -1;
                 }
-                sleep(3);
+                fflush( stdout );
+                sleep(3); // stagger sends
             }
             break;
 
         case PROT_EXIT:
             fprintf( stdout, "Processing PROT_EXIT ...\n");
+	    if( stream->send(tag, "%d", 0) == -1 ){
+                fprintf(stderr, "stream::send(%%s) failure\n");
+                return -1;
+            }
+            if( stream->flush( ) == -1 ){
+                fprintf(stderr, "stream::flush() failure\n");
+                return -1;
+            }
+            fflush( stdout );
             break;
 
         default:
-            fprintf(stdout, "Unknown Protocol: %d\n", tag);
+            fprintf(stderr, "Unknown Protocol: %d\n", tag);
             break;
         }
     } while ( tag != PROT_EXIT );
+    sleep(10); // wait for network termination
 
     return 0;
 }
