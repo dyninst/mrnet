@@ -117,7 +117,10 @@ Process::GetLastError( void )
 int
 Process::GetProcessId( void )
 {
-    return (int)getpid();
+    static int local_pid = -1;
+    if( local_pid == -1 )
+        local_pid = getpid();
+    return local_pid;
 }
 
 } // namespace XPlat
