@@ -24,7 +24,7 @@ ErrorDef errors[] = {
 };
 
 
-void Error::error( ErrorCode e, Rank r, const char * fmt, ... ) const
+void Error::error( ErrorCode e, Rank, const char * fmt, ... ) const
 {
     static char buf[1024];
 
