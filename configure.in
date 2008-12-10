@@ -48,20 +48,24 @@ AC_ARG_WITH(purify,
     ])
 AC_SUBST(PURIFY)
 
-dnl Checks for programs.
+dnl === Check for required programs
 AC_PROG_MAKE_SET
+AC_PROG_INSTALL
 AC_PROG_RANLIB
-AC_PATH_PROG(GREP, grep)
-AC_SUBST(GREP)
+AC_PROG_YACC
+
 AC_PATH_PROG(RM, rm)
 AC_SUBST(RM)
-AC_PATH_PROG(FLEX, flex)
+
+AC_PATH_PROG(FLEX, flex, notfound)
+if test "$FLEX" = "notfound" ; then
+    AC_MSG_ERROR([flex not found in \$PATH, is it installed?])
+fi
 AC_SUBST(FLEX)
-AC_PATH_PROG(BISON, bison)
-AC_SUBST(BISON)
-AC_PATH_PROG(SHELL, sh)
-AC_SUBST(SHELL)
-AC_PROG_INSTALL
+
+
+dnl === Set compiler-specific flags
+
 PD_COMPILER_TYPE
 
 if test $COMPILER_TYPE = "gnu" ; then
@@ -103,6 +107,7 @@ elif test $COMPILER_TYPE = "forte" ; then
     AC_SUBST(ARFLAGS)
 fi
 
+dnl Use OUR debug/optimization levels
 CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
 if test $debug_mode = "yes" ; then
     CXXFLAGS="-g $CXXFLAGS -DDEBUG"
@@ -181,7 +186,7 @@ esac
 AC_SUBST(LIBS)
 
 if test "$FLEX_LIBDIR" = "" ; then
-   AC_CHECK_LIB(fl, [yywrap], [], [AC_MSG_ERROR(Can't find flex library libfl. Must specify proper directory with --with-libfldir)])
+    AC_CHECK_LIB(fl, [yywrap], [], [AC_MSG_ERROR(Can't find flex library libfl. Must specify proper directory with --with-libfldir)])
 else
     LIBS_HOLD=$LIBS
     LIBS="-L$FLEX_LIBDIR"
@@ -199,7 +204,6 @@ AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(SOFLAGS)
 AC_SUBST(C_AS_CPLUSPLUS)
-
 
 
 AC_C_BIGENDIAN
