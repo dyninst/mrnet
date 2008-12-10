@@ -129,7 +129,7 @@ Network::Network( const char * itopology, const char * ibackend_exe,
     gethostname( this_host, 256 );
     string this_pretty;
     XPlat::NetUtils::GetHostName( string(this_host), this_pretty );
-    if( this_pretty != prettyHost ) {
+    if( (this_pretty != prettyHost) && (prettyHost != "localhost") ) {
         char warnmsg[1024];
         sprintf( warnmsg, "FE host (%s) != Topology Root (%s)",
                  this_pretty.c_str(), prettyHost.c_str() );
