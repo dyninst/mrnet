@@ -465,15 +465,16 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
                             (pdrproc_t)pdr_wrapstring );
             break;
         case STRING_T:
-            if( pdrs->p_op == PDR_DECODE ) {
-                cur_elem->val.p = NULL;
+            {
+                if( pdrs->p_op == PDR_DECODE ) {
+                    cur_elem->val.p = NULL;
+                }
+                char *cp = (char*)cur_elem->val.p;
+                retval = pdr_wrapstring( pdrs, &cp );             
+                mrn_dbg( 3, mrn_printf(FLF, stderr,
+                                       "string (%p): \"%s\"\n", cur_elem->val.p, cur_elem->val.p));
+                break;
             }
-            retval =
-                pdr_wrapstring( pdrs, ( char ** )&( cur_elem->val.p ) );
-
-            mrn_dbg( 3, mrn_printf(FLF, stderr,
-                                   "string (%p): \"%s\"\n", cur_elem->val.p, cur_elem->val.p));
-            break;
         }
         if( !retval ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,

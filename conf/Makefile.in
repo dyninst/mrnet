@@ -3,7 +3,6 @@ MRNET_ROOT     = @MRNET_ROOT@
 MRNET_PLATFORM = @host@
 
 @SET_MAKE@
-SHELL = @SHELL@
 
 #############################
 #### INSTALL DIRECTORIES ####
@@ -26,12 +25,12 @@ IINCDIR = @includedir@
 ### AUXILIARY PROGRAMS ###
 ##########################
 FLEX    = @FLEX@
-BISON   = @BISON@
+BISON   = @YACC@
 AR      = @AR@
 ARFLAGS = @ARFLAGS@
 RANLIB  = @RANLIB@
 INSTALL = @INSTALL@
-PURIFY = @PURIFY@
+PURIFY  = @PURIFY@
 
 #####################
 # General Definitions
@@ -115,6 +114,8 @@ OPT_TESTS = $(BINDIR)/test_Recovery_FE \
 # Object and Executable Definitions
 ###################################
 LIBMRNET_SRCS = \
+	         $(OBJDIR)/scanner.C \
+	         $(OBJDIR)/parser.tab.C \
 	         $(SRCDIR)/src/BackEndNode.C \
 	         $(SRCDIR)/src/byte_order.c \
 	         $(SRCDIR)/src/ChildNode.C \
@@ -134,14 +135,12 @@ LIBMRNET_SRCS = \
 	         $(SRCDIR)/src/Packet.C \
 	         $(SRCDIR)/src/ParadynFilterDefinitions.C \
 	         $(SRCDIR)/src/ParsedGraph.C \
-	         $(OBJDIR)/parser.tab.C \
 	         $(SRCDIR)/src/ParentNode.C \
 	         $(SRCDIR)/src/pdr.c \
 	         $(SRCDIR)/src/pdr_mem.c \
 	         $(SRCDIR)/src/pdr_sizeof.c \
 	         $(SRCDIR)/src/PeerNode.C \
 	         $(SRCDIR)/src/Router.C \
-	         $(OBJDIR)/scanner.C \
 	         $(SRCDIR)/src/SerialGraph.C \
 	         $(SRCDIR)/src/Stream.C \
 	         $(SRCDIR)/src/Tree.C \
@@ -149,7 +148,6 @@ LIBMRNET_SRCS = \
 	         $(SRCDIR)/src/utils.C
 
 LIBMRNET_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(LIBMRNET_SRCS)))))
- 
 COMMNODE_SRCS = $(SRCDIR)/src/CommunicationNodeMain.C
 COMMNODE_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(COMMNODE_SRCS)))))
 
@@ -196,7 +194,7 @@ install-local: all
 	    $(INSTALL) -p -m 644 $$hdr $(IINCDIR)/mrnet/ ; \
 	done
 
-install-tests: mrnet-tests $(BINDIR)/mrnet_tests.sh
+install-tests: tests $(BINDIR)/mrnet_tests.sh
 	@echo Installing standard tests
 	$(INSTALL) -p -m 555 $(STD_TESTS) $(BINDIR)/mrnet_tests.sh $(IBINDIR)/
 	$(INSTALL) -p -m 555 $(LIBDIR)/test_DynamicFilters.so $(ILIBDIR)/
@@ -208,7 +206,7 @@ install-tests: mrnet-tests $(BINDIR)/mrnet_tests.sh
 	    $(INSTALL) -p -m 444 $$top $(IBINDIR)/topology_files/ ; \
 	done
 
-install-tests-opt: mrnet-tests-opt
+install-tests-opt: tests-opt
 	@echo Installing optional tests
 	$(INSTALL) -p -m 555 $(OPT_TESTS) $(IBINDIR)/
 	$(INSTALL) -p -m 555 $(LIBDIR)/test_RecoveryFilter.so $(ILIBDIR)/
@@ -217,17 +215,17 @@ xplat-install:
 	@echo Installing xplat library
 	cd ./xplat ; $(MAKE) install
 
-mrnet-tests: all $(STD_TESTS)
+tests: all $(STD_TESTS)
 
-mrnet-tests-opt: $(OPT_TESTS)
+tests-opt: $(OPT_TESTS)
 
 $(OBJDIR)/scanner.C: $(SRCDIR)/src/scanner.l $(OBJDIR)/parser.tab.C $(FRC)
 	@echo Building `basename $@` ...
-	$(RM)  $@; $(FLEX) -Pmrn -t $< > $@ 
+	$(RM) $@; $(FLEX) -Pmrn -t $< > $@ 
 
 $(OBJDIR)/parser.tab.C $(OBJDIR)/parser.tab.h: $(SRCDIR)/src/parser.y $(FRC)
 	@echo Building `basename $@` ...
-	$(BISON) -p mrn -d -y $<
+	$(BISON) -p mrn -d $<
 	mv y.tab.c $(OBJDIR)/parser.tab.C
 	mv y.tab.h $(OBJDIR)/parser.tab.h
 
@@ -310,7 +308,7 @@ clean: local-clean xplat-clean
 local-clean:
 	@echo Cleaning $(MRNET_PLATFORM) platform ...
 	$(RM) $(BINDIR)/* $(LIBDIR)/* $(OBJDIR)/*
-	$(RM)  `find $(MRNET_ROOT) -name "*~" -print`
+	$(RM) `find $(MRNET_ROOT) -name "*~" -print`
 
 xplat-clean:
 	@echo Cleaning xplat library
@@ -321,12 +319,12 @@ CLEAN: local-CLEAN xplat-clean
 local-CLEAN:
 	@echo Cleaning all platforms ...
 	$(RM) -r $(DEPENDDIR) bin lib obj
-	$(RM)  `find $(MRNET_ROOT) -name "*~" -print`
+	$(RM) `find $(MRNET_ROOT) -name "*~" -print`
 
 distclean: local-distclean xplat-distclean
 
 local-distclean: local-CLEAN
-	$(RM)  config.* conf/Makefile*.inc src/config.h Makefile
+	$(RM) config.* conf/Makefile*.inc src/config.h Makefile
 	$(RM) -r autom4te.cache
 
 xplat-distclean:
