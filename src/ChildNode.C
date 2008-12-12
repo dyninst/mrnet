@@ -209,7 +209,7 @@ int ChildNode::proc_PacketsFromParent( std::list < PacketPtr >&packets ) const
         case PROT_PRINT_PERFDATA:
             if( proc_PrintPerfData( cur_packet ) == -1 ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
-                            "proc_CollectPerfData() failed\n" ));
+                            "proc_PrintPerfData() failed\n" ));
                 retval = -1;
             }
             break;
