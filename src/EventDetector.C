@@ -15,6 +15,7 @@
 #include "PeerNode.h"
 #include "Router.h"
 #include "PerfDataEvent.h"
+#include "PerfDataSysEvent.h"
 #include "mrnet/Stream.h"
 #include "utils.h"
 #include "xplat/NetUtils.h"

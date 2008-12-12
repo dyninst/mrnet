@@ -97,8 +97,8 @@ namespace MRN
         PERFDATA_MET_ELAPSED_SEC = 2,
         PERFDATA_MET_CPU_SYS_PCT = 3,
         PERFDATA_MET_CPU_USR_PCT  = 4,
-        PERFDATA_MET_MEM_VIRT_MB = 5,
-        PERFDATA_MET_MEM_PHYS_MB = 6,
+        PERFDATA_MET_MEM_VIRT_KB = 5,
+        PERFDATA_MET_MEM_PHYS_KB = 6,
         PERFDATA_MAX_MET = 7
     } perfdata_metric_t;
 
@@ -114,7 +114,8 @@ namespace MRN
         PERFDATA_CTX_RECV = 1,
         PERFDATA_CTX_FILT_IN = 2,
         PERFDATA_CTX_FILT_OUT = 3,
-        PERFDATA_MAX_CTX = 4
+	PERFDATA_CTX_NONE = 4,
+        PERFDATA_MAX_CTX = 5
     } perfdata_context_t;
 
 } /* namespace MRN */

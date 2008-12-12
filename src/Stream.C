@@ -18,6 +18,7 @@
 #include "Filter.h"
 #include "Router.h"
 #include "PerfDataEvent.h"
+#include "PerfDataSysEvent.h"
 #include "Protocol.h"
 #include "utils.h"
 
@@ -459,7 +460,9 @@ int Stream::push_Packet( PacketPtr ipacket,
 
         /* NOTE: Performance data on filter CPU usage is currently not available, since
            getrusage doesn't play nicely with threads - need a better option */ 
-        /* struct rusage before, after; */
+	long user_before, sys_before;
+	long user_after, sys_after;
+
         Timer tagg;
         Filter* cur_agg = _ds_filter;
 
@@ -473,8 +476,13 @@ int Stream::push_Packet( PacketPtr ipacket,
                 _perf_data->add_DataInstance( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_IN,
                                              val);
             }
-            /* getrusage( RUSAGE_SELF, &before); */
-            tagg.start();
+
+
+            if( _perf_data->is_Enabled(PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT)  ||
+               _perf_data->is_Enabled(PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT)) {
+	       PerfDataSysMgr::get_ThreadTime(user_before,sys_before);
+	    }
+               tagg.start();
         }
 
         // run transformation filter
@@ -485,8 +493,12 @@ int Stream::push_Packet( PacketPtr ipacket,
 
         if( igoing_upstream ) {
             tagg.stop();
-            /* getrusage( RUSAGE_SELF, &after); */
-        
+
+            if( _perf_data->is_Enabled(PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT)  ||
+               _perf_data->is_Enabled(PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT)) {
+            	PerfDataSysMgr::get_ThreadTime(user_after,sys_after);
+	    }
+
             // performance data update for FILTER_OUT
             if( _perf_data->is_Enabled( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_OUT ) ) {
                 perfdata_t val;
@@ -500,23 +512,23 @@ int Stream::push_Packet( PacketPtr ipacket,
                 _perf_data->add_DataInstance( PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_FILT_OUT,
                                              val );
             }
-            /* if( _perf_data->is_Enabled( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT ) ) {
+
+            if( _perf_data->is_Enabled( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT ) ) {
                 perfdata_t val;
-                val.d = 0.0;
-                double diff = tv2dbl(after.ru_utime) - tv2dbl(before.ru_utime);
-                if( diff < tagg.get_latency_secs )
-                    val.d = ( diff / tagg.get_latency_secs() ) * 100.0;
+                double diff = (user_after  - user_before) ;   
+                val.d = ( diff / tagg.get_latency_msecs() ) * 100.0;
                 _perf_data->add_DataInstance( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT,
                                              val );
             }
+
             if( _perf_data->is_Enabled( PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT ) ) {
                 perfdata_t val;
-                double diff = tv2dbl(after.ru_stime) - tv2dbl(before.ru_time);
-                if( diff < tagg.get_latency_secs )
-                    val.d = ( diff / tagg.get_latency_secs() ) * 100.0;
+                double diff = (sys_after  - sys_before) ;   
+                val.d = ( diff / tagg.get_latency_msecs() ) * 100.0;
                 _perf_data->add_DataInstance( PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT,
                                              val );
-            } */
+            } 
+ 
         }
     }
 
@@ -817,6 +829,11 @@ PacketPtr Stream::collect_PerfData( perfdata_metric_t metric,
 {
     vector< perfdata_t > data;
     vector< perfdata_t >::iterator iter;
+
+    if (metric == PERFDATA_MET_MEM_VIRT_KB || metric == PERFDATA_MET_MEM_PHYS_KB) {
+    	_perf_data->get_MemData(metric);
+    }
+
     _perf_data->collect( metric, context, data );
     iter = data.begin();
 
@@ -1034,7 +1051,16 @@ bool Stream::collect_PerformanceData( rank_perfdata_map& results,
 void Stream::print_PerfData( perfdata_metric_t metric, 
                              perfdata_context_t context )
 {
+
+    mrn_dbg_func_begin();
+
+    if (metric == PERFDATA_MET_MEM_VIRT_KB || metric == PERFDATA_MET_MEM_PHYS_KB) {
+    	_perf_data->get_MemData(metric);
+    }	
+
     _perf_data->print( metric, context );
+
+    mrn_dbg_func_end();
 }
 
 void Stream::print_PerformanceData( perfdata_metric_t metric, 

@@ -8,6 +8,7 @@
 
 #include "mrnet/Packet.h"
 #include "mrnet/Types.h"
+
 #include <map>
 #include <string>
 #include <vector>
@@ -43,6 +44,7 @@ class PerfDataMgr {
     
     void set_DataValue( perfdata_metric_t, perfdata_context_t, perfdata_t );
     perfdata_t get_DataValue( perfdata_metric_t, perfdata_context_t );
+    void  PerfDataMgr::get_MemData(perfdata_metric_t);
 
  private:
     // bitfield of enabled metrics per context
@@ -52,9 +54,6 @@ class PerfDataMgr {
     std::vector< std::map< perfdata_metric_t, std::vector<perfdata_t> > > the_data;
     mutable XPlat::Mutex _data_sync;
 };
-
-bool handle_PerfGuiInit( PacketPtr& );
-bool handle_PerfDataCPU( PacketPtr&, Rank );
 
 } /* namespace MRN */
 
