@@ -44,7 +44,7 @@ class PerfDataMgr {
     
     void set_DataValue( perfdata_metric_t, perfdata_context_t, perfdata_t );
     perfdata_t get_DataValue( perfdata_metric_t, perfdata_context_t );
-    void  PerfDataMgr::get_MemData(perfdata_metric_t);
+    void get_MemData(perfdata_metric_t);
 
  private:
     // bitfield of enabled metrics per context
