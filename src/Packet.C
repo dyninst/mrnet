@@ -469,8 +469,8 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
                 if( pdrs->p_op == PDR_DECODE ) {
                     cur_elem->val.p = NULL;
                 }
-                char *cp = (char*)cur_elem->val.p;
-                retval = pdr_wrapstring( pdrs, &cp );             
+                char **cp = (char**)&(cur_elem->val.p);
+                retval = pdr_wrapstring( pdrs, cp );             
                 mrn_dbg( 3, mrn_printf(FLF, stderr,
                                        "string (%p): \"%s\"\n", cur_elem->val.p, cur_elem->val.p));
                 break;
