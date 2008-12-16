@@ -116,9 +116,9 @@ class NetworkTopology: public Error {
     unsigned int get_NumNodes() const;
     void get_Leaves( std::vector< Node * > &leaves ) const;
 
-    std::set<NetworkTopology::Node*> get_ParentNodes() const;
-    std::set<NetworkTopology::Node*> get_OrphanNodes() const;
-    std::set<NetworkTopology::Node*> get_BackEndNodes() const;
+    void get_ParentNodes( std::set<NetworkTopology::Node*> & ) const;
+    void get_OrphanNodes( std::set<NetworkTopology::Node*> & ) const;
+    void get_BackEndNodes( std::set<NetworkTopology::Node*> & ) const;
     Node * get_Root() { return _root; }
 
     Node * find_Node( Rank ) const;

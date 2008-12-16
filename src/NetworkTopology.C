@@ -703,19 +703,25 @@ void NetworkTopology::serialize(Node * inode)
     _sync.Unlock();
 }
 
-set<NetworkTopology::Node*> NetworkTopology::get_BackEndNodes( void ) const
+void NetworkTopology::get_BackEndNodes( set<NetworkTopology::Node*> &nodes ) const
 {
-    return _backend_nodes;
+    _sync.Lock();
+    nodes = _backend_nodes;
+    _sync.Unlock();
 }
 
-set<NetworkTopology::Node*> NetworkTopology::get_ParentNodes( void ) const
+void NetworkTopology::get_ParentNodes( set<NetworkTopology::Node*> &nodes ) const
 {
-    return _parent_nodes;
+    _sync.Lock();
+    nodes = _parent_nodes;
+    _sync.Unlock();
 }
 
-set<NetworkTopology::Node*> NetworkTopology::get_OrphanNodes( void ) const
+void NetworkTopology::get_OrphanNodes( set<NetworkTopology::Node*> &nodes ) const
 {
-    return _orphans;
+    _sync.Lock();
+    nodes = _orphans;
+    _sync.Unlock();
 }
 
 unsigned int NetworkTopology::Node::find_SubTreeHeight( void )

@@ -282,15 +282,15 @@ void Network::set_TerminateBackEndsOnShutdown( bool terminate )
 
 void Network::update_BcastCommunicator( void )
 {
-    set< NetworkTopology::Node * > backends =
-        _network_topology->get_BackEndNodes();
+    set< NetworkTopology::Node * > backends;
+    _network_topology->get_BackEndNodes(backends);
 
     //add end-points to broadcast communicator
     set< NetworkTopology::Node * >::const_iterator iter;
     for( iter=backends.begin(); iter!=backends.end(); iter++ ){
-        string cur_hostname = (*iter)->get_HostName();
         Rank cur_rank = (*iter)->get_Rank();
         if( _end_points.find( cur_rank ) == _end_points.end() ) {
+            string cur_hostname = (*iter)->get_HostName();
             _end_points[ cur_rank ] =
                 new CommunicationNode( cur_hostname,
                                        (*iter)->get_Port(),
