@@ -50,6 +50,7 @@ MAKEDEPENDS = $(SRCDIR)/conf/makedepends.sh
 BUILD_SHARED_LIBS = @BUILDSHARED@
 
 COMPILER_TYPE = @COMPILER_TYPE@
+MRNET_OS = @MRNET_OS@
 
 ifeq ($(COMPILER_TYPE), gnu)
 
@@ -140,12 +141,16 @@ LIBMRNET_SRCS = \
 	         $(SRCDIR)/src/pdr_mem.c \
 	         $(SRCDIR)/src/pdr_sizeof.c \
 	         $(SRCDIR)/src/PeerNode.C \
+	         $(SRCDIR)/src/PerfDataEvent.C \
 	         $(SRCDIR)/src/Router.C \
 	         $(SRCDIR)/src/SerialGraph.C \
 	         $(SRCDIR)/src/Stream.C \
 	         $(SRCDIR)/src/Tree.C \
-	         $(SRCDIR)/src/PerfDataEvent.C \
 	         $(SRCDIR)/src/utils.C
+
+ifeq ($(MRNET_OS), linux)
+    LIBMRNET_SRCS += $(SRCDIR)/src/PerfDataSysEvent_linux.C
+endif
 
 LIBMRNET_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(LIBMRNET_SRCS)))))
 COMMNODE_SRCS = $(SRCDIR)/src/CommunicationNodeMain.C
