@@ -475,19 +475,19 @@ int Stream::push_Packet( PacketPtr ipacket,
                 perfdata_t val;
                 val.u = ipackets.size();
                 _perf_data->add_DataInstance( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_IN,
-                                             val);
+                                              val );
             }
 
 
             if( _perf_data->is_Enabled(PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT)  ||
-               _perf_data->is_Enabled(PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT)) {
+                _perf_data->is_Enabled(PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT) ) {
 	       PerfDataSysMgr::get_ThreadTime(user_before,sys_before);
 	    }
-               tagg.start();
+            tagg.start();
         }
 
         // run transformation filter
-        if( cur_agg->push_Packets(ipackets, opackets, opackets_reverse ) == -1){
+        if( cur_agg->push_Packets(ipackets, opackets, opackets_reverse ) == -1 ){
             mrn_dbg(1, mrn_printf(FLF, stderr, "aggr.push_packets() failed\n"));
             return -1;
         }
@@ -496,7 +496,7 @@ int Stream::push_Packet( PacketPtr ipacket,
             tagg.stop();
 
             if( _perf_data->is_Enabled(PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT)  ||
-               _perf_data->is_Enabled(PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT)) {
+               _perf_data->is_Enabled(PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT) ) {
             	PerfDataSysMgr::get_ThreadTime(user_after,sys_after);
 	    }
 
@@ -513,23 +513,20 @@ int Stream::push_Packet( PacketPtr ipacket,
                 _perf_data->add_DataInstance( PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_FILT_OUT,
                                              val );
             }
-
             if( _perf_data->is_Enabled( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT ) ) {
                 perfdata_t val;
                 double diff = (user_after  - user_before) ;   
                 val.d = ( diff / tagg.get_latency_msecs() ) * 100.0;
                 _perf_data->add_DataInstance( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT,
-                                             val );
+                                              val );
             }
-
             if( _perf_data->is_Enabled( PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT ) ) {
                 perfdata_t val;
                 double diff = (sys_after  - sys_before) ;   
                 val.d = ( diff / tagg.get_latency_msecs() ) * 100.0;
                 _perf_data->add_DataInstance( PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT,
-                                             val );
+                                              val );
             } 
- 
         }
     }
 

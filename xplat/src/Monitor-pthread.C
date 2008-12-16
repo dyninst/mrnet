@@ -40,7 +40,7 @@ int Monitor::Unlock( void )
 PthreadMonitorData::PthreadMonitorData( void )
   : initialized( false )
 {
-	int ret;
+    int ret;
     pthread_mutexattr_t recursive;
     
     ret = pthread_mutexattr_init( & recursive );

@@ -232,4 +232,4 @@ void PerfDataMgr::get_MemData(perfdata_metric_t metric)
 }
 
 
-}
+} /* namespace MRN */
