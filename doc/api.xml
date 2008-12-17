@@ -227,6 +227,39 @@ for the parent.
 </blockquote>
 </funcsynopsis>
 
+<funcsynopsis>
+<funcprototype>
+  <funcdef>std::string <function>Network::get_LocalHostName</function></funcdef>
+  <void></void>
+</funcprototype>
+<blockquote>
+<function>Network::get_LocalHostName</function> returns the name of the host
+on which the MRNet process is running.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>Port <function>Network::get_LocalPort</function></funcdef>
+  <void></void>
+</funcprototype>
+<blockquote>
+<function>Network::get_LocalPort</function> returns the port at which the 
+MRNet process can be contacted.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>Rank <function>Network::get_LocalRank</function></funcdef>
+  <void></void>
+</funcprototype>
+<blockquote>
+<function>Network::get_LocalRank</function> returns the rank of the
+MRNet process.
+</blockquote>
+</funcsynopsis>
+
 </sect1>
 
 
@@ -298,32 +331,32 @@ the back-ends should attach.
 
 <funcsynopsis>
 <funcprototype>
-  <funcdef>std::set&lt; NetworkTopology::Node * &gt; <function>NetworkTopology::get_BackEndNodes</function></funcdef>
-    <void></void>
+  <funcdef>void <function>NetworkTopology::get_BackEndNodes</function></funcdef>
+    <paramdef>std::set&lt; NetworkTopology::Node * &gt; &amp; <parameter>nodes</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function returns a set containing pointers to all back-end process tree nodes.
+This function fills a set with pointers to all back-end process tree nodes.
 </blockquote>
 </funcsynopsis>
 
 <funcsynopsis>
 <funcprototype>
-  <funcdef>std::set&lt; NetworkTopology::Node * &gt; <function>NetworkTopology::get_ParentNodes</function></funcdef>
-    <void></void>
+  <funcdef>void <function>NetworkTopology::get_ParentNodes</function></funcdef>
+    <paramdef>std::set&lt; NetworkTopology::Node * &gt; &amp; <parameter>nodes</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function returns a set containing pointers to all tree nodes that are parents
+This function fills a set with pointers to all tree nodes that are parents
 (i.e., those nodes having at least one child).
 </blockquote>
 </funcsynopsis>
 
 <funcsynopsis>
 <funcprototype>
-  <funcdef>std::set&lt; NetworkTopology::Node * &gt; <function>NetworkTopology::get_OrphanNodes</function></funcdef>
-    <void></void>
+  <funcdef>void <function>NetworkTopology::get_OrphanNodes</function></funcdef>
+    <paramdef>std::set&lt; NetworkTopology::Node * &gt; &amp; <parameter>nodes</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function returns a set containing pointers to all tree nodes that have
+This function fills a set with pointers to all tree nodes that have
 no parent due to a failure.
 </blockquote>
 </funcsynopsis>

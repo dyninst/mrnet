@@ -1,5 +1,5 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>The Multicast/Reduction Network: A User's Guide to MRNet v2.0</title><meta name="generator" content="DocBook XSL Stylesheets V1.68.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="book"></a>The Multicast/Reduction Network: A User's Guide to MRNet v2.0</h1></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#id2602806">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#id2607652">2. Installing and Using MRNet</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2607842">Supported Platforms and Compilers</a></span></dt><dt><span class="sect1"><a href="#id2603704">System Requirements</a></span></dt><dt><span class="sect1"><a href="#id2603728">Build Configuration</a></span></dt><dt><span class="sect1"><a href="#id2603823">Compilation and Installation</a></span></dt><dt><span class="sect1"><a href="#id2648247">Testing the Code</a></span></dt><dt><span class="sect1"><a href="#id2648317">Bugs, Questions and Comments</a></span></dt></dl></dd><dt><span class="chapter"><a href="#id2603557">3. MRNet Components and Abstractions</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2603548">EndPoints</a></span></dt><dt><span class="sect1"><a href="#id2603604">Communicators</a></span></dt><dt><span class="sect1"><a href="#id2603624">Streams</a></span></dt><dt><span class="sect1"><a href="#id2603652">Filters</a></span></dt></dl></dd><dt><span class="chapter"><a href="#simple_example">4. A Simple Example</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2648871">The MRNet Interface</a></span></dt><dt><span class="sect1"><a href="#mrnet_instantiation">MRNet Instantiation</a></span></dt></dl></dd><dt><span class="chapter"><a href="#mrnet_api">5. The MRNet C++ API Reference</a></span></dt><dd><dl><dt><span class="sect1"><a href="#sect:network_api">Class Network</a></span></dt><dt><span class="sect1"><a href="#sect:net_topol_api">Class NetworkTopology</a></span></dt><dt><span class="sect1"><a href="#sect:comm_api">Class Communicator</a></span></dt><dt><span class="sect1"><a href="#sect:stream_api">Class Stream</a></span></dt><dt><span class="sect1"><a href="#sect:packet_api">Class Packet</a></span></dt></dl></dd><dt><span class="chapter"><a href="#mrnet_topology_configuration">6. MRNET Process-tree
-Topologies</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2653668">Topology File Format</a></span></dt><dt><span class="sect1"><a href="#id2654340">Topology File Generator</a></span></dt></dl></dd><dt><span class="chapter"><a href="#adding_filters">7. Adding New Filters</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2654031">Defining an MRNet Filter</a></span></dt><dt><span class="sect1"><a href="#id2654129">Creating and Using MRNet Filter Shared Object Files</a></span></dt></dl></dd><dt><span class="appendix"><a href="#format_strings">A. MRNET Format Strings</a></span></dt><dt><span class="appendix"><a href="#example">B. A Complete MRNet Example: Integer Addition</a></span></dt></dl></div><div class="list-of-examples"><p><b>List of Examples</b></p><dl><dt>4.1. <a href="#fe_code">MRNet Front-end Sample Code</a></dt><dt>4.2. <a href="#be_code">MRNet Back-end Sample Code</a></dt><dt>B.1. <a href="#id2654987">A Complete MRNet Front-End</a></dt><dt>B.2. <a href="#id2654770">A Complete MRNet Back-End</a></dt><dt>B.3. <a href="#id2655050">An MRNet Filter: Integer Addition</a></dt><dt>B.4. <a href="#id2654787">An MRNet Topology File</a></dt></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2602806"></a>Chapter 1. Introduction</h2></div></div></div><p>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>The Multicast/Reduction Network: A User's Guide to MRNet v2.0</title><meta name="generator" content="DocBook XSL Stylesheets V1.68.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="book"></a>The Multicast/Reduction Network: A User's Guide to MRNet v2.0</h1></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#id2652581">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#id2657610">2. Installing and Using MRNet</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2657606">Supported Platforms and Compilers</a></span></dt><dt><span class="sect1"><a href="#id2653470">System Requirements</a></span></dt><dt><span class="sect1"><a href="#id2653494">Build Configuration</a></span></dt><dt><span class="sect1"><a href="#id2653589">Compilation and Installation</a></span></dt><dt><span class="sect1"><a href="#id2698020">Testing the Code</a></span></dt><dt><span class="sect1"><a href="#id2698090">Bugs, Questions and Comments</a></span></dt></dl></dd><dt><span class="chapter"><a href="#id2653323">3. MRNet Components and Abstractions</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2653314">EndPoints</a></span></dt><dt><span class="sect1"><a href="#id2653369">Communicators</a></span></dt><dt><span class="sect1"><a href="#id2653389">Streams</a></span></dt><dt><span class="sect1"><a href="#id2653418">Filters</a></span></dt></dl></dd><dt><span class="chapter"><a href="#simple_example">4. A Simple Example</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2698645">The MRNet Interface</a></span></dt><dt><span class="sect1"><a href="#mrnet_instantiation">MRNet Instantiation</a></span></dt></dl></dd><dt><span class="chapter"><a href="#mrnet_api">5. The MRNet C++ API Reference</a></span></dt><dd><dl><dt><span class="sect1"><a href="#sect:network_api">Class Network</a></span></dt><dt><span class="sect1"><a href="#sect:net_topol_api">Class NetworkTopology</a></span></dt><dt><span class="sect1"><a href="#sect:comm_api">Class Communicator</a></span></dt><dt><span class="sect1"><a href="#sect:stream_api">Class Stream</a></span></dt><dt><span class="sect1"><a href="#sect:packet_api">Class Packet</a></span></dt></dl></dd><dt><span class="chapter"><a href="#mrnet_topology_configuration">6. MRNET Process-tree
+Topologies</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2703653">Topology File Format</a></span></dt><dt><span class="sect1"><a href="#id2704325">Topology File Generator</a></span></dt></dl></dd><dt><span class="chapter"><a href="#adding_filters">7. Adding New Filters</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2704162">Defining an MRNet Filter</a></span></dt><dt><span class="sect1"><a href="#id2704730">Creating and Using MRNet Filter Shared Object Files</a></span></dt></dl></dd><dt><span class="appendix"><a href="#format_strings">A. MRNET Format Strings</a></span></dt><dt><span class="appendix"><a href="#example">B. A Complete MRNet Example: Integer Addition</a></span></dt></dl></div><div class="list-of-examples"><p><b>List of Examples</b></p><dl><dt>4.1. <a href="#fe_code">MRNet Front-end Sample Code</a></dt><dt>4.2. <a href="#be_code">MRNet Back-end Sample Code</a></dt><dt>B.1. <a href="#id2705016">A Complete MRNet Front-End</a></dt><dt>B.2. <a href="#id2704799">A Complete MRNet Back-End</a></dt><dt>B.3. <a href="#id2705080">An MRNet Filter: Integer Addition</a></dt><dt>B.4. <a href="#id2704817">An MRNet Topology File</a></dt></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2652581"></a>Chapter 1. Introduction</h2></div></div></div><p>
 MRNet is a customizable, high-throughput communication software system for
 parallel tools and applications with a master/slave architecture. MRNet reduces the cost of these
 tools' activities by incorporating a tree of processes between the tool's
@@ -34,13 +34,13 @@ issuing control requests from the tool front-end to its back-ends.</li><li><span
 multiple logical streams of data between tool components. Data aggregation and
 message multicast takes place within the context of a data stream, and multiple
 operations (both upward and downward) can be active simultaneously.</li></ul></div><p>
-</p></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2607652"></a>Chapter 2. Installing and Using MRNet</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2607842">Supported Platforms and Compilers</a></span></dt><dt><span class="sect1"><a href="#id2603704">System Requirements</a></span></dt><dt><span class="sect1"><a href="#id2603728">Build Configuration</a></span></dt><dt><span class="sect1"><a href="#id2603823">Compilation and Installation</a></span></dt><dt><span class="sect1"><a href="#id2648247">Testing the Code</a></span></dt><dt><span class="sect1"><a href="#id2648317">Bugs, Questions and Comments</a></span></dt></dl></div><p>
+</p></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2657610"></a>Chapter 2. Installing and Using MRNet</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2657606">Supported Platforms and Compilers</a></span></dt><dt><span class="sect1"><a href="#id2653470">System Requirements</a></span></dt><dt><span class="sect1"><a href="#id2653494">Build Configuration</a></span></dt><dt><span class="sect1"><a href="#id2653589">Compilation and Installation</a></span></dt><dt><span class="sect1"><a href="#id2698020">Testing the Code</a></span></dt><dt><span class="sect1"><a href="#id2698090">Bugs, Questions and Comments</a></span></dt></dl></div><p>
 For this discussion, <code class="envar">$MRNET_ROOT</code> is the location of the
 top-level directory of the MRNet distribution and
 <code class="envar">$MRNET_ARCH</code> is a string describing the platform (OS and
 architecture) as discovered by autoconf. For the installation instructions, it is
 assumed that the current working directory is <code class="envar">$MRNET_ROOT</code>.
-</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2607842"></a>Supported Platforms and Compilers</h2></div></div></div><p>
+</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2657606"></a>Supported Platforms and Compilers</h2></div></div></div><p>
 MRNet has been developed to be highly portable; we expect it to run properly
 on all common Unix-based as well as Microsoft Windows platforms. This being said, 
 we have successfully built and tested MRNet on the following systems:
@@ -49,12 +49,12 @@ we have successfully built and tested MRNet on the following systems:
 Our build system attempts to use native system compilers where appropriate, for
 instance, <span class="application">xlc</span> and <span class="application">xlC</span>
 in AIX environments.
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2603704"></a>System Requirements</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653470"></a>System Requirements</h2></div></div></div><p>
 Here we list the third party tools that MRNet uses and needs for
 proper installation:
 
 </p><div class="itemizedlist"><ul type="disc"><li>GNU make</li><li>flex</li><li>bison</li></ul></div><p>
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2603728"></a>Build Configuration</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653494"></a>Build Configuration</h2></div></div></div><p>
 MRNet uses <span class="application">GNU autoconf</span> to discover the
 platform specific configuration parameters. The script that does
 this auto-configuration is called <span><strong class="command">configure</strong></span>.
@@ -79,7 +79,7 @@ results, but the user may specify certain options. For example,
 instructs the configure script to use <span><strong class="command">g++</strong></span> for the C++
 compiler with level 3 optimization and <code class="filename">/usr/local/lib/libfl.a</code> 
 as the location of the flex library.
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2603823"></a>Compilation and Installation</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653589"></a>Compilation and Installation</h2></div></div></div><p>
 To build the MRNet toolkit by type:
 </p><pre class="screen">
 <code class="prompt">UNIX&gt;</code>  <span><strong class="command">make</strong></span>
@@ -96,7 +96,7 @@ Typing:
 builds the mrnet test files. In addition to those files above, you will also generate:
 </p><div class="itemizedlist"><ul type="disc"><li><code class="filename">$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_topgen</code>: MRNet
 topology file generator</li><li><code class="filename">$MRNET_ROOT/bin/$MRNET_ARCH/*_[FE,BE]</code>: MRNet test front-end and back-end programs</li><li><code class="filename">$MRNET_ROOT/lib/$MRNET_ARCH/test_DynamicFilters.so</code>: Shared object used in tests of dynamic filter loading.</li><li><code class="filename">$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_tests.sh</code>: A shell script that runs the test programs and checks for errors in an automated fashion.</li></ul></div><p>
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2648247"></a>Testing the Code</h2></div></div></div>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2698020"></a>Testing the Code</h2></div></div></div>
 The shell script, <span class="application">mrnet_tests.sh</span> is placed in the
 binary directory with the other executables during the building of the MRNet
 tests as described above. This script can be used to run the MRNet test
@@ -106,14 +106,14 @@ programs and check their output for errors. The script is used as follows:
 </pre></div>
 The <code class="option">-l</code> flag is used to run all tests using only topologies that create processes on the local machine. The <code class="option">-r</code> flag runs tests using remote machines specified in the file whose name immediately follows this flag. To run test both locally and remotely, use the <code class="option">-a</code> flag and specify a hostfile to use. To run the programs that test MRNet's ability to dynamically load filters, you must specify the absolute location of the shared object <code class="filename">test_DynamicFilters.so</code> produced when the tests were built.
 
-<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3>To successfully run all tests, the location of the MRNet binaries must be in the user's <code class="envar">$PATH</code>. For testing dynamic filters, the filesystem containing the shared object must be available to all the host machines participating in the test.</div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2648317"></a>Bugs, Questions and Comments</h2></div></div></div><p>
+<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3>To successfully run all tests, the location of the MRNet binaries must be in the user's <code class="envar">$PATH</code>. For testing dynamic filters, the filesystem containing the shared object must be available to all the host machines participating in the test.</div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2698090"></a>Bugs, Questions and Comments</h2></div></div></div><p>
 MRNet is maintained primarily by the Paradyn Project, University of Wisconsin-Madison.
 Comments and other feedback whether positive or negative are welcome.
 </p><p>
 Please report bugs to paradyn@cs.wisc.edu.
 </p><p>
 The MRNet webpage is http://www.paradyn.org/mrnet/
-</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2603557"></a>Chapter 3. MRNet Components and Abstractions</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2603548">EndPoints</a></span></dt><dt><span class="sect1"><a href="#id2603604">Communicators</a></span></dt><dt><span class="sect1"><a href="#id2603624">Streams</a></span></dt><dt><span class="sect1"><a href="#id2603652">Filters</a></span></dt></dl></div><p>
+</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2653323"></a>Chapter 3. MRNet Components and Abstractions</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2653314">EndPoints</a></span></dt><dt><span class="sect1"><a href="#id2653369">Communicators</a></span></dt><dt><span class="sect1"><a href="#id2653389">Streams</a></span></dt><dt><span class="sect1"><a href="#id2653418">Filters</a></span></dt></dl></div><p>
 The MRNet distribution has two main components: <code class="filename">libmrnet.a</code>, a
 library that is linked into a tool's front-end and back-end components, and
 <span class="application">mrnet_commnode</span>, a program that runs on intermediate nodes
@@ -124,12 +124,12 @@ primary purpose of <span class="application">mrnet_commnode</span> is to distrib
 processing functionality across multiple computer hosts and to implement
 efficient and scalable group communications. The following sub-sections describe
 the lower-level components of the MRNet API in more detail.
-</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2603548"></a>EndPoints</h2></div></div></div><p>
+</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653314"></a>EndPoints</h2></div></div></div><p>
 An MRNet end-point represents a tool or application process or node. In
 particular, they represent the back-end processes in the system. The front-end
 can communicate in a unicast or multicast fashion with one or more of these
 end-points as described below.
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2603604"></a>Communicators</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653369"></a>Communicators</h2></div></div></div><p>
 MRNet uses communicators to represent groups of network end-points. Like
 communicators in MPI, MRNet communicators provide a handle that identifies a
 set of end-points for point-to-point, multicast or broadcast communications. MPI
@@ -139,7 +139,7 @@ rooted at the tool front-end. Accordingly, MRNet communicators are created and
 managed by the front-end, and communication is only allowed between a tool's
 front-end and its back-ends, i.e. back-ends cannot interact with each other
 directly via MRNet.
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2603624"></a>Streams</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653389"></a>Streams</h2></div></div></div><p>
 A stream is a logical channel that connects the front-end to the end-points of a
 communicator. All tool-level communication via MRNet must use these streams.
 Streams carry data packets downstream, from the front-end toward the back-ends,
@@ -151,7 +151,7 @@ formatted I/O primitives, e.g. a packet whose data is described by the format
 string "%d %d %f %s" contains two integers followed by a float then a character
 string. MRNet expands the standard specification to allow for specifiers that
 describe arrays of integers and floats. 
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2603652"></a>Filters</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653418"></a>Filters</h2></div></div></div><p>
 Data Aggregation is the process of merging multiple input data packets and
 transforming them into one or more output packets. Though it is not necessary
 for the aggregation to result in less or even different data, aggregations that
@@ -196,7 +196,7 @@ average on integers or floats.</li><li><span class="emphasis"><em>Concatenation<
 and outputs a vector of length n of the same base type.</li></ul></div><p>
 <a href="#adding_filters" title="Chapter 7. Adding New Filters">Chapter 7, <i>Adding New Filters</i></a> describes facilities a tool developer 
 may use to add new filters to the provided set.
-</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="simple_example"></a>Chapter 4. A Simple Example</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2648871">The MRNet Interface</a></span></dt><dt><span class="sect1"><a href="#mrnet_instantiation">MRNet Instantiation</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2648871"></a>The MRNet Interface</h2></div></div></div><p>
+</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="simple_example"></a>Chapter 4. A Simple Example</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2698645">The MRNet Interface</a></span></dt><dt><span class="sect1"><a href="#mrnet_instantiation">MRNet Instantiation</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2698645"></a>The MRNet Interface</h2></div></div></div><p>
 A complete description of the MRNet API is in <a href="#mrnet_api" title="Chapter 5. The MRNet C++ API Reference">Chapter 5, <i>The MRNet C++ API Reference</i></a>. This section offers a brief overview only.
 Using <code class="filename">libmrnet.a</code>, a tool can leverage a system of internal
 processes, instances of the <code class="filename">mrnet_commnode</code> program, as a
@@ -438,6 +438,12 @@ returns an array of size <code class="varname">fd_array_size</code> file descrip
 output array <code class="varname">fd_array</code>. On front-ends, the array should contain
 an entry for each child, while on back-ends the array should contain a single entry
 for the parent. 
+</blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">std::string <b class="fsfunc">Network::get_LocalHostName</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_LocalHostName</code> returns the name of the host
+on which the MRNet process is running.
+</blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">Port <b class="fsfunc">Network::get_LocalPort</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_LocalPort</code> returns the port at which the 
+MRNet process can be contacted.
+</blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">Rank <b class="fsfunc">Network::get_LocalRank</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_LocalRank</code> returns the rank of the
+MRNet process.
 </blockquote></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sect:net_topol_api"></a>Class NetworkTopology</h2></div></div></div><p>
 Instances of NetworkTopology are network specific, so they are created 
 when a Network is instantiated. MRNet API users should not need to
@@ -459,13 +465,13 @@ leaf nodes in the topology. In the case where back-end processes are not
 started when the Network is instantiated, a front-end process can use this 
 function to retrieve information about the leaf internal processes to which
 the back-ends should attach.
-</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">std::set&lt; NetworkTopology::Node * &gt; <b class="fsfunc">NetworkTopology::get_BackEndNodes</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a set containing pointers to all back-end process tree nodes.
-</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">std::set&lt; NetworkTopology::Node * &gt; <b class="fsfunc">NetworkTopology::get_ParentNodes</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a set containing pointers to all tree nodes that are parents
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">NetworkTopology::get_BackEndNodes</b>(</code></td><td><var class="pdparam">nodes</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>std::set&lt; NetworkTopology::Node * &gt; &amp;  </td><td><var class="pdparam">nodes</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
+This function fills a set with pointers to all back-end process tree nodes.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">NetworkTopology::get_ParentNodes</b>(</code></td><td><var class="pdparam">nodes</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>std::set&lt; NetworkTopology::Node * &gt; &amp;  </td><td><var class="pdparam">nodes</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
+This function fills a set with pointers to all tree nodes that are parents
 (i.e., those nodes having at least one child).
-</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">std::set&lt; NetworkTopology::Node * &gt; <b class="fsfunc">NetworkTopology::get_OrphanNodes</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a set containing pointers to all tree nodes that have
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">NetworkTopology::get_OrphanNodes</b>(</code></td><td><var class="pdparam">nodes</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>std::set&lt; NetworkTopology::Node * &gt; &amp;  </td><td><var class="pdparam">nodes</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
+This function fills a set with pointers to all tree nodes that have
 no parent due to a failure.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">NetworkTopology::get_TreeStatistics</b>(</code></td><td><var class="pdparam">num_nodes</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">depth</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">min_fanout</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">max_fanout</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">avg_fanout</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">stddev_fanout</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>unsigned int &amp;  </td><td><var class="pdparam">num_nodes</var>;</td></tr><tr><td>unsigned int &amp;  </td><td><var class="pdparam">depth</var>;</td></tr><tr><td>unsigned int &amp;  </td><td><var class="pdparam">min_fanout</var>;</td></tr><tr><td>unsigned int &amp;  </td><td><var class="pdparam">max_fanout</var>;</td></tr><tr><td>double &amp;  </td><td><var class="pdparam">avg_fanout</var>;</td></tr><tr><td>double &amp;  </td><td><var class="pdparam">stddev_fanout</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
 This function fills in the values of each of the parameters. <code class="varname">num_nodes</code>
@@ -629,7 +635,7 @@ Packets is not to deallocate (false).
 Turning on deallocation is useful in filter code that must allocate strings or
 arrays for output Packets, which cannot be freed before the filter function returns.
 </blockquote></div></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="mrnet_topology_configuration"></a>Chapter 6. MRNET Process-tree
-Topologies</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2653668">Topology File Format</a></span></dt><dt><span class="sect1"><a href="#id2654340">Topology File Generator</a></span></dt></dl></div><p>
+Topologies</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2703653">Topology File Format</a></span></dt><dt><span class="sect1"><a href="#id2704325">Topology File Generator</a></span></dt></dl></div><p>
 MRNet allows a tool to specify a node allocation and process connectivity
 tailored to its computation and communication requirements and to the system
 where the tool will run. Choosing an appropriate MRNet configuration can be
@@ -637,7 +643,7 @@ difficult due to the complexity of the tool's own activity and its
 interaction with the system. This section describes how users define
 their own process topologies, and the <span><strong class="command">mrnet_topgen</strong></span> utility
 provided by MRNet to facilitate the process.
-</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653668"></a>Topology File Format</h2></div></div></div><p>
+</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2703653"></a>Topology File Format</h2></div></div></div><p>
 The first parameter to the <code class="function">Network::Network()</code>
 front-end constructor is the name of an MRNet topology file. This file defines the
 topological layout of the front-end, internal nodes, and back-end MRNet processes. 
@@ -665,40 +671,60 @@ improve readability. For example:
                   hostname1:2 
                   ;
 </pre></div><p>
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2654340"></a>Topology File Generator</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2704325"></a>Topology File Generator</h2></div></div></div><p>
 When the MRNet test programs are built, a topology generator program,
 <code class="filename">$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_topgen</code>, will also
 be created. The usage of this program is:
 </p><pre class="synopsis">
-mrnet_topgen &lt;OPTION&gt; [INFILE] [OUTFILE]
+mrnet_topgen [OPTIONS] TOPOLOGY_SPEC [INFILE] [OUTFILE]
 
-Create a MRNet topology specification from machine list in INFILE
-or standard input, and writes output to OUTFILE or standard output.
+Create a MRNet topology from the machines listed in [INFILE],
+or standard input, and writes output to [OUTFILE], or standard output.
 
-        -b topology, --balanced=topology
-                Create a balanced tree using "topology" specification. The specification
-                is in the format F^D, where F is the fan-out (or out-degree) and D is the
-                tree depth. The number of tree leaves (or back-ends) will be F^D.
+The format of the input machine list is one machine specification per line,
+where each specification is of the form "host[:num-processors]".
 
-                Example: "16^3" means a tree of depth 3 with fan-out 16, with 4096 leaves.
+         OPTIONS:
 
-        -o topology, --other=topology
-                Create a generic tree using "topology" specification. The specification
-                for this option is (the agreeably complicated) N:N,N,N:... where N specifies
-                the number of children a node has, ',' distinguishes nodes on the same level,
-                and ':' separates the tree into levels.
+         -m max-host-procs, --maxprocs=max-host-procs
+                 Specify the maximum number of processes to place on any machine,
+                 in which case the number of processes allocated to a machine will be
+                 the minimum of its processor count and "max-host-procs".
 
-                Example 1: "2:2,2" specifies a tree where the root has 2 children
-                           and each child on the 2nd level has 2 children.
-                Example 2: "2:8,4" specifies a tree where the root has 2 children.
-                           At the 2nd level, the 1st child has 8 children, and the
-                           2nd child has 4 children
+         TOPOLOGIES:
+
+         -b topology, --balanced=topology
+                 Create a balanced tree using "topology" specification. The specification
+                 is in the format F^D, where F is the fan-out (or out-degree) and D is the
+                 tree depth. The number of tree leaves (or back-ends) will be F^D.
+                 An alternative specification is FxFxF, where the fan-out at each level
+                 is specified explicitly and can differ between levels.
+
+                 Example: "16^3" is a tree of depth 3 with fan-out 16, with 4096 leaves.
+                 Example: "2x4x8" is a tree of depth 3 with 64 leaves.
+
+         -k topology, --knomial=topology
+                 Create a k-nomial tree using "topology" specification. The specification
+                 is in the format K@N, where K is the k-factor (&#8805;2) and N is the total
+                 number of tree nodes. The number of tree leaves (or back-ends) will be
+                 (N/K)*(K-1).
+
+                 Example: "2@128" is a binomial tree of 128 nodes, with 64 leaves.
+                 Example: "3@27" is a trinomial tree of 27 nodes, with 18 leaves.
+
+         -o topology, --other=topology
+                 Create a generic tree using "topology" specification. The specification
+                 for this option is (the agreeably complicated) N:N,N,N:... where N is
+                 the number of children, ',' distinguishes nodes on the same level,
+                 and ':' separates the tree into levels.
+
+                 Example: "2:8,4" is a tree where the root has 2 children,
+                          the 1st child has 8 children, and the
+                          2nd child has 4 children.
+
+
 </pre><p>
-The specified input machine list must contain enough hosts
-to support the entire process tree. mrnet_topgen assumes one process will
-be placed on each host. To place multiple processes on the same host, the
-list should contain the host's name multiple times.
-</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="adding_filters"></a>Chapter 7. Adding New Filters</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2654031">Defining an MRNet Filter</a></span></dt><dt><span class="sect1"><a href="#id2654129">Creating and Using MRNet Filter Shared Object Files</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2654031"></a>Defining an MRNet Filter</h2></div></div></div><p>
+</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="adding_filters"></a>Chapter 7. Adding New Filters</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2704162">Defining an MRNet Filter</a></span></dt><dt><span class="sect1"><a href="#id2704730">Creating and Using MRNet Filter Shared Object Files</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2704162"></a>Defining an MRNet Filter</h2></div></div></div><p>
 A filter function has the following signature
 </p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">filter_name</b>(</code></td><td><var class="pdparam">packets_in</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">packets_out</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">packets_out_reverse</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">local_storage</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">config_params</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>std::vector&lt; PacketPtr &gt; &amp;  </td><td><var class="pdparam">packets_in</var>;</td></tr><tr><td>std::vector&lt; PacketPtr &gt; &amp;  </td><td><var class="pdparam">packets_out</var>;</td></tr><tr><td>std::vector&lt; PacketPtr &gt; &amp;  </td><td><var class="pdparam">packets_out_reverse</var>;</td></tr><tr><td>void **  </td><td><var class="pdparam">local_storage</var>;</td></tr><tr><td>PacketPtr &amp;  </td><td><var class="pdparam">config_params</var>;</td></tr></table></div><p>
 <code class="varname">packets_in</code> is a reference to a vector of Packets serving
@@ -721,7 +747,7 @@ the suffix "_format_string". For instance, if the filter function is named
 The value of this string will be the MRNet format string describing the
 format of data that the filter can operate on. A value of <code class="literal">""</code>
  denotes that the filter can operate on data of arbitrary value.
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2654129"></a>Creating and Using MRNet Filter Shared Object Files</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2704730"></a>Creating and Using MRNet Filter Shared Object Files</h2></div></div></div><p>
 This topic currently pertains to use with the GNU C++ compiler only.
 </p><p>
 Since we use the C facility <code class="function">dlopen()</code> to dynamically
@@ -749,7 +775,7 @@ may be a number of flag characters. <span class="emphasis"><em>u</em></span>,
 <span class="emphasis"><em>h</em></span>, <span class="emphasis"><em>l</em></span>, and <span class="emphasis"><em>a</em></span>
 are special modifiers meaning unsigned, short, long and array, respectivley.
 The full set of conversions are:
-</p><div class="informaltable"><table border="1"><colgroup><col><col></colgroup><tbody><tr><td>c</td><td>Matches a signed 8-bit character</td></tr><tr><td>uc</td><td>Matches an unsigned 8-bit character</td></tr><tr><td>ac</td><td>Matches an array of signed 8-bit characters</td></tr><tr><td>auc</td><td>Matches an array of unsigned 8-bit characters</td></tr><tr><td>hd</td><td>Matches a signed 16-bit decimal integer</td></tr><tr><td>uhd</td><td>Matches an unsigned 16-bit decimal integer</td></tr><tr><td>ahd</td><td>Matches an array of signed 16-bit decimal integers</td></tr><tr><td>auhd</td><td>Matches an array of unsigned 16-bit decimal integers</td></tr><tr><td>d</td><td>Matches a signed 32-bit decimal integer</td></tr><tr><td>ud</td><td>Matches an unsigned 32-bit decimal integer</td></tr><tr><td>ad</td><td>Matches an array of signed 32-bit decimal integers</td></tr><tr><td>aud</td><td>Matches an array of unsigned 32-bit decimal integers</td></tr><tr><td>ld</td><td>Matches a signed 64-bit decimal integer</td></tr><tr><td>uld</td><td>Matches an unsigned 64-bit decimal integer</td></tr><tr><td>ald</td><td>Matches an array of signed 64-bit decimal integers</td></tr><tr><td>auld</td><td>Matches an array of unsigned 64-bit decimal integers</td></tr><tr><td>f</td><td>Matches a 32-bit floating-point number</td></tr><tr><td>af</td><td>Matches an array of 32-bit floating-point numbers</td></tr><tr><td>lf</td><td>Matches a 64-bit floating-point number</td></tr><tr><td>alf</td><td>Matches an array of 64-bit floating-point numbers</td></tr><tr><td>s</td><td>Matches a null-terminated character string.</td></tr><tr><td>as</td><td>Matches an array of null-terminated character strings.</td></tr></tbody></table></div><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3>All array format specifiers, "a*", require an extra <span class="emphasis"><em>implicit</em></span> length parameter of type <span class="type">unsigned int</span> to be specified. E.g., send("%d %af", integer_val, float_array_pointer, float_array_length)</div></div><div class="appendix" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="example"></a>Appendix B. A Complete MRNet Example: Integer Addition</h2></div></div></div><div class="example"><a name="id2654987"></a><p class="title"><b>Example B.1. A Complete MRNet Front-End</b></p><pre class="programlisting">
+</p><div class="informaltable"><table border="1"><colgroup><col><col></colgroup><tbody><tr><td>c</td><td>Matches a signed 8-bit character</td></tr><tr><td>uc</td><td>Matches an unsigned 8-bit character</td></tr><tr><td>ac</td><td>Matches an array of signed 8-bit characters</td></tr><tr><td>auc</td><td>Matches an array of unsigned 8-bit characters</td></tr><tr><td>hd</td><td>Matches a signed 16-bit decimal integer</td></tr><tr><td>uhd</td><td>Matches an unsigned 16-bit decimal integer</td></tr><tr><td>ahd</td><td>Matches an array of signed 16-bit decimal integers</td></tr><tr><td>auhd</td><td>Matches an array of unsigned 16-bit decimal integers</td></tr><tr><td>d</td><td>Matches a signed 32-bit decimal integer</td></tr><tr><td>ud</td><td>Matches an unsigned 32-bit decimal integer</td></tr><tr><td>ad</td><td>Matches an array of signed 32-bit decimal integers</td></tr><tr><td>aud</td><td>Matches an array of unsigned 32-bit decimal integers</td></tr><tr><td>ld</td><td>Matches a signed 64-bit decimal integer</td></tr><tr><td>uld</td><td>Matches an unsigned 64-bit decimal integer</td></tr><tr><td>ald</td><td>Matches an array of signed 64-bit decimal integers</td></tr><tr><td>auld</td><td>Matches an array of unsigned 64-bit decimal integers</td></tr><tr><td>f</td><td>Matches a 32-bit floating-point number</td></tr><tr><td>af</td><td>Matches an array of 32-bit floating-point numbers</td></tr><tr><td>lf</td><td>Matches a 64-bit floating-point number</td></tr><tr><td>alf</td><td>Matches an array of 64-bit floating-point numbers</td></tr><tr><td>s</td><td>Matches a null-terminated character string.</td></tr><tr><td>as</td><td>Matches an array of null-terminated character strings.</td></tr></tbody></table></div><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3>All array format specifiers, "a*", require an extra <span class="emphasis"><em>implicit</em></span> length parameter of type <span class="type">unsigned int</span> to be specified. E.g., send("%d %af", integer_val, float_array_pointer, float_array_length)</div></div><div class="appendix" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="example"></a>Appendix B. A Complete MRNet Example: Integer Addition</h2></div></div></div><div class="example"><a name="id2705016"></a><p class="title"><b>Example B.1. A Complete MRNet Front-End</b></p><pre class="programlisting">
 #include "mrnet/MRNet.h"
 #include "IntegerAddition.h"
 
@@ -843,7 +869,7 @@ int main(int argc, char **argv)
 
     return 0;
 }
-</pre></div><div class="example"><a name="id2654770"></a><p class="title"><b>Example B.2. A Complete MRNet Back-End</b></p><pre class="programlisting">
+</pre></div><div class="example"><a name="id2704799"></a><p class="title"><b>Example B.2. A Complete MRNet Back-End</b></p><pre class="programlisting">
 #include "mrnet/MRNet.h"
 #include "IntegerAddition.h"
 
@@ -892,7 +918,7 @@ int main(int argc, char **argv)
 
     return 0;
 }
-</pre></div><div class="example"><a name="id2655050"></a><p class="title"><b>Example B.3. An MRNet Filter: Integer Addition</b></p><pre class="programlisting">
+</pre></div><div class="example"><a name="id2705080"></a><p class="title"><b>Example B.3. An MRNet Filter: Integer Addition</b></p><pre class="programlisting">
 extern "C" {
 
 //Must Declare the format of data expected by the filter
@@ -918,7 +944,7 @@ void IntegerAdd( std::vector&lt; PacketPtr &gt; &amp; packets_in,
 }
 
 } /* extern "C" */
-</pre></div><div class="example"><a name="id2654787"></a><p class="title"><b>Example B.4. An MRNet Topology File</b></p><pre class="programlisting">
+</pre></div><div class="example"><a name="id2704817"></a><p class="title"><b>Example B.4. An MRNet Topology File</b></p><pre class="programlisting">
 nutmeg:0 =&gt; c01:0 c02:0 c03:0 c04:0 ;
 
 c03:0 =&gt; c05:0 ;
