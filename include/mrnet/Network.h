@@ -82,7 +82,11 @@ class Network: public Error {
                                   int aggr_filter_id = TFILTER_ARRAY_CONCAT );
     void print_PerformanceData( perfdata_metric_t metric, perfdata_context_t context );
 
+    // The following is deprecated in favor of get_EventNotificationFd(DATA_EVENT),
+    // and select()ing on these fds will most likely not behave as you might expect
+    // due to recv threads quickly consuming new data
     int get_DataSocketFds( int **oarray, unsigned int *oarray_size ) const;
+
     int get_EventNotificationFd( EventType etyp );
     void clear_EventNotificationFd( EventType etyp );
     void close_EventNotificationFd( EventType etyp );
