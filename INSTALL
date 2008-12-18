@@ -59,7 +59,7 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
   
   * To build the standard MRNet tests:
 
-    UNIX>  make mrnet-tests
+    UNIX>  make tests
 
     After a successful build, the following files will be present: 
       $MRNET_ROOT/bin/$MRNET_ARCH/*_[FE,BE]: MRNet test front-end and back-end programs
