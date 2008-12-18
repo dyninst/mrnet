@@ -412,7 +412,7 @@ bool KnomialTree::initialize_Tree( string &topology_spec,
         }
     }
     if( hostids.size() < num_nodes ) {
-        fprintf( stderr, "Not enough hosts(%u) for topology %s\n", 
+        fprintf( stderr, "Not enough hosts(%zu) for topology %s\n", 
                  hostids.size(), topology_spec.c_str() );
         exit(-1);
     }
@@ -575,7 +575,7 @@ bool GenericTree::initialize_Tree( string &topology_spec, list< pair<string,unsi
             cur_num_children = cur_level_num_children[ i ];
 
             if( next_orphan_iter == hostids.end() ) {
-                fprintf( stderr, "Not enough hosts(%u) for topology %s\n", 
+                fprintf( stderr, "Not enough hosts(%zu) for topology %s\n", 
                          hostids.size(), topology_spec.c_str() );
                 exit(-1);
             }
@@ -591,7 +591,7 @@ bool GenericTree::initialize_Tree( string &topology_spec, list< pair<string,unsi
 
             for( unsigned int j=0; j < cur_num_children; j++ ) {
                 if( next_orphan_iter == hostids.end() ) {
-                    fprintf( stderr, "Not enough hosts(%u) for topology %s\n", 
+                    fprintf( stderr, "Not enough hosts(%zu) for topology %s\n", 
                              hostids.size(), topology_spec.c_str() );
                     exit(-1);
                 }
