@@ -3,8 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "FilterDefinitions.h"
 #include "mrnet/Packet.h"
+#include <vector>
 
 using namespace MRN;
 
