@@ -4,7 +4,7 @@ MRNET_PLATFORM = SET_TO_YOUR_MRNET_PLATFORM
 
 CXX        = g++
 CXXFLAGS   = -g $(INCDIR)
-INCDIR     = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include -I$(MRNET_ROOT)/src
+INCDIR     = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include 
 LIBDIR     = $(MRNET_ROOT)/lib/${MRNET_PLATFORM}
 LIBMRNET   = $(LIBDIR)/libmrnet.a
 LIBXPLAT   = $(MRNET_ROOT)/xplat/libxplat.a
