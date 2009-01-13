@@ -15,8 +15,11 @@ using namespace MRN;
 
 // 'boar' presently reads tuples of a relation sharded across many backends.
 // It concatenates the shards together in parallel and outputs them at the frontend.
-// This code is a dirt-simple starting point for my Pig-on-MRNet work.
-// The next step is build the pipeline code to place in the 'superfilter'.
+// NOTE 1/12/09:
+// At the moment, this code is hardcoded to only send a physical plan corresponding
+// to testing on a single local machine (but will still concatenate data from many machines).
+// Use the following to run the local test:
+// ./boar_frontend ../../tests/topology_files/local-1x1.top ./boar_backend ./boar_filter.so 'test_data.dat' 2
 int
 main(
     int argc,
@@ -58,9 +61,23 @@ main(
     // TODO:
     // get logical plan from Hadoop
     // translate into a physical_plan for given MRNet TBON
-    // send a description of the plan to all the nodes so they can act accordingly 
-    physical_plan plan;
-    stream->set_FilterParameters(true, "%s", plan.get_manifest().c_str());
+    // send a description of the plan to all the nodes so they can act accordingly
+    // for now, let's use a handcrafted physical execution plan:
+    // node0:LOAD -> node1:STORE
+    physical_operator frontend, backend;
+    frontend.operator_id = 0;
+    frontend.host_node_id = 0;
+    frontend.op_type = LOAD;
+    backend.operator_id = 1;
+    backend.host_node_id = 0;
+    backend.op_type = STORE;
+    frontend.outputs.push_back(1);
+    backend.inputs.push_back(0);
+    physical_plan pp;
+    pp.add_operator(frontend);
+    pp.add_operator(backend);
+    char * parameters = copy_into_new_buffer(pp.get_manifest());
+    stream->set_FilterParameters(true, "%s", parameters);
 
     // TODO:
     // nail down the format of a START message that contains:
@@ -80,7 +97,7 @@ main(
 		ERROR << "stream::flush()\n";
 		return -1;
 	}
-    
+
     char * in_buffer;
     PacketPtr p;
     int tag;
@@ -114,6 +131,7 @@ main(
         INFO << "frontend received tuple {" << in_buffer << "}\n";
     }
 
+    //delete parameters;
 	delete network; // force all nodes to exit
 	INFO << "network closed at frontend\n";
 	return 0;

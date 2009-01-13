@@ -36,6 +36,7 @@ Protocol;
 typedef enum
 {
     LOAD,
+    STORE,
     FILTER,
     ORDER,
     CROSS,
