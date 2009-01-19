@@ -16,6 +16,7 @@ using std::ofstream;
 #include "message_processing.h"
 #include "logger.h"
 #include "physical_plan.h"
+#include "types_visitor.h"
 
 using namespace MRN;
 

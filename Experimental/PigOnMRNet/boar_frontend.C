@@ -4,6 +4,7 @@
 #include "boar.h"
 #include "logger.h"
 #include "physical_plan.h"
+#include "types_visitor.h"
 
 #include <fstream>
 using std::ofstream;

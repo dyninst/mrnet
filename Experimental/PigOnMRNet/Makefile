@@ -15,7 +15,7 @@ LDFLAGS    = -rdynamic
 SOFLAGS    = -fPIC -shared -rdynamic
 
 EXEC_NAME = boar
-TARGETS   = $(EXEC_NAME)_frontend $(EXEC_NAME)_backend $(EXEC_NAME)_filter.so
+TARGETS   = $(EXEC_NAME)_frontend $(EXEC_NAME)_backend $(EXEC_NAME)_filter.so test_types_visitor
 PREREQS   = .set_mrnet_dir .set_platform
 
 .PHONY: all clean
@@ -35,20 +35,26 @@ all: .READY $(TARGETS)
 	@touch -a .set_platform
     endif
 
-$(EXEC_NAME)_frontend: $(EXEC_NAME)_frontend.C boar.h logger.h physical_plan.o $(PREREQS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) physical_plan.o -o $@ $(EXEC_NAME)_frontend.C $(LIBS)
+$(EXEC_NAME)_frontend: $(EXEC_NAME)_frontend.C boar.h logger.h physical_plan.o types_visitor.o $(PREREQS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) physical_plan.o types_visitor.o -o $@ $(EXEC_NAME)_frontend.C $(LIBS)
 
-$(EXEC_NAME)_filter.so: $(EXEC_NAME)_filter.C logger.h physical_plan.o $(PREREQS)
-	$(CXX) $(CXXFLAGS) $(SOFLAGS) physical_plan.o -o $@ $(EXEC_NAME)_filter.C
+$(EXEC_NAME)_filter.so: $(EXEC_NAME)_filter.C logger.h physical_plan.o types_visitor.o $(PREREQS)
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) physical_plan.o types_visitor.o -o $@ $(EXEC_NAME)_filter.C
   
-$(EXEC_NAME)_backend: $(EXEC_NAME)_backend.C boar.h message_processing.h logger.h input_reader.o $(PREREQS)
+$(EXEC_NAME)_backend: $(EXEC_NAME)_backend.C boar.h message_processing.h logger.h input_reader.o types_visitor.o $(PREREQS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) input_reader.o -o $@ $(EXEC_NAME)_backend.C $(LIBS)
+
+test_types_visitor: test_types_visitor.C boar.h types_visitor.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) types_visitor.o -o $@ test_types_visitor.C $(LIBS)
 
 input_reader.o: input_reader.C input_reader.h $(PREREQS)
 	$(CXX) $(CXXFLAGS) -c input_reader.C
 
 physical_plan.o: physical_plan.C physical_plan.h physical_operator.h $(PREREQS)
 	$(CXX) $(CXXFLAGS) -c physical_plan.C
+
+types_visitor.o: types_visitor.C types_visitor.h pig_types.h $(PREREQS)
+	$(CXX) $(CXXFLAGS) -c types_visitor.C
 
 clean:
 	/bin/rm -f *.txt *.o *~ $(TARGETS) $(PREREQS)
