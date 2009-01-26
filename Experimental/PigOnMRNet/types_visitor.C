@@ -1,6 +1,11 @@
 
 #include "types_visitor.h"
 
+types_visitor::types_visitor(istream* stream)
+{
+    is = stream;
+}
+
 types_visitor::types_visitor(ostream* stream)
 {
     os = stream;
@@ -142,5 +147,121 @@ void types_visitor::serialize_map(map< simple_item*, complex_item* >* map)
         serialize_simple_item(at->first);
         serialize_complex_item(at->second);
     }
+}
+
+simple_item* types_visitor::deserialize_simple_item(uint type)
+{
+    simple_item* si = create_simple_item(type);
+    switch(type)
+    {
+    case SIMPLE_INTEGER: int i_value;
+                         is->read((char*)&i_value, sizeof(int));
+                         si->data._int = i_value;
+                         break;
+    case SIMPLE_LONG:    long l_value;
+                         is->read((char*)&l_value, sizeof(int));
+                         si->data._long = l_value;
+                         break; 
+    case SIMPLE_FLOAT:   float f_value;
+                         is->read((char*)&f_value, sizeof(int));
+                         si->data._float = f_value;
+                         break;
+    case SIMPLE_DOUBLE:  double d_value;
+                         is->read((char*)&d_value, sizeof(int));
+                         si->data._double = d_value;
+                         break;
+    case SIMPLE_STRING:  // TODO
+                         break;
+    }
+    return si;
+}
+
+complex_item* types_visitor::deserialize_complex_item()
+{    
+    uint type;
+    is->read((char*)&type, sizeof(uint));
+    complex_item* ci = create_complex_item(type);
+    simple_item* new_si;
+
+    if(is_simple(type))
+    {
+        new_si = deserialize_simple_item(type);
+        ci->type = COMPLEX_SIMPLE;
+        ci->data._simple = new_si;
+        return ci;
+    }
+
+    vector< complex_item* >* new_tuple;
+    set< complex_item* >* new_bag;
+    map< simple_item*, complex_item* >* new_map;
+    
+    (void)new_tuple;
+    (void)new_bag;
+    (void)new_map;
+
+    switch(type)
+    {
+    case COMPLEX_TUPLE:  new_tuple = deserialize_tuple();
+                         ci->type = COMPLEX_TUPLE;
+                         ci->data._tuple = new_tuple;
+                         break;
+    case COMPLEX_BAG:    new_bag = deserialize_bag();
+                         ci->type = COMPLEX_BAG;
+                         ci->data._bag = new_bag;
+                         break;
+    case COMPLEX_MAP:    new_map = deserialize_map();
+                         ci->type = COMPLEX_MAP;
+                         ci->data._map = new_map;
+                         break;
+    default:             cerr << "encountered unknown type";
+                         break; // TODO: throw something here
+    }
+    return ci;
+}
+
+vector< complex_item* >*  types_visitor::deserialize_tuple()
+{
+    vector< complex_item* >* new_tuple = new vector< complex_item* >();
+    complex_item* new_item;
+    size_t tuple_size;
+    is->read((char*)&tuple_size, sizeof(size_t));
+    for(uint i = 0; i < tuple_size; ++i)
+    {
+        new_item = deserialize_complex_item();
+        new_tuple->push_back(new_item);
+    }
+    return new_tuple;
+}
+
+set< complex_item* >* types_visitor::deserialize_bag()
+{
+    set< complex_item* >* new_bag = new set< complex_item* >();
+    complex_item* new_item;
+    size_t bag_size;
+    is->read((char*)&bag_size, sizeof(size_t));
+    for(uint i = 0; i < bag_size; ++i)
+    {
+        new_item = deserialize_complex_item();
+        new_bag->insert(new_item);
+    }
+    return new_bag;
+}
+
+map< simple_item*, complex_item* >* types_visitor::deserialize_map()
+{
+    map< simple_item*, complex_item* >* new_map = new map< simple_item*, complex_item* >();
+    complex_item* new_ci;
+    simple_item* new_si;
+    size_t map_size;
+    is->read((char*)&map_size, sizeof(size_t));
+    for(uint i = 0; i < map_size; ++i)
+    {
+        uint type;
+        is->read((char*)&type, sizeof(uint));
+        new_si = deserialize_simple_item(type);
+        new_ci = deserialize_complex_item();       
+        new_map->insert(make_pair(new_si, new_ci));
+    }
+    return new_map;
 }
 

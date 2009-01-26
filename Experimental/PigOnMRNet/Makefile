@@ -1,8 +1,8 @@
 
-#MRNET_ROOT = /home/jolly/Documents/Research/mrnet
-#MRNET_PLATFORM = i686-pc-linux-gnu
-MRNET_ROOT = SET_TO_YOUR_MRNET_DIR
-MRNET_PLATFORM = SET_TO_YOUR_MRNET_PLATFORM
+MRNET_ROOT = /home/jolly/Documents/Research/mrnet
+MRNET_PLATFORM = i686-pc-linux-gnu
+#MRNET_ROOT = SET_TO_YOUR_MRNET_DIR
+#MRNET_PLATFORM = SET_TO_YOUR_MRNET_PLATFORM
 
 CXX        = g++
 CXXFLAGS   = -g -pedantic -Wall $(INCDIR)
@@ -35,17 +35,17 @@ all: .READY $(TARGETS)
 	@touch -a .set_platform
     endif
 
-$(EXEC_NAME)_frontend: $(EXEC_NAME)_frontend.C boar.h logger.h physical_plan.o types_visitor.o $(PREREQS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) physical_plan.o types_visitor.o -o $@ $(EXEC_NAME)_frontend.C $(LIBS)
+$(EXEC_NAME)_frontend: $(EXEC_NAME)_frontend.C boar.h logger.h physical_plan.o types_visitor.o pig_types.o $(PREREQS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) physical_plan.o types_visitor.o pig_types.o -o $@ $(EXEC_NAME)_frontend.C $(LIBS)
 
-$(EXEC_NAME)_filter.so: $(EXEC_NAME)_filter.C logger.h physical_plan.o types_visitor.o $(PREREQS)
-	$(CXX) $(CXXFLAGS) $(SOFLAGS) physical_plan.o types_visitor.o -o $@ $(EXEC_NAME)_filter.C
-  
-$(EXEC_NAME)_backend: $(EXEC_NAME)_backend.C boar.h message_processing.h logger.h input_reader.o types_visitor.o $(PREREQS)
+$(EXEC_NAME)_filter.so: $(EXEC_NAME)_filter.C logger.h physical_plan.o types_visitor.o pig_types.o $(PREREQS)
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) physical_plan.o types_visitor.o pig_types.o -o $@ $(EXEC_NAME)_filter.C
+
+$(EXEC_NAME)_backend: $(EXEC_NAME)_backend.C boar.h message_processing.h logger.h input_reader.o $(PREREQS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) input_reader.o -o $@ $(EXEC_NAME)_backend.C $(LIBS)
 
-test_types_visitor: test_types_visitor.C boar.h types_visitor.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) types_visitor.o -o $@ test_types_visitor.C $(LIBS)
+test_types_visitor: test_types_visitor.C boar.h types_visitor.o pig_types.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) types_visitor.o pig_types.o -o $@ test_types_visitor.C $(LIBS)
 
 input_reader.o: input_reader.C input_reader.h $(PREREQS)
 	$(CXX) $(CXXFLAGS) -c input_reader.C
@@ -55,6 +55,9 @@ physical_plan.o: physical_plan.C physical_plan.h physical_operator.h $(PREREQS)
 
 types_visitor.o: types_visitor.C types_visitor.h pig_types.h $(PREREQS)
 	$(CXX) $(CXXFLAGS) -c types_visitor.C
+
+pig_types.o: pig_types.C pig_types.h $(PREREQS)
+	$(CXX) $(CXXFLAGS) -c pig_types.C
 
 clean:
 	/bin/rm -f *.txt *.o *~ $(TARGETS) $(PREREQS)

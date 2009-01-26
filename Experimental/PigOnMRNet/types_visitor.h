@@ -4,7 +4,9 @@
 #define types_visitor_h 1
 
 #include <iostream>
+using std::istream;
 using std::ostream;
+using std::cerr;
 
 #include <cstring>
 
@@ -16,8 +18,12 @@ class types_visitor
 {
 public:
 
+    istream* is;
+
     ostream* os;
 
+    types_visitor(istream* stream);
+    
     types_visitor(ostream* stream);
 
     ~types_visitor();
@@ -41,6 +47,16 @@ public:
     void serialize_bag(set< complex_item* >* bag);
     
     void serialize_map(map< simple_item*, complex_item* >* map);
+
+    simple_item* deserialize_simple_item(uint type);
+
+    complex_item* deserialize_complex_item();
+    
+    vector< complex_item* >* deserialize_tuple();
+
+    set< complex_item* >* deserialize_bag();
+    
+    map< simple_item*, complex_item* >* deserialize_map();
 
 };
 
