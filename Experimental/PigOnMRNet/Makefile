@@ -1,8 +1,8 @@
 
-MRNET_ROOT = /home/jolly/Documents/Research/mrnet
-MRNET_PLATFORM = i686-pc-linux-gnu
-#MRNET_ROOT = SET_TO_YOUR_MRNET_DIR
-#MRNET_PLATFORM = SET_TO_YOUR_MRNET_PLATFORM
+#MRNET_ROOT = /home/jolly/Documents/Research/mrnet
+#MRNET_PLATFORM = i686-pc-linux-gnu
+MRNET_ROOT = SET_TO_YOUR_MRNET_DIR
+MRNET_PLATFORM = SET_TO_YOUR_MRNET_PLATFORM
 
 CXX        = g++
 CXXFLAGS   = -g -pedantic -Wall $(INCDIR)

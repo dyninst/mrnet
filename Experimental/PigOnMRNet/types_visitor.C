@@ -80,6 +80,7 @@ void types_visitor::print_map(map< simple_item*, complex_item* >* map)
 
 void types_visitor::serialize_simple_item(simple_item* item)
 {
+    size_t str_len;
     switch(item->type)
     {
     case SIMPLE_INTEGER: os->write((char*)&SIMPLE_INTEGER, sizeof(uint));
@@ -95,7 +96,9 @@ void types_visitor::serialize_simple_item(simple_item* item)
                          os->write((char*)&item->data._long, sizeof(double));
                          break;
     case SIMPLE_STRING:  os->write((char*)&SIMPLE_STRING, sizeof(uint));
-                         os->write(item->data._string, strlen(item->data._string) + 1);
+                         str_len = strlen(item->data._string) + 1;
+                         os->write((char*)&str_len, sizeof(size_t));
+                         os->write(item->data._string, str_len);
                          break;
     default:             break;
     }
@@ -159,18 +162,22 @@ simple_item* types_visitor::deserialize_simple_item(uint type)
                          si->data._int = i_value;
                          break;
     case SIMPLE_LONG:    long l_value;
-                         is->read((char*)&l_value, sizeof(int));
+                         is->read((char*)&l_value, sizeof(long));
                          si->data._long = l_value;
                          break; 
     case SIMPLE_FLOAT:   float f_value;
-                         is->read((char*)&f_value, sizeof(int));
+                         is->read((char*)&f_value, sizeof(float));
                          si->data._float = f_value;
                          break;
     case SIMPLE_DOUBLE:  double d_value;
-                         is->read((char*)&d_value, sizeof(int));
+                         is->read((char*)&d_value, sizeof(double));
                          si->data._double = d_value;
                          break;
-    case SIMPLE_STRING:  // TODO
+    case SIMPLE_STRING:  size_t s_size;
+                         is->read((char*)&s_size, sizeof(size_t));
+                         char* s_value = new char[s_size];
+                         is->read(s_value, s_size);
+                         si->data._string = s_value;
                          break;
     }
     return si;
