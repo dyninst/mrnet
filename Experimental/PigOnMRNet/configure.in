@@ -1,0 +1,6 @@
+AC_INIT(boar_frontend.C)
+AM_INIT_AUTOMAKE(boar_frontend,1.0)
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_INSTALL
+AC_OUTPUT(Makefile)

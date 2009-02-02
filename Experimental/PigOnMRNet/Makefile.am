@@ -1,0 +1,11 @@
+LIBS = @top_srcdir@/../../lib/i686-pc-linux-gnu/libmrnet.a @top_srcdir@/../../xplat/libxplat.a
+bin_PROGRAMS = boar_frontend boar_backend boar_filter.so
+boar_frontend_SOURCES = boar_frontend.C physical_plan.C types_visitor.C pig_types.C
+boar_filter_so = boar_filter.C physical_plan.C types_visitor.C pig_types.C
+boar_backend_SOURCES = boar_backend.C input_reader.C
+INCLUDES = -I@top_srcdir@/../../xplat/include/ -I@top_srcdir@/../../include/ -I@top_srcdir@/../../src/ 
+boar_backend_LDADD = $(LIBS) -lfl -lm -lpthread -ldl
+boar_backend_LDFLAGS = -rdynamic
+boar_frontend_LDADD = $(LIBS) -lfl -lm -lpthread -ldl
+boar_frontend_LDFLAGS = -rdynamic
+boar_filter_so_LDFLAGS = -fPIC -shared -rdynamic
