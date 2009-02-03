@@ -1,11 +1,17 @@
-LIBS = @top_srcdir@/../../lib/i686-pc-linux-gnu/libmrnet.a @top_srcdir@/../../xplat/libxplat.a
-bin_PROGRAMS = boar_frontend boar_backend boar_filter.so
-boar_frontend_SOURCES = boar_frontend.C physical_plan.C types_visitor.C pig_types.C
-boar_filter_so = boar_filter.C physical_plan.C types_visitor.C pig_types.C
-boar_backend_SOURCES = boar_backend.C input_reader.C
-INCLUDES = -I@top_srcdir@/../../xplat/include/ -I@top_srcdir@/../../include/ -I@top_srcdir@/../../src/ 
-boar_backend_LDADD = $(LIBS) -lfl -lm -lpthread -ldl
+
+INCLUDES = -I@top_srcdir@/../../src/ 
+bin_PROGRAMS = boar_frontend boar_backend
+AM_CXXFLAGS = -g -pedantic -Wall
+
+boar_backend_SOURCES = boar_backend.C input_reader.C input_reader.h
+boar_backend_LDADD = -lmrnet -lxplat -lfl -lm -lpthread -ldl
 boar_backend_LDFLAGS = -rdynamic
-boar_frontend_LDADD = $(LIBS) -lfl -lm -lpthread -ldl
+
+boar_frontend_SOURCES = boar_frontend.C physical_plan.C physical_plan.h types_visitor.C types_visitor.h pig_types.C pig_types.h
+boar_frontend_LDADD = -lmrnet -lxplat -lfl -lm -lpthread -ldl
 boar_frontend_LDFLAGS = -rdynamic
-boar_filter_so_LDFLAGS = -fPIC -shared -rdynamic
+
+lib_LTLIBRARIES = libboarfilter.la
+libboarfilter_la_SOURCES = boar_filter.C physical_plan.C physical_plan.h types_visitor.C types_visitor.h pig_types.C pig_types.h
+libboarfilter_la_CXXFLAGS = $(AM_CFLAGS)
+
