@@ -1,4 +1,13 @@
 
+#include <vector>
+using std::vector;
+
+#include <map>
+using std::map;
+
+#include <set>
+using std::set;
+
 #include <iostream>
 using std::ios;
 using std::cerr;
