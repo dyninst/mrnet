@@ -15,6 +15,8 @@ using std::ofstream;
 
 #include "message_processing.h"
 #include "logger.h"
+#include "physical_plan.h"
+#include "types_visitor.h"
 
 using namespace MRN;
 
@@ -43,7 +45,10 @@ superfilter(
     vector< tuple > output_tuples;
 
     params->unpack("%s", &in_buffer);
-    INFO << "filter params: " << in_buffer << "\n";
+    physical_plan pp;
+    pp.load_manifest(in_buffer);
+    vector<physical_operator> filter_ops;
+    pp.get_operators_for_host(node_rank, filter_ops);
 
     for(i = 0; i < packets_in.size(); ++i)
     {
@@ -59,7 +64,7 @@ superfilter(
     }
     
     // TODO:
-    // feed tuples for processing into microfilters here
+    // apply filter_ops to input data here
 
     for(i = 0; i < output_tuples.size(); ++i)
     {

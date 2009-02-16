@@ -12,6 +12,8 @@ using std::stringstream;
 #include <vector>
 using std::vector;
 
+#include <cstdlib>
+
 #include "boar.h"
 
 inline

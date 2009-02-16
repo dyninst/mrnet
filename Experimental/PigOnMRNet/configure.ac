@@ -1,0 +1,7 @@
+AC_INIT(boar, 0.1, jolly@cs.wisc.edu)
+AM_INIT_AUTOMAKE(boar_frontend.C, 0.1)
+AC_CONFIG_MACRO_DIR(m4)
+AC_PROG_CXX
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+AC_OUTPUT(Makefile)

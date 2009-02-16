@@ -19,6 +19,7 @@ using std::stringstream;
 
 #include "message_processing.h"
 #include "input_reader.h"
+#include "types_visitor.h"
 
 using namespace MRN;
 
