@@ -3,13 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <ctype.h>
-#include <stdio.h>
-#include <errno.h>
-
-#include "mrnet/Tree.h"
 #include "utils.h"
-
+#include "mrnet/Tree.h"
 #include "xplat/Tokenizer.h"
 
 using namespace std;

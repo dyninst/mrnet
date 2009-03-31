@@ -3,21 +3,17 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <math.h>
 #include <sstream>
 #include <set>
 #include <vector>
 #include <time.h>
 
-#include "mrnet/CommunicationNode.h"
-#include "mrnet/NetworkTopology.h"
-#include "mrnet/MRNet.h"
+#include "config.h"
+#include "FailureManagement.h"
 #include "Router.h"
 #include "SerialGraph.h"
 #include "utils.h"
-#include "config.h"
-#include "FailureManagement.h"
+#include "mrnet/MRNet.h"
 #include "xplat/Tokenizer.h"
 
 using namespace std;

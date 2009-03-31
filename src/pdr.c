@@ -15,18 +15,7 @@
 #include "pdr.h"
 #include "pdr_mem.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-
-#include <sys/types.h>
-//#include <unistd.h>
-
-
 #define LASTUNSIGNED    ((uint32_t) 0-1)
-
-
 
 /*
  * Free a data structure using PDR

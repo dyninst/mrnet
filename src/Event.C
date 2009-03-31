@@ -3,11 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "mrnet/Event.h"
 #include "utils.h"
-
-#include <stdio.h>
-#include <errno.h>
+#include "mrnet/Event.h"
 
 using namespace std;
 

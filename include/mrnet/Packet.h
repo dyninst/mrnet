@@ -6,10 +6,10 @@
 #if !defined(__packet_h)
 #define __packet_h 1
 
-#include <stdarg.h>
+#include <cstdarg>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 
+#include "boost/shared_ptr.hpp"
 #include "mrnet/DataElement.h"
 #include "mrnet/Error.h"
 #include "xplat/Mutex.h"

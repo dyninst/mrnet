@@ -3,9 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdlib.h>
-#include <stdio.h>
-
+#include <cstdlib>
+#include <cstdio>
 
 #include "pdr.h"
 #include "pdr_mem.h"

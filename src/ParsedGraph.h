@@ -9,11 +9,10 @@
 #include <vector>
 #include <map>
 #include <string>
-#include <stdio.h>
 
+#include "SerialGraph.h"
 #include "utils.h"
 #include "mrnet/Error.h"
-#include "SerialGraph.h"
 
 namespace MRN
 {

@@ -8,7 +8,8 @@
 
 #define FAILURE_REPORTING_PORT 45678
 
-#include "mrnet/Network.h"
+#include "utils.h"
+#include "mrnet/MRNet.h"
 
 #include <map>
 

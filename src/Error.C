@@ -3,9 +3,7 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdarg.h>
-
+#include "utils.h"
 #include "mrnet/Error.h"
 
 namespace MRN

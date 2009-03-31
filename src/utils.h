@@ -11,16 +11,22 @@
 #include "xplat/TLSKey.h"
 #include "xplat/Thread.h"
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-#include <math.h>
+#include <cassert>
+#include <cctype>
+#include <cerrno>
+#include <climits>
+#include <cmath>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 #include <sys/types.h>
 
 #ifndef os_windows
 
 # include <signal.h>
+# include <unistd.h>
 # include <sys/time.h>
 
 #else

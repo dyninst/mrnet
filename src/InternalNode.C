@@ -3,14 +3,11 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdio.h>
-
 #include "EventDetector.h"
 #include "InternalNode.h"
-#include "utils.h"
 #include "Router.h"
+#include "utils.h"
 #include "mrnet/MRNet.h"
-#include "mrnet/NetworkTopology.h"
 
 namespace MRN
 {

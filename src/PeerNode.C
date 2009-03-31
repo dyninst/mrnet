@@ -3,18 +3,16 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdio.h>
-
-#include "PeerNode.h"
+#include "config.h"
 #include "ChildNode.h"
 #include "ParentNode.h"
+#include "PeerNode.h"
 #include "utils.h"
-#include "config.h"
+#include "mrnet/MRNet.h"
 #include "xplat/Process.h"
 #include "xplat/SocketUtils.h"
 #include "xplat/Error.h"
 #include "xplat/NetUtils.h"
-#include "mrnet/MRNet.h"
 
 using namespace std;
 

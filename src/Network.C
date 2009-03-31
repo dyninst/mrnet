@@ -6,28 +6,22 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-#include <sys/types.h>
-#include <ctype.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stdio.h>
+
+#include "config.h"
+#include "BackEndNode.h"
+#include "ChildNode.h"
+#include "Filter.h"
+#include "FrontEndNode.h"
+#include "InternalNode.h"
+#include "ParentNode.h"
+#include "ParsedGraph.h"
+#include "PeerNode.h"
+#include "utils.h"
 
 #include "mrnet/MRNet.h"
-#include "mrnet/NetworkTopology.h"
 #include "xplat/NetUtils.h"
 #include "xplat/Thread.h"
 using namespace XPlat;
-
-#include "utils.h"
-#include "config.h"
-#include "FrontEndNode.h"
-#include "BackEndNode.h"
-#include "InternalNode.h"
-#include "ParentNode.h"
-#include "ChildNode.h"
-#include "ParsedGraph.h"
-#include "Filter.h"
-#include "PeerNode.h"
 
 extern FILE *mrnin;
 //extern int mrn_flex_debug;

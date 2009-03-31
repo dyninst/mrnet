@@ -3,17 +3,10 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-
-#include <sys/types.h>
-//#include <unistd.h>
-
-#include "utils.h"
 #include "byte_order.h"
-#include "pdr_mem.h"
 #include "config.h"
+#include "pdr_mem.h"
+#include "utils.h"
 
 static struct pdr_ops pdrmem_ops = {
     pdrmem_putchar,

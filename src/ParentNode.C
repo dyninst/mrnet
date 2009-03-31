@@ -3,25 +3,22 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdio.h>
 #include <set>
 
-#include "mrnet/Types.h"
-#include "xplat/Process.h"
-#include "xplat/Error.h"
-#include "ParentNode.h"
-#include "ChildNode.h"
-#include "InternalNode.h"
-#include "utils.h"
 #include "config.h"
-#include "SerialGraph.h"
+#include "ChildNode.h"
+#include "EventDetector.h"
+#include "Filter.h"
+#include "InternalNode.h"
+#include "ParentNode.h"
 #include "PeerNode.h"
 #include "Router.h"
-#include "Filter.h"
-#include "EventDetector.h"
-#include "mrnet/Event.h"
-#include "mrnet/NetworkTopology.h"
+#include "SerialGraph.h"
+#include "utils.h"
+
 #include "mrnet/MRNet.h"
+#include "xplat/Process.h"
+#include "xplat/Error.h"
 
 namespace MRN
 {

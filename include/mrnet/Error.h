@@ -7,10 +7,7 @@
 #define __Error_h
 
 #include <list>
-#include <cstdlib>
 #include <cstdio>
-#include <errno.h>
-
 #include "mrnet/Types.h"
 
 namespace MRN

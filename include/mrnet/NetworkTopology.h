@@ -6,12 +6,13 @@
 #if !defined(NetworkTopology_h)
 #define NetworkTopology_h 1
 
-#include <vector>
-#include <set>
 #include <map>
+#include <set>
 #include <string>
-#include <stdio.h>
-#include <math.h>
+#include <vector>
+
+#include <cstdio>
+#include <cmath>
 
 #include "mrnet/Error.h"
 #include "mrnet/Network.h"

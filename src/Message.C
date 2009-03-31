@@ -3,17 +3,13 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdarg.h>
-#include <errno.h>
-#include <limits.h>
 #include <fcntl.h>
 
-#include "mrnet/Types.h"
-#include "mrnet/Packet.h"
-#include "pdr.h"
-#include "utils.h"
-#include "PeerNode.h"
 #include "Message.h"
+#include "pdr.h"
+#include "PeerNode.h"
+#include "utils.h"
+#include "mrnet/Packet.h"
 #include "xplat/NCIO.h"
 
 namespace MRN

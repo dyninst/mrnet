@@ -4,13 +4,11 @@
  ****************************************************************************/
 
 #include <sstream>
-#include <stdio.h>
 
-
-#include "NetworkGraph.h"
-#include "CommunicationNode.h"
-#include "utils.h"
 #include "config.h"
+#include "NetworkGraph.h"
+#include "utils.h"
+#include "mrnet/CommunicationNode.h"
 #include "xplat/Tokenizer.h"
 
 namespace MRN

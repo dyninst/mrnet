@@ -3,21 +3,14 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdio.h>
-
-#if !defined(os_windows)
-#include <sys/time.h>
-#include <unistd.h>
-#include <sys/types.h>
-#endif // !defined(os_windows)
-
 #include <list>
 
+#include "InternalNode.h"
+#include "Message.h"
+#include "utils.h"
 #include "mrnet/MRNet.h"
 #include "xplat/NetUtils.h"
-#include "Message.h"
-#include "InternalNode.h"
-#include "utils.h"
+
 
 using namespace MRN;
 using namespace XPlat;
