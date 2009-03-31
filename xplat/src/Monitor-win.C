@@ -14,8 +14,8 @@
 // and Irfan Pyarali, C++ Report, SIGS, Vol 10., No. 5, June 1998.
 //
 
-#include <assert.h>
-#include <limits.h>
+#include <cassert>
+#include <climits>
 #include "xplat/src/Monitor-win.h"
 
 namespace XPlat

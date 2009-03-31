@@ -5,7 +5,7 @@
 
 // $Id: Thread-win.C,v 1.4 2008/10/09 19:53:55 mjbrim Exp $
 #include <windows.h>
-#include <assert.h>
+#include <cassert>
 #include "xplat/Thread.h"
 
 namespace XPlat

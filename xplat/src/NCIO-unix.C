@@ -4,12 +4,12 @@
  ****************************************************************************/
 
 // $Id: NCIO-unix.C,v 1.6 2008/10/09 19:53:58 mjbrim Exp $
+#include <cassert>
+#include <cerrno>
+#include <climits>
+#include <cstdio>
+#include <cstring>
 #include <unistd.h>
-#include <limits.h>
-#include <stdio.h>
-#include <errno.h>
-#include <assert.h>
-#include <string.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
 #include "xplat/NCIO.h"

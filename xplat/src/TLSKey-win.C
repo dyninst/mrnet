@@ -4,7 +4,7 @@
  ****************************************************************************/
 
 // $Id: TLSKey-win.C,v 1.3 2007/01/24 19:34:30 darnold Exp $
-#include <assert.h>
+#include <cassert>
 #include "xplat/src/TLSKey-win.h"
 
 

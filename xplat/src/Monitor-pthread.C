@@ -4,8 +4,8 @@
  ****************************************************************************/
 
 // $Id: Monitor-pthread.C,v 1.7 2008/10/09 19:54:09 mjbrim Exp $
-#include <assert.h>
-#include <errno.h>
+#include <cassert>
+#include <cerrno>
 #include "Monitor-pthread.h"
 
 namespace XPlat

@@ -4,7 +4,7 @@
  ****************************************************************************/
 
 // $Id: SharedObject-unix.C,v 1.4 2007/03/20 23:20:21 darnold Exp $
-#include <stdlib.h>
+#include <cstdlib>
 #include "SharedObject-unix.h"
 
 namespace XPlat

@@ -5,7 +5,7 @@
 
 // $Id: Process-win.C,v 1.8 2007/01/24 19:34:20 darnold Exp $
 #include <winsock2.h>
-#include <string.h>
+#include <cstring>
 #include "xplat/Process.h"
 
 

@@ -4,8 +4,8 @@
  ****************************************************************************/
 
 // $Id: Mutex-pthread.C,v 1.5 2008/10/09 19:54:11 mjbrim Exp $
-#include <assert.h>
-#include <errno.h>
+#include <cassert>
+#include <cerrno>
 #include "Mutex-pthread.h"
 
 namespace XPlat

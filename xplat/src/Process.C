@@ -4,7 +4,7 @@
  ****************************************************************************/
 
 // $Id: Process.C,v 1.8 2008/10/09 19:54:05 mjbrim Exp $
-#include <assert.h>
+#include <cassert>
 #include "xplat/Process.h"
 
 namespace XPlat

@@ -4,16 +4,15 @@
  ****************************************************************************/
 
 // $Id: Process-unix.C,v 1.5 2007/01/24 19:34:19 darnold Exp $
+#include <cassert>
+#include <cerrno>
 #include <cstring>
-#include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
-#include <assert.h>
+#include <unistd.h>
 #include "xplat/Process.h"
 
 namespace XPlat
 {
-
 
 int
 Process::CreateLocal( const std::string& cmd,

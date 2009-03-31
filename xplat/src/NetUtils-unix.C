@@ -4,11 +4,12 @@
  ****************************************************************************/
 
 // $Id: NetUtils-unix.C,v 1.8 2007/08/06 21:18:40 mjbrim Exp $
-#include "xplat/NetUtils.h"
-#include <assert.h>
-#include <unistd.h>
-#include <errno.h>
+#include <cassert>
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
 #include <netdb.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -16,6 +17,7 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include "config.h"
+#include "xplat/NetUtils.h"
 
 #if defined( compiler_sun )
 #include <stropts.h>

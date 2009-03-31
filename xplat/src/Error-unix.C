@@ -4,7 +4,8 @@
  ****************************************************************************/
 
 // $Id: Error-unix.C,v 1.3 2007/01/24 19:33:58 darnold Exp $
-#include <errno.h>
+#include <cstring>
+#include <cerrno>
 #include "xplat/Error.h"
 
 namespace XPlat

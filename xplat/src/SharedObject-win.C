@@ -4,7 +4,7 @@
  ****************************************************************************/
 
 // $Id: SharedObject-win.C,v 1.3 2007/01/24 19:34:24 darnold Exp $
-#include <stdlib.h>
+#include <cstdlib>
 #include "SharedObject-win.h"
 
 namespace XPlat

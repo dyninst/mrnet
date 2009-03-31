@@ -4,6 +4,7 @@
  ****************************************************************************/
 
 // $Id: PathUtils-unix.C,v 1.3 2007/01/24 19:34:17 darnold Exp $
+#include <cstring>
 #include <libgen.h>
 #include "xplat/PathUtils.h"
 

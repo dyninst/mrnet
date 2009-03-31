@@ -6,7 +6,7 @@
 // $Id: NCIO-win.C,v 1.5 2008/10/09 19:54:02 mjbrim Exp $
 
 #include <winsock2.h>
-#include <stdio.h>
+#include <cstdio>
 #include "xplat/NCIO.h"
 
 namespace XPlat

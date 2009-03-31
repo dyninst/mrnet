@@ -4,7 +4,7 @@
  ****************************************************************************/
 
 // $Id: TLSKey-pthread.C,v 1.4 2007/01/24 19:34:28 darnold Exp $
-#include <assert.h>
+#include <cassert>
 #include "TLSKey-pthread.h"
 
 namespace XPlat
