@@ -6,8 +6,7 @@
 // $Id: NetUtils-unix.C,v 1.8 2007/08/06 21:18:40 mjbrim Exp $
 #include <cassert>
 #include <cerrno>
-#include <cstdlib>
-#include <cstring>
+#include <cstdio>
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/socket.h>

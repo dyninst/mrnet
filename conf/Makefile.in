@@ -41,6 +41,7 @@ VPATH   = $(SRCDIR)/src:$(SRCDIR)/tests:$(SRCDIR)/tests/test_Recovery
 CXX = @CXX@
 CXXFLAGS = @CXXFLAGS@ $(INCDIR) $(WARNFLAGS)
 LDFLAGS = @LDFLAGS@
+CN_LDFLAGS = @CN_LDFLAGS@
 SOFLAGS = @SOFLAGS@
 C_AS_CPLUSPLUS = @C_AS_CPLUSPLUS@
 LIBS = $(LIBXPLAT) @LIBS@
@@ -249,7 +250,7 @@ $(LIBXPLAT_SO): xplat-sharedobj
 
 $(BINDIR)/mrnet_commnode: $(COMMNODE_OBJS) $(LIBMRNET) $(LIBXPLAT)
 	@echo Linking `basename $@` ...
-	$(PURIFY) $(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(COMMNODE_OBJS) \
+	$(PURIFY) $(CXX) $(CXXFLAGS) $(CN_LDFLAGS) -o $@ $(COMMNODE_OBJS) \
 	   $(LIBMRNET) $(LIBS)
 
 $(BINDIR)/mrnet_topgen: $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)

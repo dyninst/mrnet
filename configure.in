@@ -12,7 +12,7 @@ abs_srcdir=`cd $srcdir && pwd`
 
 dnl === C++ COMPILERS ===
 dnl TODO: figure out dlopen()/shared object idiosyncracies when using non-GNU compilers
-AC_PROG_CXX(xlC_r CC g++)
+AC_PROG_CXX(xlC_r CC g++ pgCC icpc)
 AC_LANG(C++)
 
 dnl === CONFIGURE OPTIONS
@@ -105,6 +105,34 @@ elif test $COMPILER_TYPE = "forte" ; then
     AC_SUBST(AR)
     ARFLAGS="-xar -o"
     AC_SUBST(ARFLAGS)
+
+elif test $COMPILER_TYPE = "pgi" ; then
+
+    CXXFLAGS="$CXXFLAGS -Dcompiler_pgi -D_GNU_SOURCE"
+    SOFLAGS=" -fPIC -shared"
+
+    if test "$debug_mode" = "yes" ; then
+        CXXFLAGS="$CXXFLAGS -O0"
+    fi
+
+    AC_PATH_PROG(AR, ar)
+    AC_SUBST(AR)
+    ARFLAGS="crv"
+    AC_SUBST(ARFLAGS)
+
+elif test $COMPILER_TYPE = "intel" ; then
+
+    CXXFLAGS="$CXXFLAGS -Dcompiler_intel"
+    SOFLAGS=" -fPIC -shared"
+
+    if test "$debug_mode" = "yes" ; then
+        CXXFLAGS="$CXXFLAGS -O0"
+    fi
+
+    AC_PATH_PROG(AR, ar)
+    AC_SUBST(AR)
+    ARFLAGS="crv"
+    AC_SUBST(ARFLAGS)
 fi
 
 dnl Use OUR debug/optimization levels
@@ -145,7 +173,8 @@ CXXFLAGS="$CXXFLAGS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS"
 case "$host_os" in
   *linux*)
     LIBS="$LIBS -lm -lpthread -ldl"
-    LDFLAGS="-Wl,-E"
+    LDFLAGS="$LDFLAGS -Wl,-E"
+    CN_LDFLAGS="$CN_LDFLAGS -Wl,-E"
     os_release=`uname -r`
     case "$os_release" in
       2.4*)
@@ -202,6 +231,7 @@ AC_LINK_IFELSE( [AC_LANG_PROGRAM([],[])],
 AC_SUBST(CXX)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
+AC_SUBST(CN_LDFLAGS)
 AC_SUBST(SOFLAGS)
 AC_SUBST(C_AS_CPLUSPLUS)
 

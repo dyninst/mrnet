@@ -33,7 +33,10 @@ public:
         in_addr_t iaddr;        // IPv4 address in host byte order
 
     public:
-        NetworkAddress( ): str(""), iaddr( ntohl(INADDR_ANY) ){}
+        NetworkAddress( ): str("")
+        {
+            iaddr = ntohl(INADDR_ANY);
+        }
         NetworkAddress( in_addr_t inaddr );
         NetworkAddress( const NetworkAddress& obj )
           : str( obj.str ),

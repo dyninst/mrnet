@@ -1022,15 +1022,13 @@ void Network::waitfor_NonEmptyStream( void )
                 mrn_dbg(5, mrn_printf(FLF, stderr, "Data found on stream[%d]\n",
                                       (*iter).second->get_Id() ));
                 _streams_sync.Unlock();
+                mrn_dbg_func_end();
                 return;
             }
         }
         mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting on CV[STREAMS_NONEMPTY] ...\n"));
         _streams_sync.WaitOnCondition( STREAMS_NONEMPTY );
     }
-    _streams_sync.Unlock();
-
-    mrn_dbg_func_end();
 }
 
 void Network::signal_NonEmptyStream( void )

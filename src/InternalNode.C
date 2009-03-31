@@ -44,7 +44,7 @@ InternalNode::InternalNode( Network * inetwork,
     }
 
     //start event detection thread
-    if( EventDetector::start( ParentNode::_network ) == -1 ){
+    if( EventDetector::start( ParentNode::_network ) == false ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "start_EventDetectionThread() failed\n" ));
         ParentNode::error( ERR_INTERNAL, ParentNode::_rank, "start_EventDetectionThread failed\n" );
         ChildNode::error( ERR_INTERNAL, ParentNode::_rank, "start_EventDetectionThread failed\n" );
