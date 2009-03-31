@@ -94,7 +94,7 @@ ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
 endif
 
-INCDIR      = -I$(MRNET_ROOT)/src -I$(SRCDIR)/include -I$(SRCDIR)/src -I$(SRCDIR) \
+INCDIR      = -I$(SRCDIR)/include -I$(SRCDIR)/src \
               -I$(SRCDIR)/xplat/include -I$(SRCDIR)/tests
 
 STD_TESTS = $(BINDIR)/test_basic_FE \
