@@ -8,7 +8,7 @@
 #define XPLAT_MONITOR_H
 
 #if !defined(NULL)
-#include <stdlib.h>
+#include <cstdlib>
 #endif // !defined(NULL)
 
 namespace XPlat

@@ -7,8 +7,7 @@
 #ifndef XPLAT_SHARED_OBJECT_H
 #define XPLAT_SHARED_OBJECT_H
 
-#include <string.h>
-
+#include <cstring>
 
 namespace XPlat
 {
