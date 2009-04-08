@@ -2395,7 +2395,9 @@ if test $COMPILER_TYPE = "gnu" ; then
     if test $BUILDSHARED = "yes" ; then
         CXXFLAGS="$CXXFLAGS -fPIC"
     fi
-    SOFLAGS=" -fPIC -shared -rdynamic"
+
+    SOFLAGS="-fPIC -shared -rdynamic"
+
     C_AS_CPLUSPLUS="-x c++"
 
     # Extract the first word of "ar", so it can be a program name with args.
@@ -2444,7 +2446,9 @@ fi
 elif test $COMPILER_TYPE = "aix-native" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_ibm"
-    SOFLAGS=" -G"
+
+    SOFLAGS="-G"
+
     C_AS_CPLUSPLUS="-+"
 
     # Extract the first word of "ar", so it can be a program name with args.
@@ -2496,7 +2500,8 @@ elif test $COMPILER_TYPE = "forte" ; then
     if test $BUILDSHARED = "yes" ; then
         CXXFLAGS="$CXXFLAGS -KPIC"
     fi
-    SOFLAGS=" -G"
+
+    SOFLAGS="-G"
 
     # Extract the first word of "CC", so it can be a program name with args.
 set dummy CC; ac_word=$2
@@ -2544,11 +2549,14 @@ fi
 elif test $COMPILER_TYPE = "pgi" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_pgi -D_GNU_SOURCE"
-    SOFLAGS=" -fPIC -shared"
-
+    if test $BUILDSHARED = "yes" ; then
+        CXXFLAGS="$CXXFLAGS -fPIC"
+    fi
     if test "$debug_mode" = "yes" ; then
         CXXFLAGS="$CXXFLAGS -O0"
     fi
+
+    SOFLAGS="-shared"
 
     # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
@@ -2596,11 +2604,14 @@ fi
 elif test $COMPILER_TYPE = "intel" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_intel"
-    SOFLAGS=" -fPIC -shared"
-
+    if test $BUILDSHARED = "yes" ; then
+        CXXFLAGS="$CXXFLAGS -fPIC"
+    fi
     if test "$debug_mode" = "yes" ; then
         CXXFLAGS="$CXXFLAGS -O0"
     fi
+
+    SOFLAGS="-shared"
 
     # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
@@ -2643,6 +2654,7 @@ fi
 
 
     ARFLAGS="crv"
+
 
 fi
 

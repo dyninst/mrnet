@@ -17,21 +17,28 @@ includedir  = @includedir@
 
 VPATH   = @abs_srcdir@/src
 
-CXX = @CXX@
 INSTALL = @INSTALL@
+
+C_AS_CPLUSPLUS = @C_AS_CPLUSPLUS@
 
 MAKEDEPENDS = $(srcdir)/../conf/makedepends.sh
 
 BUILD_SHARED_LIBS = @BUILDSHARED@
 
-TARGET = libxplat.a
-TARGET_SO = libxplat.so
+INCFLAGS = -I$(srcdir)/include -I$(srcdir)/src -I$(srcdir)
 
-INCFLAGS = -I$(srcdir)/include -I$(srcdir)/src -I. -I$(srcdir)/.. -I$(srcdir)/../src -I$(srcdir)/../include
-CXXFLAGS = @CXXFLAGS@ $(INCFLAGS) $(WARNFLAGS)
-SOFLAGS = @SOFLAGS@
-LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
+COMPILER_TYPE = @COMPILER_TYPE@
+CXX = @CXX@
+CXXFLAGS = @CXXFLAGS@ $(INCFLAGS)
+
+ifeq ($(COMPILER_TYPE), pgi)
+    CXXFLAGS += --one_instantiation_per_object
+endif
+
+SOFLAGS  = @SOFLAGS@
+
+TARGET    = libxplat.a
+TARGET_SO = libxplat.so
 
 TARGETS = $(TARGET)
 ifeq ($(BUILD_SHARED_LIBS), yes)
@@ -63,12 +70,22 @@ sharedobj: $(TARGET_SO)
 
 $(TARGET): $(OBJS)
 	@echo Archiving `basename $@` ...
-	$(AR) $(ARFLAGS) $@ $?
+	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
+	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
+	    $(AR) $(ARFLAGS) $@ $^ Template.dir/*.o ; \
+	else \
+	    $(AR) $(ARFLAGS) $@ $^ ; \
+	fi
 	$(RANLIB) $@
 
 $(TARGET_SO): $(OBJS)
 	@echo Building `basename $@` ...
-	$(CXX) $(SOFLAGS) -o $@ $(OBJS)
+	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
+	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
+	    $(CXX) $(SOFLAGS) -o $@ $^ Template.dir/*.o ; \
+	else \
+	    $(CXX) $(SOFLAGS) -o $@ $^ ; \
+	fi
 
 install: $(TARGETS)
 	for dir in $(libdir) $(includedir) $(includedir)/xplat ; do \
@@ -89,10 +106,13 @@ install: $(TARGETS)
 	done
 
 clean:
-	$(RM) $(OBJS)
+	$(RM) $(OBJS) $(TARGETS)
+	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
+	    $(RM) -r Template.dir $(OBJS:.o=.ii) $(OBJS:.o=.ti) ; \
+	fi
 
 distclean: clean
-	$(RM) $(TARGETS) $(DEPS) config.status config.log config.h Makefile
+	$(RM) $(DEPS) config.status config.log config.h Makefile
 
 # pattern rules
 @VERBOSEMAKE@
@@ -103,12 +123,6 @@ distclean: clean
 # this would not be needed if archive was built differently
 # -- and then we could build in parallel
 .NOTPARALLEL:
-
-# TODO this must change - copied from gnu make info files
-#%.d:    %.C
-#set -e; $(CXX) -MM $(CXXFLAGS) $< | \
-#sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@; \
-#[ -s $@ ] || rm -f $@
 
 %.d: %.C
 	@echo Building depends file `basename $@` ...

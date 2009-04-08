@@ -50,7 +50,9 @@ if test $COMPILER_TYPE = "gnu" ; then
     if test $BUILDSHARED = "yes" ; then
         CXXFLAGS="$CXXFLAGS -fPIC"
     fi
-    SOFLAGS=" -fPIC -shared -rdynamic"
+
+    SOFLAGS="-fPIC -shared -rdynamic"
+
     C_AS_CPLUSPLUS="-x c++"
 
     AC_PATH_PROG(AR, ar)
@@ -61,7 +63,9 @@ if test $COMPILER_TYPE = "gnu" ; then
 elif test $COMPILER_TYPE = "aix-native" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_ibm"
-    SOFLAGS=" -G"
+
+    SOFLAGS="-G"
+
     C_AS_CPLUSPLUS="-+"
 
     AC_PATH_PROG(AR, ar)
@@ -75,14 +79,51 @@ elif test $COMPILER_TYPE = "forte" ; then
     if test $BUILDSHARED = "yes" ; then
         CXXFLAGS="$CXXFLAGS -KPIC"
     fi
-    SOFLAGS=" -G"
+
+    SOFLAGS="-G"
 
     AC_PATH_PROG(AR, CC)
     AC_SUBST(AR)
     ARFLAGS="-xar -o"
     AC_SUBST(ARFLAGS)
+
+elif test $COMPILER_TYPE = "pgi" ; then
+
+    CXXFLAGS="$CXXFLAGS -Dcompiler_pgi -D_GNU_SOURCE"
+    if test $BUILDSHARED = "yes" ; then
+        CXXFLAGS="$CXXFLAGS -fPIC"
+    fi
+    if test "$debug_mode" = "yes" ; then
+        CXXFLAGS="$CXXFLAGS -O0"
+    fi
+
+    SOFLAGS="-shared"
+
+    AC_PATH_PROG(AR, ar)
+    AC_SUBST(AR)
+    ARFLAGS="crv"
+    AC_SUBST(ARFLAGS)
+
+elif test $COMPILER_TYPE = "intel" ; then
+
+    CXXFLAGS="$CXXFLAGS -Dcompiler_intel"
+    if test $BUILDSHARED = "yes" ; then
+        CXXFLAGS="$CXXFLAGS -fPIC"
+    fi
+    if test "$debug_mode" = "yes" ; then
+        CXXFLAGS="$CXXFLAGS -O0"
+    fi
+
+    SOFLAGS="-shared"
+
+    AC_PATH_PROG(AR, ar)
+    AC_SUBST(AR)
+    ARFLAGS="crv"
+    AC_SUBST(ARFLAGS)
+
 fi
 
+dnl Use OUR debug/optimization levels
 CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
 if test $debug_mode = "yes" ; then
     CXXFLAGS="-g $CXXFLAGS -DDEBUG"

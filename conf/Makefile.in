@@ -36,25 +36,27 @@ PURIFY  = @PURIFY@
 # General Definitions
 #####################
 
-VPATH   = $(SRCDIR)/src:$(SRCDIR)/tests:$(SRCDIR)/tests/test_Recovery
-
-CXX = @CXX@
-CXXFLAGS = @CXXFLAGS@ $(INCDIR) $(WARNFLAGS)
-LDFLAGS = @LDFLAGS@
-CN_LDFLAGS = @CN_LDFLAGS@
-SOFLAGS = @SOFLAGS@
-C_AS_CPLUSPLUS = @C_AS_CPLUSPLUS@
-LIBS = $(LIBXPLAT) @LIBS@
-
-MAKEDEPENDS = $(SRCDIR)/conf/makedepends.sh
-
 BUILD_SHARED_LIBS = @BUILDSHARED@
 
 COMPILER_TYPE = @COMPILER_TYPE@
+
 MRNET_OS = @MRNET_OS@
 
-ifeq ($(COMPILER_TYPE), gnu)
+C_AS_CPLUSPLUS = @C_AS_CPLUSPLUS@
 
+MAKEDEPENDS = $(SRCDIR)/conf/makedepends.sh
+
+VPATH = $(SRCDIR)/src:$(SRCDIR)/tests:$(SRCDIR)/tests/test_Recovery
+
+LDFLAGS = @LDFLAGS@
+COMMNODE_LDFLAGS = @CN_LDFLAGS@
+SOFLAGS = @SOFLAGS@
+
+LIBS = $(LIBXPLAT) @LIBS@
+
+INCDIR = -I$(SRCDIR)/include -I$(SRCDIR)/src -I$(SRCDIR)/xplat/include -I$(SRCDIR)/tests
+
+ifeq ($(COMPILER_TYPE), gnu)
     ifndef SILENCE_WARNINGS
     WARNFLAGS = -Wall \
                 -W \
@@ -72,7 +74,6 @@ ifeq ($(COMPILER_TYPE), gnu)
 	        -Woverloaded-virtual   \
 	        -Wno-non-template-friend
    endif # SILENCE_WARNINGS
-
 endif #GNU options
 
 ifeq ($(COMPILER_TYPE), forte)
@@ -80,6 +81,14 @@ ifeq ($(COMPILER_TYPE), forte)
         WARNFLAGS = +w +w2
     endif # SILENCE_WARNINGS
 endif #Forte (Sun) compiler warnings
+
+CXX = @CXX@
+CXXFLAGS = @CXXFLAGS@ $(INCDIR) $(WARNFLAGS)
+TEST_CXXFLAGS := $(CXXFLAGS)
+
+ifeq ($(COMPILER_TYPE), pgi)
+    CXXFLAGS += --one_instantiation_per_object
+endif
 
 #############################
 # System Specific Definitions
@@ -94,9 +103,6 @@ TARGETS     = $(LIBMRNET) $(COMMNODE) $(BINDIR)/mrnet_topgen
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
 endif
-
-INCDIR      = -I$(SRCDIR)/include -I$(SRCDIR)/src \
-              -I$(SRCDIR)/xplat/include -I$(SRCDIR)/tests
 
 STD_TESTS = $(BINDIR)/test_basic_FE \
             $(BINDIR)/test_basic_BE  \
@@ -154,13 +160,14 @@ ifeq ($(MRNET_OS), linux)
 endif
 
 LIBMRNET_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(LIBMRNET_SRCS)))))
+
 COMMNODE_SRCS = $(SRCDIR)/src/CommunicationNodeMain.C
 COMMNODE_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(COMMNODE_SRCS)))))
 
 PDR_SRCS = $(SRCDIR)/src/pdr.c \
-	        $(SRCDIR)/src/pdr_mem.c \
-	        $(SRCDIR)/src/pdr_sizeof.c \
-	        $(SRCDIR)/src/byte_order.c
+	   $(SRCDIR)/src/pdr_mem.c \
+	   $(SRCDIR)/src/pdr_sizeof.c \
+	   $(SRCDIR)/src/byte_order.c
 PDR_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(PDR_SRCS)))))
 
 ALL_SRCS = $(LIBMRNET_SRCS) $(COMMNODE_SRCS) $(TEST_SRCS)
@@ -237,12 +244,22 @@ $(OBJDIR)/parser.tab.C $(OBJDIR)/parser.tab.h: $(SRCDIR)/src/parser.y $(FRC)
 
 $(LIBMRNET): $(LIBMRNET_OBJS)
 	@echo Archiving `basename $@` ...
-	$(AR) $(ARFLAGS) $@ $?
+	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
+	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
+	    $(AR) $(ARFLAGS) $@ $^ Template.dir/*.o ; \
+	else \
+	    $(AR) $(ARFLAGS) $@ $^ ; \
+	fi
 	$(RANLIB) $@
 
 $(LIBMRNET_SO): $(LIBMRNET_OBJS)
 	@echo Building `basename $@` ...
-	$(CXX) $(SOFLAGS) -o $@ $(LIBMRNET_OBJS)
+	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
+	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
+	    $(CXX) $(SOFLAGS) -o $@ $^ Template.dir/*.o ; \
+	else \
+	    $(CXX) $(SOFLAGS) -o $@ $^ ; \
+	fi
 
 $(LIBXPLAT): xplat-all
 
@@ -250,7 +267,7 @@ $(LIBXPLAT_SO): xplat-sharedobj
 
 $(BINDIR)/mrnet_commnode: $(COMMNODE_OBJS) $(LIBMRNET) $(LIBXPLAT)
 	@echo Linking `basename $@` ...
-	$(PURIFY) $(CXX) $(CXXFLAGS) $(CN_LDFLAGS) -o $@ $(COMMNODE_OBJS) \
+	$(PURIFY) $(CXX) $(CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(COMMNODE_OBJS) \
 	   $(LIBMRNET) $(LIBS)
 
 $(BINDIR)/mrnet_topgen: $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
@@ -262,7 +279,7 @@ $(STD_TESTS): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
               $(LIBDIR)/test_DynamicFilters.so $(SRCDIR)/tests/test_common.h \
               $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
-	$(PURIFY) $(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
+	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
 
 $(BINDIR)/mrnet_tests.sh: $(SRCDIR)/conf/mrnet_tests.sh
@@ -307,7 +324,7 @@ $(BINDIR)/xdr_test: tests/xdr_test.c
 
 
 #################################
-# Defining Cleaning rules
+# Cleaning rules
 #################################
 clean: local-clean xplat-clean
 
@@ -315,6 +332,9 @@ local-clean:
 	@echo Cleaning $(MRNET_PLATFORM) platform ...
 	$(RM) $(BINDIR)/* $(LIBDIR)/* $(OBJDIR)/*
 	$(RM) `find $(MRNET_ROOT) -name "*~" -print`
+	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
+	    $(RM) -r Template.dir ; \
+	fi
 
 xplat-clean:
 	@echo Cleaning xplat library
@@ -322,10 +342,9 @@ xplat-clean:
 
 CLEAN: local-CLEAN xplat-clean
 
-local-CLEAN:
+local-CLEAN: local-clean
 	@echo Cleaning all platforms ...
 	$(RM) -r $(DEPENDDIR) bin lib obj
-	$(RM) `find $(MRNET_ROOT) -name "*~" -print`
 
 distclean: local-distclean xplat-distclean
 
@@ -338,11 +357,15 @@ xplat-distclean:
 	cd ./xplat ; $(MAKE) distclean
 
 #################################
-# Defining Default Build rules
+# Default Build rules
 #################################
 @VERBOSEMAKE@
 .SUFFIXES:
 .SUFFIXES: .c .C .o .d
+
+$(OBJDIR)/test_%.o: test_%.C $(FRC)
+	@echo Compiling `basename $@` ...
+	$(CXX) $(TEST_CXXFLAGS) -o $@ -c $<
 
 $(OBJDIR)/%.o: %.c $(FRC)
 	@echo Compiling `basename $@` ...
