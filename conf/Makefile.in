@@ -288,7 +288,7 @@ $(BINDIR)/mrnet_tests.sh: $(SRCDIR)/conf/mrnet_tests.sh
 
 $(LIBDIR)/test_DynamicFilters.so: $(SRCDIR)/tests/test_DynamicFilters.C
 	@echo "Building `basename $@` ..."
-	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_DynamicFilters.C
+	$(CXX) $(TEST_CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_DynamicFilters.C
 
 $(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(LIBMRNET) \
                             $(OBJDIR)/%.o \
@@ -297,7 +297,7 @@ $(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(LIBMRNET) \
                             $(OBJDIR)/test_Recovery_aux.o \
                             $(LIBDIR)/test_RecoveryFilter.so
 	@echo "Linking `basename $*` ..."
-	$(PURIFY) $(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
+	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_Recovery.o $(OBJDIR)/test_Recovery_aux.o \
            $(OBJDIR)/ThroughputExperiment.o $(LIBMRNET) $(LIBS)
 
@@ -306,13 +306,13 @@ $(BINDIR)/test_Recovery_BE: $(BINDIR)/%: $(LIBMRNET) \
                             $(OBJDIR)/ThroughputExperiment.o \
                             $(OBJDIR)/test_Recovery.o
 	@echo "Linking `basename $*` ..."
-	$(PURIFY) $(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
+	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
            $(OBJDIR)/ThroughputExperiment.o \
            $(OBJDIR)/test_Recovery.o $(LIBMRNET) $(LIBS)
 
 $(LIBDIR)/test_RecoveryFilter.so: $(SRCDIR)/tests/test_Recovery/test_RecoveryFilter.C
 	@echo "Building `basename $@` ..."
-	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_Recovery/test_RecoveryFilter.C
+	$(CXX) $(TEST_CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_Recovery/test_RecoveryFilter.C
 
 $(BINDIR)/pdr_test: $(PDR_OBJS) tests/xdr_test.c
 	@echo "Linking `basename $@` ..."
