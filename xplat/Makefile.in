@@ -31,8 +31,13 @@ COMPILER_TYPE = @COMPILER_TYPE@
 CXX = @CXX@
 CXXFLAGS = @CXXFLAGS@ $(INCFLAGS)
 
+# Check for older PGI compilers (before 6.0) that require 
+# special handling for template libraries
+PGI_OLD_TEMPLATES = @PGI_OLD_TEMPLATES@
 ifeq ($(COMPILER_TYPE), pgi)
-    CXXFLAGS += --one_instantiation_per_object
+    ifeq ($(PGI_OLD_TEMPLATES), yes)
+        CXXFLAGS += --one_instantiation_per_object
+    endif
 endif
 
 SOFLAGS  = @SOFLAGS@
@@ -70,7 +75,7 @@ sharedobj: $(TARGET_SO)
 
 $(TARGET): $(OBJS)
 	@echo Archiving `basename $@` ...
-	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
+	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
 	    $(AR) $(ARFLAGS) $@ $^ Template.dir/*.o ; \
 	else \
@@ -80,7 +85,7 @@ $(TARGET): $(OBJS)
 
 $(TARGET_SO): $(OBJS)
 	@echo Building `basename $@` ...
-	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
+	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
 	    $(CXX) $(SOFLAGS) -o $@ $^ Template.dir/*.o ; \
 	else \
@@ -107,7 +112,7 @@ install: $(TARGETS)
 
 clean:
 	$(RM) $(OBJS) $(TARGETS)
-	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
+	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(RM) -r Template.dir $(OBJS:.o=.ii) $(OBJS:.o=.ti) ; \
 	fi
 

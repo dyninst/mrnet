@@ -17,7 +17,7 @@ AC_CANONICAL_HOST
 abs_srcdir=`cd $srcdir && pwd`
 
 dnl === C++ COMPILERS ===
-AC_PROG_CXX(xlC_r CC g++)
+AC_PROG_CXX(xlC_r CC g++ pgCC icpc)
 AC_LANG(C++)
 
 dnl === CONFIGURE OPTIONS
@@ -41,6 +41,14 @@ AC_ARG_ENABLE(debug,
     [ debug_mode="yes" ],
     [ debug_mode="no" ])
 
+
+dnl === Get necessary macros
+CXXFLAGS="$CXXFLAGS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS"
+
+dnl === Ignore user-requested debug/optimization levels
+CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
+
+dnl === COMPILER-SPECIFIC OPTIONS ===
 
 PD_COMPILER_TYPE
 
@@ -96,6 +104,15 @@ elif test $COMPILER_TYPE = "pgi" ; then
     if test "$debug_mode" = "yes" ; then
         CXXFLAGS="$CXXFLAGS -O0"
     fi
+ 
+    GOOD_CXXFLAGS="$CXXFLAGS"
+    CXXFLAGS="$CXXFLAGS --one_instantiation_per_object"
+    AC_MSG_CHECKING([[whether pgCC supports --one_instantiation_per_object]])
+    AC_COMPILE_IFELSE( [AC_LANG_PROGRAM([],[])],
+                       [AC_MSG_RESULT(yes) ; PGI_OLD_TEMPLATES="yes" ; debug_mode="no"],
+                       [AC_MSG_RESULT(no) ; PGI_OLD_TEMPLATES="no"])
+    AC_SUBST(PGI_OLD_TEMPLATES)
+    CXXFLAGS="$GOOD_CXXFLAGS"
 
     SOFLAGS="-shared"
 
@@ -123,17 +140,15 @@ elif test $COMPILER_TYPE = "intel" ; then
 
 fi
 
-dnl Use OUR debug/optimization levels
-CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
+dnl === Use OUR debug/optimization levels
 if test $debug_mode = "yes" ; then
     CXXFLAGS="-g $CXXFLAGS -DDEBUG"
 else
     CXXFLAGS="-O2 $CXXFLAGS"
 fi
 
-CXXFLAGS="$CXXFLAGS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS"
 
-AC_MSG_CHECKING(whether we can compile/link with \"$CXX $CXXFLAGS $LIBS\".)
+AC_MSG_CHECKING([[whether we can compile/link with "$CXX $CXXFLAGS $LIBS"]])
 AC_LINK_IFELSE( [AC_LANG_PROGRAM([],[])],
                 [AC_MSG_RESULT(yes)],
                 [AC_MSG_ERROR(no)])
