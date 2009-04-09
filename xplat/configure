@@ -2357,7 +2357,7 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 
     CXXFLAGS="$GOOD_CXXFLAGS"
 
-    SOFLAGS="-shared"
+    SOFLAGS="-fPIC -shared"
 
     # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
@@ -2412,7 +2412,7 @@ elif test $COMPILER_TYPE = "intel" ; then
         CXXFLAGS="$CXXFLAGS -O0"
     fi
 
-    SOFLAGS="-shared"
+    SOFLAGS="-fPIC -shared"
 
     # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2

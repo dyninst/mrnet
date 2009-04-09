@@ -117,7 +117,7 @@ elif test $COMPILER_TYPE = "pgi" ; then
     AC_SUBST(PGI_OLD_TEMPLATES)
     CXXFLAGS="$GOOD_CXXFLAGS"
 
-    SOFLAGS="-shared"
+    SOFLAGS="-fPIC -shared"
 
     AC_PATH_PROG(AR, ar)
     AC_SUBST(AR)
@@ -134,7 +134,7 @@ elif test $COMPILER_TYPE = "intel" ; then
         CXXFLAGS="$CXXFLAGS -O0"
     fi
 
-    SOFLAGS="-shared"
+    SOFLAGS="-fPIC -shared"
 
     AC_PATH_PROG(AR, ar)
     AC_SUBST(AR)
