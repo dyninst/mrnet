@@ -355,7 +355,7 @@ local-CLEAN: local-clean
 distclean: local-distclean xplat-distclean
 
 local-distclean: local-CLEAN
-	$(RM) config.* conf/Makefile*.inc src/config.h Makefile
+	$(RM) config.* src/config.h Makefile
 	$(RM) -r autom4te.cache
 
 xplat-distclean:
