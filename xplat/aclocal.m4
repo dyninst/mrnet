@@ -1,5 +1,5 @@
 dnl Determine the compiler type
-dnl Sets: COMPILER_TYPE to "gnu", "aix-native", "forte" or "unknown"
+dnl Sets: COMPILER_TYPE to "gnu", "aix-native", "forte", "pgi", "intel", or "unknown"
 
 AC_DEFUN(PD_COMPILER_TYPE,[
   AC_MSG_CHECKING([for compiler type])
@@ -18,6 +18,12 @@ AC_DEFUN(PD_COMPILER_TYPE,[
   elif test "$CXX" = "xlc++" ; then
     COMPILER_TYPE="aix-native"
     AC_MSG_RESULT([aix-native])
+  elif test "$CXX" = "pgCC" ; then
+    COMPILER_TYPE="pgi"
+    AC_MSG_RESULT([pgi])
+  elif test "$CXX" = "icpc" ; then
+    COMPILER_TYPE="intel"
+    AC_MSG_RESULT([intel])
   fi
 
   if test "$COMPILER_TYPE" = "unknown"; then
@@ -27,6 +33,18 @@ AC_DEFUN(PD_COMPILER_TYPE,[
     if test "$?" = 0 ; then
       COMPILER_TYPE="gnu"
       AC_MSG_RESULT([gnu])
+    else
+      $GREP "Portland Group" version.out > /dev/null
+      if test "$?" = 0; then
+        COMPILER_TYPE="pgi"
+        AC_MSG_RESULT([pgi])
+      else
+        $GREP "Intel Corporation" version.out > /dev/null
+        if test "$?" = 0; then
+          COMPILER_TYPE="intel"
+          AC_MSG_RESULT([intel])
+        fi
+      fi
     fi
     $RM -f version.out
   fi
@@ -38,11 +56,12 @@ AC_DEFUN(PD_COMPILER_TYPE,[
     if test "$?" = 0 ; then
       COMPILER_TYPE="forte"
       AC_MSG_RESULT([forte])
-    fi
-    $GREP "Sun" version.out > /dev/null
-    if test "$?" = 0 ; then
-      COMPILER_TYPE="forte"
-      AC_MSG_RESULT([forte])
+    else
+      $GREP "Sun" version.out > /dev/null
+      if test "$?" = 0 ; then
+        COMPILER_TYPE="forte"
+        AC_MSG_RESULT([forte])
+      fi
     fi
     $RM -f version.out
   fi
