@@ -106,18 +106,23 @@ install: $(TARGETS)
 	if [ -f $(TARGET_SO) ] ; then \
             $(INSTALL) -p -m 755 $(TARGET_SO) $(libdir)/ ; \
         fi
-	for hdr in @srcdir@/include/xplat/*.h ; do \
-	    $(INSTALL) -p -m 644 $$hdr $(includedir)/xplat/ ; \
+	for hdr in $(srcdir)/include/xplat/*.h ; do \
+	    if [ -f $$hdr ] ; then \
+	        $(INSTALL) -p -m 644 $$hdr $(includedir)/xplat/ ; \
+	    fi \
 	done
 
 clean:
-	$(RM) $(OBJS) $(TARGETS)
-	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
-	    $(RM) -r Template.dir $(OBJS:.o=.ii) $(OBJS:.o=.ti) ; \
-	fi
+	for file in $(OBJS) $(OBJS:.o=.ii) $(OBJS:.o=.ti) $(TARGETS) ; do \
+	    if [ -f $$file ] ; then $(RM) $$file ; fi \
+	done
+	if [ -d Template.dir ] ; then $(RM) -r Template.dir ; fi
 
 distclean: clean
-	$(RM) $(DEPS) config.status config.log config.h Makefile
+	for file in $(DEPS) config.status config.log config.h Makefile ; do \
+	    if [ -f $$file ] ; then $(RM) $$file ; fi \
+	done
+	for file in `find $(srcdir) -name "*~" -print` ; do $(RM) $$file ; done
 
 # pattern rules
 @VERBOSEMAKE@

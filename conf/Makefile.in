@@ -240,12 +240,15 @@ tests-opt: $(OPT_TESTS)
 
 $(OBJDIR)/scanner.C: $(SRCDIR)/src/scanner.l $(OBJDIR)/parser.tab.C $(FRC)
 	@echo Building `basename $@` ...
-	$(RM) $@; $(FLEX) -Pmrn -t $< > $@ 
+	if [ -f $@ ] ; then $(RM) $@ ; fi
+	$(FLEX) -Pmrn -t $< > $@ 
 
 $(OBJDIR)/parser.tab.C $(OBJDIR)/parser.tab.h: $(SRCDIR)/src/parser.y $(FRC)
 	@echo Building `basename $@` ...
 	$(BISON) -p mrn -d $<
+	if [ -f $(OBJDIR)/parser.tab.C ] ; then $(RM) $(OBJDIR)/parser.tab.C ; fi
 	mv y.tab.c $(OBJDIR)/parser.tab.C
+	if [ -f $(OBJDIR)/parser.tab.h ] ; then $(RM) $(OBJDIR)/parser.tab.h ; fi 
 	mv y.tab.h $(OBJDIR)/parser.tab.h
 
 $(LIBMRNET): $(LIBMRNET_OBJS)
@@ -294,7 +297,7 @@ $(BINDIR)/mrnet_tests.sh: $(SRCDIR)/conf/mrnet_tests.sh
 
 $(LIBDIR)/test_DynamicFilters.so: $(SRCDIR)/tests/test_DynamicFilters.C
 	@echo "Building `basename $@` ..."
-	$(CXX) $(TEST_CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_DynamicFilters.C
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_DynamicFilters.C
 
 $(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(LIBMRNET) \
                             $(OBJDIR)/%.o \
@@ -318,7 +321,7 @@ $(BINDIR)/test_Recovery_BE: $(BINDIR)/%: $(LIBMRNET) \
 
 $(LIBDIR)/test_RecoveryFilter.so: $(SRCDIR)/tests/test_Recovery/test_RecoveryFilter.C
 	@echo "Building `basename $@` ..."
-	$(CXX) $(TEST_CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_Recovery/test_RecoveryFilter.C
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_Recovery/test_RecoveryFilter.C
 
 $(BINDIR)/pdr_test: $(PDR_OBJS) tests/xdr_test.c
 	@echo "Linking `basename $@` ..."
@@ -336,11 +339,11 @@ clean: local-clean xplat-clean
 
 local-clean:
 	@echo Cleaning $(MRNET_PLATFORM) platform ...
-	$(RM) $(BINDIR)/* $(LIBDIR)/* $(OBJDIR)/*
-	$(RM) `find $(MRNET_ROOT) -name "*~" -print`
-	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
-            $(RM) -r Template.dir ; \
-	fi
+	for file in $(BINDIR)/* $(LIBDIR)/* $(OBJDIR)/* ; do \
+	    if [ -f $$file ] ; then $(RM) $$file ; fi \
+	done
+	if [ -d Template.dir ] ; then $(RM) -r Template.dir ; fi
+	for file in `find $(MRNET_ROOT) -name "*.ti" -print` ; do $(RM) $$file ; done
 
 xplat-clean:
 	@echo Cleaning xplat library
@@ -350,13 +353,18 @@ CLEAN: local-CLEAN xplat-clean
 
 local-CLEAN: local-clean
 	@echo Cleaning all platforms ...
-	$(RM) -r $(DEPENDDIR) bin lib obj
+	for dir in $(DEPENDDIR) bin lib obj ; do \
+	    if [ -d $$dir ] ; then $(RM) -r $$dir ; fi \
+	done
+	for file in `find $(MRNET_ROOT) -name "*~" -print` ; do $(RM) $$file ; done
 
 distclean: local-distclean xplat-distclean
 
 local-distclean: local-CLEAN
-	$(RM) config.* src/config.h Makefile
-	$(RM) -r autom4te.cache
+	for file in config.* src/config.h Makefile ; do  \
+	    if [ -f $$file ] ; then $(RM) $$file ; fi \
+	done
+	if [ -d autom4te.cache ] ; then $(RM) -r autom4te.cache ; fi
 
 xplat-distclean:
 	@echo "Cleaning xplat library (distclean)"
