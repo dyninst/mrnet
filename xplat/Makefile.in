@@ -8,6 +8,8 @@
 AR      = @AR@
 ARFLAGS = @ARFLAGS@
 RANLIB  = @RANLIB@
+RM      = @RM@
+INSTALL = @INSTALL@
 
 prefix  = @prefix@
 exec_prefix=@exec_prefix@
@@ -16,8 +18,6 @@ libdir  = @libdir@
 includedir  = @includedir@
 
 VPATH   = @abs_srcdir@/src
-
-INSTALL = @INSTALL@
 
 C_AS_CPLUSPLUS = @C_AS_CPLUSPLUS@
 

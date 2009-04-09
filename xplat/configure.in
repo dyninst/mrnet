@@ -41,6 +41,9 @@ AC_ARG_ENABLE(debug,
     [ debug_mode="yes" ],
     [ debug_mode="no" ])
 
+AC_PATH_PROG(GREP, grep)
+AC_PATH_PROG(RM, rm)
+AC_SUBST(RM)
 
 dnl === Get necessary macros
 CXXFLAGS="$CXXFLAGS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS"

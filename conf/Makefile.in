@@ -29,6 +29,7 @@ BISON   = @YACC@
 AR      = @AR@
 ARFLAGS = @ARFLAGS@
 RANLIB  = @RANLIB@
+RM      = @RM@
 INSTALL = @INSTALL@
 PURIFY  = @PURIFY@
 
@@ -86,8 +87,13 @@ CXX = @CXX@
 CXXFLAGS = @CXXFLAGS@ $(INCDIR) $(WARNFLAGS)
 TEST_CXXFLAGS := $(CXXFLAGS)
 
+# Check for older PGI compilers (before 6.0) that require 
+# special handling for template libraries
+PGI_OLD_TEMPLATES = @PGI_OLD_TEMPLATES@
 ifeq ($(COMPILER_TYPE), pgi)
-    CXXFLAGS += --one_instantiation_per_object
+    ifeq ($(PGI_OLD_TEMPLATES), yes)
+        CXXFLAGS += --one_instantiation_per_object
+    endif
 endif
 
 #############################
@@ -244,7 +250,7 @@ $(OBJDIR)/parser.tab.C $(OBJDIR)/parser.tab.h: $(SRCDIR)/src/parser.y $(FRC)
 
 $(LIBMRNET): $(LIBMRNET_OBJS)
 	@echo Archiving `basename $@` ...
-	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
+	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
 	    $(AR) $(ARFLAGS) $@ $^ Template.dir/*.o ; \
 	else \
@@ -254,7 +260,7 @@ $(LIBMRNET): $(LIBMRNET_OBJS)
 
 $(LIBMRNET_SO): $(LIBMRNET_OBJS)
 	@echo Building `basename $@` ...
-	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
+	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
 	    $(CXX) $(SOFLAGS) -o $@ $^ Template.dir/*.o ; \
 	else \
@@ -332,8 +338,8 @@ local-clean:
 	@echo Cleaning $(MRNET_PLATFORM) platform ...
 	$(RM) $(BINDIR)/* $(LIBDIR)/* $(OBJDIR)/*
 	$(RM) `find $(MRNET_ROOT) -name "*~" -print`
-	if [ "$(COMPILER_TYPE)" = "pgi" ]; then \
-	    $(RM) -r Template.dir ; \
+	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
+            $(RM) -r Template.dir ; \
 	fi
 
 xplat-clean:
