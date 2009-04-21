@@ -56,10 +56,12 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
                 buf_len ));
     int retval;
     if( ( retval = MRN::read( sock_fd, buf, buf_len ) ) != buf_len ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "read returned %d\n", retval ));
-        _perror( "MRN::read()" );
-        error( ERR_SYSTEM, iinlet_rank, "MRN::read() %d of %d bytes received: %s",
-               retval, buf_len, strerror(errno) );
+       
+        if( retval == -1 )
+            error( ERR_SYSTEM, iinlet_rank, "MRN::read() %s", strerror(errno) );
+        
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN::read() %d of %d bytes received\n", 
+                               retval, buf_len ));
         free( buf );
         return -1;
     }
@@ -113,9 +115,12 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
                 sock_fd, buf, buf_len, no_packets ));
     int readRet = MRN::read( sock_fd, buf, buf_len );
     if( readRet != buf_len ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "MRN::read() failed\n" );
-        error( ERR_SYSTEM, iinlet_rank, "MRN::read() %d of %d bytes received: %s",
-               readRet, buf_len, strerror(errno) ));
+
+        if( readRet == -1 )
+            error( ERR_SYSTEM, iinlet_rank, "MRN::read() %s", strerror(errno) );
+
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN::read() %d of %d bytes received\n", 
+                               readRet, buf_len ));
         free( buf );
         free( packet_sizes );
         return -1;
@@ -155,20 +160,18 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling NCRecv ...\n" ));
     retval = XPlat::NCRecv( sock_fd, ncbufs, no_packets );
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "NCRecv returned %d..\n", retval ));
     if( retval != total_bytes ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "%s\n", "" ));
-        _perror( "XPlat::NCRecv()" );
-        error( ERR_SYSTEM, iinlet_rank, "XPlat::NCRecv() %d of %d bytes received: %s",
-               retval, buf_len, strerror(errno) );
+
+        if( retval == -1 )
+            error( ERR_SYSTEM, iinlet_rank, "XPlat::NCRecv() %s", strerror(errno) );
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "NCRecv %d of %d received\n", 
+                               retval, total_bytes ));
 
         for( i = 0; i < no_packets; i++ )
-        {
             free( (void*)(ncbufs[i].buf) );
-        }
         delete[] ncbufs;
-
         free( packet_sizes );
+
         return -1;
     }
     MRN_bytes_recv += retval;
@@ -188,9 +191,7 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
         if( new_packet->has_Error( ) ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "packet creation failed\n" ));
             for( i = 0; i < no_packets; i++ )
-            {
                 free( (void*)(ncbufs[i].buf) );
-            }
             delete[] ncbufs;
             free( packet_sizes );
             return -1;
