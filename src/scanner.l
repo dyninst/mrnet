@@ -3,6 +3,7 @@
  *  Copyright 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
+#include <assert.h>
 #include <string.h>
 #include "ParsedGraph.h"
 

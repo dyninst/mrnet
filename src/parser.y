@@ -3,15 +3,15 @@
  *  Copyright 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                 Detailed MRNet usage rights in "LICENSE" file.           *
  ****************************************************************************/
-#include <list>
-
-#include "ParsedGraph.h"
 
 #if defined(os_windows)
 #include <malloc.h>
 #else
-#include <cstdlib>
+#include <stdlib.h>
 #endif
+
+#include "ParsedGraph.h"
+#include <list>
 
 static std::list <MRN::ParsedGraph::Node *> hostlist;
 static std::list <MRN::ParsedGraph::Node *> potential_root;

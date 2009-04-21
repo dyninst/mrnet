@@ -11,7 +11,6 @@
 #include <string>
 
 #include "SerialGraph.h"
-#include "utils.h"
 #include "mrnet/Error.h"
 
 namespace MRN

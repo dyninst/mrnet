@@ -8,6 +8,7 @@
 #include "config.h"
 #include "ParsedGraph.h"
 #include "Protocol.h"
+#include "utils.h"
 #include "xplat/Tokenizer.h"
 #include "xplat/NetUtils.h"
 
