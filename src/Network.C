@@ -786,33 +786,34 @@ bool Network::have_Streams( )
     _streams_sync.Unlock();
     return ret;
 }
-int Network::get_DataSocketFds( int **ofds, unsigned int *onum_fds ) const
-{
-    if( is_LocalNodeFrontEnd() ) {
-        _children_mutex.Lock();
-        std::set < PeerNodePtr >::const_iterator iter;
 
-        *onum_fds = _children.size( );
-        *ofds = new int[*onum_fds];
+// int Network::get_DataSocketFds( int **ofds, unsigned int *onum_fds ) const
+// {
+//     if( is_LocalNodeFrontEnd() ) {
+//         _children_mutex.Lock();
+//         std::set < PeerNodePtr >::const_iterator iter;
+
+//         *onum_fds = _children.size( );
+//         *ofds = new int[*onum_fds];
         
-        unsigned int i;
-        for( i=0,iter=_children.begin(); iter != _children.end(); iter++,i++ ) {
-            (*ofds)[i] = (*iter)->get_DataSocketFd();
-        }
-        _children_mutex.Unlock();
-    }
-    else if ( is_LocalNodeBackEnd() ) {
-        _parent_sync.Lock();
-        *onum_fds = 1;
-        *ofds = new int;
+//         unsigned int i;
+//         for( i=0,iter=_children.begin(); iter != _children.end(); iter++,i++ ) {
+//             (*ofds)[i] = (*iter)->get_DataSocketFd();
+//         }
+//         _children_mutex.Unlock();
+//     }
+//     else if ( is_LocalNodeBackEnd() ) {
+//         _parent_sync.Lock();
+//         *onum_fds = 1;
+//         *ofds = new int;
 
-        *ofds[0] = _parent->get_DataSocketFd();
+//         *ofds[0] = _parent->get_DataSocketFd();
 
-        _parent_sync.Unlock();
-    }
+//         _parent_sync.Unlock();
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
 int Network::get_EventNotificationFd( EventType etyp )
 {

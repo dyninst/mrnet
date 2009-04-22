@@ -85,7 +85,7 @@ class Network: public Error {
     // The following is deprecated in favor of get_EventNotificationFd(DATA_EVENT),
     // and select()ing on these fds will most likely not behave as you might expect
     // due to recv threads quickly consuming new data
-    int get_DataSocketFds( int **oarray, unsigned int *oarray_size ) const;
+    //int get_DataSocketFds( int **oarray, unsigned int *oarray_size ) const;
 
     int get_EventNotificationFd( EventType etyp );
     void clear_EventNotificationFd( EventType etyp );
