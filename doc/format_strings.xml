@@ -1,4 +1,4 @@
-<appendix id="format_strings"><title>MRNET Format Strings</title>
+<appendix id="format_strings"><title>MRNet Format Strings</title>
 <para>
 After the % character that introduces a conversion, there
 may be a number of flag characters. <emphasis>u</emphasis>,
@@ -81,5 +81,5 @@ The full set of conversions are:
 </tgroup>
 </informaltable>
 
-<note>All array format specifiers, "a*", require an extra <emphasis>implicit</emphasis> length parameter of type <type>unsigned int</type> to be specified. E.g., send("%d %af", integer_val, float_array_pointer, float_array_length)</note>
+<note>All array format specifiers, <literal>"a*"</literal>, require an extra <emphasis>implicit</emphasis> length parameter of type <type>unsigned int</type> to be specified. E.g., <literal>send("%d %af", integer_val, float_array_pointer, float_array_length)</literal></note>
 </appendix>

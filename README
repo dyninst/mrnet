@@ -1,6 +1,6 @@
 MRNet: A Multicast/Reduction Network
 http://www.paradyn.org/mrnet/
-Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller.
+Copyright © 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller.
 
 LICENSE contains the usage terms for MRNet.
 
@@ -44,23 +44,20 @@ LICENSE contains the usage terms for MRNet.
 
     * Open source licensing.
 
-2. MRNet v2.0 RELEASE NOTES
+2. MRNet v2.1 RELEASE NOTES
 
-  This release of MRNet includes a source distribution for Unix/Linux
-  platforms, a Windows binary distribution, as well as associated manuals.
-  The release incorporates improvements made to MRNet since version 1.2.
+  This release of MRNet includes a source distribution for all platforms, 
+  as well as associated manuals. The release incorporates improvements made 
+  to MRNet since version 2.0.
  
   For information about the software releases, plus papers and manuals on the
   MRNet system, visit:
       http://www.paradyn.org/mrnet
 
   Release Highlights:
-    * Fault tolerance and recovery for internal MRNet node failures
-    * Improved API for examining MRNet topology
-    * New filter capabilities such as dynamic configuration
-    * Improved memory management
-    * Improved support for multi-threaded front-ends and back-ends
-    * Updated examples, including a sample Makefile
+    * New API for Stream performance data collection
+    * Intel and Portland Group compiler support
+    * Improved topology generation facility
     * Numerous bug fixes and enhancements
 
 3. SUPPORTED PLATFORMS

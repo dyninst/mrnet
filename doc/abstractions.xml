@@ -2,58 +2,58 @@
 <para>
 The MRNet distribution has two main components: <filename>libmrnet.a</filename>, a
 library that is linked into a tool's front-end and back-end components, and
-<application>mrnet_commnode</application>, a program that runs on intermediate nodes
+<filename>mrnet_commnode</filename>, a program that runs on intermediate nodes
 interposed between the application front-end and back-ends. <filename>libmrnet.a
 </filename> exports an API (See <xref linkend="mrnet_api"></xref>) that enables
 I/O interaction between the front-end and groups of back-ends via MRNet. The
-primary purpose of <application>mrnet_commnode</application> is to distribute data
+primary purpose of <filename>mrnet_commnode</filename> is to distribute data
 processing functionality across multiple computer hosts and to implement
 efficient and scalable group communications. The following sub-sections describe
 the lower-level components of the MRNet API in more detail.
 </para>
 
-<sect1><title>EndPoints</title>
+<sect1><title>End-Points</title>
 <para>
-An MRNet end-point represents a tool or application process or node. In
-particular, they represent the back-end processes in the system. The front-end
-can communicate in a unicast or multicast fashion with one or more of these
-end-points as described below.
+An MRNet end-point represents a tool or application process. In particular, 
+they represent the back-end processes (i.e., leaf processes) in the tree
+overlay. The front-end can communicate in a unicast or multicast fashion 
+with one or more of these end-points as described below.
 </para>
 </sect1>
 
 <sect1><title>Communicators</title>
 <para>
-MRNet uses communicators to represent groups of network end-points. Like
+MRNet uses communicators to represent groups of end-points. Like
 communicators in MPI, MRNet communicators provide a handle that identifies a
 set of end-points for point-to-point, multicast or broadcast communications. MPI
 applications typically have a non-hierarchical layout of potentially identical
 processes. In contrast, MRNet enforces a tree-like layout of all processes,
-rooted at the tool front-end. Accordingly, MRNet communicators are created and
-managed by the front-end, and communication is only allowed between a tool's
-front-end and its back-ends, i.e. back-ends cannot interact with each other
-directly via MRNet.
+rooted at the front-end. Accordingly, MRNet communicators are created and
+managed by the front-end, and communication is only allowed between a
+front-end and its back-ends. As such, back-ends cannot interact with each other
+directly using the MRNet API.
 </para>
 </sect1>
 
 <sect1><title>Streams</title>
 <para>
 A stream is a logical channel that connects the front-end to the end-points of a
-communicator. All tool-level communication via MRNet must use these streams.
+communicator. All MRNet communication uses the stream abstraction.
 Streams carry data packets downstream, from the front-end toward the back-ends,
-and upstream, from the back-ends toward the front-end. Upward streams are
-expected to carry data of a specific type allowing data aggregation operations
+and upstream, from the back-ends toward the front-end. Streams are
+expected to carry data of a specific type, allowing data aggregation operations
 to be associated with a stream. The type is specified using a format string
 (See <xref linkend="format_strings"></xref>) similar to those used in C
-formatted I/O primitives, e.g. a packet whose data is described by the format
+formatted I/O primitives (e.g., a packet whose data is described by the format
 string "%d %d %f %s" contains two integers followed by a float then a character
-string. MRNet expands the standard specification to allow for specifiers that
-describe arrays of integers and floats. 
+string). MRNet expands the standard format string specification to allow for 
+description of arrays. 
 </para>
 </sect1>
 
 <sect1><title>Filters</title>
 <para>
-Data Aggregation is the process of merging multiple input data packets and
+Data aggregation is the process of merging multiple input data packets and
 transforming them into one or more output packets. Though it is not necessary
 for the aggregation to result in less or even different data, aggregations that
 reduce or modify data values are most common. MRNet uses data filters to
@@ -71,21 +71,17 @@ but transformation filters operate on packets of a specific type.
 <para>
 Synchronization filters operate on data flowing upstream in the network,
 receiving packets one at a time and outputting packets only when the
-specified synchronization criteria has occurred.
+specified synchronization criteria has been met.
 Synchronization filters provide a mechanism to deal with the asynchronous 
-arrival of packets from children nodes; the synchronizer collects packets and
+arrival of packets from children nodes. The synchronizer collects packets and
 typically aligns them into waves, passing an entire wave onward at the same
 time. Therefore, synchronization filters do no data transformation and can
 operate on packets in a type-independent fashion. MRNet currently supports
-three synchronization modes:
+two synchronization modes:
 <itemizedlist>
 <listitem><emphasis>Wait For All</emphasis>: wait for a packet from every
-child node,</listitem>
-<listitem><emphasis>Time Out</emphasis>: wait a specified time or until a
-packet has arrived from every child (whichever occurs first), or</listitem>
-<listitem><emphasis>Do Not Wait</emphasis>: output packets immediately.
-Synchronization filters use one of these three criteria to determine when to
-return packets to the stream manager.</listitem>
+child node</listitem>
+<listitem><emphasis>Do Not Wait</emphasis>: output packets immediately.</listitem>
 </itemizedlist>
 </para>
 
@@ -97,17 +93,17 @@ aggregation that yields one or more new data packets. Since transformation
 filters are expected to perform computational operations on data packets,
 there is a type requirement for the data packets to be passed to this type of
 filter: the data format string of the stream's packets and the filter must be
-the same. Transformation operations must be synchronous, but can carry state
-from one transformation to the next using static storage structures. MRNet
-provides several transformation filters that should be of general use:
+the same. Transformation operations must be synchronous, but are able to 
+maintain state from one execution to the next. MRNet provides several 
+transformation filters that should be of general use:
 <itemizedlist>
 <listitem><emphasis>Basic scalar operations</emphasis>: min, max, sum and
 average on integers or floats.</listitem>
 <listitem><emphasis>Concatenation</emphasis>: operation that inputs n scalars
 and outputs a vector of length n of the same base type.</listitem>
 </itemizedlist>
-<xref linkend="adding_filters"></xref> describes facilities a tool developer 
-may use to add new filters to the provided set.
+<xref linkend="adding_filters"></xref> describes facilities for adding new
+user-defined transformation and synchronization filters.
 </para>
 </sect1>
 </chapter>

@@ -1,4 +1,8 @@
 <appendix id="example"><title>A Complete MRNet Example: Integer Addition</title>
+
+<para>The source code for the example contained in this appendix can
+be found in <filename>$MRNET_ROOT/Examples/IntegerAddition</filename>.</para>
+
 <example><title>A Complete MRNet Front-End</title>
 <programlisting>
 #include "mrnet/MRNet.h"

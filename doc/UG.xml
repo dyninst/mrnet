@@ -10,12 +10,12 @@
 <!ENTITY api SYSTEM "api.xml">
 <!ENTITY format_strings SYSTEM "format_strings.xml">
 <!ENTITY data_elements SYSTEM "data_elements.xml">
-<!ENTITY event_types SYSTEM "event_types.xml">
+<!ENTITY perf_data SYSTEM "performance_data.xml">
 <!ENTITY full_example SYSTEM "full_example.xml">
 ]>
 
 <book id="book">
-<title>The Multicast/Reduction Network: A User's Guide to MRNet v2.0</title>
+<title>The Multicast/Reduction Network: A User's Guide to MRNet v2.1</title>
 
 &introduction;
 &installation;
@@ -25,6 +25,7 @@
 &topologies;
 &adding_filters;
 &format_strings;
+&perf_data;
 &full_example;
 
 </book>

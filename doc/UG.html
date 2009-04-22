@@ -1,5 +1,5 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>The Multicast/Reduction Network: A User's Guide to MRNet v2.0</title><meta name="generator" content="DocBook XSL Stylesheets V1.68.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="book"></a>The Multicast/Reduction Network: A User's Guide to MRNet v2.0</h1></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#id2652581">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#id2657610">2. Installing and Using MRNet</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2657606">Supported Platforms and Compilers</a></span></dt><dt><span class="sect1"><a href="#id2653470">System Requirements</a></span></dt><dt><span class="sect1"><a href="#id2653494">Build Configuration</a></span></dt><dt><span class="sect1"><a href="#id2653589">Compilation and Installation</a></span></dt><dt><span class="sect1"><a href="#id2698020">Testing the Code</a></span></dt><dt><span class="sect1"><a href="#id2698090">Bugs, Questions and Comments</a></span></dt></dl></dd><dt><span class="chapter"><a href="#id2653323">3. MRNet Components and Abstractions</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2653314">EndPoints</a></span></dt><dt><span class="sect1"><a href="#id2653369">Communicators</a></span></dt><dt><span class="sect1"><a href="#id2653389">Streams</a></span></dt><dt><span class="sect1"><a href="#id2653418">Filters</a></span></dt></dl></dd><dt><span class="chapter"><a href="#simple_example">4. A Simple Example</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2698645">The MRNet Interface</a></span></dt><dt><span class="sect1"><a href="#mrnet_instantiation">MRNet Instantiation</a></span></dt></dl></dd><dt><span class="chapter"><a href="#mrnet_api">5. The MRNet C++ API Reference</a></span></dt><dd><dl><dt><span class="sect1"><a href="#sect:network_api">Class Network</a></span></dt><dt><span class="sect1"><a href="#sect:net_topol_api">Class NetworkTopology</a></span></dt><dt><span class="sect1"><a href="#sect:comm_api">Class Communicator</a></span></dt><dt><span class="sect1"><a href="#sect:stream_api">Class Stream</a></span></dt><dt><span class="sect1"><a href="#sect:packet_api">Class Packet</a></span></dt></dl></dd><dt><span class="chapter"><a href="#mrnet_topology_configuration">6. MRNET Process-tree
-Topologies</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2703653">Topology File Format</a></span></dt><dt><span class="sect1"><a href="#id2704325">Topology File Generator</a></span></dt></dl></dd><dt><span class="chapter"><a href="#adding_filters">7. Adding New Filters</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2704162">Defining an MRNet Filter</a></span></dt><dt><span class="sect1"><a href="#id2704730">Creating and Using MRNet Filter Shared Object Files</a></span></dt></dl></dd><dt><span class="appendix"><a href="#format_strings">A. MRNET Format Strings</a></span></dt><dt><span class="appendix"><a href="#example">B. A Complete MRNet Example: Integer Addition</a></span></dt></dl></div><div class="list-of-examples"><p><b>List of Examples</b></p><dl><dt>4.1. <a href="#fe_code">MRNet Front-end Sample Code</a></dt><dt>4.2. <a href="#be_code">MRNet Back-end Sample Code</a></dt><dt>B.1. <a href="#id2705016">A Complete MRNet Front-End</a></dt><dt>B.2. <a href="#id2704799">A Complete MRNet Back-End</a></dt><dt>B.3. <a href="#id2705080">An MRNet Filter: Integer Addition</a></dt><dt>B.4. <a href="#id2704817">An MRNet Topology File</a></dt></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2652581"></a>Chapter 1. Introduction</h2></div></div></div><p>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>The Multicast/Reduction Network: A User's Guide to MRNet v2.1</title><meta name="generator" content="DocBook XSL Stylesheets V1.68.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="book"></a>The Multicast/Reduction Network: A User's Guide to MRNet v2.1</h1></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#id2830416">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#id2835443">2. Installing and Using MRNet</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2835440">Supported Platforms and Compilers</a></span></dt><dt><span class="sect1"><a href="#id2831305">System Requirements</a></span></dt><dt><span class="sect1"><a href="#id2831329">Build Configuration</a></span></dt><dt><span class="sect1"><a href="#id2831424">Compilation and Installation</a></span></dt><dt><span class="sect1"><a href="#id2875854">Testing the Code</a></span></dt><dt><span class="sect1"><a href="#id2875924">Bugs, Questions and Comments</a></span></dt></dl></dd><dt><span class="chapter"><a href="#id2831158">3. MRNet Components and Abstractions</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2831148">End-Points</a></span></dt><dt><span class="sect1"><a href="#id2831204">Communicators</a></span></dt><dt><span class="sect1"><a href="#id2831224">Streams</a></span></dt><dt><span class="sect1"><a href="#id2831252">Filters</a></span></dt></dl></dd><dt><span class="chapter"><a href="#simple_example">4. A Simple Example</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2876469">The MRNet Interface</a></span></dt><dt><span class="sect1"><a href="#mrnet_instantiation">MRNet Instantiation</a></span></dt></dl></dd><dt><span class="chapter"><a href="#mrnet_api">5. The MRNet C++ API Reference</a></span></dt><dd><dl><dt><span class="sect1"><a href="#sect:network_api">Class Network</a></span></dt><dt><span class="sect1"><a href="#sect:net_topol_api">Class NetworkTopology</a></span></dt><dt><span class="sect1"><a href="#sect:comm_api">Class Communicator</a></span></dt><dt><span class="sect1"><a href="#sect:stream_api">Class Stream</a></span></dt><dt><span class="sect1"><a href="#sect:packet_api">Class Packet</a></span></dt></dl></dd><dt><span class="chapter"><a href="#mrnet_topology_configuration">6. MRNET Process-tree
+Topologies</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2883449">Topology File Format</a></span></dt><dt><span class="sect1"><a href="#id2884121">Topology File Generator</a></span></dt></dl></dd><dt><span class="chapter"><a href="#adding_filters">7. Adding New Filters</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2883958">Defining an MRNet Filter</a></span></dt><dt><span class="sect1"><a href="#id2884532">Creating and Using MRNet Filter Shared Object Files</a></span></dt></dl></dd><dt><span class="appendix"><a href="#format_strings">A. MRNet Format Strings</a></span></dt><dt><span class="appendix"><a href="#perf_data">B. MRNet Stream Performance Data</a></span></dt><dt><span class="appendix"><a href="#example">C. A Complete MRNet Example: Integer Addition</a></span></dt></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>B.1. <a href="#id2885624">Metric-Context Compatibility Matrix</a></dt></dl></div><div class="list-of-examples"><p><b>List of Examples</b></p><dl><dt>4.1. <a href="#fe_code">MRNet Front-end Sample Code</a></dt><dt>4.2. <a href="#be_code">MRNet Back-end Sample Code</a></dt><dt>C.1. <a href="#id2885472">A Complete MRNet Front-End</a></dt><dt>C.2. <a href="#id2885409">A Complete MRNet Back-End</a></dt><dt>C.3. <a href="#id2886493">An MRNet Filter: Integer Addition</a></dt><dt>C.4. <a href="#id2886533">An MRNet Topology File</a></dt></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2830416"></a>Chapter 1. Introduction</h2></div></div></div><p>
 MRNet is a customizable, high-throughput communication software system for
 parallel tools and applications with a master/slave architecture. MRNet reduces the cost of these
 tools' activities by incorporating a tree of processes between the tool's
@@ -34,13 +34,13 @@ issuing control requests from the tool front-end to its back-ends.</li><li><span
 multiple logical streams of data between tool components. Data aggregation and
 message multicast takes place within the context of a data stream, and multiple
 operations (both upward and downward) can be active simultaneously.</li></ul></div><p>
-</p></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2657610"></a>Chapter 2. Installing and Using MRNet</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2657606">Supported Platforms and Compilers</a></span></dt><dt><span class="sect1"><a href="#id2653470">System Requirements</a></span></dt><dt><span class="sect1"><a href="#id2653494">Build Configuration</a></span></dt><dt><span class="sect1"><a href="#id2653589">Compilation and Installation</a></span></dt><dt><span class="sect1"><a href="#id2698020">Testing the Code</a></span></dt><dt><span class="sect1"><a href="#id2698090">Bugs, Questions and Comments</a></span></dt></dl></div><p>
+</p></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2835443"></a>Chapter 2. Installing and Using MRNet</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2835440">Supported Platforms and Compilers</a></span></dt><dt><span class="sect1"><a href="#id2831305">System Requirements</a></span></dt><dt><span class="sect1"><a href="#id2831329">Build Configuration</a></span></dt><dt><span class="sect1"><a href="#id2831424">Compilation and Installation</a></span></dt><dt><span class="sect1"><a href="#id2875854">Testing the Code</a></span></dt><dt><span class="sect1"><a href="#id2875924">Bugs, Questions and Comments</a></span></dt></dl></div><p>
 For this discussion, <code class="envar">$MRNET_ROOT</code> is the location of the
 top-level directory of the MRNet distribution and
 <code class="envar">$MRNET_ARCH</code> is a string describing the platform (OS and
 architecture) as discovered by autoconf. For the installation instructions, it is
 assumed that the current working directory is <code class="envar">$MRNET_ROOT</code>.
-</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2657606"></a>Supported Platforms and Compilers</h2></div></div></div><p>
+</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2835440"></a>Supported Platforms and Compilers</h2></div></div></div><p>
 MRNet has been developed to be highly portable; we expect it to run properly
 on all common Unix-based as well as Microsoft Windows platforms. This being said, 
 we have successfully built and tested MRNet on the following systems:
@@ -49,12 +49,12 @@ we have successfully built and tested MRNet on the following systems:
 Our build system attempts to use native system compilers where appropriate, for
 instance, <span class="application">xlc</span> and <span class="application">xlC</span>
 in AIX environments.
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653470"></a>System Requirements</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2831305"></a>System Requirements</h2></div></div></div><p>
 Here we list the third party tools that MRNet uses and needs for
 proper installation:
 
 </p><div class="itemizedlist"><ul type="disc"><li>GNU make</li><li>flex</li><li>bison</li></ul></div><p>
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653494"></a>Build Configuration</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2831329"></a>Build Configuration</h2></div></div></div><p>
 MRNet uses <span class="application">GNU autoconf</span> to discover the
 platform specific configuration parameters. The script that does
 this auto-configuration is called <span><strong class="command">configure</strong></span>.
@@ -79,7 +79,7 @@ results, but the user may specify certain options. For example,
 instructs the configure script to use <span><strong class="command">g++</strong></span> for the C++
 compiler with level 3 optimization and <code class="filename">/usr/local/lib/libfl.a</code> 
 as the location of the flex library.
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653589"></a>Compilation and Installation</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2831424"></a>Compilation and Installation</h2></div></div></div><p>
 To build the MRNet toolkit by type:
 </p><pre class="screen">
 <code class="prompt">UNIX&gt;</code>  <span><strong class="command">make</strong></span>
@@ -96,7 +96,7 @@ Typing:
 builds the mrnet test files. In addition to those files above, you will also generate:
 </p><div class="itemizedlist"><ul type="disc"><li><code class="filename">$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_topgen</code>: MRNet
 topology file generator</li><li><code class="filename">$MRNET_ROOT/bin/$MRNET_ARCH/*_[FE,BE]</code>: MRNet test front-end and back-end programs</li><li><code class="filename">$MRNET_ROOT/lib/$MRNET_ARCH/test_DynamicFilters.so</code>: Shared object used in tests of dynamic filter loading.</li><li><code class="filename">$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_tests.sh</code>: A shell script that runs the test programs and checks for errors in an automated fashion.</li></ul></div><p>
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2698020"></a>Testing the Code</h2></div></div></div>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2875854"></a>Testing the Code</h2></div></div></div>
 The shell script, <span class="application">mrnet_tests.sh</span> is placed in the
 binary directory with the other executables during the building of the MRNet
 tests as described above. This script can be used to run the MRNet test
@@ -106,53 +106,53 @@ programs and check their output for errors. The script is used as follows:
 </pre></div>
 The <code class="option">-l</code> flag is used to run all tests using only topologies that create processes on the local machine. The <code class="option">-r</code> flag runs tests using remote machines specified in the file whose name immediately follows this flag. To run test both locally and remotely, use the <code class="option">-a</code> flag and specify a hostfile to use. To run the programs that test MRNet's ability to dynamically load filters, you must specify the absolute location of the shared object <code class="filename">test_DynamicFilters.so</code> produced when the tests were built.
 
-<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3>To successfully run all tests, the location of the MRNet binaries must be in the user's <code class="envar">$PATH</code>. For testing dynamic filters, the filesystem containing the shared object must be available to all the host machines participating in the test.</div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2698090"></a>Bugs, Questions and Comments</h2></div></div></div><p>
+<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3>To successfully run all tests, the location of the MRNet binaries must be in the user's <code class="envar">$PATH</code>. For testing dynamic filters, the filesystem containing the shared object must be available to all the host machines participating in the test.</div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2875924"></a>Bugs, Questions and Comments</h2></div></div></div><p>
 MRNet is maintained primarily by the Paradyn Project, University of Wisconsin-Madison.
 Comments and other feedback whether positive or negative are welcome.
 </p><p>
 Please report bugs to paradyn@cs.wisc.edu.
 </p><p>
 The MRNet webpage is http://www.paradyn.org/mrnet/
-</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2653323"></a>Chapter 3. MRNet Components and Abstractions</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2653314">EndPoints</a></span></dt><dt><span class="sect1"><a href="#id2653369">Communicators</a></span></dt><dt><span class="sect1"><a href="#id2653389">Streams</a></span></dt><dt><span class="sect1"><a href="#id2653418">Filters</a></span></dt></dl></div><p>
+</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="id2831158"></a>Chapter 3. MRNet Components and Abstractions</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2831148">End-Points</a></span></dt><dt><span class="sect1"><a href="#id2831204">Communicators</a></span></dt><dt><span class="sect1"><a href="#id2831224">Streams</a></span></dt><dt><span class="sect1"><a href="#id2831252">Filters</a></span></dt></dl></div><p>
 The MRNet distribution has two main components: <code class="filename">libmrnet.a</code>, a
 library that is linked into a tool's front-end and back-end components, and
-<span class="application">mrnet_commnode</span>, a program that runs on intermediate nodes
+<code class="filename">mrnet_commnode</code>, a program that runs on intermediate nodes
 interposed between the application front-end and back-ends. <code class="filename">libmrnet.a
 </code> exports an API (See <a href="#mrnet_api" title="Chapter 5. The MRNet C++ API Reference">Chapter 5, <i>The MRNet C++ API Reference</i></a>) that enables
 I/O interaction between the front-end and groups of back-ends via MRNet. The
-primary purpose of <span class="application">mrnet_commnode</span> is to distribute data
+primary purpose of <code class="filename">mrnet_commnode</code> is to distribute data
 processing functionality across multiple computer hosts and to implement
 efficient and scalable group communications. The following sub-sections describe
 the lower-level components of the MRNet API in more detail.
-</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653314"></a>EndPoints</h2></div></div></div><p>
-An MRNet end-point represents a tool or application process or node. In
-particular, they represent the back-end processes in the system. The front-end
-can communicate in a unicast or multicast fashion with one or more of these
-end-points as described below.
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653369"></a>Communicators</h2></div></div></div><p>
-MRNet uses communicators to represent groups of network end-points. Like
+</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2831148"></a>End-Points</h2></div></div></div><p>
+An MRNet end-point represents a tool or application process. In particular, 
+they represent the back-end processes (i.e., leaf processes) in the tree
+overlay. The front-end can communicate in a unicast or multicast fashion 
+with one or more of these end-points as described below.
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2831204"></a>Communicators</h2></div></div></div><p>
+MRNet uses communicators to represent groups of end-points. Like
 communicators in MPI, MRNet communicators provide a handle that identifies a
 set of end-points for point-to-point, multicast or broadcast communications. MPI
 applications typically have a non-hierarchical layout of potentially identical
 processes. In contrast, MRNet enforces a tree-like layout of all processes,
-rooted at the tool front-end. Accordingly, MRNet communicators are created and
-managed by the front-end, and communication is only allowed between a tool's
-front-end and its back-ends, i.e. back-ends cannot interact with each other
-directly via MRNet.
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653389"></a>Streams</h2></div></div></div><p>
+rooted at the front-end. Accordingly, MRNet communicators are created and
+managed by the front-end, and communication is only allowed between a
+front-end and its back-ends. As such, back-ends cannot interact with each other
+directly using the MRNet API.
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2831224"></a>Streams</h2></div></div></div><p>
 A stream is a logical channel that connects the front-end to the end-points of a
-communicator. All tool-level communication via MRNet must use these streams.
+communicator. All MRNet communication uses the stream abstraction.
 Streams carry data packets downstream, from the front-end toward the back-ends,
-and upstream, from the back-ends toward the front-end. Upward streams are
-expected to carry data of a specific type allowing data aggregation operations
+and upstream, from the back-ends toward the front-end. Streams are
+expected to carry data of a specific type, allowing data aggregation operations
 to be associated with a stream. The type is specified using a format string
-(See <a href="#format_strings" title="Appendix A. MRNET Format Strings">Appendix A, <i>MRNET Format Strings</i></a>) similar to those used in C
-formatted I/O primitives, e.g. a packet whose data is described by the format
+(See <a href="#format_strings" title="Appendix A. MRNet Format Strings">Appendix A, <i>MRNet Format Strings</i></a>) similar to those used in C
+formatted I/O primitives (e.g., a packet whose data is described by the format
 string "%d %d %f %s" contains two integers followed by a float then a character
-string. MRNet expands the standard specification to allow for specifiers that
-describe arrays of integers and floats. 
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2653418"></a>Filters</h2></div></div></div><p>
-Data Aggregation is the process of merging multiple input data packets and
+string). MRNet expands the standard format string specification to allow for 
+description of arrays. 
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2831252"></a>Filters</h2></div></div></div><p>
+Data aggregation is the process of merging multiple input data packets and
 transforming them into one or more output packets. Though it is not necessary
 for the aggregation to result in less or even different data, aggregations that
 reduce or modify data values are most common. MRNet uses data filters to
@@ -168,18 +168,15 @@ but transformation filters operate on packets of a specific type.
 </p><p>
 Synchronization filters operate on data flowing upstream in the network,
 receiving packets one at a time and outputting packets only when the
-specified synchronization criteria has occurred.
+specified synchronization criteria has been met.
 Synchronization filters provide a mechanism to deal with the asynchronous 
-arrival of packets from children nodes; the synchronizer collects packets and
+arrival of packets from children nodes. The synchronizer collects packets and
 typically aligns them into waves, passing an entire wave onward at the same
 time. Therefore, synchronization filters do no data transformation and can
 operate on packets in a type-independent fashion. MRNet currently supports
-three synchronization modes:
+two synchronization modes:
 </p><div class="itemizedlist"><ul type="disc"><li><span class="emphasis"><em>Wait For All</em></span>: wait for a packet from every
-child node,</li><li><span class="emphasis"><em>Time Out</em></span>: wait a specified time or until a
-packet has arrived from every child (whichever occurs first), or</li><li><span class="emphasis"><em>Do Not Wait</em></span>: output packets immediately.
-Synchronization filters use one of these three criteria to determine when to
-return packets to the stream manager.</li></ul></div><p>
+child node</li><li><span class="emphasis"><em>Do Not Wait</em></span>: output packets immediately.</li></ul></div><p>
 </p><p>
 Transformation filters can be used on both upstream and downstream data flows. 
 Transformation filters input a group of synchronized packets, and
@@ -188,15 +185,15 @@ aggregation that yields one or more new data packets. Since transformation
 filters are expected to perform computational operations on data packets,
 there is a type requirement for the data packets to be passed to this type of
 filter: the data format string of the stream's packets and the filter must be
-the same. Transformation operations must be synchronous, but can carry state
-from one transformation to the next using static storage structures. MRNet
-provides several transformation filters that should be of general use:
+the same. Transformation operations must be synchronous, but are able to 
+maintain state from one execution to the next. MRNet provides several 
+transformation filters that should be of general use:
 </p><div class="itemizedlist"><ul type="disc"><li><span class="emphasis"><em>Basic scalar operations</em></span>: min, max, sum and
 average on integers or floats.</li><li><span class="emphasis"><em>Concatenation</em></span>: operation that inputs n scalars
 and outputs a vector of length n of the same base type.</li></ul></div><p>
-<a href="#adding_filters" title="Chapter 7. Adding New Filters">Chapter 7, <i>Adding New Filters</i></a> describes facilities a tool developer 
-may use to add new filters to the provided set.
-</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="simple_example"></a>Chapter 4. A Simple Example</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2698645">The MRNet Interface</a></span></dt><dt><span class="sect1"><a href="#mrnet_instantiation">MRNet Instantiation</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2698645"></a>The MRNet Interface</h2></div></div></div><p>
+<a href="#adding_filters" title="Chapter 7. Adding New Filters">Chapter 7, <i>Adding New Filters</i></a> describes facilities for adding new
+user-defined transformation and synchronization filters.
+</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="simple_example"></a>Chapter 4. A Simple Example</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2876469">The MRNet Interface</a></span></dt><dt><span class="sect1"><a href="#mrnet_instantiation">MRNet Instantiation</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2876469"></a>The MRNet Interface</h2></div></div></div><p>
 A complete description of the MRNet API is in <a href="#mrnet_api" title="Chapter 5. The MRNet C++ API Reference">Chapter 5, <i>The MRNet C++ API Reference</i></a>. This section offers a brief overview only.
 Using <code class="filename">libmrnet.a</code>, a tool can leverage a system of internal
 processes, instances of the <code class="filename">mrnet_commnode</code> program, as a
@@ -280,7 +277,7 @@ that returns the tag sent by the front-end, the packet containing the actual dat
 sent, and a stream object representing the stream that the front-end has established. 
 Finally, each back-end sends a scalar floating point value upstream toward the front-end.
 </p><p>
-A complete example of MRNet code can be found below in <a href="#example" title="Appendix B. A Complete MRNet Example: Integer Addition">Appendix B, <i>A Complete MRNet Example: Integer Addition</i></a>.
+A complete example of MRNet code can be found below in <a href="#example" title="Appendix C. A Complete MRNet Example: Integer Addition">Appendix C, <i>A Complete MRNet Example: Integer Addition</i></a>.
 </p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="mrnet_instantiation"></a>MRNet Instantiation</h2></div></div></div><p>
 While conceptually simple, creating and connecting the internal processes is
 complicated by interactions with the various job scheduling systems. In the
@@ -365,7 +362,7 @@ specified by <code class="varname">topology</code> will be instances of mrnet_co
 </div><p>
 
 </p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3> When starting internal and back-end processes, MRNet will use ssh to start remote processes
-unless the environment variable <code class="varname">XPLAT_RSH</code> is set to a different command. 
+unless the environment variable <code class="literal">XPLAT_RSH</code> is set to a different command. 
 If it is necessary to run the remote process starter command (e.g., <span><strong class="command">rsh</strong></span>) 
 with a utility like <span><strong class="command">runauth</strong></span> to non-interactively authenticate the
 unattended remote process, that command may be specified using the
@@ -400,19 +397,21 @@ has been made to request otherwise.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">Network::set_TerminateBackEndsOnShutdown</b>(</code></td><td><var class="pdparam">terminate</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>bool  </td><td><var class="pdparam">terminate</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::set_TerminateBackEndsOnShutdown</code> is used to
 control whether application back-end processes are terminated when the MRNet
 Network is shutdown. By default, back-end processes will be terminated. If this
-is not desirable, call this method with <code class="varname">terminate</code> set to false.
-</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">int <b class="fsfunc">Network::recv</b>(</code></td><td><var class="pdparam">tag</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">packet</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">stream</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">blocking</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>int *  </td><td><var class="pdparam">tag</var>;</td></tr><tr><td>PacketPtr &amp;  </td><td><var class="pdparam">packet</var>;</td></tr><tr><td>Stream **  </td><td><var class="pdparam">stream</var>;</td></tr><tr><td>bool  </td><td><var class="pdparam">blocking</var> =true;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::recv</code> is used to invoke a stream-anonymous
-receive operation. Any packet available (addressed to any stream)
-will be returned (in roughly FIFO ordering) via the output parameters. 
-<code class="varname">otag</code> will be filled in with the integer
-tag value that was passed by the corresponding <code class="function">Stream::send()
-</code> operation. <code class="varname">packet</code> is the packet that was
-received. A pointer to the Stream to which the packet was addressed
-will be returned in <code class="varname">stream</code>. <code class="varname">blocking</code>
-is used to signal whether this call should block or return if data is not
-immediately available; it defaults to a blocking call.
-A return value of -1 indicates an error, 0 indicates no packets were 
-available, and 1 indicates success.
+behavior is not desired, call this method with <code class="varname">terminate</code> set to false.
+</blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">bool <b class="fsfunc">Network::has_error</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::has_error</code> returns true if an error has
+occured during the last call to a <code class="classname">Network</code> method. 
+<code class="function">Network::print_error</code>
+can be used to print a message describing the exact error. 
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">Network::print_error</b>(</code></td><td><var class="pdparam">error_msg</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>const char *  </td><td><var class="pdparam">error_msg</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::print_error</code> prints a message to stderr
+describing the last error encountered during a <code class="classname">Network</code>
+ method. It first prints the null-terminated string, <code class="varname">error_msg</code>
+followed by a colon then the actual error message followed by a newline.
+</blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">std::string <b class="fsfunc">Network::get_LocalHostName</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_LocalHostName</code> returns the name of the host
+on which the MRNet process is running.
+</blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">Port <b class="fsfunc">Network::get_LocalPort</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_LocalPort</code> returns the port at which the 
+MRNet process can be contacted.
+</blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">Rank <b class="fsfunc">Network::get_LocalRank</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_LocalRank</code> returns the rank of the
+MRNet process.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">int <b class="fsfunc">Network::load_FilterFunc</b>(</code></td><td><var class="pdparam">so_file</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">func_name</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">is_transformation_filter</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>const char *  </td><td><var class="pdparam">so_file</var>;</td></tr><tr><td>const char *  </td><td><var class="pdparam">func_name</var>;</td></tr><tr><td>bool  </td><td><var class="pdparam">is_transformation_filter</var> =true;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><p>
 This method, used for loading new filter operations into the Network
 is conveniently similar to the conventional <code class="function">dlopen()
@@ -428,22 +427,71 @@ On success, <code class="function">Network::load_FilterFunc</code> returns the i
 of the newly loaded filter which may be used in subsequent calls to
 <code class="function">Network::new_Stream</code>. A value of -1 is returned
 on failure.
-</p></blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">Network::print_error</b>(</code></td><td><var class="pdparam">error_msg</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>const char *  </td><td><var class="pdparam">error_msg</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::print_error</code> prints a message to stderr
-describing the last error encountered during a MRNet library call. It
-first prints the null-terminated string, <code class="varname">error_msg</code>
-followed by a colon then the actual error message followed by a newline.
-</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">Network::get_DataSocketFds</b>(</code></td><td><var class="pdparam">fd_array</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">fd_array_size</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>int **  </td><td><var class="pdparam">fd_array</var>;</td></tr><tr><td>unsigned int *  </td><td><var class="pdparam">fd_array_size</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_DataSocketFds</code> is used to notify an application of
-all the file descriptors MRNet is using for data communication. This function
-returns an array of size <code class="varname">fd_array_size</code> file descriptors in the
-output array <code class="varname">fd_array</code>. On front-ends, the array should contain
-an entry for each child, while on back-ends the array should contain a single entry
-for the parent. 
-</blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">std::string <b class="fsfunc">Network::get_LocalHostName</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_LocalHostName</code> returns the name of the host
-on which the MRNet process is running.
-</blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">Port <b class="fsfunc">Network::get_LocalPort</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_LocalPort</code> returns the port at which the 
-MRNet process can be contacted.
-</blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">Rank <b class="fsfunc">Network::get_LocalRank</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_LocalRank</code> returns the rank of the
-MRNet process.
+</p></blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">int <b class="fsfunc">Network::recv</b>(</code></td><td><var class="pdparam">tag</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">packet</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">stream</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">blocking</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>int *  </td><td><var class="pdparam">tag</var>;</td></tr><tr><td>PacketPtr &amp;  </td><td><var class="pdparam">packet</var>;</td></tr><tr><td>Stream **  </td><td><var class="pdparam">stream</var>;</td></tr><tr><td>bool  </td><td><var class="pdparam">blocking</var> =true;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::recv</code> is used to invoke a stream-anonymous
+receive operation. Any packet available (addressed to any stream)
+will be returned (in roughly FIFO ordering) via the output parameters. 
+<code class="varname">otag</code> will be filled in with the integer
+tag value that was passed by the corresponding <code class="function">Stream::send()
+</code> operation. <code class="varname">packet</code> is the packet that was
+received. A pointer to the Stream to which the packet was addressed
+will be returned in <code class="varname">stream</code>. <code class="varname">blocking</code>
+is used to signal whether this call should block or return if data is not
+immediately available; it defaults to a blocking call.
+A return value of -1 indicates an error, 0 indicates no packets were 
+available, and 1 indicates success.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">bool <b class="fsfunc">Network::enable_PerformanceData</b>(</code></td><td><var class="pdparam">metric</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">context</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>perfdata_metric_t  </td><td><var class="pdparam">metric</var>;</td></tr><tr><td>perfdata_context_t  </td><td><var class="pdparam">context</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::enable_PerformanceData</code> uses
+<code class="function">Stream::enable_PerformanceData</code> to start the recording
+of performance data of the specified <code class="varname">metric</code> type for the
+given <code class="varname">context</code> on all streams. Returns true on success,
+false otherwise.
+<a href="#perf_data" title="Appendix B. MRNet Stream Performance Data">Appendix B, <i>MRNet Stream Performance Data</i></a> describes the supported metric and context types.
+See <code class="function">Stream::enable_PerformanceData</code> for additional details.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">bool <b class="fsfunc">Network::disable_PerformanceData</b>(</code></td><td><var class="pdparam">metric</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">context</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>perfdata_metric_t  </td><td><var class="pdparam">metric</var>;</td></tr><tr><td>perfdata_context_t  </td><td><var class="pdparam">context</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::disable_PerformanceData</code> uses
+<code class="function">Stream::disable_PerformanceData</code> to stop the recording
+of performance data of the specified <code class="varname">metric</code> type for the
+given <code class="varname">context</code> on all streams. Returns true on success,
+false otherwise. See 
+<code class="function">Stream::disable_PerformanceData</code> for additional details.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">bool <b class="fsfunc">Network::collect_PerformanceData</b>(</code></td><td><var class="pdparam">results</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">metric</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">context</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">aggr_filter_id</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>std::map&lt; int, rank_perfdata_map &gt; &amp;  </td><td><var class="pdparam">results</var>;</td></tr><tr><td>perfdata_metric_t  </td><td><var class="pdparam">metric</var>;</td></tr><tr><td>perfdata_context_t  </td><td><var class="pdparam">context</var>;</td></tr><tr><td>int  </td><td><var class="pdparam">aggr_filter_id</var> =TFILTER_ARRAY_CONCAT;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::collect_PerformanceData</code> uses
+<code class="function">Stream::collect_PerformanceData</code> to collect the 
+performance data of the specified <code class="varname">metric</code> type for the
+given <code class="varname">context</code> on all streams. The performance data of 
+each stream is passed through the transformation filter identified by 
+<code class="varname">aggr_filter_id</code>. The data for all streams is stored within
+the map <code class="varname">results</code>, keyed by stream identifier. Returns true on success,
+false otherwise.
+See <code class="function">Stream::collect_PerformanceData</code> for additional details.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">Network::print_PerformanceData</b>(</code></td><td><var class="pdparam">metric</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">context</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>perfdata_metric_t  </td><td><var class="pdparam">metric</var>;</td></tr><tr><td>perfdata_context_t  </td><td><var class="pdparam">context</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::enable_PerformanceData</code> uses
+<code class="function">Stream::print_PerformanceData</code> to print recorded
+performance data of the specified <code class="varname">metric</code> type for the
+given <code class="varname">context</code> on all streams. Data is printed to the
+MRNet log files. See <code class="function">Stream::print_PerformanceData</code> 
+for additional details.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">Network::get_EventNotificationFd</b>(</code></td><td><var class="pdparam">etyp</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>EventType  </td><td><var class="pdparam">etyp</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><p><code class="function">Network::get_EventNotificationFd</code> returns a file descriptor
+that can be added to the <code class="literal">read fd_set</code> of  <code class="function">select()</code> 
+to receive notification of interesting DATA, TOPOLOGY, or ERROR events.
+<code class="varname">etyp</code> should be set to one of <code class="literal">ERROR_EVENT</code>, 
+<code class="literal">DATA_EVENT</code>, or <code class="literal">TOPOLOGY_EVENT</code>.
+<code class="literal">DATA_EVENT</code> can be used by both front-end and back-end
+processes to provide notification that one or more data packets have been received. 
+<code class="literal">TOPOLOGY_EVENT</code> and <code class="literal">ERROR_EVENT</code> can only be used
+by front-end processes, and provide notification when the front-end observes a change in 
+<code class="classname">NetworkTopology</code> or an error, respectively.</p><p> When <code class="function">select()</code> indicates that the file descriptor has data 
+available, you should call <code class="function">Network::clear_EventNotificationFd</code> before
+taking action on the notification. When notifications are no longer needed, use
+<code class="function">Network::close_EventNotificationFd</code></p></blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">Network::clear_EventNotificationFd</b>(</code></td><td><var class="pdparam">etyp</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>EventType  </td><td><var class="pdparam">etyp</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
+This method resets the event notification
+file descriptor returned from <code class="function">Network::get_EventNotificationFd</code>.
+<code class="varname">etyp</code> should be set to one of <code class="literal">ERROR_EVENT</code>, 
+<code class="literal">DATA_EVENT</code>, or <code class="literal">TOPOLOGY_EVENT</code>.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">Network::close_EventNotificationFd</b>(</code></td><td><var class="pdparam">etyp</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>EventType  </td><td><var class="pdparam">etyp</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
+This method closes the event notification
+file descriptor returned from <code class="function">Network::get_EventNotificationFd</code>.
+<code class="varname">etyp</code> should be set to one of <code class="literal">ERROR_EVENT</code>, 
+<code class="literal">DATA_EVENT</code>, or <code class="literal">TOPOLOGY_EVENT</code>.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">Network::get_DataSocketFds</b>(</code></td><td><var class="pdparam">fd_array</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">fd_array_size</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>int **  </td><td><var class="pdparam">fd_array</var>;</td></tr><tr><td>unsigned int *  </td><td><var class="pdparam">fd_array_size</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_DataSocketFds</code> is deprecated and has been removed.
+See <code class="function">Network::get_EventNotificationFd</code> for a description of
+how to receive notifications for <code class="literal">DATA_EVENT</code>s.
 </blockquote></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sect:net_topol_api"></a>Class NetworkTopology</h2></div></div></div><p>
 Instances of NetworkTopology are network specific, so they are created 
 when a Network is instantiated. MRNet API users should not need to
@@ -451,30 +499,30 @@ create their own NetworkTopology instances.
 </p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">NetworkTopology * <b class="fsfunc">Network::get_NetworkTopology</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_NetworkTopology</code> is used to retrieve 
 a pointer to the underlying NetworkTopology instance of a Network.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">unsigned int <b class="fsfunc">NetworkTopology::get_NumNodes</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns the total number of nodes in the tree topology, 
+This method returns the total number of nodes in the tree topology, 
 including front-end, internal, and back-end processes.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">NetworkTopology::Node * <b class="fsfunc">NetworkTopology::find_Node</b>(</code></td><td><var class="pdparam">node_rank</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>Rank  </td><td><var class="pdparam">node_rank</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a pointer to the tree node with rank equal to <code class="varname">node_rank</code>,
+This method returns a pointer to the tree node with rank equal to <code class="varname">node_rank</code>,
 or NULL if not found.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">NetworkTopology::Node * <b class="fsfunc">NetworkTopology::get_Root</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a pointer to the root node of the tree,
+This method returns a pointer to the root node of the tree,
 or NULL if not found.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">NetworkTopology::get_Leaves</b>(</code></td><td><var class="pdparam">leaves</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>std::vector&lt; NetworkTopology::Node * &gt; &amp;  </td><td><var class="pdparam">leaves</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function fills in the <code class="varname">leaves</code> vector with pointers to the
+This method fills in the <code class="varname">leaves</code> vector with pointers to the
 leaf nodes in the topology. In the case where back-end processes are not
 started when the Network is instantiated, a front-end process can use this 
 function to retrieve information about the leaf internal processes to which
 the back-ends should attach.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">NetworkTopology::get_BackEndNodes</b>(</code></td><td><var class="pdparam">nodes</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>std::set&lt; NetworkTopology::Node * &gt; &amp;  </td><td><var class="pdparam">nodes</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function fills a set with pointers to all back-end process tree nodes.
+This method fills a set with pointers to all back-end process tree nodes.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">NetworkTopology::get_ParentNodes</b>(</code></td><td><var class="pdparam">nodes</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>std::set&lt; NetworkTopology::Node * &gt; &amp;  </td><td><var class="pdparam">nodes</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function fills a set with pointers to all tree nodes that are parents
+This method fills a set with pointers to all tree nodes that are parents
 (i.e., those nodes having at least one child).
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">NetworkTopology::get_OrphanNodes</b>(</code></td><td><var class="pdparam">nodes</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>std::set&lt; NetworkTopology::Node * &gt; &amp;  </td><td><var class="pdparam">nodes</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function fills a set with pointers to all tree nodes that have
+This method fills a set with pointers to all tree nodes that have
 no parent due to a failure.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">NetworkTopology::get_TreeStatistics</b>(</code></td><td><var class="pdparam">num_nodes</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">depth</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">min_fanout</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">max_fanout</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">avg_fanout</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">stddev_fanout</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>unsigned int &amp;  </td><td><var class="pdparam">num_nodes</var>;</td></tr><tr><td>unsigned int &amp;  </td><td><var class="pdparam">depth</var>;</td></tr><tr><td>unsigned int &amp;  </td><td><var class="pdparam">min_fanout</var>;</td></tr><tr><td>unsigned int &amp;  </td><td><var class="pdparam">max_fanout</var>;</td></tr><tr><td>double &amp;  </td><td><var class="pdparam">avg_fanout</var>;</td></tr><tr><td>double &amp;  </td><td><var class="pdparam">stddev_fanout</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function fills in the values of each of the parameters. <code class="varname">num_nodes</code>
+This method fills in the values of each of the parameters. <code class="varname">num_nodes</code>
 is the total number of tree nodes (same as the value returned by 
 <code class="function">NetworkTopology::get_NumNodes</code>), <code class="varname">depth</code> is the 
 depth of the tree (i.e., the maximum path length from root to any leaf), <code class="varname">min_fanout</code>
@@ -482,64 +530,72 @@ is the minimum number of children of any parent node, <code class="varname">max_
 maximum number of children of any parent node, <code class="varname">avg_fanout</code> is the average
 number of children across all parent nodes, and <code class="varname">stddev_fanout</code> is the standard
 deviation in number of children across all parent nodes.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">NetworkTopology::print_TopologyFile</b>(</code></td><td><var class="pdparam">filename</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>const char *  </td><td><var class="pdparam">filename</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
+This method will create (or overwrite) the specified topology file 
+<code class="varname">filename</code> using the current state of this 
+<code class="classname">NetworkTopology</code> object.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">NetworkTopology::print_DOTGraph</b>(</code></td><td><var class="pdparam">filename</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>const char *  </td><td><var class="pdparam">filename</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
+This method will create (or overwrite) the specified dot graph file 
+<code class="varname">filename</code> using the current state of this 
+<code class="classname">NetworkTopology</code> object.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">std::string <b class="fsfunc">NetworkTopology::Node::get_HostName</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a character string identifying the hostname of the tree node.
+This method returns a character string identifying the hostname of the tree node.
 </blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">Port <b class="fsfunc">NetworkTopology::Node::get_Port</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function returns the connection port of the tree node.
+This method returns the connection port of the tree node.
 </blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">Rank <b class="fsfunc">NetworkTopology::Node::get_Rank</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function returns the unique rank of the tree node.
+This method returns the unique rank of the tree node.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">const std::set&lt; NetworkTopology::Node * &gt; &amp; <b class="fsfunc">NetworkTopology::Node::get_Children</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a set containing pointers to the children of the tree node, and is useful
+This method returns a set containing pointers to the children of the tree node, and is useful
 for navigating through the tree.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">unsigned int <b class="fsfunc">NetworkTopology::Node::get_NumChildren</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns the number of children of the tree node.
+This method returns the number of children of the tree node.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">unsigned int <b class="fsfunc">NetworkTopology::Node::find_SubTreeHeight</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns the height of the subtree rooted at this tree node.
+This method returns the height of the subtree rooted at this tree node.
 </blockquote></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sect:comm_api"></a>Class Communicator</h2></div></div></div><p>
 Instances of Communicator are network specific, so their creation methods
 are functions of an instantiated Network object.
 </p><div class="funcsynopsis"><p><code class="funcdef">Communicator * <b class="fsfunc">Network::new_Communicator</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function returns a pointer to a new Communicator object. The object
+This method returns a pointer to a new Communicator object. The object
 initially contains <span class="emphasis"><em>no</em></span> end-points. Use <code class="function">
 Communicator::add_EndPoint</code> to populate the Communicator.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">Communicator * <b class="fsfunc">Network::new_Communicator</b>(</code></td><td><var class="pdparam">comm</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>Communicator &amp;  </td><td><var class="pdparam">comm</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a pointer to a new Communicator object that initially
+This method returns a pointer to a new Communicator object that initially
 contains the set of end-points contained in <code class="varname">comm</code>.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">Communicator * <b class="fsfunc">Network::new_Communicator</b>(</code></td><td><var class="pdparam">endpoints</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>std::set&lt; CommunicationNode * &gt; &amp;  </td><td><var class="pdparam">endpoints</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a pointer to a new Communicator object that initially
+This method returns a pointer to a new Communicator object that initially
 contains the set of end-points contained in <code class="varname">endpoints</code>.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">Communicator * <b class="fsfunc">Network::get_BroadcastCommunicator</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a pointer to a default broadcast Communicator containing all the
+This method returns a pointer to a default broadcast Communicator containing all the
 end-points available in the system at the time the function is called. Multiple calls to 
 this function return the same pointer to the broadcast 
 communicator object created at network instantiation. If the Network's topology changes,
 as can occur when starting back-ends separately, the object will be updated to reflect
 the additions or deletions. This object should not be deleted.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">bool <b class="fsfunc">Communicator::add_EndPoint</b>(</code></td><td><var class="pdparam">ep_rank</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>Rank  </td><td><var class="pdparam">ep_rank</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function is used to add an existing end-point with rank 
+This method is used to add an existing end-point with rank 
 <code class="varname">ep_rank</code> to the set contained
 by the Communicator. The original set of end-points contained by the
 Communicator is tested to see if it already contains the potentially
 new end-point. If so, the function silently returns successfully.
-This function fails if there exists no end-point defined by
-<code class="varname">ep_rank</code>. This function returns true on success, false on failure.
+This method fails if there exists no end-point defined by
+<code class="varname">ep_rank</code>. This method returns true on success, false on failure.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">bool <b class="fsfunc">Communicator::add_EndPoint</b>(</code></td><td><var class="pdparam">endpoint</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>CommunicationNode *  </td><td><var class="pdparam">endpoint</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function is similar to the <code class="function">add_EndPoint()</code>
+This method is similar to the <code class="function">add_EndPoint()</code>
 above except that it takes a pointer to a CommunicationNode object 
 instead of a rank. Success and failure conditions are exactly as stated above. 
-This function also returns true on success and false on failure.
+This method also returns true on success and false on failure.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">const std::set&lt; CommunicationNode * &gt; &amp; <b class="fsfunc">Communicator::get_EndPoints</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a reference to the set of CommunicationNode pointers comprising
+This method returns a reference to the set of CommunicationNode pointers comprising
 the end-points in the Communicator.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">std::string <b class="fsfunc">CommunicationNode::get_HostName</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns a character string identifying the hostname of the
+This method returns a character string identifying the hostname of the
 end-point represented by this CommunicationNode.
 is out of range.
 </blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">Port <b class="fsfunc">CommunicationNode::get_Port</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function returns the connection port of the end-point 
+This method returns the connection port of the end-point 
 represented by this CommunicationNode.
 </blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">Rank <b class="fsfunc">CommunicationNode::get_Rank</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function returns the unique rank of the end-point 
+This method returns the unique rank of the end-point 
 represented by this CommunicationNode.
 </blockquote></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sect:stream_api"></a>Class Stream</h2></div></div></div><p>
 Instances of Stream are network specific, so their creation methods
@@ -548,30 +604,30 @@ are functions of an instantiated Network object.
 to the end-points specified by the <code class="varname">comm</code> argument. The
 second argument <code class="varname">up_transfilter_id</code> specifies the
 transformation filter to apply to data flowing upstream from the application 
-back-ends toward the front-end; the default value is "Null Filter".
+back-ends toward the front-end; the default value is <code class="literal">TFILTER_NULL</code>.
 <code class="varname">up_syncfilter_id</code> specifies the synchronization filter to apply 
-to upstream packets; the default value is "Wait-for-all". 
+to upstream packets; the default value is <code class="literal">SFILTER_WAITFORALL</code>. 
 <code class="varname">down_transfilter_id</code> allows the user to specify a filter to apply 
-to downstream data flows; the default value is "Null Filter".
+to downstream data flows; the default value is <code class="literal">TFILTER_NULL</code>.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">Stream * <b class="fsfunc">Network::get_Stream</b>(</code></td><td><var class="pdparam">iid</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>unsigned int  </td><td><var class="pdparam">iid</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Network::get_Stream()</code> returns a pointer to the Stream 
 identified by <code class="varname">id</code>, or NULL on failure.
 </blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">unsigned int <b class="fsfunc">Stream::get_Id</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function returns the integer identifier for this Stream.
+This method returns the integer identifier for this Stream.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">const std::set&lt; Rank &gt; &amp; <b class="fsfunc">Stream::get_EndPoints</b>(</code></td><td><code>)</code>;</td><td> </td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function returns the set of end-point ranks for this Stream.
+This method returns the set of end-point ranks for this Stream.
 </blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">unsigned int <b class="fsfunc">Stream::size</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function returns an integer indicating the number of end-points for this Stream.
+This method returns an integer indicating the number of end-points for this Stream.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">int <b class="fsfunc">Stream::send</b>(</code></td><td><var class="pdparam">tag</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">format_string</var>, </td><td> </td></tr><tr><td> </td><td>...<code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>int  </td><td><var class="pdparam">tag</var>;</td></tr><tr><td>const char *  </td><td><var class="pdparam">format_string</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function invokes a data send operation on the calling Stream.
+This method invokes a data send operation on the calling Stream.
 <code class="varname">tag</code> is an integer identifier that is expected
 to classify the data in the packet to be transmitted across the Stream.
 <code class="varname">format_string</code> is a format string describing the data
-in the packet (See <a href="#format_strings" title="Appendix A. MRNET Format Strings">Appendix A, <i>MRNET Format Strings</i></a>
+in the packet (See <a href="#format_strings" title="Appendix A. MRNet Format Strings">Appendix A, <i>MRNet Format Strings</i></a>
 for a full description.) On success, <code class="function">Stream::send()</code>
 returns 0; on failure -1.
 <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><code class="varname">tag</code> must have a value greather than or equal to the
-constant "FirstApplicationTag" defined by MRNet. Tag values less than
-"FirstApplicationTag" are reserved for internal MRNet use.
+constant <code class="literal">FirstApplicationTag</code> defined by MRNet. Tag values less than
+<code class="literal">FirstApplicationTag</code> are reserved for internal MRNet use.
 </div></blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">int <b class="fsfunc">Stream::recv</b>(</code></td><td><var class="pdparam">tag</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">packet</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">blocking</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>int *  </td><td><var class="pdparam">tag</var>;</td></tr><tr><td>PacketPtr &amp;  </td><td><var class="pdparam">packet</var>;</td></tr><tr><td>bool  </td><td><var class="pdparam">blocking</var> =true;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Stream::recv()</code> invokes a stream-specific
 receive operation. Packets addressed to the calling stream
 will be returned in strictly FIFO ordering via the output parameters. 
@@ -583,7 +639,7 @@ or return if data is not immediately available; it defaults to a blocking call.
 A return value of -1 indicates an error, 0 indicates no packets were 
 available, and 1 indicates success.
 </blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">int <b class="fsfunc">Stream::flush</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function commits a flush of all packets currently buffered by the stream
+This method commits a flush of all packets currently buffered by the stream
 pending an output operation. A successful return indicates that all packets
 on the calling stream have been passed to the operating system for
 network transmission.
@@ -594,6 +650,39 @@ passed data is available as a PacketPtr parameter to the filter, and the
 filter can extract the configuration settings. When set to true, <code class="varname">upstream</code>
 indicates the upstream transformation filter should be updated, while a 
 value of false will update the downstream transformation filter.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">bool <b class="fsfunc">Stream::enable_PerformanceData</b>(</code></td><td><var class="pdparam">metric</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">context</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>perfdata_metric_t  </td><td><var class="pdparam">metric</var>;</td></tr><tr><td>perfdata_context_t  </td><td><var class="pdparam">context</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Stream::enable_PerformanceData</code> starts recording
+performance data for the specified <code class="varname">metric</code> type for the
+given <code class="varname">context</code>.  Returns true on success,
+false otherwise. <a href="#perf_data" title="Appendix B. MRNet Stream Performance Data">Appendix B, <i>MRNet Stream Performance Data</i></a> describes 
+the supported metric and context types.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">bool <b class="fsfunc">Stream::disable_PerformanceData</b>(</code></td><td><var class="pdparam">metric</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">context</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>perfdata_metric_t  </td><td><var class="pdparam">metric</var>;</td></tr><tr><td>perfdata_context_t  </td><td><var class="pdparam">context</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Stream::disable_PerformanceData</code> stops recording
+performance data for the specified <code class="varname">metric</code> type for the
+given <code class="varname">context</code>. Previously recorded data is not
+discarded, so that it can be retrieved with 
+<code class="function">Stream::collect_PerformanceData</code>. Users can enable/disable
+recording for a particular <code class="varname">metric</code> and 
+<code class="varname">context</code> any number of times before collecting the results. 
+Returns true on success, false otherwise.
+</blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">bool <b class="fsfunc">Stream::collect_PerformanceData</b>(</code></td><td><var class="pdparam">results</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">metric</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">context</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">aggr_filter_id</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>rank_perfdata_map&amp;  </td><td><var class="pdparam">results</var>;</td></tr><tr><td>perfdata_metric_t  </td><td><var class="pdparam">metric</var>;</td></tr><tr><td>perfdata_context_t  </td><td><var class="pdparam">context</var>;</td></tr><tr><td>int  </td><td><var class="pdparam">aggr_filter_id</var> =TFILTER_ARRAY_CONCAT;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><p><code class="function">Stream::collect_PerformanceData</code> collects the recorded
+performance data for the specified <code class="varname">metric</code> type for the
+given <code class="varname">context</code>. The collected data is stored within a
+<code class="varname">rank_perfdata_map</code>, which associates individual Ranks to a 
+<code class="varname">std::vector&lt; perf_data_t &gt;</code> containing the recorded
+data instances. After collection, the recorded data at each Rank is discarded. 
+Returns true on success, false otherwise.</p><p>Users can aggregate the recorded data across Ranks by specifying a 
+transformation filter with <code class="varname">aggr_filter_id</code>. Note that
+ only the built-in filter types of <code class="literal">TFILTER_SUM</code>, 
+<code class="literal">TFILTER_MIN</code>, <code class="literal">TFILTER_MAX</code>, 
+<code class="literal">TFILTER_AVG</code>, and <code class="literal">TFILTER_ARRAY_CONCAT</code> 
+are supported. By default, performance data from each Rank is concatenated,
+and <code class="varname">results</code> contains every recorded data instance for
+each Rank. If the summary aggregation filters are used, 
+<code class="varname">results</code> will contain a single associated pair. The
+Rank for this pair is equal to <code class="literal">-1*(number of aggregated ranks)</code>,
+and the vector contains one or more aggregated instances. </p></blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">Stream::print_PerformanceData</b>(</code></td><td><var class="pdparam">metric</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">context</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>perfdata_metric_t  </td><td><var class="pdparam">metric</var>;</td></tr><tr><td>perfdata_context_t  </td><td><var class="pdparam">context</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote"><code class="function">Stream::print_PerformanceData</code> prints recorded
+performance data of the specified <code class="varname">metric</code> type for the
+given <code class="varname">context</code>. At each Rank, the data is printed to the
+MRNet log files and then discarded.
 </blockquote></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sect:packet_api"></a>Class Packet</h2></div></div></div><p>
 A Packet encapsulates a chunk of formatted data sent on a Stream. 
 Packets are created using a format string (e.g., 
@@ -602,7 +691,7 @@ by a 32-bit integer, and the Packet is said to contain 2 data elements).
 MRNet front-end and back-end processes do not create instances of Packet; 
 instead they are automatically produced from the 
 formatted data passed to <code class="function">Stream::send</code>.
-<a href="#format_strings" title="Appendix A. MRNET Format Strings">Appendix A, <i>MRNET Format Strings</i></a> contains the full listing of data types
+<a href="#format_strings" title="Appendix A. MRNet Format Strings">Appendix A, <i>MRNet Format Strings</i></a> contains the full listing of data types
 that can be sent in a Packet.
 </p><p>
 When receiving a Packet via <code class="function">Stream::recv</code> or 
@@ -612,13 +701,13 @@ based on the Boost library shared_ptr class, and helps with memory management
 of Packets. A PacketPtr can be assumed to be equivalent to "Packet *", and 
 all operations on Packets require use of PacketPtr.
 </p><div class="funcsynopsis"><p><code class="funcdef">int <b class="fsfunc">Packet::get_Tag</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function returns the integer tag associated with the Packet.
+This method returns the integer tag associated with the Packet.
 </blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">unsigned short <b class="fsfunc">Packet::get_StreamId</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function returns the stream id associated with the Packet.
+This method returns the stream id associated with the Packet.
 </blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">const char * <b class="fsfunc">Packet::get_FormatString</b>(</code><code>)</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function returns the character string specifying the data format of the Packet.
+This method returns the character string specifying the data format of the Packet.
 </blockquote></div></div><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">Packet::unpack</b>(</code></td><td><var class="pdparam">format_string</var>, </td><td> </td></tr><tr><td> </td><td>...<code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>const char *  </td><td><var class="pdparam">format_string</var>;</td></tr></table><div class="blockquote"><blockquote class="blockquote">
-This function extracts data contained within a Packet according to the 
+This method extracts data contained within a Packet according to the 
 <code class="varname">format_string</code>, which must match that of the Packet.
 The function arguments following <code class="varname">format_string</code> should
 be pointers to the appropriate types of each data item. For string and
@@ -626,7 +715,7 @@ array data types, new memory buffers to hold the data will be allocated
 using <code class="function">malloc()</code>, and it is the user's responsibility
 to <code class="function">free()</code> these strings and arrays.
 </blockquote></div></div><div class="funcsynopsis"><p><code class="funcdef">void <b class="fsfunc">Packet::set_DestroyData</b>(</code><var class="pdparam">destroy</var>, ...<code>)</code>;<br>bool <code>destroy</code>;</p><div class="blockquote"><blockquote class="blockquote">
-This function can be used to tell MRNet whether or not to deallocate the
+This method can be used to tell MRNet whether or not to deallocate the
 string and array data members of a Packet. If <code class="varname">destroy</code> is true,
 string and array data members will be deallocated using <code class="function">free()</code>
 when the Packet destructor is executed. Note this assumes they were allocated 
@@ -635,7 +724,7 @@ Packets is not to deallocate (false).
 Turning on deallocation is useful in filter code that must allocate strings or
 arrays for output Packets, which cannot be freed before the filter function returns.
 </blockquote></div></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="mrnet_topology_configuration"></a>Chapter 6. MRNET Process-tree
-Topologies</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2703653">Topology File Format</a></span></dt><dt><span class="sect1"><a href="#id2704325">Topology File Generator</a></span></dt></dl></div><p>
+Topologies</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2883449">Topology File Format</a></span></dt><dt><span class="sect1"><a href="#id2884121">Topology File Generator</a></span></dt></dl></div><p>
 MRNet allows a tool to specify a node allocation and process connectivity
 tailored to its computation and communication requirements and to the system
 where the tool will run. Choosing an appropriate MRNet configuration can be
@@ -643,7 +732,7 @@ difficult due to the complexity of the tool's own activity and its
 interaction with the system. This section describes how users define
 their own process topologies, and the <span><strong class="command">mrnet_topgen</strong></span> utility
 provided by MRNet to facilitate the process.
-</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2703653"></a>Topology File Format</h2></div></div></div><p>
+</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2883449"></a>Topology File Format</h2></div></div></div><p>
 The first parameter to the <code class="function">Network::Network()</code>
 front-end constructor is the name of an MRNet topology file. This file defines the
 topological layout of the front-end, internal nodes, and back-end MRNet processes. 
@@ -671,7 +760,7 @@ improve readability. For example:
                   hostname1:2 
                   ;
 </pre></div><p>
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2704325"></a>Topology File Generator</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2884121"></a>Topology File Generator</h2></div></div></div><p>
 When the MRNet test programs are built, a topology generator program,
 <code class="filename">$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_topgen</code>, will also
 be created. The usage of this program is:
@@ -724,7 +813,7 @@ where each specification is of the form "host[:num-processors]".
 
 
 </pre><p>
-</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="adding_filters"></a>Chapter 7. Adding New Filters</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2704162">Defining an MRNet Filter</a></span></dt><dt><span class="sect1"><a href="#id2704730">Creating and Using MRNet Filter Shared Object Files</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2704162"></a>Defining an MRNet Filter</h2></div></div></div><p>
+</p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="adding_filters"></a>Chapter 7. Adding New Filters</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2883958">Defining an MRNet Filter</a></span></dt><dt><span class="sect1"><a href="#id2884532">Creating and Using MRNet Filter Shared Object Files</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2883958"></a>Defining an MRNet Filter</h2></div></div></div><p>
 A filter function has the following signature
 </p><div class="funcsynopsis"><table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em"><tr><td><code class="funcdef">void <b class="fsfunc">filter_name</b>(</code></td><td><var class="pdparam">packets_in</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">packets_out</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">packets_out_reverse</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">local_storage</var>, </td><td> </td></tr><tr><td> </td><td><var class="pdparam">config_params</var><code>)</code>;</td><td> </td></tr></table><table border="0" summary="Function argument synopsis" cellspacing="0" cellpadding="0"><tr><td>std::vector&lt; PacketPtr &gt; &amp;  </td><td><var class="pdparam">packets_in</var>;</td></tr><tr><td>std::vector&lt; PacketPtr &gt; &amp;  </td><td><var class="pdparam">packets_out</var>;</td></tr><tr><td>std::vector&lt; PacketPtr &gt; &amp;  </td><td><var class="pdparam">packets_out_reverse</var>;</td></tr><tr><td>void **  </td><td><var class="pdparam">local_storage</var>;</td></tr><tr><td>PacketPtr &amp;  </td><td><var class="pdparam">config_params</var>;</td></tr></table></div><p>
 <code class="varname">packets_in</code> is a reference to a vector of Packets serving
@@ -741,13 +830,13 @@ for the filter instance, as can be set using <code class="function">Stream::set_
 For each filter function defined in a shared object file, there must be a
 <span class="type">const char *</span> symbol named
 by the string formed by the concatenation of the filter function name and
-the suffix "_format_string". For instance, if the filter function is named
+the suffix <code class="literal">"_format_string"</code>. For instance, if the filter function is named
 <code class="varname">my_filter_func</code>, the shared object must define a symbol
 <span class="type">const char *</span><code class="varname">my_filter_func_format_string</code>.
 The value of this string will be the MRNet format string describing the
 format of data that the filter can operate on. A value of <code class="literal">""</code>
  denotes that the filter can operate on data of arbitrary value.
-</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2704730"></a>Creating and Using MRNet Filter Shared Object Files</h2></div></div></div><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2884532"></a>Creating and Using MRNet Filter Shared Object Files</h2></div></div></div><p>
 This topic currently pertains to use with the GNU C++ compiler only.
 </p><p>
 Since we use the C facility <code class="function">dlopen()</code> to dynamically
@@ -766,16 +855,47 @@ The file that contains the filter functions and format strings may be
 compiled with the GNU compiler options <code class="literal">"-fPIC -shared -rdynamic"
 </code> to produce a valid shared object.
 </p><p>
-A front-end that will dynamically load filters must be built
-with the GNU compiler options <code class="literal">"-Wl,-E"</code> to notify the linker
-export global symbols externally.
-</p></div></div><div class="appendix" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="format_strings"></a>Appendix A. MRNET Format Strings</h2></div></div></div><p>
+Front-end and back-end programs that will dynamically load filters must be built
+with compiler options that notify the linker to export global symbols 
+(for GNU compilers, you can use <code class="literal">"-Wl,-E"</code>).
+</p></div></div><div class="appendix" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="format_strings"></a>Appendix A. MRNet Format Strings</h2></div></div></div><p>
 After the % character that introduces a conversion, there
 may be a number of flag characters. <span class="emphasis"><em>u</em></span>,
 <span class="emphasis"><em>h</em></span>, <span class="emphasis"><em>l</em></span>, and <span class="emphasis"><em>a</em></span>
 are special modifiers meaning unsigned, short, long and array, respectivley.
 The full set of conversions are:
-</p><div class="informaltable"><table border="1"><colgroup><col><col></colgroup><tbody><tr><td>c</td><td>Matches a signed 8-bit character</td></tr><tr><td>uc</td><td>Matches an unsigned 8-bit character</td></tr><tr><td>ac</td><td>Matches an array of signed 8-bit characters</td></tr><tr><td>auc</td><td>Matches an array of unsigned 8-bit characters</td></tr><tr><td>hd</td><td>Matches a signed 16-bit decimal integer</td></tr><tr><td>uhd</td><td>Matches an unsigned 16-bit decimal integer</td></tr><tr><td>ahd</td><td>Matches an array of signed 16-bit decimal integers</td></tr><tr><td>auhd</td><td>Matches an array of unsigned 16-bit decimal integers</td></tr><tr><td>d</td><td>Matches a signed 32-bit decimal integer</td></tr><tr><td>ud</td><td>Matches an unsigned 32-bit decimal integer</td></tr><tr><td>ad</td><td>Matches an array of signed 32-bit decimal integers</td></tr><tr><td>aud</td><td>Matches an array of unsigned 32-bit decimal integers</td></tr><tr><td>ld</td><td>Matches a signed 64-bit decimal integer</td></tr><tr><td>uld</td><td>Matches an unsigned 64-bit decimal integer</td></tr><tr><td>ald</td><td>Matches an array of signed 64-bit decimal integers</td></tr><tr><td>auld</td><td>Matches an array of unsigned 64-bit decimal integers</td></tr><tr><td>f</td><td>Matches a 32-bit floating-point number</td></tr><tr><td>af</td><td>Matches an array of 32-bit floating-point numbers</td></tr><tr><td>lf</td><td>Matches a 64-bit floating-point number</td></tr><tr><td>alf</td><td>Matches an array of 64-bit floating-point numbers</td></tr><tr><td>s</td><td>Matches a null-terminated character string.</td></tr><tr><td>as</td><td>Matches an array of null-terminated character strings.</td></tr></tbody></table></div><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3>All array format specifiers, "a*", require an extra <span class="emphasis"><em>implicit</em></span> length parameter of type <span class="type">unsigned int</span> to be specified. E.g., send("%d %af", integer_val, float_array_pointer, float_array_length)</div></div><div class="appendix" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="example"></a>Appendix B. A Complete MRNet Example: Integer Addition</h2></div></div></div><div class="example"><a name="id2705016"></a><p class="title"><b>Example B.1. A Complete MRNet Front-End</b></p><pre class="programlisting">
+</p><div class="informaltable"><table border="1"><colgroup><col><col></colgroup><tbody><tr><td>c</td><td>Matches a signed 8-bit character</td></tr><tr><td>uc</td><td>Matches an unsigned 8-bit character</td></tr><tr><td>ac</td><td>Matches an array of signed 8-bit characters</td></tr><tr><td>auc</td><td>Matches an array of unsigned 8-bit characters</td></tr><tr><td>hd</td><td>Matches a signed 16-bit decimal integer</td></tr><tr><td>uhd</td><td>Matches an unsigned 16-bit decimal integer</td></tr><tr><td>ahd</td><td>Matches an array of signed 16-bit decimal integers</td></tr><tr><td>auhd</td><td>Matches an array of unsigned 16-bit decimal integers</td></tr><tr><td>d</td><td>Matches a signed 32-bit decimal integer</td></tr><tr><td>ud</td><td>Matches an unsigned 32-bit decimal integer</td></tr><tr><td>ad</td><td>Matches an array of signed 32-bit decimal integers</td></tr><tr><td>aud</td><td>Matches an array of unsigned 32-bit decimal integers</td></tr><tr><td>ld</td><td>Matches a signed 64-bit decimal integer</td></tr><tr><td>uld</td><td>Matches an unsigned 64-bit decimal integer</td></tr><tr><td>ald</td><td>Matches an array of signed 64-bit decimal integers</td></tr><tr><td>auld</td><td>Matches an array of unsigned 64-bit decimal integers</td></tr><tr><td>f</td><td>Matches a 32-bit floating-point number</td></tr><tr><td>af</td><td>Matches an array of 32-bit floating-point numbers</td></tr><tr><td>lf</td><td>Matches a 64-bit floating-point number</td></tr><tr><td>alf</td><td>Matches an array of 64-bit floating-point numbers</td></tr><tr><td>s</td><td>Matches a null-terminated character string.</td></tr><tr><td>as</td><td>Matches an array of null-terminated character strings.</td></tr></tbody></table></div><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3>All array format specifiers, <code class="literal">"a*"</code>, require an extra <span class="emphasis"><em>implicit</em></span> length parameter of type <span class="type">unsigned int</span> to be specified. E.g., <code class="literal">send("%d %af", integer_val, float_array_pointer, float_array_length)</code></div></div><div class="appendix" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="perf_data"></a>Appendix B. MRNet Stream Performance Data</h2></div></div></div><p>The primary abstraction for communication and data processing
+within MRNet is the stream, so performance metrics and contexts are
+associated with actions on a particular stream.</p><p>All data is recorded as instances of a <code class="literal">perf_data_t</code>, which
+is simply a union type that can hold a 64-bit signed integer, a 64-bit unsigned 
+integer, or a double precision float. As shown below, the data values can be
+accessed using the <code class="literal">i</code>, <code class="literal">u</code>, or <code class="literal">d</code>
+union fields.</p><code class="literal">"typedef union { int64_t i; uint64_t u; double d; } perfdata_t;"</code><p>
+Metrics define the type of performance data to record. The supported metric types are:
+</p><div class="itemizedlist"><ul type="disc"><li><code class="literal">PERFDATA_MET_NUM_BYTES</code>: count of data bytes 
+(<span class="type">uint64_t</span>)</li><li><code class="literal">PERFDATA_MET_NUM_PKTS</code>: count of data packets 
+(<span class="type">uint64_t</span>)</li><li><code class="literal">PERFDATA_MET_ELAPSED_SEC</code>: elapsed seconds 
+(<span class="type">double</span>)</li><li><code class="literal">PERFDATA_MET_CPU_USR_PCT</code>: percent CPU utilization by user 
+(<span class="type">double</span>)</li><li><code class="literal">PERFDATA_MET_CPU_USR_PCT</code>: percent CPU utilization by system 
+(<span class="type">double</span>)</li><li><code class="literal">PERFDATA_MET_MEM_VIRT_KB</code>: virtual memory footprint in KB 
+(<span class="type">double</span>)</li><li><code class="literal">PERFDATA_MET_MEM_PHYS_KB</code>: physical memory footprint in KB 
+(<span class="type">double</span>)</li></ul></div><p>
+</p><p>
+Contexts specify when to record data. The supported contexts are:
+</p><div class="itemizedlist"><ul type="disc"><li><code class="literal">PERFDATA_CTX_SEND</code>: when data is sent</li><li><code class="literal">PERFDATA_CTX_RECV</code>: when data is received</li><li><code class="literal">PERFDATA_CTX_FILT_IN</code>: before executing transformation filter</li><li><code class="literal">PERFDATA_CTX_FILT_OUT</code>: after executing transformation filter</li><li><code class="literal">PERFDATA_CTX_NONE</code>: when data is collected</li></ul></div><p>
+</p><p>
+The following table shows which metrics are valid for a given context.
+When a metric is valid for only <code class="literal">CTX_FILT_OUT</code>, the 
+metric is actually recorded through a combination of measurements at 
+<code class="literal">CTX_FILT_IN</code> and <code class="literal">CTX_FILT_OUT</code>.
+When a metric is valid for only <code class="literal">CTX_NONE</code>, the 
+data is only recorded at the time it is collected. 
+</p><div class="table"><a name="id2885624"></a><p class="title"><b>Table B.1. Metric-Context Compatibility Matrix</b></p><table summary="Metric-Context Compatibility Matrix" border="1"><colgroup><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"></colgroup><thead><tr><th align="center"> </th><th align="center">CTX_SEND</th><th align="center">CTX_RECV</th><th align="center">CTX_FILT_IN</th><th align="center">CTX_FILT_OUT</th><th align="center">CTX_NONE</th></tr></thead><tbody><tr><td align="center">MET_NUM_BYTES</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td><td align="center">no</td></tr><tr><td align="center">MET_NUM_PKTS</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td><td align="center">no</td></tr><tr><td align="center">MET_ELAPSED_SEC</td><td align="center">no</td><td align="center">no</td><td align="center">no</td><td align="center">yes</td><td align="center">no</td></tr><tr><td align="center">MET_CPU_USR_PCT</td><td align="center">no</td><td align="center">no</td><td align="center">no</td><td align="center">yes</td><td align="center">no</td></tr><tr><td align="center">MET_CPU_SYS_PCT</td><td align="center">no</td><td align="center">no</td><td align="center">no</td><td align="center">yes</td><td align="center">no</td></tr><tr><td align="center">MET_MEM_VIRT_KB</td><td align="center">no</td><td align="center">no</td><td align="center">no</td><td align="center">no</td><td align="center">yes</td></tr><tr><td align="center">MET_MEM_PHYS_KB</td><td align="center">no</td><td align="center">no</td><td align="center">no</td><td align="center">no</td><td align="center">yes</td></tr></tbody></table></div><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><code class="literal">MET_CPU_USR_PCT</code>, <code class="literal">MET_CPU_SYS_PCT</code>, 
+<code class="literal">MET_MEM_VIRT_KB</code>, and <code class="literal">MET_MEM_PHYS_KB</code> are
+currently only supported for Linux.</div><p>An example MRNet application that makes use of the Stream performance data
+collection facilities is provided in <code class="filename">$MRNET_ROOT/Examples/PerformanceData</code>.
+</p></div><div class="appendix" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="example"></a>Appendix C. A Complete MRNet Example: Integer Addition</h2></div></div></div><p>The source code for the example contained in this appendix can
+be found in <code class="filename">$MRNET_ROOT/Examples/IntegerAddition</code>.</p><div class="example"><a name="id2885472"></a><p class="title"><b>Example C.1. A Complete MRNet Front-End</b></p><pre class="programlisting">
 #include "mrnet/MRNet.h"
 #include "IntegerAddition.h"
 
@@ -869,7 +989,7 @@ int main(int argc, char **argv)
 
     return 0;
 }
-</pre></div><div class="example"><a name="id2704799"></a><p class="title"><b>Example B.2. A Complete MRNet Back-End</b></p><pre class="programlisting">
+</pre></div><div class="example"><a name="id2885409"></a><p class="title"><b>Example C.2. A Complete MRNet Back-End</b></p><pre class="programlisting">
 #include "mrnet/MRNet.h"
 #include "IntegerAddition.h"
 
@@ -918,7 +1038,7 @@ int main(int argc, char **argv)
 
     return 0;
 }
-</pre></div><div class="example"><a name="id2705080"></a><p class="title"><b>Example B.3. An MRNet Filter: Integer Addition</b></p><pre class="programlisting">
+</pre></div><div class="example"><a name="id2886493"></a><p class="title"><b>Example C.3. An MRNet Filter: Integer Addition</b></p><pre class="programlisting">
 extern "C" {
 
 //Must Declare the format of data expected by the filter
@@ -944,7 +1064,7 @@ void IntegerAdd( std::vector&lt; PacketPtr &gt; &amp; packets_in,
 }
 
 } /* extern "C" */
-</pre></div><div class="example"><a name="id2704817"></a><p class="title"><b>Example B.4. An MRNet Topology File</b></p><pre class="programlisting">
+</pre></div><div class="example"><a name="id2886533"></a><p class="title"><b>Example C.4. An MRNet Topology File</b></p><pre class="programlisting">
 nutmeg:0 =&gt; c01:0 c02:0 c03:0 c04:0 ;
 
 c03:0 =&gt; c05:0 ;

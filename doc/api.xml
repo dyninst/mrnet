@@ -57,7 +57,7 @@ specified by <varname>topology</varname> will be instances of mrnet_commnode.
 </note>
 
 <note> When starting internal and back-end processes, MRNet will use ssh to start remote processes
-unless the environment variable <varname>XPLAT_RSH</varname> is set to a different command. 
+unless the environment variable <literal>XPLAT_RSH</literal> is set to a different command. 
 If it is necessary to run the remote process starter command (e.g., <command>rsh</command>) 
 with a utility like <command>runauth</command> to non-interactively authenticate the
 unattended remote process, that command may be specified using the
@@ -141,60 +141,20 @@ has been made to request otherwise.
 <function>Network::set_TerminateBackEndsOnShutdown</function> is used to
 control whether application back-end processes are terminated when the MRNet
 Network is shutdown. By default, back-end processes will be terminated. If this
-is not desirable, call this method with <varname>terminate</varname> set to false.
+behavior is not desired, call this method with <varname>terminate</varname> set to false.
 </blockquote>
 </funcsynopsis>
 
 <funcsynopsis>
 <funcprototype>
-  <funcdef>int <function>Network::recv</function></funcdef>
-    <paramdef>int * <parameter>tag</parameter></paramdef>
-    <paramdef>PacketPtr &amp; <parameter>packet</parameter></paramdef>
-    <paramdef>Stream ** <parameter>stream</parameter></paramdef>
-    <paramdef>bool <parameter>blocking</parameter> =true</paramdef>
+  <funcdef>bool <function>Network::has_error</function></funcdef>
+  <void></void>
 </funcprototype>
 <blockquote>
-<function>Network::recv</function> is used to invoke a stream-anonymous
-receive operation. Any packet available (addressed to any stream)
-will be returned (in roughly FIFO ordering) via the output parameters. 
-<varname>otag</varname> will be filled in with the integer
-tag value that was passed by the corresponding <function>Stream::send()
-</function> operation. <varname>packet</varname> is the packet that was
-received. A pointer to the Stream to which the packet was addressed
-will be returned in <varname>stream</varname>. <varname>blocking</varname>
-is used to signal whether this call should block or return if data is not
-immediately available; it defaults to a blocking call.
-A return value of -1 indicates an error, 0 indicates no packets were 
-available, and 1 indicates success.
-</blockquote>
-</funcsynopsis>
-
-<funcsynopsis>
-<funcprototype>
-  <funcdef>int <function>Network::load_FilterFunc</function></funcdef>
-    <paramdef>const char * <parameter>so_file</parameter></paramdef>
-    <paramdef>const char * <parameter>func_name</parameter></paramdef>
-    <paramdef>bool <parameter>is_transformation_filter</parameter> =true</paramdef>
-</funcprototype>
-<blockquote>
-<para>
-This method, used for loading new filter operations into the Network
-is conveniently similar to the conventional <function>dlopen()
-</function> facilities for opening a shared object and dynamically
-loading symbols defined within. 
-<varname>so_file</varname> is the path to a shared object file that contains
-the filter function to be loaded and <varname>func_name</varname> is the name of the
-function to be loaded. The last parameter <varname>is_transformation_filter
-</varname> defaults to true and can usually be omitted since the common case
-is to load transformation, not synchronization, filters.
-</para>
-
-<para>
-On success, <function>Network::load_FilterFunc</function> returns the id
-of the newly loaded filter which may be used in subsequent calls to
-<function>Network::new_Stream</function>. A value of -1 is returned
-on failure.
-</para>
+<function>Network::has_error</function> returns true if an error has
+occured during the last call to a <classname>Network</classname> method. 
+<function>Network::print_error</function>
+can be used to print a message describing the exact error. 
 </blockquote>
 </funcsynopsis>
 
@@ -205,25 +165,9 @@ on failure.
 </funcprototype>
 <blockquote>
 <function>Network::print_error</function> prints a message to stderr
-describing the last error encountered during a MRNet library call. It
-first prints the null-terminated string, <varname>error_msg</varname>
+describing the last error encountered during a <classname>Network</classname>
+ method. It first prints the null-terminated string, <varname>error_msg</varname>
 followed by a colon then the actual error message followed by a newline.
-</blockquote>
-</funcsynopsis>
-
-<funcsynopsis>
-<funcprototype>
-  <funcdef>void <function>Network::get_DataSocketFds</function></funcdef>
-  <paramdef>int ** <parameter>fd_array</parameter></paramdef>
-  <paramdef>unsigned int * <parameter>fd_array_size</parameter></paramdef>
-</funcprototype>
-<blockquote>
-<function>Network::get_DataSocketFds</function> is used to notify an application of
-all the file descriptors MRNet is using for data communication. This function
-returns an array of size <varname>fd_array_size</varname> file descriptors in the
-output array <varname>fd_array</varname>. On front-ends, the array should contain
-an entry for each child, while on back-ends the array should contain a single entry
-for the parent. 
 </blockquote>
 </funcsynopsis>
 
@@ -260,6 +204,192 @@ MRNet process.
 </blockquote>
 </funcsynopsis>
 
+<funcsynopsis>
+<funcprototype>
+  <funcdef>int <function>Network::load_FilterFunc</function></funcdef>
+    <paramdef>const char * <parameter>so_file</parameter></paramdef>
+    <paramdef>const char * <parameter>func_name</parameter></paramdef>
+    <paramdef>bool <parameter>is_transformation_filter</parameter> =true</paramdef>
+</funcprototype>
+<blockquote>
+<para>
+This method, used for loading new filter operations into the Network
+is conveniently similar to the conventional <function>dlopen()
+</function> facilities for opening a shared object and dynamically
+loading symbols defined within. 
+<varname>so_file</varname> is the path to a shared object file that contains
+the filter function to be loaded and <varname>func_name</varname> is the name of the
+function to be loaded. The last parameter <varname>is_transformation_filter
+</varname> defaults to true and can usually be omitted since the common case
+is to load transformation, not synchronization, filters.
+</para>
+
+<para>
+On success, <function>Network::load_FilterFunc</function> returns the id
+of the newly loaded filter which may be used in subsequent calls to
+<function>Network::new_Stream</function>. A value of -1 is returned
+on failure.
+</para>
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>int <function>Network::recv</function></funcdef>
+    <paramdef>int * <parameter>tag</parameter></paramdef>
+    <paramdef>PacketPtr &amp; <parameter>packet</parameter></paramdef>
+    <paramdef>Stream ** <parameter>stream</parameter></paramdef>
+    <paramdef>bool <parameter>blocking</parameter> =true</paramdef>
+</funcprototype>
+<blockquote>
+<function>Network::recv</function> is used to invoke a stream-anonymous
+receive operation. Any packet available (addressed to any stream)
+will be returned (in roughly FIFO ordering) via the output parameters. 
+<varname>otag</varname> will be filled in with the integer
+tag value that was passed by the corresponding <function>Stream::send()
+</function> operation. <varname>packet</varname> is the packet that was
+received. A pointer to the Stream to which the packet was addressed
+will be returned in <varname>stream</varname>. <varname>blocking</varname>
+is used to signal whether this call should block or return if data is not
+immediately available; it defaults to a blocking call.
+A return value of -1 indicates an error, 0 indicates no packets were 
+available, and 1 indicates success.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>bool <function>Network::enable_PerformanceData</function></funcdef>
+  <paramdef>perfdata_metric_t <parameter>metric</parameter></paramdef>
+  <paramdef>perfdata_context_t <parameter>context</parameter></paramdef>
+</funcprototype>
+<blockquote>
+<function>Network::enable_PerformanceData</function> uses
+<function>Stream::enable_PerformanceData</function> to start the recording
+of performance data of the specified <varname>metric</varname> type for the
+given <varname>context</varname> on all streams. Returns true on success,
+false otherwise.
+<xref linkend="perf_data"></xref> describes the supported metric and context types.
+See <function>Stream::enable_PerformanceData</function> for additional details.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>bool <function>Network::disable_PerformanceData</function></funcdef>
+  <paramdef>perfdata_metric_t <parameter>metric</parameter></paramdef>
+  <paramdef>perfdata_context_t <parameter>context</parameter></paramdef>
+</funcprototype>
+<blockquote>
+<function>Network::disable_PerformanceData</function> uses
+<function>Stream::disable_PerformanceData</function> to stop the recording
+of performance data of the specified <varname>metric</varname> type for the
+given <varname>context</varname> on all streams. Returns true on success,
+false otherwise. See 
+<function>Stream::disable_PerformanceData</function> for additional details.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>bool <function>Network::collect_PerformanceData</function></funcdef>
+  <paramdef>std::map&lt; int, rank_perfdata_map &gt; &amp; <parameter>results</parameter></paramdef>
+  <paramdef>perfdata_metric_t <parameter>metric</parameter></paramdef>
+  <paramdef>perfdata_context_t <parameter>context</parameter></paramdef>
+  <paramdef>int <parameter>aggr_filter_id</parameter> =TFILTER_ARRAY_CONCAT</paramdef>
+</funcprototype>
+<blockquote>
+<function>Network::collect_PerformanceData</function> uses
+<function>Stream::collect_PerformanceData</function> to collect the 
+performance data of the specified <varname>metric</varname> type for the
+given <varname>context</varname> on all streams. The performance data of 
+each stream is passed through the transformation filter identified by 
+<varname>aggr_filter_id</varname>. The data for all streams is stored within
+the map <varname>results</varname>, keyed by stream identifier. Returns true on success,
+false otherwise.
+See <function>Stream::collect_PerformanceData</function> for additional details.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>void <function>Network::print_PerformanceData</function></funcdef>
+  <paramdef>perfdata_metric_t <parameter>metric</parameter></paramdef>
+  <paramdef>perfdata_context_t <parameter>context</parameter></paramdef>
+</funcprototype>
+<blockquote>
+<function>Network::enable_PerformanceData</function> uses
+<function>Stream::print_PerformanceData</function> to print recorded
+performance data of the specified <varname>metric</varname> type for the
+given <varname>context</varname> on all streams. Data is printed to the
+MRNet log files. See <function>Stream::print_PerformanceData</function> 
+for additional details.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>void <function>Network::get_EventNotificationFd</function></funcdef>
+  <paramdef>EventType <parameter>etyp</parameter></paramdef>
+</funcprototype>
+<blockquote>
+<para><function>Network::get_EventNotificationFd</function> returns a file descriptor
+that can be added to the <literal>read fd_set</literal> of  <function>select()</function> 
+to receive notification of interesting DATA, TOPOLOGY, or ERROR events.
+<varname>etyp</varname> should be set to one of <literal>ERROR_EVENT</literal>, 
+<literal>DATA_EVENT</literal>, or <literal>TOPOLOGY_EVENT</literal>.
+<literal>DATA_EVENT</literal> can be used by both front-end and back-end
+processes to provide notification that one or more data packets have been received. 
+<literal>TOPOLOGY_EVENT</literal> and <literal>ERROR_EVENT</literal> can only be used
+by front-end processes, and provide notification when the front-end observes a change in 
+<classname>NetworkTopology</classname> or an error, respectively.</para>
+
+<para> When <function>select()</function> indicates that the file descriptor has data 
+available, you should call <function>Network::clear_EventNotificationFd</function> before
+taking action on the notification. When notifications are no longer needed, use
+<function>Network::close_EventNotificationFd</function></para>
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>void <function>Network::clear_EventNotificationFd</function></funcdef>
+  <paramdef>EventType <parameter>etyp</parameter></paramdef>
+</funcprototype>
+<blockquote>
+This method resets the event notification
+file descriptor returned from <function>Network::get_EventNotificationFd</function>.
+<varname>etyp</varname> should be set to one of <literal>ERROR_EVENT</literal>, 
+<literal>DATA_EVENT</literal>, or <literal>TOPOLOGY_EVENT</literal>.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>void <function>Network::close_EventNotificationFd</function></funcdef>
+  <paramdef>EventType <parameter>etyp</parameter></paramdef>
+</funcprototype>
+<blockquote>
+This method closes the event notification
+file descriptor returned from <function>Network::get_EventNotificationFd</function>.
+<varname>etyp</varname> should be set to one of <literal>ERROR_EVENT</literal>, 
+<literal>DATA_EVENT</literal>, or <literal>TOPOLOGY_EVENT</literal>.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>void <function>Network::get_DataSocketFds</function></funcdef>
+  <paramdef>int ** <parameter>fd_array</parameter></paramdef>
+  <paramdef>unsigned int * <parameter>fd_array_size</parameter></paramdef>
+</funcprototype>
+<blockquote>
+<function>Network::get_DataSocketFds</function> is deprecated and has been removed.
+See <function>Network::get_EventNotificationFd</function> for a description of
+how to receive notifications for <literal>DATA_EVENT</literal>s.
+</blockquote>
+</funcsynopsis>
+
 </sect1>
 
 
@@ -288,7 +418,7 @@ a pointer to the underlying NetworkTopology instance of a Network.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the total number of nodes in the tree topology, 
+This method returns the total number of nodes in the tree topology, 
 including front-end, internal, and back-end processes.
 </blockquote>
 </funcsynopsis>
@@ -299,7 +429,7 @@ including front-end, internal, and back-end processes.
     <paramdef>Rank <parameter>node_rank</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function returns a pointer to the tree node with rank equal to <varname>node_rank</varname>,
+This method returns a pointer to the tree node with rank equal to <varname>node_rank</varname>,
 or NULL if not found.
 </blockquote>
 </funcsynopsis>
@@ -310,7 +440,7 @@ or NULL if not found.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns a pointer to the root node of the tree,
+This method returns a pointer to the root node of the tree,
 or NULL if not found.
 </blockquote>
 </funcsynopsis>
@@ -321,7 +451,7 @@ or NULL if not found.
     <paramdef>std::vector&lt; NetworkTopology::Node * &gt; &amp; <parameter>leaves</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function fills in the <varname>leaves</varname> vector with pointers to the
+This method fills in the <varname>leaves</varname> vector with pointers to the
 leaf nodes in the topology. In the case where back-end processes are not
 started when the Network is instantiated, a front-end process can use this 
 function to retrieve information about the leaf internal processes to which
@@ -335,7 +465,7 @@ the back-ends should attach.
     <paramdef>std::set&lt; NetworkTopology::Node * &gt; &amp; <parameter>nodes</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function fills a set with pointers to all back-end process tree nodes.
+This method fills a set with pointers to all back-end process tree nodes.
 </blockquote>
 </funcsynopsis>
 
@@ -345,7 +475,7 @@ This function fills a set with pointers to all back-end process tree nodes.
     <paramdef>std::set&lt; NetworkTopology::Node * &gt; &amp; <parameter>nodes</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function fills a set with pointers to all tree nodes that are parents
+This method fills a set with pointers to all tree nodes that are parents
 (i.e., those nodes having at least one child).
 </blockquote>
 </funcsynopsis>
@@ -356,7 +486,7 @@ This function fills a set with pointers to all tree nodes that are parents
     <paramdef>std::set&lt; NetworkTopology::Node * &gt; &amp; <parameter>nodes</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function fills a set with pointers to all tree nodes that have
+This method fills a set with pointers to all tree nodes that have
 no parent due to a failure.
 </blockquote>
 </funcsynopsis>
@@ -372,7 +502,7 @@ no parent due to a failure.
     <paramdef>double &amp; <parameter>stddev_fanout</parameter></paramdef>  
 </funcprototype>
 <blockquote>
-This function fills in the values of each of the parameters. <varname>num_nodes</varname>
+This method fills in the values of each of the parameters. <varname>num_nodes</varname>
 is the total number of tree nodes (same as the value returned by 
 <function>NetworkTopology::get_NumNodes</function>), <varname>depth</varname> is the 
 depth of the tree (i.e., the maximum path length from root to any leaf), <varname>min_fanout</varname>
@@ -385,11 +515,35 @@ deviation in number of children across all parent nodes.
 
 <funcsynopsis>
 <funcprototype>
+  <funcdef>void <function>NetworkTopology::print_TopologyFile</function></funcdef>
+    <paramdef>const char * <parameter>filename</parameter></paramdef>
+</funcprototype>
+<blockquote>
+This method will create (or overwrite) the specified topology file 
+<varname>filename</varname> using the current state of this 
+<classname>NetworkTopology</classname> object.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>void <function>NetworkTopology::print_DOTGraph</function></funcdef>
+    <paramdef>const char * <parameter>filename</parameter></paramdef>
+</funcprototype>
+<blockquote>
+This method will create (or overwrite) the specified dot graph file 
+<varname>filename</varname> using the current state of this 
+<classname>NetworkTopology</classname> object.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
   <funcdef>std::string <function>NetworkTopology::Node::get_HostName</function></funcdef>
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns a character string identifying the hostname of the tree node.
+This method returns a character string identifying the hostname of the tree node.
 </blockquote>
 </funcsynopsis>
 
@@ -399,7 +553,7 @@ This function returns a character string identifying the hostname of the tree no
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the connection port of the tree node.
+This method returns the connection port of the tree node.
 </blockquote>
 </funcsynopsis>
 
@@ -409,7 +563,7 @@ This function returns the connection port of the tree node.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the unique rank of the tree node.
+This method returns the unique rank of the tree node.
 </blockquote>
 </funcsynopsis>
 
@@ -419,7 +573,7 @@ This function returns the unique rank of the tree node.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns a set containing pointers to the children of the tree node, and is useful
+This method returns a set containing pointers to the children of the tree node, and is useful
 for navigating through the tree.
 </blockquote>
 </funcsynopsis>
@@ -430,7 +584,7 @@ for navigating through the tree.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the number of children of the tree node.
+This method returns the number of children of the tree node.
 </blockquote>
 </funcsynopsis>
 
@@ -440,7 +594,7 @@ This function returns the number of children of the tree node.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the height of the subtree rooted at this tree node.
+This method returns the height of the subtree rooted at this tree node.
 </blockquote>
 </funcsynopsis>
 
@@ -460,7 +614,7 @@ are functions of an instantiated Network object.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns a pointer to a new Communicator object. The object
+This method returns a pointer to a new Communicator object. The object
 initially contains <emphasis>no</emphasis> end-points. Use <function>
 Communicator::add_EndPoint</function> to populate the Communicator.
 </blockquote>
@@ -472,7 +626,7 @@ Communicator::add_EndPoint</function> to populate the Communicator.
     <paramdef>Communicator &amp; <parameter>comm</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function returns a pointer to a new Communicator object that initially
+This method returns a pointer to a new Communicator object that initially
 contains the set of end-points contained in <varname>comm</varname>.
 </blockquote>
 </funcsynopsis>
@@ -483,7 +637,7 @@ contains the set of end-points contained in <varname>comm</varname>.
     <paramdef>std::set&lt; CommunicationNode * &gt; &amp; <parameter>endpoints</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function returns a pointer to a new Communicator object that initially
+This method returns a pointer to a new Communicator object that initially
 contains the set of end-points contained in <varname>endpoints</varname>.
 </blockquote>
 </funcsynopsis>
@@ -494,7 +648,7 @@ contains the set of end-points contained in <varname>endpoints</varname>.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns a pointer to a default broadcast Communicator containing all the
+This method returns a pointer to a default broadcast Communicator containing all the
 end-points available in the system at the time the function is called. Multiple calls to 
 this function return the same pointer to the broadcast 
 communicator object created at network instantiation. If the Network's topology changes,
@@ -509,13 +663,13 @@ the additions or deletions. This object should not be deleted.
     <paramdef>Rank <parameter>ep_rank</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function is used to add an existing end-point with rank 
+This method is used to add an existing end-point with rank 
 <varname>ep_rank</varname> to the set contained
 by the Communicator. The original set of end-points contained by the
 Communicator is tested to see if it already contains the potentially
 new end-point. If so, the function silently returns successfully.
-This function fails if there exists no end-point defined by
-<varname>ep_rank</varname>. This function returns true on success, false on failure.
+This method fails if there exists no end-point defined by
+<varname>ep_rank</varname>. This method returns true on success, false on failure.
 </blockquote>
 </funcsynopsis>
 
@@ -525,10 +679,10 @@ This function fails if there exists no end-point defined by
     <paramdef>CommunicationNode * <parameter>endpoint</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This function is similar to the <function>add_EndPoint()</function>
+This method is similar to the <function>add_EndPoint()</function>
 above except that it takes a pointer to a CommunicationNode object 
 instead of a rank. Success and failure conditions are exactly as stated above. 
-This function also returns true on success and false on failure.
+This method also returns true on success and false on failure.
 </blockquote>
 </funcsynopsis>
 
@@ -538,7 +692,7 @@ This function also returns true on success and false on failure.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns a reference to the set of CommunicationNode pointers comprising
+This method returns a reference to the set of CommunicationNode pointers comprising
 the end-points in the Communicator.
 </blockquote>
 </funcsynopsis>
@@ -549,7 +703,7 @@ the end-points in the Communicator.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns a character string identifying the hostname of the
+This method returns a character string identifying the hostname of the
 end-point represented by this CommunicationNode.
 is out of range.
 </blockquote>
@@ -561,7 +715,7 @@ is out of range.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the connection port of the end-point 
+This method returns the connection port of the end-point 
 represented by this CommunicationNode.
 </blockquote>
 </funcsynopsis>
@@ -572,7 +726,7 @@ represented by this CommunicationNode.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the unique rank of the end-point 
+This method returns the unique rank of the end-point 
 represented by this CommunicationNode.
 </blockquote>
 </funcsynopsis>
@@ -598,11 +752,11 @@ are functions of an instantiated Network object.
 to the end-points specified by the <varname>comm</varname> argument. The
 second argument <varname>up_transfilter_id</varname> specifies the
 transformation filter to apply to data flowing upstream from the application 
-back-ends toward the front-end; the default value is "Null Filter".
+back-ends toward the front-end; the default value is <literal>TFILTER_NULL</literal>.
 <varname>up_syncfilter_id</varname> specifies the synchronization filter to apply 
-to upstream packets; the default value is "Wait-for-all". 
+to upstream packets; the default value is <literal>SFILTER_WAITFORALL</literal>. 
 <varname>down_transfilter_id</varname> allows the user to specify a filter to apply 
-to downstream data flows; the default value is "Null Filter".
+to downstream data flows; the default value is <literal>TFILTER_NULL</literal>.
 </blockquote>
 </funcsynopsis>
 
@@ -623,7 +777,7 @@ identified by <varname>id</varname>, or NULL on failure.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the integer identifier for this Stream.
+This method returns the integer identifier for this Stream.
 </blockquote>
 </funcsynopsis>
 
@@ -633,7 +787,7 @@ This function returns the integer identifier for this Stream.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the set of end-point ranks for this Stream.
+This method returns the set of end-point ranks for this Stream.
 </blockquote>
 </funcsynopsis>
 
@@ -643,7 +797,7 @@ This function returns the set of end-point ranks for this Stream.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns an integer indicating the number of end-points for this Stream.
+This method returns an integer indicating the number of end-points for this Stream.
 </blockquote>
 </funcsynopsis>
 
@@ -655,7 +809,7 @@ This function returns an integer indicating the number of end-points for this St
     <varargs></varargs>
 </funcprototype>
 <blockquote>
-This function invokes a data send operation on the calling Stream.
+This method invokes a data send operation on the calling Stream.
 <varname>tag</varname> is an integer identifier that is expected
 to classify the data in the packet to be transmitted across the Stream.
 <varname>format_string</varname> is a format string describing the data
@@ -664,8 +818,8 @@ for a full description.) On success, <function>Stream::send()</function>
 returns 0; on failure -1.
 <note>
 <varname>tag</varname> must have a value greather than or equal to the
-constant "FirstApplicationTag" defined by MRNet. Tag values less than
-"FirstApplicationTag" are reserved for internal MRNet use.
+constant <literal>FirstApplicationTag</literal> defined by MRNet. Tag values less than
+<literal>FirstApplicationTag</literal> are reserved for internal MRNet use.
 </note>
 </blockquote>
 </funcsynopsis>
@@ -697,7 +851,7 @@ available, and 1 indicates success.
     <void></void>
 </funcprototype>
 <blockquote>
-This function commits a flush of all packets currently buffered by the stream
+This method commits a flush of all packets currently buffered by the stream
 pending an output operation. A successful return indicates that all packets
 on the calling stream have been passed to the operating system for
 network transmission.
@@ -719,6 +873,84 @@ passed data is available as a PacketPtr parameter to the filter, and the
 filter can extract the configuration settings. When set to true, <varname>upstream</varname>
 indicates the upstream transformation filter should be updated, while a 
 value of false will update the downstream transformation filter.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>bool <function>Stream::enable_PerformanceData</function></funcdef>
+  <paramdef>perfdata_metric_t <parameter>metric</parameter></paramdef>
+  <paramdef>perfdata_context_t <parameter>context</parameter></paramdef>
+</funcprototype>
+<blockquote>
+<function>Stream::enable_PerformanceData</function> starts recording
+performance data for the specified <varname>metric</varname> type for the
+given <varname>context</varname>.  Returns true on success,
+false otherwise. <xref linkend="perf_data"></xref> describes 
+the supported metric and context types.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>bool <function>Stream::disable_PerformanceData</function></funcdef>
+  <paramdef>perfdata_metric_t <parameter>metric</parameter></paramdef>
+  <paramdef>perfdata_context_t <parameter>context</parameter></paramdef>
+</funcprototype>
+<blockquote>
+<function>Stream::disable_PerformanceData</function> stops recording
+performance data for the specified <varname>metric</varname> type for the
+given <varname>context</varname>. Previously recorded data is not
+discarded, so that it can be retrieved with 
+<function>Stream::collect_PerformanceData</function>. Users can enable/disable
+recording for a particular <varname>metric</varname> and 
+<varname>context</varname> any number of times before collecting the results. 
+Returns true on success, false otherwise.
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>bool <function>Stream::collect_PerformanceData</function></funcdef>
+  <paramdef>rank_perfdata_map&amp; <parameter>results</parameter></paramdef>
+  <paramdef>perfdata_metric_t <parameter>metric</parameter></paramdef>
+  <paramdef>perfdata_context_t <parameter>context</parameter></paramdef>
+  <paramdef>int <parameter>aggr_filter_id</parameter> =TFILTER_ARRAY_CONCAT</paramdef>
+</funcprototype>
+<blockquote>
+<para><function>Stream::collect_PerformanceData</function> collects the recorded
+performance data for the specified <varname>metric</varname> type for the
+given <varname>context</varname>. The collected data is stored within a
+<varname>rank_perfdata_map</varname>, which associates individual Ranks to a 
+<varname>std::vector&lt; perf_data_t &gt;</varname> containing the recorded
+data instances. After collection, the recorded data at each Rank is discarded. 
+Returns true on success, false otherwise.</para> 
+
+<para>Users can aggregate the recorded data across Ranks by specifying a 
+transformation filter with <varname>aggr_filter_id</varname>. Note that
+ only the built-in filter types of <literal>TFILTER_SUM</literal>, 
+<literal>TFILTER_MIN</literal>, <literal>TFILTER_MAX</literal>, 
+<literal>TFILTER_AVG</literal>, and <literal>TFILTER_ARRAY_CONCAT</literal> 
+are supported. By default, performance data from each Rank is concatenated,
+and <varname>results</varname> contains every recorded data instance for
+each Rank. If the summary aggregation filters are used, 
+<varname>results</varname> will contain a single associated pair. The
+Rank for this pair is equal to <literal>-1*(number of aggregated ranks)</literal>,
+and the vector contains one or more aggregated instances. </para>
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>void <function>Stream::print_PerformanceData</function></funcdef>
+  <paramdef>perfdata_metric_t <parameter>metric</parameter></paramdef>
+  <paramdef>perfdata_context_t <parameter>context</parameter></paramdef>
+</funcprototype>
+<blockquote>
+<function>Stream::print_PerformanceData</function> prints recorded
+performance data of the specified <varname>metric</varname> type for the
+given <varname>context</varname>. At each Rank, the data is printed to the
+MRNet log files and then discarded.
 </blockquote>
 </funcsynopsis>
 
@@ -753,7 +985,7 @@ all operations on Packets require use of PacketPtr.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the integer tag associated with the Packet.
+This method returns the integer tag associated with the Packet.
 </blockquote>
 </funcsynopsis>
 
@@ -763,7 +995,7 @@ This function returns the integer tag associated with the Packet.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the stream id associated with the Packet.
+This method returns the stream id associated with the Packet.
 </blockquote>
 </funcsynopsis>
 
@@ -773,7 +1005,7 @@ This function returns the stream id associated with the Packet.
     <void></void>
 </funcprototype>
 <blockquote>
-This function returns the character string specifying the data format of the Packet.
+This method returns the character string specifying the data format of the Packet.
 </blockquote>
 </funcsynopsis>
 
@@ -784,7 +1016,7 @@ This function returns the character string specifying the data format of the Pac
     <varargs></varargs>
 </funcprototype>
 <blockquote>
-This function extracts data contained within a Packet according to the 
+This method extracts data contained within a Packet according to the 
 <varname>format_string</varname>, which must match that of the Packet.
 The function arguments following <varname>format_string</varname> should
 be pointers to the appropriate types of each data item. For string and
@@ -801,7 +1033,7 @@ to <function>free()</function> these strings and arrays.
     <varargs></varargs>
 </funcprototype>
 <blockquote>
-This function can be used to tell MRNet whether or not to deallocate the
+This method can be used to tell MRNet whether or not to deallocate the
 string and array data members of a Packet. If <varname>destroy</varname> is true,
 string and array data members will be deallocated using <function>free()</function>
 when the Packet destructor is executed. Note this assumes they were allocated 

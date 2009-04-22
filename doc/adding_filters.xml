@@ -30,7 +30,7 @@ for the filter instance, as can be set using <function>Stream::set_FilterParamet
 For each filter function defined in a shared object file, there must be a
 <type>const char *</type> symbol named
 by the string formed by the concatenation of the filter function name and
-the suffix "_format_string". For instance, if the filter function is named
+the suffix <literal>"_format_string"</literal>. For instance, if the filter function is named
 <varname>my_filter_func</varname>, the shared object must define a symbol
 <type>const char *</type><varname>my_filter_func_format_string</varname>.
 The value of this string will be the MRNet format string describing the
@@ -63,9 +63,9 @@ compiled with the GNU compiler options <literal>"-fPIC -shared -rdynamic"
 </para>
 
 <para>
-A front-end that will dynamically load filters must be built
-with the GNU compiler options <literal>"-Wl,-E"</literal> to notify the linker
-export global symbols externally.
+Front-end and back-end programs that will dynamically load filters must be built
+with compiler options that notify the linker to export global symbols 
+(for GNU compilers, you can use <literal>"-Wl,-E"</literal>).
 </para>
 
 </sect1>
