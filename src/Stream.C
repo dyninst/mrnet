@@ -410,25 +410,25 @@ unsigned int Stream::num_ClosedPeers( void ) const
     return retval;
 }
 
-int Stream::close( )
-{
-    flush();
+// int Stream::close( )
+// {
+//     flush();
 
-    assert(!"Who the hell is calling this?");
-    PacketPtr packet( new Packet( 0, PROT_CLOSE_STREAM, "%d", _id ) );
+//     assert(!"Who the hell is calling this?");
+//     PacketPtr packet( new Packet( 0, PROT_CLOSE_STREAM, "%d", _id ) );
 
-    int retval;
-    if( _network->is_LocalNodeFrontEnd() ) {
-        _ds_closed = true;
-        retval = _network->send_PacketToChildren( packet );
-    }
-    else {
-        _us_closed = true;
-        retval = _network->send_PacketToParent( packet );
-    }
+//     int retval;
+//     if( _network->is_LocalNodeFrontEnd() ) {
+//         _ds_closed = true;
+//         retval = _network->send_PacketToChildren( packet );
+//     }
+//     else {
+//         _us_closed = true;
+//         retval = _network->send_PacketToParent( packet );
+//     }
  
-    return retval;
-}
+//     return retval;
+// }
 
 int Stream::push_Packet( PacketPtr ipacket,
                          vector<PacketPtr>& opackets,

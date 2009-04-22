@@ -45,7 +45,7 @@ class Stream{
     int flush( ) const;
 
     int recv( int *otag, PacketPtr &opacket, bool iblocking = true );
-    int close( void );
+    //int close( void );
 
     const std::set<Rank> & get_EndPoints( void ) const ;
     unsigned int get_Id( void ) const ;
