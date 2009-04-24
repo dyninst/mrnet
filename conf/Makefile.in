@@ -29,6 +29,7 @@ BISON   = @YACC@
 AR      = @AR@
 ARFLAGS = @ARFLAGS@
 RANLIB  = @RANLIB@
+CP      = @CP@
 RM      = @RM@
 INSTALL = @INSTALL@
 PURIFY  = @PURIFY@
@@ -212,6 +213,15 @@ install-local: all
 	for hdr in @srcdir@/include/mrnet/*.h ; do \
 	    $(INSTALL) -p -m 644 $$hdr $(IINCDIR)/mrnet/ ; \
 	done
+
+install-boost:
+	@echo Creating install directory
+	if [ ! -d $(IINCDIR)/boost ] ; then \
+	    mkdir -p $(IINCDIR)/boost ; \
+	    chmod 755 $(IINCDIR)/boost ; \
+        fi
+	@echo Installing headers
+	$(CP) -a @srcdir@/include/boost/* $(IINCDIR)/boost/
 
 install-tests: tests $(BINDIR)/mrnet_tests.sh
 	@echo Installing standard tests
