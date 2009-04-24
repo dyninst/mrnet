@@ -267,6 +267,9 @@ void Network::shutdown_Network( void )
         PacketPtr packet( new Packet( 0, PROT_DEL_SUBTREE, "%c", delete_backends ) );
         get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
     }
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Clearing %u leftover events\n", 
+                          Event::get_NumEvents() ));
+    Event::clear_Events();
 }
 
 void Network::set_TerminateBackEndsOnShutdown( bool terminate )

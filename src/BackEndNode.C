@@ -142,13 +142,14 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     //kill all mrnet threads
     _network->cancel_IOThreads();
 
+    EventDetector::stop();
+   
     if( delete_backend == 't' ) {
+        _network->shutdown_Network();
         mrn_dbg( 1, mrn_printf(FLF, stderr, "Back-end exiting ... \n" ));
         exit(0);
     }
 
-    EventDetector::stop();
-   
     mrn_dbg_func_end();
     return 0;
 }

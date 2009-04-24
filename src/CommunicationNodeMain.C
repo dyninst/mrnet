@@ -75,6 +75,7 @@ int main(int argc, char **argv)
     delete comm_node;
     free( const_cast<char*>(local_data->thread_name) );
     delete local_data;
+    delete network;
 
     return 0;
 }

@@ -807,6 +807,7 @@ NetworkTopology::Node * NetworkTopology::find_NewParent( Rank ichild_rank,
     find_PotentialAdopters( orphan, _root, potential_adopters );
     if( potential_adopters.empty() ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "No Adopters left :(\n"));
+        _network->shutdown_Network();
         exit(-1);
     }
 
