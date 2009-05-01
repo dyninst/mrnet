@@ -14,9 +14,6 @@
 #include "ParsedGraph.h"
 #include "PeerNode.h"
 #include "Router.h"
-#include "PerfDataEvent.h"
-#include "PerfDataSysEvent.h"
-#include "mrnet/Stream.h"
 #include "utils.h"
 #include "xplat/NetUtils.h"
 #include "xplat/SocketUtils.h"
@@ -108,9 +105,6 @@ void * EventDetector::main( void * /* iarg */ )
 
     srand48( network->get_LocalRank() );
     
-    // initialize CPU performance data collection
-    handle_PerfDataCPU( Packet::NullPacket, network->get_LocalRank() );                        
-
     //Prepare fds for select()
     fd_set rfds, rfds_copy;
 
@@ -192,20 +186,6 @@ void * EventDetector::main( void * /* iarg */ )
                     ParentNode* p;
                     PacketPtr cur_packet( *packet_list_iter );
                     switch ( cur_packet->get_Tag() ) {
-
-                    case PROT_GUI_CPUPERCENT: {
-                        fflush( stdout );
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_GUI_CPUPERCENT ...\n"));
-                        handle_PerfDataCPU( cur_packet, network->get_LocalRank() );
-                        break;
-                    }
-
-                    case PROT_GUI_INIT: {
-                        fflush( stdout );
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_GUI_INIT ...\n"));
-                        handle_PerfGuiInit( cur_packet );
-                        break;
-                    }
 
                     case PROT_KILL_SELF:
                         mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_KILL_SELF ...\n"));

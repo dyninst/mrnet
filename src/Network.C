@@ -253,6 +253,11 @@ Network::~Network( )
 {
     shutdown_Network( );
     cleanup_local( );
+    if( parsed_graph != NULL ) {
+        delete parsed_graph;
+        parsed_graph = NULL;
+    }
+    network=NULL;
 }
 
 void Network::shutdown_Network( void )

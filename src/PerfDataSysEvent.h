@@ -22,10 +22,6 @@ class PerfDataSysMgr {
 
 };
 
-bool send_PacketToGUI( PacketPtr&, PacketPtr& );
-bool handle_PerfGuiInit( PacketPtr& );
-bool handle_PerfDataCPU( PacketPtr&, Rank );
-
 } /* namespace MRN */
 
 #endif /* __performance_data_sys_events_h */
