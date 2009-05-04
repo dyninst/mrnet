@@ -262,7 +262,8 @@ Network::~Network( )
 
 void Network::shutdown_Network( void )
 {
-    if( is_LocalNodeFrontEnd() ) {
+    if( is_LocalNodeFrontEnd() && _network_topology->get_NumNodes() ) {
+        
         char delete_backends;
         if( _terminate_backends )
             delete_backends = 't';
@@ -272,6 +273,8 @@ void Network::shutdown_Network( void )
         PacketPtr packet( new Packet( 0, PROT_DEL_SUBTREE, "%c", delete_backends ) );
         get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
     }
+    string empty("");
+    reset_Topology(empty);
     mrn_dbg(5, mrn_printf(FLF, stderr, "Clearing %u leftover events\n", 
                           Event::get_NumEvents() ));
     Event::clear_Events();
