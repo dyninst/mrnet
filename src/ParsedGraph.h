@@ -60,6 +60,8 @@ class ParsedGraph: public Error {
  public:
     ParsedGraph( )
         : _root(NULL), _fully_connected(true), _cycle_free(true) { }
+    ~ParsedGraph( ) { _next_node_rank = 0; }
+
     void set_Root( Node * r ) { _root = r; }
     Node *get_Root( ) const  { return _root; }
     Node *find_Node( char *ihostname, Rank ilocal_rank );
