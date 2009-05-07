@@ -216,7 +216,7 @@ void * EventDetector::main( void * /* iarg */ )
                         mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION ...\n"));
                         FD_SET( connected_sock, &rfds );
                         if( connected_sock > max_sock )
-                            max_sock=connected_sock;
+                            max_sock = connected_sock;
                         watch_list.push_back( connected_sock );
                         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                                "FD socket:%d added to list.\n",
@@ -275,7 +275,8 @@ void * EventDetector::main( void * /* iarg */ )
                     parent_node = network->get_ParentNode();
                     parent_sock = parent_node->get_EventSocketFd();
                     FD_SET( parent_sock, &rfds );
-                    max_sock = parent_sock;
+                    if( parent_sock > max_sock )
+                        max_sock = parent_sock;
                     watch_list.push_back( parent_sock );
                     mrn_dbg( 5, mrn_printf(FLF, stderr,
                                            "Parent socket:%d added to list.\n", parent_sock));
