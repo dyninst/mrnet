@@ -80,8 +80,8 @@ operate on packets in a type-independent fashion. MRNet currently supports
 two synchronization modes:
 <itemizedlist>
 <listitem><emphasis>Wait For All</emphasis>: wait for a packet from every
-child node</listitem>
-<listitem><emphasis>Do Not Wait</emphasis>: output packets immediately.</listitem>
+child node (SFILTER_WAITFORALL)</listitem>
+<listitem><emphasis>Do Not Wait</emphasis>: output packets immediately (SFILTER_DONTWAIT)</listitem>
 </itemizedlist>
 </para>
 
@@ -97,10 +97,9 @@ the same. Transformation operations must be synchronous, but are able to
 maintain state from one execution to the next. MRNet provides several 
 transformation filters that should be of general use:
 <itemizedlist>
-<listitem><emphasis>Basic scalar operations</emphasis>: min, max, sum and
-average on integers or floats.</listitem>
+<listitem><emphasis>Basic scalar operations on characters/integers/floats</emphasis>: minimum (TFILTER_MIN), maximum (TFILTER_MAX), summation (TFILTER_SUM), average (TFILTER_AVG)</listitem>
 <listitem><emphasis>Concatenation</emphasis>: operation that inputs n scalars
-and outputs a vector of length n of the same base type.</listitem>
+and outputs a vector of length n of the same base type (TFILTER_ARRAY_CONCAT)</listitem>
 </itemizedlist>
 <xref linkend="adding_filters"></xref> describes facilities for adding new
 user-defined transformation and synchronization filters.

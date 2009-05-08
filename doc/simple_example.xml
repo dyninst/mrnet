@@ -16,12 +16,12 @@ linkend="mrnet_topology_configuration"></xref> for further discussion.
 </para>
 
 <para>
-The MRNet API contains network, end-point, communicator,
-and stream objects that a tool's front-end and back-end use for communication.
-The network object is used to instantiate the MRNet network and access end-point
-objects that represent available tool back-ends. The communicator object is a
-container for groups of end-points, and streams are used to send data to the
-end-points in a communicator.
+The MRNet API contains Network, EndPoint, Communicator,
+and Stream objects that a tool's front-end and back-end use for communication.
+The Network object is used to instantiate the MRNet network and access EndPoint
+objects that represent available tool back-ends. The Communicator object is a
+container for groups of end-points, and Stream objects are used to send data 
+to the EndPoints in a Communicator.
 </para>
 
 <example id="fe_code"><title>MRNet Front-end Sample Code</title>
@@ -34,13 +34,13 @@ end-points in a communicator.
 5.     int tag = FirstApplicationTag;
 6.     float result;
 
-7.     net = new Network(topol_config_file, backend_exe, backend_argv);
+7.     net = new Network(topology_file, backend_exe, backend_argv);
 
 8.     comm = net->get_BroadcastCommunicator( );
 
-9.     stream = net->new_Stream(comm, TFILTER_MAX);
+9.     stream = net->new_Stream(comm, TFILTER_SUM, SFILTER_WAITFORALL);
 
-10.    stream->send(tag, "%d", FLOAT_MAX_INIT);
+10.    stream->send(tag, "%d", SUM_INIT);
 
 11.    stream->recv(&amp;tag, packet)
 
@@ -53,11 +53,11 @@ end-points in a communicator.
 A simplified version of code from an example tool front-end is shown in
 <xref linkend="fe_code"></xref>. In the front-end code, after some variable
 definitions in lines 1-6, an instance of the MRNet network is created
-on line 7 using the topology specification in topol_config_file. In line 8, the newly created
-network object is queried for an auto-generated broadcast communicator that
-contains all available end-points. In line 9, this communicator is used to
-establish a stream for which the MRNet internal processes will use a built-in 
-filter that finds the maximum value of the data sent upstream. The front-end then
+on line 7 using the topology specified in topology_file. In line 8, the newly created
+Network object is queried for an auto-generated broadcast communicator that
+contains all available end-points. In line 9, this Communicator is used to
+establish a Stream that will use a built-in filter that finds the summation 
+of the data sent upstream. The front-end then
 sends one or more initialization messages to the backends; in our example
 code on line 10, we broadcast an integer initializer on the new stream. 
 The tag parameter is an application-specific value denoting the nature of the message being 
@@ -80,7 +80,7 @@ deserialize the floating point value contained in packet.
 
 7.     packet->unpack("%d", &amp;val );
 
-8.     if( val == FLOAT_MAX_INIT )
+8.     if( val == SUM_INIT )
 9.         stream->send(tag, "%f", random_float);
    }
 </programlisting>
@@ -89,8 +89,8 @@ deserialize the floating point value contained in packet.
 <para>
 <xref linkend="be_code"></xref> shows the code for the back-end that 
 reciprocates the actions of the front-end. Each tool back-end
-first connects to the appropriate internal process in line 5, 
-using the back-end version of the network constructor that receives its 
+first connects to the MRNet network in line 5, using the back-end version 
+of the Network constructor that receives its 
 arguments via the program argument vector (argc/argv). While the front-end makes 
 a stream-specific receive call, the back-ends use a stream-anonymous network receive 
 that returns the tag sent by the front-end, the packet containing the actual data 
@@ -100,7 +100,7 @@ Finally, each back-end sends a scalar floating point value upstream toward the f
 
 <para>
 A complete example of MRNet code can be found below in <xref linkend="example">.
-Additionally, the MRNet distribution provides two examples and many tests that
+Additionally, the MRNet distribution provides many examples and tests that
 demonstrate the use of the MRNet API by front-ends and back-ends. 
 </xref>.
 </para>
@@ -121,16 +121,16 @@ currently support two modes of instantiating MRNet-based tools.
 In the first mode of process instantiation, MRNet creates the internal and
 back-end processes, using the specified MRNet topology configuration to
 determine the hosts on which the components should be located. First, the
-front-end consults the configuration and uses rsh or ssh to create internal
-processes for the first level of the communication tree on the appropriate
-hosts. Upon instantiation, the newly created processes establish a network
-connection to the process that created it. The first activity on this
-connection is a message from parent to child containing the portion of the
-configuration relevant to that child. The child then uses this information to
-begin instantiation of the sub-tree rooted at that child. When a sub-tree has
-been established, the root of that sub-tree sends a report to its parent
-containing the end-points accessible via that sub-tree. Each internal node
-establishes its children processes and their respective connections
+front-end consults the configuration and uses a remote shell program
+to create internal processes for the first level of the communication tree 
+on the appropriate hosts. Upon instantiation, the newly created processes 
+establish a network connection to the process that created it. The first 
+activity on this connection is a message from parent to child containing the 
+portion of the configuration relevant to that child. The child then uses this 
+information to begin instantiation of the sub-tree rooted at that child. When 
+a sub-tree has been established, the root of that sub-tree sends a report to 
+its parent containing the end-points accessible via that sub-tree. Each 
+internal node establishes its children processes and their respective connections
 sequentially. However, since the various processes are expected to run on
 different compute nodes, sub-trees in different branches of the network are
 created concurrently, maximizing the efficiency of network instantiation.
@@ -147,15 +147,16 @@ application process. In cases like this, MRNet cannot provide back-end
 processes with the environment necessary to start MPI application processes.
 As a result, MRNet creates its internal processes recursively as in the first
 instantiation mode, but does not instantiate any back-end processes. MRNet
-then starts the tool back-ends using the process management system to ensure
-they have the environment needed to create application processes successfully.
-When starting the back-ends, the front-end must provide them with the information
-needed to connect to the MRNet internal processes, such as the leaf
-processes' host names and connection port numbers. This information can be
-provided via the environment, using shared filesystems or other information
-services as available on the target system. To collect the necessary information,
-the front-end can use the MRNet API methods for discovering the network topology
-details.
+then waits for the tool back-ends to be started by the process management 
+system to ensure they have the environment needed to create application processes 
+successfully. To allow back-ends to connect to the MRNet network, information
+such as process host names and connection port numbers must be provided to the 
+back-ends. This information can be provided via the environment, using shared 
+filesystems or other information services as available on the target system. 
+To collect the necessary information, the front-end can use the MRNet API methods 
+for discovering the network topology details. We show how to construct a tool
+that requires back-ends to be separately instantiated in 
+<filename>$MRNET_ROOT/Examples/NoBackEndInstantiation</filename>.
 </para>
 </sect1>
 </chapter>

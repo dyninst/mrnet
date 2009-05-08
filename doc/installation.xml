@@ -22,9 +22,7 @@ we have successfully built and tested MRNet on the following systems:
 <listitem>i386-unknown-nt4.0 (MS Visual Studio 2005)</listitem>
 </itemizedlist>
 
-Our build system attempts to use native system compilers where appropriate, for
-instance, <application>xlc</application> and <application>xlC</application>
-in AIX environments.
+Our build system attempts to use native system compilers where appropriate.
 </para>
 
 </sect1>
@@ -32,12 +30,13 @@ in AIX environments.
 <sect1><title>System Requirements</title>
 <para>
 Here we list the third party tools that MRNet uses and needs for
-proper installation:
+proper installation on UNIX/Linux systems. For Windows systems,
+pre-compiled libraries and binaries are available (upon request).
 
 <itemizedlist>
 <listitem>GNU make</listitem>
 <listitem>flex</listitem>
-<listitem>bison</listitem>
+<listitem>bison (version 2.3 or later)</listitem>
 </itemizedlist>
 </para>
 </sect1>
@@ -55,25 +54,34 @@ MRNet-specific ones:
 
 <screen>
 <computeroutput>
-  --with-libfldir                Directory containing flex library
+  --with-libfldir dir            Directory containing flex library
+</computeroutput>
+<computeroutput>
+  --enable-shared                Build shared library versions of MRNet and XPlat
+</computeroutput>
+<computeroutput>
+  --enable-debug                 Build MRNet and XPlat with debug information
+</computeroutput>
+<computeroutput>
+  --enable-verbosebuild          Show build actions (useful for debugging build problems)
 </computeroutput>
 </screen>
 
 <command>./configure</command> without any options should give reasonable
 results, but the user may specify certain options. For example,
 <screen>
-<prompt>UNIX></prompt> <command>./configure CXX=g++ CXXFLAGS=-O3 --with-libfldir=/usr/local/lib</command>
+<prompt>UNIX></prompt> <command>./configure CXX=g++ --with-libfldir=/usr/local/lib</command>
 </screen>
 
 instructs the configure script to use <command>g++</command> for the C++
-compiler with level 3 optimization and <filename>/usr/local/lib/libfl.a</filename> 
+compiler and <filename>/usr/local/lib</filename> 
 as the location of the flex library.
 </para>
 </sect1>
 
 <sect1><title>Compilation and Installation</title>
 <para>
-To build the MRNet toolkit by type:
+To build MRNet:
 <screen>
 <prompt>UNIX></prompt>  <command>make</command>
 </screen>
@@ -84,20 +92,39 @@ API library</listitem>
 <listitem><filename>$MRNET_ROOT/lib/$MRNET_ARCH/libxplat.a</filename>: A library that exports platform dependent routines to MRNet</listitem>
 <listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_commnode</filename>: MRNet
 internal communcation node</listitem>
-</itemizedlist>
-
-Typing:
-<screen>
-<prompt>UNIX></prompt>  <command>make mrnet-tests</command>
-</screen>
-builds the mrnet test files. In addition to those files above, you will also generate:
-<itemizedlist>
 <listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_topgen</filename>: MRNet
 topology file generator</listitem>
-<listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/*_[FE,BE]</filename>: MRNet test front-end and back-end programs</listitem>
-<listitem><filename>$MRNET_ROOT/lib/$MRNET_ARCH/test_DynamicFilters.so</filename>: Shared object used in tests of dynamic filter loading.</listitem>
-<listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_tests.sh</filename>: A shell script that runs the test programs and checks for errors in an automated fashion.</listitem>
 </itemizedlist>
+
+To build the MRNet tests:
+<screen>
+<prompt>UNIX></prompt>  <command>make tests</command>
+</screen>
+builds the MRNet test files. In addition to those files above, you will also generate:
+<itemizedlist>
+<listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/*_[FE,BE]</filename>: MRNet test front-end and back-end programs</listitem>
+<listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_tests.sh</filename>: A shell script that runs the test programs and checks for errors in an automated fashion.</listitem>
+<listitem><filename>$MRNET_ROOT/lib/$MRNET_ARCH/test_DynamicFilters.so</filename>: Shared object used in tests of dynamic filter loading.</listitem>
+</itemizedlist>
+
+To install the MRNet components (i.e., libraries, executables, and headers) to the 
+directories specified during configure (default install locations are 
+<filename>/usr/local/{bin,lib,include}</filename>):
+<screen>
+<prompt>UNIX></prompt>  <command>make install</command>
+</screen>
+
+To install the MRNet tests:
+<screen>
+<prompt>UNIX></prompt>  <command>make install-tests</command>
+</screen>
+
+If your system does not provide the C++ Boost headers (normally 
+installed in <filename>/usr/include/boost</filename>), we provide the subset
+of Boost header files necessary for building MRNet. To install these headers:
+<screen>
+<prompt>UNIX></prompt>  <command>make install-boost</command>
+</screen>
 </para>
 </sect1>
 
@@ -117,7 +144,7 @@ The <option>-l</option> flag is used to run all tests using only topologies that
 <sect1><title>Bugs, Questions and Comments</title>
 <para>
 MRNet is maintained primarily by the Paradyn Project, University of Wisconsin-Madison.
-Comments and other feedback whether positive or negative are welcome.
+Comments and feedback whether positive or negative are encouraged.
 </para>
 
 <para>

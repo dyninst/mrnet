@@ -40,6 +40,10 @@ improve readability. For example:
                   ;
 </synopsis>
 </note>
+<note>
+The hostname associated with the root of the topology must match the host
+where the front-end process is run.
+</note>
 </para>
 </sect1>
 
@@ -55,7 +59,8 @@ Create a MRNet topology from the machines listed in [INFILE],
 or standard input, and writes output to [OUTFILE], or standard output.
 
 The format of the input machine list is one machine specification per line,
-where each specification is of the form "host[:num-processors]".
+where each specification is of the form "host[:num-processors]". Note that
+the first machine listed should be the host where the front-end should be run.
 
          OPTIONS:
 

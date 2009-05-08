@@ -12,6 +12,7 @@
 <!ENTITY data_elements SYSTEM "data_elements.xml">
 <!ENTITY perf_data SYSTEM "performance_data.xml">
 <!ENTITY full_example SYSTEM "full_example.xml">
+<!ENTITY env_vars SYSTEM "environment.xml">
 ]>
 
 <book id="book">
@@ -27,5 +28,6 @@
 &format_strings;
 &perf_data;
 &full_example;
+&env_vars;
 
 </book>

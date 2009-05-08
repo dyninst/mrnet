@@ -1,11 +1,12 @@
 <chapter><title>Introduction</title>
 <para>
 MRNet is a customizable, high-throughput communication software system for
-parallel tools and applications with a master/slave architecture. MRNet reduces the cost of these
-tools' activities by incorporating a tree of processes between the tool's
-front-end and back-ends. MRNet uses these internal processes to distribute many
-important tool activities, reducing analysis time and keeping tool front-end
-loads manageable.
+parallel tools and applications with a master/slave architecture. 
+MRNet reduces the cost of these
+tools' activities by incorporating a tree-based overlay network (TBON) of processes 
+between the tool's front-end and back-ends. MRNet uses the TBON to distribute many
+important tool communication anc computation activities, reducing analysis time and 
+keeping tool front-end loads manageable.
 </para>
 
 <para>
@@ -21,8 +22,8 @@ Several features make MRNet especially well-suited as a general facility for
 building scalable parallel tools:
 <itemizedlist>
 <listitem><emphasis>Flexible organization.</emphasis> MRNet does not dictate
-the organization of MRNet and tool processes. MRNet process organization is
-specified in a configuration file that can specify common network layouts like
+the organization of the TBON. MRNet process organization is
+specified in a configuration file that can specify common network overlays like
 k-ary and k-nomial trees, or custom layouts tailored to the system(s) running
 the tool. For example, MRNet internal processes can be allocated to dedicated
 system nodes or co-located with tool back-end and application processes.
