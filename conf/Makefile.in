@@ -185,9 +185,11 @@ all: xplat-all $(TARGETS)
 
 xplat-all:
 	cd ./xplat ; $(MAKE) all
+	$(CP) $(LIBXPLAT) $(LIBDIR)/
 
 xplat-sharedobj:
 	cd ./xplat ; $(MAKE) sharedobj
+	$(CP) $(LIBXPLAT_SO) $(LIBDIR)/
 
 install: install-local xplat-install
 
@@ -302,7 +304,7 @@ $(STD_TESTS): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
 	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
 
 $(BINDIR)/mrnet_tests.sh: $(SRCDIR)/conf/mrnet_tests.sh
-	cp $(SRCDIR)/conf/mrnet_tests.sh $(BINDIR)/
+	$(CP) $(SRCDIR)/conf/mrnet_tests.sh $(BINDIR)/
 
 
 $(LIBDIR)/test_DynamicFilters.so: $(SRCDIR)/tests/test_DynamicFilters.C
