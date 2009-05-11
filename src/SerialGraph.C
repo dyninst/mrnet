@@ -6,6 +6,7 @@
 #include "SerialGraph.h"
 #include "utils.h"
 #include <sstream>
+#include <ostream>
 
 namespace MRN
 {

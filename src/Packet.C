@@ -300,7 +300,6 @@ int Packet::ExtractArgList( const char *ifmt_str, ... ) const
     return 0;
 }
 
-
 bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
 {
     unsigned int i;

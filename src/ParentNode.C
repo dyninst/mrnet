@@ -484,20 +484,45 @@ Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
     int stream_id, sync_id;
     int ds_filter_id = -1;
     int us_filter_id = -1;
+    char* cstr_us_filters;
+    char* cstr_sync_filters;
+    char* cstr_ds_filters;
+    Stream * stream;
+    std::multimap<int, int> m;
 
     mrn_dbg_func_begin();
 
-    // extract the info needed to build the stream
-    if( ipacket->ExtractArgList( "%d %ad %d %d %d", 
+    if(PROT_NEW_USERDEF_STREAM == ipacket->get_Tag()) {
+
+        if( ipacket->ExtractArgList( "%d %ad %d %d %d", 
+                                 &stream_id, &backends, &num_backends, 
+                                 &cstr_us_filters, &cstr_sync_filters, &cstr_ds_filters ) == -1 ) {
+         mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+         return NULL;
+        }
+
+        simple_parser(std::string(cstr_us_filters), m);
+        us_filter_id = my_function_id(_network->get_LocalRank(), m);
+        m.clear();
+        simple_parser(std::string(cstr_sync_filters), m);
+        sync_id = my_function_id(_network->get_LocalRank(), m);
+        m.clear();
+        simple_parser(std::string(cstr_ds_filters), m);
+        ds_filter_id = my_function_id(_network->get_LocalRank(), m);
+        stream = _network->new_Stream( stream_id, backends, num_backends, us_filter_id, sync_id, ds_filter_id );      
+
+    } else {
+
+        if( ipacket->ExtractArgList( "%d %ad %d %d %d", 
                                  &stream_id, &backends, &num_backends, 
                                  &us_filter_id, &sync_id, &ds_filter_id ) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
         return NULL;
-    }
+        }
+        //register new stream w/ network
+        stream = _network->new_Stream( stream_id, backends, num_backends, us_filter_id, sync_id, ds_filter_id );
 
-    //register new stream w/ network
-    Stream * stream = _network->new_Stream( stream_id, backends, num_backends,
-                                            us_filter_id, sync_id, ds_filter_id );
+    }
 
     //send packet to children nodes
     if( _network->send_PacketToChildren(ipacket) == -1 ) {

@@ -38,6 +38,9 @@ class SerialGraph;
 class PeerNode;
 typedef boost::shared_ptr<PeerNode> PeerNodePtr; 
 
+int my_function_id(const int& node_id, std::multimap<int, int>& m);
+int simple_parser(const std::string& s, std::multimap<int, int>& m);
+
 class Network: public Error {
  public:
     // FE constructor
@@ -69,7 +72,12 @@ class Network: public Error {
     Stream * new_Stream( Communicator *,
                          int us_filter_id=TFILTER_NULL,
                          int sync_id=SFILTER_WAITFORALL,
-                         int ds_filter_id=TFILTER_NULL );
+                         int ds_filter_id=TFILTER_NULL );  
+    Stream * new_Stream( Communicator *,
+                         std::string us_filters,
+                         std::string sync_filters,
+                         std::string ds_filters );
+
     Stream * get_Stream( unsigned int iid ) const;
 
     int recv( int *otag, PacketPtr &opacket, Stream ** ostream, bool iblocking=true );

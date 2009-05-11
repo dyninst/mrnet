@@ -69,10 +69,11 @@ Stream::Stream( Network * inetwork,
             }
         }
     }
-
+   
     mrn_dbg_func_end();
 }
-    
+
+
 Stream::~Stream()
 {
     if( _network->is_LocalNodeFrontEnd() ) {
@@ -129,8 +130,6 @@ int Stream::send(int itag, const void **idata, const char *iformat_str)
 
 int Stream::send_aux(int itag, char const *ifmt, PacketPtr &ipacket )
 {
-
-
     mrn_dbg_func_begin();
     mrn_dbg(3, mrn_printf(FLF, stderr,
                           "stream_id: %d, tag:%d, fmt=\"%s\"\n", _id, itag, ifmt));
@@ -171,7 +170,7 @@ int Stream::send_aux(int itag, char const *ifmt, PacketPtr &ipacket )
     if( !opackets.empty() ) {
         if( _network->is_LocalNodeFrontEnd() ) {
             if( _network->send_PacketsToChildren( opackets ) == -1 ) {
-                mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToChidlren() failed\n"));
+                mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToChildren() failed\n"));
                 return -1;
             }
         }
@@ -426,7 +425,7 @@ unsigned int Stream::num_ClosedPeers( void ) const
 //         _us_closed = true;
 //         retval = _network->send_PacketToParent( packet );
 //     }
- 
+
 //     return retval;
 // }
 

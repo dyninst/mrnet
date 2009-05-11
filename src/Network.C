@@ -49,6 +49,52 @@ const char *empty_str="";
 
 void set_OutputLevelFromEnvironment( void );
 
+// straightforward parser, may replace this with yacc later
+// returns -1 on parse error, 0 on success
+int simple_parser(const std::string& s, std::multimap<int, int>& m)
+{
+    stringstream ss(stringstream::in | stringstream::out);
+    ss << s;
+
+    int key, value;
+    string seperator;
+    
+    while(1)
+    {
+        ss >> value;
+        if(ss.eof())
+        {
+            break;
+        }
+        ss >> seperator;
+        if("=>" != seperator)
+        {
+            return -1;
+        }
+        ss >> key;
+        ss >> seperator;
+        if(";" != seperator)
+        {
+            return -1;
+        }
+        m.insert(make_pair(key, value));
+    }
+
+    return 0; // success
+}
+
+// returns -1 when nothing specified, function id number otherwise
+int my_function_id(const int& node_id, multimap<int, int>& m)
+{
+    multimap<int, int>::iterator i;
+    i = m.find(node_id);
+    if(m.end() == i)
+    {
+        return -1;
+    }
+    return i->second;
+}
+
 void init_local( void )
 {
 #if !defined(os_windows)
@@ -263,19 +309,19 @@ Network::~Network( )
 void Network::shutdown_Network( void )
 {
     if( is_LocalNodeFrontEnd() && _network_topology->get_NumNodes() ) {
-        
+
         char delete_backends;
         if( _terminate_backends )
             delete_backends = 't';
         else
             delete_backends = 'f';
-        
+
         PacketPtr packet( new Packet( 0, PROT_DEL_SUBTREE, "%c", delete_backends ) );
         get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
     }
     string empty("");
     reset_Topology(empty);
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Clearing %u leftover events\n", 
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Clearing %u leftover events\n",
                           Event::get_NumEvents() ));
     Event::clear_Events();
 }
@@ -746,6 +792,40 @@ Stream * Network::new_Stream( int iid,
     return stream;
 }
 
+Stream * Network::new_Stream( Communicator * icomm,
+                     std::string us_filters,
+                     std::string sync_filters,
+                     std::string ds_filters )
+{
+    static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
+
+    //get array of back-ends from communicator
+    const set <CommunicationNode*> endpoints = icomm->get_EndPoints();
+    Rank * backends = new Rank[ endpoints.size() ];
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "backends[ " ));
+    set <CommunicationNode*>:: const_iterator iter;
+    unsigned  int i;
+    for( i=0,iter=endpoints.begin(); iter!=endpoints.end(); i++,iter++) {
+        mrn_dbg(5, mrn_printf( 0,0,0, stderr, "%d, ", (*iter)->get_Rank() ));
+        backends[i] = (*iter)->get_Rank();
+    }
+    mrn_dbg(5, mrn_printf(0,0,0, stderr, "]\n"));
+
+    PacketPtr packet( new Packet( 0, PROT_NEW_USERDEF_STREAM, "%d %ad %s %s %s",
+                                  next_stream_id, backends, endpoints.size(),
+                                  us_filters.c_str(), sync_filters.c_str(), ds_filters.c_str() ) );
+    next_stream_id++;
+
+    Stream * stream = get_LocalFrontEndNode()->proc_newStream(packet);
+    if( stream == NULL ){
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
+    }
+
+    delete [] backends;
+    return stream;
+}
+
 Stream * Network::get_Stream( unsigned int iid ) const
 {
     Stream * ret;
@@ -806,7 +886,7 @@ bool Network::have_Streams( )
 
 //         *onum_fds = _children.size( );
 //         *ofds = new int[*onum_fds];
-        
+
 //         unsigned int i;
 //         for( i=0,iter=_children.begin(); iter != _children.end(); iter++,i++ ) {
 //             (*ofds)[i] = (*iter)->get_DataSocketFd();

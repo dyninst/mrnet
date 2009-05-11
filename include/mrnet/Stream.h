@@ -10,6 +10,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <sstream>
 
 #include "xplat/Monitor.h"
 #include "xplat/Mutex.h"

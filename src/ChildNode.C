@@ -79,6 +79,7 @@ int ChildNode::proc_PacketsFromParent( std::list < PacketPtr >&packets ) const
             }
             break;
 
+        case PROT_NEW_USERDEF_STREAM:
         case PROT_NEW_STREAM:
             if( _network->is_LocalNodeInternal() ){
                 if( _network->get_LocalInternalNode()-> proc_newStream( cur_packet ) == NULL ){

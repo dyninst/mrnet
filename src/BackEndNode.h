@@ -7,6 +7,7 @@
 #define __backendnode_h 1
 
 #include <string>
+#include <map>
 
 #include "ChildNode.h"
 #include "Message.h"
