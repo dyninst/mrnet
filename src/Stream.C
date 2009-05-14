@@ -458,8 +458,6 @@ int Stream::push_Packet( PacketPtr ipacket,
 
     if( ipackets.size() > 0 ) {
 
-        /* NOTE: Performance data on filter CPU usage is currently not available, since
-           getrusage doesn't play nicely with threads - need a better option */ 
 	long user_before, sys_before;
 	long user_after, sys_after;
 
@@ -1096,6 +1094,92 @@ void Stream::print_PerformanceData( perfdata_metric_t metric,
     }
 
     mrn_dbg_func_end();
+}
+
+// straightforward filter assignment parser, may replace this with yacc later
+// returns -1 on parse error, 0 on success
+static int simple_parser(const string& s, map< int, vector<int> >& m)
+{
+    if( ! s.length() )
+        return -1;
+
+    vector<string> assignments;
+    size_t semi, tmp, start=0;
+    string arrow("=>");
+    do {
+        semi = s.find_first_of(';', start + arrow.length());
+        if( semi != s.npos ) {
+
+            string a = s.substr(start, semi-start);
+            assignments.push_back(a);
+
+            start = semi + 1;
+            if( start >= s.length() ) break;
+
+            tmp = s.find( arrow, start );
+            if( tmp == s.npos ) break; // no more assignments
+
+        }
+        else {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "missing semicolon - parse failed\n"));
+            return -1;
+        }
+    } while(1);
+
+    vector<string>::iterator si = assignments.begin();
+    for( ; si != assignments.end() ; si++ ) {
+
+        int filter, rank;
+        string dummy, who;
+        stringstream ss(stringstream::in | stringstream::out);
+        ss << *si;
+
+        ss >> filter;
+        ss >> dummy;
+        ss >> who;
+        if( who.empty() ) {
+            // no space between arrow and target
+            tmp = dummy.find( arrow );
+            if( tmp == dummy.npos ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "missing arrow - parse failed\n"));
+                m.clear();
+                return -1;
+            }
+            who = dummy.substr(tmp + arrow.length());
+        }
+        
+        if( who == "*" )
+            rank = -1;
+        else
+            rank = atoi( who.c_str() );
+  
+        vector<int>& filters = m[rank];
+        filters.push_back(filter);
+    }
+    
+    return 0; // success
+}
+
+bool Stream::find_FilterAssignment(const std::string& assignments, 
+                                   Rank me, int& filter_id)
+{
+    std::map<int, vector<int> > rank_filters;
+    if( simple_parser(assignments, rank_filters) != -1 ) {
+
+        std::map<int, vector<int> >::iterator mine = rank_filters.find((int)me);
+        if( mine != rank_filters.end() )
+            filter_id = mine->second.front();
+        else {
+            // check for '*' catch-all case, stored as -1 rank
+            mine = rank_filters.find(-1);
+            if( mine != rank_filters.end() )
+                filter_id = mine->second.front();
+            else
+                return false;
+        }
+        return true;
+    }
+    return false;
 }
     
 

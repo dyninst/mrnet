@@ -100,6 +100,7 @@ class Stream{
     void signal_BlockedReceivers( void ) const;
     int block_ForIncomingPacket( void ) const;
 
+    static bool find_FilterAssignment(const std::string& assignments, Rank me, int& filter_id);
 
     //Static Data Members
     Network * _network;

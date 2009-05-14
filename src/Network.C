@@ -49,52 +49,6 @@ const char *empty_str="";
 
 void set_OutputLevelFromEnvironment( void );
 
-// straightforward parser, may replace this with yacc later
-// returns -1 on parse error, 0 on success
-int simple_parser(const std::string& s, std::multimap<int, int>& m)
-{
-    stringstream ss(stringstream::in | stringstream::out);
-    ss << s;
-
-    int key, value;
-    string seperator;
-    
-    while(1)
-    {
-        ss >> value;
-        if(ss.eof())
-        {
-            break;
-        }
-        ss >> seperator;
-        if("=>" != seperator)
-        {
-            return -1;
-        }
-        ss >> key;
-        ss >> seperator;
-        if(";" != seperator)
-        {
-            return -1;
-        }
-        m.insert(make_pair(key, value));
-    }
-
-    return 0; // success
-}
-
-// returns -1 when nothing specified, function id number otherwise
-int my_function_id(const int& node_id, multimap<int, int>& m)
-{
-    multimap<int, int>::iterator i;
-    i = m.find(node_id);
-    if(m.end() == i)
-    {
-        return -1;
-    }
-    return i->second;
-}
-
 void init_local( void )
 {
 #if !defined(os_windows)
@@ -793,9 +747,9 @@ Stream * Network::new_Stream( int iid,
 }
 
 Stream * Network::new_Stream( Communicator * icomm,
-                     std::string us_filters,
-                     std::string sync_filters,
-                     std::string ds_filters )
+                              std::string us_filters,
+                              std::string sync_filters,
+                              std::string ds_filters )
 {
     static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
 
@@ -812,7 +766,7 @@ Stream * Network::new_Stream( Communicator * icomm,
     }
     mrn_dbg(5, mrn_printf(0,0,0, stderr, "]\n"));
 
-    PacketPtr packet( new Packet( 0, PROT_NEW_USERDEF_STREAM, "%d %ad %s %s %s",
+    PacketPtr packet( new Packet( 0, PROT_NEW_HETERO_STREAM, "%d %ad %s %s %s",
                                   next_stream_id, backends, endpoints.size(),
                                   us_filters.c_str(), sync_filters.c_str(), ds_filters.c_str() ) );
     next_stream_id++;

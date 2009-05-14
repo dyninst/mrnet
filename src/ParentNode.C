@@ -480,53 +480,60 @@ int ParentNode::proc_Event( PacketPtr ipacket ) const
 Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
 {
     unsigned int num_backends;
-    Rank *backends;
-    int stream_id, sync_id;
-    int ds_filter_id = -1;
-    int us_filter_id = -1;
-    char* cstr_us_filters;
-    char* cstr_sync_filters;
-    char* cstr_ds_filters;
-    Stream * stream;
-    std::multimap<int, int> m;
+    Rank* backends;
+    int stream_id, tag;
+    int ds_filter_id, us_filter_id, sync_id;
+    Stream* stream;
 
     mrn_dbg_func_begin();
 
-    if(PROT_NEW_USERDEF_STREAM == ipacket->get_Tag()) {
+    tag = ipacket->get_Tag();
+
+    if( tag == PROT_NEW_HETERO_STREAM ) {
+
+        char* us_filters;
+        char* sync_filters;
+        char* ds_filters;
+        Rank me = _network->get_LocalRank();
+
+        if( ipacket->ExtractArgList( "%d %ad %s %s %s", 
+                                     &stream_id, &backends, &num_backends, 
+                                     &us_filters, &sync_filters, &ds_filters ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+            return NULL;
+        }
+        
+        if( ! Stream::find_FilterAssignment(std::string(us_filters), me, us_filter_id) ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(upstream) failed, using default\n" ));
+            us_filter_id = TFILTER_NULL;
+        }
+        if( ! Stream::find_FilterAssignment(std::string(ds_filters), me, ds_filter_id) ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(downstream) failed, using default\n" ));
+            ds_filter_id = TFILTER_NULL;
+        }
+        if( ! Stream::find_FilterAssignment(std::string(sync_filters), me, sync_id) ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(sync) failed, using default\n" ));
+            sync_id = SFILTER_WAITFORALL;
+        }
+        
+
+    } else if( tag == PROT_NEW_STREAM ) {
 
         if( ipacket->ExtractArgList( "%d %ad %d %d %d", 
-                                 &stream_id, &backends, &num_backends, 
-                                 &cstr_us_filters, &cstr_sync_filters, &cstr_ds_filters ) == -1 ) {
-         mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
-         return NULL;
+                                     &stream_id, &backends, &num_backends, 
+                                     &us_filter_id, &sync_id, &ds_filter_id ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+            return NULL;
         }
-
-        simple_parser(std::string(cstr_us_filters), m);
-        us_filter_id = my_function_id(_network->get_LocalRank(), m);
-        m.clear();
-        simple_parser(std::string(cstr_sync_filters), m);
-        sync_id = my_function_id(_network->get_LocalRank(), m);
-        m.clear();
-        simple_parser(std::string(cstr_ds_filters), m);
-        ds_filter_id = my_function_id(_network->get_LocalRank(), m);
-        stream = _network->new_Stream( stream_id, backends, num_backends, us_filter_id, sync_id, ds_filter_id );      
-
-    } else {
-
-        if( ipacket->ExtractArgList( "%d %ad %d %d %d", 
-                                 &stream_id, &backends, &num_backends, 
-                                 &us_filter_id, &sync_id, &ds_filter_id ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
-        return NULL;
-        }
-        //register new stream w/ network
-        stream = _network->new_Stream( stream_id, backends, num_backends, us_filter_id, sync_id, ds_filter_id );
 
     }
+    //register new stream w/ network
+    stream = _network->new_Stream( stream_id, backends, num_backends, 
+                                   us_filter_id, sync_id, ds_filter_id );
 
     //send packet to children nodes
     if( _network->send_PacketToChildren(ipacket) == -1 ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
         return NULL;
     }
 

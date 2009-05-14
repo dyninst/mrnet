@@ -38,9 +38,6 @@ class SerialGraph;
 class PeerNode;
 typedef boost::shared_ptr<PeerNode> PeerNodePtr; 
 
-int my_function_id(const int& node_id, std::multimap<int, int>& m);
-int simple_parser(const std::string& s, std::multimap<int, int>& m);
-
 class Network: public Error {
  public:
     // FE constructor

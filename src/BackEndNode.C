@@ -59,56 +59,75 @@ BackEndNode::~BackEndNode(void)
 
 int BackEndNode::proc_DataFromParent(PacketPtr ipacket) const
 {
-    Stream * stream;
-
-    stream = _network->get_Stream( ipacket->get_StreamId() );
+    int retval = 0;
+    Stream * stream = _network->get_Stream( ipacket->get_StreamId() );
     assert(  stream );
 
-    stream->add_IncomingPacket(ipacket);
+    std::vector<PacketPtr> opackets, opackets_rev;
+    stream->push_Packet( ipacket, opackets, opackets_rev, false );
 
-    return 0;
+    if( ! opackets_rev.empty() ) {
+        if( ChildNode::_network->send_PacketsToParent( opackets_rev ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send() failed()\n" ));
+            retval = -1;
+        }
+    }
+    
+    std::vector<PacketPtr>::iterator pi = opackets.begin();
+    for( ; pi != opackets.end() ; pi ++ )
+        stream->add_IncomingPacket(*pi);
+
+    return retval;
 }
 
 int BackEndNode::proc_newStream( PacketPtr ipacket ) const
 {
     unsigned int num_backends;
     Rank *backends;
-    int stream_id, sync_id;
-    int ds_filter_id = -1;
-    int us_filter_id = -1;
-    char* cstr_us_filters;
-    char* cstr_sync_filters;
-    char* cstr_ds_filters;
-    Stream * stream;
-    std::multimap<int, int> m;
+    int stream_id, tag;
+    int ds_filter_id, us_filter_id, sync_id;
 
     mrn_dbg_func_begin();
 
-    if(PROT_NEW_USERDEF_STREAM == ipacket->get_Tag()) {
-        if( ipacket->ExtractArgList( "%d %ad %d %d %d", 
-                                 &stream_id, &backends, &num_backends, 
-                                 &cstr_us_filters, &cstr_sync_filters, &cstr_ds_filters ) == -1 ) {
-           mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
-           return -1;
+    tag = ipacket->get_Tag();
+
+    if( tag == PROT_NEW_HETERO_STREAM ) {
+
+        char* us_filters;
+        char* sync_filters;
+        char* ds_filters;
+        Rank me = _network->get_LocalRank();
+
+        if( ipacket->ExtractArgList( "%d %ad %s %s %s", 
+                                     &stream_id, &backends, &num_backends, 
+                                     &us_filters, &sync_filters, &ds_filters ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+            return -1;
         }
-      simple_parser(std::string(cstr_us_filters), m);
-      us_filter_id = my_function_id(_network->get_LocalRank(), m);
-      m.clear();
-      simple_parser(std::string(cstr_sync_filters), m);
-      sync_id = my_function_id(_network->get_LocalRank(), m);
-      m.clear();
-      simple_parser(std::string(cstr_ds_filters), m);
-      ds_filter_id = my_function_id(_network->get_LocalRank(), m);
-      stream = _network->new_Stream( stream_id, backends, num_backends, us_filter_id, sync_id, ds_filter_id );
-    } else {
-        if( ipacket->ExtractArgList( "%d %ad %d %d %d", 
-                                 &stream_id, &backends, &num_backends, 
-                                 &us_filter_id, &sync_id, &ds_filter_id ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
-        return -1;
+        
+        if( ! Stream::find_FilterAssignment(std::string(us_filters), me, us_filter_id) ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(upstream) failed, using default\n" ));
+            us_filter_id = TFILTER_NULL;
         }
-        _network->new_Stream( stream_id, backends, num_backends, us_filter_id, sync_id, ds_filter_id );
+        if( ! Stream::find_FilterAssignment(std::string(ds_filters), me, ds_filter_id) ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(downstream) failed, using default\n" ));
+            ds_filter_id = TFILTER_NULL;
+        }
+        if( ! Stream::find_FilterAssignment(std::string(sync_filters), me, sync_id) ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(sync) failed, using default\n" ));
+            sync_id = SFILTER_WAITFORALL;
+        }
+
+    } else if( tag == PROT_NEW_STREAM ) {
+
+        if( ipacket->ExtractArgList( "%d %ad %d %d %d", 
+                                     &stream_id, &backends, &num_backends, 
+                                     &us_filter_id, &sync_id, &ds_filter_id ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+            return -1;
+        }
     }
+    _network->new_Stream( stream_id, backends, num_backends, us_filter_id, sync_id, ds_filter_id );
 
     mrn_dbg_func_end();
     return 0;
