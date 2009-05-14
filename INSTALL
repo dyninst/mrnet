@@ -18,7 +18,7 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
   The third party tools that MRNet uses and needs for proper installation are: 
     - GNU make
     - flex
-    - bison
+    - bison (version 2.3 or later)
 
 3. Build Configuration
 

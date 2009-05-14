@@ -1,3 +1,8 @@
+/**************************************************************************
+ * Copyright 2003-2009   Michael J. Brim, Barton P. Miller                *
+ *                Detailed MRNet usage rights in "LICENSE" file.          *
+ **************************************************************************/
+
 #ifndef _FILE_UTIL_H_
 #define _FILE_UTIL_H_
 

@@ -1,5 +1,5 @@
 /**************************************************************************
- * Copyright 2003-2008   James Jolly, Michael J. Brim, Barton P. Miller   *
+ * Copyright 2003-2009   James Jolly, Michael J. Brim, Barton P. Miller   *
  *                Detailed MRNet usage rights in "LICENSE" file.          *
  **************************************************************************/
 

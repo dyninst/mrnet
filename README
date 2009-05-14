@@ -56,6 +56,7 @@ LICENSE contains the usage terms for MRNet.
 
   Release Highlights:
     * New API for Stream performance data collection
+    * New support for hetergeneous Stream filters
     * Intel and Portland Group compiler support
     * Improved topology generation facility
     * Numerous bug fixes and enhancements
