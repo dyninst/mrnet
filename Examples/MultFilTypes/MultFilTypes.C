@@ -1,5 +1,5 @@
 /**************************************************************************
- * Copyright 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright 2003-2009   James Jolly, Michael J. Brim, Barton P. Miller   *
  *                Detailed MRNet usage rights in "LICENSE" file.          *
  **************************************************************************/
 
@@ -17,6 +17,7 @@ void Pass( std::vector< PacketPtr >& packets_in,
                  PacketPtr& /* params */ )
 {
     packets_out = packets_in;
+    fprintf(stdout, "in Pass()\n");
 }
 
 const char * SumThenLimit42_format_string = "%d";

@@ -1,11 +1,11 @@
 /**************************************************************************
- * Copyright 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright 2003-2009   James Jolly, Michael J. Brim, Barton P. Miller   *
  *                Detailed MRNet usage rights in "LICENSE" file.          *
  **************************************************************************/
 
 // Example use of multiple upstream filter types in a single MRNet tree...
-// Give it a whirl:
-// MultFilTypes_FE ./MultFilTypes_BE ./MultFilTypes.so
+// USAGE: ./MultFilTypes_FE ./MultFilTypes_BE ./MultFilTypes.so
+
 // Uses topology with one parent node and two children.
 // The parent tells the children how many terms of the Fibonacci sequence
 // it desires, and they in turn compute these terms and hand them upwards.
@@ -68,12 +68,10 @@ int main( int argc, char ** argv )
         return -1;
     }
 
-    std::cout << "built-in filter WAITFORALL id:" << SFILTER_WAITFORALL << "\n";
-
     Communicator * comm_BC = net->get_BroadcastCommunicator( );
-    std::string s1("16 => 0 ; 16 => 1 ; 15 => 2 ;"); // upstream filters
-    std::string s2("13 => 0 ; 13 => 1 ; 13 => 2 ;"); // synchronization filters
-    std::string s3("17 => 0 ; 17 => 1 ; 17 => 2 ;"); // downstream filters
+    std::string s1(" 16 =>0;16=> 1; 15 => 2 ;"); // upstream filters
+    std::string s2(""); // synchronization filters, empty string means use default
+    std::string s3("17=>*;"); // downstream filters
     Stream * add_stream = net->new_Stream(comm_BC, s1, s2, s3);
 
     // Create a stream that will use the Integer_Add filter for aggregation
@@ -83,7 +81,7 @@ int main( int argc, char ** argv )
     // waves of integers
     tag = PROT_SUM;
     unsigned int num_iters = 10;
-    if( add_stream->send( tag, "%d %d", send_val, num_iters ) == -1 ){
+    if( add_stream->send( tag, "%d", num_iters ) == -1 ){
         fprintf( stderr, "stream::send() failure\n");
         return -1;
     }

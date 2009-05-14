@@ -1,5 +1,5 @@
 /**************************************************************************
- * Copyright 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright 2003-2008   James Jolly, Michael J. Brim, Barton P. Miller   *
  *                Detailed MRNet usage rights in "LICENSE" file.          *
  **************************************************************************/
 
@@ -12,10 +12,10 @@ int main(int argc, char **argv)
 {
     Stream * stream = NULL;
     PacketPtr p;
-    int tag = 0, recv_val = 0, num_iters = 0;
+    int tag = 0, num_iters = 0;
 
-    Network * network = new Network( argc, argv );
-    uint node_rank = network->get_LocalRank();
+    Network * net = new Network( argc, argv );
+    uint node_rank = net->get_LocalRank();
     fprintf( stderr, "backend on node %d waiting for start message...\n", node_rank );
     
     int first_term = 1;
@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     int data[10] = { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55 };
 
     do{
-        if ( network->recv(&tag, p, &stream) != 1){
+        if ( net->recv(&tag, p, &stream) != 1){
             fprintf(stderr, "stream::recv() failure\n");
             return -1;
         }
@@ -32,8 +32,9 @@ int main(int argc, char **argv)
         switch(tag){
 
         case PROT_SUM:
-            p->unpack( "%d %d", &recv_val, &num_iters );
-            fprintf( stderr, "backend on node %d got start message with payload %d...\n", node_rank, num_iters );
+            p->unpack( "%d", &num_iters );
+            fprintf( stdout, "Backend %d: Processing PROT_SUM num_iters=%d\n", 
+                     node_rank, num_iters );
             
             for( unsigned int i=0; i<num_iters; i++ ){
 		new_first_term = first_term + second_term;
@@ -56,7 +57,7 @@ int main(int argc, char **argv)
             break;
 
         case PROT_EXIT:
-            fprintf( stdout, "Processing PROT_EXIT ...\n");
+            fprintf( stdout, "Backend %d: Processing PROT_EXIT ...\n", node_rank);
             if( stream->send(tag, "%d", 0) == -1 ){
                 fprintf(stderr, "stream::send(%%s) failure\n");
                 return -1;
@@ -69,7 +70,7 @@ int main(int argc, char **argv)
             break;
 
         default:
-            fprintf(stderr, "Unknown Protocol: %d\n", tag);
+            fprintf(stderr, "Backend %d: Unknown Protocol: %d\n", node_rank, tag);
             break;
         }
     } while ( tag != PROT_EXIT );
