@@ -1,28 +1,33 @@
 
-MRNET_ROOT = /afs/cs.wisc.edu/u/j/o/jolly/mrn
-#MRNET_ROOT = /home/jolly/mrn
+MRNET_ROOT = /u/m/j/mjbrim/research/MRNet/git-repo/mrnet
 MRNET_PLATFORM = i686-pc-linux-gnu
 
 CXX        = g++
 CXXFLAGS   = -g $(INCDIR)
-INCDIR     = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include 
-LIBDIR     = $(MRNET_ROOT)/lib/${MRNET_PLATFORM}
-LIBMRNET   = $(LIBDIR)/libmrnet.a
-LIBXPLAT   = $(MRNET_ROOT)/xplat/libxplat.a
-LIBS       = $(LIBMRNET) $(LIBXPLAT) -lfl -lm -lpthread -ldl
 LDFLAGS    = -rdynamic
 SOFLAGS    = -fPIC -shared -rdynamic
+
+### USERS SHOULD NOT NEED TO EDIT BELOW THIS POINT ###
+
+INCDIR     = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include
+LIBDIR     = $(MRNET_ROOT)/lib/${MRNET_PLATFORM}
+
+LIBMRNET   = $(LIBDIR)/libmrnet.a
+LIBXPLAT   = $(LIBDIR)/libxplat.a
+LIBS       = $(LIBMRNET) $(LIBXPLAT) -lfl -lm -lpthread -ldl
 
 BA_TARGETS = BackendAttach_FE BackendAttach_BE
 IA_TARGETS = IntegerAddition_FE IntegerAddition_BE IntegerAdditionFilter.so
 MFT_TARGETS = MultFilTypes_FE MultFilTypes_BE MultFilTypes.so
+HF_TARGETS = HeteroFilters_FE HeteroFilters_BE HeteroFilters.so
 PD_TARGETS = PerfData_FE PerfData_BE PerfDataFilter.so
-TARGETS = $(BA_TARGETS) $(IA_TARGETS) $(PD_TARGETS) $(MFT_TARGETS)
+TARGETS = $(BA_TARGETS) $(IA_TARGETS) $(PD_TARGETS) $(MFT_TARGETS) $(HF_TARGETS)
+
 PREREQS   = .set_mrnet_dir .set_platform
 
-.PHONY: all backend-attach integer-add perf-data clean
+default: all
 
-all: .READY $(TARGETS)
+.PHONY: all backend-attach integer-add multi-filter hetero-filter perf-data clean distclean
 
 .READY:
     ifeq ($(MRNET_ROOT), SET_TO_YOUR_MRNET_DIR)
@@ -37,51 +42,70 @@ all: .READY $(TARGETS)
 	@touch -a .set_platform
     endif
 
-backend-attach: $(BA_TARGETS) 
+all: .READY $(TARGETS)
 
-integer-add: $(IA_TARGETS)
+# Back-end Attach Example
+backend-attach: $(PREREQS) $(BA_TARGETS) 
 
-perf-data: $(PD_TARGETS)
-
-
-BackendAttach_FE: NoBackEndInstantiation/FE.C $(PREREQS)
+BackendAttach_FE: NoBackEndInstantiation/FE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ NoBackEndInstantiation/FE.C $(LIBS)
 
-BackendAttach_BE: NoBackEndInstantiation/BE.C $(PREREQS)
+BackendAttach_BE: NoBackEndInstantiation/BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ NoBackEndInstantiation/BE.C $(LIBS)
 
+# Integer Addition Example
+integer-add: $(PREREQS) $(IA_TARGETS)
 
-MultFilTypes_FE: MultFilTypes/MultFilTypes_FE.C $(PREREQS)
-	$(CXX) $(CXXFLAGS) -IMultFilTypes $(LDFLAGS) -o $@ MultFilTypes/MultFilTypes_FE.C $(LIBS)
-
-MultFilTypes_BE: MultFilTypes/MultFilTypes_BE.C $(PREREQS)
-	$(CXX) $(CXXFLAGS) -IMultFilTypes $(LDFLAGS) -o $@ MultFilTypes/MultFilTypes_BE.C $(LIBS)
-
-MultFilTypes.so: MultFilTypes/MultFilTypes.C $(PREREQS)
-	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ MultFilTypes/MultFilTypes.C
-
-
-IntegerAddition_FE: IntegerAddition/IntegerAddition_FE.C $(PREREQS)
+IntegerAddition_FE: IntegerAddition/IntegerAddition_FE.C
 	$(CXX) $(CXXFLAGS) -IIntegerAddition $(LDFLAGS) -o $@ IntegerAddition/IntegerAddition_FE.C $(LIBS)
 
-IntegerAddition_FE_async: IntegerAddition/IntegerAddition_FE_async.C $(PREREQS)
+IntegerAddition_FE_async: IntegerAddition/IntegerAddition_FE_async.C
 	$(CXX) $(CXXFLAGS) -IIntegerAddition $(LDFLAGS) -o $@ IntegerAddition/IntegerAddition_FE_async.C $(LIBS)
 
-IntegerAddition_BE: IntegerAddition/IntegerAddition_BE.C $(PREREQS)
+IntegerAddition_BE: IntegerAddition/IntegerAddition_BE.C
 	$(CXX) $(CXXFLAGS) -IIntegerAddition $(LDFLAGS) -o $@ IntegerAddition/IntegerAddition_BE.C $(LIBS)
 
-IntegerAdditionFilter.so: IntegerAddition/IntegerAdditionFilter.C $(PREREQS)
+IntegerAdditionFilter.so: IntegerAddition/IntegerAdditionFilter.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ IntegerAddition/IntegerAdditionFilter.C
 
-PerfData_FE: PerformanceData/FE.C $(PREREQS)
+# Multiple Filters Example
+multi-filter: $(MFT_TARGETS) 
+
+MultFilTypes_FE: MultFilTypes/MultFilTypes_FE.C
+	$(CXX) $(CXXFLAGS) -IMultFilTypes $(LDFLAGS) -o $@ MultFilTypes/MultFilTypes_FE.C $(LIBS)
+
+MultFilTypes_BE: MultFilTypes/MultFilTypes_BE.C
+	$(CXX) $(CXXFLAGS) -IMultFilTypes $(LDFLAGS) -o $@ MultFilTypes/MultFilTypes_BE.C $(LIBS)
+
+MultFilTypes.so: MultFilTypes/MultFilTypes.C
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ MultFilTypes/MultFilTypes.C
+
+# Heterogeneous Filters Example
+hetero-filter: $(HF_TARGETS) 
+
+HeteroFilters_FE: HeterogeneousFilters/HeteroFilters_FE.C
+	$(CXX) $(CXXFLAGS) -IHeterogeneousFilters $(LDFLAGS) -o $@ HeterogeneousFilters/HeteroFilters_FE.C $(LIBS)
+
+HeteroFilters_BE: HeterogeneousFilters/HeteroFilters_BE.C
+	$(CXX) $(CXXFLAGS) -IHeterogeneousFilters $(LDFLAGS) -o $@ HeterogeneousFilters/HeteroFilters_BE.C $(LIBS)
+
+HeteroFilters.so: HeterogeneousFilters/HeteroFilters.C
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ HeterogeneousFilters/HeteroFilters.C
+
+# Performance Data Collection Example
+perf-data: $(PREREQS) $(PD_TARGETS)
+
+PerfData_FE: PerformanceData/FE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ PerformanceData/FE.C $(LIBS)
 
-PerfData_BE: PerformanceData/BE.C $(PREREQS)
+PerfData_BE: PerformanceData/BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ PerformanceData/BE.C $(LIBS)
 
-PerfDataFilter.so: PerformanceData/PerfDataFilter.C $(PREREQS)
+PerfDataFilter.so: PerformanceData/PerfDataFilter.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ PerformanceData/PerfDataFilter.C
 
 clean:
-	/bin/rm -f *.o *~ $(TARGETS) $(PREREQS)
+	/bin/rm -f *.o *~ $(TARGETS)
 
+distclean: clean
+	/bin/rm -f $(PREREQS)
