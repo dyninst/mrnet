@@ -765,7 +765,8 @@ represented by this CommunicationNode.
 
 <para>
 Instances of Stream are network specific, so their creation methods
-are functions of an instantiated Network object.
+are functions of an instantiated Network object.  There are two common approaches to
+creating a new stream.
 </para>
 
 <funcsynopsis>
@@ -778,8 +779,10 @@ are functions of an instantiated Network object.
 </funcprototype>
 <blockquote>
 <para>
-<function>Network::new_Stream()</function> creates a Stream object attached
-to the end-points specified by the <varname>comm</varname> argument. </para>
+This version of <function>Network::new_Stream()</function> is the straightforward way to
+create a Stream object attached to the end-points specified by a Communicator object 
+<varname>comm</varname>.
+</para>
 <para><varname>up_transfilter_id</varname> specifies the
 transformation filter to apply to data flowing upstream from the application 
 back-ends toward the front-end; the default value is <literal>TFILTER_NULL</literal>.
@@ -789,6 +792,37 @@ to upstream packets; the default value is <literal>SFILTER_WAITFORALL</literal>.
 </para>
 <para><varname>down_transfilter_id</varname> allows the user to specify a filter to apply 
 to downstream data flows; the default value is <literal>TFILTER_NULL</literal>.</para>
+</blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>Stream * <function>Network::new_Stream</function></funcdef>
+    <paramdef>Communicator * <parameter>comm</parameter></paramdef>
+    <paramdef>std::string <parameter>us_filters</parameter></paramdef>
+    <paramdef>std::string <parameter>sync_filters</parameter></paramdef>
+    <paramdef>std::string <parameter>ds_filters</parameter></paramdef>
+</funcprototype>
+<blockquote>
+<para>
+This version of <function>Network::new_Stream()</function> allows the user
+to map arbitrary packet filters to arbitrary nodes within the tree.  Strings
+are used to express these mappings, with the following syntax: <function>"filter_id_1 => node_rank_1;
+filter_id_2 => node_rank_2;"</function>.  Like the simpler version of
+<function>Network::new_Stream()</function>, the end-points are specified by the
+<varname>comm</varname> argument.  See HeterogeneousFilters under the Examples directory to see
+a <function>Network::new_Stream()</function> call that specifies different filter types to be used
+within the same stream.</para>
+<para><varname>us_filters</varname> specifies the
+transformation filter(s) to apply to data flowing upstream from the application 
+back-ends toward the front-end.
+</para>
+<para><varname>sync_filters</varname> specifies the synchronization filter(s) to apply 
+to upstream packets.
+</para>
+<para><varname>ds_filters</varname> allows the user to specify a filter to apply 
+to downstream data flows.</para>
+<para>Note that more than one filter should not be assigned to a single node in any of these strings.</para>
 </blockquote>
 </funcsynopsis>
 
