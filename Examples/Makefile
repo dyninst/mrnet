@@ -1,5 +1,5 @@
-MRNET_ROOT=/home/jolly/mrn
-MRNET_PLATFORM = i686-pc-linux-gnu
+MRNET_ROOT = "SET_TO_YOUR_MRNET_DIR"
+MRNET_PLATFORM = "SET_TO_YOUR_MRNET_PLATFORM"
 
 CXX        = g++
 CXXFLAGS   = -g $(INCDIR)
@@ -17,7 +17,6 @@ LIBS       = $(LIBMRNET) $(LIBXPLAT) -lfl -lm -lpthread -ldl
 
 BA_TARGETS = BackendAttach_FE BackendAttach_BE
 IA_TARGETS = IntegerAddition_FE IntegerAddition_BE IntegerAdditionFilter.so
-HFT_TARGETS = HeteroTest_FE HeteroTest_BE HeteroTest.so
 HF_TARGETS = HeteroFilters_FE HeteroFilters_BE HeteroFilters.so
 PD_TARGETS = PerfData_FE PerfData_BE PerfDataFilter.so
 TARGETS = $(BA_TARGETS) $(IA_TARGETS) $(PD_TARGETS) $(HFT_TARGETS) $(HF_TARGETS)
@@ -26,7 +25,7 @@ PREREQS   = .set_mrnet_dir .set_platform
 
 default: all
 
-.PHONY: all backend-attach integer-add hetero-test hetero-filter perf-data clean distclean
+.PHONY: all backend-attach integer-add hetero-filter perf-data clean distclean
 
 .READY:
     ifeq ($(MRNET_ROOT), SET_TO_YOUR_MRNET_DIR)
@@ -66,18 +65,6 @@ IntegerAddition_BE: IntegerAddition/IntegerAddition_BE.C
 
 IntegerAdditionFilter.so: IntegerAddition/IntegerAdditionFilter.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ IntegerAddition/IntegerAdditionFilter.C
-
-# Heterogeneous Filters Test
-hetero-test: $(HFT_TARGETS) 
-
-HeteroTest_FE: HeterogeneousTest/HeteroTest_FE.C
-	$(CXX) $(CXXFLAGS) -IHeteroTest $(LDFLAGS) -o $@ HeterogeneousTest/HeteroTest_FE.C $(LIBS)
-
-HeteroTest_BE: HeterogeneousTest/HeteroTest_BE.C
-	$(CXX) $(CXXFLAGS) -IHeteroTest $(LDFLAGS) -o $@ HeterogeneousTest/HeteroTest_BE.C $(LIBS)
-
-HeteroTest.so: HeterogeneousTest/HeteroTest.C
-	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ HeterogeneousTest/HeteroTest.C
 
 # Heterogeneous Filters Example
 hetero-filter: $(HF_TARGETS) 
