@@ -806,16 +806,23 @@ to downstream data flows; the default value is <literal>TFILTER_NULL</literal>.<
 <blockquote>
 <para>
 This version of <function>Network::new_Stream()</function> allows the user
-to map arbitrary packet filters to arbitrary nodes within the tree.  Strings
-are used to express these mappings, with the following syntax: <function>"filter_id_1 => node_rank_1;
-filter_id_2 => node_rank_2;"</function>.  Like the simpler version of
-<function>Network::new_Stream()</function>, the end-points are specified by the
-<varname>comm</varname> argument.  See HeterogeneousFilters under the Examples directory to see
-a <function>Network::new_Stream()</function> call that specifies different filter types to be used
-within the same stream.</para>
+to map arbitrary packet filters to arbitrary nodes within the tree. Like the 
+simpler version of <function>Network::new_Stream()</function>, the end-points are 
+specified by the <varname>comm</varname> argument.
+</para>
+<para> Strings are used to
+express the filter mappings, with the following syntax: <function>"filter_id_1 => node_rank_1;
+filter_id_2 => node_rank_2;"</function>. If <literal>"*"</literal> is specified as
+the rank for an assignment, the filter will be assigned to all ranks that have not already
+been assigned. If a rank within <varname>comm</varname> is not assigned a filter, 
+it will use the default filter.
+See <filename>$MRNET_ROOT/Examples/HeterogeneousFilters</filename>
+for an example of using <function>Network::new_Stream()</function> to specify different 
+filter types to be used within the same stream.
+</para>
 <para><varname>us_filters</varname> specifies the
 transformation filter(s) to apply to data flowing upstream from the application 
-back-ends toward the front-end.
+back-ends toward the front-end. 
 </para>
 <para><varname>sync_filters</varname> specifies the synchronization filter(s) to apply 
 to upstream packets.
