@@ -18,7 +18,6 @@ int main(int argc, char **argv)
     Stream * stream;
     PacketPtr buf;
     int tag;
-    bool success=true;
 
     srandom( time(NULL) ); //arbitrary seed to random()
 
@@ -31,14 +30,13 @@ int main(int argc, char **argv)
 
         switch(tag){
         case PROT_COUNT:
-            fprintf( stdout, "Processing PROT_COUNT ...\n");
+            fprintf( stdout, "BE: Processing PROT_COUNT ...\n");
             if( stream->send(tag, "%d", 1) == -1 ){
                 fprintf(stderr, "stream::send(%%d) failure\n");
-                success=false;
             }
             break;
         case PROT_COUNTODDSANDEVENS:
-            fprintf( stdout, "Processing PROT_COUNTODDSANDEVENS ...\n");
+            fprintf( stdout, "BE: Processing PROT_COUNTODDSANDEVENS ...\n");
             int odd, even;
             if( random() % 2 ){
                 even=1, odd=0;
@@ -48,23 +46,21 @@ int main(int argc, char **argv)
             }
             if( stream->send(tag, "%d %d", odd, even) == -1 ){
                 fprintf(stderr, "stream::send(%%d) failure\n");
-                success=false;
             }
             break;
         case PROT_EXIT:
-            fprintf( stdout, "Processing PROT_EXIT ...\n");
+            fprintf( stdout, "BE: Processing PROT_EXIT ...\n");
             break;
         default:
-            fprintf(stdout, "Unknown Protocol: %d\n", tag);
+            fprintf(stdout, "BE: Unknown Protocol: %d\n", tag);
             break;
         }
         if( stream->flush( ) == -1 ){
             fprintf(stderr, "stream::flush() failure\n");
-            success=false;
         }
     } while ( tag != PROT_EXIT );
 
     // FE delete network will shut us down, so just go to sleep!!
-    sleep(10);
+    sleep(5);
     return 0;
 }

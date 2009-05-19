@@ -120,7 +120,9 @@ STD_TESTS = $(BINDIR)/test_basic_FE \
             $(BINDIR)/test_NativeFilters_FE \
             $(BINDIR)/test_NativeFilters_BE \
             $(BINDIR)/test_DynamicFilters_FE \
-            $(BINDIR)/test_DynamicFilters_BE
+            $(BINDIR)/test_DynamicFilters_BE \
+	    $(BINDIR)/test_HeteroFilters_FE \
+            $(BINDIR)/test_HeteroFilters_BE 
 
 OPT_TESTS = $(BINDIR)/test_Recovery_FE \
 	    $(BINDIR)/test_Recovery_BE
@@ -297,8 +299,8 @@ $(BINDIR)/mrnet_topgen: $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
            $(LIBMRNET) $(LIBS)
 
 $(STD_TESTS): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
-              $(LIBDIR)/test_DynamicFilters.so $(SRCDIR)/tests/test_common.h \
-              $(BINDIR)/mrnet_tests.sh
+              $(LIBDIR)/test_DynamicFilters.so $(LIBDIR)/test_HeteroFilters.so \
+              $(SRCDIR)/tests/test_common.h $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
@@ -310,6 +312,10 @@ $(BINDIR)/mrnet_tests.sh: $(SRCDIR)/conf/mrnet_tests.sh
 $(LIBDIR)/test_DynamicFilters.so: $(SRCDIR)/tests/test_DynamicFilters.C
 	@echo "Building `basename $@` ..."
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_DynamicFilters.C
+
+$(LIBDIR)/test_HeteroFilters.so: $(SRCDIR)/tests/test_HeteroFilters.C
+	@echo "Building `basename $@` ..."
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_HeteroFilters.C
 
 $(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(LIBMRNET) \
                             $(OBJDIR)/%.o \

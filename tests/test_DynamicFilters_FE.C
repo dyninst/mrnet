@@ -35,17 +35,11 @@ int main(int argc, char **argv)
 
     test = new Test("MRNet Dynamic Filter Test");
 
-	const char * dummy_argv=NULL;
+    const char * dummy_argv=NULL;
     Network * network = new Network( topology_file, backend_exe, &dummy_argv );
 
-    /* For all the following tests, the 1st bool param indicates *
-     * whether the recv() call should be stream-anonymous or not *
-     * and the 2nd bool param indicates whether the recv should block *
-     * or not */
     test_CountFilter( network, so_file );
 
-    //WARNING: This test_CountOddsAndEvensFilter() must be the last test
-    //because it is the one that instructs the backends to exit.
     test_CountOddsAndEvensFilter( network, so_file );
   
     Communicator * comm_BC = network->get_BroadcastCommunicator( );
