@@ -1,5 +1,5 @@
-MRNET_ROOT = "SET_TO_YOUR_MRNET_DIR"
-MRNET_PLATFORM = "SET_TO_YOUR_MRNET_PLATFORM"
+MRNET_ROOT     = SET_TO_YOUR_MRNET_DIR
+MRNET_PLATFORM = SET_TO_YOUR_MRNET_PLATFORM
 
 CXX        = g++
 CXXFLAGS   = -g $(INCDIR)
@@ -29,18 +29,20 @@ default: all
 
 .READY:
     ifeq ($(MRNET_ROOT), SET_TO_YOUR_MRNET_DIR)
-	@echo ' * You must set MRNET_ROOT in this Makefile to your MRNET distribution directory.'
+	@echo ' * You must set MRNET_ROOT in this Makefile to your MRNet distribution directory.' && exit 1
     else
 	@touch -a .set_mrnet_dir
     endif
     ifeq ($(MRNET_PLATFORM), SET_TO_YOUR_MRNET_PLATFORM)
-	@echo ' * You must set MRNET_PLATFORM in this Makefile; see MRNET README for details.'
-	@echo ' -- NOTE: This should be the same as MRNET_PLATFORM in your MRNET Makefile.'
+	@echo ' * You must set MRNET_PLATFORM in this Makefile; see MRNet README for details.'
+	@echo ' -- NOTE: This should be the same as MRNET_PLATFORM in your MRNet Makefile.' && exit 1
     else
 	@touch -a .set_platform
     endif
 
-all: .READY $(TARGETS)
+all: $(PREREQS) $(TARGETS)
+
+$(PREREQS): .READY
 
 # Back-end Attach Example
 backend-attach: $(PREREQS) $(BA_TARGETS) 
