@@ -19,13 +19,14 @@ BA_TARGETS = BackendAttach_FE BackendAttach_BE
 IA_TARGETS = IntegerAddition_FE IntegerAddition_BE IntegerAdditionFilter.so
 HF_TARGETS = HeteroFilters_FE HeteroFilters_BE HeteroFilters.so
 PD_TARGETS = PerfData_FE PerfData_BE PerfDataFilter.so
-TARGETS = $(BA_TARGETS) $(IA_TARGETS) $(PD_TARGETS) $(HFT_TARGETS) $(HF_TARGETS)
+FR_TARGETS = FaultRecovery_FE FaultRecovery_BE FaultRecoveryFilter.so
+TARGETS = $(BA_TARGETS) $(IA_TARGETS) $(PD_TARGETS) $(HF_TARGETS) $(FR_TARGETS)
 
 PREREQS   = .set_mrnet_dir .set_platform
 
 default: all
 
-.PHONY: all backend-attach integer-add hetero-filter perf-data clean distclean
+.PHONY: all backend-attach integer-add hetero-filter perf-data fault-recovery clean distclean
 
 .READY:
     ifeq ($(MRNET_ROOT), SET_TO_YOUR_MRNET_DIR)
@@ -91,6 +92,18 @@ PerfData_BE: PerformanceData/BE.C
 
 PerfDataFilter.so: PerformanceData/PerfDataFilter.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ PerformanceData/PerfDataFilter.C
+
+# Fault Tolerant Filter Example
+fault-recovery: $(PREREQS) $(FR_TARGETS)
+
+FaultRecovery_FE: FaultRecovery/FaultRecovery_FE.C
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ FaultRecovery/FaultRecovery_FE.C $(LIBS)
+
+FaultRecovery_BE: FaultRecovery/FaultRecovery_BE.C
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ FaultRecovery/FaultRecovery_BE.C $(LIBS)
+
+FaultRecoveryFilter.so: FaultRecovery/FaultRecoveryFilter.C
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ FaultRecovery/FaultRecoveryFilter.C
 
 clean:
 	/bin/rm -f *.o *~ $(TARGETS)
