@@ -96,6 +96,11 @@ int InternalNode::proc_DataFromParent( PacketPtr ipacket ) const
     mrn_dbg_func_begin();
 
     Stream *stream = ParentNode::_network->get_Stream( ipacket->get_StreamId( ) );
+    if( stream == NULL ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                               ipacket->get_StreamId( ) ));
+        return -1;
+    }
 
     std::vector< PacketPtr > packets, reverse_packets;
 
@@ -126,6 +131,11 @@ int InternalNode::proc_DataFromChildren( PacketPtr ipacket ) const
     mrn_dbg_func_begin();
 
     Stream *stream = ParentNode::_network->get_Stream( ipacket->get_StreamId( ) );
+    if( stream == NULL ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                               ipacket->get_StreamId( ) ));
+        return -1;
+    }
 
     std::vector < PacketPtr > packets, reverse_packets;
 

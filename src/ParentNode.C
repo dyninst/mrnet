@@ -550,6 +550,11 @@ int ParentNode::proc_DownstreamFilterParams( PacketPtr &ipacket ) const
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
+    if( strm == NULL ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                               stream_id ));
+        return -1;
+    }
 
     //send packet to child nodes
     if( _network->send_PacketToChildren( ipacket ) == -1 ) {
@@ -572,6 +577,11 @@ int ParentNode::proc_UpstreamFilterParams( PacketPtr &ipacket ) const
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
+    if( strm == NULL ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                               stream_id ));
+        return -1;
+    }
 
     //send packet to children nodes
     if( _network->send_PacketToChildren( ipacket ) == -1 ) {
@@ -604,7 +614,13 @@ int ParentNode::proc_deleteStream( PacketPtr ipacket ) const
 
     //delete only @ internal node, front-end stream destructor invokes this function
     if( _network->is_LocalNodeInternal() ) {
-        delete _network->get_Stream( stream_id );
+        Stream * strm = _network->get_Stream( stream_id );
+        if( strm == NULL ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                                   stream_id ));
+            return -1;
+        }
+        delete strm;
     }
 
     mrn_dbg_func_end();
@@ -902,7 +918,11 @@ int ParentNode::proc_closeStream( PacketPtr ipacket ) const
     ipacket->unpack( "%d", &stream_id );
 
     Stream * stream = _network->get_Stream( stream_id );
-    assert( stream );
+    if( stream == NULL ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                               stream_id ));
+        return -1;
+    }
 
     stream->close_Peer( ipacket->get_InletNodeRank() );
 

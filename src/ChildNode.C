@@ -230,6 +230,11 @@ int ChildNode::proc_EnablePerfData( PacketPtr ipacket ) const
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
+    if( strm == NULL ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                               stream_id ));
+        return -1;
+    }
 
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
@@ -256,6 +261,11 @@ int ChildNode::proc_DisablePerfData( PacketPtr ipacket ) const
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
+    if( strm == NULL ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                               stream_id ));
+        return -1;
+    }
 
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
@@ -282,6 +292,11 @@ int ChildNode::proc_CollectPerfData( PacketPtr ipacket ) const
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
+    if( strm == NULL ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                               stream_id ));
+        return -1;
+    }
 
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
@@ -302,6 +317,11 @@ int ChildNode::proc_CollectPerfData( PacketPtr ipacket ) const
         
         // send
         Stream* aggr_strm = _network->get_Stream( aggr_strm_id );
+        if( aggr_strm == NULL ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "aggr stream %d lookup failed\n",
+                                   aggr_strm_id ));
+            return -1;
+        }
         aggr_strm->send_aux( pkt->get_Tag(), pkt->get_FormatString(), pkt );
     }
 
@@ -317,6 +337,11 @@ int ChildNode::proc_PrintPerfData( PacketPtr ipacket ) const
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
+    if( strm == NULL ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                               stream_id ));
+        return -1;
+    }
 
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes

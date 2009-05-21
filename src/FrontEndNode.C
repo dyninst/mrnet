@@ -44,6 +44,12 @@ int FrontEndNode::proc_DataFromChildren( PacketPtr ipacket ) const
     mrn_dbg_func_begin();
 
     Stream *stream = _network->get_Stream( ipacket->get_StreamId() );
+    if( stream == NULL ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                               ipacket->get_StreamId() ));
+        return -1;
+    }
+
     std::vector < PacketPtr > packets, reverse_packets;
 
     stream->push_Packet( ipacket, packets, reverse_packets, true );

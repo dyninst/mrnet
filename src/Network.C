@@ -446,8 +446,12 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
     else {
         std::set < Rank > peer_ranks;
         std::set < Rank >::const_iterator iter;
-        stream = get_Stream( ipacket->get_StreamId() );
-        assert( stream );
+        stream = get_Stream( ipacket->get_StreamId() );   
+        if( stream == NULL ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                                   ipacket->get_StreamId( ) ));
+            return -1;
+        }
         peer_ranks = stream->get_ChildPeers();
         for( iter= peer_ranks.begin(); iter!=peer_ranks.end(); iter++) {
             PeerNodePtr cur_peer = get_OutletNode( *iter );
@@ -620,6 +624,7 @@ get_packet_from_stream_label:
     if( cur_packet != Packet::NullPacket ) {
         *otag = cur_packet->get_Tag();
         *ostream = get_Stream( cur_packet->get_StreamId() );
+        assert(*ostream);
         opacket = cur_packet;
         mrn_dbg(4, mrn_printf(FLF, stderr, "cur_packet tag: %d, fmt: %s\n",
                    cur_packet->get_Tag(), cur_packet->get_FormatString() ));

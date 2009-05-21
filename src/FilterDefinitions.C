@@ -898,6 +898,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     }
     params->unpack( "%d %d %d %d", &metric, &context, &aggr_id, &strm_id );
     Stream* strm = network->get_Stream( strm_id );
+    assert(strm);
 
     // determine type of data
     int data_size=0;
@@ -1228,6 +1229,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
     
     int stream_id = ipackets[0]->get_StreamId();
     Stream * stream = network->get_Stream( stream_id );
+    assert(stream);
 
     //1. Setup/Recover Filter State
     if( *local_storage == NULL ) {
