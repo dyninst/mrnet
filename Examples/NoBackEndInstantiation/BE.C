@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 
             if ( (stream->send(PROT_INT, "%d", recv_int) == -1) ||
                  (stream->flush() == -1 ) ){
-                printf("stream::send(%d) failure\n");
+                printf("stream::send() failure\n");
                 return -1;
             }
             break;

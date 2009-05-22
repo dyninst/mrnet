@@ -50,7 +50,7 @@ inline int open_file(const char* filename, int flags, mode_t mode, int errprint 
 inline char* read_file(const char* filename, unsigned& filelen)
 {
    ifstream f;
-   unsigned len;
+   int len;
    char* contents = NULL;
    filelen = 0;
    f.open(filename);
