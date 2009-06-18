@@ -299,7 +299,9 @@ void Network::update_BcastCommunicator( void )
         new_bcast->add_EndPoint( iter->first );
 
     _bcast_communicator = new_bcast;
-    delete old_bcast;
+
+    if( old_bcast != NULL )
+        delete old_bcast;
 
     _endpoints_mutex.Unlock();
     mrn_dbg(5, mrn_printf(FLF, stderr, "Bcast communicator complete \n" ));
