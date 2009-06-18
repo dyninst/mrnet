@@ -197,7 +197,9 @@ class Network: public Error {
     bool add_SubGraph( Rank iroot_rank, SerialGraph & sg  );
     bool remove_Node( Rank ifailed_rank, bool iupdate=true );
     bool change_Parent( Rank ichild_rank, Rank inew_parent_rank );
-
+    bool insert_EndPoint( std::string &hostname, Port port, Rank rank );
+    bool remove_EndPoint( Rank irank );
+    
     bool delete_PeerNode( Rank );
     PeerNodePtr new_PeerNode( std::string const& ihostname, Port iport,
                               Rank irank, bool iis_upstream,
@@ -236,6 +238,7 @@ class Network: public Error {
     mutable XPlat::Monitor _parent_sync;
     mutable XPlat::Monitor _streams_sync;
     mutable XPlat::Mutex _children_mutex;
+    mutable XPlat::Mutex _endpoints_mutex;
 };
 
 extern Network * network;

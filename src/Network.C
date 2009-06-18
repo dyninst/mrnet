@@ -287,22 +287,21 @@ void Network::set_TerminateBackEndsOnShutdown( bool terminate )
 
 void Network::update_BcastCommunicator( void )
 {
-    set< NetworkTopology::Node * > backends;
-    _network_topology->get_BackEndNodes(backends);
-
     //add end-points to broadcast communicator
-    set< NetworkTopology::Node * >::const_iterator iter;
-    for( iter=backends.begin(); iter!=backends.end(); iter++ ){
-        Rank cur_rank = (*iter)->get_Rank();
-        if( _end_points.find( cur_rank ) == _end_points.end() ) {
-            string cur_hostname = (*iter)->get_HostName();
-            _end_points[ cur_rank ] =
-                new CommunicationNode( cur_hostname,
-                                       (*iter)->get_Port(),
-                                       cur_rank );
-            _bcast_communicator->add_EndPoint( cur_rank );
-        }
-    }
+    _endpoints_mutex.Lock();
+
+    Communicator *old_bcast, *new_bcast;
+    old_bcast = _bcast_communicator;
+    new_bcast = new Communicator( this );
+
+    map< Rank, CommunicationNode * >::const_iterator iter;
+    for( iter=_end_points.begin(); iter!=_end_points.end(); iter++ )
+        new_bcast->add_EndPoint( iter->first );
+
+    _bcast_communicator = new_bcast;
+    delete old_bcast;
+
+    _endpoints_mutex.Unlock();
     mrn_dbg(5, mrn_printf(FLF, stderr, "Bcast communicator complete \n" ));
 }
 
@@ -1319,6 +1318,43 @@ bool Network::change_Parent( Rank ichild_rank, Rank inew_parent_rank )
         return false;
     }
 
+    return true;
+}
+
+bool Network::insert_EndPoint( string &ihostname, Port iport, Rank irank )
+{
+    bool retval = true;
+    mrn_dbg_func_begin();
+
+    _endpoints_mutex.Lock();
+
+    map< Rank, CommunicationNode * >::iterator iter = _end_points.find( irank );
+    if( iter != _end_points.end() ) {
+        if( (iter->second->get_HostName() != ihostname) ||
+            (iter->second->get_Port() != iport) ) {
+            CommunicationNode* cn = iter->second;
+            _end_points.erase(iter);
+            delete cn;
+            _end_points[ irank ] = new_EndPoint(ihostname, iport, irank);
+        }
+        else
+            retval = false;
+    }
+    else
+        _end_points[ irank ] = new_EndPoint(ihostname, iport, irank);
+        
+    _endpoints_mutex.Unlock();
+    
+    mrn_dbg_func_end();
+    return retval;
+}
+
+bool Network::remove_EndPoint( Rank irank )
+{
+    _endpoints_mutex.Lock();
+    _end_points.erase( irank );
+    _endpoints_mutex.Unlock();
+    
     return true;
 }
 

@@ -117,6 +117,8 @@ class NetworkTopology: public Error {
     unsigned int get_NumNodes() const;
     void get_Leaves( std::vector< Node * > &leaves ) const;
 
+    /* For get_XXXNodes, cannot guarantee that set nodes are valid
+       in the presence of an updating NetworkTopology, so use carefully */ 
     void get_ParentNodes( std::set<NetworkTopology::Node*> & ) const;
     void get_OrphanNodes( std::set<NetworkTopology::Node*> & ) const;
     void get_BackEndNodes( std::set<NetworkTopology::Node*> & ) const;

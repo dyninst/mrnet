@@ -19,8 +19,10 @@ Monitor::Monitor( void )
 
 Monitor::~Monitor( void )
 {
-    delete data;
-    data = NULL;
+    if( data != NULL ) {
+        delete data;
+        data = NULL;
+    }
 }
 
 int Monitor::Lock( void )
@@ -56,8 +58,9 @@ PthreadMonitorData::PthreadMonitorData( void )
 
 PthreadMonitorData::~PthreadMonitorData( void )
 {
-    if( initialized )
-    {
+    if( initialized ) {
+        initialized = false;
+
         for( ConditionVariableMap::iterator iter = cvmap.begin();
                 iter != cvmap.end();
                 iter++ )

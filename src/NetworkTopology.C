@@ -290,6 +290,7 @@ void NetworkTopology::remove_SubGraph( Node * inode )
         remove_SubGraph( *iter );
         remove_Node( *iter );
     }
+    inode->_children.clear();
 
     _sync.Unlock();
     mrn_dbg_func_end();
@@ -307,11 +308,12 @@ bool NetworkTopology::add_SubGraph( Rank irank, SerialGraph & isg, bool iupdate 
     if( node == NULL ) {
         retval = false;
     }
+    else {
+        retval = add_SubGraph( node, isg, false );
 
-    retval = add_SubGraph( node, isg, false );
-
-    if( iupdate )
-        _router->update_Table();
+        if( iupdate )
+            _router->update_Table();
+    }
 
     _sync.Unlock();
     return retval;
@@ -339,9 +341,11 @@ bool NetworkTopology::add_SubGraph( Node * inode, SerialGraph & isg, bool iupdat
     }
 
     if( node->is_BackEnd() ) {
-        mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as backend\n",
-                            node->get_Rank() ));
+        string name = node->get_HostName();
+        Rank r = node->get_Rank();
+        mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as backend\n", r ));
         _backend_nodes.insert( node );
+        _network->insert_EndPoint( name, node->get_Port(), r );
     }
 
     mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as child of node[%d]\n",
@@ -387,15 +391,12 @@ bool NetworkTopology::remove_Node( NetworkTopology::Node *inode )
         _root=NULL;
     }
 
-    //remove me as my parent's child
-    if( inode->_parent )
-        inode->_parent->remove_Child( inode );
-
     //remove from orphans, back-ends, parents list
     _nodes.erase( inode->_rank );
     _orphans.erase( inode );
     _backend_nodes.erase( inode );
     _parent_nodes.erase( inode );
+    _network->remove_EndPoint( inode->_rank );
 
     //remove me as my children's parent, and set children as orphans
     set < Node * >::iterator iter;
@@ -426,6 +427,10 @@ bool NetworkTopology::remove_Node(  Rank irank, bool iupdate /* = false */ )
     }
 
     node_to_remove->_failed = true;
+
+    //remove node as parent's child
+    if( node_to_remove->_parent )
+        node_to_remove->_parent->remove_Child( node_to_remove );
 
     bool retval = remove_Node( node_to_remove );
 
