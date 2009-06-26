@@ -231,6 +231,7 @@ class Network: public Error {
     bool _threaded;
     bool _recover_from_failures;
     bool _terminate_backends;
+    bool _was_shutdown;
 
     /* EventPipe notifications */
     std::map< EventType, EventPipe* > _evt_pipes;

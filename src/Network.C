@@ -81,7 +81,7 @@ Network::Network( const char * itopology, const char * ibackend_exe,
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
       _local_internal_node(NULL), _threaded(true),
-      _recover_from_failures(true), _terminate_backends(true)
+      _recover_from_failures(true), _terminate_backends(true), _was_shutdown(false) 
 {
     init_local();
     network=this;
@@ -263,15 +263,19 @@ Network::~Network( )
 void Network::shutdown_Network( void )
 {
     if( is_LocalNodeFrontEnd() && _network_topology->get_NumNodes() ) {
+        if( ! _was_shutdown ) {
+            char delete_backends;
 
-        char delete_backends;
-        if( _terminate_backends )
-            delete_backends = 't';
-        else
-            delete_backends = 'f';
+            _was_shutdown = true;
 
-        PacketPtr packet( new Packet( 0, PROT_DEL_SUBTREE, "%c", delete_backends ) );
-        get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
+            if( _terminate_backends )
+                delete_backends = 't';
+            else
+                delete_backends = 'f';
+            
+            PacketPtr packet( new Packet( 0, PROT_DEL_SUBTREE, "%c", delete_backends ) );
+            get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
+        }
     }
     string empty("");
     reset_Topology(empty);
