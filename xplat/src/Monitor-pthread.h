@@ -6,10 +6,10 @@
 // $Id: Monitor-pthread.h,v 1.5 2007/01/24 19:34:01 darnold Exp $
 #ifndef XPLAT_PTHREADMONITOR_H
 #define XPLAT_PTHREADMONITOR_H
-#include <pthread.h>
-#include <map>
-#include "xplat/Monitor.h"
 
+#include <pthread.h>
+#include "xplat/Monitor.h"
+#include <map>
 
 namespace XPlat
 {

@@ -19,6 +19,7 @@ namespace Error
 std::string GetErrorString( int code );
 bool ETimedOut( int code );
 bool EAddrInUse( int code );
+bool EConnRefused( int code ); 
 
 } // namespace Error
 

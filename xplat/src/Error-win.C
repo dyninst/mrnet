@@ -42,5 +42,11 @@ Error::EAddrInUse( int code )
     return (code == WSAEADDRINUSE);
 }
 
+bool
+Error::EConnRefused( int code )
+{
+    return (code == WSAECONNREFUSED);
+}
+
 } // namespace XPlat
 

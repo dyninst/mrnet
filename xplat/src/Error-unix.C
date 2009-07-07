@@ -30,4 +30,10 @@ Error::EAddrInUse( int code )
     return (code == EADDRINUSE);
 }
 
+bool
+Error::EConnRefused( int code )
+{
+    return (code == ECONNREFUSED);
+}
+
 } // namespace XPlat

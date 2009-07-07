@@ -10,7 +10,6 @@
 #include <pthread.h>
 #include "xplat/Mutex.h"
 
-
 namespace XPlat
 {
 
@@ -23,7 +22,6 @@ private:
 public:
     PthreadMutexData( void );
     virtual ~PthreadMutexData( void );
-
 
     virtual int Lock( void );
     virtual int Unlock( void );

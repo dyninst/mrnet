@@ -12,17 +12,26 @@ namespace XPlat
 {
 
 Monitor::Monitor( void )
-  : data( new PthreadMonitorData )
 {
-    // nothing else to do
+    static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_lock( &init_mutex );
+
+    data = new PthreadMonitorData;
+
+    pthread_mutex_unlock( &init_mutex );
 }
 
 Monitor::~Monitor( void )
 {
+    static pthread_mutex_t cleanup_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_lock( &cleanup_mutex );
+
     if( data != NULL ) {
         delete data;
         data = NULL;
     }
+
+    pthread_mutex_unlock( &cleanup_mutex );
 }
 
 int Monitor::Lock( void )
@@ -42,19 +51,20 @@ int Monitor::Unlock( void )
 PthreadMonitorData::PthreadMonitorData( void )
   : initialized( false )
 {
-    int ret;
-    pthread_mutexattr_t recursive;
+    if( ! initialized ) {
+        int ret;
+        pthread_mutexattr_t attrs;
     
-    ret = pthread_mutexattr_init( & recursive );
-    assert( ret == 0 );
-    ret = pthread_mutexattr_settype( & recursive, PTHREAD_MUTEX_RECURSIVE );
-    assert( ret == 0 );
+        ret = pthread_mutexattr_init( & attrs );
+        assert( ret == 0 );
+        ret = pthread_mutexattr_settype( & attrs, PTHREAD_MUTEX_ERRORCHECK );
+        assert( ret == 0 );
 
-    ret = pthread_mutex_init( & mutex, & recursive );
-    assert( ret == 0 );
-    initialized = true;
+        ret = pthread_mutex_init( & mutex, & attrs );
+        assert( ret == 0 );
+        initialized = true;
+    }
 }
-
 
 PthreadMonitorData::~PthreadMonitorData( void )
 {
@@ -62,9 +72,7 @@ PthreadMonitorData::~PthreadMonitorData( void )
         initialized = false;
 
         for( ConditionVariableMap::iterator iter = cvmap.begin();
-                iter != cvmap.end();
-                iter++ )
-        {
+             iter != cvmap.end(); iter++ ) {
             pthread_cond_destroy( iter->second );
         }
         cvmap.clear();
@@ -72,7 +80,6 @@ PthreadMonitorData::~PthreadMonitorData( void )
         pthread_mutex_destroy( &mutex );
     }
 }
-
 
 int
 PthreadMonitorData::Lock( void )

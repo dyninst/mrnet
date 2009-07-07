@@ -12,15 +12,26 @@ namespace XPlat
 {
 
 Mutex::Mutex( void )
-  : data( new PthreadMutexData )
 {
-    // nothing else to do
+    static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_lock( &init_mutex );
+
+    data = new PthreadMutexData;
+
+    pthread_mutex_unlock( &init_mutex );
 }
 
 Mutex::~Mutex( void )
 {
-    delete data;
-    data = NULL;
+    static pthread_mutex_t cleanup_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_lock( &cleanup_mutex );
+
+    if( data != NULL ) {
+        delete data;
+        data = NULL;
+    }
+
+    pthread_mutex_unlock( &cleanup_mutex );
 }
 
 int Mutex::Lock( void )
@@ -40,19 +51,26 @@ int Mutex::Unlock( void )
 }
 
 PthreadMutexData::PthreadMutexData( void )
-  : initialized( false )
+  : initialized(false)
 {
-    int ret = pthread_mutex_init( &mutex, NULL );
-    if( ret == 0 )
-    {
-        initialized = true;
+    if( ! initialized ) {
+        int ret;
+        pthread_mutexattr_t mattrs;
+
+        ret = pthread_mutexattr_init( &mattrs );
+        assert( ret == 0 );
+        ret = pthread_mutexattr_settype( &mattrs, PTHREAD_MUTEX_ERRORCHECK );
+        assert( ret == 0 );
+
+        ret = pthread_mutex_init( &mutex, &mattrs );
+        if( ret == 0 ) initialized = true;
     }
 }
 
 PthreadMutexData::~PthreadMutexData( void )
 {
-    if( initialized )
-    {
+    if( initialized ) {
+        initialized = false;
         pthread_mutex_destroy( &mutex );
     }
 }
