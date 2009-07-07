@@ -229,20 +229,20 @@ install-boost:
 
 install-tests: tests $(BINDIR)/mrnet_tests.sh
 	@echo Installing standard tests
-	$(INSTALL) -p -m 555 $(STD_TESTS) $(BINDIR)/mrnet_tests.sh $(IBINDIR)/
-	$(INSTALL) -p -m 555 $(LIBDIR)/test_DynamicFilters.so $(ILIBDIR)/
+	$(INSTALL) -p -m 755 $(STD_TESTS) $(BINDIR)/mrnet_tests.sh $(IBINDIR)/
+	$(INSTALL) -p -m 755 $(LIBDIR)/test_DynamicFilters.so $(ILIBDIR)/
 	if [ ! -d $(IBINDIR)/topology_files ] ; then \
             mkdir -p $(IBINDIR)/topology_files ; \
 	    chmod 755 $(IBINDIR)/topology_files ; \
 	fi
 	for top in $(SRCDIR)/tests/topology_files/local-*.top ; do \
-	    $(INSTALL) -p -m 444 $$top $(IBINDIR)/topology_files/ ; \
+	    $(INSTALL) -p -m 644 $$top $(IBINDIR)/topology_files/ ; \
 	done
 
 install-tests-opt: tests-opt
 	@echo Installing optional tests
-	$(INSTALL) -p -m 555 $(OPT_TESTS) $(IBINDIR)/
-	$(INSTALL) -p -m 555 $(LIBDIR)/test_RecoveryFilter.so $(ILIBDIR)/
+	$(INSTALL) -p -m 755 $(OPT_TESTS) $(IBINDIR)/
+	$(INSTALL) -p -m 755 $(LIBDIR)/test_RecoveryFilter.so $(ILIBDIR)/
 
 xplat-install:
 	@echo Installing xplat library
