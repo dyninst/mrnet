@@ -209,7 +209,7 @@ void * EventDetector::main( void * /* iarg */ )
                             }
                         }
                         mrn_dbg(5, mrn_printf(FLF, stderr, "bye!\n"));
-                        exit(0);
+                        return NULL;
                         break;
 
                     case PROT_NEW_CHILD_FD_CONNECTION:
@@ -285,7 +285,7 @@ void * EventDetector::main( void * /* iarg */ )
                     mrn_dbg( 1, mrn_printf(FLF, stderr, "NOT recovering from parent failure ...\n"));
                     if( watch_list.size() == 0 ) {
                         mrn_dbg(5, mrn_printf(FLF, stderr, "No more sockets to watch, bye!\n"));
-                        exit(0);
+                        return NULL;
                     }	
                 }
                 
