@@ -267,7 +267,7 @@ void * PeerNode::recv_thread_main(void * args)
     std::string local_hostname, peer_hostname;
 
     Rank rank = *((Rank*)args);
-    PeerNodePtr peer_node = network->get_PeerNode( rank );
+    PeerNodePtr peer_node = _global_network->get_PeerNode( rank );
     assert( peer_node != PeerNode::NullPeerNode );
 
     mrn_dbg_func_begin();
@@ -351,7 +351,7 @@ void * PeerNode::recv_thread_main(void * args)
 void * PeerNode::send_thread_main(void * args)
 {
     Rank rank = *((Rank*)args);
-    PeerNodePtr peer_node = network->get_PeerNode( rank );
+    PeerNodePtr peer_node = _global_network->get_PeerNode( rank );
     assert( peer_node != PeerNode::NullPeerNode );
 
     //TLS: setup thread local storage for recv thread

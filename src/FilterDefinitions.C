@@ -884,7 +884,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
                        void ** /* client data */, PacketPtr& params )
 {
     // fast path when no aggregation necessary
-    bool is_BE = network->is_LocalNodeBackEnd();
+    bool is_BE = _global_network->is_LocalNodeBackEnd();
     if( (ipackets.size() == 1) && is_BE ) {
         opackets.push_back( ipackets[0] );
         return;
@@ -897,7 +897,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
         return;
     }
     params->unpack( "%d %d %d %d", &metric, &context, &aggr_id, &strm_id );
-    Stream* strm = network->get_Stream( strm_id );
+    Stream* strm = _global_network->get_Stream( strm_id );
     assert(strm);
 
     // determine type of data
@@ -1228,7 +1228,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
     wfa_state * state;
     
     int stream_id = ipackets[0]->get_StreamId();
-    Stream * stream = network->get_Stream( stream_id );
+    Stream * stream = _global_network->get_Stream( stream_id );
     assert(stream);
 
     //1. Setup/Recover Filter State
@@ -1248,7 +1248,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
 
             Rank rank = (*map_iter).first;
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed?", rank ));
-            if( network->node_Failed( rank ) ) {
+            if( _global_network->node_Failed( rank ) ) {
                 mrn_dbg( 5, mrn_printf(0,0,0, stderr, " Yes\n", rank ));
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
@@ -1276,7 +1276,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
         map_iter = state->packets_by_rank.find( cur_inlet_rank );
 
-        if( network->node_Failed( cur_inlet_rank ) ) {
+        if( _global_network->node_Failed( cur_inlet_rank ) ) {
             //Drop packets from failed node
             continue;
         }

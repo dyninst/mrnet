@@ -108,7 +108,7 @@ void * FailureInjectionThreadMain( void * /* iarg */ )
 
         //fprintf( stderr, "Sleeping for %u seconds\n", FailureFrequency );
         sleep(FailureFrequency);
-        topology = network->get_NetworkTopology();
+        topology = _global_network->get_NetworkTopology();
 
         //Print .dot and .top files
         snprintf( filename, sizeof(filename), "%s.%u.dot",

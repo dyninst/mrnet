@@ -30,7 +30,8 @@ using namespace std;
 
 namespace MRN
 {
-Network * network=NULL;
+
+Network * _global_network=NULL;
 int mrnparse( );
 
 extern int mrndebug;
@@ -84,7 +85,7 @@ Network::Network( const char * itopology, const char * ibackend_exe,
       _recover_from_failures(true), _terminate_backends(true), _was_shutdown(false) 
 {
     init_local();
-    network=this;
+    _global_network=this;
     set_OutputLevelFromEnvironment();
     node_type="fe";
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
@@ -206,7 +207,7 @@ Network::Network( const char *iphostname, Port ipport, Rank iprank,
       _recover_from_failures( true )
 {
     init_local();
-    network=this;
+    _global_network=this;
     set_OutputLevelFromEnvironment();
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
@@ -222,7 +223,7 @@ Network::Network( int argc, char **argv )
       _recover_from_failures( true )
 {
     init_local();
-    network=this;
+    _global_network=this;
     set_OutputLevelFromEnvironment();
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
@@ -244,7 +245,7 @@ Network::Network( )
       _recover_from_failures(true)
 {
     init_local();
-    network=this;
+    _global_network=this;
     set_OutputLevelFromEnvironment();
     node_type="comm";    
 }
@@ -257,7 +258,7 @@ Network::~Network( )
         delete parsed_graph;
         parsed_graph = NULL;
     }
-    network=NULL;
+    _global_network=NULL;
 }
 
 void Network::shutdown_Network( void )

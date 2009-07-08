@@ -242,7 +242,7 @@ class Network: public Error {
     mutable XPlat::Mutex _endpoints_mutex;
 };
 
-extern Network * network;
+extern Network * _global_network;
 
 } /* MRN namespace */
 #endif /* __network_h */
