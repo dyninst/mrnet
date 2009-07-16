@@ -39,7 +39,7 @@ void inject_history_item( vector< PacketPtr >& packets_in,
     string history_str;
     vector< string > output_tuples;
 
-    int node_rank = network->get_LocalRank( );
+    int node_rank = _global_network->get_LocalRank( );
 
     for( i = 0; i < packets_in.size( ); ++i ){
 

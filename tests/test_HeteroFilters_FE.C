@@ -72,7 +72,7 @@ int main( int argc, char ** argv )
     std::string testname("test_HeterogeneousStream");
     test->start_SubTest(testname);
 
-    Rank node_rank = network->get_LocalRank( );
+    Rank node_rank = net->get_LocalRank( );
 
     int insertX_id = net->load_FilterFunc( so_file, "insertX" );
     int insertY_id = net->load_FilterFunc( so_file, "insertY" );
