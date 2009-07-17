@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     int filter_id = net->load_FilterFunc( so_file, "PerfDataFilt" );
     if( filter_id == -1 ) {
         fprintf( stderr, "Network::load_FilterFunc() failure\n");
-        delete network;
+        delete net;
         return -1;
     }
 
