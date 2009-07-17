@@ -2,6 +2,7 @@ MRNET_ROOT     = SET_TO_YOUR_MRNET_DIR
 MRNET_PLATFORM = SET_TO_YOUR_MRNET_PLATFORM
 
 CXX        = g++
+MPICXX     = mpiCC
 CXXFLAGS   = -g $(INCDIR)
 LDFLAGS    = -rdynamic
 SOFLAGS    = -fPIC -shared -rdynamic
@@ -11,11 +12,11 @@ SOFLAGS    = -fPIC -shared -rdynamic
 INCDIR     = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include
 LIBDIR     = $(MRNET_ROOT)/lib/${MRNET_PLATFORM}
 
-LIBMRNET   = $(LIBDIR)/libmrnet.a
-LIBXPLAT   = $(LIBDIR)/libxplat.a
-LIBS       = $(LIBMRNET) $(LIBXPLAT) -lfl -lm -lpthread -ldl
+LIBMRNET   = -lmrnet
+LIBXPLAT   = -lxplat
+LIBS       = -L$(LIBDIR) $(LIBMRNET) $(LIBXPLAT) -lfl -lm -lpthread -ldl
 
-BA_TARGETS = BackendAttach_FE BackendAttach_BE
+BA_TARGETS = BackendAttach_FE BackendAttach_BE BackendAttach_mpi_BE
 IA_TARGETS = IntegerAddition_FE IntegerAddition_BE IntegerAdditionFilter.so
 HF_TARGETS = HeteroFilters_FE HeteroFilters_BE HeteroFilters.so
 PD_TARGETS = PerfData_FE PerfData_BE PerfDataFilter.so
@@ -53,6 +54,9 @@ BackendAttach_FE: NoBackEndInstantiation/FE.C
 
 BackendAttach_BE: NoBackEndInstantiation/BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ NoBackEndInstantiation/BE.C $(LIBS)
+
+BackendAttach_mpi_BE: NoBackEndInstantiation/BE_mpi.C $(PREREQS)
+	$(MPICXX) $(CXXFLAGS) $(LDFLAGS) -o $@ NoBackEndInstantiation/BE_mpi.C $(LIBS)
 
 # Integer Addition Example
 integer-add: $(PREREQS) $(IA_TARGETS)
