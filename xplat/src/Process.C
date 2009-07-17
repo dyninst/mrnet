@@ -18,7 +18,7 @@ Process::CreateRemote( const std::string& host,
     assert( host.length() > 0 );
     assert( !NetUtils::IsLocalHost( host ) );
 
-   // determine the remote shell program to use
+    // determine the remote shell program to use
     std::string rshCmd = "ssh";
     const char* varval = getenv( "XPLAT_RSH" );
     if( varval != NULL )
@@ -26,26 +26,32 @@ Process::CreateRemote( const std::string& host,
         rshCmd = varval;
     }
 
-    // determine whether the remote command must be run by some other
-    // remote utility command (e.g., so that it has AFS tokens)
-    std::string remCmd = "";
-    varval = getenv( "XPLAT_REMCMD" );
-    if( varval != NULL )
-    {
-        remCmd = varval;
-    }
-
-    // build the arguments for the remote process
     std::vector<std::string> rshArgs;
     rshArgs.push_back( rshCmd );
+    varval = getenv( "XPLAT_RSH_ARGS" );
+    if( varval != NULL )
+    {
+        rshArgs.push_back( std::string(varval) );
+    }
 #ifndef os_windows
     rshArgs.push_back( std::string("-n") ); /* redirect stdin to /dev/null */
 #endif
     rshArgs.push_back( host );
-    if( remCmd.length() > 0 )
+
+
+    // determine whether the remote command must be run by some other
+    // remote utility command (e.g., so that it has AFS tokens)
+    varval = getenv( "XPLAT_REMCMD" );
+    if( varval != NULL )
     {
-        rshArgs.push_back( remCmd );
+        std::string remCmd = varval;
+        if( remCmd.length() > 0 )
+            {
+                rshArgs.push_back( remCmd );
+            }
     }
+
+    // add the user-supplied args
     for( std::vector<std::string>::const_iterator aiter = args.begin();
             aiter != args.end();
             aiter++ )
