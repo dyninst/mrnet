@@ -1,0 +1,173 @@
+MRNET_ROOT     = @MRNET_ROOT@
+MRNET_PLATFORM = @host@
+MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
+@SET_MAKE@
+
+#############################
+####  BUILD DIRECTORIES  ####
+#############################
+BINDIR  = $(MRNET_ROOT)/bin/$(MRNET_PLATFORM)
+LIBDIR  = $(MRNET_ROOT)/lib/$(MRNET_PLATFORM)
+OBJDIR  = $(MRNET_ROOT)/obj/$(MRNET_PLATFORM)
+
+#############################
+#### INSTALL DIRECTORIES ####
+#############################
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+IBINDIR = @bindir@
+ILIBDIR = @libdir@
+IINCDIR = @includedir@
+
+############################
+#### AUXILIARY PROGRAMS ####
+############################
+CP      = @CP@
+RM      = @RM@
+INSTALL = @INSTALL@
+
+#############################
+#### General Definitions ####
+#############################
+
+LIBMRNET   = -lmrnet
+LIBXPLAT   = -lxplat
+LIBS       = -L$(LIBDIR) $(LIBMRNET) $(LIBXPLAT) -lfl -lm -lpthread -ldl
+
+LDFLAGS = @LDFLAGS@
+SOFLAGS = @SOFLAGS@
+
+INCDIRS = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include
+
+#####################################
+#### System Specific Definitions ####
+#####################################
+
+COMPILER_TYPE = @COMPILER_TYPE@
+ifeq ($(COMPILER_TYPE), gnu)
+    WARNFLAGS = -Wall \
+                -Wno-system-headers \
+                -Wfloat-equal \
+                -Wconversion \
+                -Wshadow \
+                -Wpointer-arith \
+                -Wcast-qual \
+                -Wcast-align \
+                -Wwrite-strings \
+                -Wsign-compare \
+                -Wredundant-decls \
+                -Wlong-long
+endif # GCC options
+
+ifeq ($(COMPILER_TYPE), intel)
+    WARNFLAGS = -w2
+endif # Intel options
+
+ifeq ($(COMPILER_TYPE), forte)
+    WARNFLAGS = +w +w2
+endif # Sun Forte options
+
+CXX = @CXX@
+CXXFLAGS = @CXXFLAGS@ $(INCDIRS) $(WARNFLAGS)
+
+export
+
+############################
+#### Target Definitions ####
+############################
+
+@VERBOSEMAKE@
+
+TARGETS = backend-attach integer-add perf-data hetero-filter fault-recovery
+
+default: all
+
+EX_DIR = $(MRNET_ROOT)/Examples
+BA_DIR = $(EX_DIR)/NoBackEndInstantiation
+IA_DIR = $(EX_DIR)/IntegerAddition
+HF_DIR = $(EX_DIR)/HeterogeneousFilters
+PD_DIR = $(EX_DIR)/PerformanceData
+FR_DIR = $(EX_DIR)/FaultRecovery
+
+.PHONY: all clean install \
+        backend-attach backend-attach-clean backend-attach-install \
+        integer-add integer-add-clean integer-add-install \
+        hetero-filter hetero-filter-clean hetero-filter-install \
+        perf-data perf-data-clean perf-data-install \
+        fault-recovery fault-recovery-clean fault-recovery-install
+
+all: $(TARGETS)
+
+# Back-end Attach Example
+backend-attach:
+	@echo Building Backend Attach Example
+	$(MAKE) -C $(BA_DIR)
+
+backend-attach-clean:
+	@echo Cleaning Backend Attach Example
+	$(MAKE) -C $(BA_DIR) clean
+
+backend-attach-install:
+	@echo Installing Backend Attach Example
+	$(MAKE) -C $(BA_DIR) install
+
+# Integer Addition Example
+integer-add:
+	@echo Building Integer Addition Example
+	$(MAKE) -C $(IA_DIR)
+
+integer-add-clean:
+	@echo Cleaning Integer Addition Example
+	$(MAKE) -C $(IA_DIR) clean
+
+integer-add-install:
+	@echo Installing Integer Addition Example
+	$(MAKE) -C $(IA_DIR) install
+
+# Heterogeneous Filters Example
+hetero-filter:
+	@echo Building Heterogeneous Filters Example
+	$(MAKE) -C $(HF_DIR)
+
+hetero-filter-clean:
+	@echo Cleaning Heterogeneous Filters Example
+	$(MAKE) -C $(HF_DIR) clean
+
+hetero-filter-install:
+	@echo Installing Heterogeneous Filters Example
+	$(MAKE) -C $(HF_DIR) install
+
+# Performance Data Collection Example
+perf-data:
+	@echo Building Performance Data Collection Example
+	$(MAKE) -C $(PD_DIR)
+
+perf-data-clean:
+	@echo Cleaning Performance Data Collection Example
+	$(MAKE) -C $(PD_DIR) clean
+
+perf-data-install:
+	@echo Installing Performance Data Collection Example
+	$(MAKE) -C $(PD_DIR) install
+
+# Fault Tolerant Filter Example
+fault-recovery:
+	@echo Building Fault Recovery Example
+	$(MAKE) -C $(FR_DIR)
+
+fault-recovery-clean:
+	@echo Cleaning Fault Recovery Example
+	$(MAKE) -C $(FR_DIR) clean
+
+fault-recovery-install:
+	@echo Installing Fault Recovery Example
+	$(MAKE) -C $(FR_DIR) install
+
+# Clean rules
+clean: backend-attach-clean integer-add-clean hetero-filter-clean \
+       perf-data-clean fault-recovery-clean
+
+# Install rules 
+install: backend-attach-install integer-add-install hetero-filter-install \
+         perf-data-install fault-recovery-install
+

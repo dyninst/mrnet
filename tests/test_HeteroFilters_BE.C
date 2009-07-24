@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     
     char * message;
 
-    Network * net = new Network( argc, argv );
+    Network * net = Network::CreateNetworkBE( argc, argv );
     Rank node_rank = net->get_LocalRank( );
 
     do{

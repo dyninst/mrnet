@@ -21,9 +21,10 @@ typedef struct {
 
 //number format: array of elements, # pkts processed
 const char * uint32_EqClass_format_string = "%aud %ud";
-void uint32_EqClass( vector < PacketPtr >&packets_in,
-                     vector < PacketPtr >&packets_out,
-                     void ** ifs )
+void uint32_EqClass( vector< PacketPtr >& packets_in,
+                     vector< PacketPtr >& packets_out,
+                     vector< PacketPtr >&, void** ifs, PacketPtr& )
+                     
 {
     uint32_t npkts_procd=0;
     hash_set< uint32_t> new_elems;
@@ -90,7 +91,7 @@ void uint32_EqClass( vector < PacketPtr >&packets_in,
     packets_out.push_back( new_packet );
 }
 
-PacketPtr uint32_EqClass_get_state( void ** ifs, int istream_id )
+PacketPtr uint32_EqClass_get_state( void** ifs, int istream_id )
 {
     PacketPtr packet;
 

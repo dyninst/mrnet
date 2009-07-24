@@ -311,4 +311,24 @@ bool compare_Vals( void * ival1, void * ival2, MRN::DataType itype )
         return false;
     }
 }
+
+int
+ParseBECommandLine( int argc, char** argv,
+                    std::string& hostname,
+                    Rank& rank,
+                    std::string& parent_hostname,
+                    Rank& parent_rank,
+                    Port& parent_port )
+{
+    assert( argc >= 5 );
+
+    parent_hostname = argv[argc-5];
+    parent_port = (Port) strtoul( argv[argc-4], NULL, 10 );
+    parent_rank = (Rank) strtoul( argv[argc-3], NULL, 10 );
+    hostname = argv[argc-2];
+    rank = (Rank) strtoul( argv[argc-1], NULL, 10 );
+
+    return 0;
+}
+
 }

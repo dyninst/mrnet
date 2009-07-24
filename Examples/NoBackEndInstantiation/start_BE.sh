@@ -23,6 +23,6 @@ fi
 export ITER=0
 while [ $ITER -lt $NBE ]; do
     # start BE on each host using parent info in BE_MAP
-    $REM_SHELL -n ${BE_HOSTS[$ITER]} $1 `echo ${BE_CONN[$ITER]} | awk -F: '{print $1,$2,$3}'` `expr $ITER + 10000` & 
+    $REM_SHELL -n ${BE_HOSTS[$ITER]} $1 `echo ${BE_CONN[$ITER]} | awk -F: '{print $1,$2,$3}'` ${BE_HOSTS[$ITER]} `expr $ITER + 10000` & 
     ITER=`expr $ITER + 1`
 done

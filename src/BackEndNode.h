@@ -7,7 +7,6 @@
 #define __backendnode_h 1
 
 #include <string>
-#include <map>
 
 #include "ChildNode.h"
 #include "Message.h"
@@ -17,11 +16,12 @@ namespace MRN
 {
 class Network;
 
-class BackEndNode: public ChildNode{
+class BackEndNode: public virtual ChildNode
+{
  public:
-    BackEndNode(Network * inetwork, 
-                std::string imy_hostname, Rank imy_rank,
-                std::string iphostname, Port ipport, Rank iprank );
+    BackEndNode( Network * inetwork, 
+                 std::string imy_hostname, Rank imy_rank,
+                 std::string iphostname, Port ipport, Rank iprank );
     virtual ~BackEndNode(void);
 
     virtual int proc_DataFromParent( PacketPtr ) const;

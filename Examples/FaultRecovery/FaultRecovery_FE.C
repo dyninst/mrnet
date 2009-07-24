@@ -32,7 +32,7 @@ int main(int argc, char **argv)
     // This Network() cnstr instantiates the MRNet internal nodes, according to the
     // organization in "topology_file," and the application back-end with any
     // specified cmd line args
-    Network * net = new Network( topology_file, backend_exe, &dummy_argv );
+    Network * net = Network::CreateNetworkFE( topology_file, backend_exe, &dummy_argv );
     if( net->has_Error() ) {
         net->perror("Network creation failed");
         return -1;

@@ -49,7 +49,7 @@ void write_be_connections(vector< NetworkTopology::Node * >& leaves, unsigned nu
 
 int main(int argc, char **argv)
 {
-    Network * network = NULL;
+    Network * net = NULL;
     Communicator * comm_BC;
     Stream * stream;
     unsigned int num_leaves = 0;
@@ -64,10 +64,10 @@ int main(int argc, char **argv)
     
     // If backend_exe (2nd arg) and backend_args (3rd arg) are both NULL,
     // then all nodes specified in the topology are internal tree nodes.
-    network = new Network( topology_file, NULL, NULL );
+    net = Network::CreateNetworkFE( topology_file, NULL, NULL );
   
-    // Query network for topology object
-    NetworkTopology * topology = network->get_NetworkTopology();
+    // Query net for topology object
+    NetworkTopology * topology = net->get_NetworkTopology();
     vector< NetworkTopology::Node * > internal_leaves;
     topology->get_Leaves(internal_leaves);
     topology->print(stdout);
@@ -83,8 +83,8 @@ int main(int argc, char **argv)
     } while( topology->get_NumNodes() < (topol_size + num_backends) );
     fprintf( stdout, "complete!\n");
 
-    comm_BC = network->get_BroadcastCommunicator();
-    stream = network->new_Stream(comm_BC, TFILTER_NULL, SFILTER_DONTWAIT);
+    comm_BC = net->get_BroadcastCommunicator();
+    stream = net->new_Stream(comm_BC, TFILTER_NULL, SFILTER_DONTWAIT);
 
     fprintf( stdout, "broadcasting int %d to back-ends\n", send_val );
     if( (stream->send(PROT_INT, "%d", send_val) == -1) ||
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
     }
   
     // The Network destructor causes internal and leaf nodes to exit
-    delete network;
+    delete net;
 
     return 0;
 }

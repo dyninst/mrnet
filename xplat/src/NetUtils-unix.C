@@ -15,8 +15,13 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+
 #include "config.h"
 #include "xplat/NetUtils.h"
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 #if defined( compiler_sun )
 #include <stropts.h>
@@ -100,8 +105,8 @@ int NetUtils::FindNumberOfLocalNetworkInterfaces( void )
     return num_ifs;
 }
 
-int NetUtils::FindLocalNetworkInterfaces
-( std::vector<NetUtils::NetworkAddress> &local_addresses )
+int
+NetUtils::FindLocalNetworkInterfaces( std::vector< NetUtils::NetworkAddress >& local_addrs )
 {
     int num_ifs=-1, rq_len;
     int ifc_count_guess = 5;
@@ -168,11 +173,41 @@ int NetUtils::FindLocalNetworkInterfaces
         memcpy( &in.s_addr, ( void * )&( sinptr->sin_addr ),
                 sizeof( in.s_addr ) );
         
-        local_addresses.push_back( NetworkAddress( ntohl( in.s_addr ) ) );
+        local_addrs.push_back( NetworkAddress( ntohl( in.s_addr ) ) );
     }
 
     if( ifc.ifc_buf != NULL )
         free(ifc.ifc_buf);
+
+    return 0;
+}
+
+int NetUtils::GetLocalHostName( std::string& this_host )
+{
+
+#if defined(arch_crayxt)
+    // on the XT, the node number is available in /proc/cray_xt/nid
+    std::ifstream ifs( "/proc/cray_xt/nid" );
+    uint32_t nid;
+    ifs >> nid;
+
+    std::ostringstream nidStr;
+    nidStr << "nid"
+        << std::setw( 5 )
+        << std::setfill( '0' )
+        << nid
+        << std::ends;
+
+    this_host = nidStr.str();
+
+#else
+
+    char host[256];
+    gethostname( host, 256 );
+    host[255] = '\0';
+    this_host = host;
+
+#endif
 
     return 0;
 }

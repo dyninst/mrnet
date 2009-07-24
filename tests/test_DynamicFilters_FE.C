@@ -36,28 +36,34 @@ int main(int argc, char **argv)
     test = new Test("MRNet Dynamic Filter Test");
 
     const char * dummy_argv=NULL;
-    Network * network = new Network( topology_file, backend_exe, &dummy_argv );
+    Network * net = Network::CreateNetworkFE( topology_file, backend_exe, &dummy_argv );
 
-    test_CountFilter( network, so_file );
+    /* For all the following tests, the 1st bool param indicates *
+     * whether the recv() call should be stream-anonymous or not *
+     * and the 2nd bool param indicates whether the recv should block *
+     * or not */
+    test_CountFilter( net, so_file );
 
-    test_CountOddsAndEvensFilter( network, so_file );
+    //WARNING: This test_CountOddsAndEvensFilter() must be the last test
+    //because it is the one that instructs the backends to exit.
+    test_CountOddsAndEvensFilter( net, so_file );
   
-    Communicator * comm_BC = network->get_BroadcastCommunicator( );
-    Stream * stream = network->new_Stream(comm_BC, TFILTER_NULL, SFILTER_WAITFORALL);
+    Communicator * comm_BC = net->get_BroadcastCommunicator( );
+    Stream * stream = net->new_Stream(comm_BC, TFILTER_NULL, SFILTER_WAITFORALL);
 
     if(stream->send(PROT_EXIT, "") == -1){
         fprintf(stderr, "stream->send(\"PROT_EXIT\") failed\n");
-        network->print_error(argv[0]);
+        net->print_error(argv[0]);
         return -1;
     }
 
     if(stream->flush() == -1){
         fprintf(stderr, "stream->flush() failed\n");
-        network->print_error(argv[0]);
+        net->print_error(argv[0]);
         return -1;
     }
 
-    delete network;
+    delete net;
 
     test->end_Test();
     delete test;
@@ -65,7 +71,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-int test_CountFilter( Network * network, const char * so_file )
+int test_CountFilter( Network * net, const char * so_file )
 {
     int retval, tag, recv_val=0;
     PacketPtr buf;
@@ -73,15 +79,15 @@ int test_CountFilter( Network * network, const char * so_file )
 
     test->start_SubTest(testname);
 
-    int filter_id = network->load_FilterFunc( so_file, "aggr_Count" );
+    int filter_id = net->load_FilterFunc( so_file, "aggr_Count" );
     if( filter_id == -1 ){
         test->print("Stream::load_FilterFunc() failure\n", testname);
         test->end_SubTest(testname, FAILURE);
         return -1;
     }
 
-    Communicator * comm_BC = network->get_BroadcastCommunicator( );
-    Stream * stream = network->new_Stream(comm_BC, filter_id, SFILTER_WAITFORALL);
+    Communicator * comm_BC = net->get_BroadcastCommunicator( );
+    Stream * stream = net->new_Stream(comm_BC, filter_id, SFILTER_WAITFORALL);
 
     if( stream->send(PROT_COUNT, "") == -1 ){
         test->print("stream::send() failure\n", testname);
@@ -122,7 +128,7 @@ int test_CountFilter( Network * network, const char * so_file )
     return 0;
 }
 
-int test_CountOddsAndEvensFilter( Network * network, const char * so_file )
+int test_CountOddsAndEvensFilter( Network * net, const char * so_file )
 {
     int num_odds=0, num_evens=0, retval, tag=0;
     PacketPtr buf;
@@ -130,7 +136,7 @@ int test_CountOddsAndEvensFilter( Network * network, const char * so_file )
 
     test->start_SubTest(testname);
 
-    int filter_id = network->load_FilterFunc( so_file,
+    int filter_id = net->load_FilterFunc( so_file,
                                              "aggr_CountOddsAndEvens" );
     if( filter_id == -1 ){
         test->print("Stream::load_FilterFunc() failure\n", testname);
@@ -138,8 +144,8 @@ int test_CountOddsAndEvensFilter( Network * network, const char * so_file )
         return -1;
     }
 
-    Communicator * comm_BC = network->get_BroadcastCommunicator( );
-    Stream * stream = network->new_Stream(comm_BC, filter_id, SFILTER_WAITFORALL);
+    Communicator * comm_BC = net->get_BroadcastCommunicator( );
+    Stream * stream = net->new_Stream(comm_BC, filter_id, SFILTER_WAITFORALL);
 
     if( stream->send(PROT_COUNTODDSANDEVENS, "") == -1 ){
         test->print("stream::send() failure\n", testname);

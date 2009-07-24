@@ -17,10 +17,10 @@ int main(int argc, char **argv)
     int tag;
     bool success=true;
 
-    Network * network = new Network( argc, argv );
+    Network * net = Network::CreateNetworkBE( argc, argv );
 
     do{
-        if ( network->recv(&tag, buf, &stream) != 1){
+        if ( net->recv(&tag, buf, &stream) != 1){
             fprintf(stderr, "stream::recv() failure\n");
         }
 
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
         }
     } while ( tag != PROT_EXIT );
 
-    // FE delete network will shut us down, so just go to sleep!!
+    // FE delete net will shut us down, so just go to sleep!!
     sleep(10);
     return 0;
 }

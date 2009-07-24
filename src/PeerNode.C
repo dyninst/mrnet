@@ -3,11 +3,14 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+#include <sstream>
+
 #include "config.h"
+#include "utils.h"
 #include "ChildNode.h"
 #include "ParentNode.h"
 #include "PeerNode.h"
-#include "utils.h"
+
 #include "mrnet/MRNet.h"
 #include "xplat/Process.h"
 #include "xplat/SocketUtils.h"
@@ -263,8 +266,7 @@ int PeerNode::flush( bool ignore_threads /*=false*/ ) const
 
 void * PeerNode::recv_thread_main(void * args)
 {
-    std::list <PacketPtr>packet_list;
-    std::string local_hostname, peer_hostname;
+    std::list< PacketPtr > packet_list;
 
     Rank rank = *((Rank*)args);
     PeerNodePtr peer_node = _global_network->get_PeerNode( rank );
@@ -273,47 +275,27 @@ void * PeerNode::recv_thread_main(void * args)
     mrn_dbg_func_begin();
 
     //TLS: setup thread local storage for recv thread
-    // I am localhost:localport_UPRECVFROM_remotehost:remoteport
-    std::string name;
-    char local_rank_str[128];
-    char peer_rank_str[128];
-    if( peer_node->is_parent() ){
-        sprintf(local_rank_str, "%d", peer_node->_network->get_LocalRank());
-        sprintf(peer_rank_str, "%d", peer_node->get_Rank());
-        XPlat::NetUtils::GetHostName( peer_node->_network->get_LocalHostName(), local_hostname );
-        XPlat::NetUtils::GetHostName( peer_node->get_HostName(), peer_hostname );
+    std::ostringstream namestr;
 
-        name = "FROMPARENT(";
-        name += local_hostname;
-        name += ":";
-        name += local_rank_str;
-        name += "<-";
-        name += peer_hostname;
-        name += ":";
-        name += peer_rank_str;
-        name += ")";
-    }
-    else{
-        sprintf(local_rank_str, "%d", peer_node->_network->get_LocalRank());
-        sprintf(peer_rank_str, "%d", peer_node->get_Rank() );
-        XPlat::NetUtils::GetHostName( peer_node->_network->get_LocalHostName(), local_hostname );
-        XPlat::NetUtils::GetHostName( peer_node->get_HostName(), peer_hostname );
+    if( peer_node->is_parent() )
+        namestr << "FROMPARENT(";
+    else
+        namestr << "FROMCHILD(";
 
-        name = "FROMCHILD(";
-        name += local_hostname;
-        name += ":";
-        name += local_rank_str;
-        name += "<-";
-        name += peer_hostname;
-        name += ":";
-        name += peer_rank_str;
-        name += ")";
-    }
+    namestr << peer_node->_network->get_LocalHostName()
+            << ':'
+            << peer_node->_network->get_LocalRank()
+            << "<-"
+            << peer_node->get_HostName()
+            << ':'
+            << peer_node->get_Rank()
+            << ')'
+            << std::ends;
 
     int status;
     tsd_t * local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId();
-    local_data->thread_name = strdup(name.c_str());
+    local_data->thread_name = strdup( namestr.str().c_str() );
     if( (status = tsd_key.Set( local_data)) != 0){
         mrn_dbg(1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
                    strerror(status)));
@@ -354,49 +336,28 @@ void * PeerNode::send_thread_main(void * args)
     PeerNodePtr peer_node = _global_network->get_PeerNode( rank );
     assert( peer_node != PeerNode::NullPeerNode );
 
-    //TLS: setup thread local storage for recv thread
-    // I am localhost:localport_UPRECVFROM_remotehost:remoteport
-    std::string name, local_hostname, peer_hostname;
-    char local_rank_str[128];
-    char peer_rank_str[128];
+    //TLS: setup thread local storage for send thread
+    std::ostringstream namestr;
 
-    if( peer_node->is_parent() ){
-        sprintf(local_rank_str, "%d", peer_node->_network->get_LocalRank());
-        sprintf(peer_rank_str, "%d", peer_node->get_Rank() );
-        XPlat::NetUtils::GetHostName(peer_node->_network->get_LocalHostName(), local_hostname );
-        XPlat::NetUtils::GetHostName(peer_node->get_HostName(), peer_hostname );
+    if( peer_node->is_parent() )
+        namestr << "TOPARENT(";
+    else
+        namestr << "TOCHILD(";
 
-        name = "TOPARENT(";
-        name += local_hostname;
-        name += ":";
-        name += local_rank_str;
-        name += "->";
-        name += peer_hostname;
-        name += ":";
-        name += peer_rank_str;
-        name += ")";
-    }
-    else{
-        sprintf(local_rank_str, "%d", peer_node->_network->get_LocalRank());
-        sprintf(peer_rank_str, "%d", peer_node->get_Rank() );
-        XPlat::NetUtils::GetHostName(peer_node->_network->get_LocalHostName(), local_hostname );
-        XPlat::NetUtils::GetHostName(peer_node->get_HostName(), peer_hostname );
-
-        name = "TOCHILD(";
-        name += local_hostname;
-        name += ":";
-        name += local_rank_str;
-        name += "->";
-        name += peer_hostname;
-        name += ":";
-        name += peer_rank_str;
-        name += ")";
-    }
+    namestr << peer_node->_network->get_LocalHostName()
+            << ':'
+            << peer_node->_network->get_LocalRank()
+            << "<-"
+            << peer_node->get_HostName()
+            << ':'
+            << peer_node->get_Rank()
+            << ')'
+            << std::ends;
 
     int status;
     tsd_t * local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId();
-    local_data->thread_name = strdup(name.c_str());
+    local_data->thread_name = strdup( namestr.str().c_str() );
     if( (status = tsd_key.Set( local_data)) != 0){
         mrn_dbg(1, mrn_printf(0,0,0, stderr, "XPlat::TLSKey::Set(): %s\n",
                               strerror(status))); 

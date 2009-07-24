@@ -54,7 +54,7 @@ int main( int argc, char ** argv )
     const char * so_file = argv[5];
     const char * empty_argv = NULL;
 
-    Network * net = new Network( topology_file, backend_exe, &empty_argv );
+    Network * net = Network::CreateNetworkFE( topology_file, backend_exe, &empty_argv );
     if( net->has_Error() ) {
         net->perror( "network creation failed" );
         return -1;
@@ -130,7 +130,7 @@ int main( int argc, char ** argv )
     // receive unique, sorted matches
     for( int i=0; i < max_num_blocks; i++ ) {
 
-        int rc = search_stream->recv(&tag, p);
+        rc = search_stream->recv(&tag, p);
         if( rc == -1 ) {
             fprintf( stderr, "ERROR: multi_stream::recv() failure\n");
             delete net;

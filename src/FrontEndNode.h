@@ -13,7 +13,7 @@
 namespace MRN
 {
 
-class FrontEndNode: public ParentNode {
+class FrontEndNode: public virtual ParentNode {
  public:
     FrontEndNode(Network *, std::string const& ihostname, Rank irank);
     virtual ~FrontEndNode(void);

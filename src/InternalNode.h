@@ -19,12 +19,15 @@ namespace MRN
 
 class Network;
 
-class InternalNode: public ParentNode, public ChildNode
+class InternalNode: public virtual ParentNode, 
+                    public virtual ChildNode
 {
  public:
     InternalNode( Network * inetwork,
                   std::string const& ihostname, Rank irank,
-                  std::string const& iphostname, Port ipport, Rank iprank );
+                  std::string const& iphostname, Port ipport, Rank iprank,
+                  int listeningSocket,
+                  Port listeningPort );
     virtual ~InternalNode(void);
 
     void waitLoop() const;

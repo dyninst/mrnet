@@ -26,7 +26,7 @@ bool Router::update_Table()
 
     //get local node from network topology
     NetworkTopology::Node * local_node = net_topo->
-        find_Node( _network->get_LocalRank() );
+        find_NodeHoldingLock( _network->get_LocalRank() );
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "local_node: %p\n", local_node ));
 

@@ -61,17 +61,18 @@ public:
         in_addr_t GetInAddr( void ) const   { return iaddr; }
     };
 private:
-    static int FindNetworkName( std::string ihostname, std::string & );
-    static int FindNetworkAddress( std::string ihostname, NetworkAddress & );
+    static int FindNetworkName( std::string ihostname, std::string& );
+    static int FindNetworkAddress( std::string ihostname, NetworkAddress& );
     static int FindNumberOfLocalNetworkInterfaces( void ); 
-    static int FindLocalNetworkInterfaces( std::vector<NetworkAddress> & );
+    static int FindLocalNetworkInterfaces( std::vector< NetworkAddress >& );
 
 public:
-    static int GetHostName( std::string ihostname, std::string & );
-    static int GetNetworkName( std::string ihostname, std::string & );
-    static int GetNetworkAddress( std::string ihostname, NetworkAddress & );
+    static int GetHostName( std::string ihostname, std::string& );
+    static int GetNetworkName( std::string ihostname, std::string& );
+    static int GetNetworkAddress( std::string ihostname, NetworkAddress& );
     static int GetNumberOfNetworkInterfaces( void );
-    static int GetLocalNetworkInterfaces( std::vector<NetworkAddress> & );
+    static int GetLocalNetworkInterfaces( std::vector< NetworkAddress >& );
+    static int GetLocalHostName( std::string& this_host );
 
     // check whether given host is local
     static bool IsLocalHost( const std::string& host );

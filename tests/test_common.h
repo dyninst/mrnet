@@ -83,6 +83,13 @@ class Test{
     void print(const char *, const std::string& subtest_name="");
 };
 
+int ParseBECommandLine( int argc, char** argv,
+                        std::string& hostname,
+                        Rank& rank,
+                        std::string& parent_hostname,
+                        Rank& parent_rank,
+                        Port& parent_port );
+
 }
 
 #endif /* test_h */

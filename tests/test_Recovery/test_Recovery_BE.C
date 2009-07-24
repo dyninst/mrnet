@@ -34,13 +34,13 @@ int main(int argc, char **argv){
     //setup handler for SIGALRM
     setup_handler( );
 
-    Network * network = new Network( argc, argv);
-    if( network->has_Error() ){
+    Network * net = Network::CreateNetworkBE( argc, argv);
+    if( net->has_Error() ){
         fprintf(stderr, "backend_init() failed\n");
         exit (-1);
     }
 
-    if( run_ThroughputTest( network ) ) {
+    if( run_ThroughputTest( net ) ) {
         fprintf( stderr, "run_ThroughputTest() failure\n" );
         return -1;
     }
@@ -48,7 +48,7 @@ int main(int argc, char **argv){
     exit(0);
 }
 
-int run_ThroughputTest( Network * inetwork )
+int run_ThroughputTest( Network * inet )
 {
     PacketPtr packet;
     int prot;
@@ -56,7 +56,7 @@ int run_ThroughputTest( Network * inetwork )
     extern unsigned int WavesToSend, MaxVal;
     extern ThroughputExperiment send_exp;
 
-    if ( inetwork->recv(&prot, packet, &stream) != 1){
+    if ( inet->recv(&prot, packet, &stream) != 1){
         fprintf(stderr, "BE[%d]: stream::recv() failure\n", myrank);
         return -1;
     }

@@ -20,7 +20,7 @@ namespace MRN
 {
 
 class Packet;
-typedef boost::shared_ptr<Packet> PacketPtr;
+typedef boost::shared_ptr< Packet > PacketPtr;
 
 class Packet: public Error{
     friend class ParentNode;
@@ -29,6 +29,9 @@ class Packet: public Error{
     friend class Message;
 
  public:
+
+    static PacketPtr NullPacket;
+
     Packet( unsigned short _stream_id, int _tag, const char *fmt, ... );
     Packet( unsigned short _stream_id, int _tag, const void **data, const char *fmt);
     ~Packet();
@@ -46,18 +49,15 @@ class Packet: public Error{
 
     void set_DestroyData( bool b );
 
-    static PacketPtr NullPacket;
+    int ExtractVaList( const char *fmt, va_list arg_list ) const;
+    int ExtractArgList( const char *fmt, ... ) const;
 
  private:
     Packet( bool, unsigned short istream_id, int itag, const char *ifmt, va_list iargs );
     Packet( unsigned int ibuf_len, char *ibuf, Rank iinlet_rank );
 
-    int ExtractVaList( const char *fmt, va_list arg_list ) const;
-    int ExtractArgList( const char *fmt, ... ) const;
-
     const char *get_Buffer( void ) const;
     unsigned int get_BufferLen( void ) const;
-
 
     unsigned int get_NumDataElements( void ) const;
     const DataElement * get_DataElement( unsigned int i ) const;

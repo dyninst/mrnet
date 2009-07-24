@@ -22,7 +22,8 @@ namespace MRN
 BackEndNode::BackEndNode( Network * inetwork, 
                           std::string imyhostname, Rank imyrank,
                           std::string iphostname, Port ipport, Rank iprank )
-    :ChildNode( inetwork, imyhostname, imyrank, iphostname, ipport, iprank )
+    : CommunicationNode( imyhostname, UnknownPort, imyrank ),
+      ChildNode( inetwork, imyhostname, imyrank, iphostname, ipport, iprank )
 {
     _network->set_LocalHostName( _hostname  );
     _network->set_LocalRank( _rank );
@@ -110,15 +111,18 @@ int BackEndNode::proc_newStream( PacketPtr ipacket ) const
         }
         
         if( ! Stream::find_FilterAssignment(std::string(us_filters), me, us_filter_id) ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(upstream) failed, using default\n" ));
+            mrn_dbg( 3, mrn_printf(FLF, stderr, 
+                                   "Stream::find_FilterAssignment(upstream) failed, using default\n" ));
             us_filter_id = TFILTER_NULL;
         }
         if( ! Stream::find_FilterAssignment(std::string(ds_filters), me, ds_filter_id) ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(downstream) failed, using default\n" ));
+            mrn_dbg( 3, mrn_printf(FLF, stderr, 
+                                   "Stream::find_FilterAssignment(downstream) failed, using default\n" ));
             ds_filter_id = TFILTER_NULL;
         }
         if( ! Stream::find_FilterAssignment(std::string(sync_filters), me, sync_id) ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(sync) failed, using default\n" ));
+            mrn_dbg( 3, mrn_printf(FLF, stderr, 
+                                   "Stream::find_FilterAssignment(sync) failed, using default\n" ));
             sync_id = SFILTER_WAITFORALL;
         }
 
@@ -131,7 +135,8 @@ int BackEndNode::proc_newStream( PacketPtr ipacket ) const
             return -1;
         }
     }
-    _network->new_Stream( stream_id, backends, num_backends, us_filter_id, sync_id, ds_filter_id );
+    _network->new_Stream( stream_id, backends, num_backends, 
+                          us_filter_id, sync_id, ds_filter_id );
 
     mrn_dbg_func_end();
     return 0;

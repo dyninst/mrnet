@@ -5,20 +5,22 @@
 
 #include <fcntl.h>
 
-#include "Message.h"
 #include "pdr.h"
-#include "PeerNode.h"
 #include "utils.h"
+#include "Message.h"
+#include "PeerNode.h"
+
 #include "mrnet/Packet.h"
+#include "xplat/Atomic.h"
 #include "xplat/NCIO.h"
 
 namespace MRN
 {
 
-static uint64_t MRN_bytes_send = 0;
-static uint64_t MRN_bytes_recv = 0;
-uint64_t get_TotalBytesSend(void) { return MRN_bytes_send; }
-uint64_t get_TotalBytesRecv(void) { return MRN_bytes_recv; }
+static XPlat::Atomic<uint64_t> MRN_bytes_send = 0;
+static XPlat::Atomic<uint64_t> MRN_bytes_recv = 0;
+uint64_t get_TotalBytesSend(void) { return MRN_bytes_send.Get(); }
+uint64_t get_TotalBytesRecv(void) { return MRN_bytes_recv.Get(); }
 
 
 int read( int fd, void *buf, int size );
@@ -65,7 +67,7 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
         free( buf );
         return -1;
     }
-    MRN_bytes_recv += retval;
+    MRN_bytes_recv.Add( retval );
 
     //
     // pdrmem initialize
@@ -125,7 +127,7 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
         free( packet_sizes );
         return -1;
     }
-    MRN_bytes_recv += readRet;
+    MRN_bytes_recv.Add( readRet );
 
     //
     // packets
@@ -174,7 +176,7 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
 
         return -1;
     }
-    MRN_bytes_recv += retval;
+    MRN_bytes_recv.Add( retval );
 
     //
     // post-processing
@@ -282,7 +284,7 @@ int Message::send( int sock_fd )
         _packet_sync.Unlock();
         return -1;
     }
-    MRN_bytes_send += buf_len;
+    MRN_bytes_send.Add( buf_len );
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "write() succeeded\n" ));
     free( buf );
@@ -317,7 +319,7 @@ int Message::send( int sock_fd )
         _packet_sync.Unlock();
         return -1;
     }
-    MRN_bytes_send += mcwret;
+    MRN_bytes_send.Add( mcwret );
     free( packet_sizes );
     free( buf );
 
@@ -343,7 +345,7 @@ int Message::send( int sock_fd )
         _packet_sync.Unlock( );
         return -1;
     }
-    MRN_bytes_send += sret;
+    MRN_bytes_send.Add( sret );
 
     _packets.clear( );
     _packet_sync.Unlock( );

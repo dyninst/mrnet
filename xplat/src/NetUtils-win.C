@@ -32,7 +32,8 @@ int NetUtils::FindNumberOfLocalNetworkInterfaces( void )
 }
 
 
-int NetUtils::FindLocalNetworkInterfaces( std::vector<NetUtils::NetworkAddress> &local_addresses )
+int 
+NetUtils::FindLocalNetworkInterfaces( std::vector< NetUtils::NetworkAddress > &local_addrs )
 {
 	unsigned long num_interfaces = FindNumberOfLocalNetworkInterfaces();
     if( num_interfaces == -1 ){
@@ -54,7 +55,7 @@ int NetUtils::FindLocalNetworkInterfaces( std::vector<NetUtils::NetworkAddress> 
          tmp_adapter_info = tmp_adapter_info->Next ) {
         if( tmp_adapter_info->Type == MIB_IF_TYPE_ETHERNET ) {
             FindNetworkAddress( tmp_adapter_info->IpAddressList.IpAddress.String, addr ); 
-            local_addresses.push_back( addr );
+            local_addrs.push_back( addr );
         }
     }
     delete[] pAdapterInfo;
@@ -65,8 +66,16 @@ int NetUtils::FindLocalNetworkInterfaces( std::vector<NetUtils::NetworkAddress> 
     return 0;
 }
 
-int
-NetUtils::GetLastError( void )
+int NetUtils::GetLocalHostName( std::string& this_host )
+{
+    char host[256];
+    gethostname( host, 256 );
+    host[255] = '\0';
+    this_host = host;
+    return 0;
+}
+
+int NetUtils::GetLastError( void )
 {
     return WSAGetLastError();
 }

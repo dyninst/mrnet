@@ -10,6 +10,7 @@ ARFLAGS = @ARFLAGS@
 RANLIB  = @RANLIB@
 RM      = @RM@
 INSTALL = @INSTALL@
+MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
 
 prefix  = @prefix@
 exec_prefix=@exec_prefix@
@@ -49,6 +50,10 @@ TARGETS = $(TARGET)
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(TARGET_SO)
 endif 
+
+ifeq ($(MRNET_STARTUP_METHOD),cray_xt)
+    CXXFLAGS += -Darch_crayxt
+endif
 
 SRCS    = Monitor-pthread.C \
           Mutex-pthread.C \

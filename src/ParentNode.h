@@ -24,29 +24,36 @@ namespace MRN
 class Network;
 class Stream;
 
-class ParentNode: public Error, public CommunicationNode {
+class ParentNode: public virtual Error, 
+                  public virtual CommunicationNode
+{
     friend class Aggregator;
     friend class Synchronizer;
     friend class PeerNode;
  public:
-    ParentNode( Network *, std::string const&, Rank );
+    ParentNode( Network* inetwork, 
+                std::string const& myhost, 
+                Rank myrank,
+                int listeningSocket = -1,
+                Port listeningPort = UnknownPort );
     virtual ~ ParentNode( void );
 
-    int proc_PacketsFromChildren( std::list < PacketPtr >& ) const;
-    virtual int proc_DataFromChildren( PacketPtr ) const = 0;
-    virtual int proc_NewParentReportFromParent( PacketPtr ipacket ) const=0;
-    int proc_FailureReport( PacketPtr ipacket ) const;
-    int proc_RecoveryReport( PacketPtr ipacket ) const;
-
-    int recv_PacketsFromChildren( std::list < PacketPtr >&packet_list,
-                                    bool blocking = true ) const;
+    int recv_PacketsFromChildren( std::list< PacketPtr > & ipackets,
+                                  bool blocking = true ) const;
     int flush_PacketsToChildren( void ) const;
+    int proc_PacketsFromChildren( std::list< PacketPtr > & ipackets );
 
-    int proc_newSubTree( PacketPtr ipacket );
+    virtual int proc_DataFromChildren( PacketPtr ipacket ) const = 0;
+
+    virtual int proc_NewParentReportFromParent( PacketPtr ipacket ) const=0;
+
+    int proc_newSubTreeReport( PacketPtr ipacket ) const;
     int proc_DeleteSubTree( PacketPtr ipacket ) const;
     int proc_DeleteSubTreeAck( PacketPtr ipacket ) const;
 
-    int proc_newSubTreeReport( PacketPtr ipacket ) const;
+    int proc_FailureReport( PacketPtr ipacket ) const;
+    int proc_RecoveryReport( PacketPtr ipacket ) const;
+
     int proc_Event( PacketPtr ipacket ) const;
     int send_Event( PacketPtr ipacket ) const;
 
@@ -58,22 +65,17 @@ class ParentNode: public Error, public CommunicationNode {
     int proc_DownstreamFilterParams( PacketPtr &ipacket ) const;
     int proc_UpstreamFilterParams( PacketPtr &ipacket ) const;
 
-    int proc_SubTreeInfoRequest( PacketPtr ipacket ) const;
-
     int get_ListeningSocket( void ) const { return listening_sock_fd; }
     int getConnections( int **conns, unsigned int *nConns ) const;
 
     int proc_NewChildDataConnection( PacketPtr ipacket, int sock );
     PeerNodePtr find_ChildNodeByRank( int irank );
 
-    int launch_InternalNode( std::string ihostname, Rank irank,
-                             std::string icommnode_exe ) const;
-    int launch_Application( std::string ihostname, Rank irank,
-                            std::string &ibackend_exe,
-                            std::vector <std::string> &ibackend_args) const;
-
     int waitfor_SubTreeReports( void ) const;
     bool waitfor_DeleteSubTreeAcks( void ) const ;
+
+    void init_numChildrenExpected( SerialGraph& sg );
+    unsigned int get_numChildrenExpected( void ) const  { return _num_children; }
 
  protected:
     Network * _network;
@@ -82,9 +84,10 @@ class ParentNode: public Error, public CommunicationNode {
     mutable XPlat::Monitor subtreereport_sync;
     mutable unsigned int _num_children, _num_children_reported;
 
+    virtual int proc_PacketFromChildren( PacketPtr ipacket );
+
  private:
     int listening_sock_fd;
-    PacketPtr _initial_subtree_packet;
 };
 
 //bool lt_PeerNodePtr( PeerNodePtr p1, PeerNodePtr p2 );

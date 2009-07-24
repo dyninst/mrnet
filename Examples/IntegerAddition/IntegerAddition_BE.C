@@ -14,53 +14,60 @@ int main(int argc, char **argv)
     PacketPtr p;
     int tag=0, recv_val=0, num_iters=0;
 
-    Network * network = new Network( argc, argv );
+    Network * net = Network::CreateNetworkBE( argc, argv );
 
-    do{
-        if ( network->recv(&tag, p, &stream) != 1){
-            fprintf(stderr, "stream::recv() failure\n");
-            return -1;
+    do {
+        if( net->recv(&tag, p, &stream) != 1 ) {
+            fprintf(stderr, "BE: stream::recv() failure\n");
+            break;
         }
 
-        switch(tag){
+        switch(tag) {
+
         case PROT_SUM:
             p->unpack( "%d %d", &recv_val, &num_iters );
 
             // Send num_iters waves of integers
-            for( unsigned int i=0; i<num_iters; i++ ){
-                fprintf( stdout, "Sending wave %u ...\n", i);
+            for( unsigned int i=0; i<num_iters; i++ ) {
+                fprintf( stdout, "BE: Sending wave %u ...\n", i);
                 if( stream->send(tag, "%d", recv_val*i) == -1 ){
-                    fprintf(stderr, "stream::send(%%d) failure\n");
-                    return -1;
+                    fprintf(stderr, "BE: stream::send(%%d) failure\n");
+                    tag = PROT_EXIT;
+                    break;
                 }
                 if( stream->flush( ) == -1 ){
-                    fprintf(stderr, "stream::flush() failure\n");
-                    return -1;
+                    fprintf(stderr, "BE: stream::flush() failure\n");
+                    tag = PROT_EXIT;
+                    break;
                 }
-                fflush( stdout );
-                sleep(3); // stagger sends
+                fflush(stdout);
+                sleep(2); // stagger sends
             }
             break;
 
         case PROT_EXIT:
-            fprintf( stdout, "Processing PROT_EXIT ...\n");
-	    if( stream->send(tag, "%d", 0) == -1 ){
-                fprintf(stderr, "stream::send(%%s) failure\n");
-                return -1;
+	    if( stream->send(tag, "%d", 0) == -1 ) {
+                fprintf(stderr, "BE: stream::send(%%s) failure\n");
+                break;
             }
-            if( stream->flush( ) == -1 ){
-                fprintf(stderr, "stream::flush() failure\n");
-                return -1;
+            if( stream->flush( ) == -1 ) {
+                fprintf(stderr, "BE: stream::flush() failure\n");
             }
-            fflush( stdout );
             break;
 
         default:
-            fprintf(stderr, "Unknown Protocol: %d\n", tag);
+            fprintf(stderr, "BE: Unknown Protocol: %d\n", tag);
+            tag = PROT_EXIT;
             break;
         }
+
+        fflush(stderr);
+
     } while ( tag != PROT_EXIT );
-    sleep(10); // wait for network termination
+
+    
+    // FE delete of the net will causes us to exit, wait for it
+    while(true) sleep(5);
 
     return 0;
 }

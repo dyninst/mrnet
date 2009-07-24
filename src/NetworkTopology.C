@@ -365,23 +365,26 @@ bool NetworkTopology::add_SubGraph( Node * inode, SerialGraph & isg, bool iupdat
 
 NetworkTopology::Node * NetworkTopology::find_Node(Rank irank) const
 {
-    //mrn_dbg_func_begin();
+    NetworkTopology::Node* ret = NULL;
     _sync.Lock();
-    map<Rank, NetworkTopology::Node*>::const_iterator iter =
+    ret = find_NodeHoldingLock( irank );
+    _sync.Unlock();
+    return ret;
+}
+
+// assumes we are holding the lock
+NetworkTopology::Node* NetworkTopology::find_NodeHoldingLock(Rank irank) const
+{
+    map< Rank, NetworkTopology::Node* >::const_iterator iter =
         _nodes.find( irank );
 
-    //mrn_dbg( 3, mrn_printf(FLF, stderr, "Searching for rank %u ...", irank ));
     if( iter == _nodes.end() ){
-        //mrn_dbg( 3, mrn_printf(0,0,0, stderr, "not found!\n"));
-        _sync.Unlock();
         mrn_dbg_func_end();
         return NULL;
     }
-    //mrn_dbg( 3, mrn_printf(0,0,0, stderr, "found!\n"));
-    _sync.Unlock();
-    //mrn_dbg_func_end();
     return (*iter).second;
 }
+
 
 bool NetworkTopology::remove_Node( NetworkTopology::Node *inode )
 {

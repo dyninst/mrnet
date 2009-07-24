@@ -20,21 +20,20 @@ int main(int argc, char **argv)
     size_t length = 0;
     bool mapped = false;
 
-    Network * network = new Network( argc, argv );
+    Network * net = Network::CreateNetworkBE( argc, argv );
 
-    do{
-        if( network->recv(&tag, p, &stream) != 1 ) {
+    do {
+        if( net->recv(&tag, p, &stream) != 1 ) {
             fprintf(stderr, "stream::recv() failure\n");
-            return -1;
+            break;
         }
 
-        switch(tag){
+        switch(tag) {
 
-        case PROT_INIT: {
-    
+        case PROT_INIT:
             fprintf( stdout, "BE: Processing PROT_INIT ...\n");
-
             p->unpack( "%s %d", &file, &blocksz );
+            
             contents = (char*) map_file(file, &s, 0);
             if( contents != NULL  ) 
                 mapped = true;
@@ -52,10 +51,9 @@ int main(int argc, char **argv)
             stream->flush();
             
             break;
-        }
+
         case PROT_SEARCH: {
             fprintf( stdout, "BE: Processing PROT_SEARCH ...\n");
-
             max_blocks = 0;
             p->unpack( "%d", &max_blocks );
             
@@ -64,28 +62,22 @@ int main(int argc, char **argv)
                 if( offset >= s.st_size ) {
                     // empty message to indicate end of data
                     stream->send(tag, "%ac", NULL, 0);
-                    //fprintf( stdout, "BE: - sent empty block\n");
                 }
                 else if( offset + blocksz > s.st_size ) {
                     stream->send(tag, "%ac", contents + offset,
                                  s.st_size - offset);
-                    //fprintf( stdout, "BE: - sent partial block (%d bytes)\n", s.st_size - offset);
                     offset = s.st_size;
                 }
                 else {
                     stream->send(tag, "%ac", contents + offset, blocksz);
-                    //fprintf( stdout, "BE: - sent whole block (%d bytes)\n", blocksz);
                     offset += blocksz;
                 }
                 stream->flush();
-                //fflush(stdout);
             }
             break;
         }
-        case PROT_EXIT: {
 
-            fprintf( stdout, "BE: Processing PROT_EXIT ...\n");
-
+        case PROT_EXIT:
             if( mapped )
                 unmap_file((void*)contents, s.st_size);
             else
@@ -93,19 +85,24 @@ int main(int argc, char **argv)
 
             if( stream->send(tag, "%d", 0) == -1 ){
                 fprintf(stderr, "stream::send(%%s) failure\n");
-                return -1;
+                break;
             }
             stream->flush();
-            fflush( stdout );
             break;
-        }
+
         default:
             fprintf(stderr, "BE: ERROR: Unknown Protocol: %d\n", tag);
-            fflush( stderr );
+            tag = PROT_EXIT;
             break;
         }
+
+        fflush( stdout );
+        fflush( stderr );
+
     } while ( tag != PROT_EXIT );
-    sleep(10); // wait for network termination
+
+    // FE delete of the net will causes us to exit, wait for it
+    while(true) sleep(5);
 
     return 0;
 }

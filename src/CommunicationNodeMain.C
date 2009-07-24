@@ -19,70 +19,70 @@ void BeDaemon( void );
 
 int main(int argc, char **argv)
 {
-    InternalNode *comm_node;
-    int i, status;
+    int ret = 0;
+    Network *net = NULL;
+    InternalNode *comm_node = NULL;
 
-    if(argc != 6){
-        fprintf(stderr, "Usage: %s local_hostname local_rank parent_hostname parent_port parent_rank\n",
-                argv[0]);
-        fprintf(stderr, "Called with (%d) args: ", argc);
-        for(i=0; i<argc; i++){
-            fprintf(stderr, "%s ", argv[i]);
+    try
+    {
+        // parse the command line for platform-independent arguments
+        //
+        // skip past the executable name
+        argc--;
+        argv++;
+
+        // check whether to detach from the terminal
+        if( argc >= 1 )
+        {
+            if( strcmp( argv[0], "-n" ) == 0 )
+            {
+                BeDaemon();
+
+                // skip past this flag
+                argc--;
+                argv++;
+            }
         }
-        return -1;
+
+        // build our object allowing access to the MRNet network
+        net = Network::CreateNetworkIN( argc, argv );
+        if( (net == NULL) || net->has_Error() )
+            return 1;
+        
+        // handle events
+        comm_node = net->get_LocalInternalNode();
+        assert( comm_node != NULL );
+        comm_node->waitfor_NetworkTermination();
+    }
+    catch( std::exception& e )
+    {
+        mrn_dbg( 1, mrn_printf( FLF, stderr, e.what() ) );
+        ret = 1;        
     }
 
-    Network * network = new Network;
-
-    // become a daemon
-    BeDaemon();
-    std::string pretty_hostname;
-    std::string hostname( argv[1] );
-    XPlat::NetUtils::GetHostName( hostname, pretty_hostname );
-    Rank rank = (Rank)strtoul( argv[2], NULL, 10 );
-    setrank( rank );
-    std::string parent_hostname( argv[3] );
-    Port parent_port = (Port)strtoul( argv[4], NULL, 10 );
-    Rank parent_rank = (Rank)strtoul( argv[5], NULL, 10 );
-
-    //TLS: setup thread local storage for internal node
-    //I am "CommNodeMain(hostname:port)"
-
-    std::string name("COMM(");
-    name += pretty_hostname;
-    name += ":";
-    name += argv[2];
-    name += ")";
-
-    tsd_t * local_data = new tsd_t;
-    local_data->thread_id = XPlat::Thread::GetId();
-    local_data->thread_name = strdup(name.c_str());
-
-    if( (status = tsd_key.Set( local_data )) != 0){
-        fprintf(stderr, "XPlat::TLSKey::Set(): %s\n", strerror(status)); 
-        return -1;
+    if( comm_node != NULL ) {
+        delete comm_node;
+        comm_node = NULL;
     }
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr,
-                           "InternalNode(local[%u]:\"%s\", parent[%u]:\"%s:%u\")\n",
-                           rank, hostname.c_str(),
-                           parent_rank, parent_hostname.c_str(), parent_port ) );
-    comm_node = new InternalNode( network, hostname, rank,
-                                  parent_hostname, parent_port, parent_rank );
+    delete net;
+    net = NULL;
 
-    comm_node->waitfor_NetworkTermination();
+    tsd_t* tsd = (tsd_t*)tsd_key.Get();
+    if( tsd != NULL )
+    {
+        free( const_cast<char*>( tsd->thread_name ) );
+        delete tsd;
+    }
 
-    delete comm_node;
-    free( const_cast<char*>(local_data->thread_name) );
-    delete local_data;
-    delete network;
-
-    return 0;
+    return ret;
 }
 
 void BeDaemon( void )
 {
-#if !defined (os_windows)
+#ifndef os_windows
+# ifndef arch_crayxt
+
     // become a background process
     pid_t pid = fork();
     if( pid > 0 ) {
@@ -105,9 +105,10 @@ void BeDaemon( void )
         fprintf( stderr, "BE: 2nd fork failed to put process in background\n" );
         exit(-1);
     }
-
     // we were the child of both forks - we're the one who survives
+
+# endif /* !defined(arch_crayxt) */
 #else
-//TODO: figure out how to run in background on windows
+    //TODO: figure out how to run in background on windows
 #endif /* !defined(os_windows) */
 }

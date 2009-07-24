@@ -128,6 +128,7 @@ class NetworkTopology: public Error {
     bool remove_Node( Node * );
 
   private:
+    Node * find_NodeHoldingLock( Rank ) const;
     bool remove_Orphan( Rank );
     void remove_SubGraph( Node * inode );
 

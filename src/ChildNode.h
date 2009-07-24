@@ -15,15 +15,16 @@ namespace MRN
 {
 class Network;
 
-class ChildNode: public Error, public CommunicationNode {
+class ChildNode: public virtual Error, 
+                 public virtual CommunicationNode {
   public:
     ChildNode( Network *inetwork,
                std::string const& ihostname, Rank irank,
                std::string const& iphostname, Port ipport, Rank iprank );
     virtual ~ChildNode(void) {};
 
-    int proc_PacketsFromParent(std::list <PacketPtr> &)const;
-    virtual int proc_DataFromParent(PacketPtr)const=0;
+    int proc_PacketsFromParent( std::list<PacketPtr> & );
+    virtual int proc_DataFromParent( PacketPtr ipacket ) const=0;
     virtual int proc_FailureReportFromParent( PacketPtr ipacket ) const=0;
     virtual int proc_NewParentReportFromParent( PacketPtr ipacket ) const=0;
 
@@ -37,7 +38,7 @@ class ChildNode: public Error, public CommunicationNode {
     int proc_CollectPerfData( PacketPtr ipacket ) const;
     int proc_PrintPerfData( PacketPtr ipacket ) const;
 
-    int recv_PacketsFromParent( std::list <PacketPtr> &packet_list ) const;
+    int recv_PacketsFromParent( std::list<PacketPtr> &packet_list ) const;
     int send_EventsToParent( ) const;
     bool has_PacketsFromParent( ) const;
 
@@ -49,6 +50,7 @@ class ChildNode: public Error, public CommunicationNode {
 
  protected:
     Network * _network;
+    virtual int proc_PacketFromParent( PacketPtr cur_packet );
 
  private:
     uint16_t _incarnation; //incremented each time child connects to new parent

@@ -26,24 +26,38 @@ namespace MRN
 /*====================================================*/
 /*  ParentNode CLASS METHOD DEFINITIONS            */
 /*====================================================*/
-ParentNode::ParentNode( Network * inetwork, std::string const& ihostname, Rank irank )
-    : CommunicationNode( ihostname, UnknownPort, irank ), _network(inetwork),
-      _num_children( 0 ), _num_children_reported( 0 ), listening_sock_fd( 0 )
+ParentNode::ParentNode( Network* inetwork,
+                        std::string const& myhost,
+                        Rank myrank,
+                        int listeningSocket,
+                        Port listeningPort )
+    : CommunicationNode( myhost, listeningPort, myrank ),
+      _network(inetwork),
+      _num_children( 0 ),
+      _num_children_reported( 0 ), 
+      listening_sock_fd( listeningSocket )
 {
     mrn_dbg( 5, mrn_printf(FLF, stderr, "ParentNode(local[%u]:\"%s:%u\")\n",
                            _rank, _hostname.c_str(), _port ));
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling bind_to_port(%d)\n", _port ));
-    if( bindPort( &listening_sock_fd, &_port ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "bind_to_port() failed\n" ));
-        error( ERR_SYSTEM, _rank, "bindPort(%d): %s\n", _port, strerror(errno) );
-        return;
+
+    if( listeningSocket == -1 )
+    {
+        listening_sock_fd = 0; // force system to create socket and assign port
+        _port = UnknownPort;
+
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling bind_to_port(%d)\n", _port ));
+
+        if( bindPort( &listening_sock_fd, &_port ) == -1 ) {
+            error( ERR_SYSTEM, _rank, "bindPort(%d): %s\n", _port, strerror(errno) );
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "bind_to_port() failed\n" ));
+            return;
+        }
     }
 
     subtreereport_sync.RegisterCondition( ALLNODESREPORTED );
     
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Leaving ParentNode()\n" ));
 }
-
 
 ParentNode::~ParentNode( void )
 {
@@ -148,165 +162,96 @@ int ParentNode::recv_PacketsFromChildren( std::list< PacketPtr >&pkt_list,
     return ret;
 }
 
-int ParentNode::proc_PacketsFromChildren( std::list < PacketPtr >&
-                                            packet_list ) const
+int ParentNode::proc_PacketsFromChildren( std::list< PacketPtr > & ipackets )
 {
     int retval = 0;
     PacketPtr cur_packet;
 
     mrn_dbg_func_begin();
 
-    std::list < PacketPtr >::iterator iter = packet_list.begin(  );
-    for( ; iter != packet_list.end(  ); iter++ ) {
-        cur_packet = ( *iter );
-        switch ( cur_packet->get_Tag(  ) ) {
-        case PROT_CLOSE_STREAM:
-            mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                   "Calling proc_closeStream() ...\n" ));
-            if( proc_closeStream( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                            "proc_closeStream() failed\n" ));
-                retval = -1;
-            }
-            //printf(3, mrn_printf(FLF, stderr, "proc_closeStream() succeeded\n");
-            break;
-        case PROT_NEW_SUBTREE_RPT:
-            mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                   "Calling proc_newSubTreeReport() ...\n" ));
-            if( proc_newSubTreeReport( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                            "proc_newSubTreeReport() failed\n" ));
-                retval = -1;
-            }
-            //printf(3, mrn_printf(FLF, stderr, "proc_newSubTreeReport() succeeded\n");
-            break;
-         case PROT_DEL_SUBTREE_ACK:
-            mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                   "Calling proc_DeleteSubTreeAck() ...\n" ));
-            if( proc_DeleteSubTreeAck( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                            "proc_DeleteSubTreeAck() failed\n" ));
-                retval = -1;
-            }
-            //printf(3, mrn_printf(FLF, stderr, "proc_DeleteSubTreeAck() succeeded\n");
-            break;
-       case PROT_EVENT:
-            if( proc_Event( cur_packet ) == -1 ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_Event() failed\n" ));
-                retval = -1;
-            }
-            break;
-        case PROT_FAILURE_RPT:
-            if( proc_FailureReport( cur_packet ) == -1 ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "proc_FailureReport() failed\n" ));
-                retval = -1;
-            }
-            break;
-        case PROT_RECOVERY_RPT:
-            if( proc_RecoveryReport( cur_packet ) == -1 ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_RecoveryReport() failed\n" ));
-                retval = -1;
-            }
-            break;
-        case PROT_NEW_PARENT_RPT:
-            if( proc_NewParentReportFromParent( cur_packet ) == -1 ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "proc_NewParentReport() failed\n" ));
-                retval = -1;
-            }
-            break;
-        case PROT_SUBTREE_INFO_REQ:
-            if( proc_SubTreeInfoRequest( cur_packet ) == -1 ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "proc_SubTreeInfoRequest() failed\n" ));
-                retval = -1;
-            }
-            break;
-        default:
-            //Any unrecognized tag is assumed to be data
-            if( proc_DataFromChildren( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                            "proc_DataFromChildren() failed\n" ));
-                retval = -1;
-            }
-        }
+    std::list < PacketPtr >::iterator iter = ipackets.begin(  );
+    for( ; iter != ipackets.end(  ); iter++ ) {
+        if( proc_PacketFromChildren( *iter ) == -1 )
+            retval = -1;
     }
-
+ 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_PacketsFromChildren() %s",
-                ( retval == -1 ? "failed\n" : "succeeded\n" ) ));
-    packet_list.clear(  );
+                           ( retval == -1 ? "failed\n" : "succeeded\n" ) ));
+    ipackets.clear(  );
     return retval;
 }
 
-int ParentNode::proc_newSubTree( PacketPtr ipacket )
+int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
 {
-    char *byte_array = NULL;
-    char *backend_exe = NULL;
-    char *commnode_path=NULL;
-    char **backend_argv;
-    unsigned int backend_argc;
+    int retval = 0;
 
-    mrn_dbg_func_begin();
-
-    _initial_subtree_packet = ipacket;
-    if( ipacket->ExtractArgList( "%s%s%s%as", &byte_array, &commnode_path,
-                               &backend_exe, &backend_argv, &backend_argc ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
-        return -1;
-    }
-
-    SerialGraph sg( byte_array );
-    std::string backend_exe_str( ( backend_exe == NULL ) ? "" : backend_exe );
-
-    SerialGraph *cur_sg, *my_sg;
-
-    //use "UnknownPort" in lookup since this is what serialgraph was created w/
-    my_sg = sg.get_MySubTree( _hostname, UnknownPort, _rank );
-    if( my_sg == NULL ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "get_MySubTree() failed\n" ));
-        return -1;
-    }
-    my_sg->set_ToFirstChild( );
-    
-    for( cur_sg = my_sg->get_NextChild( ); cur_sg;
-         cur_sg = my_sg->get_NextChild( ) ) {
-        subtreereport_sync.Lock( );
-        _num_children++;
-        subtreereport_sync.Unlock( );
-
-        std::string cur_node_hostname = cur_sg->get_RootHostName( ); 
-        Rank cur_node_rank = cur_sg->get_RootRank( );
-
-        if( !cur_sg->is_RootBackEnd( ) ) {
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "launching internal node ...\n" ));
-            launch_InternalNode( cur_node_hostname, cur_node_rank, commnode_path );
+    switch ( cur_packet->get_Tag(  ) ) {
+    case PROT_CLOSE_STREAM:
+        mrn_dbg( 5, mrn_printf(FLF, stderr,
+                               "Calling proc_closeStream() ...\n" ));
+        if( proc_closeStream( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_closeStream() failed\n" ));
+            retval = -1;
         }
-        else {
-            if( backend_exe_str.length( ) > 0 ) {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "launching backend_exe: \"%s\"\n",
-                                       backend_exe_str.c_str() )); 
-                std::vector < std::string > args;
-                for(unsigned int i=0; i<backend_argc; i++){
-                    args.push_back( backend_argv[i] );
-                }
-                if( launch_Application( cur_node_hostname, cur_node_rank,
-                                        backend_exe_str, args ) == -1 ){
-                    mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                "launch_application() failed\n" ));
-                    return -1;
-                }
-            }
-            else {
-                // BE attach case
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "launching internal node ...\n" ));
-                launch_InternalNode( cur_node_hostname, cur_node_rank, commnode_path );
-            }
+        //printf(3, mrn_printf(FLF, stderr, "proc_closeStream() succeeded\n");
+        break;
+    case PROT_NEW_SUBTREE_RPT:
+        mrn_dbg( 5, mrn_printf(FLF, stderr,
+                               "Calling proc_newSubTreeReport() ...\n" ));
+        if( proc_newSubTreeReport( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_newSubTreeReport() failed\n" ));
+            retval = -1;
+        }
+        //printf(3, mrn_printf(FLF, stderr, "proc_newSubTreeReport() succeeded\n");
+        break;
+    case PROT_DEL_SUBTREE_ACK:
+        mrn_dbg( 5, mrn_printf(FLF, stderr,
+                               "Calling proc_DeleteSubTreeAck() ...\n" ));
+        if( proc_DeleteSubTreeAck( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_DeleteSubTreeAck() failed\n" ));
+            retval = -1;
+        }
+        //printf(3, mrn_printf(FLF, stderr, "proc_DeleteSubTreeAck() succeeded\n");
+        break;
+    case PROT_EVENT:
+        if( proc_Event( cur_packet ) == -1 ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_Event() failed\n" ));
+            retval = -1;
+        }
+        break;
+    case PROT_FAILURE_RPT:
+        if( proc_FailureReport( cur_packet ) == -1 ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_FailureReport() failed\n" ));
+            retval = -1;
+        }
+        break;
+    case PROT_RECOVERY_RPT:
+        if( proc_RecoveryReport( cur_packet ) == -1 ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_RecoveryReport() failed\n" ));
+            retval = -1;
+        }
+        break;
+    case PROT_NEW_PARENT_RPT:
+        if( proc_NewParentReportFromParent( cur_packet ) == -1 ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_NewParentReport() failed\n" ));
+            retval = -1;
+        }
+        break;
+    default:
+        //Any unrecognized tag is assumed to be data
+        if( proc_DataFromChildren( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_DataFromChildren() failed\n" ));
+            retval = -1;
         }
     }
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newSubTree() succeeded\n" ));
-    return 0;
+    return retval;
 }
 
 int ParentNode::waitfor_SubTreeReports( void ) const
@@ -746,108 +691,6 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
     return 0;
 }
 
-int ParentNode::proc_SubTreeInfoRequest( PacketPtr  ipacket ) const
-{
-    //send the packet containing the initial subtree to requesting node
-    mrn_dbg(5, mrn_printf(FLF, stderr, "sending initial subtree packet:\n"
-                          "\t%s\n", (*_initial_subtree_packet)[0]->get_string() ));
-    PeerNodePtr outlet = _network->get_PeerNode( ipacket->get_InletNodeRank() );
-    if( ( outlet->send( _initial_subtree_packet ) == -1 ) ||
-        ( outlet->flush() == -1 ) ){
-        mrn_dbg(1, mrn_printf(FLF, stderr, "send()/flush() failed\n" ));
-        return -1;
-    }
-
-    return 0;
-}
-
-int ParentNode::launch_InternalNode( std::string ihostname, Rank irank,
-                                     std::string icommnode_exe )
-    const
-{
-    char parent_port_str[128];
-    snprintf(parent_port_str, sizeof(parent_port_str), "%d", _port);
-    char parent_rank_str[128];
-    snprintf(parent_rank_str, sizeof(parent_rank_str), "%d", _rank);
-    char rank_str[128];
-    snprintf(rank_str, sizeof(rank_str), "%d", irank );
-
-    mrn_dbg(3, mrn_printf(FLF, stderr, "Launching %s:%d ...",
-                          ihostname.c_str(), irank ));
-
-    // set up arguments for the new process
-    std::vector <std::string> args;
-    args.push_back(icommnode_exe);
-    args.push_back(ihostname);
-    args.push_back(rank_str);
-    args.push_back(_hostname);
-    args.push_back(parent_port_str);
-    args.push_back( parent_rank_str );
-
-    if( XPlat::Process::Create( ihostname, icommnode_exe, args ) != 0 ){
-        int err = XPlat::Process::GetLastError();
-        
-        error( ERR_SYSTEM, _rank, "XPlat::Process::Create(%s %s): %s\n",
-               ihostname.c_str(), icommnode_exe.c_str(),
-               XPlat::Error::GetErrorString( err ).c_str() );
-        mrn_dbg(1, mrn_printf(FLF, stderr,
-                              "XPlat::Process::Create(%s %s): %s\n",
-                              ihostname.c_str(), icommnode_exe.c_str(),
-                              XPlat::Error::GetErrorString( err ).c_str() ));
-        return -1;
-    }
-
-    mrn_dbg(3, mrn_printf(0,0,0, stderr, "Success!\n" ));
-
-    return 0;
-}
-
-
-int ParentNode::launch_Application( std::string ihostname, Rank irank, std::string &ibackend_exe,
-                                    std::vector <std::string> &ibackend_args)
-    const
-{
-
-    mrn_dbg(3, mrn_printf(FLF, stderr, "Launching application on %s:%d (\"%s\")\n",
-                          ihostname.c_str(), irank, ibackend_exe.c_str()));
-  
-    char parent_port_str[128];
-    snprintf(parent_port_str, sizeof( parent_port_str), "%d", _port);
-    char parent_rank_str[128];
-    snprintf(parent_rank_str, sizeof( parent_rank_str), "%d", _rank );
-    char rank_str[128];
-    snprintf(rank_str, sizeof(rank_str), "%d", irank );
-
-    // set up arguments for new process: copy to get the cmd in front
-
-    std::vector<std::string> new_args;
-
-    new_args.push_back( ibackend_exe );
-    for(unsigned int i=0; i<ibackend_args.size(); i++){
-        new_args.push_back(ibackend_args[i]);
-    }
-    new_args.push_back( _hostname );
-    new_args.push_back( parent_port_str );
-    new_args.push_back( parent_rank_str );
-    new_args.push_back( ihostname );
-    new_args.push_back( rank_str );
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Creating \"%s\" on \"%s:%d\"\n",
-                          ibackend_exe.c_str(), ihostname.c_str(), irank ));
-  
-    if( XPlat::Process::Create( ihostname, ibackend_exe, new_args ) != 0 ){
-        mrn_dbg(1, mrn_printf(FLF, stderr, "XPlat::Process::Create() failed\n"));
-        int err = XPlat::Process::GetLastError();
-        error( ERR_SYSTEM, _rank, "XPlat::Process::Create(%s %s): %s\n",
-               ihostname.c_str(), ibackend_exe.c_str(),
-               XPlat::Error::GetErrorString( err ).c_str() );
-        return -1;
-    }
-    mrn_dbg(5, mrn_printf(FLF, stderr, "success\n"));
-
-    return 0;
-}
-
 int ParentNode::proc_FailureReport( PacketPtr ipacket ) const
 {
     Rank failed_rank;
@@ -874,7 +717,6 @@ int ParentNode::proc_FailureReport( PacketPtr ipacket ) const
             return -1;
         }
     }
-
     return 0;
 }
 
@@ -944,4 +786,15 @@ int ParentNode::proc_closeStream( PacketPtr ipacket ) const
     return 0;
 }
 
-}                               // namespace MRN
+void ParentNode::init_numChildrenExpected( SerialGraph& sg )
+{
+    _num_children = 0;
+
+    sg.set_ToFirstChild();
+    SerialGraph* currSubtree = sg.get_NextChild();
+    for( ; currSubtree != NULL; currSubtree = sg.get_NextChild() )
+        _num_children++;
+}
+
+
+} // namespace MRN

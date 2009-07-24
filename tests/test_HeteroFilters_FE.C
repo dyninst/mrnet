@@ -61,7 +61,7 @@ int main( int argc, char ** argv )
    
     test = new Test("MRNet Heterogeneous Stream Filters Test");
 
-    Network * net = new Network( topology_file, backend_exe, &dummy_argv );
+    Network * net = Network::CreateNetworkFE( topology_file, backend_exe, &dummy_argv );
     if( net->has_Error( ) ){
         net->perror( "network creation failed" );
         exit( -1 );

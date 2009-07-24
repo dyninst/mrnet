@@ -10,56 +10,69 @@ using namespace MRN;
 
 int main(int argc, char **argv) {
 
-    // Command line args are: parent_hostname, parent_port, parent_rank, my_rank
+    // Command line args are: parent_hostname, parent_port, parent_rank, my_hostname, my_rank
     // these are used to instantiate the backend network object
 
-    const char* parHostname = argv[argc-4];
-    Port parPort = (Port)strtoul( argv[argc-3], NULL, 10 );
-    Rank parRank = (Rank)strtoul( argv[argc-2], NULL, 10 );
+    if( argc != 6 ) {
+        fprintf(stderr, "Incorrect usage, must pass parent/local info\n");
+        return -1;
+    }
+
+    const char* parHostname = argv[argc-5];
+    Port parPort = (Port)strtoul( argv[argc-4], NULL, 10 );
+    const char* myHostname = argv[argc-2];
     Rank myRank = (Rank)strtoul( argv[argc-1], NULL, 10 );
 				
+    fprintf( stdout, "Backend %s[%d] connecting to %s:%d\n",
+             myHostname, myRank, parHostname, parPort );
+
+    Network * net = Network::CreateNetworkBE( argc, argv );
+
     int32_t recv_int=0;
     int tag;   
     PacketPtr p;
     Stream* stream;
-    Network * network = NULL;
 
-    char myHostname[64];
-    while( gethostname(myHostname, 64) == -1 );
-
-    fprintf( stdout, "Backend %s[%d] connecting to %s:%d\n",
-             myHostname, myRank, parHostname, parPort );
-
-    network = new Network(parHostname, parPort, parRank, myHostname, myRank);
-
-    do{
-        if ( network->recv(&tag, p, &stream) != 1){
-            printf("receive failure\n");
-            return -1;
+    do {
+        if( net->recv(&tag, p, &stream) != 1 ) {
+            fprintf(stderr, "BE: receive failure\n");
+            break;
         }
 
         switch( tag ) {
+
         case PROT_INT:
-            if( p->unpack( "%d", &recv_int) == -1 ){
-                printf("stream::unpack(%%d) failure\n");
-                return -1;
+            if( p->unpack( "%d", &recv_int) == -1 ) {
+                fprintf(stderr, "BE: stream::unpack(%%d) failure\n");
+                tag = PROT_EXIT;
+                break;
             }
 
-            printf("BE received int = %d\n", recv_int);
+            fprintf(stdout, "BE: received int = %d\n", recv_int);
 
             if ( (stream->send(PROT_INT, "%d", recv_int) == -1) ||
-                 (stream->flush() == -1 ) ){
-                printf("stream::send() failure\n");
-                return -1;
+                 (stream->flush() == -1 ) ) {
+                fprintf(stderr, "BE: stream::send() failure\n");
+                tag = PROT_EXIT;
             }
             break;
+
+        case PROT_EXIT:
+            break;
+
         default:
+            fprintf(stderr, "BE: Unknown Protocol: %d\n", tag);
+            tag = PROT_EXIT;
             break;
         }
+
+        fflush(stdout);
+        fflush(stderr);
+
     } while ( tag != PROT_EXIT );
 
-    // FE delete of the network will causes us to exit, wait for it
-    sleep(5);
+    // FE delete of the net will causes us to exit, wait for it
+    while(true) sleep(5);
 
     return 0;
 }

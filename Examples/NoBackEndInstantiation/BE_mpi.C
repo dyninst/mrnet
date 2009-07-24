@@ -4,6 +4,7 @@
  ****************************************************************************/
 #include "mpi.h"
 
+
 #include <iostream>
 #include <fstream>
 
@@ -13,44 +14,12 @@
 using namespace MRN;
 using namespace std;
 
-
-int getParentInfo(const char* file, int rank, char* phost, char* pport, char* prank)
-{
-    ifstream ifs(file);
-    if( ifs.is_open() ) {
-        while( ifs.good() ) {
-            char line[256];
-	    ifs.getline( line, 256 );
-            
-            char pname[64];
-            int tpport, tprank, trank;
-            int matches = sscanf( line, "%s %d %d %d",
-                                  pname, &tpport, &tprank, &trank );
-            if( matches != 4 ) {
-                fprintf(stderr, "Error while scanning %s\n", file);
-                ifs.close();
-	        return 1;
-            }
-            if( trank == rank ) {
-                sprintf(phost, "%s", pname);
-                sprintf(pport, "%d", tpport);
-                sprintf(prank, "%d", tprank);
-                ifs.close();
-                return 0;
-            }
-
-        }
-        ifs.close();
-    }
-    // my rank not found :(
-    return 1;
-}
+int getParentInfo(const char* file, int rank, 
+                  char* phost, char* pport, char* prank);
 
 int main( int argc, char *argv[] ) {
 
-    // Command line args are: 
-    //     connections_file 
-    // These are used to instantiate the backend network object
+    // Command line args are: connections_file  
 
     int wSize, wRank;
     if( argc != 2 ) {
@@ -65,7 +34,6 @@ int main( int argc, char *argv[] ) {
     wSize = wRank = -1;
     MPI_Comm_size( MPI_COMM_WORLD, &wSize );
     MPI_Comm_rank( MPI_COMM_WORLD, &wRank );
-
 
     char parHostname[64], myHostname[64], parPort[10], parRank[10], myRank[10];
     Rank mRank = 10000 + wRank;
@@ -97,38 +65,80 @@ int main( int argc, char *argv[] ) {
     fprintf( stdout, "Backend %s[%s] connecting to %s:%s[%s]\n",
              myHostname, myRank, parHostname, parPort, parRank );
 
-    net = new Network(BE_argc, BE_argv);
+    net = Network::CreateNetworkBE( BE_argc, BE_argv );
 
-    do{
-        if ( net->recv(&tag, p, &stream) != 1){
+    do {
+        if( net->recv(&tag, p, &stream) != 1 ) {
             printf("receive failure\n");
             return -1;
         }
 
         switch( tag ) {
         case PROT_INT:
-            if( p->unpack( "%d", &recv_int) == -1 ){
+            if( p->unpack( "%d", &recv_int) == -1 ) {
                 printf("stream::unpack(%%d) failure\n");
                 return -1;
             }
 
-            printf("BE received int = %d\n", recv_int);
+            fprintf(stdout, "BE: received int = %d\n", recv_int);
 
-            if ( (stream->send(PROT_INT, "%d", recv_int) == -1) ||
-                 (stream->flush() == -1 ) ){
-                printf("stream::send(%d) failure\n");
+            if( (stream->send(PROT_INT, "%d", recv_int) == -1) ||
+                (stream->flush() == -1 ) ) {
+                printf("stream::send(%%d) failure\n");
                 return -1;
             }
             break;
+            
+        case PROT_EXIT:            
+            break;
+
         default:
+            fprintf(stdout, "BE: Unknown Protocol %d\n", tag);
+            tag = PROT_EXIT;
             break;
         }
+
+        fflush(stdout);
+        fflush(stderr);
+
     } while ( tag != PROT_EXIT );
 
     MPI_Finalize();
 
     // FE delete of the network will causes us to exit, wait for it
-    sleep(5);
+    while(true) sleep(5);
 
     return 0;
+}
+
+int getParentInfo(const char* file, int rank, char* phost, char* pport, char* prank)
+{
+    ifstream ifs(file);
+    if( ifs.is_open() ) {
+        while( ifs.good() ) {
+            char line[256];
+	    ifs.getline( line, 256 );
+            
+            char pname[64];
+            int tpport, tprank, trank;
+            int matches = sscanf( line, "%s %d %d %d",
+                                  pname, &tpport, &tprank, &trank );
+            if( matches != 4 ) {
+                fprintf(stderr, "Error while scanning %s\n", file);
+                ifs.close();
+	        return 1;
+            }
+            if( trank == rank ) {
+                sprintf(phost, "%s", pname);
+                sprintf(pport, "%d", tpport);
+                sprintf(prank, "%d", tprank);
+                ifs.close();
+                return 0;
+            }
+
+        }
+        ifs.close();
+    }
+    // my rank not found :(
+    return 1;
 }

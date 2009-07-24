@@ -13,10 +13,10 @@ using namespace MRN;
 using namespace MRN_test;
 Test * test;
 
-int test_Sum( Network * network, DataType type );
-int test_Max( Network * network, DataType type );
-int test_Min( Network * network, DataType type );
-int test_Avg( Network * network, DataType type );
+int test_Sum( Network * net, DataType type );
+int test_Max( Network * net, DataType type );
+int test_Min( Network * net, DataType type );
+int test_Avg( Network * net, DataType type );
 
 int main(int argc, char **argv)
 {
@@ -33,22 +33,22 @@ int main(int argc, char **argv)
             "MRNet's built-in filters.\n\n");
 
     test = new Test("MRNet Native Filter Test");
-	const char * dummy_argv=NULL;
-    Network * network = new Network( topology_file, backend_exe, &dummy_argv  );
+    const char * dummy_argv=NULL;
+    Network * net = Network::CreateNetworkFE( topology_file, backend_exe, &dummy_argv  );
 
-    test_Sum( network, CHAR_T );
-    test_Sum( network, UCHAR_T );
-    test_Sum( network, INT16_T );
-    test_Sum( network, UINT16_T );
-    test_Sum( network, INT32_T );
-    test_Sum( network, UINT32_T );
-    test_Sum( network, INT64_T );
-    test_Sum( network, UINT64_T );
-    test_Sum( network, FLOAT_T );
-    test_Sum( network, DOUBLE_T );
+    test_Sum( net, CHAR_T );
+    test_Sum( net, UCHAR_T );
+    test_Sum( net, INT16_T );
+    test_Sum( net, UINT16_T );
+    test_Sum( net, INT32_T );
+    test_Sum( net, UINT32_T );
+    test_Sum( net, INT64_T );
+    test_Sum( net, UINT64_T );
+    test_Sum( net, FLOAT_T );
+    test_Sum( net, DOUBLE_T );
   
-    Communicator * comm_BC = network->get_BroadcastCommunicator( );
-    Stream * stream = network->new_Stream( comm_BC );
+    Communicator * comm_BC = net->get_BroadcastCommunicator( );
+    Stream * stream = net->new_Stream( comm_BC );
     if(stream->send(PROT_EXIT, "") == -1){
         test->print("stream::send(exit) failure\n");
         return -1;
@@ -62,12 +62,12 @@ int main(int argc, char **argv)
     test->end_Test();
     delete test;
 
-    delete network;
+    delete net;
 
     return 0;
 }
 
-int test_Sum( Network * network, DataType type )
+int test_Sum( Network * net, DataType type )
 {
     PacketPtr buf;
     int64_t recv_buf; // we have alignment issues on some 64-bit platforms that require this
@@ -81,8 +81,8 @@ int test_Sum( Network * network, DataType type )
     testname = "test_Sum(" + Type2String[ type ] + ")";
     test->start_SubTest(testname);
 
-    Communicator * comm_BC = network->get_BroadcastCommunicator( );
-    Stream * stream = network->new_Stream( comm_BC, TFILTER_SUM,
+    Communicator * comm_BC = net->get_BroadcastCommunicator( );
+    Stream * stream = net->new_Stream( comm_BC, TFILTER_SUM,
                                            SFILTER_WAITFORALL);
 
     int num_backends = stream->size();
@@ -249,7 +249,7 @@ int test_Sum( Network * network, DataType type )
 }
 
 #if defined (UNCUT)
-int test_Max( Network * network, DataType type )
+int test_Max( Network * net, DataType type )
 {
     PacketPtr buf;
     char recv_val[8];
@@ -262,9 +262,9 @@ int test_Max( Network * network, DataType type )
 
     test->start_SubTest(testname);
 
-    Communicator * comm_BC = network->get_BroadcastCommunicator( );
-    Stream * stream = network->new_Stream(comm_BC, TFILTER_MAX,
-                                          SFILTER_WAITFORALL);
+    Communicator * comm_BC = net->get_BroadcastCommunicator( );
+    Stream * stream = net->new_Stream(comm_BC, TFILTER_MAX,
+                                      SFILTER_WAITFORALL);
 
     if( stream->send(tag, "") == -1 ){
         test->print("stream::send() failure\n", testname);

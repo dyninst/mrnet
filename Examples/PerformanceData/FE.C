@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     // This Network() cnstr instantiates the MRNet internal nodes, according to the
     // organization in "topology_file," and the application back-end with any
     // specified cmd line args
-    Network * net = new Network( topology_file, backend_exe, &dummy_argv  );
+    Network * net = Network::CreateNetworkFE( topology_file, backend_exe, &dummy_argv  );
 
     // A Broadcast communicator contains all the back-ends
     Communicator * comm_BC = net->get_BroadcastCommunicator();
@@ -109,17 +109,12 @@ int main(int argc, char **argv)
     rank_perfdata_map::iterator mi = data.begin();
     for( ; mi != data.end() ; mi++ ) {
         unsigned sz = mi->second.size();
-        // printf("Rank %d has %d values, first is %" PRIu64 "\n",
-//                (int)mi->first, mi->second.size(), mi->second[0].u);
-//         printf("Rank %d has %d values, first is %" PRIi64 "\n",
-//                (int)mi->first, mi->second.size(), mi->second[0].i);
-        printf("Rank %d :", (int)mi->first);
+        printf("Average of %d ranks :\n", 0-(int)mi->first);
         for(unsigned u=0; u < sz; u++ ) {
-            // printf(" %" PRIu64, mi->second[u].u);
-//             printf(" %" PRIi64, mi->second[u].i);
-            printf(" %.6lf", mi->second[u].d);
+            // NOTE: for unsigned integer data use - printf(" %" PRIu64, mi->second[u].u);
+            // NOTE: for signed integer data use - printf(" %" PRIi64, mi->second[u].i);
+            printf("  filter execution %d time: %.6lf\n", u, mi->second[u].d);
         }
-        printf("\n");
     }
 
     if( stream->send(PROT_EXIT, "") == -1 ) {
@@ -130,7 +125,6 @@ int main(int argc, char **argv)
         fprintf( stderr, "stream::flush() failure\n");
         return -1;
     }
-    sleep(5);
 
     // The Network destructor will cause all internal and leaf tree nodes to exit
     delete net;

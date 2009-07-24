@@ -27,198 +27,182 @@ ChildNode::ChildNode( Network * inetwork,
     _network->set_ParentNode( parent );
 }
 
-int ChildNode::proc_PacketsFromParent( std::list < PacketPtr >&packets ) const
+int ChildNode::proc_PacketsFromParent( std::list< PacketPtr > & packets )
 {
     int retval = 0;
-    PacketPtr cur_packet;
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "In proc_Packets()\n" ));
-    std::list < PacketPtr >::iterator iter = packets.begin(  );
-    for( ; iter != packets.end(  ); iter++ ) {
-        cur_packet = ( *iter );
-        switch ( cur_packet->get_Tag(  ) ) {
+    mrn_dbg_func_begin();
 
-        case PROT_NEW_SUBTREE_RPT:
-            assert(0);
-            break;
-
-        case PROT_NEW_SUBTREE:
-            assert( _network->is_LocalNodeInternal() );
-            mrn_dbg(3, mrn_printf(FLF, stderr, "Processing PROT_NEW_SUBTREE\n"));
-            if( _network->get_LocalInternalNode()->proc_newSubTree( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTree() failed\n" ));
-                retval = -1;
-            }
-            mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
-            if( _network->get_LocalInternalNode()->waitfor_SubTreeReports() == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_SubTreeReports() failed\n" ));
-                retval = -1;
-            }
-            mrn_dbg(5, mrn_printf(FLF, stderr, "Subtrees reported\n" ));
-
-            //must send reports upwards
-            if( send_NewSubTreeReport( ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                            "send_newSubTreeReport() failed\n" ));
-                retval = -1;
-            }
-            break;
-
-        case PROT_DEL_SUBTREE:
-            if( _network->is_LocalNodeParent() ) {
-                if( _network->get_LocalParentNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n" ));
-                    retval = -1;
-                }
-            }
-            else{
-                if( _network->get_LocalBackEndNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n" ));
-                    retval = -1;
-                }
-            }
-            break;
-
-        case PROT_NEW_HETERO_STREAM:
-        case PROT_NEW_STREAM:
-            if( _network->is_LocalNodeInternal() ){
-                if( _network->get_LocalInternalNode()->proc_newStream( cur_packet ) == NULL ){
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
-                    retval = -1;
-                }
-            }
-            else{
-                if( _network->get_LocalBackEndNode()->proc_newStream( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
-                    retval = -1;
-                }
-            }
-            break;
-
-        case PROT_SET_FILTERPARAMS_UPSTREAM:
-            if( _network->is_LocalNodeInternal() ){
-                if( _network->get_LocalInternalNode()->proc_UpstreamFilterParams( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_UpstreamFilterParams() failed\n" ));
-                    retval = -1;
-                }
-            }
-            else{
-                if( _network->get_LocalBackEndNode()->proc_UpstreamFilterParams( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_UpstreamFilterParams() failed\n" ));
-                    retval = -1;
-                }
-            }
-            break;
-
-        case PROT_SET_FILTERPARAMS_DOWNSTREAM:
-            if( _network->is_LocalNodeInternal() ){
-                if( _network->get_LocalInternalNode()->proc_DownstreamFilterParams( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_DownstreamFilterParams() failed\n" ));
-                    retval = -1;
-                }
-            }
-            else{
-                if( _network->get_LocalBackEndNode()->proc_DownstreamFilterParams( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_DownstreamFilterParams() failed\n" ));
-                    retval = -1;
-                }
-            }
-            break;
-
-        case PROT_DEL_STREAM:
-            if( _network->is_LocalNodeInternal() ) {
-                if( _network->get_LocalInternalNode()->proc_deleteStream( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_delStream() failed\n" ));
-                    retval = -1;
-                }
-            }
-            break;
-
-        case PROT_NEW_FILTER:
-            if( _network->is_LocalNodeInternal() ){
-                if( _network->get_LocalInternalNode()->proc_newFilter( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n" ));
-                    retval = -1;
-                }
-            }
-            else {
-                if( _network->get_LocalBackEndNode()->proc_newFilter( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n" ));
-                    retval = -1;
-                }
-            }
-            break;
-
-        case PROT_FAILURE_RPT:
-            if( proc_FailureReportFromParent( cur_packet ) == -1 ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "proc_FailureReport() failed\n" ));
-                retval = -1;
-            }
-            break;
-        case PROT_NEW_PARENT_RPT:
-            if( proc_NewParentReportFromParent( cur_packet ) == -1 ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "proc_NewParentReport() failed\n" ));
-                retval = -1;
-            }
-            break;
-        case PROT_TOPOLOGY_RPT:
-            if( proc_TopologyReport( cur_packet ) == -1 ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "proc_TopologyReport() failed\n" ));
-                retval = -1;
-            }
-            break;
-        case PROT_RECOVERY_RPT:
-            if( proc_RecoveryReport( cur_packet ) == -1 ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "proc_RecoveryReport() failed\n" ));
-                retval = -1;
-            }
-            break;
-        case PROT_ENABLE_PERFDATA:
-            if( proc_EnablePerfData( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                            "proc_CollectPerfData() failed\n" ));
-                retval = -1;
-            }
-            break;
-        case PROT_DISABLE_PERFDATA:
-            if( proc_DisablePerfData( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                            "proc_CollectPerfData() failed\n" ));
-                retval = -1;
-            }
-            break;
-        case PROT_COLLECT_PERFDATA:
-            if( proc_CollectPerfData( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                            "proc_CollectPerfData() failed\n" ));
-                retval = -1;
-            }
-            break;
-        case PROT_PRINT_PERFDATA:
-            if( proc_PrintPerfData( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                            "proc_PrintPerfData() failed\n" ));
-                retval = -1;
-            }
-            break;
-        default:
-            //Any Unrecognized tag is assumed to be data
-            if( proc_DataFromParent( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                            "proc_Data() failed\n" ));
-                retval = -1;
-            }
-            break;
-        }
+    std::list < PacketPtr >::iterator iter = packets.begin();
+    for( ; iter != packets.end(); iter++ ) {
+        if( this->proc_PacketFromParent( *iter ) == -1 )
+            retval = -1;
     }
 
-    packets.clear(  );
+    packets.clear();
+
     mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_Packets() %s",
-                ( retval == -1 ? "failed\n" : "succeeded\n" ) ));
+                           ( retval == -1 ? "failed\n" : "succeeded\n" ) ));
+    return retval;
+}
+
+int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
+{
+    int retval = 0;
+
+    switch ( cur_packet->get_Tag() ) {
+
+    case PROT_DEL_SUBTREE:
+        if( _network->is_LocalNodeParent() ) {
+            if( _network->get_LocalParentNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n" ));
+                retval = -1;
+            }
+        }
+        else{
+            if( _network->get_LocalBackEndNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n" ));
+                retval = -1;
+            }
+        }
+        break;
+        
+    case PROT_NEW_HETERO_STREAM:
+    case PROT_NEW_STREAM:
+        if( _network->is_LocalNodeInternal() ){
+            if( _network->get_LocalInternalNode()->proc_newStream( cur_packet ) == NULL ){
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
+                retval = -1;
+            }
+        }
+        else{
+            if( _network->get_LocalBackEndNode()->proc_newStream( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
+                retval = -1;
+            }
+        }
+        break;
+        
+    case PROT_SET_FILTERPARAMS_UPSTREAM:
+        if( _network->is_LocalNodeInternal() ){
+            if( _network->get_LocalInternalNode()->proc_UpstreamFilterParams( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_UpstreamFilterParams() failed\n" ));
+                retval = -1;
+            }
+        }
+        else{
+            if( _network->get_LocalBackEndNode()->proc_UpstreamFilterParams( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_UpstreamFilterParams() failed\n" ));
+                retval = -1;
+            }
+        }
+        break;
+
+    case PROT_SET_FILTERPARAMS_DOWNSTREAM:
+        if( _network->is_LocalNodeInternal() ){
+            if( _network->get_LocalInternalNode()->proc_DownstreamFilterParams( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_DownstreamFilterParams() failed\n" ));
+                retval = -1;
+            }
+        }
+        else{
+            if( _network->get_LocalBackEndNode()->proc_DownstreamFilterParams( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_DownstreamFilterParams() failed\n" ));
+                retval = -1;
+            }
+        }
+        break;
+
+    case PROT_DEL_STREAM:
+        if( _network->is_LocalNodeInternal() ) {
+            if( _network->get_LocalInternalNode()->proc_deleteStream( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_delStream() failed\n" ));
+                retval = -1;
+            }
+        }
+        break;
+
+    case PROT_NEW_FILTER:
+        if( _network->is_LocalNodeInternal() ){
+            if( _network->get_LocalInternalNode()->proc_newFilter( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n" ));
+                retval = -1;
+            }
+        }
+        else {
+            if( _network->get_LocalBackEndNode()->proc_newFilter( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n" ));
+                retval = -1;
+            }
+        }
+        break;
+
+    case PROT_FAILURE_RPT:
+        if( proc_FailureReportFromParent( cur_packet ) == -1 ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_FailureReport() failed\n" ));
+            retval = -1;
+        }
+        break;
+    case PROT_NEW_PARENT_RPT:
+        if( proc_NewParentReportFromParent( cur_packet ) == -1 ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_NewParentReport() failed\n" ));
+            retval = -1;
+        }
+        break;
+    case PROT_TOPOLOGY_RPT:
+        if( proc_TopologyReport( cur_packet ) == -1 ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_TopologyReport() failed\n" ));
+            retval = -1;
+        }
+        break;
+    case PROT_RECOVERY_RPT:
+        if( proc_RecoveryReport( cur_packet ) == -1 ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_RecoveryReport() failed\n" ));
+            retval = -1;
+        }
+        break;
+    case PROT_ENABLE_PERFDATA:
+        if( proc_EnablePerfData( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_CollectPerfData() failed\n" ));
+            retval = -1;
+        }
+        break;
+    case PROT_DISABLE_PERFDATA:
+        if( proc_DisablePerfData( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_CollectPerfData() failed\n" ));
+            retval = -1;
+        }
+        break;
+    case PROT_COLLECT_PERFDATA:
+        if( proc_CollectPerfData( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_CollectPerfData() failed\n" ));
+            retval = -1;
+        }
+        break;
+    case PROT_PRINT_PERFDATA:
+        if( proc_PrintPerfData( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_PrintPerfData() failed\n" ));
+            retval = -1;
+        }
+        break;
+    default:
+        //Any Unrecognized tag is assumed to be data
+        if( proc_DataFromParent( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_Data() failed\n" ));
+            retval = -1;
+        }
+        break;
+    }
+
     return retval;
 }
 

@@ -17,9 +17,11 @@ namespace MRN
 /*======================================================*/
 InternalNode::InternalNode( Network * inetwork,
                             std::string const& ihostname, Rank irank,
-                            std::string const& iphostname, Port ipport, Rank iprank )
-    : ParentNode( inetwork, ihostname, irank ),
-      ChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank )
+                            std::string const& iphostname, Port ipport, Rank iprank,
+                            int listeningSocket, Port listeningPort )
+  : CommunicationNode( ihostname, listeningPort, irank ),
+    ParentNode( inetwork, ihostname, irank, listeningSocket, listeningPort ),
+    ChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank )
 {
     _sync.RegisterCondition( NETWORK_TERMINATION );
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Local[%u]: %s:%u, parent[%u]: %s:%u\n",
@@ -51,6 +53,7 @@ InternalNode::InternalNode( Network * inetwork,
         return;
     }
 
+#ifdef MJB_CHECK_NEEDED
     //request subtree information
     if( request_SubTreeInfo() == -1 ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "request_SubTreeInfo() failed\n" ));
@@ -58,6 +61,7 @@ InternalNode::InternalNode( Network * inetwork,
         ChildNode::error( ERR_INTERNAL, ParentNode::_rank, "request_SubTreeInfofailed\n" );
         return;
     }
+#endif
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "InternalNode:%p\n", this ));
     mrn_dbg_func_end();

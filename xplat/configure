@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT BUILDSHARED VERBOSEMAKE GREP RM COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES SOFLAGS SET_MAKE RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CXXCPP EGREP LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT BUILDSHARED VERBOSEMAKE MRNET_STARTUP_METHOD GREP RM COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES SOFLAGS SET_MAKE RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CXXCPP EGREP LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1989,6 +1989,31 @@ else
    debug_mode="no"
 fi;
 
+echo "$as_me:$LINENO: checking for /proc/cray_xt/nid" >&5
+echo $ECHO_N "checking for /proc/cray_xt/nid... $ECHO_C" >&6
+if test "${ac_cv_file__proc_cray_xt_nid+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/proc/cray_xt/nid"; then
+  ac_cv_file__proc_cray_xt_nid=yes
+else
+  ac_cv_file__proc_cray_xt_nid=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file__proc_cray_xt_nid" >&5
+echo "${ECHO_T}$ac_cv_file__proc_cray_xt_nid" >&6
+if test $ac_cv_file__proc_cray_xt_nid = yes; then
+  MRNET_STARTUP_METHOD="cray_xt"
+else
+  MRNET_STARTUP_METHOD="ssh"
+fi
+
+
+
 # Extract the first word of "grep", so it can be a program name with args.
 set dummy grep; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -2027,6 +2052,7 @@ else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
+
 
 # Extract the first word of "rm", so it can be a program name with args.
 set dummy rm; ac_word=$2
@@ -2096,6 +2122,14 @@ echo "${ECHO_T}aix-native" >&6
     COMPILER_TYPE="aix-native"
     echo "$as_me:$LINENO: result: aix-native" >&5
 echo "${ECHO_T}aix-native" >&6
+  elif test "$CXX" = "pgCC" ; then
+    COMPILER_TYPE="pgi"
+    echo "$as_me:$LINENO: result: pgi" >&5
+echo "${ECHO_T}pgi" >&6
+  elif test "$CXX" = "icpc" ; then
+    COMPILER_TYPE="intel"
+    echo "$as_me:$LINENO: result: intel" >&5
+echo "${ECHO_T}intel" >&6
   fi
 
   if test "$COMPILER_TYPE" = "unknown"; then
@@ -2106,6 +2140,20 @@ echo "${ECHO_T}aix-native" >&6
       COMPILER_TYPE="gnu"
       echo "$as_me:$LINENO: result: gnu" >&5
 echo "${ECHO_T}gnu" >&6
+    else
+      $GREP "Portland Group" version.out > /dev/null
+      if test "$?" = 0; then
+        COMPILER_TYPE="pgi"
+        echo "$as_me:$LINENO: result: pgi" >&5
+echo "${ECHO_T}pgi" >&6
+      else
+        $GREP "Intel Corporation" version.out > /dev/null
+        if test "$?" = 0; then
+          COMPILER_TYPE="intel"
+          echo "$as_me:$LINENO: result: intel" >&5
+echo "${ECHO_T}intel" >&6
+        fi
+      fi
     fi
     $RM -f version.out
   fi
@@ -2118,12 +2166,13 @@ echo "${ECHO_T}gnu" >&6
       COMPILER_TYPE="forte"
       echo "$as_me:$LINENO: result: forte" >&5
 echo "${ECHO_T}forte" >&6
-    fi
-    $GREP "Sun" version.out > /dev/null
-    if test "$?" = 0 ; then
-      COMPILER_TYPE="forte"
-      echo "$as_me:$LINENO: result: forte" >&5
+    else
+      $GREP "Sun" version.out > /dev/null
+      if test "$?" = 0 ; then
+        COMPILER_TYPE="forte"
+        echo "$as_me:$LINENO: result: forte" >&5
 echo "${ECHO_T}forte" >&6
+      fi
     fi
     $RM -f version.out
   fi
@@ -2142,7 +2191,7 @@ if test $COMPILER_TYPE = "gnu" ; then
         CXXFLAGS="$CXXFLAGS -fPIC"
     fi
 
-    SOFLAGS="-fPIC -shared -rdynamic"
+    SOFLAGS=" -fPIC -shared -rdynamic"
 
     C_AS_CPLUSPLUS="-x c++"
 
@@ -2193,7 +2242,7 @@ elif test $COMPILER_TYPE = "aix-native" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_ibm"
 
-    SOFLAGS="-G"
+    SOFLAGS=" -G"
 
     C_AS_CPLUSPLUS="-+"
 
@@ -2247,7 +2296,7 @@ elif test $COMPILER_TYPE = "forte" ; then
         CXXFLAGS="$CXXFLAGS -KPIC"
     fi
 
-    SOFLAGS="-G"
+    SOFLAGS=" -G"
 
     # Extract the first word of "CC", so it can be a program name with args.
 set dummy CC; ac_word=$2
@@ -2357,7 +2406,7 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 
     CXXFLAGS="$GOOD_CXXFLAGS"
 
-    SOFLAGS="-fPIC -shared"
+    SOFLAGS=" -fPIC -shared"
 
     # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
@@ -2412,7 +2461,7 @@ elif test $COMPILER_TYPE = "intel" ; then
         CXXFLAGS="$CXXFLAGS -O0"
     fi
 
-    SOFLAGS="-fPIC -shared"
+    SOFLAGS=" -fPIC -shared"
 
     # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
@@ -4909,6 +4958,7 @@ s,@EXEEXT@,$EXEEXT,;t t
 s,@OBJEXT@,$OBJEXT,;t t
 s,@BUILDSHARED@,$BUILDSHARED,;t t
 s,@VERBOSEMAKE@,$VERBOSEMAKE,;t t
+s,@MRNET_STARTUP_METHOD@,$MRNET_STARTUP_METHOD,;t t
 s,@GREP@,$GREP,;t t
 s,@RM@,$RM,;t t
 s,@COMPILER_TYPE@,$COMPILER_TYPE,;t t

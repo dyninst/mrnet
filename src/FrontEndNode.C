@@ -15,14 +15,14 @@ namespace MRN
 /*  FrontEndNode CLASS METHOD DEFINITIONS        */
 /*===============================================*/
 FrontEndNode::FrontEndNode( Network * inetwork, std::string const& ihostname, Rank irank )
-    : ParentNode( inetwork, ihostname, irank )
+    : CommunicationNode( ihostname, UnknownPort, irank ),
+      ParentNode( inetwork, ihostname, irank )
 {
     mrn_dbg_func_begin();
 
     _network->set_LocalHostName( _hostname  );
     _network->set_LocalPort( _port );
     _network->set_LocalRank( _rank );
-    _network->set_FrontEndNode( this );
     _network->set_NetworkTopology( new NetworkTopology( inetwork, _hostname, _port, _rank ));
     _network->set_FailureManager( new CommunicationNode( _hostname, _port, _rank ) );
     

@@ -19,8 +19,8 @@ using namespace std;
 using namespace MRN;
 
 char RecoveryStatsFilename[256],
-    ThroughputStatsFilename[256],
-    TopologyFileBasename[256];
+     ThroughputStatsFilename[256],
+     TopologyFileBasename[256];
 
 static int run_ThroughputTest( Network * inetwork,
                                uint32_t iduration,
@@ -122,34 +122,34 @@ int main(int argc, char **argv)
 
     const char * dummy_argv=NULL;
     fprintf( stderr, "Creating MRNet network: ... " );
-    Network * network = new Network( top_filename, backend_exe.c_str(),
-                                     &dummy_argv );
-    if( network->has_Error() ){
+    Network * net = Network::CreateNetworkFE( top_filename, backend_exe.c_str(),
+                                              &dummy_argv );
+    if( net->has_Error() ){
         fprintf(stderr, "Network Initialization failure\n");
-        network->print_error(argv[0]);
+        net->print_error(argv[0]);
         exit(-1);
     }
     fprintf( stderr, "Done!\n\n");
 
     fprintf( stderr, "Front-end EDT on ***%s:%d***\n\n",
-             network->get_NetworkTopology()->get_Root()->get_HostName().c_str(),
-             network->get_NetworkTopology()->get_Root()->get_Port() );
+             net->get_NetworkTopology()->get_Root()->get_HostName().c_str(),
+             net->get_NetworkTopology()->get_Root()->get_Port() );
 
     if( nfailures > 0 ) {
         fprintf(stderr, "FE: Starting failure manager ...\n");
         set_NumFailures( nfailures );
         set_FailureFrequency( failure_frequency );
-        if( start_FailureManager( network ) == -1 ){
+        if( start_FailureManager( net ) == -1 ){
             fprintf(stderr, "start_FailureManager() failed\n");
-            delete network;
+            delete net;
             exit(-1);
         }
     }
 
     fprintf(stderr, "FE: Starting experiments ...\n");
-    if( run_ThroughputTest( network, duration, so_file.c_str() ) == -1 ){
+    if( run_ThroughputTest( net, duration, so_file.c_str() ) == -1 ){
         fprintf(stderr, "run_ThroughputTest() failed\n");
-        delete network;
+        delete net;
         exit(-1);
     }
 
@@ -157,14 +157,14 @@ int main(int argc, char **argv)
         fprintf(stderr, "FE: Stoping failure manager ...\n");
         if( stop_FailureManager( ) == -1 ){
             fprintf(stderr, "stop_FailureManager() failed\n");
-            delete network;
+            delete net;
             exit(-1);
         }
 
         fprintf(stderr, "FE: Waiting for failure manager ...\n");
         if( waitFor_FailureManager( ) == -1 ){
             fprintf(stderr, "waitFor_FailureManager() failed\n");
-            delete network;
+            delete net;
             exit(-1);
         }
 
@@ -173,11 +173,11 @@ int main(int argc, char **argv)
     }
 
     fprintf( stderr, "Done!\n");
-    //delete network;
+    //delete net;
     return 0;
 }
 
-int run_ThroughputTest( Network * inetwork,
+int run_ThroughputTest( Network * inet,
                         uint32_t iduration,
                         const char * iso_filename )
 {
@@ -186,20 +186,20 @@ int run_ThroughputTest( Network * inetwork,
     int tag;
     PacketPtr packet;
     
-    int filter_id = inetwork->load_FilterFunc( iso_filename, "uint32_EqClass" );
+    int filter_id = inet->load_FilterFunc( iso_filename, "uint32_EqClass" );
     if( filter_id == -1 ){
         fprintf( stderr, "load_FilterFunc() failure\n" );
         return -1;
     }
 
-    uint32_t nbackends = inetwork->get_BroadcastCommunicator()->
+    uint32_t nbackends = inet->get_BroadcastCommunicator()->
         get_EndPoints().size() ;
 
     //duration is in secs, DATA_SEND_FREQ is in msecs
     uint32_t nwaves = ( iduration * 1000 ) / DATA_SEND_FREQ;
     uint32_t nsamples_expected = nwaves * nbackends;
 
-    stream = inetwork->new_Stream( inetwork->get_BroadcastCommunicator(),
+    stream = inet->new_Stream( inet->get_BroadcastCommunicator(),
                                    filter_id, SFILTER_WAITFORALL );
 
     uint32_t max_val = nsamples_expected;

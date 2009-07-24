@@ -14,42 +14,50 @@ int main(int argc, char **argv)
     PacketPtr p;
     int tag=0, recv_val=0, num_iters=0;
 
-    Network * net = new Network( argc, argv );
+    Network * net = Network::CreateNetworkBE( argc, argv );
 
-    do{
-        if ( net->recv(&tag, p, &stream) != 1){
-            fprintf(stderr, "stream::recv() failure\n");
-            return -1;
+    do {
+        if( net->recv(&tag, p, &stream) != 1 ) {
+            fprintf(stderr, "BE: stream::recv() failure\n");
+            break;
         }
 
-        switch(tag){
+        switch(tag) {
+
         case PROT_SUM:
             p->unpack( "%d %d", &recv_val, &num_iters );
 
             // Send num_iters waves of integers
-            for( unsigned int i=0; i<num_iters; i++ ){
-                if( stream->send(tag, "%d", recv_val*i) == -1 ){
-                    fprintf(stderr, "stream::send(%%d) failure\n");
-                    return -1;
+            for( unsigned int i=0; i<num_iters; i++ ) {
+                if( stream->send( tag, "%d", recv_val*i ) == -1 ) {
+                    fprintf(stderr, "BE: stream::send(%%d) failure\n");
+                    tag = PROT_EXIT;
+                    break;
                 }
-                if( stream->flush( ) == -1 ){
-                    fprintf(stderr, "stream::flush() failure\n");
-                    return -1;
+                if( stream->flush( ) == -1 ) {
+                    fprintf(stderr, "BE: stream::flush() failure\n");
+                    tag = PROT_EXIT;
+                    break;
                 }
             }
             break;
+
         case PROT_EXIT:
-            fprintf( stdout, "Processing PROT_EXIT ...\n");
             break;
 
         default:
-            fprintf(stdout, "Unknown Protocol: %d\n", tag);
+            fprintf(stderr, "BE: Unknown Protocol: %d\n", tag);
+            tag = PROT_EXIT;
             break;
         }
+
+        fflush(stdout);
+        fflush(stderr);
+
     } while ( tag != PROT_EXIT );
 
-    sleep(3);
-    delete net;
+    // FE delete of the net will causes us to exit, wait for it
+    while(true) sleep(5);
 
     return 0;
 }

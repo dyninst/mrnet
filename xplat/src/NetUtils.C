@@ -5,7 +5,11 @@
 
 // $Id: NetUtils.C,v 1.11 2008/10/09 19:54:04 mjbrim Exp $
 
+#include <iostream>
+#include <iomanip>
+#include <fstream>
 #include <sstream>
+
 #include "xplat/Types.h"
 #include "xplat/NetUtils.h"
 #include "xplat/PathUtils.h"
@@ -103,9 +107,8 @@ bool NetUtils::IsLocalHost( const std::string& ihostname )
     }
 
     for( unsigned int i=0; i<local_addresses.size(); i++ ) {
-		if( local_addresses[i] == iaddress ){
+        if( local_addresses[i] == iaddress )
             return true;
-        }
     }
 
     return false;
@@ -114,6 +117,7 @@ bool NetUtils::IsLocalHost( const std::string& ihostname )
 
 int NetUtils::GetHostName( std::string ihostname, std::string &ohostname )
 {
+
     std::string fqdn;
     if( FindNetworkName( ihostname, fqdn ) == -1 ){
         return -1;
@@ -121,12 +125,10 @@ int NetUtils::GetHostName( std::string ihostname, std::string &ohostname )
 
     // extract host name from the fully-qualified domain name
     std::string::size_type firstDotPos = fqdn.find_first_of( '.' );
-    if( firstDotPos != std::string::npos ) {
+    if( firstDotPos != std::string::npos )
         ohostname = fqdn.substr( 0, firstDotPos );
-    }
-    else {
+    else 
         ohostname = fqdn;
-    }
 
     return 0;
 }
@@ -137,25 +139,9 @@ int NetUtils::GetNetworkName( std::string ihostname, std::string & ohostname )
     return FindNetworkName( ihostname, ohostname );
 }
 
-
 int NetUtils::GetNetworkAddress( std::string ihostname, NetworkAddress & oaddr )
 {
-    static NetUtils::NetworkAddress cachedLocalAddr( ntohl( INADDR_ANY ) );
-
-    // check if we've already looked up our network address
-    if( ihostname == "" ){
-        if( cachedLocalAddr.GetInAddr() == ntohl( INADDR_ANY ) ) {
-            // we didn't have the network address cached - look it up
-            if( FindNetworkAddress( ihostname, cachedLocalAddr  ) == -1 ){
-                return -1;
-            }
-        }
-        oaddr = cachedLocalAddr;
-        return 0;
-    }
-    else{
-        return FindNetworkAddress( ihostname, oaddr );
-    }
+    return FindNetworkAddress( ihostname, oaddr  );
 }
 
 // Note: does not use inet_ntoa or similar functions because they are not

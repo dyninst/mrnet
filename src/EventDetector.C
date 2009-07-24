@@ -2,19 +2,20 @@
  *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
+#include <sstream>
 
-#include "mrnet/MRNet.h"
-
-#include "EventDetector.h"
-#include "InternalNode.h"
-#include "FrontEndNode.h"
 #include "BackEndNode.h"
-#include "ParentNode.h"
 #include "ChildNode.h"
+#include "EventDetector.h"
+#include "FrontEndNode.h"
+#include "InternalNode.h"
+#include "ParentNode.h"
 #include "ParsedGraph.h"
 #include "PeerNode.h"
 #include "Router.h"
 #include "utils.h"
+
+#include "mrnet/MRNet.h"
 #include "xplat/NetUtils.h"
 #include "xplat/SocketUtils.h"
 
@@ -74,28 +75,25 @@ void * EventDetector::main( void * /* iarg */ )
     int local_sock=0;
     int max_sock=0;
 
-    //EDTArg * arg=(EDTArg*)iarg;
-    //Network * network = arg->network;
     PeerNodePtr  parent_node = PeerNode::NullPeerNode;
     if( _global_network->is_LocalNodeChild() ) {
         parent_node = _global_network->get_ParentNode();
     }
-    //delete arg;
     
     //set up debugging stuff
     string prettyHost;
     XPlat::NetUtils::GetHostName( _global_network->get_LocalHostName(), prettyHost );
-    char rank_str[128];
-    snprintf( rank_str, sizeof(rank_str), "%u", _global_network->get_LocalRank() ); 
-    string name("EDT(");
-    name += prettyHost;
-    name += ":";
-    name += rank_str;
-    name += ")";
+    std::ostringstream namestr;
+    namestr << "EDT("
+            << prettyHost
+            << ':'
+            << _global_network->get_LocalRank()
+            << ')'
+            << std::ends;
 
     tsd_t * local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId();
-    local_data->thread_name = strdup(name.c_str());
+    local_data->thread_name = strdup( namestr.str().c_str() );
 
     int status;
     if( (status = tsd_key.Set( local_data )) != 0){
@@ -112,7 +110,7 @@ void * EventDetector::main( void * /* iarg */ )
 
     //(1) Establish connection with parent Event Detection Thread
     if( _global_network->is_LocalNodeChild() ) {
-        if( init_NewChildFDConnection( _global_network, parent_node ) == -1 ){
+        if( init_NewChildFDConnection( _global_network, parent_node ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "init_NewChildFDConnection() failed\n") );
         }
@@ -127,7 +125,7 @@ void * EventDetector::main( void * /* iarg */ )
                                "Parent socket:%d added to list.\n", parent_sock));
     }
 
-    if( _global_network->is_LocalNodeParent() ){
+    if( _global_network->is_LocalNodeParent() ) {
         //(2) Add local socket to event list
         local_sock = _global_network->get_ListeningSocket();
         if( local_sock != -1 ){
@@ -189,7 +187,6 @@ void * EventDetector::main( void * /* iarg */ )
 
                     case PROT_KILL_SELF:
                         mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_KILL_SELF ...\n"));
-                        //_global_network->close_PeerNodeConnections();
 
                         //close event sockets explicitly
                         mrn_dbg(5, mrn_printf(FLF, stderr,
@@ -259,7 +256,7 @@ void * EventDetector::main( void * /* iarg */ )
                 }
             }
 
-            if( _global_network->is_LocalNodeChild() && FD_ISSET ( parent_sock, &rfds_copy ) ){
+            if( _global_network->is_LocalNodeChild() && FD_ISSET( parent_sock, &rfds_copy ) ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "Parent failure detected ...\n"));
                 //event happened on parent monitored connections, likely failure
 
@@ -267,8 +264,8 @@ void * EventDetector::main( void * /* iarg */ )
                 FD_CLR( parent_sock, &rfds );
                 watch_list.remove( parent_sock );
 
-                if( _global_network->recover_FromFailures() ){
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "recovering from parent failure ...\n"));
+                if( _global_network->recover_FromFailures() ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "... recovering from parent failure\n"));
                     recover_FromParentFailure( _global_network );
 
                     //add new parent sock to monitor for failure
@@ -281,7 +278,7 @@ void * EventDetector::main( void * /* iarg */ )
                     mrn_dbg( 5, mrn_printf(FLF, stderr,
                                            "Parent socket:%d added to list.\n", parent_sock));
                 }
-                else{
+                else {
                     mrn_dbg( 1, mrn_printf(FLF, stderr, "NOT recovering from parent failure ...\n"));
                     if( watch_list.size() == 0 ) {
                         mrn_dbg(5, mrn_printf(FLF, stderr, "No more sockets to watch, bye!\n"));
@@ -296,15 +293,14 @@ void * EventDetector::main( void * /* iarg */ )
             for( iter=watch_list.begin(); iter != watch_list.end(); ) {
                 int cur_sock = *iter;
                 //skip local_sock and parent_sock or if socket isn't set
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "Is socket:%d set?  ", cur_sock));
                 if( ( cur_sock == local_sock ) ||
                     ( (_global_network->is_LocalNodeChild() ) && (cur_sock == parent_sock) ) ||
-                    ( !FD_ISSET( cur_sock, &rfds_copy ) ) ){
-                    mrn_dbg( 5, mrn_printf(0,0,0, stderr, "NO!\n", cur_sock));
+                    ( ! FD_ISSET( cur_sock, &rfds_copy ) ) ) {
+                    mrn_dbg( 5, mrn_printf(0,0,0, stderr, "Is socket:%d set? NO!\n", cur_sock));
                     iter++;
                     continue;
                 }
-                mrn_dbg( 5, mrn_printf(0,0,0, stderr, "YES!\n", cur_sock));
+                mrn_dbg( 5, mrn_printf(0,0,0, stderr, "Is socket:%d set? YES!\n", cur_sock));
 
                 map< int, Rank >:: iterator iter2 =
                     childRankByEventDetectionSocket.find( cur_sock );

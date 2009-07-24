@@ -41,7 +41,11 @@ AC_ARG_ENABLE(debug,
     [ debug_mode="yes" ],
     [ debug_mode="no" ])
 
+AC_CHECK_FILE([/proc/cray_xt/nid],[MRNET_STARTUP_METHOD="cray_xt"],[MRNET_STARTUP_METHOD="ssh"])
+AC_SUBST(MRNET_STARTUP_METHOD)
+
 AC_PATH_PROG(GREP, grep)
+AC_SUBST(GREP)
 AC_PATH_PROG(RM, rm)
 AC_SUBST(RM)
 
@@ -62,7 +66,7 @@ if test $COMPILER_TYPE = "gnu" ; then
         CXXFLAGS="$CXXFLAGS -fPIC"
     fi
 
-    SOFLAGS="-fPIC -shared -rdynamic"
+    SOFLAGS=" -fPIC -shared -rdynamic"
 
     C_AS_CPLUSPLUS="-x c++"
 
@@ -75,7 +79,7 @@ elif test $COMPILER_TYPE = "aix-native" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_ibm"
 
-    SOFLAGS="-G"
+    SOFLAGS=" -G"
 
     C_AS_CPLUSPLUS="-+"
 
@@ -91,7 +95,7 @@ elif test $COMPILER_TYPE = "forte" ; then
         CXXFLAGS="$CXXFLAGS -KPIC"
     fi
 
-    SOFLAGS="-G"
+    SOFLAGS=" -G"
 
     AC_PATH_PROG(AR, CC)
     AC_SUBST(AR)
@@ -117,7 +121,7 @@ elif test $COMPILER_TYPE = "pgi" ; then
     AC_SUBST(PGI_OLD_TEMPLATES)
     CXXFLAGS="$GOOD_CXXFLAGS"
 
-    SOFLAGS="-fPIC -shared"
+    SOFLAGS=" -fPIC -shared"
 
     AC_PATH_PROG(AR, ar)
     AC_SUBST(AR)
@@ -134,7 +138,7 @@ elif test $COMPILER_TYPE = "intel" ; then
         CXXFLAGS="$CXXFLAGS -O0"
     fi
 
-    SOFLAGS="-fPIC -shared"
+    SOFLAGS=" -fPIC -shared"
 
     AC_PATH_PROG(AR, ar)
     AC_SUBST(AR)

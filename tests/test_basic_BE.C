@@ -10,7 +10,7 @@ using namespace MRN;
 
 int main(int argc, char **argv){
     Stream * stream;
-    PacketPtr buf;
+    PacketPtr pkt;
     int tag;
     char recv_char;
     char recv_uchar;
@@ -25,16 +25,16 @@ int main(int argc, char **argv){
     char * recv_string;
     bool success=true;
 
-    if( argc != 6 ){
+    if( argc != 6 ) {
         fprintf(stderr, "Usage: %s parent_hostname parent_port parent_rank my_hostname my_rank\n",
                 argv[0]);
         exit( -1 );
     }
    
-    Network * network = new Network( argc, argv);
+    Network * net = Network::CreateNetworkBE( argc, argv );
 
-    do{
-        if ( network->recv(&tag, buf, &stream) != 1){
+    do {
+        if ( net->recv( &tag, pkt, &stream ) != 1 ) {
             fprintf(stderr, "stream::recv() failure ... backend exiting\n");
             exit (-1);
         }
@@ -44,11 +44,11 @@ int main(int argc, char **argv){
 #if defined(DEBUG)
             fprintf( stderr, "Processing PROT_CHAR ...\n");
 #endif
-            if( buf->unpack( "%c", &recv_char) == -1 ){
+            if( pkt->unpack( "%c", &recv_char ) == -1 ) {
                 fprintf(stderr, "stream::unpack(%%c) failure\n");
                 success=false;
             }
-            if( stream->send(tag, "%c", recv_char) == -1 ){
+            if( stream->send( tag, "%c", recv_char ) == -1 ) {
                 fprintf(stderr, "stream::send(%%c) failure\n");
                 success=false;
             }
@@ -57,11 +57,11 @@ int main(int argc, char **argv){
 #if defined(DEBUG)
             fprintf( stderr, "Processing PROT_INT ...\n");
 #endif
-            if( buf->unpack( "%d", &recv_int) == -1 ){
+            if( pkt->unpack( "%d", &recv_int ) == -1 ) {
                 fprintf(stderr, "stream::unpack(%%d) failure\n");
                 success=false;
             }
-            if( stream->send(tag, "%d", recv_int) == -1 ){
+            if( stream->send( tag, "%d", recv_int ) == -1 ) {
                 fprintf(stderr, "stream::send(%%d) failure\n");
                 success=false;
             }
@@ -70,11 +70,11 @@ int main(int argc, char **argv){
 #if defined(DEBUG)
             fprintf( stderr, "Processing PROT_UINT ...\n");
 #endif
-            if( buf->unpack( "%ud", &recv_uint) == -1 ){
+            if( pkt->unpack( "%ud", &recv_uint ) == -1 ) {
                 fprintf(stderr, "stream::unpack(%%ud) failure\n");
                 success=false;
             }
-            if( stream->send(tag, "%ud", recv_uint) == -1 ){
+            if( stream->send( tag, "%ud", recv_uint ) == -1 ) {
                 fprintf(stderr, "stream::send(%%ud) failure\n");
                 success=false;
             }
@@ -83,11 +83,11 @@ int main(int argc, char **argv){
 #if defined(DEBUG)
             fprintf( stderr, "Processing PROT_SHORT ...\n");
 #endif
-            if( buf->unpack( "%hd", &recv_short) == -1 ){
+            if( pkt->unpack( "%hd", &recv_short ) == -1 ) {
                 fprintf(stderr, "stream::unpack(%%hd) failure\n");
                 success=false;
             }
-            if( stream->send(tag, "%hd", recv_short) == -1 ){
+            if( stream->send( tag, "%hd", recv_short ) == -1 ) {
                 fprintf(stderr, "stream::send(%%hd) failure\n");
                 success=false;
             }
@@ -96,11 +96,11 @@ int main(int argc, char **argv){
 #if defined(DEBUG)
             fprintf( stderr, "Processing PROT_USHORT ...\n");
 #endif
-            if( buf->unpack( "%uhd", &recv_ushort) == -1 ){
+            if( pkt->unpack( "%uhd", &recv_ushort ) == -1 ) {
                 fprintf(stderr, "stream::unpack(%%uhd) failure\n");
                 success=false;
             }
-            if( stream->send(tag, "%uhd", recv_ushort) == -1 ){
+            if( stream->send( tag, "%uhd", recv_ushort ) == -1 ) {
                 fprintf(stderr, "stream::send(%%uhd) failure\n");
                 success=false;
             }
@@ -109,11 +109,11 @@ int main(int argc, char **argv){
 #if defined(DEBUG)
             fprintf( stderr, "Processing PROT_LONG ...\n");
 #endif
-            if( buf->unpack( "%ld", &recv_long) == -1 ){
+            if( pkt->unpack( "%ld", &recv_long ) == -1 ) {
                 fprintf(stderr, "stream::unpack(%%ld) failure\n");
                 success=false;
             }
-            if( stream->send(tag, "%ld", recv_long) == -1 ){
+            if( stream->send( tag, "%ld", recv_long ) == -1 ) {
                 fprintf(stderr, "stream::send(%%ld) failure\n");
                 success=false;
             }
@@ -122,11 +122,11 @@ int main(int argc, char **argv){
 #if defined(DEBUG)
             fprintf( stderr, "Processing PROT_ULONG ...\n");
 #endif
-            if( buf->unpack( "%uld", &recv_ulong) == -1 ){
+            if( pkt->unpack( "%uld", &recv_ulong ) == -1 ) {
                 fprintf(stderr, "stream::unpack(%%uld) failure\n");
                 success=false;
             }
-            if( stream->send(tag, "%uld", recv_ulong) == -1 ){
+            if( stream->send( tag, "%uld", recv_ulong ) == -1 ) {
                 fprintf(stderr, "stream::send(%%uld) failure\n");
                 success=false;
             }
@@ -135,11 +135,11 @@ int main(int argc, char **argv){
 #if defined(DEBUG)
             fprintf( stderr, "Processing PROT_FLOAT ...\n");
 #endif
-            if( buf->unpack( "%f", &recv_float) == -1 ){
+            if( pkt->unpack( "%f", &recv_float ) == -1 ) {
                 fprintf(stderr, "stream::unpack(%%f) failure\n");
                 success=false;
             }
-            if( stream->send(tag, "%f", recv_float) == -1 ){
+            if( stream->send( tag, "%f", recv_float ) == -1 ) {
                 fprintf(stderr, "stream::send(%%f) failure\n");
                 success=false;
             }
@@ -148,11 +148,11 @@ int main(int argc, char **argv){
 #if defined(DEBUG)
             fprintf( stderr, "Processing PROT_DOUBLE ...\n");
 #endif
-            if( buf->unpack( "%lf", &recv_double) == -1 ){
+            if( pkt->unpack( "%lf", &recv_double ) == -1 ) {
                 fprintf(stderr, "stream::unpack(%%lf) failure\n");
                 success=false;
             }
-            if( stream->send(tag, "%lf", recv_double) == -1 ){
+            if( stream->send( tag, "%lf", recv_double ) == -1 ) {
                 fprintf(stderr, "stream::send(%%lf) failure\n");
                 success=false;
             }
@@ -161,11 +161,11 @@ int main(int argc, char **argv){
 #if defined(DEBUG)
             fprintf( stderr, "Processing PROT_STRING ...\n");
 #endif
-            if( buf->unpack( "%s", &recv_string) == -1 ){
+            if( pkt->unpack( "%s", &recv_string ) == -1 ) {
                 fprintf(stderr, "stream::unpack(%%s) failure\n");
                 success=false;
             }
-            if( stream->send(tag, "%s", recv_string) == -1 ){
+            if( stream->send( tag, "%s", recv_string ) == -1 ) {
                 fprintf(stderr, "stream::send(%%s) failure\n");
                 success=false;
             }
@@ -175,17 +175,17 @@ int main(int argc, char **argv){
 #if defined(DEBUG)
             fprintf( stderr, "Processing PROT_ALL ...\n");
 #endif
-            if(buf->unpack( "%c %uc %hd %uhd %d %ud %ld %uld %f %lf %s",
-                            &recv_char, &recv_uchar, &recv_short, &recv_ushort,
-                            &recv_int, &recv_uint, &recv_long, &recv_ulong,
-                            &recv_float, &recv_double, &recv_string) == 1){
+            if( pkt->unpack( "%c %uc %hd %uhd %d %ud %ld %uld %f %lf %s",
+                             &recv_char, &recv_uchar, &recv_short, &recv_ushort,
+                             &recv_int, &recv_uint, &recv_long, &recv_ulong,
+                             &recv_float, &recv_double, &recv_string ) == 1 ) {
                 fprintf(stderr, "stream::unpack(all) failure\n");
                 success = false;
             }
-            if(stream->send(tag, "%c %uc %hd %uhd %d %ud %ld %uld %f %lf %s",
-                            recv_char, recv_uchar, recv_short, recv_ushort,
-                            recv_int, recv_uint, recv_long, recv_ulong,
-                            recv_float, recv_double, recv_string) == 1){
+            if( stream->send( tag, "%c %uc %hd %uhd %d %ud %ld %uld %f %lf %s",
+                              recv_char, recv_uchar, recv_short, recv_ushort,
+                              recv_int, recv_uint, recv_long, recv_ulong,
+                              recv_float, recv_double, recv_string ) == 1 ) {
                 fprintf(stderr, "stream::send(all) failure\n");
                 success=false;
             }
@@ -206,7 +206,7 @@ int main(int argc, char **argv){
 
     } while( tag != PROT_EXIT );
 
-    // FE delete network will shut us down, so just go to sleep!!
+    // FE delete net will shut us down, so just go to sleep!!
     sleep(10);
     return 0;
 }

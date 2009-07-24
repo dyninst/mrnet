@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 
     std::bitset<10> pct;
 
-    Network * net = new Network( argc, argv );
+    Network * net = Network::CreateNetworkBE( argc, argv );
 
     Rank me = net->get_LocalRank();
     unsigned int seed = me, now = time(NULL);
@@ -31,17 +31,18 @@ int main(int argc, char **argv)
     srandom( seed );
 
     do{
-        if ( net->recv(&tag, p, &stream) != 1){
-            fprintf(stderr, "stream::recv() failure\n");
-            return -1;
+        if ( net->recv(&tag, p, &stream) != 1 ) {
+            fprintf(stderr, "BE: stream::recv() failure\n");
+            break;
         }
 
-        switch(tag){
+        switch(tag) {
+
         case PROT_START:
             p->unpack( "%ud", &num_iters );
 
             // Send num_iters waves of integers
-            for( unsigned int i=0; i < num_iters; i++ ){
+            for( unsigned int i=0; i < num_iters; i++ ) {
 
                 long int rand = random();
                 unsigned int val = rand % 100;
@@ -55,71 +56,70 @@ int main(int argc, char **argv)
                 fprintf( stdout, "BE %d: Sending wave %u\n", me, i);
                 fflush( stdout );
 
-                if( stream->send(PROT_WAVE, "%ud", val) == -1 ){
-                    fprintf(stderr, "stream::send(%%d) failure\n");
-                    return -1;
+                if( stream->send(PROT_WAVE, "%ud", val) == -1 ) {
+                    fprintf(stderr, "BE: stream::send(%%d) failure\n");
+                    tag = PROT_EXIT;
+                    break;
                 }
                 stream->flush();
-                sleep(1); // stagger sends
+                sleep(2); // stagger sends
             }
             break;
 
         case PROT_CHECK_MIN:
-
             fprintf( stdout, "BE %d: Sending min %u\n", me, min_val);
-            fflush( stdout );
-
-            if( stream->send(tag, "%ud", min_val) == -1 ){
-                fprintf(stderr, "stream::send(%%d) failure\n");
-                return -1;
+            if( stream->send(tag, "%ud", min_val) == -1 ) {
+                fprintf(stderr, "BE: stream::send(%%d) failure\n");
+                tag = PROT_EXIT;
+                break;
             }
             stream->flush();
             break;
 
         case PROT_CHECK_MAX:
-
             fprintf( stdout, "BE %d: Sending max %u\n", me, max_val);
-            fflush( stdout );
-
-            if( stream->send(tag, "%ud", max_val) == -1 ){
-                fprintf(stderr, "stream::send(%%d) failure\n");
-                return -1;
+            if( stream->send(tag, "%ud", max_val) == -1 ) {
+                fprintf(stderr, "BE: stream::send(%%d) failure\n");
+                tag = PROT_EXIT;
+                break;
             }
             stream->flush();
             break;
 
         case PROT_CHECK_PCT: {
-
             string bits = pct.to_string<char,char_traits<char>,allocator<char> >();
             unsigned long percent = pct.to_ulong();
             fprintf( stdout, "BE %d: Sending pct (%s)\n", me, bits.c_str() );
-            fflush( stdout );
-
             if( stream->send(tag, "%uld", percent) == -1 ){
-                fprintf(stderr, "stream::send(%%d) failure\n");
-                return -1;
+                fprintf(stderr, "BE: stream::send(%%d) failure\n");
+                tag = PROT_EXIT;
+                break;
             }
             stream->flush();
             break;
         }
 
         case PROT_EXIT:
-            fprintf( stdout, "BE %d: Processing PROT_EXIT\n", me);
-            fflush( stdout );
 	    if( stream->send(tag, "%d", 0) == -1 ){
-                fprintf(stderr, "stream::send(%%s) failure\n");
-                return -1;
+                fprintf(stderr, "BE: stream::send(%%s) failure\n");
+                break;
             }
             stream->flush();
             break;
 
         default:
-            fprintf(stderr, "Unknown Protocol: %d\n", tag);
+            fprintf(stderr, "BE: Unknown Protocol: %d\n", tag);
+            tag = PROT_EXIT;
             break;
         }
+
+        fflush(stdout);
+        fflush(stderr);
+
     } while ( tag != PROT_EXIT );
 
-    sleep(10); // wait for network termination
+    // FE delete of the net will causes us to exit, wait for it
+    while(true) sleep(5);
 
     return 0;
 }

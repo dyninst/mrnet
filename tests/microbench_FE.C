@@ -74,11 +74,11 @@ main( int argc, char* argv[] )
     std::string backend_exe = argv[4];
     
     // instantiate the network
-    Network * network = BuildNetwork( topology_file, backend_exe );
+    Network * net = BuildNetwork( topology_file, backend_exe );
 
     // get a broadcast communicator
-    Communicator * bcComm = network->get_BroadcastCommunicator();
-    Stream* stream = network->new_Stream( bcComm, TFILTER_SUM );
+    Communicator * bcComm = net->get_BroadcastCommunicator();
+    Stream* stream = net->new_Stream( bcComm, TFILTER_SUM );
     assert( bcComm != NULL );
     assert( stream != NULL );
     unsigned int nBackends = bcComm->get_EndPoints().size();
@@ -99,9 +99,9 @@ main( int argc, char* argv[] )
         std::cerr << "FE: failed to broadcast termination message" << std::endl;
     }
 
-    // delete the network
-    std::cout << "FE: deleting network" << std::endl;
-    delete network;
+    // delete the net
+    std::cout << "FE: deleting net" << std::endl;
+    delete net;
 
     return ret;
 }
@@ -114,16 +114,16 @@ BuildNetwork( std::string cfgfile, std::string backend_exe )
     mb_time endTime;
 	const char *argv=NULL;
 
-    std::cout << "FE: network instantiation: ";
+    std::cout << "FE: net instantiation: " << std::endl;
     startTime.set_time();
-    Network * network = new Network( cfgfile.c_str(), backend_exe.c_str(), &argv );
+    Network * net = Network::CreateNetworkFE( cfgfile.c_str(), backend_exe.c_str(), &argv );
     endTime.set_time();
 
-    // dump network instantiation latency
+    // dump net instantiation latency
     double latency = (endTime - startTime).get_double_time();
     std::cout << " latency(sec): " << latency << std::endl;
 
-    return network;
+    return net;
 }
 
 
@@ -257,7 +257,7 @@ DoReductionThroughputExp( Stream* stream,
     mb_time startTime;
     mb_time endTime;
 
-    std::cout << "FE: reduction throughput: " << std::flush;
+    std::cout << "FE: starting reduction throughput experiment" << std::endl;
     // broadcast request to start throughput experiment
     // we send number of iterations to do and the value to send
     if( (stream->send( MB_RED_THROUGHPUT, "%d %d", nIters, 1 ) == -1) ||
@@ -314,7 +314,8 @@ DoReductionThroughputExp( Stream* stream,
     // dump reduction throughput
     double expLatency = (endTime - startTime).get_double_time();
     double throughput = ((double)nIters) / expLatency;
-    std::cout << "nIters: " << nIters
+    std::cout << "FE: reduction throughput: "
+                << "nIters: " << nIters
                 << ", latency(sec): " << expLatency
                 << ", throughput(ops/sec): " << throughput
                 << std::endl;

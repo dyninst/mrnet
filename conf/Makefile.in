@@ -1,6 +1,7 @@
 MRNET_VERSION  = @MRNET_VERSION@
 MRNET_ROOT     = @MRNET_ROOT@
 MRNET_PLATFORM = @host@
+MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
 
 @SET_MAKE@
 
@@ -105,24 +106,28 @@ LIBMRNET_SO = $(LIBDIR)/libmrnet.so
 LIBXPLAT    = $(MRNET_ROOT)/xplat/libxplat.a
 LIBXPLAT_SO = $(MRNET_ROOT)/xplat/libxplat.so
 COMMNODE    = $(BINDIR)/mrnet_commnode 
+TOPGEN      = $(BINDIR)/mrnet_topgen
 
-TARGETS     = $(LIBMRNET) $(COMMNODE) $(BINDIR)/mrnet_topgen
+TARGETS     = $(LIBMRNET) $(COMMNODE) $(TOPGEN)
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
 endif
 
-STD_TESTS = $(BINDIR)/test_basic_FE \
-            $(BINDIR)/test_basic_BE  \
-            $(BINDIR)/microbench_FE \
-            $(BINDIR)/microbench_BE \
-            $(BINDIR)/test_arrays_FE \
-            $(BINDIR)/test_arrays_BE \
-            $(BINDIR)/test_NativeFilters_FE \
-            $(BINDIR)/test_NativeFilters_BE \
-            $(BINDIR)/test_DynamicFilters_FE \
-            $(BINDIR)/test_DynamicFilters_BE \
-	    $(BINDIR)/test_HeteroFilters_FE \
-            $(BINDIR)/test_HeteroFilters_BE 
+STD_TESTS_FE = $(BINDIR)/test_basic_FE \
+               $(BINDIR)/microbench_FE \
+               $(BINDIR)/test_arrays_FE \
+               $(BINDIR)/test_NativeFilters_FE \
+               $(BINDIR)/test_DynamicFilters_FE \
+               $(BINDIR)/test_HeteroFilters_FE
+
+STD_TESTS_BE = $(BINDIR)/test_basic_BE  \
+               $(BINDIR)/microbench_BE \
+               $(BINDIR)/test_arrays_BE \
+               $(BINDIR)/test_NativeFilters_BE \
+               $(BINDIR)/test_DynamicFilters_BE \
+               $(BINDIR)/test_HeteroFilters_BE
+
+STD_TESTS = ${STD_TESTS_FE} ${STD_TESTS_BE}
 
 OPT_TESTS = $(BINDIR)/test_Recovery_FE \
 	    $(BINDIR)/test_Recovery_BE
@@ -167,6 +172,34 @@ LIBMRNET_SRCS = \
 ifeq ($(MRNET_OS), linux)
     LIBMRNET_SRCS += $(SRCDIR)/src/PerfDataSysEvent_linux.C
 endif
+
+ifeq ($(MRNET_STARTUP_METHOD),cray_xt)
+
+# build for a Cray XT (uses aprun or alps_tool_helper for parallel process launch)
+LIBMRNET_SRCS += $(SRCDIR)/src/XTNetwork.C \
+                 $(SRCDIR)/src/XTFrontEndNode.C \
+                 $(SRCDIR)/src/XTBackEndNode.C \
+                 $(SRCDIR)/src/XTInternalNode.C
+
+CXXFLAGS += -Darch_crayxt
+
+else
+    ifeq ($(MRNET_STARTUP_METHOD),ssh)
+
+# fall back to RSH instantiation approach
+LIBMRNET_SRCS += $(SRCDIR)/src/RSHNetwork.C \
+                 $(SRCDIR)/src/RSHParentNode.C \
+                 $(SRCDIR)/src/RSHChildNode.C \
+                 $(SRCDIR)/src/RSHFrontEndNode.C \
+                 $(SRCDIR)/src/RSHBackEndNode.C \
+                 $(SRCDIR)/src/RSHInternalNode.C
+
+    else
+
+$(error Unrecognized MRNet instantiation method "$(MRNET_STARTUP_METHOD)"; see configure --help for supported methods)
+    endif
+endif
+
 
 LIBMRNET_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(LIBMRNET_SRCS)))))
 
@@ -231,6 +264,7 @@ install-tests: tests $(BINDIR)/mrnet_tests.sh
 	@echo Installing standard tests
 	$(INSTALL) -p -m 755 $(STD_TESTS) $(BINDIR)/mrnet_tests.sh $(IBINDIR)/
 	$(INSTALL) -p -m 755 $(LIBDIR)/test_DynamicFilters.so $(ILIBDIR)/
+	$(INSTALL) -p -m 755 $(LIBDIR)/test_HeteroFilters.so $(ILIBDIR)/
 	if [ ! -d $(IBINDIR)/topology_files ] ; then \
             mkdir -p $(IBINDIR)/topology_files ; \
 	    chmod 755 $(IBINDIR)/topology_files ; \
@@ -244,13 +278,19 @@ install-tests-opt: tests-opt
 	$(INSTALL) -p -m 755 $(OPT_TESTS) $(IBINDIR)/
 	$(INSTALL) -p -m 755 $(LIBDIR)/test_RecoveryFilter.so $(ILIBDIR)/
 
+install-examples: examples
+	$(MAKE) -C Examples install
+
 xplat-install:
 	@echo Installing xplat library
 	cd ./xplat ; $(MAKE) install
 
-tests: all $(STD_TESTS)
+tests: all $(STD_TESTS) $(LIBDIR)/test_DynamicFilters.so $(LIBDIR)/test_HeteroFilters.so
 
 tests-opt: $(OPT_TESTS)
+
+examples: all
+	$(MAKE) -C Examples install
 
 $(OBJDIR)/scanner.C: $(SRCDIR)/src/scanner.l $(OBJDIR)/parser.tab.C $(FRC)
 	@echo Building `basename $@` ...
@@ -298,16 +338,22 @@ $(BINDIR)/mrnet_topgen: $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
 	$(PURIFY) $(CXX) $(CXXFLAGS) -o $@ $(OBJDIR)/config_generator.o \
            $(LIBMRNET) $(LIBS)
 
-$(STD_TESTS): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
-              $(LIBDIR)/test_DynamicFilters.so $(LIBDIR)/test_HeteroFilters.so \
-              $(SRCDIR)/tests/test_common.h $(BINDIR)/mrnet_tests.sh
+$(STD_TESTS_FE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
+              $(SRCDIR)/tests/test_common.h \
+              $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
 
+$(STD_TESTS_BE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
+              $(SRCDIR)/tests/test_common.h \
+              $(BINDIR)/mrnet_tests.sh
+	@echo "Linking `basename $*` ..."
+	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
+	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
+
 $(BINDIR)/mrnet_tests.sh: $(SRCDIR)/conf/mrnet_tests.sh
 	$(CP) $(SRCDIR)/conf/mrnet_tests.sh $(BINDIR)/
-
 
 $(LIBDIR)/test_DynamicFilters.so: $(SRCDIR)/tests/test_DynamicFilters.C
 	@echo "Building `basename $@` ..."
@@ -333,7 +379,7 @@ $(BINDIR)/test_Recovery_BE: $(BINDIR)/%: $(LIBMRNET) \
                             $(OBJDIR)/ThroughputExperiment.o \
                             $(OBJDIR)/test_Recovery.o
 	@echo "Linking `basename $*` ..."
-	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
+	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
            $(OBJDIR)/ThroughputExperiment.o \
            $(OBJDIR)/test_Recovery.o $(LIBMRNET) $(LIBS)
 
@@ -379,7 +425,7 @@ local-CLEAN: local-clean
 distclean: local-distclean xplat-distclean
 
 local-distclean: local-CLEAN
-	for file in config.* src/config.h Makefile ; do  \
+	for file in config.* src/config.h Makefile Examples/Makefile ; do  \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
 	if [ -d autom4te.cache ] ; then $(RM) -r autom4te.cache ; fi

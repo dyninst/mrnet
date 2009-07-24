@@ -3,11 +3,14 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+#include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <algorithm>
 
 #include "config.h"
+#include "utils.h"
 #include "BackEndNode.h"
 #include "ChildNode.h"
 #include "Filter.h"
@@ -16,7 +19,6 @@
 #include "ParentNode.h"
 #include "ParsedGraph.h"
 #include "PeerNode.h"
-#include "utils.h"
 
 #include "mrnet/MRNet.h"
 #include "xplat/NetUtils.h"
@@ -24,14 +26,13 @@
 using namespace XPlat;
 
 extern FILE *mrnin;
-//extern int mrn_flex_debug;
 
 using namespace std;
 
 namespace MRN
 {
 
-Network * _global_network=NULL;
+Network* _global_network=NULL;
 int mrnparse( );
 
 extern int mrndebug;
@@ -53,6 +54,14 @@ void set_OutputLevelFromEnvironment( void );
 void init_local( void )
 {
 #if !defined(os_windows)
+    // Make sure any data sockets we create have descriptors != {1,2}
+    // to avoid nasty bugs where fprintf(stdout/stderr) writes to data sockets.
+    int fd;
+    while( (fd = socket( AF_INET, SOCK_STREAM, 0 )) <= 2 ) {
+        if( fd == -1 ) break;
+    } 
+    if( fd > 2 ) close(fd);
+
     // ignore SIGPIPE
     signal( SIGPIPE, SIG_IGN );
 #else
@@ -75,9 +84,7 @@ void cleanup_local( void )
 /*===========================================================*/
 /*             Network DEFINITIONS        */
 /*===========================================================*/
-Network::Network( const char * itopology, const char * ibackend_exe,
-                  const char **ibackend_args, bool irank_backends,
-                  bool iusing_mem_buf )
+Network::Network( void )
     : _local_port(UnknownPort), _local_rank(UnknownRank),_network_topology(NULL), 
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
@@ -87,170 +94,9 @@ Network::Network( const char * itopology, const char * ibackend_exe,
     init_local();
     _global_network=this;
     set_OutputLevelFromEnvironment();
-    node_type="fe";
-    _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
-    _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
-
-    if( parse_Configuration( itopology, iusing_mem_buf ) == -1 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: parse_Configuration( \"%s\" )!\n",
-                              ( iusing_mem_buf ? "memory buffer" : itopology )));
-        return;
-    }
-
-    if( ! parsed_graph->validate( ) ) {
-        parsed_graph->perror( "ParsedGraph not valid." );
-        return;
-    }
-
-    parsed_graph->assign_NodeRanks( irank_backends );
-
-    //TLS: setup thread local storage for frontend
-    //I am "FE(hostname:port)"
-    string prettyHost;
-    string rootHost = parsed_graph->get_Root()->get_HostName();
-    Rank rootRank = parsed_graph->get_Root( )->get_Rank();
-    setrank(rootRank);
-    XPlat::NetUtils::GetHostName( rootHost, prettyHost );
-    char port_str[128];
-    sprintf( port_str, "%d", rootRank );
-    string name( "FE(" );
-    name += prettyHost;
-    name += ":";
-    name += port_str;
-    name += ")";
-
-    // check that topology root is same host we're on
-    char this_host[256];
-    gethostname( this_host, 256 );
-    string this_pretty;
-    XPlat::NetUtils::GetHostName( string(this_host), this_pretty );
-    if( (this_pretty != prettyHost) && (prettyHost != "localhost") ) {
-        char warnmsg[1024];
-        sprintf( warnmsg, "FE host (%s) != Topology Root (%s)",
-                 this_pretty.c_str(), prettyHost.c_str() );
-        error( ERR_TOPOLOGY_FORMAT, UnknownRank, warnmsg );
-        return;
-    }
-
-    int status;
-    tsd_t *local_data = new tsd_t;
-    local_data->thread_id = XPlat::Thread::GetId( );
-    local_data->thread_name = strdup( name.c_str( ) );
-    status = tsd_key.Set( local_data );
-
-    if( status != 0 ) {
-        error( ERR_SYSTEM, rootRank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
-        return;
-    }
-
-    new FrontEndNode( this, rootHost, rootRank );
-
-    const char* mrn_commnode_path = getenv( "MRN_COMM_PATH" );
-
-    if( mrn_commnode_path == NULL ) {
-        mrn_commnode_path = COMMNODE_EXE;
-    }
-    if( ibackend_exe == NULL ) {
-        ibackend_exe = empty_str;
-    }
-    unsigned int backend_argc=0;
-    if( ibackend_args != NULL ){
-        for(unsigned int i=0; ibackend_args[i] != NULL; i++){
-            backend_argc++;
-        }
-    }
-
-    // save the serialized graph string in a variable on the stack,
-    // so that we don't build a packet with a pointer into a temporary
-    string sg = parsed_graph->get_SerializedGraphString();
-
-    PacketPtr packet( new Packet( 0, PROT_NEW_SUBTREE, "%s%s%s%as", sg.c_str( ),
-                                  mrn_commnode_path, ibackend_exe, ibackend_args,
-                                  backend_argc ) );
-    
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Instantiating network ... \n" ));
-    if( get_LocalFrontEndNode()->proc_newSubTree( packet ) == -1 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: FrontEndNode::proc_newSubTree()!\n" ));
-        error( ERR_INTERNAL, rootRank, "");
-    }
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
-    if( get_LocalFrontEndNode()->waitfor_SubTreeReports( ) == -1 ) {
-        error( ERR_INTERNAL, rootRank, "");
-    }
-  
-    //We should have a topology available after subtrees report
-    _network_topology->print( stderr );
-
-    //broadcast topology, not necessary since sent for subtree creation, right?
-    char * topology = _network_topology->get_TopologyStringPtr();
-    packet = PacketPtr( new Packet( 0, PROT_TOPOLOGY_RPT, "%s", topology ) );
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Broadcasting topology ... \n" ));
-    if( send_PacketToChildren( packet, false ) == -1 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: send_DownStream()!\n" ));
-        error( ERR_INTERNAL, rootRank, "");
-    }
-    free( topology );
-  
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Creating bcast communicator ... \n" ));
-    _bcast_communicator = new Communicator( this );
-    update_BcastCommunicator( );
 }
 
-// back-end constructors
-Network::Network( const char *iphostname, Port ipport, Rank iprank,
-                  const char *imyhostname, Rank imyrank )
-    : _local_port(UnknownPort), _local_rank(UnknownRank), _network_topology(NULL),
-      _failure_manager(NULL), _bcast_communicator(NULL),
-      _local_front_end_node(NULL), _local_back_end_node(NULL),
-      _local_internal_node(NULL), _threaded(true),
-      _recover_from_failures( true )
-{
-    init_local();
-    _global_network=this;
-    set_OutputLevelFromEnvironment();
-    _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
-    _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
-
-    init_BackEnd( iphostname, ipport, iprank, imyhostname, imyrank );
-}
-
-Network::Network( int argc, char **argv )
-    : _local_port(UnknownPort), _local_rank(UnknownRank), _network_topology(NULL),
-      _failure_manager(NULL), _bcast_communicator(NULL),
-      _local_front_end_node(NULL), _local_back_end_node(NULL),
-      _local_internal_node(NULL), _threaded(true),
-      _recover_from_failures( true )
-{
-    init_local();
-    _global_network=this;
-    set_OutputLevelFromEnvironment();
-    _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
-    _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
-
-    const char * phostname = argv[argc-5];
-    Port pport = (Port) strtoul( argv[argc-4], NULL, 10 );
-    Rank prank = (Rank) strtoul( argv[argc-3], NULL, 10 );
-    const char * myhostname = argv[argc-2];
-    Rank myrank = (Rank) strtoul( argv[argc-1], NULL, 10 );
-    init_BackEnd( phostname, pport, prank, myhostname, myrank );
-}
-
-//internal node constructor
-Network::Network( )
-    : _local_port(UnknownPort), _local_rank(UnknownRank), _network_topology(NULL), 
-      _failure_manager(NULL), _bcast_communicator(NULL), 
-      _local_front_end_node(NULL), _local_back_end_node(NULL),
-      _local_internal_node(NULL), _threaded(true),
-      _recover_from_failures(true)
-{
-    init_local();
-    _global_network=this;
-    set_OutputLevelFromEnvironment();
-    node_type="comm";    
-}
-
-Network::~Network( )
+Network::~Network( void )
 {
     shutdown_Network( );
     cleanup_local( );
@@ -285,6 +131,15 @@ void Network::shutdown_Network( void )
     Event::clear_Events();
 }
 
+
+const char* Network::FindCommnodePath( void )
+{
+    const char* path = getenv( "MRN_COMM_PATH" );
+    if( path == NULL )
+        path = COMMNODE_EXE;
+    return path;
+}
+
 void Network::set_TerminateBackEndsOnShutdown( bool terminate )
 {
    _terminate_backends = terminate;
@@ -312,30 +167,140 @@ void Network::update_BcastCommunicator( void )
     mrn_dbg(5, mrn_printf(FLF, stderr, "Bcast communicator complete \n" ));
 }
 
-void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
-                           const char * imyhostname, Rank imyrank )
+// initialize a Network in its role as front end
+void Network::init_FrontEnd( const char * itopology,
+                             const char * ibackend_exe,
+                             const char **ibackend_args,
+                             const std::map<std::string,std::string>* iattrs,
+                             bool irank_backends,
+                             bool iusing_mem_buf )
 {
-    node_type="be";
-    setrank( imyrank );
-    string myhostname;
-    XPlat::NetUtils::GetNetworkName( imyhostname, myhostname );
+    node_type="fe";
+
+    _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
+    _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
+
+    if( parse_Configuration( itopology, iusing_mem_buf ) == -1 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: parse_Configuration( \"%s\" )!\n",
+                              ( iusing_mem_buf ? "memory buffer" : itopology )));
+        return;
+    }
+
+    if( ! parsed_graph->validate( ) ) {
+        parsed_graph->perror( "ParsedGraph not valid." );
+        return;
+    }
+
+    parsed_graph->assign_NodeRanks( irank_backends );
 
     //TLS: setup thread local storage for frontend
-    //I am "BE(host:port)"
-    string prettyHost;
-    XPlat::NetUtils::GetHostName( myhostname, prettyHost );
-    char rank_str[16];
-    sprintf( rank_str, "%u", imyrank );
-    string name( "BE(" );
-    name += prettyHost;
-    name += ":";
-    name += rank_str;
-    name += ")";
-    int status;
+    Rank rootRank = parsed_graph->get_Root( )->get_Rank();
+    setrank(rootRank);
+    _local_rank = rootRank;
 
+    string prettyHost, rootHost;
+    rootHost = parsed_graph->get_Root()->get_HostName();
+    XPlat::NetUtils::GetHostName( rootHost, prettyHost );
+    std::ostringstream nameStream;
+    nameStream << "FE("
+                << prettyHost
+                << ":"
+                << rootRank
+                << ")"
+                << std::ends;
+
+    if( ! XPlat::NetUtils::IsLocalHost( prettyHost ) ) {
+        char warnmsg[1024];
+        sprintf( warnmsg, "FE host (%s) != Topology Root (%s)",
+                 get_LocalHostName().c_str(), prettyHost.c_str() );
+        error( ERR_TOPOLOGY_FORMAT, rootRank, warnmsg );
+        return;
+    }
+
+    int status;
     tsd_t *local_data = new tsd_t;
-    local_data->thread_id = XPlat::Thread::GetId(  );
-    local_data->thread_name = strdup( name.c_str(  ) );
+    local_data->thread_id = XPlat::Thread::GetId( );
+    local_data->thread_name = strdup( nameStream.str().c_str() );
+    status = tsd_key.Set( local_data );
+
+    if( status != 0 ) {
+        error( ERR_SYSTEM, rootRank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
+        return;
+    }
+    
+    _local_front_end_node = CreateFrontEndNode( this, rootHost, rootRank );
+
+    const char* mrn_commnode_path = FindCommnodePath();
+    assert( mrn_commnode_path != NULL );
+
+    if( ibackend_exe == NULL ) {
+        ibackend_exe = empty_str;
+    }
+    unsigned int backend_argc=0;
+    if( ibackend_args != NULL ){
+        for(unsigned int i=0; ibackend_args[i] != NULL; i++){
+            backend_argc++;
+        }
+    }
+
+    // spawn and connect processes that constitute our network
+    this->Instantiate( parsed_graph, 
+                       mrn_commnode_path, 
+                       ibackend_exe, 
+                       ibackend_args, 
+                       backend_argc,
+                       iattrs );
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
+    if( get_LocalFrontEndNode()->waitfor_SubTreeReports( ) == -1 ) {
+        error( ERR_INTERNAL, rootRank, "");
+    }
+  
+    //We should have a topology available after subtrees report
+    _network_topology->print( stderr );
+
+    //broadcast topology, not necessary since sent for subtree creation, right?
+    char * topology = _network_topology->get_TopologyStringPtr();
+    PacketPtr packet( new Packet( 0, PROT_TOPOLOGY_RPT, "%s", topology ) );
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Broadcasting topology ... \n" ));
+    if( send_PacketToChildren( packet, false ) == -1 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: send_DownStream()!\n" ));
+        error( ERR_INTERNAL, rootRank, "");
+    }
+    free( topology );
+  
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Creating bcast communicator ... \n" ));
+    _bcast_communicator = new Communicator( this );
+    update_BcastCommunicator( );
+}
+
+void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
+                           const char *imyhostname, Rank imyrank )
+{
+    node_type="be";
+
+    _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
+    _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
+
+    setrank( imyrank );
+    _local_rank = imyrank;
+
+    //TLS: setup thread local storage for backend
+    string prettyHost, myhostname;
+    XPlat::NetUtils::GetNetworkName( imyhostname, myhostname );
+    XPlat::NetUtils::GetHostName( myhostname, prettyHost );
+    std::ostringstream nameStream;
+    nameStream << "BE("
+            << prettyHost
+            << ":"
+            << imyrank
+            << ")"
+            << std::ends;
+
+    int status;
+    tsd_t *local_data = new tsd_t;
+    local_data->thread_id = XPlat::Thread::GetId();
+    local_data->thread_name = strdup( nameStream.str().c_str() );
     if( ( status = tsd_key.Set( local_data ) ) != 0 ) {
         //TODO: add event to notify upstream
         error( ERR_SYSTEM, imyrank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
@@ -343,12 +308,62 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
                     strerror( status ) ));
     }
 
-    set_BackEndNode( new BackEndNode( this, myhostname, imyrank,
-                                                 iphostname, ipport, iprank ) );
+    BackEndNode* be = CreateBackEndNode( this, myhostname, imyrank,
+                                         iphostname, ipport, iprank );
+    assert( be != NULL );
+    set_BackEndNode( be );
 
-    if( get_LocalBackEndNode()->has_Error() ){
+    if( be->has_Error() ) 
         error( ERR_SYSTEM, imyrank, "Failed to initialize via BackEndNode()\n" );
+}
+
+void Network::init_InternalNode( const char* iphostname,
+                                 Port ipport,
+                                 Rank iprank,
+                                 const char* imyhostname,
+                                 Rank imyrank,
+                                 int idataSocket,
+                                 Port idataPort )
+{
+    node_type="comm";
+
+    _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
+
+    //TLS: set up thread name
+    _local_rank = imyrank;
+    setrank( imyrank );
+
+    string prettyHost, myhostname;
+    XPlat::NetUtils::GetNetworkName( imyhostname, myhostname );
+    XPlat::NetUtils::GetHostName( myhostname, prettyHost );
+    std::ostringstream nameStream;
+    nameStream << "COMM("
+            << prettyHost
+            << ":"
+            << imyrank
+            << ")"
+            << std::ends;
+
+    int status;
+    tsd_t *local_data = new tsd_t;
+    local_data->thread_id = XPlat::Thread::GetId();
+    local_data->thread_name = strdup( nameStream.str().c_str() );
+    if( ( status = tsd_key.Set( local_data ) ) != 0 )
+    {
+        //TODO: add event to notify upstream
+        error(ERR_SYSTEM, imyrank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
+                    strerror( status ) ));
     }
+
+    InternalNode* in = CreateInternalNode( this, myhostname, imyrank,
+                                           iphostname, ipport, iprank,
+                                           idataSocket, idataPort );
+    assert( in != NULL );
+    set_InternalNode( in );
+
+    if( in->has_Error() )
+        error( ERR_SYSTEM, imyrank, "Failed to initialize InternalNode\n" );
 }
 
 int Network::parse_Configuration( const char* itopology, bool iusing_mem_buf )
@@ -548,9 +563,8 @@ int Network::recv( bool iblocking )
         }
 
         //check if we already have data
-        if( is_LocalNodeThreaded() ) {
+        if( is_LocalNodeThreaded() )
             waitfor_NonEmptyStream();
-        }
         else {
             mrn_dbg(3, mrn_printf(FLF, stderr, "Calling recv_packets()\n"));
             if( recv_PacketsFromParent( packet_list ) == -1){
@@ -658,7 +672,7 @@ get_packet_from_stream_label:
     return 0;
 }
 
-CommunicationNode * Network::get_EndPoint( Rank irank ) const
+CommunicationNode* Network::get_EndPoint( Rank irank ) const
 {
     map< Rank, CommunicationNode * >::const_iterator iter =
         _end_points.find( irank );
@@ -670,36 +684,36 @@ CommunicationNode * Network::get_EndPoint( Rank irank ) const
     return (*iter).second;
 }
 
-Communicator * Network::get_BroadcastCommunicator(void) const
+Communicator* Network::get_BroadcastCommunicator(void) const
 {
     return _bcast_communicator;
 }
 
-Communicator * Network::new_Communicator()
+Communicator* Network::new_Communicator()
 {
     return new Communicator(this);
 }
 
-Communicator * Network::new_Communicator( Communicator& comm )
+Communicator* Network::new_Communicator( Communicator& comm )
 {
     return new Communicator( this, comm );
 }
 
-Communicator * Network::new_Communicator( set <CommunicationNode *> & endpoints )
+Communicator* Network::new_Communicator( set <CommunicationNode *> & endpoints )
 {
     return new Communicator( this, endpoints );
 }
 
-CommunicationNode * Network::new_EndPoint(string &ihostname,
+CommunicationNode* Network::new_EndPoint( string &ihostname, 
                                           Port iport, Rank irank )
 {
     return new CommunicationNode(ihostname, iport, irank);
 }
 
-Stream * Network::new_Stream( Communicator *icomm, 
-                              int ius_filter_id /*=TFILTER_NULL*/,
-                              int isync_filter_id /*=SFILTER_WAITFORALL*/, 
-                              int ids_filter_id /*=TFILTER_NULL*/ )
+Stream* Network::new_Stream( Communicator *icomm, 
+                             int ius_filter_id /*=TFILTER_NULL*/,
+                             int isync_filter_id /*=SFILTER_WAITFORALL*/, 
+                             int ids_filter_id /*=TFILTER_NULL*/ )
 {
     static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
 
@@ -731,13 +745,12 @@ Stream * Network::new_Stream( Communicator *icomm,
     return stream;
 }
 
-Stream * Network::new_Stream( int iid,
-                              Rank *ibackends,
-                              unsigned int inum_backends,
-                              int ius_filter_id,
-                              int isync_filter_id,
-                              int ids_filter_id
-                            )
+Stream* Network::new_Stream( int iid,
+                             Rank* ibackends,
+                             unsigned int inum_backends,
+                             int ius_filter_id,
+                             int isync_filter_id,
+                             int ids_filter_id )
 {
     mrn_dbg_func_begin();
     Stream * stream = new Stream( this, iid, ibackends, inum_backends,
@@ -757,10 +770,10 @@ Stream * Network::new_Stream( int iid,
     return stream;
 }
 
-Stream * Network::new_Stream( Communicator * icomm,
-                              std::string us_filters,
-                              std::string sync_filters,
-                              std::string ds_filters )
+Stream* Network::new_Stream( Communicator* icomm,
+                             std::string us_filters,
+                             std::string sync_filters,
+                             std::string ds_filters )
 {
     static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
 
@@ -791,10 +804,10 @@ Stream * Network::new_Stream( Communicator * icomm,
     return stream;
 }
 
-Stream * Network::get_Stream( unsigned int iid ) const
+Stream* Network::get_Stream( unsigned int iid ) const
 {
-    Stream * ret;
-    map<unsigned int, Stream*>::const_iterator iter; 
+    Stream* ret;
+    map< unsigned int, Stream* >::const_iterator iter; 
 
     _streams_sync.Lock();
 
@@ -813,7 +826,7 @@ Stream * Network::get_Stream( unsigned int iid ) const
 
 void Network::delete_Stream( unsigned int iid )
 {
-    map<unsigned int, Stream*>::iterator iter; 
+    map< unsigned int, Stream* >::iterator iter; 
 
     _streams_sync.Lock();
 
@@ -843,33 +856,35 @@ bool Network::have_Streams( )
     return ret;
 }
 
-// int Network::get_DataSocketFds( int **ofds, unsigned int *onum_fds ) const
-// {
-//     if( is_LocalNodeFrontEnd() ) {
-//         _children_mutex.Lock();
-//         std::set < PeerNodePtr >::const_iterator iter;
-
-//         *onum_fds = _children.size( );
-//         *ofds = new int[*onum_fds];
-
-//         unsigned int i;
-//         for( i=0,iter=_children.begin(); iter != _children.end(); iter++,i++ ) {
-//             (*ofds)[i] = (*iter)->get_DataSocketFd();
-//         }
-//         _children_mutex.Unlock();
-//     }
-//     else if ( is_LocalNodeBackEnd() ) {
-//         _parent_sync.Lock();
-//         *onum_fds = 1;
-//         *ofds = new int;
-
-//         *ofds[0] = _parent->get_DataSocketFd();
-
-//         _parent_sync.Unlock();
-//     }
-
-//     return 0;
-// }
+/***** DEPRECATED *****
+ * int Network::get_DataSocketFds( int** ofds, unsigned int* onum_fds ) const
+ * {
+ *     if( is_LocalNodeFrontEnd() ) {
+ *         _children_mutex.Lock();
+ *         std::set < PeerNodePtr >::const_iterator iter;
+ * 
+ *         *onum_fds = _children.size( );
+ *         *ofds = new int[*onum_fds];
+ * 
+ *         unsigned int i;
+ *         for( i=0,iter=_children.begin(); iter != _children.end(); iter++,i++ ) {
+ *             (*ofds)[i] = (*iter)->get_DataSocketFd();
+ *         }
+ *         _children_mutex.Unlock();
+ *     }
+ *     else if ( is_LocalNodeBackEnd() ) {
+ *         _parent_sync.Lock();
+ *         *onum_fds = 1;
+ *         *ofds = new int;
+ * 
+ *         *ofds[0] = _parent->get_DataSocketFd();
+ * 
+ *         _parent_sync.Unlock();
+ *     }
+ * 
+ *     return 0;
+ * }
+ *****/
 
 int Network::get_EventNotificationFd( EventType etyp )
 {
@@ -964,7 +979,7 @@ bool Network::disable_PerformanceData( perfdata_metric_t metric,
         return false;
 
     bool ret = true;
-    map<unsigned int, Stream*>::iterator iter; 
+    map< unsigned int, Stream* >::iterator iter; 
     _streams_sync.Lock();
     for( iter = _streams.begin(); iter != _streams.end(); iter++ ) {
         bool rc = (*iter).second->disable_PerformanceData( metric, context );
@@ -983,8 +998,7 @@ bool Network::disable_PerformanceData( perfdata_metric_t metric,
 bool Network::collect_PerformanceData( map< int, rank_perfdata_map >& results,
                                        perfdata_metric_t metric, 
                                        perfdata_context_t context,
-                                       int aggr_filter_id /*=TFILTER_CONCAT*/
-                                       )
+                                       int aggr_filter_id /*=TFILTER_CONCAT*/ )
 {
     mrn_dbg_func_begin();
     if( metric >= PERFDATA_MAX_MET )
@@ -994,7 +1008,7 @@ bool Network::collect_PerformanceData( map< int, rank_perfdata_map >& results,
 
     bool ret = true;
 
-    map<unsigned int, Stream*>::const_iterator citer;
+    map< unsigned int, Stream* >::const_iterator citer;
     _streams_sync.Lock();
     for( citer = _streams.begin(); citer != _streams.end(); citer++ ) {
 
@@ -1023,7 +1037,7 @@ void Network::print_PerformanceData( perfdata_metric_t metric,
     if( context >= PERFDATA_MAX_CTX )
         return;
 
-    map<unsigned int, Stream*>::const_iterator citer; 
+    map< unsigned int, Stream* >::const_iterator citer; 
     _streams_sync.Lock();
     for( citer = _streams.begin(); citer != _streams.end(); citer++ ) {
         (*citer).second->print_PerformanceData( metric, context );
@@ -1034,18 +1048,18 @@ void Network::print_PerformanceData( perfdata_metric_t metric,
 }
 
 
-int Network::load_FilterFunc( const char *so_file, const char *func )
+int Network::load_FilterFunc( const char* so_file, const char* func_name )
 {
     mrn_dbg_func_begin();
 
-    int fid = Filter::load_FilterFunc( so_file, func );
+    int fid = Filter::load_FilterFunc( so_file, func_name );
     
     if( fid != -1 ){
         //Filter registered locally, now propagate to tree
         //TODO: ensure that filter is loaded down the entire tree
         mrn_dbg(3, mrn_printf(FLF, stderr, "sending PROT_NEW_FILTER\n" ));
         PacketPtr packet( new Packet( 0, PROT_NEW_FILTER, "%uhd %s %s",
-                                      fid, so_file, func ) );
+                                      fid, so_file, func_name ) );
         send_PacketToChildren( packet );
     }
     mrn_dbg_func_end();
@@ -1055,8 +1069,7 @@ int Network::load_FilterFunc( const char *so_file, const char *func )
 
 void Network::set_BlockingTimeOut( int timeout )
 {
-    mrn_dbg(2, mrn_printf(FLF, stderr, "set_BlockingTimeOut(%d)\n", timeout ));
-
+    mrn_dbg(3, mrn_printf(FLF, stderr, "set_BlockingTimeOut(%d)\n", timeout ));
     PeerNode::set_BlockingTimeOut( timeout );
 }
 
@@ -1086,6 +1099,8 @@ void Network::waitfor_NonEmptyStream( void )
         mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting on CV[STREAMS_NONEMPTY] ...\n"));
         _streams_sync.WaitOnCondition( STREAMS_NONEMPTY );
     }
+    // should never get here, just in case
+    _streams_sync.Unlock();
 }
 
 void Network::signal_NonEmptyStream( void )
@@ -1099,27 +1114,27 @@ void Network::signal_NonEmptyStream( void )
 
 /* Methods to access internal network state */
 
-void Network::set_BackEndNode( BackEndNode * iback_end_node )
+void Network::set_BackEndNode( BackEndNode* iback_end_node )
 {
     _local_back_end_node = iback_end_node;
 }
 
-void Network::set_FrontEndNode( FrontEndNode * ifront_end_node )
+void Network::set_FrontEndNode( FrontEndNode* ifront_end_node )
 {
     _local_front_end_node = ifront_end_node;
 }
 
-void Network::set_InternalNode( InternalNode * iinternal_node )
+void Network::set_InternalNode( InternalNode* iinternal_node )
 {
     _local_internal_node = iinternal_node;
 }
 
-void Network::set_NetworkTopology( NetworkTopology * inetwork_topology )
+void Network::set_NetworkTopology( NetworkTopology* inetwork_topology )
 {
     _network_topology = inetwork_topology;
 }
 
-void Network::set_LocalHostName( string & ihostname )
+void Network::set_LocalHostName( string const& ihostname )
 {
     _local_hostname = ihostname;
 }
@@ -1134,7 +1149,7 @@ void Network::set_LocalRank( Rank irank )
     _local_rank = irank;
 }
 
-void Network::set_FailureManager( CommunicationNode * icomm )
+void Network::set_FailureManager( CommunicationNode* icomm )
 {
     if( _failure_manager != NULL ) {
         delete _failure_manager;
@@ -1142,40 +1157,40 @@ void Network::set_FailureManager( CommunicationNode * icomm )
     _failure_manager = icomm;
 }
 
-NetworkTopology * Network::get_NetworkTopology( void ) const
+NetworkTopology* Network::get_NetworkTopology( void ) const
 {
     return _network_topology;
 }
 
-FrontEndNode * Network::get_LocalFrontEndNode( void ) const
+FrontEndNode* Network::get_LocalFrontEndNode( void ) const
 {
     return _local_front_end_node;
 }
 
-InternalNode * Network::get_LocalInternalNode( void ) const
+InternalNode* Network::get_LocalInternalNode( void ) const
 {
     return _local_internal_node;
 }
 
-BackEndNode * Network::get_LocalBackEndNode( void ) const
+BackEndNode* Network::get_LocalBackEndNode( void ) const
 {
     return _local_back_end_node;
 }
 
-ChildNode * Network::get_LocalChildNode( void ) const
+ChildNode* Network::get_LocalChildNode( void ) const
 {
     if( is_LocalNodeInternal() )
-        return dynamic_cast<ChildNode*>(_local_internal_node);
+        return dynamic_cast< ChildNode* >(_local_internal_node);
     else
-        return dynamic_cast<ChildNode*>(_local_back_end_node) ;
+        return dynamic_cast< ChildNode* >(_local_back_end_node) ;
 }
 
-ParentNode * Network::get_LocalParentNode( void ) const
+ParentNode* Network::get_LocalParentNode( void ) const
 {
     if( is_LocalNodeInternal() )
-        return dynamic_cast<ParentNode*>(_local_internal_node);
+        return dynamic_cast< ParentNode* >(_local_internal_node);
     else
-        return dynamic_cast<ParentNode*>(_local_front_end_node); 
+        return dynamic_cast< ParentNode* >(_local_front_end_node); 
 }
 
 string Network::get_LocalHostName( void ) const
@@ -1199,7 +1214,7 @@ int Network::get_ListeningSocket( void ) const
     return get_LocalParentNode()->get_ListeningSocket();
 }
 
-CommunicationNode * Network::get_FailureManager( void ) const
+CommunicationNode* Network::get_FailureManager( void ) const
 {
     return _failure_manager;
 }
@@ -1237,7 +1252,7 @@ bool Network::is_LocalNodeThreaded( void ) const
 int Network::send_FilterStatesToParent( void )
 {
     mrn_dbg_func_begin();
-    map<unsigned int, Stream*>::iterator iter; 
+    map< unsigned int, Stream* >::iterator iter; 
 
     _streams_sync.Lock();
 
@@ -1250,7 +1265,7 @@ int Network::send_FilterStatesToParent( void )
     return 0;
 }
 
-bool Network::reset_Topology( string & itopology )
+bool Network::reset_Topology( string& itopology )
 {
     if( !_network_topology->reset( itopology ) ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "Topology->reset() failed\n" ));
@@ -1260,7 +1275,7 @@ bool Network::reset_Topology( string & itopology )
     return true;
 }
 
-bool Network::add_SubGraph( Rank iroot_rank, SerialGraph &sg )
+bool Network::add_SubGraph( Rank iroot_rank, SerialGraph& sg )
 {
     unsigned topsz = _network_topology->get_NumNodes();
 
@@ -1297,7 +1312,7 @@ bool Network::remove_Node( Rank ifailed_rank, bool iupdate )
 
     mrn_dbg(3, mrn_printf( FLF, stderr, "Removing from Streams: node[%u] ...\n", ifailed_rank ));
     _streams_sync.Lock();
-    map < unsigned int, Stream * >::iterator iter;
+    map < unsigned int, Stream* >::iterator iter;
     for( iter=_streams.begin(); iter != _streams.end(); iter++ ) {
         (*iter).second->remove_Node( ifailed_rank );
     }
@@ -1328,14 +1343,14 @@ bool Network::change_Parent( Rank ichild_rank, Rank inew_parent_rank )
     return true;
 }
 
-bool Network::insert_EndPoint( string &ihostname, Port iport, Rank irank )
+bool Network::insert_EndPoint( string& ihostname, Port iport, Rank irank )
 {
     bool retval = true;
     mrn_dbg_func_begin();
 
     _endpoints_mutex.Lock();
 
-    map< Rank, CommunicationNode * >::iterator iter = _end_points.find( irank );
+    map< Rank, CommunicationNode* >::iterator iter = _end_points.find( irank );
     if( iter != _end_points.end() ) {
         if( (iter->second->get_HostName() != ihostname) ||
             (iter->second->get_Port() != iport) ) {
@@ -1370,7 +1385,7 @@ bool Network::update( void )
     //update stream
     mrn_dbg(3, mrn_printf( FLF, stderr, "Updating stream children ...\n"));
     _streams_sync.Lock();
-    map < unsigned int, Stream * >::iterator iter;
+    map < unsigned int, Stream* >::iterator iter;
     for( iter=_streams.begin(); iter != _streams.end(); iter++ ) {
         (*iter).second->recompute_ChildrenNodes();
     }
@@ -1475,12 +1490,12 @@ void Network::close_PeerNodeConnections( void )
     mrn_dbg_func_end();
 }
 
-char * Network::get_TopologyStringPtr( void ) const
+char* Network::get_TopologyStringPtr( void ) const
 {
     return _network_topology->get_TopologyStringPtr();
 }
 
-char * Network::get_LocalSubTreeStringPtr( void ) const
+char* Network::get_LocalSubTreeStringPtr( void ) const
 {
     return _network_topology->get_LocalSubTreeStringPtr();
 }
@@ -1606,10 +1621,10 @@ PeerNodePtr Network::get_PeerNode( Rank irank )
     return peer;
 }
 
-const set < PeerNodePtr > Network::get_ChildPeers( void ) const
+const set< PeerNodePtr > Network::get_ChildPeers( void ) const
 {
     _children_mutex.Lock();
-    const set< PeerNodePtr> children = _children;
+    const set< PeerNodePtr > children = _children;
     _children_mutex.Unlock();
 
     return children;
@@ -1637,7 +1652,8 @@ bool Network::node_Failed( Rank irank  )
     return _network_topology->node_Failed( irank );
 }
 
-void set_OutputLevel(int l){
+void set_OutputLevel(int l)
+{
     if( l <= MIN_OUTPUT_LEVEL ) {
         CUR_OUTPUT_LEVEL = MIN_OUTPUT_LEVEL;
     }
@@ -1651,9 +1667,8 @@ void set_OutputLevel(int l){
 
 void set_OutputLevelFromEnvironment( void )
 {
-    char * output_level = getenv( "MRNET_OUTPUT_LEVEL" );
-
-    if( output_level ) {
+    char* output_level = getenv( "MRNET_OUTPUT_LEVEL" );
+    if( output_level != NULL ) {
         int l = atoi( output_level );
         set_OutputLevel( l );
     }
