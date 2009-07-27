@@ -7,6 +7,7 @@
 #include "FaultRecovery.h"
 #include <bitset>
 #include <cmath>
+#include <cstring>
 
 using namespace MRN;
 
