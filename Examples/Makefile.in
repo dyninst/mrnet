@@ -32,7 +32,7 @@ INSTALL = @INSTALL@
 
 LIBMRNET   = -lmrnet
 LIBXPLAT   = -lxplat
-LIBS       = -L$(LIBDIR) $(LIBMRNET) $(LIBXPLAT) -lfl -lm -lpthread -ldl
+LIBS       = -L$(LIBDIR) $(LIBMRNET) $(LIBXPLAT) @LIBS@ -lfl -lm -lpthread -ldl
 
 LDFLAGS = @LDFLAGS@
 SOFLAGS = @SOFLAGS@
