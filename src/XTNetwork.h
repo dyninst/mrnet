@@ -1,6 +1,13 @@
 #ifndef MRN_XTNetwork_h
 #define MRN_XTNetwork_h
 
+#include <set>
+#include <string>
+#include <vector>
+#include <utility>
+
+#include "mrnet/Network.h"
+
 #include "ParsedGraph.h"
 
 extern "C"

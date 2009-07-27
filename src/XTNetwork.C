@@ -9,12 +9,16 @@
 #include <sstream>
 #include <unistd.h>
 #include <sys/wait.h>
-#include "mrnet/MRNet.h"
+
+#include "utils.h"
 #include "SerialGraph.h"
 #include "XTNetwork.h"
 #include "XTFrontEndNode.h"
 #include "XTBackEndNode.h"
 #include "XTInternalNode.h"
+
+
+#include "mrnet/MRNet.h"
 #include "xplat/Process.h"
 
 extern "C"
@@ -45,12 +49,12 @@ Network::CreateNetworkFE( const char * itopology,
     mrn_dbg_func_begin();
 
     Network* n = new XTNetwork;
-    n->InitFE( itopology,
-               ibackend_exe,
-               ibackend_argv,
-               iattrs,
-               irank_backends,
-               iusing_mem_buf );
+    n->init_FrontEend( itopology,
+                       ibackend_exe,
+                       ibackend_argv,
+                       iattrs,
+                       irank_backends,
+                       iusing_mem_buf );
     return n;
 }
 

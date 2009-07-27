@@ -33,13 +33,19 @@ class ParsedGraph: public Error {
         
     public:
         Node( const char *ihostname, Rank ilocal_rank );
+
         std::string const& get_HostName( ) const { return _hostname; }
         Rank get_LocalRank( ) const { return _local_rank; }
         Rank get_Rank( ) const { return _rank; }
+
         bool visited( ) const { return _visited; }
         void visit( ) { _visited=true; }
+
+        const std::vector<Node*>& get_Children( void ) const { return _children; }
         void add_Child( Node * c ) { _children.push_back(c); }
         void remove_Child( Node * c ) ;
+   
+        const Node* get_Parent( void ) const { return _parent; }
         void set_Parent( Node * p ) { _parent = p; };
         
         void print_Node( FILE *, unsigned int idepth );

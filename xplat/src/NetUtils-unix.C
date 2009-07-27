@@ -21,6 +21,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 
 #if defined( compiler_sun )
