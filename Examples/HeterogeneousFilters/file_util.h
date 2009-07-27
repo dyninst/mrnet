@@ -47,10 +47,10 @@ inline int open_file(const char* filename, int flags, mode_t mode, int errprint 
    return fd;
 }
 
-inline char* read_file(const char* filename, unsigned long& filelen)
+inline char* read_file(const char* filename, size_t& filelen)
 {
    ifstream f;
-   long int len;
+   size_t len;
    char* contents = NULL;
    filelen = 0;
    f.open(filename);
@@ -76,7 +76,7 @@ inline char* read_file(const char* filename, unsigned long& filelen)
       // read entire file
       contents = (char*) malloc(len+512);
       if( contents == NULL )
-         fprintf(stderr, "%s[%d] %s - malloc(%d) failed\n", 
+         fprintf(stderr, "%s[%d] %s - malloc(%zd) failed\n", 
 	         __FILE__, __LINE__, __FUNCTION__, len+1);
       else {
          f.read(contents, len+511);

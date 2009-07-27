@@ -16,7 +16,7 @@ all: $(TARGETS) $(TARGETS_SO)
 $(BINDIR)/HeteroFilters_FE: HeteroFilters_FE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ HeteroFilters_FE.C $(LIBS)
 
-$(BINDIR)/HeteroFilters_BE: HeteroFilters_BE.C
+$(BINDIR)/HeteroFilters_BE: HeteroFilters_BE.C file_util.h
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ HeteroFilters_BE.C $(LIBS)
 
 $(LIBDIR)/HeteroFilters.so: HeteroFilters.C
