@@ -290,7 +290,7 @@ tests: all $(STD_TESTS) $(LIBDIR)/test_DynamicFilters.so $(LIBDIR)/test_HeteroFi
 tests-opt: $(OPT_TESTS)
 
 examples: all
-	$(MAKE) -C Examples install
+	$(MAKE) -C Examples
 
 $(OBJDIR)/scanner.C: $(SRCDIR)/src/scanner.l $(OBJDIR)/parser.tab.C $(FRC)
 	@echo Building `basename $@` ...
