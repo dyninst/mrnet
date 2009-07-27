@@ -300,6 +300,5 @@ AC_TYPE_PID_T
 AC_FUNC_FORK
 AC_CHECK_FUNCS([gethostbyname socket strchr strerror])
 
-AC_OUTPUT( Makefile:conf/Makefile.in )
-AC_OUTPUT( xplat/Makefile:xplat/Makefile.in )
-AC_OUTPUT( Examples/Makefile:Examples/Makefile.in )
+AC_CONFIG_FILES( Makefile:conf/Makefile.in Examples/Makefile xplat/Makefile )
+AC_OUTPUT
