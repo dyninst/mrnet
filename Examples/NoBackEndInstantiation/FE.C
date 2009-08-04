@@ -38,10 +38,11 @@ void write_be_connections(vector< NetworkTopology::Node * >& leaves, unsigned nu
               leaves[curr_leaf]->get_Port(),
               leaves[curr_leaf]->get_Rank() );
 
-      fprintf(f, "%s:%d:%d\n", 
+      fprintf(f, "%s %d %d %d\n", 
               leaves[curr_leaf]->get_HostName().c_str(), 
               leaves[curr_leaf]->get_Port(), 
-              leaves[curr_leaf]->get_Rank());
+              leaves[curr_leaf]->get_Rank(),
+              i);
 
    }
    fclose(f);
