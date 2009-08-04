@@ -19,18 +19,23 @@ dnl === CONFIGURE OPTIONS
 AC_ARG_WITH(startup,
             [AS_HELP_STRING([--with-startup=METHOD],
                             [Tree instantiation method - "ssh" (default), "cray_xt"])],
-            [MRNET_STARTUP_METHOD="${withval}";],
+            [MRNET_STARTUP_METHOD="${withval}"],
             [MRNET_STARTUP_METHOD="ssh"])
-if test $MRNET_STARTUP_METHOD = "ssh" ; then
-    AC_CHECK_FILE([/proc/cray_xt/nid],[MRNET_STARTUP_METHOD="cray_xt"])
-fi
-AC_SUBST(MRNET_STARTUP_METHOD)
-
+AC_ARG_WITH(alpstoolhelp-lib,
+            [AS_HELP_STRING([--with-alpstoolhelp-lib],
+                            [(CrayXT only) Absolute path to directory containing libalps library])],
+            [CRAYXT_ATH_LIBDIR="${withval}"],
+            [CRAYXT_ATH_LIBDIR=""])
+    
+AC_ARG_WITH(alpstoolhelp-inc,
+            [AS_HELP_STRING([--with-alpstoolhelp-inc],
+                            [(CrayXT only) Absolute path to directory containing libalps.h])],
+            [CRAYXT_ATH_INCDIR="${withval}"],
+            [CRAYXT_ATH_INCDIR=""])
 
 AC_ARG_WITH(libfldir,
             [AS_HELP_STRING([--with-libfldir],[Absolute path to directory containing flex library])],
             [FLEX_LIBDIR="${withval}";] )
-
 
 AC_ARG_ENABLE(shared,
     [AS_HELP_STRING([--enable-shared],[Build shared object version of mrnet library (default off)])],
@@ -91,7 +96,7 @@ PD_COMPILER_TYPE
 
 if test $COMPILER_TYPE = "gnu" ; then
 
-    CXXFLAGS="$CXXFLAGS -Dcompiler_gnu"
+    CXXFLAGS="$CXXFLAGS -Dcompiler_gnu -fno-default-inline"
     if test $BUILDSHARED = "yes" ; then
         CXXFLAGS="$CXXFLAGS -fPIC"
     fi
@@ -251,15 +256,63 @@ case "$host_os" in
     LIBS="$LIBS -lm -lpthread"
     ;;
 esac
-AC_SUBST(LIBS)
 
+dnl === CRAY XT OPTIONS ===
+if test $MRNET_STARTUP_METHOD = "ssh" ; then
+    AC_CHECK_FILE([/proc/cray_xt/nid],[MRNET_STARTUP_METHOD="cray_xt"])
+fi
+if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
+
+    CXXFLAGS="$CXXFLAGS -Darch_crayxt"
+    if test "$CRAYXT_ATH_INCDIR" != "" ; then
+        CXXFLAGS="$CXXFLAGS -I$CRAYXT_ATH_INCDIR"
+    fi
+
+    AC_CHECK_HEADERS([alps/apInfo.h])
+    AC_CHECK_HEADER([libalps.h], 
+                    [], 
+                    [AC_MSG_ERROR(Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc)],
+[#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_ALPS_APINFO_H 
+# include <alps/apInfo.h> 
+#endif] )
+
+    LIBS_HOLD=$LIBS
+    ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
+    if test "$CRAYXT_ATH_LIBDIR" = "" ; then
+        AC_CHECK_LIB(alps, [alps_launch_tool_helper], 
+                     [LIBS="$ATH_LIBS $LIBS_HOLD"], 
+                     [AC_MSG_ERROR(Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib)],
+                     [-lxmlrpc])
+    else
+        LIBS="-L$CRAYXT_ATH_LIBDIR"
+        AC_CHECK_LIB(alps, [alps_launch_tool_helper], 
+                     [LIBS="-L$CRAYXT_ATH_LIBDIR $ATH_LIBS $LIBS_HOLD"], 
+                     [AC_MSG_ERROR(No/invalid libalps found in $CRAYXT_ATH_LIBDIR)],
+                     [-lxmlrpc])
+    fi
+
+fi
+AC_SUBST(MRNET_STARTUP_METHOD)
+
+dnl === FLEX ===
 if test "$FLEX_LIBDIR" = "" ; then
-    AC_CHECK_LIB(fl, [yywrap], [], [AC_MSG_ERROR(Can't find flex library libfl. Must specify proper directory with --with-libfldir)])
+    AC_CHECK_LIB(fl, [yywrap], 
+                 [], 
+                 [AC_MSG_ERROR(Can't find flex library libfl. Must specify proper directory with --with-libfldir)])
 else
     LIBS_HOLD=$LIBS
     LIBS="-L$FLEX_LIBDIR"
-    AC_CHECK_LIB(fl, [yywrap], [LIBS="-L$FLEX_LIBDIR $LIBS_HOLD"], [AC_MSG_ERROR(No/invalid flex library found in ${FLEX_LIBDIR})])
+    AC_CHECK_LIB(fl, [yywrap], 
+                 [LIBS="-L$FLEX_LIBDIR -lfl $LIBS_HOLD"], 
+                 [AC_MSG_ERROR(No/invalid flex library found in ${FLEX_LIBDIR})])
 fi
+
 
 AC_MSG_CHECKING([[whether we can compile/link with "$CXX $CXXFLAGS $LIBS"]])
 AC_LINK_IFELSE( [AC_LANG_PROGRAM([],[])],
@@ -273,6 +326,7 @@ AC_SUBST(LDFLAGS)
 AC_SUBST(CN_LDFLAGS)
 AC_SUBST(SOFLAGS)
 AC_SUBST(C_AS_CPLUSPLUS)
+AC_SUBST(LIBS)
 
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF(char)
@@ -300,5 +354,5 @@ AC_TYPE_PID_T
 AC_FUNC_FORK
 AC_CHECK_FUNCS([gethostbyname socket strchr strerror])
 
-AC_CONFIG_FILES( Makefile:conf/Makefile.in Examples/Makefile xplat/Makefile )
+AC_CONFIG_FILES( Makefile:conf/Makefile.in xplat/Makefile Examples/Makefile )
 AC_OUTPUT
