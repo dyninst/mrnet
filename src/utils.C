@@ -130,28 +130,30 @@ struct hostent * mrnet_gethostbyname( const char * name )
     return ret_hostent;
 }
 
-int connectHost( int *sock_in, const std::string & hostname, Port port )
+int connectHost( int *sock_in, const std::string & hostname, Port port, 
+                 int num_retry )
 {
 
     int sock = *sock_in;
     struct sockaddr_in server_addr;
     struct hostent *server_hostent = NULL;
+    const char* host = hostname.c_str();
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "In connect_to_host(%s:%d) sock:%d ...\n",
-                           hostname.c_str(  ), port, sock ) );
+                           host, port, sock ) );
 
     if( sock <= 0 ) {
         sock = socket( AF_INET, SOCK_STREAM, 0 );
         mrn_dbg( 5, mrn_printf(FLF, stderr, "socket() => %d\n", sock ));
 
         if( sock == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "socket() failed\n" ) );
             perror( "socket()" );
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "socket() failed\n" ) );
             return -1;
         }
     }
 
-    server_hostent = mrnet_gethostbyname( hostname.c_str( ) );
+    server_hostent = mrnet_gethostbyname( host );
     if( server_hostent == NULL ) {
         perror( "gethostbyname()" );
         return -1;
@@ -166,27 +168,31 @@ int connectHost( int *sock_in, const std::string & hostname, Port port )
 
     unsigned int nConnectTries = 0;
     int err, cret = -1;
-    while( ( cret == -1 ) && ( nConnectTries < 10 ) ) {
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "Connecting to socket %d\n", sock ));
-        cret =
-            connect( sock, (sockaddr *) & server_addr, sizeof( server_addr ) );
+    do {
+        cret = connect( sock, (sockaddr *) & server_addr, sizeof( server_addr ) );
         if( cret == -1 ) {
             err = XPlat::NetUtils::GetLastError();
             if( ! ( XPlat::Error::ETimedOut(err) || XPlat::Error::EConnRefused(err) ) ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() failed: %s\n",
-                            XPlat::Error::GetErrorString( err ).c_str() ) );
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n",
+                                       host, port,
+                                       XPlat::Error::GetErrorString( err ).c_str()) );
                 return -1;
             }
-            nConnectTries++;
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "connection timed out %d times\n",
-                        nConnectTries ) );
 
-            // delay a bit before trying again
-            sleep( 1 );
+	    nConnectTries++;
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "connect() to %s:%d timed out %d times\n",
+                                   host, port, nConnectTries) );
+	    if( (num_retry > 0) && (nConnectTries >= num_retry) )
+                break;
+
+	    // delay before trying again (more each time)
+	    sleep( nConnectTries );
         }
-    }
+    } while( cret == -1 );
+
     if( cret == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() failed: %s\n",
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n",
+                               host, port,
 			       XPlat::Error::GetErrorString( err ).c_str() ) );
         return -1;
     }
@@ -251,8 +257,7 @@ int bindPort( int *sock_in, Port *port_in )
 
     if( port != 0 ) {
         local_addr.sin_port = htons( port );
-        if( bind( sock, (sockaddr*) & local_addr, sizeof( local_addr ) ) ==
-            -1 ) {
+        if( bind( sock, (sockaddr*)&local_addr, sizeof( local_addr ) ) == -1 ) {
             perror( "bind()" );
             return -1;
         }
@@ -261,8 +266,7 @@ int bindPort( int *sock_in, Port *port_in )
         // let the system assign a port, start from 1st dynamic port
         port = 49152;
         local_addr.sin_port = htons( port );
-        while( bind( sock, (sockaddr*) & local_addr, sizeof( local_addr ) ) ==
-               -1 ) {
+        while( bind( sock, (sockaddr*)&local_addr, sizeof( local_addr ) ) == -1 ) {
 
             int err = XPlat::NetUtils::GetLastError();
             if( XPlat::Error::EAddrInUse( err ) ) {
@@ -278,8 +282,8 @@ int bindPort( int *sock_in, Port *port_in )
     }
 
     if( listen( sock, 64 ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "%s", "" ) );
         perror( "listen()" );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "%s", "" ) );
         return -1;
     }
 
@@ -297,8 +301,7 @@ int bindPort( int *sock_in, Port *port_in )
 #endif // defined(TCP_NODELAY)
 
     // determine which port we were actually assigned to
-    if( getPortFromSocket( sock, port_in ) != 0 )
-    {
+    if( getPortFromSocket( sock, port_in ) != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
             "failed to obtain port from socket\n" ) );
         XPlat::SocketUtils::Close( sock );
@@ -307,8 +310,8 @@ int bindPort( int *sock_in, Port *port_in )
     
     *sock_in = sock;
     mrn_dbg( 3, mrn_printf(FLF, stderr,
-                "Leaving bind_to_port(). Returning sock:%d, port:%d\n",
-                sock, *port_in ) );
+                           "Leaving bind_to_port(). Returning sock:%d, port:%d\n",
+                           sock, *port_in ) );
     return 0;
 }
 
@@ -377,61 +380,50 @@ int mrn_printf( const char *file, int line, const char * func,
     va_list arglist;
 
     struct timeval tv;
-    while( gettimeofday( &tv, NULL ) == -1 );
-
-    if( fp == NULL ) {
-
-        unsigned rank = getrank();
-	if( rank != UnknownRank ) {
-
-            std::string this_host;
-            struct stat s;
-            char host[256];
-            char logdir[256];
-            char logfile[512];
-            logfile[0] = '\0';
-
-            const char* home = getenv("HOME");
-
-            XPlat::NetUtils::GetLocalHostName(this_host);
-            strncpy( host, this_host.c_str(), 256 );
-            host[255] = '\0';
-
-            const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
-            if( varval != NULL ) {
-                if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) ) {
-                    snprintf( logfile, sizeof(logfile), "%s/%s-%s-%u",
-                              varval, node_type, host, getrank() );
-                }
-            }
-            else if( (home != NULL) && (host != NULL) ) { 
-                snprintf( logdir, sizeof(logdir), "%s/mrnet-log", home );
-                if( (stat(logdir, &s) == 0) && (S_IFDIR & s.st_mode) ) {
-                    snprintf( logfile, sizeof(logfile), "%s/%s-%s-%u",
-                              logdir, node_type, host, getrank() );
-                }
-                else {
-                    snprintf( logfile, sizeof(logfile), "%s/mrnet-%s-%s-%u.log",
-                              home, node_type, host, getrank() );
-                }
-            }
-            if( strcmp(logfile, "") == 0 ) {
-                snprintf( logfile, sizeof(logfile), "/tmp/mrnet-%s-%u.log", 
-                          node_type, getrank() );
-            }
-            fp = fopen( logfile, "w" );
-            if( fp == NULL ) {
-                //perror( "fopen()" );
-                fp=ifp;
-            }
-        }
-    }
+    while( gettimeofday( &tv, NULL ) == -1 ) {}
 
     printf_mutex.Lock();
 
+    int rank = getrank();
+
+    if( (fp == NULL) && (rank != UnknownRank) ) {
+
+        FILE * tmp_fp = NULL;
+        std::string this_host;
+        struct stat s;
+        char host[256];
+        char logdir[256];
+        char logfile[512];
+        logfile[0] = '\0';
+
+        const char* home = getenv("HOME");
+
+        XPlat::NetUtils::GetLocalHostName(this_host);
+        strncpy( host, this_host.c_str(), 256 );
+        host[255] = '\0';
+
+        // find log directory
+        const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
+        if( varval != NULL ) {
+            if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
+                snprintf( logdir, sizeof(logdir), "%s", varval );
+        }
+        else if( home != NULL ) {
+            snprintf( logdir, sizeof(logdir), "%s/mrnet-log", home );
+            if( ! ((stat(logdir, &s) == 0) && (S_IFDIR & s.st_mode)) )
+                snprintf( logdir, sizeof(logdir), "/tmp" );
+        }
+        // set file name format
+        snprintf( logfile, sizeof(logfile), "%s/%s_%s_%d",
+                  logdir, node_type, host, rank );
+        tmp_fp = fopen( logfile, "w" );
+	if( tmp_fp != NULL )
+            fp = tmp_fp;
+    }
+
     FILE *f = fp;
-    if( f == NULL )
-	f = ifp;
+    if( f == NULL ) 
+        f = ifp;
 
     if( file ) {
         // get thread name

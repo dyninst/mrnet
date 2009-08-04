@@ -61,7 +61,8 @@ using namespace MRN;
 namespace MRN
 {
 
-int connectHost( int *sock_in, const std::string & hostname, Port port );
+int connectHost( int *sock_in, const std::string & hostname, Port port,
+                 int num_retry = -1 );
 
 int bindPort( int *sock_in, Port *port_in );
 int getSocketConnection( int bound_socket );
