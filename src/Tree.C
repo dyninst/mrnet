@@ -244,7 +244,7 @@ bool BalancedTree::initialize_Tree( string &topology_spec, list< pair<string,uns
 
     list< pair<string,unsigned> >::const_iterator list_iter = hosts.begin();
     if( list_iter == hosts.end() ) {
-        fprintf( stderr, "Not enough hosts for topology %s\n", 
+        fprintf( stderr, "Input host list is empty. Not enough hosts for topology %s\n", 
                  topology_spec.c_str() );
         exit(-1);
     }
@@ -260,7 +260,7 @@ bool BalancedTree::initialize_Tree( string &topology_spec, list< pair<string,uns
     if( ( _fe_procs_per_host == 1 ) || ( list_iter->second == 1 ) ) {
         procs_on_cur_host=0;    
         if( ++list_iter == hosts.end() ) {
-            fprintf( stderr, "Not enough hosts for topology %s\n", 
+            fprintf( stderr, "After placing FE, not enough hosts for topology %s\n", 
                      topology_spec.c_str() );
             exit(-1);
         }
@@ -277,7 +277,7 @@ bool BalancedTree::initialize_Tree( string &topology_spec, list< pair<string,uns
             if( procs_on_cur_host == _int_procs_per_host ) {
                 procs_on_cur_host=0;
                 if( ++list_iter == hosts.end() ) {
-                    fprintf( stderr, "Not enough hosts for topology %s\n", 
+                    fprintf( stderr, "After placing max on CP, not enough hosts for topology %s\n", 
                              topology_spec.c_str() );
                     exit(-1);
                 }
@@ -290,7 +290,7 @@ bool BalancedTree::initialize_Tree( string &topology_spec, list< pair<string,uns
             if( procs_on_cur_host == list_iter->second ) {
                 procs_on_cur_host=0;
                 if( ++list_iter == hosts.end() ) {
-                    fprintf( stderr, "Not enough hosts for topology %s\n", 
+                    fprintf( stderr, "After using all procs on CP, not enough hosts for topology %s\n", 
                              topology_spec.c_str() );
                     exit(-1);
                 }
@@ -300,7 +300,7 @@ bool BalancedTree::initialize_Tree( string &topology_spec, list< pair<string,uns
     if( procs_on_cur_host == _int_procs_per_host ) {
         procs_on_cur_host=0;
         if( ++list_iter == hosts.end() ) {
-            fprintf( stderr, "Not enough hosts for topology %s\n", 
+            fprintf( stderr, "After placing all CPs, not enough hosts for topology %s\n", 
                      topology_spec.c_str() );
             exit(-1);
         }
@@ -314,11 +314,13 @@ bool BalancedTree::initialize_Tree( string &topology_spec, list< pair<string,uns
 
         if( procs_on_cur_host == _be_procs_per_host ) {
             procs_on_cur_host=0;
-            if( ++list_iter == hosts.end() ) {
-                fprintf( stderr, "Not enough hosts for topology %s\n", 
-                         topology_spec.c_str() );
-                exit(-1);
-            }
+            ++list_iter;
+        }
+
+        if( list_iter == hosts.end() ) {
+            fprintf( stderr, "Ran out of locations while placing BEs, not enough hosts for topology %s\n", 
+                     topology_spec.c_str() );
+            exit(-1);
         }
 
         snprintf( cur_host, sizeof(cur_host), "%s:%u",
@@ -327,11 +329,7 @@ bool BalancedTree::initialize_Tree( string &topology_spec, list< pair<string,uns
 
         if( procs_on_cur_host == list_iter->second ) {
             procs_on_cur_host=0;
-            if( ++list_iter == hosts.end() ) {
-                fprintf( stderr, "Not enough hosts for topology %s\n", 
-                         topology_spec.c_str() );
-                exit(-1);
-            }
+            ++list_iter;
         }
     }
 
