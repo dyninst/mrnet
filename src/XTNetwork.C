@@ -17,17 +17,13 @@
 #include "XTBackEndNode.h"
 #include "XTInternalNode.h"
 
-
 #include "mrnet/MRNet.h"
 #include "xplat/Process.h"
 
 extern "C"
 {
-#include "alps.h"
-#include "apInfo.h"
 #include "libalps.h"
 }
-
 
 namespace MRN
 {
@@ -49,12 +45,12 @@ Network::CreateNetworkFE( const char * itopology,
     mrn_dbg_func_begin();
 
     Network* n = new XTNetwork;
-    n->init_FrontEend( itopology,
-                       ibackend_exe,
-                       ibackend_argv,
-                       iattrs,
-                       irank_backends,
-                       iusing_mem_buf );
+    n->init_FrontEnd( itopology,
+                      ibackend_exe,
+                      ibackend_argv,
+                      iattrs,
+                      irank_backends,
+                      iusing_mem_buf );
     return n;
 }
 
@@ -162,46 +158,47 @@ XTNetwork::PropagateTopologyOffNode( Port topoPort,
 {
     mrn_dbg_func_begin();
 
+    std::string childHost, thisHost;
+    std::set< std::string > hostsSeen;
+    thisHost = mySubtree->get_RootHostName();
+    hostsSeen.insert( thisHost );
+    mrn_dbg(5, mrn_printf(FLF, stderr, "sending topology from %s:%d\n",
+                          thisHost.c_str(), mySubtree->get_RootRank() ) );
+
     // serialize the topology
     // we only need to serialize and send our subtree
     std::string sTopology = topology->get_ByteArray();
 
     // propagate topology to our off-node child processes
-    std::string childHost, lastHost("");
     mySubtree->set_ToFirstChild();
     SerialGraph* currChildSubtree = mySubtree->get_NextChild();
-    for( ; currChildSubtree != NULL; 
-         currChildSubtree = mySubtree->get_NextChild(), lastHost = childHost ) {
-        // determine child's host name
+    for( ; currChildSubtree != NULL; currChildSubtree = mySubtree->get_NextChild() ) {
+
         childHost = currChildSubtree->get_RootHostName();
         Rank childRank = currChildSubtree->get_RootRank();
 
-        if( ( strcmp(childHost.c_str(), mySubtree->get_RootHostName().c_str()) == 0 ) ||
-            ( strcmp(childHost.c_str(), lastHost.c_str()) == 0 ) ) {
-            // skip this child
-            // Case 1: child co-located on this node
-            // Case 2: already delivered to previous child on remote host
-            mrn_dbg(5, mrn_printf(FLF, stderr, "skipping topology send to %s:%d\n", 
-                                  childHost.c_str(), childRank ));
-            continue;
+        if( hostsSeen.find(childHost) == hostsSeen.end() ) {
+            
+            if( ClosestToRoot( topology, childHost, childRank ) ) {
+
+                // connect to child's topology propagation socket
+                mrn_dbg(5, mrn_printf(FLF, stderr, "sending topology to %s:%d\n", 
+                                      childHost.c_str(), childRank ));
+
+                int childTopoSocket = -1;
+                int cret = connectHost( &childTopoSocket, childHost.c_str(), topoPort, 10 );
+                if( cret != 0 ) {
+                    // TODO how to handle this error?
+                    mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                          "Failure: unable to connect to %s:%d to send topology\n", 
+                                          childHost.c_str(), childRank ) );
+                    continue;
+                }
+                PropagateTopology( childTopoSocket, topology, childRank );
+                close( childTopoSocket );
+		hostsSeen.insert( childHost );
+            }
         }
-
-        mrn_dbg(5, mrn_printf(FLF, stderr, "sending topology to %s:%d\n", 
-                              childHost.c_str(), childRank ));
-
-        // connect to child's topology propagation socket
-        int childTopoSocket = -1;
-        int cret = connectHost( &childTopoSocket, childHost.c_str(), topoPort );
-        if( cret != 0 ) {
-            // TODO how to handle this error?
-            mrn_dbg(1, mrn_printf(FLF, stderr, 
-                                  "Failure: unable to connect to %s:%d to send topology\n", 
-                                  childHost.c_str(), childRank ) );
-            continue;
-        }
-
-        PropagateTopology( childTopoSocket, topology, childRank );
-        close( childTopoSocket );
     }
 
     return 0;
@@ -289,15 +286,15 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
   
     if( topoPipeFd == -1 ) { // first process on this node
 
-        // spawn other subtree roots on this node, if any
-        std::vector< TopologyPosition* > other_roots;
-        FindColocatedSubtreeRoots( topology, myHost, my_tpos, other_roots );
-        if( other_roots.size() ) {
+        // spawn other processes on this node, if any
+        std::vector< TopologyPosition* > other_procs;
+        FindColocatedProcesses( topology, myHost, my_tpos, other_procs );
+        if( other_procs.size() ) {
 
-            std::vector< TopologyPosition* >::iterator root_iter = other_roots.begin();
-            for( ; root_iter != other_roots.end() ; root_iter++ ) {
+            std::vector< TopologyPosition* >::iterator pos_iter = other_procs.begin();
+            for( ; pos_iter != other_procs.end() ; pos_iter++ ) {
                 
-                TopologyPosition* tpos = *root_iter;
+                TopologyPosition* tpos = *pos_iter;
                 assert( tpos != NULL );
 
                 // check if current pos is a BE or another IN
@@ -337,10 +334,12 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
 
                 delete tpos;
             }
+            mrn_dbg(3, mrn_printf(FLF, stderr, 
+                                 "done spawning co-located processes\n" ));
         }
 	else
             mrn_dbg(3, mrn_printf(FLF, stderr,
-                                  "no other subtree roots on this node to spawn\n" ));    
+                                  "no other processes on this node to spawn\n" ));    
     }
     
     // Am I really a BE?
@@ -395,67 +394,12 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
     mrn_dbg(5, mrn_printf(FLF, stderr, "expecting %u children\n", 
                           in->get_numChildrenExpected() ));
 
-    // Spawn any children
     if( ! my_tpos->subtree->is_RootBackEnd() ) {
-
-        my_tpos->subtree->set_ToFirstChild();
-        SerialGraph* currChildSubtree = my_tpos->subtree->get_NextChild();
-        for( ; currChildSubtree != NULL; currChildSubtree = my_tpos->subtree->get_NextChild() ) {
-            // determine child's host name
-            std::string childHost = currChildSubtree->get_RootHostName();
-            Rank childRank = currChildSubtree->get_RootRank();
-            mrn_dbg(5, mrn_printf(FLF, stderr, "considering spawn of %s:%d\n", 
-                                  childHost.c_str(), childRank ));
-
-            if( strcmp( childHost.c_str(), myHost.c_str() ) != 0 ) {
-                // skip this child - we deliver topology to children on other nodes later
-                mrn_dbg(5, mrn_printf(FLF, stderr, 
-                                      "child %s:%d is on remote host, not spawning\n", 
-                                      childHost.c_str(), childRank ));
-                continue;
-            }
-
-            // check if current child is a BE or another IN
-            pid_t currChildPid = 0;
-            if( currChildSubtree->is_RootBackEnd() && (beArgc > 0) ) {
-                currChildPid = SpawnBE( beArgc, beArgv, myHost.c_str(), 
-                                        myRank, listeningDataPort, 
-                                        childHost.c_str(), childRank );
-
-                if( currChildPid == 0 ) {
-                    // we failed to spawn the process
-                    // TODO how to handle the error?
-                    mrn_dbg(1, mrn_printf(FLF, stderr, 
-                                          "Failure: unable to spawn child %s:%d\n", 
-                                          childHost.c_str(), childRank ));
-                    continue;
-                }
-            }
-            else {
-                int currChildTopoFd = -1;
-                currChildPid = SpawnIN( mrn_commnode_path, beArgc, beArgv, &currChildTopoFd );
-
-                if( (currChildPid == 0) || (currChildTopoFd == -1) ) {
-                    // we failed to spawn the process
-                    // TODO how to handle the error?
-                    mrn_dbg(1, mrn_printf(FLF, stderr, 
-                                          "Failure: unable to spawn child %s:%d\n", 
-                                          childHost.c_str(), childRank ));
-                    continue;
-                }
-       
-                // deliver the full topology
-                PropagateTopology( currChildTopoFd, topology, childRank );
-                close( currChildTopoFd );
-            }
-        }
-        mrn_dbg(3, mrn_printf(FLF, stderr, 
-                              "done spawning co-located processes\n" ));
-
         // propagate full topology to any off-node children
         PropagateTopologyOffNode( topoPort, my_tpos->subtree, topology );
     }
     delete my_tpos;
+
     in->PropagateSubtreeReports();
 }
 
@@ -614,6 +558,32 @@ XTNetwork::FindParentPort( void )
     return ret;
 }
 
+bool
+XTNetwork::ClosestToRoot( SerialGraph* topology,
+                          const std::string& childhost, Rank childrank )
+{
+    mrn_dbg_func_begin();
+
+    // identify rank on host that is closest to topology root with respect to DFS
+
+    topology->set_ToFirstChild();
+    SerialGraph* currChildSubtree = topology->get_NextChild();
+    for( ; currChildSubtree != NULL ; currChildSubtree = topology->get_NextChild() ) {
+        // check the hostname associated with the root of the current subtree
+        if( strcmp(currChildSubtree->get_RootHostName().c_str(), childhost.c_str()) == 0 ) {
+            if( currChildSubtree->get_RootRank() == childrank )
+                return true;
+            else
+                return false;
+        }
+        else if( ! currChildSubtree->is_RootBackEnd() ) {
+            if( ClosestToRoot( currChildSubtree, childhost, childrank ) )
+                return true;
+        }
+    }
+    return false;
+}
+
 void
 XTNetwork::FindPositionInTopology( SerialGraph* topology,
                                    const std::string& myHost, Rank myRank,
@@ -643,35 +613,33 @@ XTNetwork::FindPositionInTopology( SerialGraph* topology,
     }
 }
 
-
 void
-XTNetwork::FindColocatedSubtreeRoots( SerialGraph* topology, 
-                                      const std::string& myHost,
-                                      const XTNetwork::TopologyPosition* myPos, 
-                                      std::vector< XTNetwork::TopologyPosition* >& roots )
+XTNetwork::FindColocatedProcesses( SerialGraph* topology, 
+                                   const std::string& myHost,
+                                   const XTNetwork::TopologyPosition* myPos, 
+                                   std::vector< XTNetwork::TopologyPosition* >& procs )
 {
     mrn_dbg_func_begin();
 
     topology->set_ToFirstChild();
     SerialGraph* currChildSubtree = topology->get_NextChild();
     for( ; currChildSubtree != NULL ; currChildSubtree = topology->get_NextChild() ) {
-        // check the hostname associated with the root of the current subtree
-        if( strcmp(currChildSubtree->get_RootHostName().c_str(), myHost.c_str()) == 0 ) {
-            if( currChildSubtree->get_RootRank() != myPos->myRank ) {
-                // we found another subtree root on this host
-                TopologyPosition* tpos = new TopologyPosition;
-                tpos->myHostname = myHost;
-                tpos->myRank = currChildSubtree->get_RootRank();
-                tpos->subtree = currChildSubtree;
-                tpos->parentHostname = topology->get_RootHostName();
-                tpos->parentRank = topology->get_RootRank();
-                tpos->parentPort = topology->get_RootPort();
-                tpos->parSubtree = topology;
-                roots.push_back( tpos );
-            }
+        // check the hostname/rank of the current subtree root
+        if( ( strcmp(currChildSubtree->get_RootHostName().c_str(), myHost.c_str()) == 0 ) &&
+            ( currChildSubtree->get_RootRank() != myPos->myRank ) ) {
+            // we found another process on this host
+            TopologyPosition* tpos = new TopologyPosition;
+            tpos->myHostname = myHost;
+            tpos->myRank = currChildSubtree->get_RootRank();
+            tpos->subtree = currChildSubtree;
+            tpos->parentHostname = topology->get_RootHostName();
+            tpos->parentRank = topology->get_RootRank();
+            tpos->parentPort = topology->get_RootPort();
+            tpos->parSubtree = topology;
+            procs.push_back( tpos );
         }
-        else if( ! currChildSubtree->is_RootBackEnd() )
-            FindColocatedSubtreeRoots( currChildSubtree, myHost, myPos, roots );
+        if( ! currChildSubtree->is_RootBackEnd() )
+            FindColocatedProcesses( currChildSubtree, myHost, myPos, procs );
     }
 }
 

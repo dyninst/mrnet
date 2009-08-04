@@ -12,7 +12,7 @@
 
 extern "C"
 {
-#include "apInfo.h"
+#include <alps/apInfo.h>
 }
 
 namespace MRN
@@ -94,13 +94,16 @@ private:
 				 const std::string& myHost, Rank myRank,
 				 TopologyPosition*& myPos );
 
-    void FindColocatedSubtreeRoots( SerialGraph* topology, 
-                                    const std::string& myHost, 
-                                    const TopologyPosition* myPos,
-                                    std::vector< TopologyPosition* >& roots );
+    void FindColocatedProcesses( SerialGraph* topology, 
+                                 const std::string& myHost, 
+                                 const TopologyPosition* myPos,
+                                 std::vector< TopologyPosition* >& procs );
 
     void FindHostsInTopology( SerialGraph* topology,
 			      std::map< std::string, int >& host_counts );
+
+    bool ClosestToRoot( SerialGraph* topology,
+			const std::string& childhost, Rank childrank );
 
     int CreateListeningSocket( int& ps, Port& pp ) const;
 
