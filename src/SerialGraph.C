@@ -101,7 +101,7 @@ SerialGraph * SerialGraph::get_MySubTree( std::string &ihostname, Port iport, Ra
     std::ostringstream hoststr;
     size_t begin, cur, end;
 
-    hoststr << "[" << ihostname << ":" << iport << ":" << irank; 
+    hoststr << "[" << ihostname << ":" << iport << ":" << irank << ":" ; 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "SubTreeRoot:\"%s\" byte_array:\"%s\"\n",
                            hoststr.str().c_str(), _byte_array.c_str() ));
 
