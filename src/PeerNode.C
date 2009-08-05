@@ -272,8 +272,6 @@ void * PeerNode::recv_thread_main(void * args)
     PeerNodePtr peer_node = _global_network->get_PeerNode( rank );
     assert( peer_node != PeerNode::NullPeerNode );
 
-    mrn_dbg_func_begin();
-
     //TLS: setup thread local storage for recv thread
     std::ostringstream namestr;
 
@@ -296,14 +294,15 @@ void * PeerNode::recv_thread_main(void * args)
     tsd_t * local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId();
     local_data->thread_name = strdup( namestr.str().c_str() );
-    if( (status = tsd_key.Set( local_data)) != 0){
+    if( (status = tsd_key.Set(local_data)) != 0 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
                    strerror(status)));
         XPlat::Thread::Exit(args);
     }
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "I am thread 0x%x:\n"));
-    while(true){
+    mrn_dbg_func_begin();
+
+    while(true) {
         // block for data
         mrn_dbg(3, mrn_printf(FLF, stderr, "Calling blocking recv() for data\n"));
         int rret = peer_node->recv( packet_list );
@@ -315,15 +314,13 @@ void * PeerNode::recv_thread_main(void * args)
             XPlat::Thread::Exit(args);
         }
 
-        if( peer_node->is_parent() ){
-            if(peer_node->_network->get_LocalChildNode()->proc_PacketsFromParent(packet_list) == -1){
+        if( peer_node->is_parent() ) {
+            if( peer_node->_network->get_LocalChildNode()->proc_PacketsFromParent(packet_list) == -1 )
                 mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromParent() failed\n"));
-            }
         }
-        else{
-            if(peer_node->_network->get_LocalParentNode()->proc_PacketsFromChildren(packet_list) == -1){
+        else {
+            if( peer_node->_network->get_LocalParentNode()->proc_PacketsFromChildren(packet_list) == -1 )
                 mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromChildren() failed\n"));
-            }
         }
     }
 
@@ -358,19 +355,20 @@ void * PeerNode::send_thread_main(void * args)
     tsd_t * local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId();
     local_data->thread_name = strdup( namestr.str().c_str() );
-    if( (status = tsd_key.Set( local_data)) != 0){
+    if( (status = tsd_key.Set(local_data)) != 0 ) {
         mrn_dbg(1, mrn_printf(0,0,0, stderr, "XPlat::TLSKey::Set(): %s\n",
                               strerror(status))); 
         XPlat::Thread::Exit(args);
     }
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "I am thread 0x%x:\n"));
-    while(true){
+    mrn_dbg_func_begin();
+
+    while(true) {
         mrn_dbg(3, mrn_printf(FLF, stderr, "Blocking for packets to send ...\n"));
         peer_node->_msg_out.waitfor_MessagesToSend( );
 
         mrn_dbg(3, mrn_printf(FLF, stderr, "Sending packets ...\n"));
-        if( peer_node->_msg_out.send(peer_node->_data_sock_fd) == -1 ){
+        if( peer_node->_msg_out.send(peer_node->_data_sock_fd) == -1 ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "msg.send() failed. Thread Exiting\n"));
             peer_node->mark_Failed();
             XPlat::Thread::Exit(args);
