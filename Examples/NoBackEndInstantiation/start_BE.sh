@@ -13,7 +13,8 @@ NBE=${#BE_HOSTS[*]}
 
 declare -a BE_CONN
 export BE_CONN=( `cat $3` )
-NC=${#BE_CONN[*]}
+NC=`expr ${#BE_CONN[*]} / 4`
+
 
 if [ $NBE -ne $NC ]; then
     echo Number of backends $NBE from $2 not equal to number of connections $NC from $3
@@ -23,6 +24,12 @@ fi
 export ITER=0
 while [ $ITER -lt $NBE ]; do
     # start BE on each host using parent info in BE_MAP
-    $REM_SHELL -n ${BE_HOSTS[$ITER]} $1 `echo ${BE_CONN[$ITER]} | awk -F: '{print $1,$2,$3}'` ${BE_HOSTS[$ITER]} `expr $ITER + 10000` & 
+    CITER=`expr $ITER \* 4`
+    chost=${BE_CONN[$CITER]}
+    CITER=`expr $CITER + 1`
+    cport=${BE_CONN[$CITER]}
+    CITER=`expr $CITER + 1`
+    crank=${BE_CONN[$CITER]}
+    $REM_SHELL -n ${BE_HOSTS[$ITER]} $1 $chost $cport $crank ${BE_HOSTS[$ITER]} `expr $ITER + 10000` & 
     ITER=`expr $ITER + 1`
 done
