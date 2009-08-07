@@ -57,7 +57,7 @@ PthreadMonitorData::PthreadMonitorData( void )
     
         ret = pthread_mutexattr_init( & attrs );
         assert( ret == 0 );
-        ret = pthread_mutexattr_settype( & attrs, PTHREAD_MUTEX_ERRORCHECK );
+        ret = pthread_mutexattr_settype( & attrs, PTHREAD_MUTEX_RECURSIVE );
         assert( ret == 0 );
 
         ret = pthread_mutex_init( & mutex, & attrs );
