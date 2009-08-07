@@ -185,6 +185,25 @@ unsigned int NetworkTopology::Node::get_Proximity( Node *iorphan )
     return node_ascendant_distance + orphan_ascendant_distance;
 }
 
+unsigned int NetworkTopology::Node::find_SubTreeHeight( void )
+{
+    if( _children.empty() ) {
+        _subtree_height = 0;
+    }
+    else{
+        unsigned int max_height=0, cur_height;
+
+        set < Node * > ::iterator iter;
+        for( iter=_children.begin(); iter!=_children.end(); iter++ ){
+            cur_height = (*iter)->find_SubTreeHeight( );
+            max_height = (cur_height > max_height ? cur_height : max_height);
+        }
+        _subtree_height = max_height+1;
+    }
+
+    return _subtree_height;
+}
+
 void NetworkTopology::compute_AdoptionScores( vector<Node*> iadopters,
                                               Node *iorphan )
 {
@@ -281,8 +300,8 @@ NetworkTopology::NetworkTopology( Network *inetwork, SerialGraph & isg )
 
 void NetworkTopology::remove_SubGraph( Node * inode )
 {
+    // assumes we are holding the lock
     mrn_dbg_func_begin();
-    _sync.Lock();
 
     //remove all children subgraphs
     set < Node * > ::iterator iter;
@@ -292,7 +311,6 @@ void NetworkTopology::remove_SubGraph( Node * inode )
     }
     inode->_children.clear();
 
-    _sync.Unlock();
     mrn_dbg_func_end();
 }
 
@@ -321,6 +339,7 @@ bool NetworkTopology::add_SubGraph( Rank irank, SerialGraph & isg, bool iupdate 
 
 bool NetworkTopology::add_SubGraph( Node * inode, SerialGraph & isg, bool iupdate )
 {
+    // assumes we are holding the lock
     mrn_dbg_func_begin();
     mrn_dbg( 5, mrn_printf( FLF, stderr, "Node[%d] adding subgraph \"%s\"\n",
                             inode->get_Rank(), isg.get_ByteArray().c_str() ));
@@ -328,7 +347,7 @@ bool NetworkTopology::add_SubGraph( Node * inode, SerialGraph & isg, bool iupdat
     _parent_nodes.insert( inode );
 
     //search for root of subgraph
-    Node * node = find_Node( isg.get_RootRank() );
+    Node * node = find_NodeHoldingLock( isg.get_RootRank() );
     if( node == NULL ) {
         //Not found! allocate
         node = new Node( isg.get_RootHostName(), isg.get_RootPort(), 
@@ -372,9 +391,10 @@ NetworkTopology::Node * NetworkTopology::find_Node(Rank irank) const
     return ret;
 }
 
-// assumes we are holding the lock
+
 NetworkTopology::Node* NetworkTopology::find_NodeHoldingLock(Rank irank) const
 {
+    // assumes we are holding the lock
     map< Rank, NetworkTopology::Node* >::const_iterator iter =
         _nodes.find( irank );
 
@@ -388,6 +408,7 @@ NetworkTopology::Node* NetworkTopology::find_NodeHoldingLock(Rank irank) const
 
 bool NetworkTopology::remove_Node( NetworkTopology::Node *inode )
 {
+    // assumes we are holding the lock
     mrn_dbg_func_begin();
 
     if( _root == inode ){
@@ -449,14 +470,14 @@ bool NetworkTopology::set_Parent( Rank ichild_rank, Rank inew_parent_rank, bool 
     mrn_dbg_func_begin();
     _sync.Lock();
 
-    NetworkTopology::Node *child_node = find_Node( ichild_rank );
+    NetworkTopology::Node *child_node = find_NodeHoldingLock( ichild_rank );
     if( child_node == NULL ){
         _sync.Unlock();
         mrn_dbg_func_end();
         return false;
     }
 
-    NetworkTopology::Node *new_parent_node = find_Node( inew_parent_rank );
+    NetworkTopology::Node *new_parent_node = find_NodeHoldingLock( inew_parent_rank );
     if( new_parent_node == NULL ){
         _sync.Unlock();
         mrn_dbg_func_end();
@@ -486,8 +507,8 @@ bool NetworkTopology::set_Parent( Rank ichild_rank, Rank inew_parent_rank, bool 
 
 bool NetworkTopology::remove_Orphan( Rank r )
 {
-    _sync.Lock();
-    NetworkTopology::Node * node = find_Node(r);
+    // assumes we are holding the lock
+    NetworkTopology::Node * node = find_NodeHoldingLock(r);
     if( !node ) {
         _sync.Unlock();
         return false;
@@ -495,7 +516,6 @@ bool NetworkTopology::remove_Orphan( Rank r )
 
     _orphans.erase( node );
 
-    _sync.Unlock();
     return true;
 }
 
@@ -533,17 +553,16 @@ void NetworkTopology::print_DOTSubTree( NetworkTopology::Node * inode, FILE * f 
 
 void NetworkTopology::print_TopologyFile( const char * filename ) const
 {
-    _sync.Lock();
     map < Rank, NetworkTopology::Node * >::const_iterator iter;
     set < NetworkTopology::Node * >::const_iterator iter2;
 
     FILE * f = fopen(filename, "w" );
     if( f == NULL ){
         perror("fopen()");
-        _sync.Unlock();
         return;
     }
 
+    _sync.Lock();
     for( iter = _nodes.begin(); iter != _nodes.end(); iter++ ) {
         if( !(*iter).second->_children.empty() ) {
             fprintf( f, "%s:%u => \n", (*iter).second->get_HostName().c_str(),
@@ -558,45 +577,45 @@ void NetworkTopology::print_TopologyFile( const char * filename ) const
             fprintf( f, "\t;\n\n" );
         }
     } 
-
-    fclose( f );
     _sync.Unlock();
+    fclose( f );
 }
 
 void NetworkTopology::print_DOTGraph( const char * filename ) const
 {
-    _sync.Lock();
-    set < NetworkTopology::Node * >::const_iterator iter;
 
     FILE * f = fopen(filename, "w" );
     if( f == NULL ){
         perror("fopen()");
-        _sync.Unlock();
         return;
     }
 
     fprintf( f, "digraph G{\n" );
 
+    _sync.Lock();
     print_DOTSubTree( _root, f );
 
+    set < NetworkTopology::Node * >::const_iterator iter;
     for( iter = _orphans.begin(); iter != _orphans.end(); iter++ ) {
         print_DOTSubTree( *iter, f);
     } 
-
+    _sync.Unlock();
     fprintf( f, "}\n" );
     fclose( f );
-    _sync.Unlock();
+
 }
 
 void NetworkTopology::print( FILE * f ) const
 {
-    _sync.Lock();
     map < Rank, NetworkTopology::Node * >::const_iterator iter;
 
     string cur_parent_str, cur_child_str;
     char rank_str[128];
 
     mrn_dbg(5, mrn_printf(0,0,0, f, "\n***NetworkTopology***\n" ));
+
+    _sync.Lock();
+
     for( iter = _nodes.begin(); iter != _nodes.end(); iter++ ) {
         NetworkTopology::Node * cur_node = (*iter).second;
 
@@ -633,6 +652,7 @@ char * NetworkTopology::get_TopologyStringPtr( )
     serialize( _root );
 
     char * retval = strdup( _serial_graph->get_ByteArray().c_str() );
+
     _sync.Unlock();
 
     return retval;
@@ -671,12 +691,11 @@ char * NetworkTopology::get_LocalSubTreeStringPtr( )
             num_rightbrackets++;
     }
 
-    char * retval = strdup( _serial_graph->get_ByteArray()
-                            .substr(begin, end).c_str() );
+    char * retval = strdup( _serial_graph->get_ByteArray().substr(begin, end).c_str() );
     
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "returned:\"%s\"\n", retval ));
-
     _sync.Unlock();
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning '%s'\n", retval ));
 
     return retval;
 }
@@ -684,6 +703,7 @@ char * NetworkTopology::get_LocalSubTreeStringPtr( )
 void NetworkTopology::serialize(Node * inode)
 {
     _sync.Lock();
+
     if( inode->is_BackEnd() ){
         // Leaf node, just add my name to serial representation and return
         _serial_graph->add_Leaf( inode->get_HostName(), inode->get_Port(),
@@ -704,6 +724,7 @@ void NetworkTopology::serialize(Node * inode)
 
     //Ending sub-tree component in graph serialization:
     _serial_graph->end_SubTree();
+
     _sync.Unlock();
 }
 
@@ -726,25 +747,6 @@ void NetworkTopology::get_OrphanNodes( set<NetworkTopology::Node*> &nodes ) cons
     _sync.Lock();
     nodes = _orphans;
     _sync.Unlock();
-}
-
-unsigned int NetworkTopology::Node::find_SubTreeHeight( void )
-{
-    if( _children.empty() ) {
-        _subtree_height = 0;
-    }
-    else{
-        unsigned int max_height=0, cur_height;
-
-        set < Node * > ::iterator iter;
-        for( iter=_children.begin(); iter!=_children.end(); iter++ ){
-            cur_height = (*iter)->find_SubTreeHeight( );
-            max_height = (cur_height > max_height ? cur_height : max_height);
-        }
-        _subtree_height = max_height+1;
-    }
-
-    return _subtree_height;
 }
 
 struct lt_rank {
@@ -786,10 +788,12 @@ NetworkTopology::Node * NetworkTopology::find_NewParent( Rank ichild_rank,
                                                          unsigned int inum_attempts,
                                                          ALGORITHM_T ialgorithm )
 {
-    mrn_dbg_func_begin();
-    _sync.Lock();
     static vector<Node*> potential_adopters;
     Node * adopter=NULL;
+
+    mrn_dbg_func_begin();
+
+    _sync.Lock();
 
     if( inum_attempts > 0 ) {
         //previously computed list, but failed to contact new parent
@@ -804,6 +808,7 @@ NetworkTopology::Node * NetworkTopology::find_NewParent( Rank ichild_rank,
                                   adopter->get_Rank(),
                                   adopter->get_HostName().c_str(),
                                   adopter->get_Port() ));
+        _sync.Unlock();
         return adopter;
     }
 
@@ -815,6 +820,7 @@ NetworkTopology::Node * NetworkTopology::find_NewParent( Rank ichild_rank,
     find_PotentialAdopters( orphan, _root, potential_adopters );
     if( potential_adopters.empty() ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "No Adopters left :(\n"));
+        _sync.Unlock();
         _network->shutdown_Network();
         exit(-1);
     }
@@ -881,8 +887,8 @@ void NetworkTopology::find_PotentialAdopters( Node * iorphan,
                                               Node * ipotential_adopter,
                                               vector<Node*> &opotential_adopters )
 {
-    _sync.Lock();
     mrn_dbg_func_begin();
+    _sync.Lock();
 
     mrn_dbg(5, mrn_printf(FLF, stderr,
                           "Can Node[%d]:%s:%d (%s) adopt Orphan[%d]:%s:%d ...",
@@ -921,15 +927,17 @@ void NetworkTopology::find_PotentialAdopters( Node * iorphan,
          iter!=ipotential_adopter->_children.end(); iter++ ){
         find_PotentialAdopters( iorphan, *iter, opotential_adopters );
     }
+
     _sync.Unlock();
     mrn_dbg_func_end();
 }
 
 bool NetworkTopology::reset( string itopology_str, bool iupdate /* =true */ )
 {
-    _sync.Lock();
     mrn_dbg( 5, mrn_printf( FLF, stderr, "Reseting topology to \"%s\"\n",
                             itopology_str.c_str() ));
+    _sync.Lock();
+
     if( _serial_graph != NULL )
         delete _serial_graph;
     _serial_graph = new SerialGraph( itopology_str );
@@ -1065,9 +1073,9 @@ void NetworkTopology::compute_TreeStatistics( void )
         sum_of_square += (diff*diff);
     }
 
-    _var_fanout = sum_of_square / _parent_nodes.size();
-    
+    _var_fanout = sum_of_square / _parent_nodes.size();    
     _stddev_fanout = sqrt( _var_fanout );
+
     _sync.Unlock();
 }
 
