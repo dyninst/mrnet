@@ -53,16 +53,6 @@ InternalNode::InternalNode( Network * inetwork,
         return;
     }
 
-#ifdef MJB_CHECK_NEEDED
-    //request subtree information
-    if( request_SubTreeInfo() == -1 ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "request_SubTreeInfo() failed\n" ));
-        ParentNode::error( ERR_INTERNAL, ParentNode::_rank, "request_SubTreeInfofailed\n" );
-        ChildNode::error( ERR_INTERNAL, ParentNode::_rank, "request_SubTreeInfofailed\n" );
-        return;
-    }
-#endif
-
     mrn_dbg( 5, mrn_printf(FLF, stderr, "InternalNode:%p\n", this ));
     mrn_dbg_func_end();
 }

@@ -126,25 +126,6 @@ RSHNetwork::RSHNetwork( const char* phostname, Port pport, Rank prank,
                         const char* myhostname, Rank myrank, bool isInternal )
 {
     if( isInternal ) {
-#if MJB_CHECK_NEEDED
-        // TODO remove this - no longer necessary
-        // we are an internal process
-        int listeningSocket = -1;
-        Port listeningPort = UnknownPort;
-
-        // we build and bind our listening socket now
-        // because other platforms need to have this information
-        // in their initialization code, and it doesn't hurt us
-        // to bind it early
-        int bRet = bindPort( &listeningSocket, &listeningPort );
-        if( bRet == -1 )
-        {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "Failure: unable to instantiate network\n" ));
-            error( ERR_INTERNAL, UnknownRank, "" );
-        }
-        assert( listeningPort != UnknownPort );
-#endif // READY
-        
         // initialize as a Network IN
         Network::init_InternalNode( phostname,
                                     pport,
