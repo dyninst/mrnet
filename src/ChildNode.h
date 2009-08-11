@@ -11,6 +11,8 @@
 #include "Message.h"
 #include "PeerNode.h"
 
+#include "xplat/Mutex.h"
+
 namespace MRN
 {
 class Network;
@@ -54,6 +56,8 @@ class ChildNode: public virtual Error,
 
  private:
     uint16_t _incarnation; //incremented each time child connects to new parent
+
+    mutable XPlat::Mutex _sync;
 };
 
 } // namespace MRN
