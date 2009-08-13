@@ -45,14 +45,14 @@ int PeerNode::connect_DataSocket( void )
     mrn_dbg(3, mrn_printf(FLF, stderr, "Creating data connection to (%s:%d) ...\n",
                           _hostname.c_str(), _port));
 
-    if(connectHost(&_data_sock_fd, _hostname.c_str(), _port) == -1){
-        mrn_dbg(1, mrn_printf(FLF, stderr, "connect_to_host() failed\n"));
-        error( ERR_SYSTEM, _rank, "connect(): %s\n", strerror(errno) );
+    if( connectHost(&_data_sock_fd, _hostname.c_str(), _port) == -1) {
+        error( ERR_SYSTEM, _rank, "connectHost() failed" );
+        mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost() failed\n"));
         return -1;
     }
     
     mrn_dbg(3, mrn_printf(FLF, stderr,
-                          "connect_to_host() returned socket fd %d\n", _data_sock_fd));
+                          "new data socket %d\n", _data_sock_fd));
     return 0;
 }
 
@@ -61,14 +61,14 @@ int PeerNode::connect_EventSocket( void )
     mrn_dbg(3, mrn_printf(FLF, stderr, "Creating event connection to (%s:%d) ...\n",
                           _hostname.c_str(), _port));
 
-    if(connectHost(&_event_sock_fd, _hostname.c_str(), _port) == -1){
-        mrn_dbg(1, mrn_printf(FLF, stderr, "connect_to_host() failed\n"));
-        error( ERR_SYSTEM, _rank, "connect(): %s\n", strerror(errno) );
+    if( connectHost(&_event_sock_fd, _hostname.c_str(), _port) == -1 ) {
+        error( ERR_SYSTEM, _rank, "connectHost() failed" );
+        mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost() failed\n"));
         return -1;
     }
     
     mrn_dbg(3, mrn_printf(FLF, stderr,
-                          "connect_to_host() returned socket fd %d\n", _event_sock_fd));
+                          "new event socket %d\n", _event_sock_fd));
     return 0;
 }
 

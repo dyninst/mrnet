@@ -131,26 +131,26 @@ struct hostent * mrnet_gethostbyname( const char * name )
 }
 
 int connectHost( int *sock_in, const std::string & hostname, Port port, 
-                 int num_retry )
+                 int num_retry /*=-1*/ )
 {
 
-    int sock = *sock_in;
+    int err, sock = *sock_in;
     struct sockaddr_in server_addr;
     struct hostent *server_hostent = NULL;
     const char* host = hostname.c_str();
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "In connect_to_host(%s:%d) sock:%d ...\n",
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "In connectHost(%s:%d) sock:%d ...\n",
                            host, port, sock ) );
 
     if( sock <= 0 ) {
         sock = socket( AF_INET, SOCK_STREAM, 0 );
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "socket() => %d\n", sock ));
-
         if( sock == -1 ) {
+            err = XPlat::NetUtils::GetLastError();
             perror( "socket()" );
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "socket() failed\n" ) );
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "socket() failed, errno=%d\n", err) );
             return -1;
         }
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "socket() => %d\n", sock ));
     }
 
     server_hostent = mrnet_gethostbyname( host );
@@ -167,7 +167,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
     delete_hostent( server_hostent );
 
     unsigned int nConnectTries = 0;
-    int err, cret = -1;
+    int cret = -1;
     do {
         cret = connect( sock, (sockaddr *) & server_addr, sizeof( server_addr ) );
         if( cret == -1 ) {
@@ -218,7 +218,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
 
 int bindPort( int *sock_in, Port *port_in )
 {
-    int soVal, soRet;
+    int err, soVal, soRet;
     int sock = *sock_in;
     Port port;
 
@@ -231,12 +231,15 @@ int bindPort( int *sock_in, Port *port_in )
 
     struct sockaddr_in local_addr;
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "In bind_to_port(sock:%d, port:%d)\n",
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "In bindPort(sock:%d, port:%d)\n",
                 sock, port ) );
 
     sock = socket( AF_INET, SOCK_STREAM, 0 );
     if( sock == -1 ) {
+        err = XPlat::NetUtils::GetLastError();
         perror( "socket()" );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "socket() failed: %s\n",
+                                       XPlat::Error::GetErrorString( err ).c_str() ) );
         return -1;
     }
 
@@ -247,7 +250,10 @@ int bindPort( int *sock_in, Port *port_in )
     soRet = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, 
                         (const char*)&soVal, sizeof(soVal) );
     if( soRet < 0 ) {
+        err = XPlat::NetUtils::GetLastError();
         perror( "setsockopt()" );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "setsockopt() failed: %s\n",
+                                       XPlat::Error::GetErrorString( err ).c_str() ) );
         return -1;
     }
 
@@ -258,7 +264,10 @@ int bindPort( int *sock_in, Port *port_in )
     if( port != 0 ) {
         local_addr.sin_port = htons( port );
         if( bind( sock, (sockaddr*)&local_addr, sizeof( local_addr ) ) == -1 ) {
+            err = XPlat::NetUtils::GetLastError();
             perror( "bind()" );
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to static port %d failed: %s\n",
+                                   port, XPlat::Error::GetErrorString( err ).c_str() ) );
             return -1;
         }
     }
@@ -266,16 +275,16 @@ int bindPort( int *sock_in, Port *port_in )
         // let the system assign a port, start from 1st dynamic port
         port = 49152;
         local_addr.sin_port = htons( port );
-        while( bind( sock, (sockaddr*)&local_addr, sizeof( local_addr ) ) == -1 ) {
 
-            int err = XPlat::NetUtils::GetLastError();
+        while( bind( sock, (sockaddr*)&local_addr, sizeof( local_addr ) ) == -1 ) {
+            err = XPlat::NetUtils::GetLastError();
             if( XPlat::Error::EAddrInUse( err ) ) {
                 local_addr.sin_port = htons( ++port );
                 continue;
             }
             else {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "bind failed: %s\n",
-                    XPlat::Error::GetErrorString( err ).c_str() ) );
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to dynamic port %d failed: %s\n",
+                                       XPlat::Error::GetErrorString( err ).c_str() ) );
                 return -1;
             }
         }
@@ -310,7 +319,7 @@ int bindPort( int *sock_in, Port *port_in )
     
     *sock_in = sock;
     mrn_dbg( 3, mrn_printf(FLF, stderr,
-                           "Leaving bind_to_port(). Returning sock:%d, port:%d\n",
+                           "Leaving bindPort(). Returning sock:%d, port:%d\n",
                            sock, *port_in ) );
     return 0;
 }
