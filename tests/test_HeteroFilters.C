@@ -74,7 +74,8 @@ void insertX( vector< PacketPtr >& packets_in,
               vector< PacketPtr >& packets_out,
               vector< PacketPtr >& /* packets_out_reverse */,
               void ** /* client data */,
-              PacketPtr& /* params */ )
+              PacketPtr& /* params */,
+              const TopologyLocalInfo& )
 {
     inject_history_item(packets_in, packets_out, 'X');
 }
@@ -84,7 +85,8 @@ void insertY( vector< PacketPtr >& packets_in,
               vector< PacketPtr >& packets_out,
               vector< PacketPtr >& /* packets_out_reverse */,
               void ** /* client data */,
-              PacketPtr& /* params */ )
+              PacketPtr& /* params */,
+              const TopologyLocalInfo& )
 {
     inject_history_item(packets_in, packets_out, 'Y');
 }
@@ -94,7 +96,8 @@ void insertI( vector< PacketPtr >& packets_in,
               vector< PacketPtr >& packets_out,
               vector< PacketPtr >& /* packets_out_reverse */,
               void ** /* client data */,
-              PacketPtr& /* params */ )
+              PacketPtr& /* params */,
+              const TopologyLocalInfo& )
 {
     inject_history_item(packets_in, packets_out, 'I');
 }
@@ -104,7 +107,8 @@ void insertJ( vector< PacketPtr >& packets_in,
               vector< PacketPtr >& packets_out,
               vector< PacketPtr >& /* packets_out_reverse */,
               void ** /* client data */,
-              PacketPtr& /* params */ )
+              PacketPtr& /* params */,
+              const TopologyLocalInfo& )
 {
     inject_history_item(packets_in, packets_out, 'J');
 }

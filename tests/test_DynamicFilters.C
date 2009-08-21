@@ -13,7 +13,8 @@ const char * aggr_Count_format_string = "%d";
 void aggr_Count( const std::vector< PacketPtr >& packets_in,
                  std::vector< PacketPtr >& packets_out,
                  std::vector< PacketPtr >&,
-                 void ** /* client data */, PacketPtr& )
+                 void ** /* client data */, PacketPtr&,
+                 const TopologyLocalInfo& )
 {
     int sum = 0;
     
@@ -35,7 +36,8 @@ const char * aggr_CountOddsAndEvens_format_string = "%d %d";
 void aggr_CountOddsAndEvens( const std::vector< PacketPtr >& packets_in,
                              std::vector< PacketPtr >& packets_out,
                              std::vector< PacketPtr >&,
-                             void ** /* client data */, PacketPtr& )
+                             void ** /* client data */, PacketPtr&,
+                             const TopologyLocalInfo& )
 {
     int odd_sum=0, even_sum = 0;
     
