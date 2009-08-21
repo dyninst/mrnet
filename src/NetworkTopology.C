@@ -667,31 +667,13 @@ char * NetworkTopology::get_LocalSubTreeStringPtr( )
     _serial_graph = new SerialGraph("");
     serialize( _root );
 
-    ostringstream my_subtree;
-    my_subtree << "["
-               << _network->get_LocalHostName() << ":"
-               << _network->get_LocalPort() << ":"
-               << _network->get_LocalRank() << ":";
+    std::string localhost = _network->get_LocalHostName();
+    SerialGraph* my_subgraph = _serial_graph->get_MySubTree( localhost,
+                                                             _network->get_LocalPort(),
+                                                             _network->get_LocalRank() );
 
-    string sgba = _serial_graph->get_ByteArray();
-    const char * buf = sgba.c_str();
-    
-    size_t begin, end, cur;    
-    begin = sgba.find(my_subtree.str());
-    assert( begin != string::npos ); 
-
-    cur=begin;
-    end=1;
-    int num_leftbrackets=1, num_rightbrackets=0;
-    while(num_leftbrackets != num_rightbrackets){
-        cur++, end++;
-        if( buf[cur] == '[')
-            num_leftbrackets++;
-        else if( buf[cur] == ']')
-            num_rightbrackets++;
-    }
-
-    char * retval = strdup( _serial_graph->get_ByteArray().substr(begin, end).c_str() );
+    char * retval = strdup( my_subgraph->get_ByteArray().c_str() );
+    delete my_subgraph;
     
     _sync.Unlock();
 
