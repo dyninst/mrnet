@@ -144,17 +144,17 @@ int Stream::send_aux(int itag, char const *ifmt, PacketPtr &ipacket )
     // performance data update for STREAM_SEND
     if( _perf_data->is_Enabled( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_SEND ) ) {
         perfdata_t val = _perf_data->get_DataValue( PERFDATA_MET_NUM_PKTS, 
-                                                   PERFDATA_CTX_SEND );
+                                                    PERFDATA_CTX_SEND );
         val.u += 1;
         _perf_data->set_DataValue( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_SEND,
-                                  val );
+                                   val );
     }
     if( _perf_data->is_Enabled( PERFDATA_MET_NUM_BYTES, PERFDATA_CTX_SEND ) ) {
         perfdata_t val = _perf_data->get_DataValue( PERFDATA_MET_NUM_BYTES, 
-                                                  PERFDATA_CTX_SEND );
+                                                    PERFDATA_CTX_SEND );
         val.u += ipacket->get_BufferLen();
         _perf_data->set_DataValue( PERFDATA_MET_NUM_BYTES, PERFDATA_CTX_SEND,
-                                  val );
+                                   val );
     }
 
     // filter packet
@@ -167,7 +167,7 @@ int Stream::send_aux(int itag, char const *ifmt, PacketPtr &ipacket )
 
     // send filtered result packets
     tsend.start();
-    if( !opackets.empty() ) {
+    if( ! opackets.empty() ) {
         if( _network->is_LocalNodeFrontEnd() ) {
             if( _network->send_PacketsToChildren( opackets ) == -1 ) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToChildren() failed\n"));
@@ -183,7 +183,7 @@ int Stream::send_aux(int itag, char const *ifmt, PacketPtr &ipacket )
         }
         opackets.clear();
     }
-    if( !opackets_reverse.empty() ) {
+    if( ! opackets_reverse.empty() ) {
         for( unsigned int i = 0; i < opackets_reverse.size( ); i++ ) {
             PacketPtr cur_packet( opackets_reverse[i] );
 

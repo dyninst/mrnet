@@ -100,14 +100,14 @@ int InternalNode::proc_DataFromParent( PacketPtr ipacket ) const
 
     stream->push_Packet( ipacket, packets, reverse_packets, false );  // packet going to children
 
-    if( !packets.empty() ) {
+    if( ! packets.empty() ) {
         // deliver all packets to all child nodes
         if( ParentNode::_network->send_PacketsToChildren( packets ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
             retval = -1;
         }
     }
-    else if( !reverse_packets.empty() ) {
+    if( ! reverse_packets.empty() ) {
         if( ParentNode::_network->send_PacketsToParent( packets ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send() failed()\n" ));
             retval = -1;
@@ -131,17 +131,17 @@ int InternalNode::proc_DataFromChildren( PacketPtr ipacket ) const
         return -1;
     }
 
-    std::vector < PacketPtr > packets, reverse_packets;
+    std::vector< PacketPtr > packets, reverse_packets;
 
     stream->push_Packet( ipacket, packets, reverse_packets, true );
 
-    if( !packets.empty() ) {
+    if( ! packets.empty() ) {
         if( ParentNode::_network->send_PacketsToParent( packets ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send() failed()\n" ));
             retval = -1;
         }
     }
-    if( !reverse_packets.empty() ) {
+    if( ! reverse_packets.empty() ) {
         if( ParentNode::_network->send_PacketsToChildren( reverse_packets ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketsToChildren() failed\n" ));
             retval = -1;

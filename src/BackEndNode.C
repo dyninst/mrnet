@@ -68,11 +68,11 @@ int BackEndNode::proc_DataFromParent(PacketPtr ipacket) const
         return -1;
     }
 
-    std::vector<PacketPtr> opackets, opackets_rev;
-    stream->push_Packet( ipacket, opackets, opackets_rev, false );
+    std::vector<PacketPtr> opackets, opackets_reverse;
+    stream->push_Packet( ipacket, opackets, opackets_reverse, false );
 
-    if( ! opackets_rev.empty() ) {
-        if( ChildNode::_network->send_PacketsToParent( opackets_rev ) == -1 ) {
+    if( ! opackets_reverse.empty() ) {
+        if( ChildNode::_network->send_PacketsToParent( opackets_reverse ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send() failed()\n" ));
             retval = -1;
         }

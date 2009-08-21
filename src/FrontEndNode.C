@@ -58,7 +58,7 @@ int FrontEndNode::proc_DataFromChildren( PacketPtr ipacket ) const
              (FLF, stderr, "push_packet => %u packets, %u reverse_packets\n", 
               packets.size(), reverse_packets.size() ));
 
-    if( !packets.empty() ) {
+    if( ! packets.empty() ) {
         for( unsigned int i = 0; i < packets.size( ); i++ ) {
             PacketPtr cur_packet( packets[i] );
 
@@ -67,7 +67,7 @@ int FrontEndNode::proc_DataFromChildren( PacketPtr ipacket ) const
             stream->add_IncomingPacket( cur_packet );
         }
     }
-    if( !reverse_packets.empty() ) {
+    if( ! reverse_packets.empty() ) {
         if( _network->send_PacketsToChildren( reverse_packets ) == -1 ){
             mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketsToChildren() failed()\n" ));
             return -1;
