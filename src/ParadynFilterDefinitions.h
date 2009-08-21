@@ -13,25 +13,25 @@
 namespace MRN
 {
 
-extern const char * TFILTER_SAVE_LOCAL_CLOCK_SKEW_UPSTREAM_FORMATSTR;
+extern const char * save_LocalClockSkewUpstream_format_string;
 void save_LocalClockSkewUpstream( const std::vector < PacketPtr >&,
                                   std::vector < PacketPtr >&,
-                                  void**, PacketPtr&, bool& );
+                                  void**, PacketPtr&, const TopologyLocalInfo& );
 
-extern const char * TFILTER_SAVE_LOCAL_CLOCK_SKEW_DOWNSTREAM_FORMATSTR;
+extern const char * save_LocalClockSkewDownstream_format_string;
 void save_LocalClockSkewDownstream( const std::vector < PacketPtr >&,
                                     std::vector < PacketPtr >&,
-                                    void**, PacketPtr&, bool& );
+                                    void**, PacketPtr&, const TopologyLocalInfo& );
 
-extern const char * TFILTER_GET_CLOCK_SKEW_FORMATSTR;
+extern const char * get_ClockSkew_format_string;
 void get_ClockSkew( const std::vector < PacketPtr >&,
                     std::vector < PacketPtr >&,
-                    void**, PacketPtr&, bool& );
+                    void**, PacketPtr&, const TopologyLocalInfo& );
 
-extern const char * TFILTER_PD_UINT_EQ_CLASS_FORMATSTR;
+extern const char * tfilter_PDUIntEqClass_format_string;
 void tfilter_PDUIntEqClass( const std::vector < PacketPtr >&,
                            std::vector < PacketPtr >&,
-                           void**, PacketPtr&, bool& );
+                           void**, PacketPtr&, const TopologyLocalInfo& );
 }
 
 #endif /* paradynfilterdefinitions_h */

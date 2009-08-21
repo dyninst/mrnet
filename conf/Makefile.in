@@ -155,7 +155,6 @@ LIBMRNET_SRCS = \
 	         $(SRCDIR)/src/Network.C \
 	         $(SRCDIR)/src/NetworkTopology.C \
 	         $(SRCDIR)/src/Packet.C \
-	         $(SRCDIR)/src/ParadynFilterDefinitions.C \
 	         $(SRCDIR)/src/ParsedGraph.C \
 	         $(SRCDIR)/src/ParentNode.C \
 	         $(SRCDIR)/src/pdr.c \
@@ -168,6 +167,11 @@ LIBMRNET_SRCS = \
 	         $(SRCDIR)/src/Stream.C \
 	         $(SRCDIR)/src/Tree.C \
 	         $(SRCDIR)/src/utils.C
+
+ifeq ($(NEED_PARADYN_FILTERS), yes)
+    CXXFLAGS += -D_NEED_PARADYN_FILTERS_
+    LIBMRNET_SRCS += $(SRCDIR)/src/ParadynFilterDefinitions.C 
+endif
 
 ifeq ($(MRNET_OS), linux)
     LIBMRNET_SRCS += $(SRCDIR)/src/PerfDataSysEvent_linux.C

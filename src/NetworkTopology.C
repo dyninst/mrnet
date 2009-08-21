@@ -1108,4 +1108,75 @@ bool NetworkTopology::node_Failed( Rank irank ) const
     return node->failed();
 }
 
+/***************************************************
+ * TopologyLocalInfo
+ **************************************************/
+
+Rank TopologyLocalInfo::get_Rank() const
+{
+    if( local_node != NULL )
+        return local_node->get_Rank();
+
+    return UnknownRank;
+}
+
+unsigned int TopologyLocalInfo::get_NumChildren() const
+{
+    if( local_node != NULL )
+        return local_node->get_NumChildren();
+
+    return 0;
+}
+
+unsigned int TopologyLocalInfo::get_NumSiblings() const
+{
+    if( local_node != NULL )
+        return local_node->_parent->get_NumChildren() - 1;
+
+    return 0;
+}
+
+unsigned int TopologyLocalInfo::get_NumDescendants() const
+{
+    if( (local_node != NULL) && (topol != NULL) ) {
+        std::vector<NetworkTopology::Node*> descendants;
+        topol->get_Descendants( local_node, descendants );
+        return descendants.size();
+    }
+    return 0;
+}
+
+unsigned int TopologyLocalInfo::get_NumLeafDescendants() const
+{
+    if( (local_node != NULL) && (topol != NULL) ) {
+        std::vector<NetworkTopology::Node*> descendants;
+        topol->get_LeafDescendants( local_node, descendants );
+        return descendants.size();
+    }
+    return 0;
+}
+
+unsigned int TopologyLocalInfo::get_RootDistance() const
+{
+    if( (local_node != NULL) && (topol != NULL) ) {
+        unsigned int hops = 0;
+        NetworkTopology::Node* curr = local_node;
+        NetworkTopology::Node* root = topol->get_Root();
+        while( curr != root ) {
+            hops++;
+            curr = curr->_parent;
+        }
+        return hops;
+    }
+    return 0;
+}
+
+unsigned int TopologyLocalInfo::get_MaxChildDistance() const
+{
+    if( local_node != NULL )
+        return local_node->find_SubTreeHeight();
+
+    return 0;
+}
+
 } // namespace MRN

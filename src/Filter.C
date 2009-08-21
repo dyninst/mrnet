@@ -32,7 +32,8 @@ Filter::Filter(unsigned short iid)
     : _id(iid), _filter_state(NULL), _params(Packet::NullPacket)
 {
     _filter_func =
-        (void (*)(const vector<PacketPtr>&, vector<PacketPtr>&, vector<PacketPtr>&, void **, PacketPtr& ))
+        (void (*)(const vector<PacketPtr>&, vector<PacketPtr>&, vector<PacketPtr>&, 
+                  void **, PacketPtr&, const TopologyLocalInfo& ))
         FilterFuncs[iid];
 
     _get_state_func = ( PacketPtr (*)( void **, int ) ) GetStateFuncs[iid];
@@ -46,7 +47,8 @@ Filter::~Filter(  )
 
 int Filter::push_Packets( vector< PacketPtr >& ipackets,
                           vector< PacketPtr >& opackets,
-                          vector< PacketPtr >& opackets_reverse )
+                          vector< PacketPtr >& opackets_reverse,
+                          const TopologyLocalInfo& topol_info )
 {
     mrn_dbg_func_begin();
 
@@ -61,8 +63,7 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
         return 0;
     }
 
-    //TODO: put exception block to catch user error
-    _filter_func( ipackets, opackets, opackets_reverse, &_filter_state, _params );
+    _filter_func( ipackets, opackets, opackets_reverse, &_filter_state, _params, topol_info );
     ipackets.clear( );
     
     _mutex.Unlock();
@@ -89,7 +90,6 @@ void Filter::set_FilterParams( PacketPtr iparams )
 {
    mrn_dbg_func_begin();
    _params = iparams;
-   mrn_dbg_func_end();
 }
 
 int Filter::load_FilterFunc( const char *iso_file, const char *ifunc_name )
@@ -149,9 +149,6 @@ unsigned short Filter::register_Filter( void (*ifilter_func)( ),
     static unsigned short next_filter_id=0; 
     unsigned short cur_filter_id=next_filter_id;
     next_filter_id++;
-
-    //FilterFuncs[cur_filter_id] = (void(*)())ifilter_func;
-    //StateFuncs[cur_filter_id] = (void(*)())istate_func;
 
     FilterFuncs[cur_filter_id] = ifilter_func;
     GetStateFuncs[cur_filter_id] = istate_func;

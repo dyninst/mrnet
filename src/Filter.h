@@ -11,11 +11,13 @@
 #include <map>
 #include <vector>
 #include <set>
+
 #include "mrnet/Error.h"
-#include "Message.h"
-#include "FilterDefinitions.h"
+#include "mrnet/NetworkTopology.h"
 #include "xplat/Mutex.h"
 
+#include "FilterDefinitions.h"
+#include "Message.h"
 #include "ParadynFilterDefinitions.h"
 #include "PeerNode.h"
 
@@ -28,10 +30,12 @@ class Filter: public Error {
  public:
     Filter( unsigned short iid );
     ~Filter( void );
+
     int push_Packets( std::vector < PacketPtr > &ipackets,
                       std::vector < PacketPtr > &opackets, 
-                      std::vector < PacketPtr > &opackets_reverse
-                    );
+                      std::vector < PacketPtr > &opackets_reverse,
+                      const TopologyLocalInfo &info );
+
     PacketPtr get_FilterState( int istream_id );
     void set_FilterParams( PacketPtr iparams );
 
@@ -49,59 +53,60 @@ class Filter: public Error {
     static std::map < unsigned short, std::string > FilterFmts;
 
     unsigned short _id;
-    void * _filter_state;  //TODO: deallocate when filter is destructed
+    void * _filter_state;
     XPlat::Mutex _mutex;
     PacketPtr _params;
     std::string _fmt_str;
     void ( *_filter_func )( const std::vector < PacketPtr >&,
                             std::vector < PacketPtr >&, 
                             std::vector < PacketPtr >&, 
-                            void **, PacketPtr& );
+                            void **, PacketPtr&, const TopologyLocalInfo& );
     PacketPtr ( *_get_state_func )( void ** ifilter_state, int istream_id );
 };
 
 inline void Filter::initialize_static_stuff( )
 {
-    TFILTER_NULL = register_Filter( NULL, NULL, TFILTER_NULL_FORMATSTR);
+    TFILTER_NULL = register_Filter( NULL, NULL, TFILTER_NULL_FORMATSTR );
 
-    TFILTER_SUM = register_Filter( (void(*)())tfilter_Sum, NULL, TFILTER_SUM_FORMATSTR);
+    TFILTER_SUM = register_Filter( (void(*)())tfilter_Sum, NULL, TFILTER_SUM_FORMATSTR );
 
-    TFILTER_AVG = register_Filter( (void(*)())tfilter_Avg, NULL, TFILTER_AVG_FORMATSTR);
+    TFILTER_AVG = register_Filter( (void(*)())tfilter_Avg, NULL, TFILTER_AVG_FORMATSTR );
 
-    TFILTER_MAX = register_Filter( (void(*)())tfilter_Max, NULL, TFILTER_MAX_FORMATSTR);
+    TFILTER_MAX = register_Filter( (void(*)())tfilter_Max, NULL, TFILTER_MAX_FORMATSTR );
 
-    TFILTER_MIN = register_Filter( (void(*)())tfilter_Min, NULL, TFILTER_MIN_FORMATSTR);
+    TFILTER_MIN = register_Filter( (void(*)())tfilter_Min, NULL, TFILTER_MIN_FORMATSTR );
 
     TFILTER_ARRAY_CONCAT = register_Filter( (void(*)())tfilter_ArrayConcat, NULL,
-                                            TFILTER_ARRAY_CONCAT_FORMATSTR);
+                                            TFILTER_ARRAY_CONCAT_FORMATSTR );
 
     TFILTER_INT_EQ_CLASS = register_Filter( (void(*)())tfilter_IntEqClass, NULL,
-                                            TFILTER_INT_EQ_CLASS_FORMATSTR);
+                                            TFILTER_INT_EQ_CLASS_FORMATSTR );
 
     TFILTER_PERFDATA = register_Filter( (void(*)())tfilter_PerfData, NULL,
-                                        TFILTER_PERFDATA_FORMATSTR);
+                                        TFILTER_PERFDATA_FORMATSTR );
 
+#ifdef _NEED_PARADYN_FILTERS_
     TFILTER_SAVE_LOCAL_CLOCK_SKEW_UPSTREAM =
         register_Filter( (void(*)())save_LocalClockSkewUpstream, NULL,
-                         TFILTER_SAVE_LOCAL_CLOCK_SKEW_UPSTREAM_FORMATSTR );
+                         save_LocalClockSkewUpstream_format_string );
 
     TFILTER_SAVE_LOCAL_CLOCK_SKEW_DOWNSTREAM =
         register_Filter( (void(*)())save_LocalClockSkewDownstream, NULL,
-                         TFILTER_SAVE_LOCAL_CLOCK_SKEW_DOWNSTREAM_FORMATSTR );
+                          save_LocalClockSkewDownstream_format_string );
 
     TFILTER_GET_CLOCK_SKEW =
         register_Filter( (void(*)())get_ClockSkew, NULL,
-                         TFILTER_GET_CLOCK_SKEW_FORMATSTR );
+                         get_ClockSkew_format_string );
 
-    TFILTER_PD_UINT_EQ_CLASS = register_Filter( (void(*)())tfilter_PDUIntEqClass,
-                                                NULL,
-                                                TFILTER_PD_UINT_EQ_CLASS_FORMATSTR);
+    TFILTER_PD_UINT_EQ_CLASS = register_Filter( (void(*)())tfilter_PDUIntEqClass, NULL,
+                                                 tfilter_PDUIntEqClass_format_string );
+#endif /*_NEED_PARADYN_FILTERS_*/
 
-    SFILTER_DONTWAIT = register_Filter( (void(*)())NULL, NULL, "");
+    SFILTER_DONTWAIT = register_Filter( (void(*)())NULL, NULL, "" );
 
-    SFILTER_WAITFORALL = register_Filter( (void(*)())sfilter_WaitForAll, NULL, "");
+    SFILTER_WAITFORALL = register_Filter( (void(*)())sfilter_WaitForAll, NULL, "" );
 
-    SFILTER_TIMEOUT = register_Filter( (void(*)())sfilter_TimeOut, NULL, "");
+    SFILTER_TIMEOUT = register_Filter( (void(*)())sfilter_TimeOut, NULL, "" );
 }
 
 inline void Filter::free_static_stuff( )
@@ -124,4 +129,5 @@ class FilterCounter {
 };
 
 } // namespace MRN
+
 #endif  /* __filter_h */

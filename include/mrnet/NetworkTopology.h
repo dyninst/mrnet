@@ -35,13 +35,16 @@ typedef enum{ TOPOL_RESET=0,
 
 class Router;
 class SerialGraph;
+class TopologyLocalInfo;
 
 class NetworkTopology: public Error {
     friend class Router;
+    friend class TopologyLocalInfo;
 
   public:
     class Node{
         friend class NetworkTopology;
+        friend class TopologyLocalInfo;
         
     public:
         std::string get_HostName( void ) const;
@@ -165,6 +168,28 @@ class NetworkTopology: public Error {
                                  std::list<Node*> &oadopters );
 };
 
+class TopologyLocalInfo {
+    friend class NetworkTopology;
+        
+ private:
+    NetworkTopology::Node* local_node;
+    NetworkTopology* topol;
+
+ public:
+    TopologyLocalInfo( NetworkTopology* itopol, NetworkTopology::Node* inode )
+        : local_node(inode), topol(itopol) 
+        {}
+
+    Rank get_Rank() const;
+
+    unsigned int get_NumChildren() const;
+    unsigned int get_NumSiblings() const;
+    unsigned int get_NumDescendants() const;
+    unsigned int get_NumLeafDescendants() const;
+
+    unsigned int get_RootDistance() const;
+    unsigned int get_MaxChildDistance() const;
+};
 
 }                               // namespace MRN
 

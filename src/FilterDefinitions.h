@@ -24,54 +24,54 @@ extern const char * TFILTER_SUM_FORMATSTR;
 void tfilter_Sum( const std::vector < PacketPtr >&, 
                   std::vector < PacketPtr >&, 
                   std::vector < PacketPtr >&, 
-                  void**, PacketPtr& );
+                  void**, PacketPtr&, const TopologyLocalInfo& );
 
 extern const char * TFILTER_AVG_FORMATSTR;
 void tfilter_Avg( const std::vector < PacketPtr >&, 
                   std::vector < PacketPtr >&, 
                   std::vector < PacketPtr >&, 
-                  void**, PacketPtr& );
+                  void**, PacketPtr&, const TopologyLocalInfo& );
 
 extern const char * TFILTER_MIN_FORMATSTR;
 void tfilter_Min( const std::vector < PacketPtr >&, 
                   std::vector < PacketPtr >&, 
                   std::vector < PacketPtr >&, 
-                  void**, PacketPtr& );
+                  void**, PacketPtr&, const TopologyLocalInfo& );
 
 extern const char * TFILTER_MAX_FORMATSTR;
 void tfilter_Max( const std::vector < PacketPtr >&, 
                   std::vector < PacketPtr >&, 
                   std::vector < PacketPtr >&, 
-                  void**, PacketPtr& );
+                  void**, PacketPtr&, const TopologyLocalInfo& );
 
 extern const char * TFILTER_ARRAY_CONCAT_FORMATSTR;
 void tfilter_ArrayConcat( const std::vector < PacketPtr >&, 
                           std::vector < PacketPtr >&, 
                           std::vector < PacketPtr >&, 
-                          void**, PacketPtr& );
+                          void**, PacketPtr&, const TopologyLocalInfo& );
 
 extern const char * TFILTER_INT_EQ_CLASS_FORMATSTR;
 void tfilter_IntEqClass( const std::vector < PacketPtr >&, 
                          std::vector < PacketPtr >&, 
                          std::vector < PacketPtr >&, 
-                         void**, PacketPtr& );
+                         void**, PacketPtr&, const TopologyLocalInfo& );
 
 extern const char * TFILTER_PERFDATA_FORMATSTR;
 void tfilter_PerfData( const std::vector < PacketPtr >&, 
                        std::vector < PacketPtr >&, 
                        std::vector < PacketPtr >&, 
-                       void**, PacketPtr& );
+                       void**, PacketPtr&, const TopologyLocalInfo& );
 
 // synchronization filters
 void sfilter_WaitForAll( const std::vector < PacketPtr >&, 
                          std::vector < PacketPtr >&, 
                          std::vector < PacketPtr >&, 
-                         void**, PacketPtr& );
+                         void**, PacketPtr&, const TopologyLocalInfo& );
 
 void sfilter_TimeOut( const std::vector < PacketPtr >&, 
                       std::vector < PacketPtr >&, 
                       std::vector < PacketPtr >&, 
-                      void**, PacketPtr& );
+                      void**, PacketPtr&, const TopologyLocalInfo& );
 
 } // namespace MRN
 

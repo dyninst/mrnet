@@ -61,7 +61,8 @@ static inline void sum(const void *in1, const void *in2, void* out, DataType typ
 void tfilter_IntSum( const vector< PacketPtr >& ipackets,
                      vector< PacketPtr >& opackets,
                      vector< PacketPtr >& /* opackets_reverse */,
-                     void ** /* client data */, PacketPtr& )
+                     void ** /* client data */, PacketPtr&,
+                     const TopologyLocalInfo& )
 {
     int sum = 0;
     
@@ -79,7 +80,8 @@ void tfilter_IntSum( const vector< PacketPtr >& ipackets,
 void tfilter_Sum( const vector< PacketPtr >& ipackets,
                   vector< PacketPtr >& opackets,
                   vector< PacketPtr >& /* opackets_reverse */,
-                  void ** /* client data */, PacketPtr& )
+                  void ** /* client data */, PacketPtr&,
+                  const TopologyLocalInfo& )
 {
     char result[8]; //ptr to 8 bytes
     string format_string;
@@ -226,7 +228,8 @@ void tfilter_Sum( const vector< PacketPtr >& ipackets,
 void tfilter_Max( const vector< PacketPtr >& ipackets,
                   vector< PacketPtr >& opackets,
                   vector< PacketPtr >& /* opackets_reverse */,
-                  void ** /* client data */, PacketPtr& )
+                  void ** /* client data */, PacketPtr&,
+                  const TopologyLocalInfo& )
 {
     char result[8]; //ptr to 8 bytes
     string format_string;
@@ -373,7 +376,8 @@ void tfilter_Max( const vector< PacketPtr >& ipackets,
 void tfilter_Min( const vector< PacketPtr >& ipackets,
                   vector< PacketPtr >& opackets,
                   vector< PacketPtr >& /* opackets_reverse */,
-                  void ** /* client data */, PacketPtr& )
+                  void ** /* client data */, PacketPtr&,
+                  const TopologyLocalInfo& )
 {
     char result[8]; //ptr to 8 bytes
     string format_string;
@@ -522,7 +526,8 @@ void tfilter_Min( const vector< PacketPtr >& ipackets,
 void tfilter_Avg( const vector < PacketPtr >& ipackets,
                   vector< PacketPtr >& opackets,
                   vector< PacketPtr >& /* opackets_reverse */,
-                  void ** /* client data */, PacketPtr& )
+                  void ** /* client data */, PacketPtr&,
+                  const TopologyLocalInfo& )
 {
     char result[8]; //ptr to 8 bytes
     char product[8];
@@ -662,7 +667,8 @@ void tfilter_Avg( const vector < PacketPtr >& ipackets,
 void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
                           vector< PacketPtr >& opackets,
                           vector< PacketPtr >& /* opackets_reverse */,
-                          void ** /* client data */, PacketPtr& )
+                          void ** /* client data */, PacketPtr&,
+                          const TopologyLocalInfo& )
 {
     unsigned int result_array_size=0, i, j;
     char * result_array=NULL;
@@ -790,7 +796,8 @@ void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
 void tfilter_IntEqClass( const vector< PacketPtr >& ipackets,
                          vector< PacketPtr >& opackets,
                          vector< PacketPtr >& /* opackets_reverse */,
-                         void ** /* client data */, PacketPtr& )
+                         void ** /* client data */, PacketPtr&,
+                         const TopologyLocalInfo& )
 {
     DataType type;
     uint32_t array_len0, array_len1, array_len2;
@@ -881,7 +888,8 @@ void tfilter_IntEqClass( const vector< PacketPtr >& ipackets,
 void tfilter_PerfData( const vector< PacketPtr >& ipackets,
                        vector< PacketPtr >& opackets,
                        vector< PacketPtr >& /* opackets_reverse */,
-                       void ** /* client data */, PacketPtr& params )
+                       void ** /* client data */, PacketPtr& params,
+                       const TopologyLocalInfo& )
 {
     // fast path when no aggregation necessary
     bool is_BE = _global_network->is_LocalNodeBackEnd();
@@ -1221,7 +1229,8 @@ typedef struct {
 void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
                          vector< PacketPtr >& opackets,
                          vector< PacketPtr >& /* opackets_reverse */,
-                         void **local_storage, PacketPtr& )
+                         void **local_storage, PacketPtr&,
+                         const TopologyLocalInfo& )
 {
     mrn_dbg_func_begin();
     map < Rank, vector< PacketPtr >* >::iterator map_iter, del_iter;
@@ -1357,7 +1366,8 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
 void sfilter_TimeOut( const vector< PacketPtr > &,
                       vector< PacketPtr > &,
                       vector< PacketPtr > &,
-                      void **, PacketPtr& )
+                      void **, PacketPtr&,
+                      const TopologyLocalInfo& )
 {
 }
 

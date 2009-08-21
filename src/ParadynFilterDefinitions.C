@@ -33,25 +33,29 @@ double * localSkews = NULL;
 namespace MRN
 {
 
-// Downstream filter used to save time skew data on downward flow
-// "%lf" => parents_send_time
-const char * TFILTER_SAVE_LOCAL_CLOCK_SKEW_DOWNSTREAM_FORMATSTR="%d %lf";
-FilterId TFILTER_SAVE_LOCAL_CLOCK_SKEW_DOWNSTREAM=0;
-	void getTime(struct timeval *tmval)
-	{
+void getTime(struct timeval *tmval)
+{
 #if defined(os_windows)
-		SYSTEMTIME systime;
-		FILETIME ftime;
-		GetSystemTime(&systime);
-		SystemTimeToFileTime(&systime, &ftime);
-		unsigned val = ftime.dwLowDateTime;
+    SYSTEMTIME systime;
+    FILETIME ftime;
+    GetSystemTime(&systime);
+    SystemTimeToFileTime(&systime, &ftime);
+    unsigned val = ftime.dwLowDateTime;
 #else
     gettimeofday(tmval, NULL);
 #endif
-	}
+}
+
+// Downstream filter used to save time skew data on downward flow
+// "%lf" => parents_send_time
+FilterId TFILTER_SAVE_LOCAL_CLOCK_SKEW_DOWNSTREAM=0;
+const char * save_LocalClockSkewDownstream_format_string="%d %lf";
+
 void save_LocalClockSkewDownstream( const std::vector<PacketPtr>& in_pkts,
                                     std::vector<PacketPtr>& out_pkts,
-                                    void** /* cd */, PacketPtr&, bool& )
+                                    std::vector<PacketPtr>&,
+                                    void**, PacketPtr&, 
+                                    const TopologyLocalInfo& )
 {
     //DataType atype;
     //unsigned int alen;
@@ -81,12 +85,15 @@ void save_LocalClockSkewDownstream( const std::vector<PacketPtr>& in_pkts,
 // Upstream filter used to save time skew data on upward flow and propagate
 // upwards.
 // "%ald" => parents_send_time, local_recv_time, local_send_time
-const char * TFILTER_SAVE_LOCAL_CLOCK_SKEW_UPSTREAM_FORMATSTR="%ud %ud %alf";
+
 FilterId TFILTER_SAVE_LOCAL_CLOCK_SKEW_UPSTREAM=0;
+const char * save_LocalCLockSkewUpstream_format_string="%ud %ud %alf";
 
 void save_LocalClockSkewUpstream( const std::vector<PacketPtr>& in_pkts,
                                   std::vector<PacketPtr>& out_pkts,
-                                  void** /* cd */, PacketPtr&, bool& )
+                                  std::vector<PacketPtr>&,
+                                  void**, PacketPtr&,
+                                  const TopologyLocalInfo& )
 {
     struct timeval recvTimeVal, sendTimeVal;
     double recvTime, sendTime;
@@ -156,13 +163,16 @@ void save_LocalClockSkewUpstream( const std::vector<PacketPtr>& in_pkts,
                                                "%ud %ud %alf", id, 3, timestamps, 3 ) ) );
 }
 
-const char * TFILTER_GET_CLOCK_SKEW_FORMATSTR="%ud %ud %alf";
+
 FilterId TFILTER_GET_CLOCK_SKEW=0;
+const char * get_ClockSkew_format_string="%ud %ud %alf";
 
 void
 get_ClockSkew( const std::vector<PacketPtr>& in_pkts,
-                std::vector<PacketPtr>& out_pkts,
-                void** /* cd */, PacketPtr&, bool& )
+               std::vector<PacketPtr>& out_pkts,
+               std::vector<PacketPtr>&,
+               void**, PacketPtr&,
+               const TopologyLocalInfo& )
 {
     assert( localSkews != NULL );
     unsigned int id = (*in_pkts[0])[0]->get_uint32_t();
@@ -222,7 +232,7 @@ get_ClockSkew( const std::vector<PacketPtr>& in_pkts,
 }
 
 FilterId TFILTER_PD_UINT_EQ_CLASS=0;
-const char * TFILTER_PD_UINT_EQ_CLASS_FORMATSTR="%ud %ud %ad %ad";
+const char * tfilter_PDUIntEqClass_format_string="%ud %ud %ad %ad";
 
 //format str: "%ud %ud %ad %ad "
 //  %ud => unsigned int daemon_id (igen_spec)
@@ -230,9 +240,11 @@ const char * TFILTER_PD_UINT_EQ_CLASS_FORMATSTR="%ud %ud %ad %ad";
 //  %ad => array of classes (1 for each object in parallel array)
 //  %ad => array of class reps (1 for each object in parallel array)
 
-void tfilter_PDUIntEqClass( const std::vector < PacketPtr >&packets_in,
-                           std::vector < PacketPtr >&packets_out,
-                            void ** /* client data */, PacketPtr&, bool& )
+void tfilter_PDUIntEqClass( const std::vector< PacketPtr >& packets_in,
+                            std::vector< PacketPtr >& packets_out,
+                            std::vector< PacketPtr >&,
+                            void **, PacketPtr&, 
+                            const TopologyLocalInfo& )
 {
     DataType type=UNKNOWN_T;
     const uint32_t *class_array, *class_rep_array;

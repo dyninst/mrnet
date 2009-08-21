@@ -435,7 +435,10 @@ int Stream::push_Packet( PacketPtr ipacket,
                          bool igoing_upstream )
 {
     vector<PacketPtr> ipackets;
-    
+    NetworkTopology* topol = _network->get_NetworkTopology();
+    TopologyLocalInfo topol_info( topol,
+                                  topol->find_Node( _network->get_LocalRank() ) );
+
     mrn_dbg_func_begin();
 
     if( ipacket != Packet::NullPacket ) {
@@ -444,7 +447,7 @@ int Stream::push_Packet( PacketPtr ipacket,
 
     // if not back-end and going upstream, sync first
     if( !_network->is_LocalNodeBackEnd() && igoing_upstream ){
-        if( _sync_filter->push_Packets(ipackets, opackets, opackets_reverse ) == -1){
+        if( _sync_filter->push_Packets(ipackets, opackets, opackets_reverse, topol_info ) == -1){
             mrn_dbg(1, mrn_printf(FLF, stderr, "Sync.push_packets() failed\n"));
             return -1;
         }
@@ -462,10 +465,10 @@ int Stream::push_Packet( PacketPtr ipacket,
 	long user_after, sys_after;
 
         Timer tagg;
-        Filter* cur_agg = _ds_filter;
+        Filter* trans_filter = _ds_filter;
 
         if( igoing_upstream ) {
-            cur_agg = _us_filter;
+            trans_filter = _us_filter;
 
             // performance data update for FILTER_IN
             if( _perf_data->is_Enabled( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_IN ) ) {
@@ -484,7 +487,7 @@ int Stream::push_Packet( PacketPtr ipacket,
         }
 
         // run transformation filter
-        if( cur_agg->push_Packets(ipackets, opackets, opackets_reverse ) == -1 ){
+        if( trans_filter->push_Packets(ipackets, opackets, opackets_reverse, topol_info ) == -1 ){
             mrn_dbg(1, mrn_printf(FLF, stderr, "aggr.push_packets() failed\n"));
             return -1;
         }
