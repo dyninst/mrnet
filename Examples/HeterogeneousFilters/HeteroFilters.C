@@ -3,22 +3,25 @@
  *                Detailed MRNet usage rights in "LICENSE" file.          *
  **************************************************************************/
 
-#include "mrnet/Packet.h"
-#include "HeteroFilters.h"
-
 #include <set>
 #include <algorithm>
+
+#include "mrnet/Packet.h"
+#include "mrnet/NetworkTopology.h"
+
+#include "HeteroFilters.h"
 
 using namespace MRN;
 
 extern "C" {
 
 const char * HF_BE_scan_format_string = "%ac";
-void HF_BE_scan(std::vector< PacketPtr >& pin,
-                std::vector< PacketPtr >& pout,
-                std::vector< PacketPtr >& /* packets_out_reverse */,
-                void ** /* client data */,
-                PacketPtr& params )
+void HF_BE_scan( std::vector< PacketPtr >& pin,
+                 std::vector< PacketPtr >& pout,
+                 std::vector< PacketPtr >& /* packets_out_reverse */,
+                 void ** /* client data */,
+                 PacketPtr& params,
+                 const TopologyLocalInfo& )
 {
     char* search = NULL;
     if( params != Packet::NullPacket ) {
@@ -74,11 +77,12 @@ void HF_BE_scan(std::vector< PacketPtr >& pin,
 }
 
 const char * HF_CP_sort_format_string = "%as";
-void HF_CP_sort(std::vector< PacketPtr >& pin,
-                std::vector< PacketPtr >& pout,
-                std::vector< PacketPtr >& /* pout_reverse */,
-                void ** /* client data */,
-                PacketPtr& /* params */ )
+void HF_CP_sort( std::vector< PacketPtr >& pin,
+                 std::vector< PacketPtr >& pout,
+                 std::vector< PacketPtr >& /* pout_reverse */,
+                 void ** /* client data */,
+                 PacketPtr& /* params */,
+                 const TopologyLocalInfo& )
 {
     vector< string > sorted;
     
@@ -111,11 +115,12 @@ void HF_CP_sort(std::vector< PacketPtr >& pin,
 }
 
 const char * HF_FE_uniq_format_string = "%as";
-void HF_FE_uniq(std::vector< PacketPtr >& pin,
-                std::vector< PacketPtr >& pout,
-                std::vector< PacketPtr >& pout_reverse,
-                void **filter_state,
-                PacketPtr& /* params */ )
+void HF_FE_uniq( std::vector< PacketPtr >& pin,
+                 std::vector< PacketPtr >& pout,
+                 std::vector< PacketPtr >& pout_reverse,
+                 void **filter_state,
+                 PacketPtr& /* params */,
+                 const TopologyLocalInfo& info )
 {
     std::set< string >* uniq = (std::set< string >*)*filter_state;
     if( uniq == NULL ) {
@@ -124,7 +129,7 @@ void HF_FE_uniq(std::vector< PacketPtr >& pin,
     }
 
     std::vector< PacketPtr > tmp_out;
-    HF_CP_sort( pin, tmp_out, pout_reverse, NULL, Packet::NullPacket );
+    HF_CP_sort( pin, tmp_out, pout_reverse, NULL, Packet::NullPacket, info );
 
     PacketPtr& sorted = tmp_out.front();
     char** strArr;

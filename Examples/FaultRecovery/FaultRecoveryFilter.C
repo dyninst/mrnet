@@ -3,11 +3,14 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "mrnet/Packet.h"
-#include "FaultRecovery.h"
 #include <bitset>
 #include <cmath>
 #include <cstring>
+
+#include "mrnet/Packet.h"
+#include "mrnet/NetworkTopology.h"
+
+#include "FaultRecovery.h"
 
 using namespace MRN;
 
@@ -24,7 +27,8 @@ void IntegerPercentiles( std::vector< PacketPtr >& packets_in,
                          std::vector< PacketPtr >& packets_out,
                          std::vector< PacketPtr >& /* packets_out_reverse */,
                          void ** filter_state,
-                         PacketPtr& /* params */ )
+                         PacketPtr& /* params */,
+                         const TopologyLocalInfo& )
 {
     struct IP_state* state = (struct IP_state*)*filter_state;
     if( *filter_state == NULL ) {
@@ -104,7 +108,8 @@ PacketPtr IntegerPercentiles_get_state( void ** ifilter_state, int istream_id )
 const char * BitsetOr_format_string = "%ud";
 void BitsetOr( std::vector< PacketPtr >& packets_in,
                std::vector< PacketPtr >& packets_out,
-               std::vector< PacketPtr >&, void **, PacketPtr& )
+               std::vector< PacketPtr >&, void **, PacketPtr&,
+               const TopologyLocalInfo& )
 {
     unsigned long aggr_val = 0;
 

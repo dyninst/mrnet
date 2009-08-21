@@ -3,8 +3,10 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "mrnet/Packet.h"
 #include <vector>
+
+#include "mrnet/Packet.h"
+#include "mrnet/NetworkTopology.h"
 
 using namespace MRN;
 
@@ -15,7 +17,8 @@ void PerfDataFilt( std::vector< PacketPtr >& packets_in,
                    std::vector< PacketPtr >& packets_out,
                    std::vector< PacketPtr >& /* packets_out_reverse */,
                    void ** /* client data */,
-                   PacketPtr& /* params */ )
+                   PacketPtr& /* params */,
+                   const TopologyLocalInfo& )
 {
     int sum = 0;
     
