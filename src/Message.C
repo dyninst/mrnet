@@ -247,8 +247,6 @@ int Message::send( int sock_fd )
         PacketPtr curPacket( *iter );
 
         ncbufs[i].buf = const_cast< char * >( curPacket->get_Buffer( ) );
-        //unsigned short * s = (unsigned short *)(ncbufs[i].buf+1);
-        //assert( 0 <= *s  && *s < 5 );
         ncbufs[i].len = curPacket->get_BufferLen( );
         packet_sizes[i] = curPacket->get_BufferLen( );
 
