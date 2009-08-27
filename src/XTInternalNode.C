@@ -45,7 +45,7 @@ XTInternalNode::PropagateSubtreeReports( void )
 {
     int retval = 0;
 
-    if( waitfor_SubTreeReports() == -1 ) {
+    if( ! waitfor_SubTreeReports() ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_SubTreeReports() failed\n" ));
         retval = -1;
     }

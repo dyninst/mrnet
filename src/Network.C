@@ -252,9 +252,8 @@ void Network::init_FrontEnd( const char * itopology,
                        iattrs );
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
-    if( get_LocalFrontEndNode()->waitfor_SubTreeReports( ) == -1 ) {
-        error( ERR_INTERNAL, rootRank, "");
-    }
+    if( ! get_LocalFrontEndNode()->waitfor_SubTreeReports() )
+        error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
   
     //We should have a topology available after subtrees report
     _network_topology->print( stderr );
@@ -263,11 +262,10 @@ void Network::init_FrontEnd( const char * itopology,
     char * topology = _network_topology->get_TopologyStringPtr();
     PacketPtr packet( new Packet( 0, PROT_TOPOLOGY_RPT, "%s", topology ) );
     mrn_dbg(5, mrn_printf(FLF, stderr, "Broadcasting topology ... \n" ));
-    if( send_PacketToChildren( packet, false ) == -1 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: send_DownStream()!\n" ));
-        error( ERR_INTERNAL, rootRank, "");
-    }
+    if( ! get_LocalFrontEndNode()->proc_TopologyReport( packet ) )
+        error( ERR_INTERNAL, rootRank, "waitfor_TopologyReportAcks() failed");
     free( topology );
+ 
   
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating bcast communicator ... \n" ));
     _bcast_communicator = new Communicator( this );
@@ -493,14 +491,13 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
                                ( cur_node->is_internal() ? "internal" : "end-point" ) ));
 
         //Never send packet back to src
-        if ( cur_node->get_Rank() == ipacket->get_InletNodeRank() ){
+        if( cur_node->get_Rank() == ipacket->get_InletNodeRank() )
             continue;
-        }
 
         //if internal_only, don't send to non-internal nodes
-        if( iinternal_only && !cur_node->is_internal( ) ){
+        if( iinternal_only && !cur_node->is_internal( ) )
             continue;
-        }
+
         mrn_dbg( 3, mrn_printf( FLF, stderr, "Calling peer[%d].send() ...\n",
                                 cur_node->get_Rank() ));
         if( cur_node->send( ipacket ) == -1 ) {

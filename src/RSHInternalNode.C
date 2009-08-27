@@ -54,7 +54,7 @@ RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
             retval = -1;
         }
         mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
-        if( waitfor_SubTreeReports() == -1 ) {
+        if( ! waitfor_SubTreeReports() ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_SubTreeReports() failed\n" ));
             retval = -1;
         }

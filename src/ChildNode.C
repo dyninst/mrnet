@@ -360,8 +360,16 @@ int ChildNode::proc_TopologyReport( PacketPtr ipacket ) const
     }
 
     if( _network->is_LocalNodeParent() ) {
-        if( _network->send_PacketToChildren( ipacket ) == -1 ) {
+        if( _network->get_LocalParentNode()->proc_TopologyReport( ipacket ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            return -1;
+        }
+        
+    }
+    else {
+        // send ack to parent
+        if( ! ack_TopologyReport() ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_TopologyReport() failed\n" ));
             return -1;
         }
     }
@@ -565,6 +573,28 @@ bool ChildNode::ack_DeleteSubTree( void ) const
     mrn_dbg_func_begin();
 
     PacketPtr packet( new Packet( 0, PROT_DEL_SUBTREE_ACK, "" ));
+
+    if( !packet->has_Error( ) ) {
+        if( ( _network->get_ParentNode()->send( packet ) == -1 ) ||
+            ( _network->get_ParentNode()->flush(  ) == -1 ) ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n" ));
+            return false;
+        }
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n" ));
+        return false;
+    }
+
+    mrn_dbg_func_end();
+    return true;
+}
+
+bool ChildNode::ack_TopologyReport( void ) const
+{
+    mrn_dbg_func_begin();
+
+    PacketPtr packet( new Packet( 0, PROT_TOPOLOGY_ACK, "" ));
 
     if( !packet->has_Error( ) ) {
         if( ( _network->get_ParentNode()->send( packet ) == -1 ) ||

@@ -34,6 +34,7 @@ class ChildNode: public virtual Error,
     int proc_RecoveryReport( PacketPtr ipacket ) const;
     int send_NewSubTreeReport( void )const;
     bool ack_DeleteSubTree( void ) const ;
+    bool ack_TopologyReport( void ) const ;
 
     int proc_EnablePerfData( PacketPtr ipacket ) const;
     int proc_DisablePerfData( PacketPtr ipacket ) const;

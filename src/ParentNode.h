@@ -50,6 +50,8 @@ class ParentNode: public virtual Error,
     int proc_newSubTreeReport( PacketPtr ipacket ) const;
     int proc_DeleteSubTree( PacketPtr ipacket ) const;
     int proc_DeleteSubTreeAck( PacketPtr ipacket ) const;
+    int proc_TopologyReport( PacketPtr ipacket ) const;
+    int proc_TopologyReportAck( PacketPtr ipacket ) const;
 
     int proc_FailureReport( PacketPtr ipacket ) const;
     int proc_RecoveryReport( PacketPtr ipacket ) const;
@@ -71,8 +73,9 @@ class ParentNode: public virtual Error,
     int proc_NewChildDataConnection( PacketPtr ipacket, int sock );
     PeerNodePtr find_ChildNodeByRank( int irank );
 
-    int waitfor_SubTreeReports( void ) const;
+    bool waitfor_SubTreeReports( void ) const;
     bool waitfor_DeleteSubTreeAcks( void ) const ;
+    bool waitfor_TopologyReportAcks( void ) const ;
 
     void init_numChildrenExpected( SerialGraph& sg );
     unsigned int get_numChildrenExpected( void ) const  { return _num_children; }

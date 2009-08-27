@@ -63,105 +63,6 @@ ParentNode::~ParentNode( void )
 {
 }
 
-int ParentNode::recv_PacketsFromChildren( std::list< PacketPtr >&pkt_list,
-                                            bool blocking ) const
-{
-    int ret = 0;
-
-    mrn_dbg( 2, mrn_printf(FLF, stderr, "In PN::recv_PacketsFromChildren( "
-                "blocking=%s)\n", (blocking? "true" : "false") ));
-
-    // add the passed set of remote nodes to the poll set
-    fd_set rfds;
-    int max_fd = 0;
-    FD_ZERO( &rfds );
-
-    const std::set < PeerNodePtr > peers = _network->get_ChildPeers();
-    std::set < PeerNodePtr >::const_iterator iter;
-    for( iter=peers.begin(); iter!=peers.end(); iter++ ) {
-        PeerNodePtr cur_node = *iter;
-        assert( cur_node != NULL );
-        if( cur_node->has_Error() || cur_node->is_parent() )
-            continue;
-
-        int curr_fd = cur_node->get_DataSocketFd();
-        FD_SET( curr_fd, &rfds );
-
-        if( curr_fd > max_fd )
-        {
-            max_fd = curr_fd;
-        }
-    }
-
-    // check for input on our child connections
-    int pollret = 0;
-    struct timeval * timeout=NULL;
-
-    if( blocking ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling \"blocking\" select"
-                    "( timeout=%d )\n", PeerNode::get_BlockingTimeOut() ));
-
-        if( PeerNode::get_BlockingTimeOut() != 0 ){
-            timeout = (struct timeval *) new char[ sizeof(struct timeval) ];
-            timeout->tv_sec = (PeerNode::get_BlockingTimeOut() / 1000);
-            timeout->tv_usec = (PeerNode::get_BlockingTimeOut() % 1000) * 1000;
-        }
-
-    }
-    else {
-        timeout = (struct timeval *) new char[ sizeof(struct timeval) ];
-        timeout->tv_sec = 0;
-        timeout->tv_usec = 0;
-    }
-    pollret = select( max_fd + 1, &rfds, NULL, NULL, timeout );
-    delete [] timeout;
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "select() returned %d\n", pollret ));
-
-    if( pollret > 0 ) {
-        // there is input on some connection
-        // determine the connection on which input exists
-        for( iter=peers.begin(); iter!=peers.end(); iter++ ) {
-            PeerNodePtr cur_node = *iter;
-            if( cur_node->has_Error() )
-                continue;
-            int curr_fd = cur_node->get_DataSocketFd();
-            if( FD_ISSET( curr_fd, &rfds ) ) {
-                if( cur_node->recv( pkt_list ) == -1 ) {
-                    ret = -1;
-                    mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                           "PN: recv() from ready node failed\n" ));
-                    cur_node->error( ERR_NETWORK_FAILURE, _rank, "recv() failed");
-                }
-            }
-        }
-    }
-    else if( pollret < 0 ) {
-        // an error occurred
-        ret = -1;
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
-                    "PN::recv_PacketsFromChildren() poll failed\n" ));
-        fprintf( stderr, "%d: poll failed: %d: %s\n",
-            XPlat::Process::GetProcessId(), errno, strerror(errno) );
-    }
-
-    mrn_dbg( 2, mrn_printf(FLF, stderr, "PN::recv_PacketsFromChildren() %s\n",
-                ( ret >= 0 ? "succeeded" : "failed" ) ));
-    if( ret >= 0 && pkt_list.size() > 0 ){
-        mrn_dbg(2, mrn_printf(FLF, stderr,
-                   "recv_PacketsFromChildren() => %d packets. Tags:",
-                   pkt_list.size() ));
-
-        std::list <PacketPtr>::iterator piter;
-        for(piter = pkt_list.begin(); piter != pkt_list.end(); piter++){
-            mrn_dbg(2, mrn_printf(0,0,0, stderr, " %d", (*piter)->get_Tag() ));
-        }
-        mrn_dbg(2, mrn_printf(0,0,0, stderr, "\n"));
-    }
-
-    return ret;
-}
-
 int ParentNode::proc_PacketsFromChildren( std::list< PacketPtr > & ipackets )
 {
     int retval = 0;
@@ -194,7 +95,6 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
                                    "proc_closeStream() failed\n" ));
             retval = -1;
         }
-        //printf(3, mrn_printf(FLF, stderr, "proc_closeStream() succeeded\n");
         break;
     case PROT_NEW_SUBTREE_RPT:
         mrn_dbg( 5, mrn_printf(FLF, stderr,
@@ -204,7 +104,6 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
                                    "proc_newSubTreeReport() failed\n" ));
             retval = -1;
         }
-        //printf(3, mrn_printf(FLF, stderr, "proc_newSubTreeReport() succeeded\n");
         break;
     case PROT_DEL_SUBTREE_ACK:
         mrn_dbg( 5, mrn_printf(FLF, stderr,
@@ -214,7 +113,15 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
                                    "proc_DeleteSubTreeAck() failed\n" ));
             retval = -1;
         }
-        //printf(3, mrn_printf(FLF, stderr, "proc_DeleteSubTreeAck() succeeded\n");
+        break;
+    case PROT_TOPOLOGY_ACK:
+        mrn_dbg( 5, mrn_printf(FLF, stderr,
+                               "Calling proc_TopologyReportAck() ...\n" ));
+        if( proc_TopologyReportAck( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_TopologyReportAck() failed\n" ));
+            retval = -1;
+        }
         break;
     case PROT_EVENT:
         if( proc_Event( cur_packet ) == -1 ){
@@ -254,24 +161,25 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
     return retval;
 }
 
-int ParentNode::waitfor_SubTreeReports( void ) const
+bool ParentNode::waitfor_SubTreeReports( void ) const
 {
     std::list < PacketPtr >packet_list;
 
     subtreereport_sync.Lock( );
     while( _num_children > _num_children_reported ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for child nodes ...\n",
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u subtree reports ...\n",
+                               _num_children - _num_children_reported,
                                _num_children ));
         subtreereport_sync.WaitOnCondition( ALLNODESREPORTED );
         mrn_dbg( 3, mrn_printf(FLF, stderr,
-                               "%d of %d Descendants have checked in.\n",
+                               "%d of %d children have checked in.\n",
                                _num_children_reported, _num_children ));
     }
     subtreereport_sync.Unlock( );
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "All %d children nodes have reported\n",
                 _num_children ));
-    return 0;
+    return true;
 }
 
 bool ParentNode::waitfor_DeleteSubTreeAcks( void ) const
@@ -280,7 +188,7 @@ bool ParentNode::waitfor_DeleteSubTreeAcks( void ) const
 
     subtreereport_sync.Lock( );
     while( _num_children > _num_children_reported ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u reports ...\n",
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u delete subtree acks ...\n",
                                _num_children - _num_children_reported,
                                _num_children ));
         subtreereport_sync.WaitOnCondition( ALLNODESREPORTED );
@@ -344,6 +252,60 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     return 0;
 }
 
+bool ParentNode::waitfor_TopologyReportAcks( void ) const
+{
+    mrn_dbg_func_begin();
+
+    subtreereport_sync.Lock( );
+    while( _num_children > _num_children_reported ) {
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u topol report acks ...\n",
+                               _num_children - _num_children_reported,
+                               _num_children ));
+        subtreereport_sync.WaitOnCondition( ALLNODESREPORTED );
+        mrn_dbg( 3, mrn_printf(FLF, stderr,
+                               "%d of %d children have ack'd.\n",
+                               _num_children, _num_children_reported ));
+    }
+    subtreereport_sync.Unlock( );
+
+    mrn_dbg_func_end();
+    return true;
+}
+
+int ParentNode::proc_TopologyReport( PacketPtr ipacket ) const
+{
+    mrn_dbg_func_begin();
+
+    _num_children_reported = _num_children = 0;
+    const std::set < PeerNodePtr > peers = _network->get_ChildPeers();
+    std::set < PeerNodePtr >::const_iterator iter;
+    for( iter=peers.begin(); iter!=peers.end(); iter++ ) {
+        if( (*iter)->is_child() ) {
+            _num_children++;
+        }
+    }
+
+    //send delete_subtree message to all children
+    if( ( _network->send_PacketToChildren( ipacket ) == -1 ) ||
+        ( _network->flush_PacketsToChildren( ) == -1 ) ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush_PacketToChildren() failed\n" ));
+    }
+
+    //wait for acks
+    if( !waitfor_TopologyReportAcks() ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_DeleteSubTreeAcks() failed\n" ));
+    }
+
+    //Send ack to parent, if any
+    if( _network->is_LocalNodeChild() ) {
+        if( ! _network->get_LocalChildNode()->ack_TopologyReport() ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
+        }
+    }
+
+    mrn_dbg_func_end();
+}
+
 int ParentNode::proc_newSubTreeReport( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
@@ -391,7 +353,24 @@ int ParentNode::proc_DeleteSubTreeAck( PacketPtr /* ipacket */ ) const
 
     subtreereport_sync.Lock( );
     _num_children_reported++;
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "%d of %d children reported\n",
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
+                           _num_children_reported, _num_children ));
+    if( _num_children_reported == _num_children ) {
+        subtreereport_sync.SignalCondition( ALLNODESREPORTED );
+    }
+    subtreereport_sync.Unlock( );
+	
+    mrn_dbg_func_end();
+    return 0;
+}
+
+int ParentNode::proc_TopologyReportAck( PacketPtr /* ipacket */ ) const
+{
+    mrn_dbg_func_begin();
+
+    subtreereport_sync.Lock( );
+    _num_children_reported++;
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
                            _num_children_reported, _num_children ));
     if( _num_children_reported == _num_children ) {
         subtreereport_sync.SignalCondition( ALLNODESREPORTED );

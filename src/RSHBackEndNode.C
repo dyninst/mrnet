@@ -15,7 +15,7 @@ namespace MRN
 RSHBackEndNode::RSHBackEndNode( Network * inetwork, 
                           std::string imyhostname, Rank imyrank,
                           std::string iphostname, Port ipport, Rank iprank )
-  : CommunicationNode( imyhostname, UnknownRank, imyrank ),
+  : CommunicationNode( imyhostname, UnknownPort, imyrank ),
     ChildNode( inetwork, imyhostname, imyrank, iphostname, ipport, iprank ),
     RSHChildNode( inetwork, imyhostname, imyrank, iphostname, ipport, iprank ),
     BackEndNode( inetwork, imyhostname, imyrank, iphostname, ipport, iprank )
