@@ -5,7 +5,7 @@ parallel tools and applications with a master/slave architecture.
 MRNet reduces the cost of these
 tools' activities by incorporating a tree-based overlay network (TBON) of processes 
 between the tool's front-end and back-ends. MRNet uses the TBON to distribute many
-important tool communication anc computation activities, reducing analysis time and 
+important tool communication and computation activities, reducing analysis time and 
 keeping tool front-end loads manageable.
 </para>
 
