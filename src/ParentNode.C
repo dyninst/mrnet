@@ -289,21 +289,25 @@ int ParentNode::proc_TopologyReport( PacketPtr ipacket ) const
     if( ( _network->send_PacketToChildren( ipacket ) == -1 ) ||
         ( _network->flush_PacketsToChildren( ) == -1 ) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush_PacketToChildren() failed\n" ));
+        return -1;
     }
 
     //wait for acks
-    if( !waitfor_TopologyReportAcks() ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_DeleteSubTreeAcks() failed\n" ));
+    if( ! waitfor_TopologyReportAcks() ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_TopologyReportAcks() failed\n" ));
+        return -1;
     }
 
     //Send ack to parent, if any
     if( _network->is_LocalNodeChild() ) {
         if( ! _network->get_LocalChildNode()->ack_TopologyReport() ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_TopologyReport() failed\n" ));
+            return -1;
         }
     }
 
     mrn_dbg_func_end();
+    return 0;
 }
 
 int ParentNode::proc_newSubTreeReport( PacketPtr ipacket ) const
@@ -316,7 +320,7 @@ int ParentNode::proc_newSubTreeReport( PacketPtr ipacket ) const
 
     SerialGraph sg( topo_ptr );
     if( !_network->add_SubGraph( _network->get_LocalRank(), sg ) ){
-        mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
         return -1;
     }
 
