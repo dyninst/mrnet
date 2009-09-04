@@ -998,7 +998,7 @@ XTNetwork::CreateFrontEndNode( Network* n, std::string ihost, Rank irank )
     mrn_dbg_func_begin();
 
     int listeningSocket = -1;
-    Port listeningPort = FindParentPort();
+    Port listeningPort = UnknownPort;
     if( -1 == CreateListeningSocket( listeningSocket, listeningPort ) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, 
                               "failed to create listening data socket\n" ));
