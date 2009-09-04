@@ -262,8 +262,8 @@ void Network::init_FrontEnd( const char * itopology,
     char * topology = _network_topology->get_TopologyStringPtr();
     PacketPtr packet( new Packet( 0, PROT_TOPOLOGY_RPT, "%s", topology ) );
     mrn_dbg(5, mrn_printf(FLF, stderr, "Broadcasting topology ... \n" ));
-    if( ! get_LocalFrontEndNode()->proc_TopologyReport( packet ) )
-        error( ERR_INTERNAL, rootRank, "waitfor_TopologyReportAcks() failed");
+    if( -1 == get_LocalFrontEndNode()->proc_TopologyReport( packet ) )
+        error( ERR_INTERNAL, rootRank, "proc_TopologyReport() failed");
     free( topology );
  
   
