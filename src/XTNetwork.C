@@ -941,11 +941,8 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology )
 {
     mrn_dbg_func_begin();
 
-    XTFrontEndNode* fe = dynamic_cast<XTFrontEndNode*>( get_LocalFrontEndNode() );
-    assert( fe != NULL );
-
-    Port fe_port = fe->get_LocalPort();
-    std::string fe_host = fe->get_LocalHostName();
+    Port fe_port = get_LocalPort();
+    std::string fe_host = get_LocalHostName();
 
     // get SerialGraph topology
     std::string sg = topology->get_SerializedGraphString();
@@ -991,6 +988,8 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology )
                           sgnew ));
         
     // tell our FE object about the topology
+    XTFrontEndNode* fe = dynamic_cast<XTFrontEndNode*>( get_LocalFrontEndNode() );
+    assert( fe != NULL );
     fe->init_numChildrenExpected( sgtmp );
     mrn_dbg(5, mrn_printf(FLF, stderr, "expecting %u children\n", 
                           fe->get_numChildrenExpected() ));
