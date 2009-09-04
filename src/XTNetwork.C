@@ -941,6 +941,12 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology )
 {
     mrn_dbg_func_begin();
 
+    XTFrontEndNode* fe = dynamic_cast<XTFrontEndNode*>( get_LocalFrontEndNode() );
+    assert( fe != NULL );
+
+    Port fe_port = fe->get_LocalPort();
+    std::string fe_host = fe->get_LocalHostName();
+
     // get SerialGraph topology
     std::string sg = topology->get_SerializedGraphString();
     SerialGraph sgtmp(sg);
@@ -953,13 +959,22 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology )
     FindHostsInTopology( &sgtmp, hosts );
     std::map< std::string, int >::iterator host_iter = hosts.begin();
     for( ; host_iter != hosts.end() ; host_iter++ ) {
+
         int count = host_iter->second;
         std::ostringstream findme;
         findme << host_iter->first << ":" << UnknownPort;
+
         char* search = strdup( findme.str().c_str() );
         char* start = sgnew;
+
         for( int i=0; i < count; i++ ) {
-            sprintf( currPort, "%d", base + i );
+
+            // need to special case FE port, which isn't static 
+            if( (i == 0) && (fe_host == host_iter->first) )
+                sprintf( currPort, "%d", fe_port );
+            else
+                sprintf( currPort, "%d", base + i );
+
             char* found = strstr(start, search);
             if( found != NULL ) {
                 mrn_dbg(5, mrn_printf(FLF, stderr, "changing %s port to %s\n", 
@@ -976,8 +991,6 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology )
                           sgnew ));
         
     // tell our FE object about the topology
-    XTFrontEndNode* fe = dynamic_cast<XTFrontEndNode*>( get_LocalFrontEndNode() );
-    assert( fe != NULL );
     fe->init_numChildrenExpected( sgtmp );
     mrn_dbg(5, mrn_printf(FLF, stderr, "expecting %u children\n", 
                           fe->get_numChildrenExpected() ));
