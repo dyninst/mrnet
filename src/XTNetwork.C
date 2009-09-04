@@ -649,21 +649,20 @@ XTNetwork::FindHostsInTopology( SerialGraph* topology,
 {
     mrn_dbg_func_begin();
 
+    // check the hostname associated with the root
+    std::string host = topology->get_RootHostName();
+    std::map< std::string, int >::iterator host_info = host_counts.find( host );
+    if( host_info == host_counts.end() ) {
+        host_counts[host] = 1;
+    }
+    else {
+        host_info->second++;
+    }
+
     topology->set_ToFirstChild();
     SerialGraph* currChildSubtree = topology->get_NextChild();
-    for( ; currChildSubtree != NULL ; currChildSubtree = topology->get_NextChild() ) {
-        // check the hostname associated with the root of the current subtree
-        std::string host = currChildSubtree->get_RootHostName();
-        std::map< std::string, int >::iterator host_info = host_counts.find( host );
-        if( host_info == host_counts.end() ) {
-            host_counts[host] = 1;
-        }
-        else {
-            host_info->second++;
-        }
-	if( ! currChildSubtree->is_RootBackEnd() )
-            FindHostsInTopology( currChildSubtree, host_counts );
-    }
+    for( ; currChildSubtree != NULL ; currChildSubtree = topology->get_NextChild() )
+	FindHostsInTopology( currChildSubtree, host_counts );
 }
 
 
