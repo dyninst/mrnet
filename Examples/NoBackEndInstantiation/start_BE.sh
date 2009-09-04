@@ -31,5 +31,6 @@ while [ $ITER -lt $NBE ]; do
     CITER=`expr $CITER + 1`
     crank=${BE_CONN[$CITER]}
     $REM_SHELL -n ${BE_HOSTS[$ITER]} $1 $chost $cport $crank ${BE_HOSTS[$ITER]} `expr $ITER + 10000` & 
+    sleep 1
     ITER=`expr $ITER + 1`
 done
