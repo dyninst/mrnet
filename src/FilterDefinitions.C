@@ -1327,13 +1327,13 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
         return;
     }
 
-    //If we get here, SYNC CONDITION MET!
+    //check for a complete wave
     if( state->ready_peers.size() + closed_peers.size() < peers.size() ) {
         return;
     }
 
-    //check for a complete wave
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "All child nodes ready?" ));
+    //if we get here, SYNC CONDITION MET!
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "All child nodes ready!" ));
 
     //3. All nodes ready! Place output packets
     for( map_iter = state->packets_by_rank.begin( );
