@@ -592,7 +592,7 @@ const set<Rank> & Stream::get_EndPoints( void ) const
 
 bool Stream::has_Data( void )
 {
-    _incoming_packet_buffer_sync.Unlock();
+    _incoming_packet_buffer_sync.Lock();
     bool empty = _incoming_packet_buffer.empty();
     _incoming_packet_buffer_sync.Unlock();
 
