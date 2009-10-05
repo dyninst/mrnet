@@ -715,7 +715,7 @@ Stream* Network::new_Stream( Communicator *icomm,
     static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
 
     //get array of back-ends from communicator
-    const set <CommunicationNode*> endpoints = icomm->get_EndPoints();
+    const set <CommunicationNode*>& endpoints = icomm->get_EndPoints();
     Rank * backends = new Rank[ endpoints.size() ];
         
     mrn_dbg(5, mrn_printf(FLF, stderr, "backends[ " ));
@@ -775,7 +775,7 @@ Stream* Network::new_Stream( Communicator* icomm,
     static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
 
     //get array of back-ends from communicator
-    const set <CommunicationNode*> endpoints = icomm->get_EndPoints();
+    const set <CommunicationNode*>& endpoints = icomm->get_EndPoints();
     Rank * backends = new Rank[ endpoints.size() ];
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "backends[ " ));
