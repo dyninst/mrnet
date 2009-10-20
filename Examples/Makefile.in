@@ -103,6 +103,10 @@ backend-attach:
 	@echo Building Backend Attach Example
 	$(MAKE) -C $(BA_DIR)
 
+backend-attach-mpi: backend-attach
+	@echo Building Backend Attach MPI Example
+	$(MAKE) -C $(BA_DIR) mpi
+
 backend-attach-clean:
 	@echo Cleaning Backend Attach Example
 	$(MAKE) -C $(BA_DIR) clean

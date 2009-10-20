@@ -5,14 +5,17 @@ MPICXX = mpiCC
 # See Makefile in Examples directory for variable definitions
 
 TARGETS = $(BINDIR)/BackendAttach_FE \
-          $(BINDIR)/BackendAttach_mpi_BE \
           $(BINDIR)/BackendAttach_BE
+
+MPI_TARGETS = $(BINDIR)/BackendAttach_mpi_BE
 
 default: all
 
-.PHONY: all clean install
+.PHONY: all mpi clean install
 
 all: $(TARGETS)
+
+mpi: $(MPI_TARGETS)
 
 $(BINDIR)/BackendAttach_FE: FE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ FE.C $(LIBS)
@@ -25,9 +28,14 @@ $(BINDIR)/BackendAttach_BE: BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ BE.C $(LIBS)
 
 clean:
-	$(RM) -f $(TARGETS)
+	$(RM) -f $(TARGETS) $(MPI_TARGETS)
 
 install: $(TARGETS)
 	for exe in $(TARGETS) ; do \
 	    $(INSTALL) -p -m 755 $$exe $(IBINDIR)/ ; \
+	done ; \
+	for exe in $(MPI_TARGETS) ; do \
+	    if [ -f $$exe ]; then \
+	       $(INSTALL) -p -m 755 $$exe $(IBINDIR)/ ; \
+	    fi ; \
 	done
