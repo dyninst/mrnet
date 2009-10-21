@@ -5,6 +5,7 @@
 
 // $Id: NetUtils.C,v 1.11 2008/10/09 19:54:04 mjbrim Exp $
 
+#include <cstdio>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
