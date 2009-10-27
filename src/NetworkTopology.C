@@ -319,6 +319,9 @@ bool NetworkTopology::add_SubGraph( Rank irank, SerialGraph & isg, bool iupdate 
     _sync.Lock();
     bool retval;
 
+    mrn_dbg( 3, mrn_printf( FLF, stderr, "Node[%d] adding subgraph \"%s\"\n",
+                            irank, isg.get_ByteArray().c_str() ));
+
     Event::new_Event( TOPOLOGY_EVENT, TOPOL_ADD_SUBGRAPH, irank );
     
     Node * node = find_Node( irank );
@@ -341,8 +344,6 @@ bool NetworkTopology::add_SubGraph( Node * inode, SerialGraph & isg, bool iupdat
 {
     // assumes we are holding the lock
     mrn_dbg_func_begin();
-    mrn_dbg( 5, mrn_printf( FLF, stderr, "Node[%d] adding subgraph \"%s\"\n",
-                            inode->get_Rank(), isg.get_ByteArray().c_str() ));
 
     _parent_nodes.insert( inode );
 
@@ -441,10 +442,9 @@ bool NetworkTopology::remove_Node(  Rank irank, bool iupdate /* = false */ )
 {
     _sync.Lock();
 
-    Event::new_Event( TOPOLOGY_EVENT, TOPOL_REMOVE_NODE, irank );
+    //Event::new_Event( TOPOLOGY_EVENT, TOPOL_REMOVE_NODE, irank );
     
     NetworkTopology::Node *node_to_remove = find_Node( irank );
-
     if( node_to_remove == NULL ){
         _sync.Unlock();
         return false;
@@ -497,11 +497,10 @@ bool NetworkTopology::set_Parent( Rank ichild_rank, Rank inew_parent_rank, bool 
 
     if( iupdate ) {
         _router->update_Table();
-        Event::new_Event( TOPOLOGY_EVENT, TOPOL_PARENT_CHANGE, ichild_rank );
+        //Event::new_Event( TOPOLOGY_EVENT, TOPOL_PARENT_CHANGE, ichild_rank );
     }
 
     _sync.Unlock();
-    mrn_dbg_func_end();
     return true;
 }
 

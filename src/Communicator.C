@@ -44,16 +44,7 @@ Communicator::Communicator( Network * inetwork, Communicator &icomm)
 bool Communicator::add_EndPoint(Rank irank)
 {
     CommunicationNode * new_endpoint = _network->get_EndPoint(irank);
-
-    if( new_endpoint == NULL ){
-        return false;
-    }
-
-    _mutex.Lock();
-    _back_ends.insert( new_endpoint );
-    _mutex.Unlock();
-
-    return true;
+    return add_EndPoint( new_endpoint );
 }
 
 bool Communicator::add_EndPoint(CommunicationNode * iendpoint)

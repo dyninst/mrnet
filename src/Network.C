@@ -150,18 +150,12 @@ void Network::update_BcastCommunicator( void )
     //add end-points to broadcast communicator
     _endpoints_mutex.Lock();
 
-    Communicator *old_bcast, *new_bcast;
-    old_bcast = _bcast_communicator;
-    new_bcast = new Communicator( this );
+    if( _bcast_communicator == NULL )
+        _bcast_communicator = new Communicator( this );
 
     map< Rank, CommunicationNode * >::const_iterator iter;
     for( iter=_end_points.begin(); iter!=_end_points.end(); iter++ )
-        new_bcast->add_EndPoint( iter->first );
-
-    _bcast_communicator = new_bcast;
-
-    if( old_bcast != NULL )
-        delete old_bcast;
+        _bcast_communicator->add_EndPoint( iter->first );
 
     _endpoints_mutex.Unlock();
     mrn_dbg(5, mrn_printf(FLF, stderr, "Bcast communicator complete \n" ));
@@ -227,6 +221,8 @@ void Network::init_FrontEnd( const char * itopology,
         error( ERR_SYSTEM, rootRank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
         return;
     }
+
+    _bcast_communicator = new Communicator( this );
     
     _local_front_end_node = CreateFrontEndNode( this, rootHost, rootRank );
 
@@ -268,7 +264,6 @@ void Network::init_FrontEnd( const char * itopology,
  
   
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating bcast communicator ... \n" ));
-    _bcast_communicator = new Communicator( this );
     update_BcastCommunicator( );
 }
 
@@ -1281,12 +1276,9 @@ bool Network::add_SubGraph( Rank iroot_rank, SerialGraph& sg )
         return false;
     }
 
-    if( is_LocalNodeFrontEnd() && 
-        ( _bcast_communicator != NULL ) &&
+    if( is_LocalNodeFrontEnd() &&
         ( _network_topology->get_NumNodes() > topsz ) ) {
         // new node joined network (likely a new BE)   
-        // update list of network endpoints and bcast communicator
-        update_BcastCommunicator( );
 
         // TODO: safely inform rest of network about topology change
     }
@@ -1301,13 +1293,13 @@ bool Network::remove_Node( Rank ifailed_rank, bool iupdate )
 {
     mrn_dbg_func_begin();
 
-    mrn_dbg(3, mrn_printf( FLF, stderr, "Deleing PeerNode: node[%u] ...\n", ifailed_rank ));
+    mrn_dbg(5, mrn_printf( FLF, stderr, "Deleting PeerNode: node[%u] ...\n", ifailed_rank ));
     delete_PeerNode( ifailed_rank );
 
-    mrn_dbg(3, mrn_printf( FLF, stderr, "Removing from Topology: node[%u] ...\n", ifailed_rank ));
+    mrn_dbg(5, mrn_printf( FLF, stderr, "Removing from Topology: node[%u] ...\n", ifailed_rank ));
     _network_topology->remove_Node( ifailed_rank, iupdate );
 
-    mrn_dbg(3, mrn_printf( FLF, stderr, "Removing from Streams: node[%u] ...\n", ifailed_rank ));
+    mrn_dbg(5, mrn_printf( FLF, stderr, "Removing from Streams: node[%u] ...\n", ifailed_rank ));
     _streams_sync.Lock();
     map < unsigned int, Stream* >::iterator iter;
     for( iter=_streams.begin(); iter != _streams.end(); iter++ ) {
@@ -1343,6 +1335,8 @@ bool Network::change_Parent( Rank ichild_rank, Rank inew_parent_rank )
 bool Network::insert_EndPoint( string& ihostname, Port iport, Rank irank )
 {
     bool retval = true;
+    CommunicationNode* cn = NULL;
+    
     mrn_dbg_func_begin();
 
     _endpoints_mutex.Lock();
@@ -1351,16 +1345,25 @@ bool Network::insert_EndPoint( string& ihostname, Port iport, Rank irank )
     if( iter != _end_points.end() ) {
         if( (iter->second->get_HostName() != ihostname) ||
             (iter->second->get_Port() != iport) ) {
-            CommunicationNode* cn = iter->second;
+            mrn_dbg( 5, mrn_printf( FLF, stderr, "Replacing Node[%d] [%s:%d] with [%s:%d]\n",
+                                    iter->second->get_HostName().c_str(), iter->second->get_Port(),
+                                    ihostname.c_str(), iport ) );
+            cn = iter->second;
             _end_points.erase(iter);
             delete cn;
-            _end_points[ irank ] = new_EndPoint(ihostname, iport, irank);
+            cn = new_EndPoint(ihostname, iport, irank);
+            _end_points[ irank ] = cn;
         }
         else
             retval = false;
     }
-    else
-        _end_points[ irank ] = new_EndPoint(ihostname, iport, irank);
+    else {
+        cn = new_EndPoint(ihostname, iport, irank);
+        _end_points[ irank ] = cn;
+    }
+
+    if( is_LocalNodeFrontEnd() && ( cn != NULL ) )
+        _bcast_communicator->add_EndPoint( cn );
         
     _endpoints_mutex.Unlock();
     
