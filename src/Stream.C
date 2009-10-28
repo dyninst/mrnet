@@ -573,8 +573,11 @@ void Stream::add_IncomingPacket( PacketPtr ipacket )
     mrn_dbg(5, mrn_printf(FLF, stderr, "Stream[%d](%p): signaling \"got packet\"\n",
                           _id, this));
     _incoming_packet_buffer_sync.SignalCondition( PACKET_BUFFER_NONEMPTY );
-    _network->signal_NonEmptyStream();
     _incoming_packet_buffer_sync.Unlock();
+
+    // Note: the following should never be moved inside the Lock/Unlock above
+    //       as it can (and has) cause a circular dependency deadlock
+    _network->signal_NonEmptyStream();
 }
 
 unsigned int Stream::size( void ) const
