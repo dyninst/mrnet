@@ -58,7 +58,7 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
     //use "UnknownPort" in lookup since this is what serialgraph was created w/
     my_sg = sg.get_MySubTree( _hostname, UnknownPort, _rank );
     if( my_sg == NULL ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "get_MySuBTree() failed\n" ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "get_MySubTree() failed\n" ));
         return -1;
     }
     my_sg->set_ToFirstChild( );
@@ -115,7 +115,7 @@ RSHParentNode::launch_InternalNode( std::string ihostname, Rank irank,
     char rank_str[128];
     snprintf(rank_str, sizeof(rank_str), "%d", irank );
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "Launching %s:%d ...",
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Launching %s:%d ...\n",
                           ihostname.c_str(), irank ));
 
     // set up arguments for the new process
@@ -149,7 +149,8 @@ RSHParentNode::launch_InternalNode( std::string ihostname, Rank irank,
     }
 #endif // READY
 
-    mrn_dbg(3, mrn_printf(0,0,0, stderr, "Success!\n" ));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Successful launch of %s:%d\n",
+                          ihostname.c_str(), irank ));
 
     return 0;
 }
@@ -205,7 +206,8 @@ RSHParentNode::launch_Application( std::string ihostname, Rank irank, std::strin
         return -1;
     }
 #endif // READY
-    mrn_dbg(5, mrn_printf(FLF, stderr, "success\n"));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Successful launch of app on %s:%d\n",
+                          ihostname.c_str(), irank));
 
     return 0;
 }

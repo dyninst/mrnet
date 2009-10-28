@@ -10,7 +10,7 @@
 namespace MRN
 {
 
-void SerialGraph::add_Leaf(std::string ihostname, Port iport, Rank irank )
+void SerialGraph::add_Leaf( std::string ihostname, Port iport, Rank irank )
 {
     std::ostringstream hoststr;
 
@@ -20,7 +20,7 @@ void SerialGraph::add_Leaf(std::string ihostname, Port iport, Rank irank )
     _num_nodes++; _num_backends++;
 }
 
-void SerialGraph::add_SubTreeRoot(std::string ihostname, Port iport, Rank irank )
+void SerialGraph::add_SubTreeRoot( std::string ihostname, Port iport, Rank irank )
 {
     std::ostringstream hoststr;
 
@@ -76,7 +76,8 @@ Port SerialGraph::get_RootPort()
     return retval;
 }
 
-Rank SerialGraph::get_RootRank(){
+Rank SerialGraph::get_RootRank()
+{
     Rank retval = UnknownRank;
     size_t begin=0, end=1; //Byte array begins [ xxx ...
 
