@@ -346,26 +346,38 @@ bool NetworkTopology::add_SubGraph( Node * inode, SerialGraph & isg, bool iupdat
     mrn_dbg_func_begin();
 
     _parent_nodes.insert( inode );
-
+ 
     //search for root of subgraph
     Node * node = find_NodeHoldingLock( isg.get_RootRank() );
     if( node == NULL ) {
         //Not found! allocate
+        string node_type = ( isg.is_RootBackEnd() ? "backend" : "internal" );
+        mrn_dbg( 5, mrn_printf( FLF, stderr, "Creating %s node[%d] %s:%d\n",
+                                node_type.c_str(), isg.get_RootRank(), 
+                                isg.get_RootHostName().c_str(), 
+                                isg.get_RootPort() ) );
         node = new Node( isg.get_RootHostName(), isg.get_RootPort(), 
                          isg.get_RootRank(), isg.is_RootBackEnd() );
         _nodes[ isg.get_RootRank() ] = node;
     }
     else{
         //Found! Remove old subgraph
-        remove_SubGraph( node );
+        /* MJB NOTE: removed following call to remove_SubGraph() as it 
+                     adds a lot of overhead but does not seem to be
+                     necessary for proper operation
+           remove_SubGraph( node );
+        */
     }
 
     if( node->is_BackEnd() ) {
         string name = node->get_HostName();
         Rank r = node->get_Rank();
-        mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as backend\n", r ));
-        _backend_nodes.insert( node );
-        _network->insert_EndPoint( name, node->get_Port(), r );
+        set< Node* >::iterator niter = _backend_nodes.find( node );
+        if( niter == _backend_nodes.end() ) {
+            mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as backend\n", r ));
+            _backend_nodes.insert( node );
+            _network->insert_EndPoint( name, node->get_Port(), r );
+        }
     }
 
     mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as child of node[%d]\n",
@@ -399,10 +411,9 @@ NetworkTopology::Node* NetworkTopology::find_NodeHoldingLock(Rank irank) const
     map< Rank, NetworkTopology::Node* >::const_iterator iter =
         _nodes.find( irank );
 
-    if( iter == _nodes.end() ){
-        mrn_dbg_func_end();
+    if( iter == _nodes.end() )
         return NULL;
-    }
+
     return (*iter).second;
 }
 
@@ -419,9 +430,14 @@ bool NetworkTopology::remove_Node( NetworkTopology::Node *inode )
     //remove from orphans, back-ends, parents list
     _nodes.erase( inode->_rank );
     _orphans.erase( inode );
-    _backend_nodes.erase( inode );
-    _parent_nodes.erase( inode );
-    _network->remove_EndPoint( inode->_rank );
+
+    if( inode->is_BackEnd() ) {
+        _backend_nodes.erase( inode );
+        _network->remove_EndPoint( inode->_rank );
+    }
+    else
+        _parent_nodes.erase( inode );
+
 
     //remove me as my children's parent, and set children as orphans
     set < Node * >::iterator iter;
@@ -442,7 +458,7 @@ bool NetworkTopology::remove_Node(  Rank irank, bool iupdate /* = false */ )
 {
     _sync.Lock();
 
-    //Event::new_Event( TOPOLOGY_EVENT, TOPOL_REMOVE_NODE, irank );
+    Event::new_Event( TOPOLOGY_EVENT, TOPOL_REMOVE_NODE, irank );
     
     NetworkTopology::Node *node_to_remove = find_Node( irank );
     if( node_to_remove == NULL ){
@@ -497,7 +513,7 @@ bool NetworkTopology::set_Parent( Rank ichild_rank, Rank inew_parent_rank, bool 
 
     if( iupdate ) {
         _router->update_Table();
-        //Event::new_Event( TOPOLOGY_EVENT, TOPOL_PARENT_CHANGE, ichild_rank );
+        Event::new_Event( TOPOLOGY_EVENT, TOPOL_PARENT_CHANGE, ichild_rank );
     }
 
     _sync.Unlock();

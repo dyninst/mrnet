@@ -178,21 +178,21 @@ SerialGraph & ParsedGraph::get_SerializedGraph( )
 
 void ParsedGraph::serialize( Node * inode )
 {
-    if(inode->_children.size() == 0){
+    if( inode->_children.size() == 0 ) {
         // Leaf node, just add my name to serial representation and return
         _serial_graph.add_Leaf(inode->get_HostName(), UnknownPort,
                                inode->get_Rank() );
         return;
     }
-    else{
+    else {
         //Starting new sub-tree component in graph serialization:
         _serial_graph.add_SubTreeRoot(inode->get_HostName(), UnknownPort,
                                       inode->get_Rank() );
+
+        for( unsigned int i=0; i < inode->_children.size(); i++ )
+            serialize( inode->_children[i] );
     }
 
-    for(unsigned int i=0; i<inode->_children.size(); i++){
-        serialize( inode->_children[i] );
-    }
 
     //Ending sub-tree component in graph serialization:
     _serial_graph.end_SubTree();
