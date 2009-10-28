@@ -199,14 +199,9 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 
     ipacket->unpack( "%c", &delete_backend );
 
-    //kill all mrnet threads
-    _network->cancel_IOThreads();
-
-    EventDetector::stop();
-
     if( delete_backend == 't' ) {
-	_network->shutdown_Network();
         mrn_dbg( 1, mrn_printf(FLF, stderr, "Back-end exiting ... \n" ));
+	_network->shutdown_Network();
         exit(0);
     }
    
@@ -249,15 +244,14 @@ int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
         return -1;
     }
 
-    retval = Filter::load_FilterFunc( so_file, func );
-    if( retval != ( int )fid ) {
+    retval = Filter::load_FilterFunc( fid, so_file, func );
+    if( retval == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                     "Filter::load_FilterFunc() failed.\n" ));
-        return -1;
     }
 
     mrn_dbg_func_end();
-    return fid;
+    return retval;
 }
 
 } // namespace MRN

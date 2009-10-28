@@ -220,7 +220,7 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 
     //Send ack to parent, if any
     if( _network->is_LocalNodeChild() ) {
-        if( _network->get_LocalChildNode()->ack_DeleteSubTree() ) {
+        if( ! _network->get_LocalChildNode()->ack_DeleteSubTree() ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
         }
     }
@@ -232,16 +232,9 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     }
 
     //wait for acks -- so children don't initiate failure recovery when we exit
-    if( !waitfor_DeleteSubTreeAcks() ) {
+    if( ! waitfor_DeleteSubTreeAcks() ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_DeleteSubTreeAcks() failed\n" ));
     }
-
-    // turn off debug output to prevent cancelled threads from causing mrn_printf deadlock
-    MRN::set_OutputLevel( -1 );
-
-    //kill all IO threads, should allow downstream threads to flush
-    _network->cancel_IOThreads();
-    EventDetector::stop();
 
     //if internal, signal network termination
     if( _network->is_LocalNodeInternal() ) {
@@ -557,7 +550,7 @@ int ParentNode::proc_deleteStream( PacketPtr ipacket ) const
 
 int ParentNode::proc_newFilter( PacketPtr ipacket ) const
 {
-    int retval = 0;
+    int rc = 0;
     unsigned short fid = 0;
     const char *so_file = NULL, *func = NULL;
 
@@ -568,19 +561,18 @@ int ParentNode::proc_newFilter( PacketPtr ipacket ) const
         return -1;
     }
 
-    retval = Filter::load_FilterFunc( so_file, func );
-
-    if( retval != ( int )fid ) {
+    rc = Filter::load_FilterFunc( fid, so_file, func );
+    if( rc != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                                "Filter::load_FilterFunc() failed.\n" ));
-        return -1;
+        rc = -1;
     }
 
     //Filter registered locally, now propagate to tree
     _network->send_PacketToChildren( ipacket );
 
     mrn_dbg_func_end();
-    return fid;
+    return rc;
 }
 
 bool lt_PeerNodePtr( PeerNode * p1, PeerNode * p2 )

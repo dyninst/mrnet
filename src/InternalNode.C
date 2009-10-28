@@ -79,8 +79,6 @@ void InternalNode::signal_NetworkTermination( )
     _sync.Lock();
     _sync.SignalCondition( NETWORK_TERMINATION );
     _sync.Unlock();
-
-    mrn_dbg_func_end();
 }
 
 int InternalNode::proc_DataFromParent( PacketPtr ipacket ) const

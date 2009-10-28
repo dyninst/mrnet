@@ -27,6 +27,31 @@ namespace MRN
 class Filter: public Error {
     friend class FilterCounter;
 
+    class FilterInfo {
+        friend class Filter;
+     public:
+        FilterInfo(void)
+            : filter_func(NULL), state_func(NULL), filter_fmt("")
+        {
+        }
+         FilterInfo( void(*ifilter)(), void(*istate)(), const char* ifmt )
+            : filter_func(ifilter), state_func(istate), filter_fmt(ifmt)
+        {
+        }
+        FilterInfo( const FilterInfo &finfo )
+            : filter_func(finfo.filter_func), state_func(finfo.state_func), 
+              filter_fmt(finfo.filter_fmt)
+        {
+        }
+        ~FilterInfo(void)
+        {
+        }
+     private:
+        void(*filter_func)();
+        void(*state_func)();
+        std::string filter_fmt;
+    };
+
  public:
     Filter( unsigned short iid );
     ~Filter( void );
@@ -39,18 +64,17 @@ class Filter: public Error {
     PacketPtr get_FilterState( int istream_id );
     void set_FilterParams( PacketPtr iparams );
 
-    static int load_FilterFunc( const char *so_file, const char *func );
-    static unsigned short register_Filter( void (*ifilter_func)( ),
-                                           void (*istate_func)( ),
-                                           const char * ifmt );
+    static int load_FilterFunc( unsigned short iid, const char *so_file, const char *func );
+    static bool register_Filter( unsigned short iid,
+                                 void (*ifilter_func)( ),
+                                 void (*istate_func)( ),
+                                 const char * ifmt );
 
  private:
     static void initialize_static_stuff( );
     static void free_static_stuff( );
 
-    static std::map < unsigned short, void(*)() > FilterFuncs;
-    static std::map < unsigned short, void(*)() > GetStateFuncs;
-    static std::map < unsigned short, std::string > FilterFmts;
+    static std::map< unsigned short, FilterInfo > Filters;
 
     unsigned short _id;
     void * _filter_state;
@@ -66,47 +90,76 @@ class Filter: public Error {
 
 inline void Filter::initialize_static_stuff( )
 {
-    TFILTER_NULL = register_Filter( NULL, NULL, TFILTER_NULL_FORMATSTR );
+    unsigned short tfilter_start = 0;
+    unsigned short sfilter_start = 50;
+    
+    TFILTER_NULL = tfilter_start++;
+    register_Filter( TFILTER_NULL, NULL, NULL, TFILTER_NULL_FORMATSTR );
 
-    TFILTER_SUM = register_Filter( (void(*)())tfilter_Sum, NULL, TFILTER_SUM_FORMATSTR );
+    TFILTER_SUM = tfilter_start++;
+    register_Filter( TFILTER_SUM, 
+                     (void(*)())tfilter_Sum, NULL, TFILTER_SUM_FORMATSTR );
 
-    TFILTER_AVG = register_Filter( (void(*)())tfilter_Avg, NULL, TFILTER_AVG_FORMATSTR );
+    TFILTER_AVG = tfilter_start++;
+    register_Filter( TFILTER_AVG, 
+                     (void(*)())tfilter_Avg, NULL, TFILTER_AVG_FORMATSTR );
 
-    TFILTER_MAX = register_Filter( (void(*)())tfilter_Max, NULL, TFILTER_MAX_FORMATSTR );
+    TFILTER_MAX = tfilter_start++;
+    register_Filter( TFILTER_MAX, 
+                     (void(*)())tfilter_Max, NULL, TFILTER_MAX_FORMATSTR );
 
-    TFILTER_MIN = register_Filter( (void(*)())tfilter_Min, NULL, TFILTER_MIN_FORMATSTR );
+    TFILTER_MIN = tfilter_start++;
+    register_Filter( TFILTER_MIN, 
+                     (void(*)())tfilter_Min, NULL, TFILTER_MIN_FORMATSTR );
 
-    TFILTER_ARRAY_CONCAT = register_Filter( (void(*)())tfilter_ArrayConcat, NULL,
-                                            TFILTER_ARRAY_CONCAT_FORMATSTR );
+    TFILTER_ARRAY_CONCAT = tfilter_start++;
+    register_Filter( TFILTER_ARRAY_CONCAT, 
+                     (void(*)())tfilter_ArrayConcat, NULL,
+                     TFILTER_ARRAY_CONCAT_FORMATSTR );
 
-    TFILTER_INT_EQ_CLASS = register_Filter( (void(*)())tfilter_IntEqClass, NULL,
-                                            TFILTER_INT_EQ_CLASS_FORMATSTR );
+    TFILTER_INT_EQ_CLASS = tfilter_start++;
+    register_Filter( TFILTER_INT_EQ_CLASS, 
+                     (void(*)())tfilter_IntEqClass, NULL,
+                     TFILTER_INT_EQ_CLASS_FORMATSTR );
 
-    TFILTER_PERFDATA = register_Filter( (void(*)())tfilter_PerfData, NULL,
-                                        TFILTER_PERFDATA_FORMATSTR );
+    TFILTER_PERFDATA = tfilter_start++;
+    register_Filter( TFILTER_PERFDATA, 
+                     (void(*)())tfilter_PerfData, NULL,
+                     TFILTER_PERFDATA_FORMATSTR );
 
 #ifdef _NEED_PARADYN_FILTERS_
-    TFILTER_SAVE_LOCAL_CLOCK_SKEW_UPSTREAM =
-        register_Filter( (void(*)())save_LocalClockSkewUpstream, NULL,
-                         save_LocalClockSkewUpstream_format_string );
+    TFILTER_SAVE_LOCAL_CLOCK_SKEW_UPSTREAM = tfilter_start++;
+    register_Filter( TFILTER_SAVE_LOCAL_CLOCK_SKEW_UPSTREAM, 
+                     (void(*)())save_LocalClockSkewUpstream, NULL,
+                     save_LocalClockSkewUpstream_format_string );
 
-    TFILTER_SAVE_LOCAL_CLOCK_SKEW_DOWNSTREAM =
-        register_Filter( (void(*)())save_LocalClockSkewDownstream, NULL,
-                          save_LocalClockSkewDownstream_format_string );
+    TFILTER_SAVE_LOCAL_CLOCK_SKEW_DOWNSTREAM = tfilter_start++;
+    register_Filter( TFILTER_SAVE_LOCAL_CLOCK_SKEW_DOWNSTREAM, 
+                     (void(*)())save_LocalClockSkewDownstream, NULL,
+                     save_LocalClockSkewDownstream_format_string );
 
-    TFILTER_GET_CLOCK_SKEW =
-        register_Filter( (void(*)())get_ClockSkew, NULL,
-                         get_ClockSkew_format_string );
+    TFILTER_GET_CLOCK_SKEW = tfilter_start++;
+    register_Filter( TFILTER_GET_CLOCK_SKEW, 
+                     (void(*)())get_ClockSkew, NULL,
+                     get_ClockSkew_format_string );
 
-    TFILTER_PD_UINT_EQ_CLASS = register_Filter( (void(*)())tfilter_PDUIntEqClass, NULL,
-                                                 tfilter_PDUIntEqClass_format_string );
+    TFILTER_PD_UINT_EQ_CLASS = tfilter_start++;
+    register_Filter( TFILTER_PD_UINT_EQ_CLASS, 
+                     (void(*)())tfilter_PDUIntEqClass, NULL,
+                     tfilter_PDUIntEqClass_format_string );
 #endif /*_NEED_PARADYN_FILTERS_*/
 
-    SFILTER_DONTWAIT = register_Filter( (void(*)())NULL, NULL, "" );
+    SFILTER_DONTWAIT = sfilter_start++;
+    register_Filter( SFILTER_DONTWAIT, 
+                     (void(*)())NULL, NULL, "" );
 
-    SFILTER_WAITFORALL = register_Filter( (void(*)())sfilter_WaitForAll, NULL, "" );
+    SFILTER_WAITFORALL = sfilter_start++;
+    register_Filter( SFILTER_WAITFORALL, 
+                     (void(*)())sfilter_WaitForAll, NULL, "" );
 
-    SFILTER_TIMEOUT = register_Filter( (void(*)())sfilter_TimeOut, NULL, "" );
+    SFILTER_TIMEOUT = sfilter_start++;
+    register_Filter( SFILTER_TIMEOUT, 
+                     (void(*)())sfilter_TimeOut, NULL, "" );
 }
 
 inline void Filter::free_static_stuff( )

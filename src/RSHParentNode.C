@@ -229,7 +229,7 @@ RSHParentNode::proc_SubTreeInfoRequest( PacketPtr  ipacket ) const
 int
 RSHParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
 {
-    int retval = -1;
+    int retval = 0;
 
     switch ( cur_packet->get_Tag(  ) ) {
     case PROT_SUBTREE_INFO_REQ:

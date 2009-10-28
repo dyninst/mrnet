@@ -111,11 +111,11 @@ class Network: public Error {
     bool is_LocalNodeBackEnd( void ) const ;
 
     //NOT IN PUBLIC API
-    void shutdown_Network( void );
     const std::set< PeerNodePtr > get_ChildPeers() const;
     static Network* CreateNetworkIN( int argc, char* argv[] );    // create obj for internal node
     InternalNode* get_LocalInternalNode( void ) const;
     PeerNodePtr get_PeerNode( Rank );
+    mutable XPlat::Mutex printf_mutex;
 
 protected:
     // constructor
@@ -176,6 +176,8 @@ protected:
 
     void set_LocalHostName( std::string const& );
     static const char* FindCommnodePath( void );
+
+    void shutdown_Network( void );
 
  private:
     friend class Stream;

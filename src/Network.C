@@ -13,6 +13,7 @@
 #include "utils.h"
 #include "BackEndNode.h"
 #include "ChildNode.h"
+#include "EventDetector.h"
 #include "Filter.h"
 #include "FrontEndNode.h"
 #include "InternalNode.h"
@@ -109,26 +110,33 @@ Network::~Network( void )
 
 void Network::shutdown_Network( void )
 {
-    if( is_LocalNodeFrontEnd() && _network_topology->get_NumNodes() ) {
-        if( ! _was_shutdown ) {
-            char delete_backends;
+    if( ! _was_shutdown ) {
 
-            _was_shutdown = true;
+        _was_shutdown = true;
 
+        if( is_LocalNodeFrontEnd() && _network_topology->get_NumNodes() ) {
+
+            char delete_backends = 'f';
             if( _terminate_backends )
                 delete_backends = 't';
-            else
-                delete_backends = 'f';
             
             PacketPtr packet( new Packet( 0, PROT_DEL_SUBTREE, "%c", delete_backends ) );
             get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
         }
+
+        // turn off debug output to prevent cancelled threads from causing mrn_printf deadlock
+        MRN::set_OutputLevel( -1 );
+        
+        //kill all threads, should allow downstream threads to flush
+        EventDetector::stop();
+        cancel_IOThreads();
+        
+        string empty("");
+        reset_Topology(empty);
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Clearing %u leftover events\n",
+                              Event::get_NumEvents() ));
+        Event::clear_Events();
     }
-    string empty("");
-    reset_Topology(empty);
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Clearing %u leftover events\n",
-                          Event::get_NumEvents() ));
-    Event::clear_Events();
 }
 
 
@@ -1042,20 +1050,32 @@ void Network::print_PerformanceData( perfdata_metric_t metric,
 
 int Network::load_FilterFunc( const char* so_file, const char* func_name )
 {
+    // start user-defined filter ids at 100 to avoid conflicts with built-ins
+    static unsigned short next_filter_id=100; 
+    unsigned short cur_filter_id=next_filter_id;
+    next_filter_id++;
+
     mrn_dbg_func_begin();
 
-    int fid = Filter::load_FilterFunc( so_file, func_name );
-    
-    if( fid != -1 ){
+    int rc = Filter::load_FilterFunc( cur_filter_id, so_file, func_name );
+    if( rc != -1 ){
         //Filter registered locally, now propagate to tree
         //TODO: ensure that filter is loaded down the entire tree
-        mrn_dbg(3, mrn_printf(FLF, stderr, "sending PROT_NEW_FILTER\n" ));
+        mrn_dbg( 3, mrn_printf(FLF, stderr, 
+                               "load_FilterFunc(%hu, %s, %s) successful, sending PROT_NEW_FILTER\n",
+                               cur_filter_id, so_file, func_name) );
         PacketPtr packet( new Packet( 0, PROT_NEW_FILTER, "%uhd %s %s",
-                                      fid, so_file, func_name ) );
+                                      cur_filter_id, so_file, func_name ) );
         send_PacketToChildren( packet );
+        rc = cur_filter_id;
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr,
+                               "load_FilterFunc(%hu, %s, %s) failed\n", 
+                               cur_filter_id, so_file, func_name) );
     }
     mrn_dbg_func_end();
-    return fid;
+    return rc;
 }
 
 
@@ -1397,9 +1417,14 @@ bool Network::update( void )
 #include <signal.h>
 void Network::cancel_IOThreads( void )
 {
-    mrn_dbg_func_begin();
+    /* Remember, no mrn_dbg()s allowed in this function. You wouldn't
+       see your messages anyway since we have already set output level to -1 */
 
     set< PeerNodePtr >::const_iterator iter;
+
+    // get this thread's id so we don't try to cancel ourself
+    tsd_t *tsd = ( tsd_t * )tsd_key.Get();
+    XPlat::Thread::Id my_id = tsd->thread_id;
 
     if( is_LocalNodeParent() ) {
         _children_mutex.Lock();
@@ -1407,47 +1432,25 @@ void Network::cancel_IOThreads( void )
             PeerNodePtr cur_node = *iter;
             
             //flush outgoing packets for children threads
-            if( cur_node->flush() != 0 ) {
-                mrn_dbg(1, mrn_printf(FLF, stderr, "Peer[%u]: flush() failed\n",
-                                      cur_node->get_Rank() ));
+            cur_node->flush();
+            if( cur_node->send_thread_id != my_id ) {
+                XPlat::Thread::Cancel( cur_node->send_thread_id ); 
             }
-
-            mrn_dbg(5, mrn_printf(FLF, stderr,
-                                  "Cancelling I/O threads to %s:%d\n",
-                                  cur_node->get_HostName().c_str(),
-                                  cur_node->get_Rank() ));
-            if( XPlat::Thread::Cancel( cur_node->send_thread_id ) != 0 ) {
-                mrn_dbg(1, mrn_printf(FLF, stderr, "Thread::Cancel(%d) failed\n",
-                                      cur_node->send_thread_id ));
-                ::perror( "Thread::Cancel()\n");
-            }
-            if( XPlat::Thread::Cancel( cur_node->recv_thread_id ) != 0 ) {
-                mrn_dbg(1, mrn_printf(FLF, stderr, "Thread::Cancel(%d) failed\n",
-                                      cur_node->recv_thread_id ));
-                ::perror( "Thread::Cancel()\n");
+            if( cur_node->recv_thread_id != my_id ) {
+                XPlat::Thread::Cancel( cur_node->recv_thread_id );
             }
         }
         _children_mutex.Unlock();
     }
 
     if( is_LocalNodeChild() ) {
-        mrn_dbg(5, mrn_printf(FLF, stderr,
-                              "Cancelling I/O threads to %s:%d\n",
-                              _parent->get_HostName().c_str(),
-                              _parent->get_Rank() ));
-        if( XPlat::Thread::Cancel( _parent->send_thread_id ) != 0 ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Thread::Cancel(%d) failed\n",
-                                  _parent->send_thread_id ));
-            ::perror( "Thread::Cancel()\n");
+        if( _parent->send_thread_id != my_id ) {
+            XPlat::Thread::Cancel( _parent->send_thread_id );
         }
-        if( XPlat::Thread::Cancel( _parent->recv_thread_id ) != 0 ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Thread::Cancel(%d) failed\n",
-                                  _parent->recv_thread_id ));
-            ::perror( "Thread::Cancel()\n");
+        if( _parent->recv_thread_id != my_id ) {
+            XPlat::Thread::Cancel( _parent->recv_thread_id );
         }
     }
-
-    mrn_dbg_func_end();
 }
 
 void Network::close_PeerNodeConnections( void )

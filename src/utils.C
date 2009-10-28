@@ -378,8 +378,6 @@ int getPortFromSocket( int sock, Port *port )
     return 0;
 }
 
-XPlat::Mutex printf_mutex;
-
 int mrn_printf( const char *file, int line, const char * func,
                 FILE * ifp, const char *format, ... )
 {
@@ -391,7 +389,7 @@ int mrn_printf( const char *file, int line, const char * func,
     struct timeval tv;
     while( gettimeofday( &tv, NULL ) == -1 ) {}
 
-    printf_mutex.Lock();
+    _global_network->printf_mutex.Lock();
 
     int rank = getrank();
 
@@ -454,7 +452,7 @@ int mrn_printf( const char *file, int line, const char * func,
     va_end( arglist );
     fflush( f );
     
-    printf_mutex.Unlock();
+    _global_network->printf_mutex.Unlock();
     return retval;
 }
 

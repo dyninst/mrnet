@@ -29,11 +29,11 @@ static int proc_NewChildFDConnection( PacketPtr ipacket, int isock );
 
 static map< int, Rank > childRankByEventDetectionSocket;
 
-typedef struct
-{
-    Network *network;
-    PeerNodePtr parent_node;
-} EDTArg ;
+// typedef struct
+// {
+//     Network *network;
+//     PeerNodePtr parent_node;
+// } EDTArg ;
 
 bool EventDetector::stop( void )
 {
@@ -45,8 +45,6 @@ bool EventDetector::stop( void )
         ::perror( "Thread::Cancel()\n");
         return false;
     }
-
-    mrn_dbg_func_end();
     return true;
 }
 

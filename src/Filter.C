@@ -22,23 +22,22 @@ namespace MRN
 /*======================================*
  *    Filter Class Definition        *
  *======================================*/
-map< unsigned short, void (*)() > Filter::FilterFuncs;
-map< unsigned short, void (*)() > Filter::GetStateFuncs;
-map< unsigned short, string > Filter::FilterFmts;
+map< unsigned short, Filter::FilterInfo > Filter::Filters;
 int FilterCounter::count=0;
 static FilterCounter fc;
 
 Filter::Filter(unsigned short iid)
     : _id(iid), _filter_state(NULL), _params(Packet::NullPacket)
 {
+    FilterInfo& finfo = Filters[iid];
     _filter_func =
         (void (*)(const vector<PacketPtr>&, vector<PacketPtr>&, vector<PacketPtr>&, 
                   void **, PacketPtr&, const TopologyLocalInfo& ))
-        FilterFuncs[iid];
+        finfo.filter_func;
 
-    _get_state_func = ( PacketPtr (*)( void **, int ) ) GetStateFuncs[iid];
+    _get_state_func = ( PacketPtr (*)( void **, int ) ) finfo.state_func;
 
-    _fmt_str = FilterFmts[iid];
+    _fmt_str = finfo.filter_fmt;
 }
 
 Filter::~Filter(  )
@@ -92,7 +91,7 @@ void Filter::set_FilterParams( PacketPtr iparams )
    _params = iparams;
 }
 
-int Filter::load_FilterFunc( const char *iso_file, const char *ifunc_name )
+int Filter::load_FilterFunc( unsigned short iid, const char *iso_file, const char *ifunc_name )
 {
     XPlat::SharedObject* so_handle = NULL;
     void (*filter_func_ptr)()=NULL;
@@ -138,23 +137,27 @@ int Filter::load_FilterFunc( const char *iso_file, const char *ifunc_name )
         return -1;
     }
 
-    mrn_dbg_func_end();
-    return  (int)register_Filter( filter_func_ptr, state_func_ptr, *fmt_str_ptr );
+    if( ! register_Filter( iid, filter_func_ptr, state_func_ptr, *fmt_str_ptr ) )
+        return -1;
+
+    return 0;
 }
 
-unsigned short Filter::register_Filter( void (*ifilter_func)( ),
-                                        void (*istate_func)( ),
-                                        const char *ifmt )
+bool Filter::register_Filter( unsigned short iid,
+                              void (*ifilter_func)(),
+                              void (*istate_func)(),
+                              const char *ifmt )
 {
-    static unsigned short next_filter_id=0; 
-    unsigned short cur_filter_id=next_filter_id;
-    next_filter_id++;
+    mrn_dbg_func_begin();
 
-    FilterFuncs[cur_filter_id] = ifilter_func;
-    GetStateFuncs[cur_filter_id] = istate_func;
-    FilterFmts[cur_filter_id] = ifmt;
-
-    return cur_filter_id;
+    FilterInfo finfo( ifilter_func, istate_func, ifmt );
+    if( Filters.find( iid ) == Filters.end() ) {
+        Filters[iid] = finfo;
+        return true;
+    }
+    mrn_dbg( 1, mrn_printf(FLF, stderr,
+                           "Filter id %hu already registered\n", iid));
+    return false;
 }
 
 } // namespace MRN
