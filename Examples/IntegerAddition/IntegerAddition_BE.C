@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 
     
     // FE delete of the net will causes us to exit, wait for it
-    while(true) sleep(5);
+    sleep(60);
 
     return 0;
 }

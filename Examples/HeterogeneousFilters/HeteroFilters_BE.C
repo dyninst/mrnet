@@ -101,8 +101,8 @@ int main(int argc, char **argv)
 
     } while ( tag != PROT_EXIT );
 
-    // FE delete of the net will causes us to exit, wait for it
-    while(true) sleep(5);
+    // FE delete of the net will cause us to exit, wait for it
+    sleep(60);
 
     return 0;
 }

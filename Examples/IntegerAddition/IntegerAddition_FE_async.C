@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 
         fprintf(stderr, "FE: Waiting for data to arrive...\n");
 	fflush(stderr);
-        int retval = select(max_fd, &readfds, NULL, NULL, &timeout);
+        retval = select(max_fd, &readfds, NULL, NULL, &timeout);
         if( retval < 0 )
             perror("select");
         else if(retval > 0) {
