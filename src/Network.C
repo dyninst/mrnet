@@ -1369,8 +1369,11 @@ bool Network::insert_EndPoint( string& ihostname, Port iport, Rank irank )
                                     iter->second->get_HostName().c_str(), iter->second->get_Port(),
                                     ihostname.c_str(), iport ) );
             cn = iter->second;
-            _end_points.erase(iter);
+            _end_points.erase( iter );
+            if( is_LocalNodeFrontEnd() )
+                _bcast_communicator->remove_EndPoint( irank );
             delete cn;
+    
             cn = new_EndPoint(ihostname, iport, irank);
             _end_points[ irank ] = cn;
         }
@@ -1395,6 +1398,8 @@ bool Network::remove_EndPoint( Rank irank )
 {
     _endpoints_mutex.Lock();
     _end_points.erase( irank );
+    if( is_LocalNodeFrontEnd() )
+        _bcast_communicator->remove_EndPoint( irank );
     _endpoints_mutex.Unlock();
     
     return true;

@@ -55,7 +55,18 @@ bool Communicator::add_EndPoint(CommunicationNode * iendpoint)
     _mutex.Lock();
     _back_ends.insert( iendpoint );
     _mutex.Unlock();
+    return true;
+}
 
+bool Communicator::remove_EndPoint(Rank irank)
+{
+    CommunicationNode *cn = _network->get_EndPoint(irank);
+    if( cn == NULL )
+        return false;
+
+    _mutex.Lock();
+    _back_ends.erase( cn );
+    _mutex.Unlock();
     return true;
 }
 

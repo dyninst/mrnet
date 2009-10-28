@@ -23,7 +23,7 @@ class Communicator{
     friend class Network;
 
  public:
-    bool add_EndPoint(Rank _rank);
+    bool add_EndPoint(Rank irank);
     bool add_EndPoint(CommunicationNode *);
     const std::set<CommunicationNode *>& get_EndPoints() const;
 
@@ -36,6 +36,8 @@ class Communicator{
     Communicator( Network *, Communicator &);
     Communicator( Network *, const std::set<CommunicationNode *>& );
     Communicator( Network *, const std::set<Rank>& );
+
+    bool remove_EndPoint(Rank irank);
 };
 
 
