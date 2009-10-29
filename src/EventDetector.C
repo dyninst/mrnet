@@ -39,12 +39,9 @@ bool EventDetector::stop( void )
 {
     mrn_dbg_func_begin();
 
-    if( XPlat::Thread::Cancel( _thread_id ) != 0 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Thread::Cancel(%d) failed\n",
-                              _thread_id ));
-        ::perror( "Thread::Cancel()\n");
+    if( XPlat::Thread::Cancel( _thread_id ) != 0 )
         return false;
-    }
+
     return true;
 }
 
@@ -255,7 +252,7 @@ void * EventDetector::main( void * /* iarg */ )
             }
 
             if( _global_network->is_LocalNodeChild() && FD_ISSET( parent_sock, &rfds_copy ) ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "Parent failure detected ...\n"));
+                mrn_dbg( 3, mrn_printf(FLF, stderr, "Parent failure detected ...\n"));
                 //event happened on parent monitored connections, likely failure
 
                 //remove old parent socket from "select" sockets list
@@ -263,7 +260,7 @@ void * EventDetector::main( void * /* iarg */ )
                 watch_list.remove( parent_sock );
 
                 if( _global_network->recover_FromFailures() ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "... recovering from parent failure\n"));
+                    mrn_dbg( 3, mrn_printf(FLF, stderr, "... recovering from parent failure\n"));
                     recover_FromParentFailure( _global_network );
 
                     //add new parent sock to monitor for failure
@@ -277,7 +274,7 @@ void * EventDetector::main( void * /* iarg */ )
                                            "Parent socket:%d added to list.\n", parent_sock));
                 }
                 else {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "NOT recovering from parent failure ...\n"));
+                    mrn_dbg( 3, mrn_printf(FLF, stderr, "NOT recovering from parent failure ...\n"));
                     if( watch_list.size() == 0 ) {
                         mrn_dbg(5, mrn_printf(FLF, stderr, "No more sockets to watch, bye!\n"));
                         return NULL;
@@ -307,7 +304,7 @@ void * EventDetector::main( void * /* iarg */ )
                     //this child has failed
                     int failed_rank = (*iter2).second;
 
-                    mrn_dbg( 1, mrn_printf(FLF, stderr,
+                    mrn_dbg( 3, mrn_printf(FLF, stderr,
                                            "Child[%u] failure detected ...\n",
                                            failed_rank ));
 

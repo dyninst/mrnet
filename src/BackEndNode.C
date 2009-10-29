@@ -200,7 +200,7 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     ipacket->unpack( "%c", &delete_backend );
 
     if( delete_backend == 't' ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "Back-end exiting ... \n" ));
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Back-end exiting ... \n" ));
 	_network->shutdown_Network();
         exit(0);
     }

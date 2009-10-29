@@ -222,7 +222,7 @@ void * PeerNode::recv_thread_main(void * args)
         int rret = peer_node->recv( packet_list );
         if( (rret == -1) || ((rret == 0) && (packet_list.size() == 0)) ) {
             if( rret == -1 ) {
-                mrn_dbg(1, mrn_printf(FLF, stderr, 
+                mrn_dbg(3, mrn_printf(FLF, stderr, 
                            "PeerNode recv failed - thread terminating\n"));
             }
             XPlat::Thread::Exit(args);
