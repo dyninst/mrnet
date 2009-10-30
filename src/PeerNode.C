@@ -167,8 +167,8 @@ int PeerNode::flush( bool ignore_threads /*=false*/ ) const
             retval = -1;
         }
     }
-    else{
-        if( _network->is_LocalNodeThreaded() && waitfor_FlushCompletion() == -1) {
+    else if( _network->is_LocalNodeThreaded() ) {
+        if( waitfor_FlushCompletion() == -1 ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "Flush() failed\n"));
             retval = -1;
         }
