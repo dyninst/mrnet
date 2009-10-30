@@ -42,7 +42,7 @@ RSHInternalNode::~RSHInternalNode( void )
 int
 RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
 {
-    int retval = -1;
+    int retval = 0;
 
     switch( cur_packet->get_Tag() )
     {
@@ -68,8 +68,8 @@ RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
         }
         break;
 
-        default:
-            retval = InternalNode::proc_PacketFromParent( cur_packet );
+    default:
+        retval = InternalNode::proc_PacketFromParent( cur_packet );
     }
     return retval;
 }
