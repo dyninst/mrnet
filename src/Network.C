@@ -114,14 +114,18 @@ void Network::shutdown_Network( void )
 
         _was_shutdown = true;
 
-        if( is_LocalNodeFrontEnd() && _network_topology->get_NumNodes() ) {
+        if( is_LocalNodeFrontEnd() ) {
 
-            char delete_backends = 'f';
-            if( _terminate_backends )
-                delete_backends = 't';
+            if( ( _network_topology != NULL ) && 
+                ( _network_topology->get_NumNodes() > 0 ) ) {
+
+                char delete_backends = 'f';
+                if( _terminate_backends )
+                    delete_backends = 't';
             
-            PacketPtr packet( new Packet( 0, PROT_DEL_SUBTREE, "%c", delete_backends ) );
-            get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
+                PacketPtr packet( new Packet( 0, PROT_DEL_SUBTREE, "%c", delete_backends ) );
+                get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
+            }
         }
 
         // turn off debug output to prevent cancelled threads from causing mrn_printf deadlock
@@ -131,10 +135,11 @@ void Network::shutdown_Network( void )
         EventDetector::stop();
         cancel_IOThreads();
         
-        string empty("");
-        reset_Topology(empty);
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Clearing %u leftover events\n",
-                              Event::get_NumEvents() ));
+        if( _network_topology != NULL ) {
+            string empty("");
+            reset_Topology(empty);
+        }
+
         Event::clear_Events();
     }
 }
@@ -1428,8 +1433,10 @@ void Network::cancel_IOThreads( void )
     set< PeerNodePtr >::const_iterator iter;
 
     // get this thread's id so we don't try to cancel ourself
+    XPlat::Thread::Id my_id = 0;
     tsd_t *tsd = ( tsd_t * )tsd_key.Get();
-    XPlat::Thread::Id my_id = tsd->thread_id;
+    if( tsd != NULL )
+        my_id = tsd->thread_id;
 
     if( is_LocalNodeParent() ) {
         _children_mutex.Lock();

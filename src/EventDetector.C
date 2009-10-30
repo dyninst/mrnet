@@ -39,8 +39,10 @@ bool EventDetector::stop( void )
 {
     mrn_dbg_func_begin();
 
-    if( XPlat::Thread::Cancel( _thread_id ) != 0 )
-        return false;
+    if( _thread_id ) {
+        if( XPlat::Thread::Cancel( _thread_id ) != 0 )
+            return false;
+    }
 
     return true;
 }
