@@ -19,10 +19,10 @@ int test_CountOddsAndEvensFilter(  Network *, const char * so_file );
 
 int main(int argc, char **argv)
 {
-    if( argc != 4 ){
+    if( argc != 4 ) {
         fprintf(stderr, "Usage: %s <shared_object file> <topology file> "
                 "<backend_exe>\n", argv[0]);
-        exit(-1);
+        return -1;
     }
     const char * so_file = argv[1];
     const char * topology_file = argv[2];
@@ -37,6 +37,8 @@ int main(int argc, char **argv)
 
     const char * dummy_argv=NULL;
     Network * net = Network::CreateNetworkFE( topology_file, backend_exe, &dummy_argv );
+    if( net->has_Error() )
+        return -1;
 
     /* For all the following tests, the 1st bool param indicates *
      * whether the recv() call should be stream-anonymous or not *

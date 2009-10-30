@@ -20,9 +20,9 @@ int test_Avg( Network * net, DataType type );
 
 int main(int argc, char **argv)
 {
-    if( argc != 3 ){
+    if( argc != 3 ) {
         fprintf(stderr, "Usage: %s <topology file> <backend_exe>\n", argv[0]);
-        exit(-1);
+        return -1;
     }
     const char * topology_file = argv[1];
     const char * backend_exe = argv[2];
@@ -35,7 +35,9 @@ int main(int argc, char **argv)
     test = new Test("MRNet Native Filter Test");
     const char * dummy_argv=NULL;
     Network * net = Network::CreateNetworkFE( topology_file, backend_exe, &dummy_argv  );
-
+    if( net->has_Error() )
+        return -1;
+ 
     test_Sum( net, CHAR_T );
     test_Sum( net, UCHAR_T );
     test_Sum( net, INT16_T );

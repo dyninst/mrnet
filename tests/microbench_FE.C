@@ -48,8 +48,7 @@ main( int argc, char* argv[] )
 {
     int ret = 0;
 
-    if( getenv( "MRN_DEBUG_FE" ) != NULL )
-    {
+    if( getenv( "MRN_DEBUG_FE" ) != NULL ) {
         fprintf( stderr, "FE: spinning, pid=%d\n", getpid() );
         bool bCont=false;
         while( !bCont )
@@ -59,8 +58,7 @@ main( int argc, char* argv[] )
     }
 
     // parse the command line
-    if( argc != 5 )
-    {
+    if( argc != 5 ) {
         std::cerr << "Usage: " << argv[0]
                 << "<roundtrip_iters> <thru_iters>"
                 << " <topology file> <backend exe>"
@@ -75,6 +73,8 @@ main( int argc, char* argv[] )
     
     // instantiate the network
     Network * net = BuildNetwork( topology_file, backend_exe );
+    if( net == NULL )
+        return -1;
 
     // get a broadcast communicator
     Communicator * bcComm = net->get_BroadcastCommunicator();
@@ -94,8 +94,7 @@ main( int argc, char* argv[] )
 
     // tell back-ends to go away
     if( (stream->send( MB_EXIT, "%d", 0 ) == -1) ||
-        (stream->flush() == -1) )
-    {
+        (stream->flush() == -1) ) {
         std::cerr << "FE: failed to broadcast termination message" << std::endl;
     }
 
@@ -118,6 +117,11 @@ BuildNetwork( std::string cfgfile, std::string backend_exe )
     startTime.set_time();
     Network * net = Network::CreateNetworkFE( cfgfile.c_str(), backend_exe.c_str(), &argv );
     endTime.set_time();
+
+    if( net->has_Error() ) {
+        delete net;
+        return NULL;
+    }
 
     // dump net instantiation latency
     double latency = (endTime - startTime).get_double_time();

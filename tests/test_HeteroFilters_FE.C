@@ -45,9 +45,9 @@ int main( int argc, char ** argv )
     int tag, retval;
     PacketPtr p;
 
-    if( argc != 3 ){
+    if( argc != 3 ) {
         fprintf( stderr, "Usage: %s <shared_object file> <backend_exe>\n", argv[0] );
-        exit( -1 );
+        return -1;
     }
     const char * topology_file = "../../tests/topology_files/local-1x4.top";
     const char * so_file = argv[1];
@@ -62,10 +62,8 @@ int main( int argc, char ** argv )
     test = new Test("MRNet Heterogeneous Stream Filters Test");
 
     Network * net = Network::CreateNetworkFE( topology_file, backend_exe, &dummy_argv );
-    if( net->has_Error( ) ){
-        net->perror( "network creation failed" );
-        exit( -1 );
-    }
+    if( net->has_Error() )
+        return -1;
 
     Communicator * comm_BC = net->get_BroadcastCommunicator( );
 

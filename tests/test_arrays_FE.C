@@ -20,10 +20,10 @@ int main(int argc, char **argv)
 {
     Stream * stream_BC;
 
-    if( argc !=3 ){
+    if( argc !=3 ) {
         fprintf(stderr, 
                 "Usage: %s <topology file> <backend_exe>\n", argv[0]);
-        exit(-1);
+        return -1;
     }
 
     fprintf(stdout, "\n"
@@ -39,8 +39,10 @@ int main(int argc, char **argv)
 
     const char * dummy_argv=NULL;
     Network * net = Network::CreateNetworkFE( argv[1], argv[2], &dummy_argv );
-    Communicator * comm_BC = net->get_BroadcastCommunicator();
+    if( net->has_Error() )
+        return -1;
 
+    Communicator * comm_BC = net->get_BroadcastCommunicator();
     stream_BC = net->new_Stream(comm_BC, TFILTER_NULL, SFILTER_DONTWAIT);
 
     /* For all the following tests, the 1st bool param indicates *
