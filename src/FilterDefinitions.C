@@ -1256,9 +1256,8 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
         while ( map_iter != state->packets_by_rank.end( ) ) {
 
             Rank rank = (*map_iter).first;
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed?", rank ));
             if( _global_network->node_Failed( rank ) ) {
-                mrn_dbg( 5, mrn_printf(0,0,0, stderr, " Yes\n", rank ));
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? Yes!!\n", rank ));
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
                                        rank ));
@@ -1274,7 +1273,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
                 state->ready_peers.erase( rank );
             }
             else{
-                mrn_dbg( 5, mrn_printf(0,0,0, stderr, " No\n", rank ));
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? no\n", rank ));
                 map_iter++;
             }
         }
