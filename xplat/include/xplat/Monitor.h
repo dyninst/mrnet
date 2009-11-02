@@ -48,22 +48,30 @@ public:
     // condition variable-related methods
     virtual int RegisterCondition( unsigned int condid )
     {
-        return data->RegisterCondition( condid );
+        if( data != NULL )
+            return data->RegisterCondition( condid );
+        return -1;
     }
 
     virtual int WaitOnCondition( unsigned int condid )
     {
-        return data->WaitOnCondition( condid );
+        if( data != NULL )
+            return data->WaitOnCondition( condid );
+        return -1;
     }
 
     virtual int SignalCondition( unsigned int condid )
     {
-        return data->SignalCondition( condid );
+        if( data != NULL )
+            return data->SignalCondition( condid );
+        return -1;
     }
 
     virtual int BroadcastCondition( unsigned int condid )
     {
-        return data->BroadcastCondition( condid );
+        if( data != NULL )
+            return data->BroadcastCondition( condid );
+        return -1;
     }
 };
 

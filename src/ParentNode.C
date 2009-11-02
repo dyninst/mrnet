@@ -166,6 +166,7 @@ bool ParentNode::waitfor_SubTreeReports( void ) const
     std::list < PacketPtr >packet_list;
 
     subtreereport_sync.Lock( );
+
     while( _num_children > _num_children_reported ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u subtree reports ...\n",
                                _num_children - _num_children_reported,
@@ -175,6 +176,7 @@ bool ParentNode::waitfor_SubTreeReports( void ) const
                                "%d of %d children have checked in.\n",
                                _num_children_reported, _num_children ));
     }
+
     subtreereport_sync.Unlock( );
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "All %d children nodes have reported\n",
@@ -187,6 +189,7 @@ bool ParentNode::waitfor_DeleteSubTreeAcks( void ) const
     mrn_dbg_func_begin();
 
     subtreereport_sync.Lock( );
+
     while( _num_children > _num_children_reported ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u delete subtree acks ...\n",
                                _num_children - _num_children_reported,
@@ -196,6 +199,7 @@ bool ParentNode::waitfor_DeleteSubTreeAcks( void ) const
                                "%d of %d children have ack'd.\n",
                                _num_children, _num_children_reported ));
     }
+
     subtreereport_sync.Unlock( );
 
     mrn_dbg_func_end();
@@ -206,6 +210,8 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
 
+    subtreereport_sync.Lock( );
+    
     _num_children_reported = _num_children = 0;
     const std::set < PeerNodePtr > peers = _network->get_ChildPeers();
     std::set < PeerNodePtr >::const_iterator iter;
@@ -214,6 +220,8 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
             _num_children++;
         }
     }
+
+    subtreereport_sync.Unlock( );
 
     //processes will be exiting -- disable failure recovery
     _network->disable_FailureRecovery();
@@ -250,6 +258,7 @@ bool ParentNode::waitfor_TopologyReportAcks( void ) const
     mrn_dbg_func_begin();
 
     subtreereport_sync.Lock( );
+
     while( _num_children > _num_children_reported ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u topol report acks ...\n",
                                _num_children - _num_children_reported,
@@ -259,6 +268,7 @@ bool ParentNode::waitfor_TopologyReportAcks( void ) const
                                "%d of %d children have ack'd.\n",
                                _num_children, _num_children_reported ));
     }
+
     subtreereport_sync.Unlock( );
 
     mrn_dbg_func_end();
@@ -269,6 +279,8 @@ int ParentNode::proc_TopologyReport( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
 
+    subtreereport_sync.Lock( );
+
     _num_children_reported = _num_children = 0;
     const std::set < PeerNodePtr > peers = _network->get_ChildPeers();
     std::set < PeerNodePtr >::const_iterator iter;
@@ -277,6 +289,8 @@ int ParentNode::proc_TopologyReport( PacketPtr ipacket ) const
             _num_children++;
         }
     }
+
+    subtreereport_sync.Unlock( );
 
     //send delete_subtree message to all children
     if( ( _network->send_PacketToChildren( ipacket ) == -1 ) ||

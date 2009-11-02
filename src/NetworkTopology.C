@@ -524,10 +524,8 @@ bool NetworkTopology::remove_Orphan( Rank r )
 {
     // assumes we are holding the lock
     NetworkTopology::Node * node = find_NodeHoldingLock(r);
-    if( !node ) {
-        _sync.Unlock();
+    if( !node )
         return false;
-    }
 
     _orphans.erase( node );
 
