@@ -166,7 +166,6 @@ XTNetwork::PropagateTopologyOffNode( Port topoPort,
                           thisHost.c_str(), mySubtree->get_RootRank() ) );
 
     // serialize the topology
-    // we only need to serialize and send our subtree
     std::string sTopology = topology->get_ByteArray();
 
     // propagate topology to our off-node child processes
@@ -196,8 +195,8 @@ XTNetwork::PropagateTopologyOffNode( Port topoPort,
                 }
                 PropagateTopology( childTopoSocket, topology, childRank );
                 close( childTopoSocket );
-		hostsSeen.insert( childHost );
             }
+            hostsSeen.insert( childHost );
         }
     }
 
@@ -558,30 +557,53 @@ XTNetwork::FindParentPort( void )
     return ret;
 }
 
+
+SerialGraph* FindClosestHostToRoot( const std::string& host, SerialGraph* topology )
+{
+    // check my children
+    topology->set_ToFirstChild();
+    SerialGraph* currChildSubtree = topology->get_NextChild();
+    for( ; currChildSubtree != NULL ; currChildSubtree = topology->get_NextChild() ) {
+        if( strcmp(currChildSubtree->get_RootHostName().c_str(), host.c_str()) == 0 ) {
+            return currChildSubtree;
+        }
+    }
+
+    // recursively check my children's descendants
+    topology->set_ToFirstChild();
+    currChildSubtree = topology->get_NextChild();
+    for( ; currChildSubtree != NULL ; currChildSubtree = topology->get_NextChild() ) {
+        if( ! currChildSubtree->is_RootBackEnd() ) {
+            SerialGraph* found = FindClosestHostToRoot( host, currChildSubtree );
+            if( found != NULL )
+                return found;
+        }
+    }
+    
+    return NULL;
+}
+
 bool
 XTNetwork::ClosestToRoot( SerialGraph* topology,
                           const std::string& childhost, Rank childrank )
 {
     mrn_dbg_func_begin();
 
-    // identify rank on host that is closest to topology root with respect to DFS
+    // identify process on same host that is closest to topology root
+    SerialGraph* firsthost = FindClosestHostToRoot( childhost, topology );
+    if( firsthost == NULL )
+        return false;
 
-    topology->set_ToFirstChild();
-    SerialGraph* currChildSubtree = topology->get_NextChild();
-    for( ; currChildSubtree != NULL ; currChildSubtree = topology->get_NextChild() ) {
-        // check the hostname associated with the root of the current subtree
-        if( strcmp(currChildSubtree->get_RootHostName().c_str(), childhost.c_str()) == 0 ) {
-            if( currChildSubtree->get_RootRank() == childrank )
-                return true;
-            else
-                return false;
-        }
-        else if( ! currChildSubtree->is_RootBackEnd() ) {
-            if( ClosestToRoot( currChildSubtree, childhost, childrank ) )
-                return true;
-        }
+    else if( firsthost->get_RootRank() == childrank ) {
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "found my child %s:%d as closest\n", 
+                               childhost.c_str(), childrank) );
+        return true;
     }
-    return false;
+    else {
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "closest %s:%d is not my child\n", 
+                               childhost.c_str(), firsthost->get_RootRank() ) );
+        return false;
+    }
 }
 
 void
