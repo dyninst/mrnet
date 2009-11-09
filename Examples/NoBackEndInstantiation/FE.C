@@ -87,6 +87,9 @@ int main(int argc, char **argv)
     comm_BC = net->get_BroadcastCommunicator();
     stream = net->new_Stream(comm_BC, TFILTER_NULL, SFILTER_DONTWAIT);
 
+    // should backends go away?
+    // net->set_TerminateBackEndsOnShutdown(false);
+
     fprintf( stdout, "broadcasting int %d to back-ends\n", send_val );
     if( (stream->send(PROT_INT, "%d", send_val) == -1) ||
         (stream->flush() == -1) ){
