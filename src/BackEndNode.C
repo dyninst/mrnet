@@ -187,23 +187,26 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
 
-    //processes will be exiting -- disable failure recovery
+    bool goaway = false;
+    char delete_backend;
+    ipacket->unpack( "%c", &delete_backend );
+    if( delete_backend == 't' ) {
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Back-end will exit\n" ));
+        goaway = true;
+    }
+
+    // processes will be exiting -- disable failure recovery
     _network->disable_FailureRecovery();
 
-    //Send ack to parent
+    // send ack to parent
     if( !_network->get_LocalChildNode()->ack_DeleteSubTree() ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
     }
 
-    char delete_backend;
+    // kill threads, topology, and events
+    _network->shutdown_Network();
 
-    ipacket->unpack( "%c", &delete_backend );
-
-    if( delete_backend == 't' ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Back-end exiting ... \n" ));
-	_network->shutdown_Network();
-        exit(0);
-    }
+    if( goaway ) exit(0);
    
     mrn_dbg_func_end();
     return 0;
