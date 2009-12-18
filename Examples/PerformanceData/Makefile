@@ -3,7 +3,8 @@
 # See Makefile in Examples directory for variable definitions
 
 TARGETS = $(BINDIR)/PerfData_FE \
-          $(BINDIR)/PerfData_BE
+          $(BINDIR)/PerfData_BE \
+		  $(BINDIR)/PerfData_BE_lightweight
 
 TARGETS_SO = $(LIBDIR)/PerfDataFilter.so
 
@@ -18,6 +19,9 @@ $(BINDIR)/PerfData_FE: FE.C
 
 $(BINDIR)/PerfData_BE: BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ BE.C $(LIBS)
+
+$(BINDIR)/PerfData_BE_lightweight: BE_lightweight.c
+	$(CXX_LIGHTWEIGHT) $(CXXFLAGS_LIGHTWEIGHT) $(LDFLAGS) -o $@ BE_lightweight.c $(LIBS_LIGHTWEIGHT)
 
 $(LIBDIR)/PerfDataFilter.so: PerfDataFilter.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ PerfDataFilter.C

@@ -56,14 +56,16 @@ COMMNODE_LDFLAGS = @CN_LDFLAGS@
 SOFLAGS = @SOFLAGS@
 
 LIBS = $(LIBXPLAT) @LIBS@
+LIBS_LIGHTWEIGHT = $(LIBXPLAT_LIGHTWEIGHT) @LIBS@
 
 INCDIR = -I$(SRCDIR)/include -I$(SRCDIR)/src -I$(SRCDIR)/xplat/include -I$(SRCDIR)/tests
+INCDIR_LIGHTWEIGHT = -I$(SRCDIR)/lightweight/include -I$(SRCDIR)/lightweight/src -I$(SRCDIR)/lightweight/xplat/include -I$(SRCDIR)/tests
 
 ifeq ($(COMPILER_TYPE), gnu)
     ifndef SILENCE_WARNINGS
     WARNFLAGS = -Wall \
                 -W \
-	        -Wno-system-headers \
+	        	-Wno-system-headers \
                 -Wfloat-equal \
                 -Wconversion \
                 -Wshadow \
@@ -74,8 +76,26 @@ ifeq ($(COMPILER_TYPE), gnu)
                 -Wsign-compare \
                 -Wredundant-decls \
                 -Wlong-long \
-	        -Woverloaded-virtual   \
-	        -Wno-non-template-friend
+	        	-Woverloaded-virtual   \
+	        	-Wno-non-template-friend
+   endif # SILENCE_WARNINGS
+endif #GNU options
+
+ifeq ($(COMPILER_TYPE), gnu)
+    ifndef SILENCE_WARNINGS
+    WARNFLAGS_LIGHTWEIGHT = -Wall \
+                -W \
+	        	-Wno-system-headers \
+                -Wfloat-equal \
+                -Wconversion \
+                -Wshadow \
+                -Wpointer-arith \
+                -Wcast-qual \
+                -Wcast-align \
+                -Wwrite-strings \
+                -Wsign-compare \
+                -Wredundant-decls \
+                -Wlong-long 
    endif # SILENCE_WARNINGS
 endif #GNU options
 
@@ -86,8 +106,11 @@ ifeq ($(COMPILER_TYPE), forte)
 endif #Forte (Sun) compiler warnings
 
 CXX = @CXX@
+CXX_LIGHTWEIGHT = gcc
 CXXFLAGS = @CXXFLAGS@ $(INCDIR) $(WARNFLAGS)
+CXXFLAGS_LIGHTWEIGHT = -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Dcompiler_gnu -DDEBUG -Dos_linux=26 $(INCDIR_LIGHTWEIGHT) $(WARNFLAGS_LIGHTWEIGHT)
 TEST_CXXFLAGS := $(CXXFLAGS)
+TEST_CXXFLAGS_LIGHTWEIGHT := $(CXXFLAGS_LIGHTWEIGHT)
 
 # Check for older PGI compilers (before 6.0) that require 
 # special handling for template libraries
@@ -105,6 +128,10 @@ LIBMRNET    = $(LIBDIR)/libmrnet.a
 LIBMRNET_SO = $(LIBDIR)/libmrnet.so
 LIBXPLAT    = $(MRNET_ROOT)/xplat/libxplat.a
 LIBXPLAT_SO = $(MRNET_ROOT)/xplat/libxplat.so
+LIBMRNET_LIGHTWEIGHT = $(MRNET_ROOT)/lightweight/libmrnet_lightweight.a
+LIBMRNET_LIGHTWEIGHT_SO = $(MRNET_ROOT)/lightweight/libmrnet_lightweight.so
+LIBXPLAT_LIGHTWEIGHT = $(MRNET_ROOT)/lightweight/xplat/libxplat_lightweight.a
+LIBXPLAT_LIGHTWEIGHT_SO = $(MRNET_ROOT)/lightweight/xplat/libxplat_lightweight.so
 COMMNODE    = $(BINDIR)/mrnet_commnode 
 TOPGEN      = $(BINDIR)/mrnet_topgen
 
@@ -118,14 +145,28 @@ STD_TESTS_FE = $(BINDIR)/test_basic_FE \
                $(BINDIR)/test_arrays_FE \
                $(BINDIR)/test_NativeFilters_FE \
                $(BINDIR)/test_DynamicFilters_FE \
-               $(BINDIR)/test_HeteroFilters_FE
+               $(BINDIR)/test_HeteroFilters_FE \
+			   $(BINDIR)/test_MultStreams_FE
 
 STD_TESTS_BE = $(BINDIR)/test_basic_BE  \
                $(BINDIR)/microbench_BE \
                $(BINDIR)/test_arrays_BE \
                $(BINDIR)/test_NativeFilters_BE \
                $(BINDIR)/test_DynamicFilters_BE \
-               $(BINDIR)/test_HeteroFilters_BE
+               $(BINDIR)/test_HeteroFilters_BE \
+			   $(BINDIR)/test_MultStreams_BE
+
+STD_TESTS_FE_LIGHTWEIGHT = $(BINDIR)/test_basic_FE_lightweight \
+						   $(BINDIR)/test_arrays_FE_lightweight \
+						   $(BINDIR)/test_MultStreams_FE_lightweight
+
+STD_TESTS_BE_LIGHTWEIGHT = $(BINDIR)/test_basic_BE_lightweight \
+						   $(BINDIR)/microbench_BE_lightweight \
+						   $(BINDIR)/test_arrays_BE_lightweight \
+						   $(BINDIR)/test_NativeFilters_BE_lightweight \
+						   $(BINDIR)/test_DynamicFilters_BE_lightweight \
+						   $(BINDIR)/test_HeteroFilters_BE_lightweight \
+						   $(BINDIR)/test_MultStreams_BE_lightweight
 
 STD_TESTS = ${STD_TESTS_FE} ${STD_TESTS_BE}
 
@@ -219,8 +260,7 @@ PDR_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdi
 ALL_SRCS = $(LIBMRNET_SRCS) $(COMMNODE_SRCS) $(TEST_SRCS)
 DEPS	= $(addprefix $(DEPENDDIR)/, $(patsubst %.C,%.d,$(patsubst %.c,%.d,$(notdir $(ALL_SRCS)))))
 
-
-all: xplat-all $(TARGETS)
+all: xplat-all lightweight-all xplat_lightweight-all $(TARGETS)
 
 xplat-all:
 	cd ./xplat ; $(MAKE) all
@@ -230,7 +270,23 @@ xplat-sharedobj:
 	cd ./xplat ; $(MAKE) sharedobj
 	$(CP) $(LIBXPLAT_SO) $(LIBDIR)/
 
-install: install-local xplat-install
+lightweight-all:
+	cd ./lightweight ; $(MAKE) all
+	$(CP) $(LIBMRNET_LIGHTWEIGHT) $(LIBDIR)/
+
+lightweight-sharedobj:
+	cd ./lightweight ; $(MAKE) sharedobj
+	$(CP) $(LIBMRNET_LIGHTWEIGHT_SO) $(LIBDIR)/
+
+xplat_lightweight-all:
+	cd ./lightweight/xplat ; $(MAKE) all
+	$(CP) $(LIBXPLAT_LIGHTWEIGHT) $(LIBDIR)/
+
+xplat_lightweight-sharedobj:
+	cd ./lightweight/xplat ; $(MAKE) sharedobj
+	$(CP) $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBDIR)/
+
+install: install-local xplat-install lightweight-install xplat_lightweight-install
 
 install-local: all
 	@echo Creating install directories
@@ -266,7 +322,7 @@ install-boost:
 
 install-tests: tests $(BINDIR)/mrnet_tests.sh
 	@echo Installing standard tests
-	$(INSTALL) -p -m 755 $(STD_TESTS) $(BINDIR)/mrnet_tests.sh $(IBINDIR)/
+	$(INSTALL) -p -m 755 $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(BINDIR)/mrnet_tests.sh  $(IBINDIR)/
 	$(INSTALL) -p -m 755 $(LIBDIR)/test_DynamicFilters.so $(ILIBDIR)/
 	$(INSTALL) -p -m 755 $(LIBDIR)/test_HeteroFilters.so $(ILIBDIR)/
 	if [ ! -d $(IBINDIR)/topology_files ] ; then \
@@ -289,7 +345,15 @@ xplat-install:
 	@echo Installing xplat library
 	cd ./xplat ; $(MAKE) install
 
-tests: all $(STD_TESTS) $(LIBDIR)/test_DynamicFilters.so $(LIBDIR)/test_HeteroFilters.so
+lightweight-install:
+	@echo Installing lightweight backend library
+	cd ./lightweight ; $(MAKE) install
+
+xplat_lightweight-install:
+	@echo Installing xplat library for lightweight backend library
+	cd ./lightweight/xplat ; $(MAKE) install
+
+tests: all $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(LIBDIR)/test_DynamicFilters.so $(LIBDIR)/test_HeteroFilters.so
 
 tests-opt: $(OPT_TESTS)
 
@@ -332,6 +396,14 @@ $(LIBXPLAT): xplat-all
 
 $(LIBXPLAT_SO): xplat-sharedobj
 
+$(LIBMRNET_LIGHTWEIGHT): lightweight-all
+
+$(LIBMRNET_LIGHTWEIGHT_SO): lightweight-sharedobj
+
+$(LIBXPLAT_LIGHTWEIGHT): xplat_lightweight-all
+
+$(LIBXPLAT_LIGHTWEIGHT_SO): xplat_lightweight-sharedobj
+
 $(BINDIR)/mrnet_commnode: $(COMMNODE_OBJS) $(LIBMRNET) $(LIBXPLAT)
 	@echo Linking `basename $@` ...
 	$(PURIFY) $(CXX) $(CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(COMMNODE_OBJS) \
@@ -356,8 +428,26 @@ $(STD_TESTS_BE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o 
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
 
+$(STD_TESTS_FE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
+              $(SRCDIR)/tests/test_common.h \
+              $(BINDIR)/mrnet_tests.sh
+	@echo "Linking `basename $*` ..."
+	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
+	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
+
+$(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o \
+				$(BINDIR)/mrnet_tests.sh
+	@echo "Linking `basename $*` ..."
+	$(PURIFY) $(CXX_LIGHTWEIGHT) $(TEST_CXXFLAGS_LIGHTWEIGHT) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
+		$(LIBMRNET_LIGHTWEIGHT) $(LIBS_LIGHTWEIGHT)
+
+$(OBJDIR)/microbench_BE_lightweight.o: microbench_BE_lightweight.c $(FRC)
+	@echo Compiling microbench_BE_lightweight ...
+	$(CXX_LIGHTWEIGHT) $(TEST_CXXFLAGS_LIGHTWEIGHT) -o $@ -c $<
+
 $(BINDIR)/mrnet_tests.sh: $(SRCDIR)/conf/mrnet_tests.sh
 	$(CP) $(SRCDIR)/conf/mrnet_tests.sh $(BINDIR)/
+
 
 $(LIBDIR)/test_DynamicFilters.so: $(SRCDIR)/tests/test_DynamicFilters.C
 	@echo "Building `basename $@` ..."
@@ -403,7 +493,7 @@ $(BINDIR)/xdr_test: tests/xdr_test.c
 #################################
 # Cleaning rules
 #################################
-clean: local-clean xplat-clean
+clean: local-clean xplat-clean lightweight-clean xplat_lightweight-clean
 
 local-clean:
 	@echo Cleaning $(MRNET_PLATFORM) platform ...
@@ -417,7 +507,15 @@ xplat-clean:
 	@echo Cleaning xplat library
 	cd ./xplat ; $(MAKE) clean
 
-CLEAN: local-CLEAN xplat-clean
+lightweight-clean:
+	@echo Cleaning lightweight back-end library
+	cd ./lightweight ; $(MAKE) clean
+
+xplat_lightweight-clean:
+	@echo Cleaning xplat for lightweight back-end library
+	cd ./lightweight/xplat ; $(MAKE) clean
+
+CLEAN: local-CLEAN xplat-clean lightweight-clean xplat_lightweight-clean
 
 local-CLEAN: local-clean
 	@echo Cleaning all platforms ...
@@ -426,7 +524,7 @@ local-CLEAN: local-clean
 	done
 	for file in `find $(MRNET_ROOT) -name "*~" -print` ; do $(RM) $$file ; done
 
-distclean: local-distclean xplat-distclean
+distclean: local-distclean xplat-distclean lightweight-distclean xplat_lightweight-distclean
 
 local-distclean: local-CLEAN
 	for file in config.* src/config.h Makefile Examples/Makefile ; do  \
@@ -438,12 +536,25 @@ xplat-distclean:
 	@echo "Cleaning xplat library (distclean)"
 	cd ./xplat ; $(MAKE) distclean
 
+lightweight-distclean:
+	@echo "Cleaning lightweight back-end library (distclean)"
+	cd ./lightweight ; $(MAKE) distclean
+
+xplat_lightweight-distclean:
+	@echo "Cleaning xplat for lightweight back-end library (distclean)"
+	cd ./lightweight ; $(MAKE) distclean
+
+
 #################################
 # Default Build rules
 #################################
 @VERBOSEMAKE@
 .SUFFIXES:
 .SUFFIXES: .c .C .o .d
+
+$(OBJDIR)/test_%.o: test_%.c $(FRC)
+	@echo Compiling `basename $@` ...
+	$(CXX_LIGHTWEIGHT) $(TEST_CXXFLAGS_LIGHTWEIGHT) -o $@ -c $<
 
 $(OBJDIR)/test_%.o: test_%.C $(FRC)
 	@echo Compiling `basename $@` ...
@@ -460,7 +571,6 @@ $(OBJDIR)/%.o: %.C $(FRC)
 $(DEPENDDIR)/%.d: %.c $(FRC)
 	@echo Building Depends File `basename $@` ...
 	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCDIR) 
-
 
 $(DEPENDDIR)/%.d: %.C $(FRC)
 	@echo Building Depends File `basename $@` ...

@@ -78,6 +78,11 @@ void NetworkTopology::Node::set_Parent( Node * p )
     _parent = p;
 }
 
+Rank NetworkTopology::Node::get_Parent( void) const
+{
+    return _parent->get_Rank();
+}
+
 void NetworkTopology::Node::add_Child( Node * c )
 {
     _children.insert(c);

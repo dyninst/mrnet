@@ -11,7 +11,7 @@ for host in $hosts
 do
 	echo -n "Cleaning processes on $host ..."
 
-	ssh $host ps aux | grep darnold 
+	ssh $host ps aux | grep $USER
     ssh $host killall -9 ssh
 
 	if [ "$?" != 0 ]; then

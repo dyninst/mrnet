@@ -28,7 +28,7 @@ int main(int argc, char **argv)
             p->unpack( "%d %d", &recv_val, &num_iters );
 
             // Send num_iters waves of integers
-            for( unsigned int i=0; i<num_iters; i++ ) {
+            for( int i=0; i<num_iters; i++ ) {
                 fprintf( stdout, "BE: Sending wave %u ...\n", i);
                 if( stream->send(tag, "%d", recv_val*i) == -1 ){
                     fprintf(stderr, "BE: stream::send(%%d) failure\n");

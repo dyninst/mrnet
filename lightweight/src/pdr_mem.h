@@ -1,0 +1,63 @@
+/****************************************************************************
+ *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *                  Detailed MRNet usage rights in "LICENSE" file.          *
+ ****************************************************************************/
+
+#if !defined(__pdr_mem_h)
+#define __pdr_mem_h 
+
+
+#include "pdr.h"
+
+#define SIZEOF_CHAR 1
+#define SIZEOF_INT 4
+#define SIZEOF_SHORT 2
+#define SIZEOF_LONG 4
+#define SIZEOF_FLOAT 4
+#define SIZEOF_DOUBLE 8
+
+#define SIZEOF_INT16 2
+#define SIZEOF_INT32 4
+#define SIZEOF_INT64 8
+
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+bool_t   pdrmem_putchar(PDR *, char *);
+bool_t   pdrmem_getchar(PDR *, char *);
+
+bool_t   pdrmem_putint16(PDR *, int16_t *);
+bool_t   pdrmem_getint16(PDR *, int16_t *);
+bool_t   pdrmem_getint16_swap(PDR *, int16_t *);
+
+bool_t   pdrmem_putint32(PDR *, int32_t *);
+bool_t   pdrmem_getint32(PDR *, int32_t *);
+bool_t   pdrmem_getint32_swap(PDR *, int32_t *);
+
+bool_t   pdrmem_putint64(PDR *, int64_t *);
+bool_t   pdrmem_getint64(PDR *, int64_t *);
+bool_t   pdrmem_getint64_swap(PDR *, int64_t *);
+
+bool_t   pdrmem_putfloat(PDR *, float *);
+bool_t   pdrmem_getfloat(PDR *, float *);
+bool_t   pdrmem_getfloat_swap(PDR *, float *);
+
+bool_t   pdrmem_putdouble(PDR *, double *);
+bool_t   pdrmem_getdouble(PDR *, double *);
+bool_t   pdrmem_getdouble_swap(PDR *, double *);
+
+bool_t   pdrmem_getbytes(PDR *, char *, uint32_t);
+bool_t   pdrmem_putbytes(PDR *, char *, uint32_t);
+
+bool_t   pdrmem_setpos(PDR *, uint32_t);
+uint32_t pdrmem_getpos(PDR *);
+int32_t* pdrmem_inline(PDR *, int32_t);
+void     pdrmem_destroy(PDR *);
+
+#if defined(__cplusplus)
+}
+#endif
+
+#endif /* __pdr_mem_h */

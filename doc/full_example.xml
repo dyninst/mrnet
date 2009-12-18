@@ -157,6 +157,82 @@ int main(int argc, char **argv)
 </programlisting>
 </example>
 
+<example><title>A Complete MRNet Lightweight Back-End</title>
+<programlisting>
+#include "assert.h"
+        
+#include "mrnet/Mrnet.h"
+#include "IntegerAddition_lightweight.h"
+int main(int argc, char **argv)
+{
+    Stream_t * stream=(Stream_t*)malloc(sizeof(Stream_t));
+    assert(stream);
+    Packet_t* p = (Packet_t*)malloc(sizeof(Packet_t));
+    assert(p);
+    int tag=0, recv_val=0, num_iters=0;
+    
+    Network_t * net = Network_CreateNetworkBE( argc, argv );
+    assert(net);
+
+    do {
+        if( Network_recv(net, &amp;tag, p, &amp;stream) != 1 ) {
+            fprintf(stderr, "BE: stream::recv() failure\n");
+            break;
+        }
+
+        switch(tag) {
+
+        case PROT_SUM:
+            Packet_unpack(p, "%d %d", &amp;recv_val, &amp;num_iters );
+
+            // Send num_iters waves of integers
+            unsigned int i;
+            for( i=0; i&lt;num_iters; i++ ) {
+                fprintf( stdout, "BE: Sending wave %u ...\n", i);
+                if( Stream_send(stream,tag, "%d", recv_val*i) == -1 ){
+                    fprintf(stderr, "BE: stream::send(%%d) failure\n");
+                    tag = PROT_EXIT;
+                    break;
+                }
+                if( Stream_flush(stream ) == -1 ){
+                    fprintf(stderr, "BE: stream::flush() failure\n");
+                    tag = PROT_EXIT;
+                    break;
+                }
+                fflush(stdout);
+                sleep(2); // stagger sends
+            }
+            break;
+
+        case PROT_EXIT:
+	    if( Stream_send(stream,tag, "%d", 0) == -1 ) {
+                fprintf(stderr, "BE: stream::send(%%s) failure\n");
+                break;
+            }
+            if( Stream_flush(stream ) == -1 ) {
+                fprintf(stderr, "BE: stream::flush() failure\n");
+            }
+            break;
+
+        default:
+            fprintf(stderr, "BE: Unknown Protocol: %d\n", tag);
+            tag = PROT_EXIT;
+            break;
+        }
+
+        fflush(stderr);
+
+    } while ( tag != PROT_EXIT );
+
+    // wait for final teardown packet from FE; 
+    // this will cause us to exit
+    Network_recv(net, &amp;tag, p, &amp;stream);
+    
+    return 0;
+}
+</programlisting>
+</example>
+
 <example><title>An MRNet Filter: Integer Addition</title>
 <programlisting>
 extern "C" {

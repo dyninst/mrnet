@@ -21,6 +21,10 @@ we have successfully built and tested MRNet on the following systems:
 <listitem>sparc-sun-solaris2.8</listitem>
 <listitem>i386-unknown-nt4.0 (MS Visual Studio 2005)</listitem>
 </itemizedlist>
+<note>
+    Currently, the lightweight backend library does not run on Windows
+    systems.
+</note>
 
 Our build system attempts to use native system compilers where appropriate.
 </para>
@@ -89,9 +93,13 @@ After a successful build, the following files will be present:
 <itemizedlist>
 <listitem><filename>$MRNET_ROOT/lib/$MRNET_ARCH/libmrnet.a</filename>: MRNet
 API library</listitem>
+<listitem><filename>$MRNET_ROOT/lib/$MRNET_ARCH/libmrnet_lightweight.a</filename>
+: MRNet Lightweight Backend API library</listitem>
 <listitem><filename>$MRNET_ROOT/lib/$MRNET_ARCH/libxplat.a</filename>: A library that exports platform dependent routines to MRNet</listitem>
+<listitem><filename>$MRNET_ROOT/lib/$MRNET_ARCH/libxplat_lightweight.a</filename>: A library that exports platform dependent routines to MRNet, for use with the
+lightweight backend library</listitem>
 <listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_commnode</filename>: MRNet
-internal communcation node</listitem>
+internal communication node</listitem>
 <listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_topgen</filename>: MRNet
 topology file generator</listitem>
 </itemizedlist>
@@ -102,8 +110,13 @@ To build the MRNet tests:
 </screen>
 builds the MRNet test files. In addition to those files above, you will also generate:
 <itemizedlist>
-<listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/*_[FE,BE]</filename>: MRNet test front-end and back-end programs</listitem>
-<listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_tests.sh</filename>: A shell script that runs the test programs and checks for errors in an automated fashion.</listitem>
+<listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/*_[FE, FE_lightweight, BE, BE_lightweight]</filename>: MRNet test front-end and back-end programs. Note that not all lightweight tests require a separate front-end; in these cases, one will not be generated and the standard front-end will be used instead.</listitem>
+<listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_tests.sh</filename>: 
+    A shell script that runs the test programs and checks for errors in an 
+    automated fashion.</listitem>
+<listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_tests_lightweight.sh</filename>: 
+    A shell script that runs the test programs using the lightweight back-end 
+    library and checks for errors in an automated fashion.</listitem>
 <listitem><filename>$MRNET_ROOT/lib/$MRNET_ARCH/test_DynamicFilters.so</filename>: Shared object used in tests of dynamic filter loading.</listitem>
 </itemizedlist>
 
@@ -134,10 +147,11 @@ binary directory with the other executables during the building of the MRNet
 tests as described above. This script can be used to run the MRNet test
 programs and check their output for errors. The script is used as follows:
 <screen>
-<prompt>UNIX></prompt> <command>mrnet_tests.sh [ -l | -r &lt;hostfile&gt; | -a &lt;hostfile&gt; ] [ -f &lt;sharedobject&gt; ]</command>
+<prompt>UNIX></prompt> <command>mrnet_tests.sh [ -l | -r &lt;hostfile&gt; | -a &lt;hostfile&gt; ] [ -f &lt;sharedobject&gt; ] [ -lightweight ]</command>
 </screen>
 </sect1>
-The <option>-l</option> flag is used to run all tests using only topologies that create processes on the local machine. The <option>-r</option> flag runs tests using remote machines specified in the file whose name immediately follows this flag. To run test both locally and remotely, use the <option>-a</option> flag and specify a hostfile to use. To run the programs that test MRNet's ability to dynamically load filters, you must specify the absolute location of the shared object <filename>test_DynamicFilters.so</filename> produced when the tests were built.
+The <option>-l</option> flag is used to run all tests using only topologies that create processes on the local machine. The <option>-r</option> flag runs tests using remote machines specified in the file whose name immediately follows this flag. To run test both locally and remotely, use the <option>-a</option> flag and specify a hostfile to use. To run the programs that test MRNet's ability to dynamically load filters, you must specify the absolute location of the shared object <filename>test_DynamicFilters.so</filename> produced when the tests were built. The <option>-lightweight</option> flag is used
+to run all tests for both the standard back-ends and the lightweight back-ends.
 
 <note>To successfully run all tests, the location of the MRNet binaries must be in the user's <envar>$PATH</envar>. For testing dynamic filters, the filesystem containing the shared object must be available to all the host machines participating in the test.</note>
 

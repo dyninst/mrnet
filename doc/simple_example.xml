@@ -1,7 +1,8 @@
 <chapter id="simple_example"><title>A Simple Example</title>
 <sect1><title>The MRNet Interface</title>
 <para>
-A complete description of the MRNet API is in <xref linkend="mrnet_api"></xref>. This section offers a brief overview only.
+    A complete description of the MRNet API is in <xref linkend="mrnet_api"></xref> and <xref linkend="mrnet_api_lightweight"></xref>. 
+    This section offers a brief overview only.
 Using <filename>libmrnet.a</filename>, a tool can leverage a system of internal
 processes, instances of the <filename>mrnet_commnode</filename> program, as a
 communication substrate. After instantiation of the MRNet network (discussed in
@@ -158,5 +159,6 @@ for discovering the network topology details. We show how to construct a tool
 that requires back-ends to be separately instantiated in 
 <filename>$MRNET_ROOT/Examples/NoBackEndInstantiation</filename>.
 </para>
+
 </sect1>
 </chapter>

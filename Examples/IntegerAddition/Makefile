@@ -4,7 +4,8 @@
 
 TARGETS = $(BINDIR)/IntegerAddition_FE \
           $(BINDIR)/IntegerAddition_async_FE \
-          $(BINDIR)/IntegerAddition_BE
+          $(BINDIR)/IntegerAddition_BE \
+		  $(BINDIR)/IntegerAddition_BE_lightweight
 
 TARGETS_SO = $(LIBDIR)/IntegerAdditionFilter.so
 
@@ -22,6 +23,9 @@ $(BINDIR)/IntegerAddition_async_FE: IntegerAddition_FE_async.C
 
 $(BINDIR)/IntegerAddition_BE: IntegerAddition_BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ IntegerAddition_BE.C $(LIBS)
+
+$(BINDIR)/IntegerAddition_BE_lightweight: IntegerAddition_BE_lightweight.c
+	$(CXX_LIGHTWEIGHT) $(CXXFLAGS_LIGHTWEIGHT) $(LDFLAGS) -o $@ IntegerAddition_BE_lightweight.c $(LIBS_LIGHTWEIGHT)
 
 $(LIBDIR)/IntegerAdditionFilter.so: IntegerAdditionFilter.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ IntegerAdditionFilter.C

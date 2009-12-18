@@ -5,7 +5,8 @@ MPICXX = mpiCC
 # See Makefile in Examples directory for variable definitions
 
 TARGETS = $(BINDIR)/BackendAttach_FE \
-          $(BINDIR)/BackendAttach_BE
+          $(BINDIR)/BackendAttach_BE \
+		  $(BINDIR)/BackendAttach_BE_lightweight
 
 MPI_TARGETS = $(BINDIR)/BackendAttach_mpi_BE
 
@@ -26,6 +27,9 @@ $(BINDIR)/BackendAttach_mpi_BE: BE_mpi.C
 
 $(BINDIR)/BackendAttach_BE: BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ BE.C $(LIBS)
+
+$(BINDIR)/BackendAttach_BE_lightweight: BE_lightweight.c
+	$(CXX_LIGHTWEIGHT) $(CXXFLAGS_LIGHTWEIGHT) $(LDFLAGS) -o $@ BE_lightweight.c $(LIBS_LIGHTWEIGHT)
 
 clean:
 	$(RM) -f $(TARGETS) $(MPI_TARGETS)

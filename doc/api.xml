@@ -59,7 +59,7 @@ containing the topology specification, rather than the name of a file.
 <para>
 When this function completes without error, 
 all MRNet processes specified in the topology will have been instantiated. You may
-use <function>Network::has_error()</function> to check for successful completion.
+use <function>Network::has_error</function> to check for successful completion.
 </para>
 </blockquote>
 </funcsynopsis>
@@ -219,11 +219,11 @@ MRNet process.
 <blockquote>
 <para>
 This method, used for loading new filter operations into the Network
-is conveniently similar to the conventional <function>dlopen()
+is conveniently similar to the conventional <function>dlopen
 </function> facilities for opening a shared object and dynamically
 loading symbols defined within. 
 </para>
-<para>
+    <para>
 <varname>so_file</varname> is the path to a shared object file that contains
 the filter function to be loaded and <varname>func_name</varname> is the name of the
 function to be loaded. The last parameter <varname>is_transformation_filter
@@ -237,6 +237,11 @@ of the newly loaded filter which may be used in subsequent calls to
 <function>Network::new_Stream</function>. A value of -1 is returned
 on failure.
 </para>
+<note>
+In standard MRNet, this filter function is run on all nodes. However, in the 
+lightweight backend version, the filter function will not run on the backend
+nodes.
+</note>
 </blockquote>
 </funcsynopsis>
 
@@ -256,7 +261,7 @@ will be returned (in roughly FIFO ordering) via the output parameters.
 </para>
 <para>
 <varname>otag</varname> will be filled in with the integer
-tag value that was passed by the corresponding <function>Stream::send()
+tag value that was passed by the corresponding <function>Stream::send
 </function> operation. <varname>packet</varname> is the packet that was
 received. A pointer to the Stream to which the packet was addressed
 will be returned in <varname>stream</varname>. 
@@ -350,7 +355,7 @@ for additional details.
 </funcprototype>
 <blockquote>
 <para><function>Network::get_EventNotificationFd</function> returns a file descriptor
-that can be added to the <literal>read fd_set</literal> of  <function>select()</function> 
+that can be added to the <literal>read fd_set</literal> of  <function>select</function> 
 to receive notification of interesting DATA, TOPOLOGY, or ERROR events.
 </para>
 <para>
@@ -361,7 +366,7 @@ processes to provide notification that one or more data packets have been receiv
 <literal>TOPOLOGY_EVENT</literal> and <literal>ERROR_EVENT</literal> can only be used
 by front-end processes, and provide notification when the front-end observes a change in 
 <classname>NetworkTopology</classname> or an error, respectively.</para>
-<para> When <function>select()</function> indicates that the file descriptor has data 
+<para> When <function>select</function> indicates that the file descriptor has data 
 available, you should call <function>Network::clear_EventNotificationFd</function> before
 taking action on the notification. When notifications are no longer needed, use
 <function>Network::close_EventNotificationFd</function></para>
@@ -591,6 +596,16 @@ This method returns the unique rank of the tree node.
 </funcsynopsis>
 
 <funcsynopsis>
+    <funcprototype>
+        <funcdef>Rank <function>NetworkTopology::Node::get_Parent</function></funcdef>
+        <void></void>
+    </funcprototype>
+    <blockquote>
+        This method returns the Rank of the tree node's parent.
+    </blockquote>
+</funcsynopsis>
+
+<funcsynopsis>
 <funcprototype>
   <funcdef>const std::set&lt; NetworkTopology::Node * &gt; &amp; <function>NetworkTopology::Node::get_Children</function></funcdef>
     <void></void>
@@ -708,7 +723,7 @@ on failure.</para>
     <paramdef>CommunicationNode * <parameter>endpoint</parameter></paramdef>
 </funcprototype>
 <blockquote>
-This method is similar to the <function>add_EndPoint()</function>
+This method is similar to the <function>add_EndPoint</function>
 above except that it takes a pointer to a CommunicationNode object 
 instead of a rank. Success and failure conditions are exactly as stated above. 
 This method also returns true on success and false on failure.
@@ -779,7 +794,7 @@ creating a new stream.
 </funcprototype>
 <blockquote>
 <para>
-This version of <function>Network::new_Stream()</function> is the straightforward way to
+This version of <function>Network::new_Stream</function> is the straightforward way to
 create a Stream object attached to the end-points specified by a Communicator object 
 <varname>comm</varname>.
 </para>
@@ -805,9 +820,9 @@ to downstream data flows; the default value is <literal>TFILTER_NULL</literal>.<
 </funcprototype>
 <blockquote>
 <para>
-This version of <function>Network::new_Stream()</function> allows the user
+This version of <function>Network::new_Stream</function> allows the user
 to map arbitrary packet filters to arbitrary nodes within the tree. Like the 
-simpler version of <function>Network::new_Stream()</function>, the end-points are 
+simpler version of <function>Network::new_Stream</function>, the end-points are 
 specified by the <varname>comm</varname> argument.
 </para>
 <para> Strings are used to
@@ -817,7 +832,7 @@ the rank for an assignment, the filter will be assigned to all ranks that have n
 been assigned. If a rank within <varname>comm</varname> is not assigned a filter, 
 it will use the default filter.
 See <filename>$MRNET_ROOT/Examples/HeterogeneousFilters</filename>
-for an example of using <function>Network::new_Stream()</function> to specify different 
+for an example of using <function>Network::new_Stream</function> to specify different 
 filter types to be used within the same stream.
 </para>
 <para><varname>us_filters</varname> specifies the
@@ -839,7 +854,7 @@ to downstream data flows.</para>
     <paramdef>unsigned int <parameter>iid</parameter></paramdef>
 </funcprototype>
 <blockquote>
-<function>Network::get_Stream()</function> returns a pointer to the Stream 
+<function>Network::get_Stream</function> returns a pointer to the Stream 
 identified by <varname>id</varname>, or NULL on failure.
 </blockquote>
 </funcsynopsis>
@@ -887,7 +902,7 @@ This method invokes a data send operation on the calling Stream.
 to classify the data in the packet to be transmitted across the Stream.
 <varname>format_string</varname> is a format string describing the data
 in the packet (See <xref linkend="format_strings"></xref>
-for a full description.) On success, <function>Stream::send()</function>
+for a full description.) On success, <function>Stream::send</function>
 returns 0; on failure -1.
 <note>
 <varname>tag</varname> must have a value greather than or equal to the
@@ -907,13 +922,13 @@ constant <literal>FirstApplicationTag</literal> defined by MRNet
 </funcprototype>
 <blockquote>
 <para>
-<function>Stream::recv()</function> invokes a stream-specific
+<function>Stream::recv</function> invokes a stream-specific
 receive operation. Packets addressed to the calling stream
 will be returned in strictly FIFO ordering via the output parameters. 
 </para>
 <para>
 <varname>tag</varname> will be filled in with the integer
-tag value that was passed by the corresponding <function>Stream::send()
+tag value that was passed by the corresponding <function>Stream::send
 </function> operation. <varname>packet</varname> is the recieved Packet. 
 </para>
 <para>
@@ -1104,8 +1119,8 @@ This method extracts data contained within a Packet according to the
 The function arguments following <varname>format_string</varname> should
 be pointers to the appropriate types of each data item. For string and
 array data types, new memory buffers to hold the data will be allocated 
-using <function>malloc()</function>, and it is the user's responsibility
-to <function>free()</function> these strings and arrays.
+using <function>malloc</function>, and it is the user's responsibility
+to <function>free</function> these strings and arrays.
 </blockquote>
 </funcsynopsis>
 
@@ -1118,9 +1133,9 @@ to <function>free()</function> these strings and arrays.
 <blockquote>
 This method can be used to tell MRNet whether or not to deallocate the
 string and array data members of a Packet. If <varname>destroy</varname> is true,
-string and array data members will be deallocated using <function>free()</function>
+string and array data members will be deallocated using <function>free</function>
 when the Packet destructor is executed. Note this assumes they were allocated 
-using <function>malloc()</function>. The default behavior for user-generated
+using <function>malloc</function>. The default behavior for user-generated
 Packets is not to deallocate (false). 
 Turning on deallocation is useful in filter code that must allocate strings or
 arrays for output Packets, which cannot be freed before the filter function returns.

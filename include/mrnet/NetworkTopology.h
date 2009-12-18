@@ -50,6 +50,7 @@ class NetworkTopology: public Error {
         std::string get_HostName( void ) const;
         Port get_Port( void ) const;
         Rank get_Rank( void ) const;
+        Rank get_Parent (void) const;
         const std::set< Node * > & get_Children( void ) const;
         unsigned int get_NumChildren( void ) const;
         unsigned int find_SubTreeHeight( void );

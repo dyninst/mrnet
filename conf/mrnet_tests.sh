@@ -11,7 +11,7 @@ remote_topology_specs=(1 2 16 1:1 2:2x1 16:16x1 1:2 1:16 2:2x2 4:4x4)
 
 print_usage()
 {
-    echo "Usage:  $cmdname [ -l | -r <hostfile> | -a <hostfile> | -f <sharedobject> ]"
+    echo "Usage:  $cmdname [ -l | -r <hostfile> | -a <hostfile> | -f <sharedobject> ] [ -lightweight]"
     return 0
 }
 
@@ -22,6 +22,7 @@ print_help()
     echo "    -r will run tests on remote hosts and requires a hostfile"
     echo "    -a will run tests locally and remotely and requires a hostfile"
     echo "    -f will additionally test dynamic filter loading and requires a .so file"
+    echo "    -lightweight will run tests using lightweight back-end library in addition to standard tests"
     return 0
 }
 
@@ -53,6 +54,8 @@ run_test()
     # $1, 1st arg, is front-end program
     # $2, 2nd arg, is back-end program
     # $3, 3rd arg, says to use local or remote topology files
+    # $4, 4th arg, specifies the shared object file, if applicable
+    # $5, 5th arg, says to use standard or lightweight output file names
     front_end=$1
     back_end=$2
     test=`basename $front_end`
@@ -62,13 +65,23 @@ run_test()
         topology=${topologies[$idx]}
         if [ $3 = "remote" ]; then
             topology_file="remote-$topology.top"
-            outfile="$test-remote-$topology.out"
-            logfile="$test-remote-$topology.log"
+            if [ "$5" = "lightweight" ]; then
+                outfile="$test-remote-lightweight-$topology.out"
+                logfile="$test-remote-lightweight-$topology.log"
+            else
+                outfile="$test-remote-$topology.out"
+                logfile="$test-remote-$topology.log"
+            fi
             echo -n "Running $test(\"remote\", \"$topology\") ... "
         else
             topology_file="$topology_dir/local-$topology.top"
-            outfile="$test-local-$topology.out"
-            logfile="$test-local-$topology.log"
+            if [ "$5" = "lightweight" ]; then
+                outfile="$test-local-lightweight-$topology.out"
+                logfile="$test-local-lightweight-$topology.log"
+            else
+                outfile="$test-local-$topology.out"
+                logfile="$test-local-$topology.log"
+            fi
             echo -n "Running $test(\"local\", \"$topology\") ... "
         fi
 
@@ -81,6 +94,15 @@ run_test()
             ;;
         "microbench_FE" )
             $front_end 5 500 $topology_file $back_end > $outfile 2> $logfile
+            ;;
+        "microbench_FE_lightweight" )
+            $front_end 5 500 $topology_file $back_end > $outfile 2> $logfile
+            ;;
+        "test_MultStreams_FE" )
+            $front_end $topology_file 5 $back_end > $outfile 2> $logfile
+            ;;
+        "test_MultStreams_FE_lightweight" )
+            $front_end $topology_file 5 $back_end > $outfile 2> $logfile
             ;;
         * )
             $front_end $topology_file $back_end > $outfile 2> $logfile
@@ -115,6 +137,7 @@ fi
 local="true"
 remote="false"
 sharedobject=""
+lightweight="false"
 
 while [ $# -gt 0 ]
 do
@@ -172,36 +195,79 @@ do
       exit 0;
       ;;
   esac
+  case $1 in 
+      -lightweight )
+            lightweight="true"
+            shift
+            ;;
+  esac
 done
 
 if [ "$local" == "true" ]; then
-    run_test "test_basic_FE" "test_basic_BE" "local" ""
+    run_test "test_basic_FE" "test_basic_BE" "local" "" ""
     echo
-    run_test "test_arrays_FE" "test_arrays_BE" "local" ""
+    run_test "test_arrays_FE" "test_arrays_BE" "local" "" ""
     echo
-    run_test "test_NativeFilters_FE" "test_NativeFilters_BE" "local" ""
+    run_test "test_MultStreams_FE" "test_MultStreams_BE" "local" "" ""
+    echo 
+    run_test "test_NativeFilters_FE" "test_NativeFilters_BE" "local" "" "" 
     echo
     if [ "$sharedobject" != "" ]; then
-        run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE" "local" $sharedobject
+        run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE" "local" $sharedobject ""
         echo
     fi
-    run_test "microbench_FE" "microbench_BE" "local" ""
+    run_test "microbench_FE" "microbench_BE" "local" "" 
     echo
+    if [ "$lightweight" == "true" ]; then
+        run_test "test_basic_FE_lightweight" "test_basic_BE_lightweight" "local" "" "lightweight" 
+        echo
+        run_test "test_arrays_FE_lightweight" "test_arrays_BE_lightweight" "local" "" "lightweight" 
+        echo
+        run_test "test_MultStreams_FE_lightweight" "test_MultStreams_BE_lightweight" "local" "" "lightweight" 
+        echo
+        run_test "test_Native_Filters_FE" "test_NativeFilters_BE_lightweight" "local" "" "lightweight"
+        echo
+        if [ "$sharedobject" != "" ]; then
+            run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE_lightweight" "local" $sharedobject "lightweight" 
+            echo
+        fi
+        run_test "microbench_FE" "microbench_FE_lightweight" "local" "" "lightweight" 
+        echo
+    fi
 fi
 
 if [ "$remote" == "true" ]; then
 	create_remote_topologies $hostfile
 
-    run_test "test_basic_FE" "test_basic_BE" "remote" ""
+    run_test "test_basic_FE" "test_basic_BE" "remote" "" ""
     echo
-    run_test "test_arrays_FE" "test_arrays_BE" "remote" ""
+    run_test "test_arrays_FE" "test_arrays_BE" "remote" "" ""
     echo
-    run_test "test_NativeFilters_FE" "test_NativeFilters_BE" "remote" ""
+    run_test "test_MultStreams_FE" "test_MultStreams_BE" "remote" "" ""
+    echo
+    run_test "test_NativeFilters_FE" "test_NativeFilters_BE" "remote" "" ""
     echo
     if [ "$sharedobject" != "" ]; then
-        run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE" "remote" $sharedobject
+        run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE" "remote" $sharedobject ""
         echo
     fi
-    run_test "microbench_FE" "microbench_BE" "remote" ""
+    run_test "microbench_FE" "microbench_BE" "remote" "" ""
     echo
+    if [ "$lightweight" == "true" ]; then
+        run_test "test_basic_FE_lightweight" "test_basic_BE_lightweight" "remote" "" "lightweight"
+        echo
+        run_test "test_arrays_FE_lightweight" "test_arrays_BE_lightweight" "remote" "" "lightweight"
+        echo
+        run_test "test_MultStreams_FE_lightweight" "test_MultStreams_BE_lightweight" "remote" "" "lightweight" 
+        echo
+        run_test "test_Native_Filters_FE" "test_NativeFilters_BE_lightweight" "remote" "" "lightweight" 
+        echo
+        if [ "$sharedobject" != "" ]; then
+            run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE_lightweight" "remote" $sharedobject "lightweight"
+            echo
+        fi
+        run_test "microbench_FE" "microbench_FE_lightweight" "remote" "" "lightweight" 
+        echo
+    fi
+
 fi

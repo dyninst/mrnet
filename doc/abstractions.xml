@@ -8,8 +8,13 @@ interposed between the application front-end and back-ends. <filename>libmrnet.a
 I/O interaction between the front-end and groups of back-ends via MRNet. The
 primary purpose of <filename>mrnet_commnode</filename> is to distribute data
 processing functionality across multiple computer hosts and to implement
-efficient and scalable group communications. The following sub-sections describe
-the lower-level components of the MRNet API in more detail.
+efficient and scalable group communications. In addition, there is another 
+component, <filename>libmrnet_lightweight.a</filename>, which exports an API 
+(See <xref linkend="mrnet_api_lightweight"></xref>) that enables I/O interaction
+between the front-end and groups of "lightweight" back-ends via MRNet. Lightweight
+back-ends are described in more detail in
+<xref linkend="mrnet_api_lightweight"></xref>. The following sub-sections 
+describe the lower-level components of the MRNet API in more detail.
 </para>
 
 <sect1><title>End-Points</title>

@@ -11,7 +11,7 @@ for host in $hosts
 do
 	echo -n "Checking processes on $host ..."
 
-	ssh $host ps aux | grep darnold 
+	ssh $host ps aux | grep $USER
 
 	if [ "$?" != 0 ]; then
         echo "failure!"

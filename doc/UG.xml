@@ -8,6 +8,7 @@
 <!ENTITY topologies SYSTEM "topologies.xml">
 <!ENTITY adding_filters SYSTEM "adding_filters.xml">
 <!ENTITY api SYSTEM "api.xml">
+<!ENTITY api_lightweight SYSTEM "api_lightweight.xml">
 <!ENTITY format_strings SYSTEM "format_strings.xml">
 <!ENTITY data_elements SYSTEM "data_elements.xml">
 <!ENTITY perf_data SYSTEM "performance_data.xml">
@@ -23,6 +24,7 @@
 &abstractions;
 &simple_example;
 &api;
+&api_lightweight;
 &topologies;
 &adding_filters;
 &format_strings;

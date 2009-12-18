@@ -1,0 +1,147 @@
+#/****************************************************************************
+# * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+# *                  Detailed MRNet usage rights in "LICENSE" file.          *
+# ****************************************************************************/
+# $Id: Makefile.in,v 1.14 2008/10/09 19:50:12 mjbrim Exp $
+@SET_MAKE@
+
+AR      = @AR@
+ARFLAGS = @ARFLAGS@
+RANLIB  = @RANLIB@
+RM      = @RM@
+INSTALL = @INSTALL@
+MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
+
+prefix  = @prefix@
+exec_prefix=@exec_prefix@
+srcdir  = @abs_srcdir@
+libdir  = @libdir@
+includedir  = @includedir@
+
+VPATH   = @abs_srcdir@/src
+
+#C_AS_CPLUSPLUS = @C_AS_CPLUSPLUS@
+
+MAKEDEPENDS = $(srcdir)/../conf/makedepends.sh
+
+BUILD_SHARED_LIBS = @BUILDSHARED@
+
+INCFLAGS = -I$(srcdir)/include -I$(srcdir)/src -I$(srcdir)
+
+COMPILER_TYPE = @COMPILER_TYPE@
+CXX = gcc
+CXXFLAGS = -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Dcompiler_gnu -DDEBUG -Dos_linux=26 $(INCFLAGS)
+
+# Check for older PGI compilers (before 6.0) that require 
+# special handling for template libraries
+PGI_OLD_TEMPLATES = @PGI_OLD_TEMPLATES@
+ifeq ($(COMPILER_TYPE), pgi)
+    ifeq ($(PGI_OLD_TEMPLATES), yes)
+        CXXFLAGS += --one_instantiation_per_object
+    endif
+endif
+
+SOFLAGS  = @SOFLAGS@
+
+TARGET    = libxplat_lightweight.a
+TARGET_SO = libxplat_lightweight.so
+
+TARGETS = $(TARGET)
+ifeq ($(BUILD_SHARED_LIBS), yes)
+    TARGETS += $(TARGET_SO)
+endif 
+
+ifeq ($(MRNET_STARTUP_METHOD),cray_xt)
+    CXXFLAGS += -Darch_crayxt
+endif
+
+SRCS    = Error-unix.c \
+		  NCIO.c \
+          NCIO-unix.c \
+          NetUtils.c \
+          NetUtils-unix.c \
+          PathUtils-unix.c \
+          Process-unix.c
+  
+OBJS    = $(SRCS:.c=.o)
+DEPS    = $(SRCS:.c=.d)
+
+all: $(TARGETS)
+
+sharedobj: $(TARGET_SO)
+
+$(TARGET): $(OBJS)
+	@echo Archiving `basename $@` ...
+	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
+	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
+	    $(AR) $(ARFLAGS) $@ $^ Template.dir/*.o ; \
+	else \
+	    $(AR) $(ARFLAGS) $@ $^ ; \
+	fi
+	$(RANLIB) $@
+
+$(TARGET_SO): $(OBJS)
+	@echo Building `basename $@` ...
+	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
+	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
+	    $(CXX) $(SOFLAGS) -o $@ $^ Template.dir/*.o ; \
+	else \
+	    $(CXX) $(SOFLAGS) -o $@ $^ ; \
+	fi
+
+install: $(TARGETS)
+	for dir in $(libdir) $(includedir) $(includedir)/xplat_lightweight ; do \
+	    if [ ! -d $$dir ] ; then \
+	        mkdir -p $$dir ; \
+	        chmod 755 $$dir ; \
+	    fi \
+	done
+	if [ ! -x `echo $(INSTALL) | sed 's/ .*$$//'` ] ; then \
+	    chmod +x `echo $(INSTALL) | sed 's/ .*$$//'` ; \
+	fi
+	$(INSTALL) -p -m 755 $(TARGET) $(libdir)/
+	if [ -f $(TARGET_SO) ] ; then \
+            $(INSTALL) -p -m 755 $(TARGET_SO) $(libdir)/ ; \
+        fi
+	for hdr in $(srcdir)/include/xplat/*.h ; do \
+	    if [ -f $$hdr ] ; then \
+	        $(INSTALL) -p -m 644 $$hdr $(includedir)/xplat_lightweight ; \
+	    fi \
+	done
+
+clean:
+	for file in $(OBJS) $(OBJS:.o=.ii) $(OBJS:.o=.ti) $(TARGETS) ; do \
+	    if [ -f $$file ] ; then $(RM) $$file ; fi \
+	done
+	if [ -d Template.dir ] ; then $(RM) -r Template.dir ; fi
+
+distclean: clean
+	for file in $(DEPS) config.status config.log config.h Makefile ; do \
+	    if [ -f $$file ] ; then $(RM) $$file ; fi \
+	done
+	for file in `find $(srcdir) -name "*~" -print` ; do $(RM) $$file ; done
+
+# pattern rules
+@VERBOSEMAKE@
+.SUFFIXES:
+.SUFFIXES: .c .C .o .d
+
+# add phony target to force serial build of xplat.
+# this would not be needed if archive was built differently
+# -- and then we could build in parallel
+.NOTPARALLEL:
+
+%.d: %.C
+	@echo Building depends file `basename $@` ...
+	$(MAKEDEPENDS)  $< $*.o $@ $(INCFLAGS)
+
+%.o: %.c
+	@echo Compiling `basename $@` ...
+	$(CXX) $(CXXFLAGS) $(C_AS_CPLUSPLUS) -o $@ -c $<
+
+%.o: %.C
+	@echo Compiling `basename $@` ...
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+# make sure file dependencies are determiend and used
+-include $(DEPS)
