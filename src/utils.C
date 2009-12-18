@@ -284,7 +284,7 @@ int bindPort( int *sock_in, Port *port_in )
             }
             else {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to dynamic port %d failed: %s\n",
-                                       XPlat::Error::GetErrorString( err ).c_str() ) );
+                                       port, XPlat::Error::GetErrorString( err ).c_str() ) );
                 return -1;
             }
         }

@@ -205,8 +205,7 @@ MRNET_ROOT=`pwd`
 MRNET_VERSION='`cat "$(srcdir)"/VERSION`'
 changequote([, ])dnl
 
-AC_DEFINE_UNQUOTED(COMMNODE_EXE, "mrnet_commnode")
-AC_DEFINE_UNQUOTED(OUTPUT_LEVEL, $OUTPUT_LEVEL)
+AC_DEFINE([COMMNODE_EXE], "mrnet_commnode", [Set to default path of mrnet_commnode executable.])
 AC_SUBST(MRNET_ARCH)
 AC_SUBST(MRNET_OS)
 AC_SUBST(MRNET_ROOT)
