@@ -9,8 +9,6 @@
 #include <list>
 #include <vector>
 #include <set>
-#include <map>
-#include <sstream>
 
 #include "xplat/Monitor.h"
 #include "xplat/Mutex.h"
@@ -26,6 +24,12 @@ class FrontEndNode;
 class BackEndNode;
 class PerfDataMgr;
 
+typedef enum {
+    FILTER_DOWNSTREAM_TRANS,
+    FILTER_UPSTREAM_TRANS,
+    FILTER_UPSTREAM_SYNC
+} FilterType; 
+
 class Stream{
     friend class Network;
     friend class FrontEndNode;
@@ -33,6 +37,7 @@ class Stream{
     friend class InternalNode;
     friend class ParentNode;
     friend class ChildNode;
+    friend class EventDetector;
 
  public:
     Stream( Network * inetwork, int iid, Rank *ibackends, unsigned int inum_backends,
@@ -48,19 +53,19 @@ class Stream{
     int recv( int *otag, PacketPtr &opacket, bool iblocking = true );
     //int close( void );
 
-    const std::set<Rank> & get_EndPoints( void ) const ;
+    const std::set< Rank > & get_EndPoints( void ) const ;
     unsigned int get_Id( void ) const ;
     unsigned int size( void ) const ;
     bool has_Data( void );
 
-    int set_FilterParameters( bool upstream, const char *format_str, ... ) const;
-    int set_FilterParameters( const char *params_fmt, va_list params, bool upstream ) const;
+    int set_FilterParameters( FilterType ftype, const char *format_str, ... ) const;
+    int set_FilterParameters( const char *params_fmt, va_list params, FilterType ftype ) const;
 
     bool is_PeerClosed( Rank irank ) const;
     unsigned int num_ClosedPeers( void ) const ;
     bool is_Closed( void ) const;
-    const std::set<Rank> & get_ClosedPeers( void ) const ;
-    std::set < Rank > get_ChildPeers() const;
+    const std::set< Rank > & get_ClosedPeers( void ) const ;
+    std::set< Rank > get_ChildPeers() const;
 
     bool enable_PerformanceData( perfdata_metric_t metric, 
                                  perfdata_context_t context );
@@ -88,7 +93,7 @@ class Stream{
     int send_FilterStateToParent( void ) const;
     PacketPtr get_FilterState( ) const;
 
-    void set_FilterParams( bool, PacketPtr& ) const;
+    void set_FilterParams( FilterType, PacketPtr& ) const;
 
     bool enable_PerfData( perfdata_metric_t metric, perfdata_context_t context );
     bool disable_PerfData( perfdata_metric_t metric, perfdata_context_t context );
@@ -104,14 +109,14 @@ class Stream{
 
     //Static Data Members
     Network * _network;
-    unsigned short _id;
+    unsigned int _id;
     int _sync_filter_id;
     Filter * _sync_filter;
     int _us_filter_id;
     Filter * _us_filter;
     int _ds_filter_id;
     Filter * _ds_filter;
-    std::set < Rank > _end_points;  //end-points of stream
+    std::set< Rank > _end_points;  //end-points of stream
 
     //Dynamic Data Members
     PerfDataMgr * _perf_data;
@@ -121,7 +126,7 @@ class Stream{
     std::set< Rank > _closed_peers;
     mutable XPlat::Mutex _peers_sync;
 
-    std::list < PacketPtr > _incoming_packet_buffer;
+    std::list< PacketPtr > _incoming_packet_buffer;
     mutable XPlat::Monitor _incoming_packet_buffer_sync;
     enum {PACKET_BUFFER_NONEMPTY};
 };

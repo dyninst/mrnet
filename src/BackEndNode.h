@@ -31,8 +31,7 @@ class BackEndNode: public virtual ChildNode
     int proc_newStream( PacketPtr ) const;
     int proc_DeleteSubTree( PacketPtr ) const;
     int proc_newFilter( PacketPtr ) const;
-    int proc_DownstreamFilterParams( PacketPtr &ipacket ) const;
-    int proc_UpstreamFilterParams( PacketPtr &ipacket ) const;
+    int proc_FilterParams( FilterType, PacketPtr &ipacket ) const;
 };
 
 } // namespace MRN

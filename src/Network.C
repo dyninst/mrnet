@@ -20,6 +20,7 @@
 #include "ParentNode.h"
 #include "ParsedGraph.h"
 #include "PeerNode.h"
+#include "TimeKeeper.h"
 
 #include "mrnet/MRNet.h"
 #include "xplat/NetUtils.h"
@@ -36,7 +37,6 @@ namespace MRN
 Network* _global_network=NULL;
 int mrnparse( );
 
-extern int mrndebug;
 extern const char* mrnBufPtr;
 extern unsigned int mrnBufRemaining;
 
@@ -89,8 +89,9 @@ Network::Network( void )
     : _local_port(UnknownPort), _local_rank(UnknownRank),_network_topology(NULL), 
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
-      _local_internal_node(NULL), _threaded(true),
-      _recover_from_failures(true), _terminate_backends(true), _was_shutdown(false) 
+      _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
+      _threaded(true), _recover_from_failures(true), 
+      _terminate_backends(true), _was_shutdown(false) 
 {
     init_local();
     _global_network=this;
@@ -375,8 +376,6 @@ void Network::init_InternalNode( const char* iphostname,
 int Network::parse_Configuration( const char* itopology, bool iusing_mem_buf )
 {
     int status;
-    mrndebug=0;
-    //mrn_flex_debug=0;
 
     if( iusing_mem_buf ) {
         // set up to parse config from a buffer in memory
@@ -1663,6 +1662,12 @@ bool Network::node_Failed( Rank irank  )
 {
     return _network_topology->node_Failed( irank );
 }
+
+TimeKeeper* Network::get_TimeKeeper( void ) 
+{ 
+    return _local_time_keeper;
+}
+
 
 void set_OutputLevel(int l)
 {

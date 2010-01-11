@@ -142,28 +142,7 @@ int BackEndNode::proc_newStream( PacketPtr ipacket ) const
     return 0;
 }
 
-int BackEndNode::proc_DownstreamFilterParams( PacketPtr &ipacket ) const
-{
-    int stream_id;
-
-    mrn_dbg_func_begin();
-
-    stream_id = ipacket->get_StreamId();
-
-    Stream* strm = _network->get_Stream( stream_id );
-    if( strm == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                               stream_id ));
-        return -1;
-    }
-
-    strm->set_FilterParams( false, ipacket );
-
-    mrn_dbg_func_end();
-    return 0;
-}
-
-int BackEndNode::proc_UpstreamFilterParams( PacketPtr &ipacket ) const
+int BackEndNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
 {
     int stream_id;
 
@@ -177,7 +156,7 @@ int BackEndNode::proc_UpstreamFilterParams( PacketPtr &ipacket ) const
         return -1;
     }
 
-    strm->set_FilterParams( true, ipacket );
+    strm->set_FilterParams( ftype, ipacket );
 
     mrn_dbg_func_end();
     return 0;

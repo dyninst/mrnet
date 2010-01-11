@@ -9,6 +9,7 @@
 
 #include <stdarg.h>
 #include <set>
+#include <sstream>
 
 #include "mrnet/MRNet.h"
 #include "PeerNode.h"
@@ -604,11 +605,23 @@ bool Stream::has_Data( void )
     return !empty;
 }
 
-int Stream::set_FilterParameters( const char *iparams_fmt, va_list iparams, bool iupstream ) const
+int Stream::set_FilterParameters( const char *iparams_fmt, va_list iparams, 
+				  FilterType iftype ) const
 {
-    int tag = PROT_SET_FILTERPARAMS_DOWNSTREAM;
-    if( iupstream )
-       tag = PROT_SET_FILTERPARAMS_UPSTREAM;
+    int tag;
+    switch( iftype ) {
+     case FILTER_DOWNSTREAM_TRANS:
+	 tag = PROT_SET_FILTERPARAMS_DOWNSTREAM;
+	 break;
+     case FILTER_UPSTREAM_TRANS:
+	 tag = PROT_SET_FILTERPARAMS_UPSTREAM_TRANS;
+	 break;
+     case FILTER_UPSTREAM_SYNC:
+	 tag = PROT_SET_FILTERPARAMS_UPSTREAM_SYNC;
+	 break;
+     default:
+	 assert(!"bad filter type");
+    }
     
     if( _network->is_LocalNodeFrontEnd() ) {
 
@@ -623,23 +636,15 @@ int Stream::set_FilterParameters( const char *iparams_fmt, va_list iparams, bool
             mrn_dbg(1, mrn_printf(FLF, stderr, "local parent is NULL\n"));
             return -1;
         }
-        if( iupstream ) {
-            if( parent->proc_UpstreamFilterParams( packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "FrontEnd::recv() failed\n" ));
-                return -1;
-            }
-        }
-        else {
-            if( parent->proc_DownstreamFilterParams( packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "FrontEnd::recv() failed\n" ));
-                return -1;
-            }
-        }
+	if( parent->proc_FilterParams( iftype, packet ) == -1 ) {
+	     mrn_dbg( 1, mrn_printf(FLF, stderr, "FrontEnd::recv() failed\n" ));
+	     return -1;
+	}
     }
     return 0;
 }
 
-int Stream::set_FilterParameters( bool iupstream, const char *iformat_str, ... ) const
+int Stream::set_FilterParameters( FilterType iftype, const char *iformat_str, ... ) const
 {
     int rc;
 
@@ -648,7 +653,7 @@ int Stream::set_FilterParameters( bool iupstream, const char *iformat_str, ... )
     va_list arg_list;
     va_start(arg_list, iformat_str);
     
-    rc = set_FilterParameters( iformat_str, arg_list, iupstream );
+    rc = set_FilterParameters( iformat_str, arg_list, iftype );
 
     va_end(arg_list);
 
@@ -657,13 +662,20 @@ int Stream::set_FilterParameters( bool iupstream, const char *iformat_str, ... )
     return rc;
 }
 
-void Stream::set_FilterParams( bool upstream, PacketPtr &iparams ) const
+void Stream::set_FilterParams( FilterType itype, PacketPtr &iparams ) const
 {
-    if( upstream ) {
-        _us_filter->set_FilterParams(iparams);
-    }
-    else {
-        _ds_filter->set_FilterParams(iparams);
+    switch( itype ) {
+     case FILTER_DOWNSTREAM_TRANS:
+         _ds_filter->set_FilterParams(iparams);
+	 break;
+     case FILTER_UPSTREAM_TRANS:
+	 _us_filter->set_FilterParams(iparams);
+	 break;
+     case FILTER_UPSTREAM_SYNC:
+	 _sync_filter->set_FilterParams(iparams);
+	 break;
+     default:
+	 assert(!"bad filter type");
     }
 }
 
@@ -927,7 +939,7 @@ bool Stream::collect_PerformanceData( rank_perfdata_map& results,
     // create stream to aggregate performance data
     Communicator* comm = new Communicator( _network, _end_points );
     Stream* aggr_strm = _network->new_Stream( comm, TFILTER_PERFDATA );
-    aggr_strm->set_FilterParameters( true, "%d %d %d %d", 
+    aggr_strm->set_FilterParameters( FILTER_UPSTREAM_TRANS, "%d %d %d %d", 
                                      (int)metric, (int)context, 
                                      aggr_filter_id, _id );
     int aggr_strm_id = aggr_strm->get_Id();
