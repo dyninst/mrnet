@@ -6,25 +6,43 @@
 #if !defined( __event_detector_h )
 #define __event_detector_h 1
 
+#include <poll.h>
+#include <set>
+
 #include "PeerNode.h"
+#include "TimeKeeper.h"
 
 namespace MRN {
 
-class EventDetector{
+class EventDetector {
+ 
  public:
     static bool start( Network *inetwork );
     static bool stop( void );
 
  private:
-    static long _thread_id;
 
     static void * main( void * iarg );
+
     static int init_NewChildFDConnection( Network * inetwork,
                                           PeerNodePtr iparent_node );
+
     static int recover_FromChildFailure( Network *inetwork, Rank ifailed_rank );
     static int recover_FromParentFailure( Network *inetwork );
+    
+    static bool add_FD( int ifd );
+    static bool remove_FD( int ifd );
+    static int eventWait( std::set< int >& event_fds, int timeout,
+                          bool use_poll/*=true*/ );
+
+    static void handle_Timeout( TimeKeeper*, int );
+
+    static long _thread_id;
+    static struct pollfd* _pollfds;
+    static unsigned int _num_pollfds, _max_pollfds;
+    static int _max_fd;
 };
 
-};
+} // namespace MRN
 
 #endif /* __event_detector_h */

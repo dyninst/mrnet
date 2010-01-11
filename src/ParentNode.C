@@ -477,7 +477,7 @@ Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
 }
 
 
-int ParentNode::proc_DownstreamFilterParams( PacketPtr &ipacket ) const
+int ParentNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
 {
     int stream_id;
 
@@ -498,34 +498,7 @@ int ParentNode::proc_DownstreamFilterParams( PacketPtr &ipacket ) const
     }
 
     // local update
-    strm->set_FilterParams( false, ipacket );
-
-    mrn_dbg_func_end();
-    return 0;
-}
-
-int ParentNode::proc_UpstreamFilterParams( PacketPtr &ipacket ) const
-{
-    int stream_id;
-
-    mrn_dbg_func_begin();
-
-    stream_id = ipacket->get_StreamId();
-    Stream* strm = _network->get_Stream( stream_id );
-    if( strm == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                               stream_id ));
-        return -1;
-    }
-
-    //send packet to children nodes
-    if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
-        return -1;
-    }
-
-    // local update
-    strm->set_FilterParams( true, ipacket );
+    strm->set_FilterParams( ftype, ipacket );
 
     mrn_dbg_func_end();
     return 0;

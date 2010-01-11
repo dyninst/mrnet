@@ -2,6 +2,7 @@
  *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
+
 #include <sstream>
 
 #include "BackEndNode.h"
@@ -16,18 +17,24 @@
 #include "utils.h"
 
 #include "mrnet/MRNet.h"
+#include "mrnet/NetworkTopology.h"
 #include "xplat/NetUtils.h"
 #include "xplat/SocketUtils.h"
+
 
 using namespace std;
 
 namespace MRN {
 
 long EventDetector::_thread_id=0;
-
-static int proc_NewChildFDConnection( PacketPtr ipacket, int isock );
+struct pollfd* EventDetector::_pollfds=NULL;
+unsigned int EventDetector::_num_pollfds=0;
+unsigned int EventDetector::_max_pollfds=0;
+int EventDetector::_max_fd=-1;
 
 static map< int, Rank > childRankByEventDetectionSocket;
+
+static int proc_NewChildFDConnection( PacketPtr ipacket, int isock );
 
 // typedef struct
 // {
@@ -65,13 +72,210 @@ bool EventDetector::start( Network * /* inetwork */ )
     return true;
 }
 
+bool EventDetector::add_FD( int ifd )
+{
+    int retval = 0;
+
+    mrn_dbg_func_begin();
+
+    if( _pollfds == NULL ) {
+
+        NetworkTopology* topol = _global_network->get_NetworkTopology();
+        if( topol == NULL ) return false;
+
+        Rank lrank = _global_network->get_LocalRank();
+        NetworkTopology::Node* lnode =  topol->find_Node(lrank);
+        if( lnode == NULL ) return false;
+
+        unsigned int nchild = lnode->get_NumChildren();
+        if( nchild == 0 ) {
+            // is leaf, but could be commnode so pre-allocate for BEs that may attach
+            nchild = 256;
+        }
+        mrn_dbg( 5, mrn_printf(FLF, stderr,
+                               "allocating %u slots for pollfds\n", nchild) );
+        _pollfds = (struct pollfd*) malloc( nchild * sizeof(struct pollfd) );
+        if( _pollfds == NULL ) return false;
+
+        _num_pollfds = 0;
+        _max_pollfds = nchild;
+    }
+    else if( _num_pollfds == _max_pollfds ) {
+        mrn_dbg( 5, mrn_printf(FLF, stderr,
+                               "can't add, already have %u pollfds\n", _max_pollfds) );
+        return false;
+    }
+
+    if( ifd > _max_fd )
+        _max_fd = ifd;
+    
+    _pollfds[_num_pollfds].fd = ifd;
+    _pollfds[_num_pollfds].events = POLLIN;
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "added fd %d\n", ifd) );
+ 
+    _num_pollfds++;  
+
+    return true;
+}
+
+bool EventDetector::remove_FD( int ifd )
+{
+    int i, new_max = -1;
+
+    mrn_dbg_func_begin();
+
+    for( i=0; i < _num_pollfds; i++ ) {
+        if( _pollfds[i].fd == ifd )
+            break;
+        else if( _pollfds[i].fd > new_max )
+            new_max = _pollfds[i].fd;
+    }
+    if( i == _num_pollfds ) return false;
+
+    // shift rest of array
+    for( int j=i; j < _num_pollfds-1; j++ ) {
+        _pollfds[j].fd = _pollfds[j+1].fd;
+        if( _pollfds[j].fd > new_max )
+            new_max = _pollfds[j].fd;
+    }
+
+    _num_pollfds--;
+    _max_fd = new_max;
+
+    return true;
+}
+
+
+int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms, 
+                              bool use_poll=true )
+{
+    int retval;
+    fd_set readfds;
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr,
+                           "waiting on %u fds\n", _num_pollfds) );
+    if( use_poll ) { 
+
+        retval = poll( _pollfds, _num_pollfds, timeout_ms );
+        mrn_dbg( 5, mrn_printf(FLF, stderr,
+                               "poll() returned %d\n", retval) );
+    }
+    else { // select
+
+        FD_ZERO( &readfds );
+        for( int num=0; num < _num_pollfds; num++ )
+            FD_SET( _pollfds[num].fd, &readfds );
+ 
+        struct timeval* tvp = NULL;
+        struct timeval tv = {0,0};
+        if( timeout_ms != -1 ) {
+            if( timeout_ms > 0 ) {
+                unsigned extra_ms = timeout_ms % 1000;
+                tv.tv_sec = (timeout_ms - extra_ms) / 1000;
+                tv.tv_usec = extra_ms * 1000;
+            }
+            tvp = &tv;
+        }
+
+        retval = select( _max_fd+1, &readfds, NULL, NULL, tvp );
+        mrn_dbg( 5, mrn_printf(FLF, stderr,
+                               "select() returned %d\n", retval) );
+    }
+    if( retval == -1 )
+        perror("select() or poll()");
+
+    if( retval <= 0 )
+        return retval;
+    
+    for( int num=0; num < _num_pollfds; num++ ) {
+        bool add = false;
+        if( use_poll ) {
+            if( _pollfds[num].revents & POLLIN )
+                add = true;
+        }
+        else { // select
+            if( FD_ISSET( _pollfds[num].fd, &readfds ) )
+                add = true;
+        }
+        if( add ) {
+            event_fds.insert( _pollfds[num].fd );
+            mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                   "activity on fd %d\n", _pollfds[num].fd) );
+        }
+    }
+
+    return retval;    
+}
+
+void EventDetector::handle_Timeout( TimeKeeper* tk, int elapsed_ms )
+{
+    std::set< unsigned int > elapsed_strms;
+
+    mrn_dbg_func_begin();
+
+    assert( tk != NULL );
+    tk->notify_Elapsed( elapsed_ms, elapsed_strms );
+
+    if( elapsed_strms.size() > 0 ) {
+
+	std::set< unsigned int >::iterator siter = elapsed_strms.begin();
+	for( ; siter != elapsed_strms.end(); siter++ ) {
+
+	    Stream* strm = _global_network->get_Stream( *siter );
+	    if( strm == NULL ) continue;
+
+	    // push NullPacket to indicate timeout
+	    vector<PacketPtr> opackets, opackets_rev;
+	    strm->push_Packet( Packet::NullPacket,
+			       opackets, opackets_rev,
+			       true );
+
+	    // forward output packets as necessary
+	    if( ! opackets.empty() ) {
+	        if( _global_network->is_LocalNodeFrontEnd() ) {
+		    for( unsigned int i = 0; i < opackets.size(); i++ ) {
+		        PacketPtr cur_packet( opackets[i] );
+			mrn_dbg( 3, mrn_printf(FLF, stderr, "Put packet in stream %d\n",
+					       cur_packet->get_StreamId() ));
+			strm->add_IncomingPacket( cur_packet );
+		    }
+		}
+		else {
+		    if( _global_network->send_PacketsToParent( opackets ) == -1 ) {
+			 mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToParent() failed\n"));
+		    }
+		}
+		opackets.clear();
+	    }
+	    if( ! opackets_rev.empty() ) {
+		if( _global_network->is_LocalNodeBackEnd() ) {
+		    for( unsigned int i = 0; i < opackets_rev.size(); i++ ) {
+			PacketPtr cur_packet( opackets_rev[i] );
+			mrn_dbg( 3, mrn_printf(FLF, stderr, "Put packet in stream %d\n",
+					       cur_packet->get_StreamId() ));
+			strm->add_IncomingPacket( cur_packet );
+		    }
+		}
+		else {
+		    if( _global_network->send_PacketsToChildren( opackets ) == -1 ) {
+			mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToChildren() failed\n"));
+		    }
+		}
+		opackets_rev.clear();
+	    }
+	}
+    }
+
+    mrn_dbg_func_end();
+}
+
 void * EventDetector::main( void * /* iarg */ )
 {
     list< int > watch_list; //list of sockets to detect events on
     int parent_sock=0;
     int local_sock=0;
     int max_sock=0;
-
+ 
     PeerNodePtr  parent_node = PeerNode::NullPeerNode;
     if( _global_network->is_LocalNodeChild() ) {
         parent_node = _global_network->get_ParentNode();
@@ -100,11 +304,6 @@ void * EventDetector::main( void * /* iarg */ )
 
     srand48( _global_network->get_LocalRank() );
     
-    //Prepare fds for select()
-    fd_set rfds, rfds_copy;
-
-    FD_ZERO( &rfds );
-
     //(1) Establish connection with parent Event Detection Thread
     if( _global_network->is_LocalNodeChild() ) {
         if( init_NewChildFDConnection( _global_network, parent_node ) == -1 ) {
@@ -115,7 +314,8 @@ void * EventDetector::main( void * /* iarg */ )
 
         //monitor parent sock for failure
         parent_sock = parent_node->get_EventSocketFd();
-        FD_SET( parent_sock, &rfds );
+        add_FD(parent_sock);
+
         max_sock = parent_sock;
         watch_list.push_back( parent_sock );
         mrn_dbg( 5, mrn_printf(FLF, stderr,
@@ -126,7 +326,7 @@ void * EventDetector::main( void * /* iarg */ )
         //(2) Add local socket to event list
         local_sock = _global_network->get_ListeningSocket();
         if( local_sock != -1 ){
-            FD_SET( local_sock, &rfds );
+            add_FD(local_sock);
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "Monitoring local socket:%d.\n", local_sock));
             if( local_sock > max_sock )
@@ -143,24 +343,38 @@ void * EventDetector::main( void * /* iarg */ )
     list< PacketPtr > packets;
     mrn_dbg( 5, mrn_printf(FLF, stderr, "EDT Main Loop ...\n"));
     while ( true ) {
-        rfds_copy = rfds;
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "Blocking on select(): %d sockets...\n",
-                               watch_list.size() ));
 
-        int retval = select( max_sock+1, &rfds_copy, NULL, NULL, NULL );
+        Timer waitTimer;
+        int timeout = -1; /* block */
+        TimeKeeper* tk = _global_network->get_TimeKeeper();
+	if( tk != NULL ) {
+	    timeout = tk->get_Timeout();
+	    waitTimer.start();
+	}
+
+        std::set< int > eventfds;
+        int retval = eventWait( eventfds, timeout );
 
         if( retval == -1 ) {
-            //select error
-            perror("select()");
             continue;
         }
-        else if( retval == 0 ){
-            //shouldn't get here since we block forever
-            perror("select()");
-            assert(0);
+        else if( retval == 0 ) {
+	    // timed-out, calculate elapsed time
+	    double elapsed_ms;
+	    int elapsed;
+	    waitTimer.stop();
+	    elapsed_ms = waitTimer.get_latency_msecs();
+	    elapsed = (int)elapsed_ms;
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "timeout after %d ms ...\n", elapsed));
+                
+	    // notify streams with registered timeouts
+	    handle_Timeout( tk, elapsed );
+	    continue;
         }
         else{
-            if( FD_ISSET ( local_sock, &rfds_copy ) ){
+            mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                   "checking event fds"));
+            if( eventfds.find(local_sock) != eventfds.end() ) {
                 //Activity on our local listening sock, accept connection
                 mrn_dbg( 5, mrn_printf(FLF, stderr, "Activity on listening socket ...\n"));
                 int connected_sock = getSocketConnection( local_sock );
@@ -208,7 +422,7 @@ void * EventDetector::main( void * /* iarg */ )
 
                     case PROT_NEW_CHILD_FD_CONNECTION:
                         mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION ...\n"));
-                        FD_SET( connected_sock, &rfds );
+                        add_FD(connected_sock);
                         if( connected_sock > max_sock )
                             max_sock = connected_sock;
                         watch_list.push_back( connected_sock );
@@ -253,12 +467,13 @@ void * EventDetector::main( void * /* iarg */ )
                 }
             }
 
-            if( _global_network->is_LocalNodeChild() && FD_ISSET( parent_sock, &rfds_copy ) ) {
+            if( _global_network->is_LocalNodeChild() && 
+                 ( eventfds.find(parent_sock) != eventfds.end() ) ) {
                 mrn_dbg( 3, mrn_printf(FLF, stderr, "Parent failure detected ...\n"));
                 //event happened on parent monitored connections, likely failure
 
                 //remove old parent socket from "select" sockets list
-                FD_CLR( parent_sock, &rfds );
+                remove_FD(parent_sock);
                 watch_list.remove( parent_sock );
 
                 if( _global_network->recover_FromFailures() ) {
@@ -268,7 +483,7 @@ void * EventDetector::main( void * /* iarg */ )
                     //add new parent sock to monitor for failure
                     parent_node = _global_network->get_ParentNode();
                     parent_sock = parent_node->get_EventSocketFd();
-                    FD_SET( parent_sock, &rfds );
+                    add_FD(parent_sock);
                     if( parent_sock > max_sock )
                         max_sock = parent_sock;
                     watch_list.push_back( parent_sock );
@@ -292,7 +507,7 @@ void * EventDetector::main( void * /* iarg */ )
                 //skip local_sock and parent_sock or if socket isn't set
                 if( ( cur_sock == local_sock ) ||
                     ( (_global_network->is_LocalNodeChild() ) && (cur_sock == parent_sock) ) ||
-                    ( ! FD_ISSET( cur_sock, &rfds_copy ) ) ) {
+                    ( eventfds.find(cur_sock)==eventfds.end() ) ) {
                     mrn_dbg( 5, mrn_printf(0,0,0, stderr, "Is socket:%d set? NO!\n", cur_sock));
                     iter++;
                     continue;
@@ -316,7 +531,7 @@ void * EventDetector::main( void * /* iarg */ )
                     childRankByEventDetectionSocket.erase( iter2 );
 
                     //remove from "select" sockets list
-                    FD_CLR( cur_sock, &rfds );
+                    remove_FD(cur_sock);
 
                     //remove socket from socket watch list
                     list< int >::iterator tmp_iter;

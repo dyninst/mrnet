@@ -6,11 +6,9 @@
 #if !defined(__filter_h)
 #define __filter_h 1
 
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
-#include <vector>
-#include <set>
 
 #include "mrnet/Error.h"
 #include "mrnet/NetworkTopology.h"

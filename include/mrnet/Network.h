@@ -35,6 +35,7 @@ class Router;
 class NetworkTopology;
 class SerialGraph;
 class ParsedGraph;
+class TimeKeeper;
 
 class PeerNode;
 typedef boost::shared_ptr< PeerNode > PeerNodePtr; 
@@ -111,6 +112,7 @@ class Network: public Error {
     bool is_LocalNodeBackEnd( void ) const ;
 
     //NOT IN PUBLIC API
+    TimeKeeper* get_TimeKeeper( void );
     const std::set< PeerNodePtr > get_ChildPeers() const;
     static Network* CreateNetworkIN( int argc, char* argv[] );    // create obj for internal node
     InternalNode* get_LocalInternalNode( void ) const;
@@ -275,6 +277,7 @@ protected:
     FrontEndNode* _local_front_end_node;
     BackEndNode* _local_back_end_node;
     InternalNode* _local_internal_node;
+    TimeKeeper* _local_time_keeper;
 
     PeerNodePtr _parent;
     std::set< PeerNodePtr > _children;

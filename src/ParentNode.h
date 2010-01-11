@@ -64,8 +64,7 @@ class ParentNode: public virtual Error,
     int proc_closeStream( PacketPtr ipacket ) const;
 
     int proc_newFilter( PacketPtr ipacket ) const;
-    int proc_DownstreamFilterParams( PacketPtr &ipacket ) const;
-    int proc_UpstreamFilterParams( PacketPtr &ipacket ) const;
+    int proc_FilterParams( FilterType, PacketPtr &ipacket ) const;
 
     int get_ListeningSocket( void ) const { return listening_sock_fd; }
     int getConnections( int **conns, unsigned int *nConns ) const;

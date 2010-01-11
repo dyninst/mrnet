@@ -15,6 +15,7 @@
 #include "utils.h"
 #include "PeerNode.h"
 #include "PerfDataEvent.h"
+#include "TimeKeeper.h"
 
 using namespace std;
 
@@ -1252,8 +1253,8 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
         state = ( wfa_state * ) *local_storage;
 
         //Check for failed nodes && closed Peers
-        map_iter = state->packets_by_rank.begin( );
-        while ( map_iter != state->packets_by_rank.end( ) ) {
+        map_iter = state->packets_by_rank.begin();
+        while ( map_iter != state->packets_by_rank.end() ) {
 
             Rank rank = (*map_iter).first;
             if( _global_network->node_Failed( rank ) ) {
@@ -1280,7 +1281,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
     }
 
     //2. Place input packets
-    for( unsigned int i=0; i<ipackets.size(); i++ ){
+    for( unsigned int i=0; i < ipackets.size(); i++ ) {
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
         map_iter = state->packets_by_rank.find( cur_inlet_rank );
 
@@ -1335,8 +1336,8 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
     mrn_dbg( 3, mrn_printf(FLF, stderr, "All child nodes ready!" ));
 
     //3. All nodes ready! Place output packets
-    for( map_iter = state->packets_by_rank.begin( );
-         map_iter != state->packets_by_rank.end( );
+    for( map_iter = state->packets_by_rank.begin();
+         map_iter != state->packets_by_rank.end();
          map_iter++ ) {
 
         if( (*map_iter).second->empty() ) {
@@ -1362,13 +1363,148 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Returning %d packets\n", opackets.size(  ) ));
 }
 
-void sfilter_TimeOut( const vector< PacketPtr > &,
-                      vector< PacketPtr > &,
-                      vector< PacketPtr > &,
-                      void **, PacketPtr&,
-                      const TopologyLocalInfo& )
+typedef struct {
+    bool active_timeout;
+    map < Rank, vector< PacketPtr >* > packets_by_rank;
+    set < Rank > ready_peers;
+} to_state;
+
+void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
+		      vector< PacketPtr >& opackets,
+		      vector< PacketPtr >& /* opackets_reverse */,
+		      void **local_storage, PacketPtr& config,
+		      const TopologyLocalInfo& )
 {
+    mrn_dbg_func_begin();
+    map < Rank, vector< PacketPtr >* >::iterator map_iter, del_iter;
+    to_state* state;
+    
+    bool active = false;
+    unsigned int timeout_ms = 0;
+    if( config != Packet::NullPacket ) {
+	 config->unpack( "%ud", &timeout_ms );
+    }
+    if( timeout_ms == 0 ) {
+	 opackets = ipackets;
+	 return;
+    }
+    
+    //1. Setup/Recover Filter State
+    if( *local_storage == NULL ) {
+
+        //Allocate packet buffer map as appropriate
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "No previous storage, allocating ...\n"));
+
+        state = new to_state;
+	state->active_timeout = false;
+
+        *local_storage = state;
+    }
+    else {
+        //Get packet buffer map from filter state
+        state = ( to_state * ) *local_storage;
+
+	active = state->active_timeout;
+
+        //Check for failed nodes && closed Peers
+        map_iter = state->packets_by_rank.begin();
+        while ( map_iter != state->packets_by_rank.end() ) {
+
+            Rank rank = map_iter->first;
+            if( _global_network->node_Failed( rank ) ) {
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? Yes!!\n", rank ));
+                mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                       "Discarding packets from failed node[%d] ...\n",
+                                       rank ));
+                del_iter = map_iter;
+                map_iter++;
+
+                //clear packet vector
+                del_iter->second->clear();
+
+                //erase map slot
+                state->packets_by_rank.erase( del_iter );
+                state->ready_peers.erase( rank );
+            }
+            else {
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? no\n", rank ));
+                map_iter++;
+            }
+        }
+    }
+
+    //2. Place input packets
+    for( unsigned int i=0; i < ipackets.size(); i++ ) {
+
+        Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
+        map_iter = state->packets_by_rank.find( cur_inlet_rank );
+
+        if( _global_network->node_Failed( cur_inlet_rank ) ) {
+            //Drop packets from failed node
+            continue;
+        }
+
+        //Insert packet into map (allocate new slot if necessary)
+        if( map_iter == state->packets_by_rank.end() ) {
+            mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                   "Allocating new map slot for node[%d] ...\n",
+                                   cur_inlet_rank ));
+            state->packets_by_rank[ cur_inlet_rank ] = new vector < PacketPtr >;
+        }
+
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Placing packet[%d] from node[%d]\n",
+                               i, cur_inlet_rank ));
+        state->packets_by_rank[ cur_inlet_rank ]->push_back( ipackets[i] );
+        state->ready_peers.insert( cur_inlet_rank );
+    }
+
+    if( ipackets.size() > 0 ) {
+        if( ! active ) {
+	    // set timeout
+            int stream_id = ipackets[0]->get_StreamId();
+            Stream* stream = _global_network->get_Stream( stream_id );
+            assert(stream);
+
+	    TimeKeeper* tk = _global_network->get_TimeKeeper();
+	    if( tk != NULL ) {
+	        if( tk->register_Timeout( stream_id, timeout_ms ) ) {
+	            state->active_timeout = true;
+	        }
+	    }
+        }
+        return;
+    }
+
+    //if we get here, SYNC CONDITION MET!
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "Timeout occurred!\n" ));
+
+    state->active_timeout = false;
+
+    //3. Place output packets
+    for( map_iter = state->packets_by_rank.begin( );
+         map_iter != state->packets_by_rank.end( );
+         map_iter++ ) {
+
+        if( map_iter->second->empty() ) {
+            //list should only be empty if peer closed stream
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "Node[%d]'s slot is empty\n",
+                                   map_iter->first ) );
+            continue;
+        }
+
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Popping packets from Node[%d]\n",
+                               map_iter->first ) );
+        //push list onto output vector
+        opackets.insert( opackets.end(), map_iter->second->begin(), map_iter->second->end() );
+	map_iter->second->clear();
+
+	mrn_dbg( 3, mrn_printf(FLF, stderr, "Removing Node[%d] from ready list\n",
+			       map_iter->first ) );
+	state->ready_peers.erase( map_iter->first );
+    }
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "Returning %d packets\n", opackets.size(  ) ));
 }
+
 
 /*====================================*
  *    Support Function Definitions    *

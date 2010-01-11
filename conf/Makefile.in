@@ -165,6 +165,7 @@ LIBMRNET_SRCS = \
 	         $(SRCDIR)/src/Router.C \
 	         $(SRCDIR)/src/SerialGraph.C \
 	         $(SRCDIR)/src/Stream.C \
+	         $(SRCDIR)/src/TimeKeeper.C \
 	         $(SRCDIR)/src/Tree.C \
 	         $(SRCDIR)/src/utils.C
 

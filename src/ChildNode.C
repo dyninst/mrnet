@@ -83,36 +83,60 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
         }
         break;
         
-    case PROT_SET_FILTERPARAMS_UPSTREAM:
+    case PROT_SET_FILTERPARAMS_UPSTREAM_TRANS: {
+	FilterType ftype = FILTER_UPSTREAM_TRANS;
         if( _network->is_LocalNodeInternal() ){
-            if( _network->get_LocalInternalNode()->proc_UpstreamFilterParams( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_UpstreamFilterParams() failed\n" ));
+	     if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
+								       cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
                 retval = -1;
             }
         }
         else{
-            if( _network->get_LocalBackEndNode()->proc_UpstreamFilterParams( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_UpstreamFilterParams() failed\n" ));
+	     if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
+								      cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
                 retval = -1;
             }
         }
         break;
-
-    case PROT_SET_FILTERPARAMS_DOWNSTREAM:
+    }
+    case PROT_SET_FILTERPARAMS_UPSTREAM_SYNC: {
+        FilterType ftype = FILTER_UPSTREAM_SYNC;
         if( _network->is_LocalNodeInternal() ){
-            if( _network->get_LocalInternalNode()->proc_DownstreamFilterParams( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_DownstreamFilterParams() failed\n" ));
+	     if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
+								       cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
                 retval = -1;
             }
         }
         else{
-            if( _network->get_LocalBackEndNode()->proc_DownstreamFilterParams( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_DownstreamFilterParams() failed\n" ));
+	     if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
+								      cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
                 retval = -1;
             }
         }
         break;
-
+    }
+    case PROT_SET_FILTERPARAMS_DOWNSTREAM: {
+        FilterType ftype = FILTER_DOWNSTREAM_TRANS;
+        if( _network->is_LocalNodeInternal() ){
+	    if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
+								      cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
+                retval = -1;
+            }
+        }
+        else{
+	    if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
+								     cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
+                retval = -1;
+            }
+        }
+        break;
+    }
     case PROT_DEL_STREAM:
         if( _network->is_LocalNodeInternal() ) {
             if( _network->get_LocalInternalNode()->proc_deleteStream( cur_packet ) == -1 ) {

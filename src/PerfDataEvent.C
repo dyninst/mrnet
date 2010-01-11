@@ -40,7 +40,7 @@ const char* PerfDataMgr::perfdata_context_names[PERFDATA_MAX_CTX] =
 PerfDataMgr::PerfDataMgr( void )
     : the_data(PERFDATA_MAX_CTX)
 {
-    memset(active_metrics, 0, sizeof(active_metrics));
+    memset(active_metrics, 0, PERFDATA_MAX_CTX);
 }
 
 string PerfDataMgr::get_MetricName( perfdata_metric_t met )
