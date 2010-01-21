@@ -7,7 +7,7 @@
 #define __perfdatasysevent_h 1
 
 
-int PerfDataSysMgr_get_ThreadTime(long user, long sys);
+int PerfDataSysMgr_get_ThreadTime(long* user, long* sys);
 
-int PerfDataSysMgr_get_MemUsage(double vsize, double psize);
+int PerfDataSysMgr_get_MemUsage(double* vsize, double* psize);
 #endif 

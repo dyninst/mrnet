@@ -5,24 +5,27 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <assert.h>
+
+#ifndef os_windows
+#include <unistd.h>
+#endif
 
 #include "map.h"
 #include "Utils.h"
 
 map_t* new_map_t()
 {
-  map_t* new_map = (map_t*)malloc(sizeof(map_t));
-  assert(new_map);
+    int keys[0];
+    map_t* new_map = (map_t*)malloc(sizeof(map_t));
+    assert(new_map);
 
-  new_map->root = NULL;
-  new_map->size = 0;
-  int keys[0];
-  new_map->keys = (int*)malloc(sizeof(keys));
-  assert(new_map->keys);
+    new_map->root = NULL;
+    new_map->size = 0;
+    new_map->keys = (int*)malloc(sizeof(keys));
+    assert(new_map->keys);
 
-  return new_map;
+    return new_map;
 }
 
 map_node_t* delete_map_recursive(map_node_t* root) {
@@ -51,45 +54,46 @@ void clear_map_t(map_t* map) {
 
 map_node_t* insert_recursive(map_node_t* root, int key, void* val)
 {
-  
+    map_node_t* new_node;
 
-  // map is currently empty
-  if (root == NULL) {
-    map_node_t* new_node = (map_node_t*)malloc(sizeof(map_node_t));
-    assert(new_node);
+    // map is currently empty
+    if (root == NULL) {
+        new_node = (map_node_t*)malloc(sizeof(map_node_t));
+        assert(new_node);
 
-    new_node->key = key;
-    new_node->val = (void*)malloc(sizeof(val));
-    assert(new_node->val);
-    new_node->val = val;
-    new_node->left = NULL;
-    new_node->right = NULL;
+        new_node->key = key;
+        new_node->val = (void*)malloc(sizeof(val));
+        assert(new_node->val);
+        new_node->val = val;
+        new_node->left = NULL;
+        new_node->right = NULL;
 
-    return new_node;
-  }
-  
-  // check if we need to insert into left subtree or right subtree
-  else {
-    if (key < root->key) {
-      root->left = insert_recursive(root->left, key, val);
+        return new_node;
     }
-    else if (key == root->key) {
-        perror("Cannot have multiple map entries with same key");
-        return NULL;
-    }
+  
+    // check if we need to insert into left subtree or right subtree
     else {
-      root->right = insert_recursive(root->right, key, val);
+        if (key < root->key) {
+            root->left = insert_recursive(root->left, key, val);
+        }
+        else if (key == root->key) {
+            perror("Cannot have multiple map entries with same key");
+            return NULL;
+        }
+        else {
+            root->right = insert_recursive(root->right, key, val);
+        }
     }
-  }
 
-
-  return root;
+    return root;
 }
 
 void insert(map_t* map, int key, void* val)
 {
     int i;
     int new_val = 1;
+    int* keys;
+
     for (i = 0; i < map->size; i++) {
         if (map->keys[i] == key) 
             new_val = 0;
@@ -100,7 +104,7 @@ void insert(map_t* map, int key, void* val)
         // update map size
         map->size++;
         // insert key into key array
-        int keys[map->size];
+        keys = (int*)malloc(sizeof(int)*(map->size));
         map->keys = (int*)realloc(map->keys, sizeof(keys));
         assert(map->keys);
         map->keys[map->size-1] = key;
@@ -126,7 +130,7 @@ void* get_val_recursive(map_node_t* root, int key)
 
 void* get_val(map_t* map, int key)
 {
-  return get_val_recursive(map->root, key);
+    return get_val_recursive(map->root, key);
 }
 
 map_t* erase(map_t* map, int ikey)

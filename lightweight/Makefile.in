@@ -137,22 +137,18 @@ distclean: clean
 # pattern rules
 @VERBOSEMAKE@
 .SUFFIXES:
-.SUFFIXES: .c .C .o .d
+.SUFFIXES: .c .o .d
 
 # add phony target to force serial build of lightweight backend.
 # this would not be needed if archive was built differently
 # -- and then we could build in parallel
 .NOTPARALLEL:
 
-%.d: %.C
+%.d: %.c
 	@echo Building depends file `basename $@` ...
 	$(MAKEDEPENDS)  $< $*.o $@ $(INCFLAGS)
 
 %.o: %.c
-	@echo Compiling `basename $@` ...
-	$(CXX) $(CXXFLAGS) $(C_AS_CPLUSPLUS) -o $@ -c $<
-
-%.o: %.C
 	@echo Compiling `basename $@` ...
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 

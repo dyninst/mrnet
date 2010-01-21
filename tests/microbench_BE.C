@@ -5,7 +5,11 @@
 
 #include <iostream>
 #include <assert.h>
+#ifndef os_windows
 #include <unistd.h>
+#else
+#include <winsock2.h>
+#endif
 
 #include "mrnet/MRNet.h"
 #include "microbench.h"
@@ -16,13 +20,16 @@ using namespace MRN;
 
 int main( int argc, char* argv[] )
 {
-    int ret = 0;
     Stream* stream;
     int tag;
     PacketPtr pkt;
 
     if( getenv( "MRN_DEBUG_BE" ) != NULL ) {
-        fprintf( stderr, "BE: spinning for debugger, pid=%d\n", getpid() );
+#ifndef os_windows
+		fprintf( stderr, "BE: spinning for debugger, pid=%d\n", getpid() );
+#else 
+		fprintf(stderr, "BE: spinning for debugger, pid=%d\n", (int)GetCurrentProcessId());
+#endif
         bool bCont=false;
         while( !bCont )
         {
@@ -102,6 +109,10 @@ int main( int argc, char* argv[] )
     }
 
     // FE delete net will shut us down, so just go to sleep!!
-    sleep(10);
+#ifndef os_windows
+	sleep(10);
+#else
+	Sleep(10);
+#endif
     return 0;
 }

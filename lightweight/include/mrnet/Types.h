@@ -6,7 +6,15 @@
 #if !defined(__types_h)
 #define __types_h 1
 
+#include <sys/types.h>
+
+#if defined (os_linux)
 #include <stdint.h>
+#elif defined(os_solaris)
+#include <inttypes.h>
+#elif defined(os_windows)
+#include "xplat/Types.h"
+#endif
 
 #define true 1
 #define false 0

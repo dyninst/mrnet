@@ -10,11 +10,35 @@
 #include <stdlib.h>
 
 #include "mrnet/Types.h"
+#include "xplat/Types.h"
 
-#define MRN_RELEASE_DATE_SECS 1208100000
+#ifndef os_windows
+#include <signal.h>
+#include <unistd.h>
+#include <sys/time.h>
+#else
+#include <io.h>
+#include <sys/timeb.h>
 
 #define srand48 srand
 #define drand48 (double)rand
+#define snprintf _snprintf
+#define sleep(x) Sleep(1000*(DWORD)x)
+
+int gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+    struct _timeb now;
+    _ftime(&now);
+    if (tv != NULL) {
+        tv->tv_sec = now.time;
+        tv->tv_usec = now.millitm * 1000;
+    }
+    return 0;
+}
+#endif //ifndef(os_windows)
+
+#define MRN_RELEASE_DATE_SECS 1208100000
+
 
 struct hostent *copy_hostent (struct hostent *in);
 void delete_hostent(struct hostent *in);

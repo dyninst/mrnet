@@ -6,7 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef os_windows
 #include <unistd.h>
+#endif //ifndef os_windows
 #include <assert.h>
 
 #include "vector.h"
@@ -14,11 +16,11 @@
 
 vector_t* new_empty_vector_t()
 {
-  vector_t* new_vector = (vector_t*)malloc(sizeof(vector_t));
-  assert(new_vector != NULL);
   void* vec[1];
+  vector_t* new_vector = (vector_t*)malloc(sizeof(vector_t));
+  assert(new_vector);
   new_vector->vec = (void**)malloc(sizeof(vec));
-  assert(new_vector->vec != NULL);
+  assert(new_vector->vec);
   new_vector->size = 0;
 
   return new_vector;
@@ -34,12 +36,14 @@ void clear(vector_t* vector)
 
     void* vec[1];
     vector->vec = (void**)realloc(vector->vec, sizeof(vec));
+    assert(vector->vec);
     vector->size = 0;
 }
 
 void pushBackElement(vector_t* vector, void* elem)
 {
     void* vec[vector->size+1];
+    assert(vec);
 
     vector->vec = (void**)realloc(vector->vec, sizeof(vec));
     assert(vector->vec);
@@ -57,8 +61,10 @@ void* popBackElement( vector_t* vector)
 {
     void* elem = vector->vec[vector->size-1];
 
-    void* vec[vector->size-1];
-    
+    //void* vec[vector->size-1];
+	void** vec = (void**)malloc(sizeof(elem)*(vector->size-1));
+    assert(vec);
+
     vector->vec = (void**)realloc(vector->vec, sizeof(vec));
     assert(vector->vec);
 

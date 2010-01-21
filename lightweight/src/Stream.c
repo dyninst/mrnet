@@ -7,8 +7,11 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <sys/time.h>
-#include <unistd.h>
 #include <assert.h>
+
+#ifndef os_windows
+#include <unistd.h>
+#endif
 
 #include "mrnet/Network.h"
 #include "PeerNode.h"
@@ -53,15 +56,16 @@ unsigned int Stream_get_Id(Stream_t* stream) {
 
 int Stream_find_FilterAssignment(char* assignments, Rank me, int filter_id)
 {
-    // STUB--should this be supported?
+    assert(!"STUB");
     return -1;
 }
 
 Packet_t* Stream_get_IncomingPacket(Stream_t* stream)
 {
+  Packet_t* cur_packet = NULL;
+  perfdata_t val;
 
   mrn_dbg_func_begin();
-  Packet_t* cur_packet = NULL;
      
   // assumption: only one packet in buffer at time
   if (stream->incoming_packet_buffer != NULL) {
@@ -72,7 +76,7 @@ Packet_t* Stream_get_IncomingPacket(Stream_t* stream)
     if (PerfDataMgr_is_Enabled(stream->perf_data, 
                               PERFDATA_MET_NUM_PKTS,
                               PERFDATA_CTX_RECV)) {
-      perfdata_t val = PerfDataMgr_get_DataValue(stream->perf_data,
+      val = PerfDataMgr_get_DataValue(stream->perf_data,
                                                 PERFDATA_MET_NUM_PKTS,
                                                 PERFDATA_CTX_RECV);
       val.u += 1;
@@ -84,7 +88,7 @@ Packet_t* Stream_get_IncomingPacket(Stream_t* stream)
     if (PerfDataMgr_is_Enabled(stream->perf_data, 
                             PERFDATA_MET_NUM_BYTES,
                             PERFDATA_CTX_RECV)) {
-    perfdata_t val = PerfDataMgr_get_DataValue(stream->perf_data,
+    val = PerfDataMgr_get_DataValue(stream->perf_data,
                                               PERFDATA_MET_NUM_BYTES,
                                               PERFDATA_CTX_RECV);
     val.u += cur_packet->buf_len;
@@ -115,13 +119,16 @@ int Stream_push_Packet(Stream_t* stream,
     TopologyLocalInfo_t* topol_info = 
       new_TopologyLocalInfo_t(topol, NetworkTopology_find_Node(topol, stream->network->local_rank));
 
-    mrn_dbg_func_begin();
-
     long user_before, sys_before;
     long user_after, sys_after;
 
     Timer_t tagg = new_Timer_t();
     Filter_t* trans_filter = stream->ds_filter;
+    
+    perfdata_t val;
+    double diff;
+    
+    mrn_dbg_func_begin();
 
     if (igoing_upstream) {
       trans_filter = stream->us_filter;
@@ -130,7 +137,6 @@ int Stream_push_Packet(Stream_t* stream,
       if (PerfDataMgr_is_Enabled(stream->perf_data, 
                                 PERFDATA_MET_NUM_PKTS, 
                                 PERFDATA_CTX_FILT_IN)) {
-        perfdata_t val;
         val.u = 1; // ipacket.size()
         PerfDataMgr_add_DataInstance(stream->perf_data,
                                      PERFDATA_MET_NUM_PKTS, 
@@ -143,7 +149,7 @@ int Stream_push_Packet(Stream_t* stream,
           PerfDataMgr_is_Enabled(stream->perf_data, 
                                 PERFDATA_MET_CPU_SYS_PCT, 
                                 PERFDATA_CTX_FILT_OUT)) {
-          PerfDataSysMgr_get_ThreadTime(user_before, sys_before);
+          PerfDataSysMgr_get_ThreadTime(&user_before, &sys_before);
       }
         Timer_start(tagg);
     }
@@ -165,7 +171,7 @@ int Stream_push_Packet(Stream_t* stream,
           PerfDataMgr_is_Enabled(stream->perf_data, 
                                   PERFDATA_MET_CPU_SYS_PCT, 
                                   PERFDATA_CTX_FILT_OUT)) {
-        PerfDataSysMgr_get_ThreadTime(user_after, sys_after);
+        PerfDataSysMgr_get_ThreadTime(&user_after, &sys_after);
       }
 
       // performance data update for FILTER_OUT
@@ -183,7 +189,6 @@ int Stream_push_Packet(Stream_t* stream,
       if( PerfDataMgr_is_Enabled(stream->perf_data,  
                                  PERFDATA_MET_ELAPSED_SEC, 
                                  PERFDATA_CTX_FILT_OUT ) ) {
-        perfdata_t val;
         val.d = Timer_get_latency_secs(tagg);
         PerfDataMgr_add_DataInstance(stream->perf_data, 
                                       PERFDATA_MET_ELAPSED_SEC, 
@@ -193,8 +198,7 @@ int Stream_push_Packet(Stream_t* stream,
       if( PerfDataMgr_is_Enabled(stream->perf_data,  
                                  PERFDATA_MET_CPU_USR_PCT, 
                                  PERFDATA_CTX_FILT_OUT ) ) {
-        perfdata_t val;
-        double diff = (user_after  - user_before) ;   
+        diff = (user_after  - user_before) ;   
         val.d = ( diff / Timer_get_latency_msecs(tagg) ) * 100.0;
         PerfDataMgr_add_DataInstance(stream->perf_data, 
                                      PERFDATA_MET_CPU_USR_PCT, 
@@ -205,7 +209,7 @@ int Stream_push_Packet(Stream_t* stream,
                                  PERFDATA_MET_CPU_SYS_PCT, 
                                  PERFDATA_CTX_FILT_OUT ) ) {
                                  perfdata_t val;
-        double diff = (sys_after  - sys_before) ;   
+        diff = (sys_after  - sys_before) ;   
         val.d = ( diff / Timer_get_latency_msecs(tagg) ) * 100.0;
         PerfDataMgr_add_DataInstance(stream->perf_data, 
                                      PERFDATA_MET_CPU_SYS_PCT, 
@@ -227,13 +231,15 @@ void Stream_add_IncomingPacket(Stream_t* stream, Packet_t* ipacket)
 
 int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ... )
 {
-  mrn_dbg_func_begin();
-
   int status;
   va_list arg_list;
+  Packet_t* packet;
+  
+  mrn_dbg_func_begin();
+
   va_start(arg_list, iformat_str);
 
-  Packet_t* packet = new_Packet_t(true, stream->id, itag, iformat_str, arg_list);
+  packet = new_Packet_t(true, stream->id, itag, iformat_str, arg_list);
   if (packet == NULL) {
     mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));
     return -1;
@@ -251,22 +257,24 @@ int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ... )
 
 int Stream_send_aux(Stream_t* stream, int itag, char* ifmt, Packet_t* ipacket)
 {
-  mrn_dbg_func_begin();
-  mrn_dbg(3, mrn_printf(FLF, stderr, "stream_id: %d, tag:%d, fmt=\"%s\"\n", stream->id, itag, ifmt));
-
   Timer_t tagg = new_Timer_t();
   Timer_t tsend = new_Timer_t();
+  Packet_t* opacket;
+  int upstream = true;
+  perfdata_t val;
+
+  mrn_dbg_func_begin();
+  mrn_dbg(3, mrn_printf(FLF, stderr, "stream_id: %d, tag:%d, fmt=\"%s\"\n", stream->id, itag, ifmt));
   
-  Packet_t* opacket = (Packet_t*)malloc(sizeof(Packet_t));
+  opacket = (Packet_t*)malloc(sizeof(Packet_t));
   assert(opacket);
 
-  int upstream = true;
 
   // performance data update for STREAM_SEND
   if (PerfDataMgr_is_Enabled(stream->perf_data, 
                               PERFDATA_MET_NUM_PKTS,
                               PERFDATA_CTX_SEND)) {
-    perfdata_t val = PerfDataMgr_get_DataValue(stream->perf_data,
+    val = PerfDataMgr_get_DataValue(stream->perf_data,
                                               PERFDATA_MET_NUM_PKTS,
                                               PERFDATA_CTX_SEND);
     val.u += 1;
@@ -278,7 +286,7 @@ int Stream_send_aux(Stream_t* stream, int itag, char* ifmt, Packet_t* ipacket)
   if (PerfDataMgr_is_Enabled(stream->perf_data,
                               PERFDATA_MET_NUM_BYTES,
                               PERFDATA_CTX_SEND)) {
-    perfdata_t val = PerfDataMgr_get_DataValue(stream->perf_data,
+    val = PerfDataMgr_get_DataValue(stream->perf_data,
                                               PERFDATA_MET_NUM_BYTES,
                                               PERFDATA_CTX_SEND);
     val.u += ipacket->buf_len;
@@ -357,6 +365,17 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
 {
     vector_t* data = new_empty_vector_t();
     int iter = 0;
+    Rank my_rank;
+    unsigned num_elems;
+    void* data_arr;
+    const char* fmt;
+    uint64_t* u64_arr;
+    unsigned u;
+    int64_t* i64_arr;
+    double* dbl_arr;
+    int* rank_arr;
+    int* nelems_arr;
+    Packet_t* packet;
 
     if (metric == PERFDATA_MET_MEM_VIRT_KB ||
         metric == PERFDATA_MET_MEM_PHYS_KB) {
@@ -365,21 +384,20 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
 
     PerfDataMgr_collect(stream->perf_data, metric, context, data);
 
-    Rank my_rank = stream->network->local_rank;
-    unsigned num_elems = data->size;
-    void* data_arr = NULL;
-    const char* fmt = NULL;
+    my_rank = stream->network->local_rank;
+    num_elems = data->size;
+    data_arr = NULL;
+    fmt = NULL;
 
     switch (PerfDataMgr_get_MetricType(metric)) {
         case PERFDATA_TYPE_UINT: {
             fmt = "%ad %ad %auld";
             if (num_elems) {
-                uint64_t* u64_arr = (uint64_t*)malloc(sizeof(uint64_t*)*num_elems);
+                u64_arr = (uint64_t*)malloc(sizeof(uint64_t*)*num_elems);
                 if (u64_arr == NULL) {
                     mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() data array failed\n"));
                     return NULL;
                 }
-                unsigned u;
                 for (u = 0; iter != data->size; u++, iter++)
                     u64_arr[u] = ((perfdata_t*)data->vec[iter])->u;
                 data_arr = u64_arr;
@@ -390,12 +408,11 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
         case PERFDATA_TYPE_INT: {
             fmt = "%ad %ad %ald";
             if (num_elems) {
-                int64_t*i64_arr = (int64_t*)malloc(sizeof(int64_t)*num_elems);
+                i64_arr = (int64_t*)malloc(sizeof(int64_t)*num_elems);
                 if (i64_arr == NULL) {
                     mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() data array failed\n"));
                     return NULL;
                 }
-                unsigned u;
                 for (u = 0; iter != data->size; u++, iter++)
                     i64_arr[u] = ((perfdata_t*)data->vec[iter])->i;
 
@@ -406,12 +423,11 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
         case PERFDATA_TYPE_FLOAT: {
             fmt = "%ad %ad %alf";
             if (num_elems) {
-                double* dbl_arr = (double*)malloc(sizeof(double)*num_elems);
+                dbl_arr = (double*)malloc(sizeof(double)*num_elems);
                 if (dbl_arr == NULL) {
                     mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() data array failed\n"));
                     return NULL;
                 }
-                unsigned u;
                 for (u = 0; iter != data->size; u++, iter++)
                     dbl_arr[u] = ((perfdata_t*)data->vec[iter])->d;
                 data_arr = dbl_arr;
@@ -424,13 +440,13 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
     }
 
     // create output packet
-    int* rank_arr = (int*)malloc(sizeof(int));
+    rank_arr = (int*)malloc(sizeof(int));
     assert(rank_arr);
-    int* nelems_arr = (int*)malloc(sizeof(int));
+    nelems_arr = (int*)malloc(sizeof(int));
     assert(nelems_arr);
     *rank_arr = my_rank;
     *nelems_arr = num_elems;
-    Packet_t* packet = new_Packet_t_2(aggr_strm_id, PROT_COLLECT_PERFDATA,
+    packet = new_Packet_t_2(aggr_strm_id, PROT_COLLECT_PERFDATA,
                                         fmt, rank_arr, 1, 
                                         nelems_arr, 1, data_arr,
                                         num_elems);

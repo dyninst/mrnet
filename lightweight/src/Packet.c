@@ -8,7 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef os_windows
 #include <unistd.h>
+#endif //ifdef os_windows
 
 #include "mrnet/DataElement.h"
 #include "mrnet/Network.h"
@@ -31,8 +33,12 @@ Packet_t* new_Packet_t(int val, unsigned short _stream_id,
                         int _tag, char* fmt,
                         va_list arg_list)
 {
+  
+  PDR pdrs;
   Packet_t* packet = (Packet_t*)malloc(sizeof(Packet_t));
   assert(packet != NULL);
+  
+  // initialize values
   packet->stream_id = _stream_id;
   packet->tag = _tag;
   packet->fmt_str = strdup(fmt);
@@ -41,7 +47,6 @@ Packet_t* new_Packet_t(int val, unsigned short _stream_id,
   packet->destroy_data = false;
   packet->data_elements = new_empty_vector_t();
 
-  PDR pdrs;
   mrn_dbg(3, mrn_printf(FLF, stderr, "stream_id:%d, tag:%d, fmt:\"%s\"\n", packet->stream_id, packet->tag, packet->fmt_str));
 
   packet->src_rank = UnknownRank;
@@ -70,18 +75,21 @@ Packet_t* new_Packet_t(int val, unsigned short _stream_id,
 Packet_t* new_Packet_t_2(unsigned short istream_id, int itag, 
                       /*const*/ char* ifmt_str, ... )
 {
-  // initialize values
+  va_list arg_list;
+  PDR pdrs;
+    
   Packet_t* packet = (Packet_t*)malloc(sizeof(Packet_t));
   assert(packet != NULL);
+  
+  // initialize values
   packet->stream_id = (uint16_t)istream_id;
   packet->tag = itag;
-  packet->fmt_str = ifmt_str;
+  packet->fmt_str = strdup(ifmt_str);
   packet->buf = NULL;
   packet->inlet_rank = UnknownRank;
   packet->destroy_data = false;
   packet->data_elements = new_empty_vector_t();
 
-  va_list arg_list;
   mrn_dbg(2, mrn_printf(FLF, stderr, "stream_id:%d, tag: %d, fmt: \"%s\"\n",
                         istream_id, itag, ifmt_str));
 
@@ -94,7 +102,6 @@ Packet_t* new_Packet_t_2(unsigned short istream_id, int itag,
   packet->buf = ( char* ) malloc( packet->buf_len );
   assert( packet->buf );
 
-  PDR pdrs;
   pdrmem_create(&pdrs, packet->buf, packet->buf_len, PDR_ENCODE);
 
   if (!Packet_pdr_packet(&pdrs, packet)) {
@@ -112,8 +119,11 @@ Packet_t* new_Packet_t_2(unsigned short istream_id, int itag,
 
 Packet_t* new_Packet_t_3(unsigned int ibuf_len, char* ibuf, Rank iinlet_rank)
 {
+  PDR pdrs;
   Packet_t* packet = (Packet_t*)malloc(sizeof(Packet_t));
   assert(packet != NULL);
+  
+  // initialize values
   packet->stream_id = 0;
   packet->fmt_str = NULL;
   packet->buf = ibuf;
@@ -122,7 +132,6 @@ Packet_t* new_Packet_t_3(unsigned int ibuf_len, char* ibuf, Rank iinlet_rank)
   packet->destroy_data = true;
   packet->data_elements = new_empty_vector_t();
 
-  PDR pdrs;
   mrn_dbg_func_begin();
   
   if (packet->buf_len == 0) 
@@ -159,16 +168,17 @@ char* Packet_get_FormatString(Packet_t* packet)
 
 void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
 {
-  mrn_dbg_func_begin();
-
   DataElement_t* cur_elem = new_DataElement_t();
-
-  char* fmt = (char*)malloc(sizeof(char)*(strlen(packet->fmt_str)+1));
-  assert(fmt != NULL);
-  if (packet->fmt_str != NULL)
-        strncpy(fmt, packet->fmt_str, strlen(packet->fmt_str)+1);
+  char* fmt;
   char* delim = " \t\n%";
   char* tok;
+    
+  mrn_dbg_func_begin();
+
+  fmt = (char*)malloc(sizeof(char)*(strlen(packet->fmt_str)+1));
+  assert(fmt);
+  if (packet->fmt_str != NULL)
+        strncpy(fmt, packet->fmt_str, strlen(packet->fmt_str)+1);
 
   tok = strtok(fmt, delim);
 
@@ -236,9 +246,10 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
         break;
     }
 
-    DataElement_t* new_elem = new_DataElement_t();
-    *new_elem = *cur_elem;
-    pushBackElement(packet->data_elements, new_elem);
+    //DataElement_t* new_elem = new_DataElement_t();
+    //*new_elem = *cur_elem;
+    //pushBackElement(packet->data_elements, new_elem);
+	packet = Packet_pushBackElement(packet, cur_elem);
 
     tok = strtok(NULL, delim);
   }
@@ -247,14 +258,29 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
 
 }
 
+Packet_t* Packet_pushBackElement(Packet_t* packet, DataElement_t* cur_elem)
+{
+	DataElement_t* new_elem = (DataElement_t*)malloc(sizeof(DataElement_t));
+	*new_elem = *cur_elem;
+	pushBackElement(packet->data_elements, new_elem);
+
+	return packet;
+}
+
 bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
 {
     
     unsigned int i;
     bool_t retval = 0;
     DataElement_t * cur_elem;
+    char* op_str;
+    char* fmt;
+    char* delim = " \t\n%";
+    char* tok;
+    void **vp;
+    char **cp;
 
-    char*  op_str = (char*)malloc(sizeof(char)*9);
+    op_str = (char*)malloc(sizeof(char)*9);
     assert(op_str);
     if( pdrs->p_op == PDR_ENCODE )
         strcpy(op_str, "ENCODING");
@@ -292,23 +318,17 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
         return true;
     }
 
-    char* fmt;
     if (pkt->fmt_str) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "pkt->fmt_str=%s\n", pkt->fmt_str));
         fmt = (char*)malloc(sizeof(char)*(strlen(pkt->fmt_str)+1));
         assert(fmt);
         strncpy(fmt, pkt->fmt_str, strlen(pkt->fmt_str)+1);
     } else {
         fmt = "";
     }
-    mrn_dbg(1, mrn_printf(FLF, stderr, "fmt=%s\n", fmt)); 
-    char* delim = " \t\n%";
-    char* tok;
 
     i = 0;
     tok = strtok(fmt, delim);
     while( tok != NULL ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "tok=%s\n", tok));
 
         if( pdrs->p_op == PDR_ENCODE ) {
             cur_elem = (DataElement_t *)(pkt->data_elements->vec[i]); 
@@ -318,7 +338,6 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
             cur_elem->type = DataType_Fmt2Type( tok );
         }
      
-        mrn_dbg(1, mrn_printf(FLF, stderr, "cur_elem->type=%d\n", cur_elem->type)); 
         switch ( cur_elem->type ) {
         case UNKNOWN_T:
             assert( 0 );
@@ -425,8 +444,8 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
                 if( pdrs->p_op == PDR_DECODE ) {
                     cur_elem->val.p = NULL;
                 }
-                void **vp = &(cur_elem->val.p);
-                char **cp = (char**)vp;
+                vp = &(cur_elem->val.p);
+                cp = (char**)vp;
                 retval = pdr_wrapstring( pdrs, cp );             
                 mrn_dbg( 3, mrn_printf(FLF, stderr,
                                        "string (%p): \"%s\"\n", cur_elem->val.p, cur_elem->val.p));
@@ -454,9 +473,10 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
 int Packet_unpack(Packet_t* packet, const char *ifmt_str, ... )
 {
   va_list arg_list;
+  int ret;
 
   va_start(arg_list, ifmt_str);
-  int ret = Packet_ExtractVaList(packet, ifmt_str, arg_list);
+  ret = Packet_ExtractVaList(packet, ifmt_str, arg_list);
   va_end(arg_list);
   
   return ret;
@@ -475,17 +495,36 @@ int Packet_ExtractVaList(Packet_t* packet, char* fmt, va_list arg_list)
 
 void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
 {
-  mrn_dbg_func_begin();
-  int i = 0, array_len = 0;
+  int i = 0;
+  int array_len = 0;
   DataElement_t* cur_elem = new_DataElement_t();
-  void *tmp_ptr, *tmp_array;
+  void *tmp_ptr;
+  void *tmp_array;
+  char* fmt;
+  char* delim = " \t\n%";
+  char* tok;
+   
+  // variables for data types
+  char* cp;
+  unsigned char* ucp;
+  short int* hdp;
+  unsigned short int* uhdp;
+  int* dp;
+  unsigned int* udp;
+  int64_t* ldp;
+  uint64_t* uldp;
+  float* fp;
+  double* lfp;
+  const char** cpp;
 
-  char* fmt = (char*)malloc(sizeof(char)*(strlen(packet->fmt_str)+1));
+  unsigned j;
+
+  mrn_dbg_func_begin();
+
+  fmt = (char*)malloc(sizeof(char)*(strlen(packet->fmt_str)+1));
   assert(fmt != NULL);
   if (packet->fmt_str != NULL)
     strncpy(fmt, packet->fmt_str, strlen(packet->fmt_str)+1);
-  char* delim = " \t\n%";
-  char* tok;
 
   tok = strtok(fmt, delim);
   while( tok != NULL ) {
@@ -497,62 +536,62 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
         assert(0);
 
       case CHAR_T: {
-          char* cp = va_arg( arg_list, char * );
+          cp = va_arg( arg_list, char * );
           *cp = cur_elem->val.c;
           break;
       }
       case UCHAR_T: {
-          unsigned char* ucp = va_arg( arg_list, unsigned char * );
+          ucp = va_arg( arg_list, unsigned char * );
           *ucp = cur_elem->val.uc;
           break;
       }
 
       case INT16_T: {
-          short int* hdp = va_arg( arg_list, short int * );
+          hdp = va_arg( arg_list, short int * );
           *hdp = cur_elem->val.hd;
           break;
       }
       case UINT16_T: {
-          unsigned short int* uhdp = va_arg( arg_list, unsigned short int * );
+          uhdp = va_arg( arg_list, unsigned short int * );
           *uhdp = cur_elem->val.uhd;
           break;
       }
 
       case INT32_T: {
-          int* dp = va_arg( arg_list, int * );
+          dp = va_arg( arg_list, int * );
           *dp = cur_elem->val.d;
           break;
       }
       case UINT32_T: {
-          unsigned int* udp = va_arg( arg_list, unsigned int * );
+          udp = va_arg( arg_list, unsigned int * );
           *udp = cur_elem->val.ud;
           break;
       }
 
       case INT64_T: {
-          int64_t* ldp = va_arg( arg_list, int64_t * );
+          ldp = va_arg( arg_list, int64_t * );
           *ldp = cur_elem->val.ld;
           break;
       }
       case UINT64_T: {
-          uint64_t* uldp = va_arg( arg_list, uint64_t * );
+          uldp = va_arg( arg_list, uint64_t * );
           *uldp = cur_elem->val.uld;
           break;
       }
 
       case FLOAT_T: {
-          float* fp = va_arg( arg_list, float * );
+          fp = va_arg( arg_list, float * );
           *fp = cur_elem->val.f;
           break;
       }
       case DOUBLE_T: {
-          double* lfp = va_arg( arg_list, double * );
+		  lfp = va_arg(arg_list, double *);
           *lfp = cur_elem->val.lf;
           break;
       }
 
       case STRING_T: {
-          const char** cpp = ( const char ** ) va_arg( arg_list, const char ** );
+          cpp = ( const char ** ) va_arg( arg_list, const char ** );
           *cpp = strdup( (const char *) cur_elem->val.p );
           assert( *cpp != NULL );
           break;
@@ -677,7 +716,6 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
           if( array_len > 0 ) {
              tmp_array = malloc(array_len);
              assert( tmp_array != NULL );
-             unsigned j;
              for(j = 0; j < cur_elem->array_len; j++ ) {
                 (( char ** ) tmp_array)[j] = strdup( ((const char **)(cur_elem->val.p))[j] );
                 assert( (( char ** ) tmp_array)[j] != NULL );

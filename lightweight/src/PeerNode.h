@@ -52,4 +52,6 @@ int PeerNode_recv( PeerNode_t* node,  /* Packet_t* packet*/ vector_t* opacket);
 
 int PeerNode_flush( PeerNode_t* peer);
 
+void PeerNode_mark_Failed(PeerNode_t* node);
+
 #endif /* __peernode_h */

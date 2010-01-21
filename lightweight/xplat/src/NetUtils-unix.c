@@ -7,12 +7,12 @@
 
 #include "xplat/NetUtils.h"
 
-int GetLastError()
+int NetUtils_GetLastError()
 {
   return errno;
 }
 
-int GetLocalHostName(char* this_host) 
+int NetUtils_GetLocalHostName(char* this_host) 
 {
 #if defined(arch_crayxt)
     // on the XT, the node number is available in /proc/cray_xt/nid

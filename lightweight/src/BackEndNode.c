@@ -28,27 +28,30 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
                               Port ipport,
                               Rank iprank)
 {
-  BackEndNode_t* be = (BackEndNode_t*)malloc(sizeof(BackEndNode_t));
-  assert(be != NULL);
-  be->network = inetwork;
-  be->myhostname = imyhostname;
-  be->myrank = imyrank;
-  be->myport = UnknownPort;
-  be->phostname = iphostname;
-  be->pport = ipport;
-  be->prank = iprank;
-  be->incarnation = 0;
+    BackEndNode_t* be;
+    PeerNode_t* parent;
 
-  PeerNode_t* parent = Network_new_PeerNode(inetwork, iphostname, ipport, iprank, true, true);
-  be->network->parent = parent;
+    be = (BackEndNode_t*)malloc(sizeof(BackEndNode_t));
+    assert(be != NULL);
+    be->network = inetwork;
+    be->myhostname = imyhostname;
+    be->myrank = imyrank;
+    be->myport = UnknownPort;
+    be->phostname = iphostname;
+    be->pport = ipport;
+    be->prank = iprank;
+    be->incarnation = 0;
 
-  be->network->local_hostname = imyhostname;
-  be->network->local_rank = imyrank;
-  be->network->local_back_end_node = be;
+    parent = Network_new_PeerNode(inetwork, iphostname, ipport, iprank, true, true);
+    be->network->parent = parent;
+
+    be->network->local_hostname = imyhostname;
+    be->network->local_rank = imyrank;
+    be->network->local_back_end_node = be;
   
-  be->network->network_topology = new_NetworkTopology_t(inetwork, imyhostname, UnknownPort, imyrank, true);
+    be->network->network_topology = new_NetworkTopology_t(inetwork, imyhostname, UnknownPort, imyrank, true);
 
-  return be; 
+    return be; 
 }
 
 
@@ -63,9 +66,7 @@ BackEndNode_t* CreateBackEndNode ( Network_t* inetwork,
   // create the new backend node
   BackEndNode_t* be = new_BackEndNode_t(inetwork, imy_hostname, imy_rank, iphostname, ipport, iprank); 
 
-  mrn_dbg(1, mrn_printf(FLF, stderr, "CreateBackEndNode about to call ChildNode_init_newChildDataConnection\n"));
   // establish data connection with parent
-  mrn_dbg(5, mrn_printf(FLF, stderr, "about to connect to parent, %s\n", be->network->parent->hostname));
   if (ChildNode_init_newChildDataConnection(be, be->network->parent, UnknownRank) == -1) {
     mrn_dbg (1, mrn_printf(FLF, stderr,
                             "init_newBEDataConnection() failed\n"));
@@ -87,11 +88,11 @@ BackEndNode_t* CreateBackEndNode ( Network_t* inetwork,
 
 int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
 {
-  mrn_dbg_func_begin();
-
   int goaway = 0;
   char delete_backend;
   
+  mrn_dbg_func_begin();
+
   Packet_unpack(packet, "%c", &delete_backend);
   if (delete_backend == 't') {
       mrn_dbg(3, mrn_printf(FLF, stderr, "Back-end will exit\n"));
@@ -120,71 +121,72 @@ int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
 
 int BackEndNode_proc_newStream(BackEndNode_t* be, Packet_t* packet)
 {
-  unsigned int num_backends;
-  Rank *backends;
-  int stream_id, tag;
-  int ds_filter_id, us_filter_id, sync_id;
-
-  mrn_dbg_func_begin();
-
-  tag = packet->tag;
-
-  if (tag == PROT_NEW_HETERO_STREAM) {
+    unsigned int num_backends;
+    Rank *backends;
+    int stream_id, tag;
+    int ds_filter_id, us_filter_id, sync_id;
     char* us_filters;
     char* sync_filters;
     char* ds_filters;
-    Rank me = be->network->local_rank;
+    Rank me;
 
-    if (Packet_ExtractArgList(packet, "%d %ad %s %s %s",
-        &stream_id, &backends, &num_backends, 
-        &us_filters, &sync_filters, &ds_filters) == -1) {
-      mrn_dbg(1, mrn_printf(FLF, stderr, "Packet_ExtractArgList() failed\n"));
-      return -1;
-    }
+    mrn_dbg_func_begin();
+
+    tag = packet->tag;
+
+    if (tag == PROT_NEW_HETERO_STREAM) {
+        me = be->network->local_rank;
+
+        if (Packet_ExtractArgList(packet, "%d %ad %s %s %s",
+            &stream_id, &backends, &num_backends, 
+            &us_filters, &sync_filters, &ds_filters) == -1) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "Packet_ExtractArgList() failed\n"));
+            return -1;
+        }
   
-    if (!Stream_find_FilterAssignment(us_filters, me, us_filter_id)) {
-      mrn_dbg(3, mrn_printf(FLF, stderr, "Stream_find_FilterAssignment(upstream) failed, using default\n"));
-      us_filter_id = TFILTER_NULL;
-    }
+        if (!Stream_find_FilterAssignment(us_filters, me, us_filter_id)) {
+            mrn_dbg(3, mrn_printf(FLF, stderr, "Stream_find_FilterAssignment(upstream) failed, using default\n"));
+            us_filter_id = TFILTER_NULL;
+        }
     
-    if (!Stream_find_FilterAssignment(ds_filters, me, ds_filter_id)) {
-      mrn_dbg(3, mrn_printf(FLF, stderr, "Stream_find_FilterAssignment(downstream) failed, using default\n"));
-      ds_filter_id = TFILTER_NULL;
+        if (!Stream_find_FilterAssignment(ds_filters, me, ds_filter_id)) {
+            mrn_dbg(3, mrn_printf(FLF, stderr, "Stream_find_FilterAssignment(downstream) failed, using default\n"));
+            ds_filter_id = TFILTER_NULL;
+        }
+        if (!Stream_find_FilterAssignment(sync_filters, me, sync_id)) {
+            mrn_dbg(3, mrn_printf(FLF, stderr, "Stream_find_FilterAssignment(sync) failed, using default\n"));
+            sync_id = SFILTER_WAITFORALL;
+        }
     }
-    if (!Stream_find_FilterAssignment(sync_filters, me, sync_id)) {
-      mrn_dbg(3, mrn_printf(FLF, stderr, "Stream_find_FilterAssignment(sync) failed, using default\n"));
-      sync_id = SFILTER_WAITFORALL;
+
+    else if (tag == PROT_NEW_STREAM) {
+        if (Packet_ExtractArgList(packet, "%d %ad %d %d %d", 
+                                  &stream_id, &backends,&num_backends,
+                                  &us_filter_id, &sync_id, &ds_filter_id) == -1) 
+        {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "Packet_ExtractArgList() failed\n"));
+            return -1;
+        }
     }
-  }
 
-  else if (tag == PROT_NEW_STREAM) {
-    if (Packet_ExtractArgList(packet, "%d %ad %d %d %d", 
-                              &stream_id, &backends,&num_backends,
-                              &us_filter_id, &sync_id, &ds_filter_id) == -1) 
-    {
-      mrn_dbg(1, mrn_printf(FLF, stderr, "Packet_ExtractArgList() failed\n"));
-      return -1;
-    }
-  }
+    Network_new_Stream(be->network, stream_id, backends, num_backends,
+                          us_filter_id, sync_id, ds_filter_id);
 
-  Network_new_Stream(be->network, stream_id, backends, num_backends,
-                      us_filter_id, sync_id, ds_filter_id);
+    mrn_dbg_func_end();
 
-  mrn_dbg_func_end();
-
-  return 0;
-
+    return 0;
 }
 
 int BackEndNode_proc_UpstreamFilterParams(BackEndNode_t* be, 
                                           Packet_t* ipacket)
 {
   int stream_id;
+  Stream_t* strm;
 
   mrn_dbg_func_begin();
 
   stream_id = ipacket->stream_id;
-  Stream_t* strm = Network_get_Stream(be->network, stream_id);
+  strm = Network_get_Stream(be->network, stream_id);
   if (strm == NULL) {
     mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", stream_id));
     return -1;
@@ -198,11 +200,12 @@ int BackEndNode_proc_UpstreamFilterParams(BackEndNode_t* be,
 int BackEndNode_proc_DownstreamFilterParams(BackEndNode_t* be, Packet_t* ipacket)
 {
   int stream_id;
+  Stream_t* strm;
 
   mrn_dbg_func_begin();
   stream_id = ipacket->stream_id;
 
-  Stream_t* strm = Network_get_Stream(be->network, stream_id);
+  strm = Network_get_Stream(be->network, stream_id);
   if (strm == NULL) {
     mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", stream_id));
     return -1;
@@ -236,7 +239,8 @@ int BackEndNode_proc_FailureReportFromParent(BackEndNode_t* be, Packet_t* ipacke
   Rank failed_rank;
   Packet_unpack(ipacket, "%uhd", &failed_rank);
   Network_remove_Node(be->network, failed_rank, false);
-  
+
+  return 0;
 }
 
 int BackEndNode_proc_NewParentReportFromParent(BackEndNode_t* be, Packet_t* ipacket)
@@ -246,22 +250,26 @@ int BackEndNode_proc_NewParentReportFromParent(BackEndNode_t* be, Packet_t* ipac
   Packet_unpack(ipacket, "%ud %ud", &child_rank, &parent_rank);
 
   Network_change_Parent(be->network, child_rank, parent_rank);
+
+  return 0;
 }
 
 int BackEndNode_proc_DataFromParent(BackEndNode_t* be, Packet_t* ipacket)
 {
+  int retval = 0;
+  Stream_t* stream;
+  Packet_t* opacket;
+
   mrn_dbg_func_begin();
 
-  int retval = 0;
-
-  Stream_t* stream = Network_get_Stream(be->network, (unsigned int)ipacket->stream_id);
+  stream = Network_get_Stream(be->network, (unsigned int)ipacket->stream_id);
 
   if (stream == NULL) {
     mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", ipacket->stream_id));
     return -1;
   }
 
-  Packet_t* opacket = (Packet_t*)malloc(sizeof(Packet_t));
+  opacket = (Packet_t*)malloc(sizeof(Packet_t));
   assert(opacket != NULL);
   Stream_push_Packet(stream, ipacket, opacket, false);
  

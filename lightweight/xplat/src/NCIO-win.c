@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <sys/uio.h>
 #include <string.h>
-#include <unistd.h>
 #include <bits/uio.h>
 #include <limits.h>
 #include <sys/socket.h>

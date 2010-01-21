@@ -125,6 +125,8 @@ Rank NetworkTopology_Node_get_Parent(Node_t* node);
 
 void NetworkTopology_Node_set_Parent(Node_t* node, Node_t* parent);
 
+int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, SerialGraph_t* isg, int iupdate);
+
 unsigned int NetworkTopology_Node_find_SubTreeHeight(Node_t* node);
 
 unsigned int NetworkTopology_Node_get_Proximity(Node_t* adopter, Node_t* iorphan);

@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <vector>
+#include <sstream>
 using namespace MRN;
 using namespace MRN_test;
 Test * test;
@@ -23,7 +24,7 @@ int main(int argc, char **argv)
         exit(-1);
     }
     if (atoi(argv[2]) < 1) {
-        fprintf(stderr, "Argument 2, num streams, must be positive. Given %d\n", argv[2]);
+        fprintf(stderr, "Argument 2, num streams, must be positive. Given %d\n", atoi(argv[2]));
         exit(-1);
     }
 

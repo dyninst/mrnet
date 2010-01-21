@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <string.h>
 
+#include "xplat/Types.h"
 #include "xplat/NetUtils.h"
 
 static int checked_resolve_env = 0;

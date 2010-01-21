@@ -7,9 +7,12 @@
 #define __vector_h 1
 
 #include <string.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifndef os_windows
+#include <unistd.h>
+#endif
 
 typedef struct {
     void** vec;

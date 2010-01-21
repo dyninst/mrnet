@@ -6,8 +6,10 @@
 #ifndef __protocol_h
 #define __protocol_h 1
 
+#ifdef __cplusplus
 namespace MRN
 {
+#endif
 
 enum ProtocolTags {
     PROT_SUBTREE_INFO_REQ = FirstSystemTag,
@@ -43,6 +45,8 @@ enum ProtocolTags {
     PROT_GUI_CPUPERCENT
 };
 
+#ifdef __cplusplus
 } // namespace MRN
+#endif 
 
 #endif /* __protocol_h */

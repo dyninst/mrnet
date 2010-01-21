@@ -119,7 +119,7 @@ int main( int argc, char ** argv )
 
     // tell BEs to start sending data (max_num_blocks waves expected);
     Stream * search_stream = net->new_Stream(comm_BC, up, sync, down);
-    search_stream->set_FilterParameters(true, "%s", search_str);
+    search_stream->set_FilterParameters(FILTER_UPSTREAM_TRANS, "%s", search_str);
     if( search_stream->send(PROT_SEARCH, "%d", max_num_blocks) == -1 ) {
         fprintf( stderr, "ERROR: multi_stream::send() failure\n");
         delete net;

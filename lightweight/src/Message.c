@@ -16,24 +16,27 @@
 
 #include "xplat/NCIO.h"
 
+#ifdef os_windows
+#include <winsock2.h>
+const int NCBlockingRecvFlag = 0;
+#else
 const int NCBlockingRecvFlag = MSG_WAITALL;
+#endif
+
+
 
 Message_t* new_Message_t()
 {
-  Message_t* new_message = (Message_t*)malloc(sizeof(Message_t));
-  assert(new_message);
-  new_message->packet = (Packet_t*)malloc(sizeof(Packet_t));
-  assert(new_message->packet);
+    Message_t* new_message = (Message_t*)malloc(sizeof(Message_t));
+    assert(new_message);
+    new_message->packet = (Packet_t*)malloc(sizeof(Packet_t));
+    assert(new_message->packet);
 
-  return new_message;
+    return new_message;
 }
 
 int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_rank)
 {
-  mrn_dbg_func_begin();
- 
-  mrn_dbg(5, mrn_printf(FLF, stderr, "called with sock_fd = %d\n", sock_fd));
-
   unsigned int i;
   int32_t buf_len;
   uint32_t no_packets=0;
@@ -41,6 +44,15 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
   char *buf = NULL;
   PDR pdrs;
   enum pdr_op op = PDR_DECODE;
+  int retval;
+  int readRet;
+  NCBuf_t** ncbufs;
+  int total_bytes = 0;
+  Packet_t* new_packet;
+    
+  mrn_dbg_func_begin();
+ 
+  mrn_dbg(5, mrn_printf(FLF, stderr, "called with sock_fd = %d\n", sock_fd));
 
   // packet count
 
@@ -53,7 +65,6 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
 
   mrn_dbg(3, mrn_printf(FLF, stderr, "read(%d, %p, %d) ...\n", sock_fd, buf, buf_len));
 
-  int retval;
   if ((retval = MRN_read(net, sock_fd, buf, buf_len)) != buf_len) {
     if (retval == -1)
       error(ERR_SYSTEM, iinlet_rank, "MRN_read() %s", strerror(errno));
@@ -101,7 +112,7 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
   mrn_dbg(3, mrn_printf(FLF, stderr, 
               "Calling read(%d, %p, %d) for %d buffer lengths.\n",
               sock_fd, buf, buf_len, no_packets));
-  int readRet = MRN_read(net, sock_fd, buf, buf_len);
+  readRet = MRN_read(net, sock_fd, buf, buf_len);
   if (readRet != buf_len) {
     if (readRet == -1)
       error(ERR_SYSTEM, iinlet_rank, "MRN_read() %s", strerror(errno));
@@ -126,11 +137,11 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
   free(buf);
 
   /* recv packet buffers */
-  NCBuf_t* ncbufs[no_packets];
+  //NCBuf_t* ncbufs[no_packets];
+  ncbufs = (NCBuf_t**)malloc(sizeof(NCBuf_t)*no_packets);
 
   mrn_dbg(3, mrn_printf(FLF, stderr, "Reading %d packets of size: [", no_packets));
 
-  int total_bytes = 0;
   for (i = 0; i < no_packets; i++) {
     ncbufs[i] = new_NCBuf_t();
     ncbufs[i]->buf = (char*)malloc(packet_sizes[i]);
@@ -164,7 +175,7 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
   for (i = 0; i < no_packets; i++) {
     mrn_dbg(3, mrn_printf(FLF, stderr, "Creating packet[%d] ...\n",i));
 
-    Packet_t* new_packet = new_Packet_t_3(ncbufs[i]->len, ncbufs[i]->buf, iinlet_rank);
+    new_packet = new_Packet_t_3(ncbufs[i]->len, ncbufs[i]->buf, iinlet_rank);
 
     if (new_packet == NULL) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "packet creation failed\n"));
@@ -197,6 +208,10 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
   int buf_len;
   PDR pdrs;
   enum pdr_op op = PDR_ENCODE;
+  NCBuf_t* ncbuf = new_NCBuf_t();
+  int total_bytes;
+  int mcwret;
+  int sret;
 
   mrn_dbg(3, mrn_printf(FLF, stderr, "Sending packets from message %p\n", msg_out));
 
@@ -210,13 +225,12 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
   assert(packet_sizes);
 
   // Process packet to prepare for send()
-  NCBuf_t* ncbuf = new_NCBuf_t();
- 
-  ncbuf->buf = (char*)malloc(sizeof(msg_out->packet->buf_len));
+  //ncbuf->buf = (char*)malloc(sizeof(msg_out->packet->buf_len));
+  //assert(ncbuf->buf);
   ncbuf->buf = msg_out->packet->buf;
   ncbuf->len = msg_out->packet->buf_len;
   packet_sizes[0] = ncbuf->len;
-  int total_bytes = ncbuf->len;
+  total_bytes = ncbuf->len;
 
   /* put how many packets are going (always 1) */
 
@@ -267,7 +281,7 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
   }
 
   mrn_dbg(3, mrn_printf(FLF, stderr, "Calling write(%d, %p, %d)\n", sock_fd, buf, buf_len));
-  int mcwret = MRN_write(net, sock_fd, buf, buf_len);
+  mcwret = MRN_write(net, sock_fd, buf, buf_len);
   if (mcwret != buf_len) {
     mrn_dbg(1, mrn_printf(FLF, stderr, "write failed\n"));
     perror("write()");
@@ -288,7 +302,7 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
   mrn_dbg(5, mrn_printf(FLF, stderr, 
           "...ncbuf->len=%d, ncbuf->buf=%s\n", ncbuf->len, ncbuf->buf));
 
-  int sret = NCSend(sock_fd, ncbuf, no_packets);
+  sret = NCSend(sock_fd, ncbuf, no_packets);
   if (sret != total_bytes) {
     mrn_dbg(3, mrn_printf(FLF, stderr,
             "NCSend() returned %d of %d bytes, errno = %d, nbuffers = %d\n", sret, total_bytes, errno, no_packets));
@@ -317,13 +331,16 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
 
 int MRN_write(Network_t* net, int ifd, /* const */ void *ibuf, int ibuf_len)
 {
-  mrn_dbg(3, mrn_printf(FLF, stderr, "%d, %p, %d\n", ifd, ibuf, ibuf_len));
 
-  int ret = send(ifd, (char*)ibuf, ibuf_len, 0);
+    int ret;
 
-  mrn_dbg(3, mrn_printf(FLF, stderr, "send => %d\n", ret));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "%d, %p, %d\n", ifd, ibuf, ibuf_len));
+
+    ret = send(ifd, (char*)ibuf, ibuf_len, 0);
+
+    mrn_dbg(3, mrn_printf(FLF, stderr, "send => %d\n", ret));
   
-  return ret;
+    return ret;
 
 }
 

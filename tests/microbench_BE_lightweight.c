@@ -4,7 +4,12 @@
  ****************************************************************************/
 
 #include <assert.h>
+
+#ifndef os_windows
 #include <unistd.h>
+#else
+#include <winsock2.h>
+#endif
 
 #include "microbench_lightweight.h"
 
@@ -13,10 +18,21 @@ int main( int argc, char* argv[] )
     Stream_t* stream = (Stream_t*)malloc(sizeof(Stream_t));
     int tag;
     Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
+	int bCont;
+	Network_t* net;
+	int done;
+	int rret;
+	int nReductions = 0;
+    int ival;
+	int i;
 
     if( getenv( "MRN_DEBUG_BE" ) != NULL ) {
-        fprintf( stderr, "BE: spinning for debugger, pid=%d\n", getpid() );
-        int bCont=false;
+#ifndef os_windows
+		fprintf( stderr, "BE: spinning for debugger, pid=%d\n", getpid() );
+#else
+		fprintf(stderr, "BE: spinning for debugger, pid=%d\n", (int)GetCurrentProcessId());
+#endif
+        bCont=false;
         while( !bCont )
         {
             // spin
@@ -24,14 +40,14 @@ int main( int argc, char* argv[] )
     }
 
     // join the MRNet net
-    Network_t* net = Network_CreateNetworkBE( argc, argv );
+    net = Network_CreateNetworkBE( argc, argv );
 
     // participate in the broadcast/reduction roundtrip latency experiment
-    int done = false;
+    done = false;
     while( !done ) {
         // receive the broadcast message
         tag = 0;
-        int rret = Network_recv(net,  &tag, pkt, &stream);
+        rret = Network_recv(net,  &tag, pkt, &stream);
         if( rret == -1 ) {
             fprintf(stderr, "BE: Stream_recv() failed\n");
             return -1;
@@ -66,12 +82,10 @@ int main( int argc, char* argv[] )
     // determine the number of reductions required
     assert( tag == MB_RED_THROUGHPUT );
     assert( stream != NULL );
-    int nReductions = 0;
-    int ival;
+
     Packet_unpack(pkt,  "%d %d", &nReductions, &ival );
 
     // do the reductions
-    int i;
     for( i = 0; i < nReductions; i++ ) {
 
         // send a value for the reduction
@@ -84,17 +98,14 @@ int main( int argc, char* argv[] )
     // cleanup
     // receive a go-away message
     tag = 0;
-    int rret = Network_recv(net,  &tag, pkt, &stream);
+    rret = Network_recv(net,  &tag, pkt, &stream);
     if( (rret != -1) && (tag != MB_EXIT) ) {
         fprintf(stderr, "BE: received unexpected go-away tag %d\n", tag);
     }
     if( tag != MB_EXIT ) {
         fprintf(stderr, "BE: received unexpected go-away tag %d\n", tag);
     }
-#if 0
-    // FE delete net will shut us down, so just go to sleep!!
-    sleep(10);
-#endif 
+
     Network_recv(net,  &tag, pkt, &stream);
 
     return 0;

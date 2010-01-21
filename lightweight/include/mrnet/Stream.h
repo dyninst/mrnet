@@ -77,4 +77,6 @@ void Stream_print_PerfData(Stream_t* stream,
                             perfdata_metric_t metric,
                             perfdata_context_t context);
 
+int Stream_remove_Node(Stream_t* stream, Rank irank);
+
 #endif /* __stream_h */

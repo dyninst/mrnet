@@ -45,6 +45,8 @@ char* Packet_get_FormatString(Packet_t* packet);
 
 void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list);
 
+Packet_t* Packet_pushBackElement(Packet_t* packet, DataElement_t* cur_elem);
+
 bool_t Packet_pdr_packet(PDR *pdrs,  Packet_t* pkt);
 
 int Packet_unpack( Packet_t* packet, const char *ifmt_str, ... );

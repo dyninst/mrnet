@@ -5,13 +5,18 @@
 
 #include <iostream>
 #include <string>
-#include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
 
 #include "mrnet/MRNet.h"
 #include "timer.h"
 #include "microbench.h"
+
+#ifndef os_windows
+#include <unistd.h>
+#else
+#include <winsock2.h>
+#endif
 
 using namespace MRN;
 const unsigned int kMaxRecvTries = 1000000;
@@ -49,7 +54,11 @@ main( int argc, char* argv[] )
     int ret = 0;
 
     if( getenv( "MRN_DEBUG_FE" ) != NULL ) {
-        fprintf( stderr, "FE: spinning, pid=%d\n", getpid() );
+#ifndef os_windows
+		fprintf( stderr, "FE: spinning, pid=%d\n", getpid() );
+#else
+		fprintf(stderr, "FE: spinning, pid=%d\n", (int)GetCurrentProcessId());
+#endif
         bool bCont=false;
         while( !bCont )
         {

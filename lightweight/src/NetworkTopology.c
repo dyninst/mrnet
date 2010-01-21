@@ -21,6 +21,9 @@ Node_t* new_Node_t(char* ihostname,
                   Rank irank, 
                   int iis_backend)
 {
+
+  static int first_time = true;
+  
   Node_t* node = (Node_t*)malloc(sizeof(Node_t));
   assert(node);
   node->hostname = ihostname;
@@ -35,7 +38,6 @@ Node_t* new_Node_t(char* ihostname,
   node->subtree_height = 0;
   node->adoption_score = 0;
 
-  static int first_time = true;
   
   if (first_time) {
     first_time = false;
@@ -98,6 +100,10 @@ void NetworkTopology_get_OrphanNodes(NetworkTopology_t* net_top,
 
 char* NetworkTopology_get_LocalSubTreeStringPtr(NetworkTopology_t* net_top)
 { 
+  char* localhost;
+  SerialGraph_t* my_subgraph;
+  char* retval;
+    
   mrn_dbg_func_begin();
 
   if (net_top->serial_graph != NULL)
@@ -106,14 +112,14 @@ char* NetworkTopology_get_LocalSubTreeStringPtr(NetworkTopology_t* net_top)
   
   NetworkTopology_serialize (net_top, net_top->root);
 
-  char* localhost = Network_get_LocalHostName(net_top->net);
-  SerialGraph_t* my_subgraph = 
+  localhost = Network_get_LocalHostName(net_top->net);
+  my_subgraph = 
     SerialGraph_get_MySubTree(net_top->serial_graph,
                               localhost,
                               Network_get_LocalPort(net_top->net),
                               Network_get_LocalRank(net_top->net));
   
-  char* retval = strdup(my_subgraph->byte_array);
+  retval = strdup(my_subgraph->byte_array);
 
   mrn_dbg(5, mrn_printf(FLF, stderr, "returning '%s'\n", retval));
 
@@ -124,6 +130,7 @@ char* NetworkTopology_get_LocalSubTreeStringPtr(NetworkTopology_t* net_top)
 
 void NetworkTopology_serialize(NetworkTopology_t* net_top, Node_t* inode)
 {
+  int iter;
   
   if (inode->is_backend) {
     // leaf node, just add my name to serial representation and return
@@ -135,7 +142,6 @@ void NetworkTopology_serialize(NetworkTopology_t* net_top, Node_t* inode)
     SerialGraph_add_SubTreeRoot(net_top->serial_graph, inode->hostname, inode->port, inode->rank);
   }
 
-  int iter;
   for (iter = 0; iter < inode->children->size; iter++) {
     NetworkTopology_serialize(net_top, (Node_t*)(inode->children->vec[iter]));
   }
@@ -147,6 +153,8 @@ void NetworkTopology_serialize(NetworkTopology_t* net_top, Node_t* inode)
 
 int NetworkTopology_reset(NetworkTopology_t* net_top, char* itopology_str)
 {
+  SerialGraph_t* cur_sg;
+    
   mrn_dbg(5, mrn_printf(FLF, stderr, "Reseting topology to \"%s\"\n", itopology_str));
 
   if (net_top->serial_graph != NULL) {
@@ -178,7 +186,7 @@ int NetworkTopology_reset(NetworkTopology_t* net_top, char* itopology_str)
 ;
   insert(net_top->nodes, net_top->root->rank, net_top->root);
 
-  SerialGraph_t *cur_sg = (SerialGraph_t*)malloc(sizeof(SerialGraph_t));
+  cur_sg = (SerialGraph_t*)malloc(sizeof(SerialGraph_t));
   assert(cur_sg);
   for (cur_sg = SerialGraph_get_NextChild(net_top->serial_graph);
         cur_sg;
@@ -197,6 +205,12 @@ int NetworkTopology_reset(NetworkTopology_t* net_top, char* itopology_str)
 
 int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, SerialGraph_t* isg, int iupdate) 
 {
+    Node_t* node;
+    Node_t* new_node;
+    char* name;
+    Rank r;
+    SerialGraph_t* cur_sg;
+    
     mrn_dbg_func_begin();
     mrn_dbg(5, mrn_printf(FLF, stderr, "Node[%d] adding subgraph \"%s\"\n",
                         inode->rank, isg->byte_array));
@@ -205,7 +219,7 @@ int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, Seri
         pushBackElement(net_top->parent_nodes, inode);
 
     // search of root of subgraph
-    Node_t* node = (Node_t*)malloc(sizeof(Node_t));
+    node = (Node_t*)malloc(sizeof(Node_t));
     assert(node);
     node = NetworkTopology_find_Node(net_top, SerialGraph_get_RootRank(isg));
     if (node == NULL) {
@@ -215,7 +229,7 @@ int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, Seri
                             SerialGraph_get_RootPort(isg),
                             SerialGraph_get_RootRank(isg),
                             SerialGraph_is_RootBackEnd(isg));
-        Node_t* new_node = (Node_t*)malloc(sizeof(Node_t));
+        new_node = (Node_t*)malloc(sizeof(Node_t));
         assert(node);
         *new_node = *node;
         insert(net_top->nodes, node->rank, new_node);
@@ -226,8 +240,8 @@ int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, Seri
     }
 
     if (NetworkTopology_Node_is_BackEnd(node)) {
-        char* name = node->hostname;
-        Rank r = node->rank;
+        name = node->hostname;
+        r = node->rank;
         if (!findElement(net_top->backend_nodes, node)) {
             mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as backend\n", r));
             pushBackElement(net_top->backend_nodes, node);
@@ -238,7 +252,7 @@ int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, Seri
     // add root of new subgraph as child of input node
     NetworkTopology_set_Parent(net_top, node->rank, inode->rank, iupdate);
 
-    SerialGraph_t *cur_sg = (SerialGraph_t*)malloc(sizeof(SerialGraph_t));
+    cur_sg = (SerialGraph_t*)malloc(sizeof(SerialGraph_t));
     assert(cur_sg);
     SerialGraph_set_ToFirstChild(isg);
     for (cur_sg = SerialGraph_get_NextChild(isg);
@@ -254,6 +268,10 @@ int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, Seri
 
 int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
 {
+  Node_t* node_to_delete;
+  int i;
+  Node_t* cur_node;
+
   mrn_dbg_func_begin();
 
   if (net_top->root == inode)
@@ -267,11 +285,10 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
     net_top->backend_nodes = eraseElement(net_top->backend_nodes, inode);
   } else {
     // find appropriate node to delete (necessary b/c of how they are stored)
-    Node_t* node_to_delete = (Node_t*)malloc(sizeof(Node_t));
+    node_to_delete = (Node_t*)malloc(sizeof(Node_t));
     assert(node_to_delete);
-    int i;
     for (i = 0; i < net_top->parent_nodes->size; i++){
-        Node_t* cur_node = (Node_t*)net_top->parent_nodes->vec[i];
+        cur_node = (Node_t*)net_top->parent_nodes->vec[i];
         if (cur_node->rank == inode->rank) {
             node_to_delete = cur_node;
             break;
@@ -281,9 +298,8 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
   }
 
   // remove me as my children's parent, and set children as oprhans
-  int i;
   for (i = 0; i < inode->children->size; i++) {
-    Node_t* cur_node = (Node_t*)(inode->children->vec[i]);
+    cur_node = (Node_t*)(inode->children->vec[i]);
     if (cur_node->parent == inode) {
         NetworkTopology_Node_set_Parent(cur_node, NULL);
         pushBackElement(net_top->orphans, cur_node);
@@ -298,9 +314,12 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
 
 int NetworkTopology_remove_Node(NetworkTopology_t* net_top, Rank irank)
 {
+    Node_t* node_to_remove;
+    int retval;
+    
     mrn_dbg_func_begin();
     
-    Node_t* node_to_remove = NetworkTopology_find_Node(net_top, irank);
+    node_to_remove = NetworkTopology_find_Node(net_top, irank);
 
     if (node_to_remove == NULL) {
         return false;
@@ -313,7 +332,7 @@ int NetworkTopology_remove_Node(NetworkTopology_t* net_top, Rank irank)
         NetworkTopology_Node_remove_Child(node_to_remove->parent, node_to_remove);
     }
 
-    int retval = NetworkTopology_remove_Node_2(net_top, node_to_remove);
+    retval = NetworkTopology_remove_Node_2(net_top, node_to_remove);
 
     mrn_dbg_func_end();
 
@@ -332,9 +351,11 @@ TopologyLocalInfo_t* new_TopologyLocalInfo_t(NetworkTopology_t* topol, Node_t* n
 
 Node_t* NetworkTopology_find_Node(NetworkTopology_t* net_top, Rank irank)
 {
+    Node_t* ret;
+    
     mrn_dbg_func_begin();
     
-    Node_t* ret = (Node_t*)(get_val(net_top->nodes, irank));
+    ret = (Node_t*)(get_val(net_top->nodes, irank));
 
     mrn_dbg_func_end();
 
@@ -348,13 +369,14 @@ int NetworkTopology_Node_is_BackEnd(Node_t* node)
 
 void NetworkTopology_remove_SubGraph(NetworkTopology_t* net_top, Node_t* inode)
 {
+    int iter;
+    
     mrn_dbg_func_begin();
 
-    int iter;
     for (iter = 0; iter < inode->children->size; iter++) {
         Node_t* cur_node = (Node_t*)inode->children->vec[iter];
         NetworkTopology_remove_SubGraph(net_top, cur_node);
-        NetworkTopology_remove_Node(net_top, cur_node);
+        NetworkTopology_remove_Node_2(net_top, cur_node);
     }
 
     clear(inode->children);
@@ -364,16 +386,20 @@ void NetworkTopology_remove_SubGraph(NetworkTopology_t* net_top, Node_t* inode)
 
 int NetworkTopology_set_Parent(NetworkTopology_t* net_top, Rank ichild_rank, Rank inew_parent_rank, int iupdate)
 {
+    Node_t* child_node;
+    Node_t* new_parent_node;
+    int j;
+    
     mrn_dbg_func_begin();
 
-    Node_t* child_node = NetworkTopology_find_Node(net_top, ichild_rank);
+    child_node = NetworkTopology_find_Node(net_top, ichild_rank);
 
     if (child_node == NULL) {
         mrn_dbg_func_end();
         return 0;
     }
 
-    Node_t* new_parent_node = NetworkTopology_find_Node(net_top, inew_parent_rank);
+    new_parent_node = NetworkTopology_find_Node(net_top, inew_parent_rank);
 
     if (new_parent_node == NULL) {
         mrn_dbg_func_end();
@@ -389,7 +415,6 @@ int NetworkTopology_set_Parent(NetworkTopology_t* net_top, Rank ichild_rank, Ran
     NetworkTopology_remove_Orphan(net_top, child_node->rank); 
     
     //child_node->ascendants = new_parent_node->ascendants;
-    int j;
     for (j = 0; j < new_parent_node->ascendants->size; j++)
         pushBackElement(child_node->ascendants, new_parent_node->ascendants->vec[j]);
     if (!findElement(child_node->ascendants, new_parent_node))
@@ -416,17 +441,22 @@ int NetworkTopology_remove_Orphan(NetworkTopology_t* net_top, Rank r)
 
 void NetworkTopology_print(NetworkTopology_t* net_top, FILE * f) 
 {
-    char* cur_parent_str = (char*)malloc(sizeof(char)*256);
-    assert(cur_parent_str);
-    char* cur_child_str = (char*)malloc(sizeof(char)*256);
-    assert(cur_child_str);
+    char* cur_parent_str;
+    char* cur_child_str;
     char rank_str[128];
+    int node_iter;
+    Node_t* cur_node;
+    int set_iter;
+    
+    cur_parent_str = (char*)malloc(sizeof(char)*256);
+    assert(cur_parent_str);
+    cur_child_str = (char*)malloc(sizeof(char)*256);
+    assert(cur_child_str);
 
     mrn_dbg(5, mrn_printf(0,0,0, f, "\n***NetworkTopology***\n"));
 
-    int node_iter;
     for (node_iter = 0; node_iter < net_top->nodes->size; node_iter++) {
-        Node_t* cur_node = (Node_t*)(get_val(net_top->nodes, net_top->nodes->keys[node_iter]));
+        cur_node = (Node_t*)(get_val(net_top->nodes, net_top->nodes->keys[node_iter]));
 
         // Only print on lhs if root or have children
         if (cur_node == net_top->root || cur_node->children->size) {
@@ -436,7 +466,6 @@ void NetworkTopology_print(NetworkTopology_t* net_top, FILE * f)
             strcat(cur_parent_str, rank_str); 
             mrn_dbg(5, mrn_printf(0,0,0, f, "%s =>\n", cur_parent_str));
             
-            int set_iter;
             for (set_iter = 0; set_iter < cur_node->children->size; set_iter++){
                 Node_t* cur_child = (Node_t*)(cur_node->children->vec[set_iter]);
                 sprintf(rank_str, "%u", cur_child->rank);
@@ -456,7 +485,13 @@ Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top,
                                         ALGORITHM_T ialgorithm)
 {
     vector_t* potential_adopters = new_empty_vector_t(); // vec of Node_t*
-    Node_t* adopter = (Node_t*)malloc(sizeof(Node_t*));
+    Node_t* adopter;
+    Node_t* orphan;
+    int i, j;
+    Node_t* cur;
+    Node_t* cur_node;
+
+    adopter = (Node_t*)malloc(sizeof(Node_t*));
     assert(adopter);
 
     mrn_dbg_func_begin();
@@ -479,7 +514,7 @@ Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top,
         return adopter;
     }
 
-    Node_t* orphan = NetworkTopology_find_Node(net_top, ichild_rank);
+    orphan = NetworkTopology_find_Node(net_top, ichild_rank);
     assert(orphan);
 
     // computer list of potential adopters
@@ -499,14 +534,12 @@ Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top,
         // use weighted random selection to choose a parent
         NetworkTopology_compute_AdoptionScores(net_top, potential_adopters, orphan);
 
-        int j;
         for (j = 0; j < potential_adopters->size; j++) {
-            Node_t* cur = (Node_t*)(potential_adopters->vec[j]);
+            cur = (Node_t*)(potential_adopters->vec[j]);
             mrn_dbg(5, mrn_printf(FLF, stderr, "adopter[%d] is [%s:%d], adoption_wrs_key=%f\n", j, cur->hostname, cur->rank, cur->wrs_key)); 
         }   
         adopter = (Node_t*)(potential_adopters->vec[0]);
-        int i;
-        Node_t* cur_node = (Node_t*)malloc(sizeof(Node_t));
+        cur_node = (Node_t*)malloc(sizeof(Node_t));
         assert(cur_node);
         for (i = 1; i < potential_adopters->size; i++) {
             cur_node = (Node_t*)(potential_adopters->vec[i]);
@@ -543,6 +576,8 @@ void NetworkTopology_find_PotentialAdopters(NetworkTopology_t* net_top,
                                             Node_t* ipotential_adopter,
                                             vector_t* potential_adopters)
 {
+    int i;
+    
     mrn_dbg_func_begin();
 
     mrn_dbg(5, mrn_printf(FLF, stderr, 
@@ -565,7 +600,6 @@ void NetworkTopology_find_PotentialAdopters(NetworkTopology_t* net_top,
 
     pushBackElement(potential_adopters, ipotential_adopter);
 
-    int i;
     for (i = 0; i < ipotential_adopter->children->size; i++) {
         NetworkTopology_find_PotentialAdopters(net_top, iorphan, ipotential_adopter->children->vec[i], potential_adopters);
     }
@@ -577,9 +611,10 @@ void NetworkTopology_compute_AdoptionScores(NetworkTopology_t* net_top,
                                             vector_t* iadopters,
                                             Node_t* orphan)
 {
+    unsigned int i;
+    
     NetworkTopology_compute_TreeStatistics(net_top);
 
-    unsigned int i;
     for (i = 0; i < iadopters->size; i++) {
         NetworkTopology_Node_compute_AdoptionScore(net_top, (Node_t*)(iadopters->vec[i]), orphan, net_top->min_fanout, net_top->max_fanout, net_top->depth); 
     } 
@@ -590,13 +625,15 @@ void NetworkTopology_compute_AdoptionScores(NetworkTopology_t* net_top,
 
 void NetworkTopology_compute_TreeStatistics(NetworkTopology_t* net_top)
 {
+    int i;
+    double diff = 0, sum_of_square = 0;
+
     net_top->max_fanout = 0;
     net_top->depth = 0;
     net_top->min_fanout = (unsigned int)-1;
 
     net_top->depth = NetworkTopology_Node_find_SubTreeHeight(net_top->root);
 
-    int i;
     for (i = 0; i < net_top->parent_nodes->size; i++) {
         Node_t* cur_node = (Node_t*)(net_top->parent_nodes->vec[i]);
         net_top->max_fanout = (cur_node->children->size > net_top->max_fanout ?
@@ -607,7 +644,6 @@ void NetworkTopology_compute_TreeStatistics(NetworkTopology_t* net_top)
 
     net_top->avg_fanout = ((double)(net_top->nodes->size - 1) / ((double)net_top->parent_nodes->size));
 
-    double diff = 0, sum_of_square = 0;
     for (i = 0; i < net_top->parent_nodes->size; i++) {
         Node_t* cur_node = (Node_t*)(net_top->parent_nodes->vec[i]);
         diff = net_top->avg_fanout - cur_node->children->size;
@@ -645,13 +681,13 @@ void NetworkTopology_Node_set_Parent(Node_t* node, Node_t* parent)
 
 unsigned int NetworkTopology_Node_find_SubTreeHeight(Node_t* node)
 {
+    unsigned int max_height = 0, cur_height;
+    int i;
+    
     if (node->children->size == 0)
         node->subtree_height = 0;
     
     else {
-        unsigned int max_height = 0, cur_height;
-    
-        int i;
         for (i = 0; i < node->children->size; i++) {
             Node_t* cur_node = (Node_t*)(node->children->vec[i]);
             cur_height = NetworkTopology_Node_find_SubTreeHeight(cur_node);
@@ -666,16 +702,18 @@ unsigned int NetworkTopology_Node_find_SubTreeHeight(Node_t* node)
 unsigned int NetworkTopology_Node_get_Proximity(Node_t* adopter,
                                                 Node_t* iorphan)
 {
+    // Find closest common ascendant to both current node and orphan
+    Node_t* cur_ascendant = adopter;
+    Node_t* common_ascendant = NULL;
+    unsigned int node_ascendant_distance = 0;
+    unsigned int orphan_ascendant_distance = 0;
+    
     mrn_dbg(5, mrn_printf(FLF, stderr,
                     "Computing proximity: [%s:%d] <-> [%s:%d] ...\n",
                     iorphan->hostname, iorphan->rank,
                     adopter->hostname, adopter->rank));
 
-    // Find closest common ascendant to both current node and orphan
-    Node_t* cur_ascendant = adopter;
-    Node_t* common_ascendant = NULL;
 
-    unsigned int node_ascendant_distance = 0;
     do {
         mrn_dbg(5, mrn_printf(FLF, stderr, 
                             "Is \"%s:%d\" a common ascendant? ",
@@ -693,7 +731,6 @@ unsigned int NetworkTopology_Node_get_Proximity(Node_t* adopter,
     
     // Find distance between orphan and common ascendant
     cur_ascendant = iorphan;
-    unsigned int orphan_ascendant_distance = 0;
     mrn_dbg(5, mrn_printf(FLF, stderr, "Ascend from orphan to common ascendant [%s:%d]:\n"
                 "\t[%s:%d]",
                 common_ascendant->hostname,
@@ -758,6 +795,14 @@ void NetworkTopology_Node_compute_AdoptionScore(NetworkTopology_t* net_top,
                                                 unsigned int imax_fanout,
                                                 unsigned int idepth)
 {
+    unsigned int depth_increase = NetworkTopology_Node_get_DepthIncrease(adopter, orphan); 
+    unsigned int proximity = NetworkTopology_Node_get_Proximity(adopter, orphan); 
+    unsigned int fanout = adopter->children->size;
+
+    double fanout_score;
+    double depth_increase_score;
+    double proximity_score;
+
     mrn_dbg(5, mrn_printf(FLF, stderr,
                             "Computing [%s:%d]'s score for adopting [%s:%d] ... \n", 
                             adopter->hostname,
@@ -765,11 +810,6 @@ void NetworkTopology_Node_compute_AdoptionScore(NetworkTopology_t* net_top,
                             orphan->hostname,
                             orphan->rank));
 
-    unsigned int depth_increase = NetworkTopology_Node_get_DepthIncrease(adopter, orphan); 
-    unsigned int proximity = NetworkTopology_Node_get_Proximity(adopter, orphan); 
-    unsigned int fanout = adopter->children->size;
-
-    double fanout_score;
 
     if (imax_fanout == imin_fanout)
         fanout_score = 1;
@@ -778,11 +818,11 @@ void NetworkTopology_Node_compute_AdoptionScore(NetworkTopology_t* net_top,
                 (double)(imax_fanout - imin_fanout);
 
 
-    double depth_increase_score = (double)((idepth-1) - depth_increase )/
+    depth_increase_score = (double)((idepth-1) - depth_increase )/
         (double)(idepth-1);
 
 
-    double proximity_score = (double)(2 * idepth - 1 - proximity ) /
+    proximity_score = (double)(2 * idepth - 1 - proximity ) /
         (double)(2 * idepth - 1 - 2);
 
     

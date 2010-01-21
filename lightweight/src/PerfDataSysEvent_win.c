@@ -6,12 +6,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if !defined(os_windows)
 #include <sys/syscall.h>
-#include <errno.h>
-
-#ifndef os_windows
 #include <unistd.h>
-#endif
+#else
+#include <winsock2.h>
+#endif //!defined(os_windows)
+#include <errno.h>
 
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
@@ -20,7 +21,7 @@
 
 #include "xplat/Process.h"
 
-//#define SYS_gettid 224
+#define SYS_gettid 224
 #define SEC_PER_JIFFIES (.01)
 #define MSEC_PER_JIFFIES (10)
 
@@ -29,25 +30,29 @@ int PerfDataSysMgr_get_ThreadTime(long* user, long* sys)
   char procFilename[256];
   char buffer[1024];
 
-  pid_t pid = Process_GetProcessId(); 
-
-  static int gettid_not_valid = 0;
   int tid;
-
   FILE *fd;
   int num_read;
-  
-  char* ptrUsr = strrchr(buffer, ')') + 1;
+
+  char* ptrUsr;
   int i;
+
+  int pid;
+  static int gettid_not_valid;
+  pid = Process_GetProcessId();
+  gettid_not_valid = 0;
 
   if (gettid_not_valid)
     return -1;
 
-  tid = syscall((long int) SYS_gettid);
-  if (tid == -1 && errno == ENOSYS) {
-    gettid_not_valid = 1;
-    return -1;
-  }
+  //tid = syscall((long int) SYS_gettid);
+  //if (tid == -1 && errno == ENOSYS) {
+  //  gettid_not_valid = 1;
+  //  return -1;
+  //}
+
+  tid = (int)GetCurrentThreadId();
+  // TODO: figure out how to error check tid
 
   sprintf(procFilename, "/proc/%d/task/%d/stat",pid,tid);
 
@@ -63,6 +68,7 @@ int PerfDataSysMgr_get_ThreadTime(long* user, long* sys)
   fclose(fd);
   buffer[num_read]='\0';
 
+  ptrUsr = strrchr(buffer, ')') + 1;
   for (i = 3; i != 14; ++i) ptrUsr = strchr(ptrUsr+1, ' ');
 
   ptrUsr++;
@@ -77,7 +83,7 @@ int PerfDataSysMgr_get_ThreadTime(long* user, long* sys)
 
 int PerfDataSysMgr_get_MemUsage(double* vsize, double* psize) 
 {
-    static long syspage = 0;
+    static unsigned int syspage = 0;
     static double pageKB = 0;
 
     FILE *fd;
@@ -86,12 +92,16 @@ int PerfDataSysMgr_get_MemUsage(double* vsize, double* psize)
 
     char procFilename[256];
 
-    pid_t pid = Process_GetProcessId(); 
+    int pid;
+	pid = Process_GetProcessId(); 
 
     sprintf(procFilename, "/proc/%d/statm",pid);
 
     if (!syspage) {
-        syspage = sysconf(_SC_PAGESIZE);
+        //syspage = sysconf(_SC_PAGESIZE);
+		SYSTEM_INFO si;
+		GetSystemInfo(&si);
+		syspage = si.dwPageSize;
         pageKB = (double)syspage/1024;
     }
 

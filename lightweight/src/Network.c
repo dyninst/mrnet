@@ -11,6 +11,7 @@
 
 #include "BackEndNode.h"
 #include "mrnet/NetworkTopology.h"
+#include "ChildNode.h"
 #include "PeerNode.h"
 #include "Utils.h"
 
@@ -20,6 +21,27 @@
 const int MIN_OUTPUT_LEVEL=0;
 const int MAX_OUTPUT_LEVEL=5;
 int CUR_OUTPUT_LEVEL=1;
+
+void init_local(void)
+{
+#if !defined(os_windows)
+    int fd;
+    while ((fd = socket(AF_INET, SOCK_STREAM, 0)) <= 2) {
+        if (fd == -1) break;
+    }
+    if (fd > 2) close(fd);
+
+    // ignore SIGPIPE
+    signal (SIGPIPE, SIG_IGN);
+#else
+    // init Winsock
+    WORD version = MAKEWORK(2,2); /* socket version 2.2 supported by all moddern Windows */
+    WSADATA data;
+    if (WSAStartup(version, &data) != 0)
+        fprintf(stderr, "WSAStartup failed!\n");
+#endif
+
+}
 
 Network_t* new_Network_t()
 {
@@ -31,6 +53,8 @@ Network_t* new_Network_t()
   net->streams = new_map_t();
   net->stream_iter = 0;
   net->recover_from_failures = true;
+
+  init_local();
 
   Network_set_OutputLevelFromEnvironment();
 
@@ -64,15 +88,22 @@ Network_t*
 Network_CreateNetworkBE ( int argc, char* argv[] )
 { 
   
+  char* phostname;
+  Port pport;
+  Rank prank;
+  char* myhostname;
+  Rank myrank;
+  Network_t* net;
+    
   // Get parent/local info from end of BE args
   if ( argc >= 6) {
-    /*const*/ char* phostname = argv[argc-5];
-    Port pport = (Port)strtoul( argv[argc-4], NULL, 10 );
-    Rank prank = (Rank)strtoul( argv[argc-3], NULL, 10 );
-    /*const*/ char* myhostname = argv[argc-2];
-    Rank myrank = (Rank)strtoul( argv[argc-1], NULL, 10);
+    phostname = argv[argc-5];
+    pport = (Port)strtoul( argv[argc-4], NULL, 10 );
+    prank = (Rank)strtoul( argv[argc-3], NULL, 10 );
+    myhostname = argv[argc-2];
+    myrank = (Rank)strtoul( argv[argc-1], NULL, 10);
 
-    Network_t* net = Network_init_BackEnd(phostname, pport, prank,
+    net = Network_init_BackEnd(phostname, pport, prank,
                                   myhostname, myrank);
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Returning from Network_CreateNetworkBE\n"));
@@ -95,20 +126,24 @@ Network_t* Network_init_BackEnd(/*const*/ char* iphostname, Port ipport,
                         /*const*/ char* imyhostname, Rank imyrank)
 {
  
+  Network_t* net = new_Network_t();
+  char* pretty_host;
+  char* myhostname;
+  BackEndNode_t* be;
+  
   setrank(imyrank);  
     
-  char* pretty_host = (char*) malloc(sizeof(char)*256);
+  pretty_host = (char*) malloc(sizeof(char)*256);
   assert(pretty_host);
-  char* myhostname = (char*) malloc (sizeof(char)*256);
+  myhostname = (char*) malloc (sizeof(char)*256);
   assert(myhostname);
   NetUtils_FindNetworkName( imyhostname, myhostname );
   NetUtils_GetHostName( myhostname, pretty_host );
 
-  Network_t* net = new_Network_t();
   net->local_rank = imyrank;
 
   // create the new node
-  BackEndNode_t* be = CreateBackEndNode( net, myhostname, imyrank,
+  be = CreateBackEndNode( net, myhostname, imyrank,
                                       iphostname, ipport, iprank );
   
   assert ( be != NULL);
@@ -123,10 +158,12 @@ Network_t* Network_init_BackEnd(/*const*/ char* iphostname, Port ipport,
 
 int Network_recv_2(Network_t* net)
 {
-    mrn_dbg_func_begin();
+  vector_t* packet_list;
+    
+  mrn_dbg_func_begin();
 
   if (Network_is_LocalNodeBackEnd(net)) {
-    vector_t* packet_list = new_empty_vector_t();
+    packet_list = new_empty_vector_t();
     mrn_dbg(3, mrn_printf(FLF, stderr, "In backend.recv(blocking)...\n"));
 
 
@@ -173,11 +210,15 @@ int Network_recv_2(Network_t* net)
 /* called from BE instantiation file */
 int Network_recv(Network_t* net, int *otag, Packet_t* opacket, Stream_t** ostream)
 {
-   
-    mrn_dbg(2, mrn_printf(FLF, stderr, "blocking: \"yes\"\n"));
-
   int checked_network = false; // have we checked sockets for input?
   Packet_t* cur_packet = NULL;
+  int packet_found;  
+  int start_iter;
+  Stream_t* cur_stream;
+  int retval;
+
+  mrn_dbg(2, mrn_printf(FLF, stderr, "blocking: \"yes\"\n"));
+
 
   mrn_dbg(5, mrn_printf(FLF, stderr, "About to call Network_have_Streams()\n"));
 
@@ -185,14 +226,14 @@ int Network_recv(Network_t* net, int *otag, Packet_t* opacket, Stream_t** ostrea
 get_packet_from_stream_label: 
   if (Network_have_Streams(net)) {
     
-    int packet_found=false;
+    packet_found = false;
 
-    int start_iter = net->stream_iter;
+    start_iter = net->stream_iter;
     
     do {
         // get the Stream associated with the current stream_iter,
         // which is an index into the keys array
-        Stream_t* cur_stream = get_val(net->streams, net->streams->keys[net->stream_iter]);
+        cur_stream = get_val(net->streams, net->streams->keys[net->stream_iter]);
 
         mrn_dbg(5, mrn_printf(FLF, stderr,
                     "Checking for packets on stream[%d]...\n",
@@ -225,7 +266,7 @@ get_packet_from_stream_label:
     // No packets are already in the stream
     // check whether there is data waiting to be read on our socket
     mrn_dbg(5, mrn_printf(FLF, stderr, "No packets waiting in stream, checking for data on socket\n"));
-    int retval = Network_recv_2(net);
+    retval = Network_recv_2(net);
 
     checked_network = true;
 
@@ -285,9 +326,11 @@ Stream_t* Network_new_Stream(Network_t* net,
                           int isync_filter_id,
                           int ids_filter_id)
 {
+  Stream_t* stream;
+    
   mrn_dbg_func_begin();
 
-  Stream_t* stream = new_Stream_t(net,iid, ibackends, inum_backends,
+  stream = new_Stream_t(net,iid, ibackends, inum_backends,
                                   ius_filter_id, isync_filter_id,
                                   ids_filter_id);
   insert(net->streams, iid, stream);
@@ -300,6 +343,9 @@ Stream_t* Network_new_Stream(Network_t* net,
 
 int Network_remove_Node(Network_t* net, Rank ifailed_rank, int iupdate)
 {
+  int i;
+  int retval;
+    
   mrn_dbg_func_begin();
 
   mrn_dbg(3, mrn_printf(FLF, stderr, "Deleting PeerNode: node[%u] ...\n", ifailed_rank));
@@ -310,12 +356,11 @@ int Network_remove_Node(Network_t* net, Rank ifailed_rank, int iupdate)
 
   mrn_dbg(3, mrn_printf(FLF, stderr, "Removing from Streams: node[%u] ...\n" , ifailed_rank));
   
-  int i;
   for (i = 0; i < net->streams->size; i++) {
     Stream_remove_Node((Stream_t*)get_val(net->streams, net->streams->keys[i]), ifailed_rank);
   }
 
-  int retval = true;
+  retval = true;
 
   mrn_dbg_func_end();
   return retval;
@@ -323,15 +368,18 @@ int Network_remove_Node(Network_t* net, Rank ifailed_rank, int iupdate)
 
 int Network_delete_PeerNode(Network_t* net, Rank irank)
 {
+    struct PeerNode_t* peerNode;
+    int iter;
+    Node_t* cur_child;
+    
     if (net->parent->rank == irank) {
-        struct PeerNode_t* peerNode = NULL;
+        peerNode = NULL;
         net->parent = peerNode;
         return true;
     }
 
-    int iter;
     for (iter = 0; iter < net->children->size; iter++) {
-        Node_t* cur_child = (Node_t*)(net->children->vec[iter]);
+        cur_child = (Node_t*)(net->children->vec[iter]);
         if (NetworkTopology_Node_get_Rank(cur_child) == irank) {
             net->children = eraseElement(net->children, cur_child);
            return true; 
@@ -358,7 +406,6 @@ int Network_have_Streams(Network_t* net)
 
 Stream_t* Network_get_Stream(Network_t* net, unsigned int iid)
 {
-
   
   Stream_t* ret = (Stream_t*)get_val(net->streams, iid);
 
@@ -441,15 +488,17 @@ void Network_set_ParentNode(Network_t* net, PeerNode_t* ip)
 int Network_has_ParentFailure(Network_t* net) 
 {
     struct timeval zeroTimeout;
+    fd_set rfds;
+    int sret;
+
     zeroTimeout.tv_sec = 0;
     zeroTimeout.tv_usec = 0;
 
     // set up file descriptor set for the poll
-    fd_set rfds;
     FD_ZERO(&rfds);
     FD_SET(net->parent->event_sock_fd, &rfds);
 
-    int sret = select(net->parent->event_sock_fd + 1, &rfds, NULL, NULL, &zeroTimeout);
+    sret = select(net->parent->event_sock_fd + 1, &rfds, NULL, NULL, &zeroTimeout);
    
    if (sret != 1) {
        // select error
@@ -470,13 +519,16 @@ int Network_recover_FromParentFailure(Network_t* net)
     Timer_t new_parent_timer = new_Timer_t();
     Timer_t cleanup_timer = new_Timer_t();
     Timer_t connection_timer = new_Timer_t();
-    Timer_t filter_state_timer = new_Timer_t();
     Timer_t overall_timer = new_Timer_t();
+    Rank failed_rank;
+    Node_t* new_parent_node;
+    char* new_parent_name;
+    PeerNode_t* new_parent;
 
    mrn_dbg_func_begin();
 
    PeerNode_mark_Failed(Network_get_ParentNode(net));
-   Rank failed_rank = PeerNode_get_Rank(Network_get_ParentNode(net));
+   failed_rank = PeerNode_get_Rank(Network_get_ParentNode(net));
    Network_set_ParentNode(net, NULL);
 
    mrn_dbg(3, mrn_printf(FLF, stderr, "Recovering from parent[%d]'s failure\n", failed_rank));
@@ -486,7 +538,7 @@ int Network_recover_FromParentFailure(Network_t* net)
    //Step 1: Compute new parent
    Timer_start(overall_timer);
    Timer_start(new_parent_timer);
-   Node_t* new_parent_node = NetworkTopology_find_NewParent(Network_get_NetworkTopology(net), Network_get_LocalRank(net), 0, ALG_WRS);
+   new_parent_node = NetworkTopology_find_NewParent(Network_get_NetworkTopology(net), Network_get_LocalRank(net), 0, ALG_WRS);
    if (!new_parent_node) {
        mrn_dbg(1, mrn_printf(FLF, stderr, "Can't find new parent! Exiting...\n"));
        exit(-1);
@@ -497,9 +549,9 @@ int Network_recover_FromParentFailure(Network_t* net)
                         NetworkTopology_Node_get_Port(new_parent_node),
                         NetworkTopology_Node_get_Rank(new_parent_node)));
 
-   char* new_parent_name = NetworkTopology_Node_get_HostName(new_parent_node);
+   new_parent_name = NetworkTopology_Node_get_HostName(new_parent_node);
  
-  PeerNode_t* new_parent = Network_new_PeerNode(net, 
+   new_parent = Network_new_PeerNode(net, 
                                         new_parent_name,
                                        NetworkTopology_Node_get_Port(new_parent_node),
                                       NetworkTopology_Node_get_Rank(new_parent_node),
@@ -561,8 +613,9 @@ void Network_set_OutputLevel(int l)
 void Network_set_OutputLevelFromEnvironment(void)
 {
     char* output_level = getenv("MRNET_OUTPUT_LEVEL");
+    int l;
     if (output_level != NULL) {
-        int l = atoi(output_level);
+        l = atoi(output_level);
         Network_set_OutputLevel(l);
     }
 }

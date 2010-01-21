@@ -5,11 +5,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <assert.h>
+
+#if !defined(os_windows)
+#include <unistd.h>
 #include <inttypes.h>
+#endif //!defined(os_windows)
 
 #include "PerfDataEvent.h" 
+#include "PerfDataSysEvent.h"
 #include "map.h"
 #include "mrnet/Types.h"
 #include "Utils.h"
@@ -19,12 +23,14 @@
 
 PerfDataMgr_t* new_PerfDataMgr_t()
 {
+  int i;
+  map_t* newmap;
   PerfDataMgr_t* newperf = (PerfDataMgr_t*)malloc(sizeof(PerfDataMgr_t));
   assert(newperf != NULL);
   newperf->the_data = new_empty_vector_t();
-  int i;
+  memset(newperf->active_metrics, 0, sizeof(newperf->active_metrics));
   for (i = 0; i < PERFDATA_MAX_CTX; i++) {
-    map_t* newmap = new_map_t();
+    newmap = new_map_t();
     pushBackElement(newperf->the_data, newmap);
   }
   return newperf;
@@ -59,7 +65,6 @@ int PerfDataMgr_is_Enabled(PerfDataMgr_t* perf_data, perfdata_metric_t met, perf
   int ndx = ctx;
   if (ndx < PERFDATA_MAX_CTX) {
     if (perf_data->active_metrics[ndx] & PERFDATA_MET_FLAG(met)) {
-      mrn_dbg(5, mrn_printf(FLF, stderr, "about to return true\n"));
       return true;
     } 
   }
@@ -71,14 +76,18 @@ void PerfDataMgr_add_DataInstance(PerfDataMgr_t* perf_data,
                                   perfdata_context_t ctx,
                                   perfdata_t data)
 {
+	perfdata_t* newdata;
+	map_t* ctx_map;
+	vector_t* met_data;
+
     mrn_dbg_func_begin();
-    perfdata_t* newdata = (perfdata_t*)malloc(sizeof(perfdata_t));
+    newdata = (perfdata_t*)malloc(sizeof(perfdata_t));
     assert(newdata != NULL);
     *newdata = data;
 
-    map_t* ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
+    ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
     if (ctx_map->size > 0) {
-        vector_t* met_data = (vector_t*)(get_val(ctx_map,met));
+        met_data = (vector_t*)(get_val(ctx_map,met));
         if ((met_data!=NULL) && (met_data->size)) {
             pushBackElement(met_data, newdata);
         } else {
@@ -87,7 +96,7 @@ void PerfDataMgr_add_DataInstance(PerfDataMgr_t* perf_data,
         }
     }
     else {
-        vector_t* met_data = new_empty_vector_t();
+        met_data = new_empty_vector_t();
         pushBackElement(met_data, newdata);
         insert(ctx_map, met, met_data);
     }
@@ -99,18 +108,22 @@ perfdata_t PerfDataMgr_get_DataValue(PerfDataMgr_t* perf_data,
                                     perfdata_metric_t met,
                                     perfdata_context_t ctx)
 {
-    mrn_dbg_func_begin();
+	map_t* ctx_map;
+	vector_t* met_data;
+	perfdata_t zero;
 
-    map_t* ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
+	mrn_dbg_func_begin();
+
+    ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
     if(ctx_map->size > 0) {
-        vector_t* met_data = (vector_t*)(get_val(ctx_map, met));
+        met_data = (vector_t*)(get_val(ctx_map, met));
         if( (met_data!=NULL) && (met_data->size)) {
             mrn_dbg_func_end();
             return *(perfdata_t*)met_data->vec[0];
         }
     }
     // if ctx_map or met_data are empty...
-    perfdata_t zero;
+
     memset(&zero, 0, sizeof(zero));
     mrn_dbg_func_end();
     return zero;
@@ -121,12 +134,16 @@ void PerfDataMgr_set_DataValue(PerfDataMgr_t* perf_data,
                                 perfdata_context_t ctx,
                                 perfdata_t data)
 {
-    mrn_dbg_func_begin();
-    perfdata_t* newdata = (perfdata_t*)malloc(sizeof(perfdata_t));
+	perfdata_t* newdata;
+	map_t* ctx_map;
+	vector_t* met_data;
+    
+	mrn_dbg_func_begin();
+    newdata = (perfdata_t*)malloc(sizeof(perfdata_t));
     assert(newdata != NULL);
     *newdata = data;
 
-    map_t* ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
+    ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
     mrn_dbg(5, mrn_printf(FLF, stderr, "ctx_map->size=%d\n", ctx_map->size));
     if (ctx_map->root) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "ctx_map->root is not NULL\n"));
@@ -135,7 +152,7 @@ void PerfDataMgr_set_DataValue(PerfDataMgr_t* perf_data,
         mrn_dbg(5, mrn_printf(FLF, stderr, "ctx_map->root _is_ NULL\n"));
     }
     if (ctx_map->size > 0) {
-        vector_t* met_data = (vector_t*)(get_val(ctx_map, met));
+        met_data = (vector_t*)(get_val(ctx_map, met));
         if ((met_data!=NULL) && (met_data->size)) {
             clear(met_data);
         }
@@ -145,7 +162,7 @@ void PerfDataMgr_set_DataValue(PerfDataMgr_t* perf_data,
         pushBackElement(met_data, newdata);
     }
     else {
-        vector_t* met_data = new_empty_vector_t();
+        met_data = new_empty_vector_t();
         pushBackElement(met_data, newdata);
         insert(ctx_map, met, met_data);
     }
@@ -155,22 +172,21 @@ void PerfDataMgr_set_DataValue(PerfDataMgr_t* perf_data,
 void PerfDataMgr_get_MemData(PerfDataMgr_t* perf_data,
                             perfdata_metric_t metric)
 {
-    mrn_dbg_func_begin();
-
     double vsize=0, psize=0;
+	perfdata_t val;
+	
+	mrn_dbg_func_begin();
 
-    PerfDataSysMgr_get_MemUsage(vsize, psize);
+    PerfDataSysMgr_get_MemUsage(&vsize, &psize);
     mrn_dbg(5, mrn_printf(FLF, stderr, "print_PerfData vsize %f psize %f\n", vsize, psize));
 
     if (metric == PERFDATA_MET_MEM_VIRT_KB) {
-        perfdata_t val;
         val.d = vsize;
         PerfDataMgr_add_DataInstance(perf_data, 
                                     PERFDATA_MET_MEM_VIRT_KB,
                                     PERFDATA_CTX_NONE,
                                     val);
     } else if (metric == PERFDATA_MET_MEM_PHYS_KB) {
-        perfdata_t val;
         val.d = psize;
         PerfDataMgr_add_DataInstance(perf_data,
                                     PERFDATA_MET_MEM_PHYS_KB,
@@ -184,29 +200,38 @@ void PerfDataMgr_print(PerfDataMgr_t* perf_data,
                         perfdata_metric_t met,
                         perfdata_context_t ctx) 
 {
-    mrn_dbg_func_begin();
-
     vector_t* data = new_empty_vector_t();
+	struct timeval tv;
+	perfdata_metinfo_t* mi;
+	int size;
+	char* report;
+	int k;
+
+	mrn_dbg_func_begin();
 
     PerfDataMgr_collect(perf_data, met, ctx, data); 
 
-    struct timeval tv;
     gettimeofday(&tv, NULL);
 
-    perfdata_metinfo_t* mi = perfdata_metric_info + (unsigned)met;
-    char* report = NULL;
-    asprintf(&report, "PERFDATA @ T=%d.%06dsec: %s %s -",
-            (int)tv.tv_sec-MRN_RELEASE_DATE_SECS,
-            (int)tv.tv_usec, mi->name,
-            perfdata_context_names[(unsigned)ctx]);
+    mi = perfdata_metric_info + (unsigned)met;
+	size = 12; // "PERFDATA @ T="
+	size += 10; // "%d"
+	size += 11; // "%06dsec: " 
+	size += strlen(mi->name);
+	size += strlen(perfdata_context_names[(unsigned)ctx]);
+	size += 1;
+	
+	report= (char*)malloc(sizeof(char)*size);
+    sprintf( report, "PERFDATA @ T=%d.%06dsec: %s %s -",
+             (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, 
+              perfdata_context_names[(unsigned)ctx] );
 
-    int k;
     for (k = 0; k < data->size; k++) {
         if (mi->type == PERFDATA_TYPE_UINT) {
-            mrn_printf(FLF, stderr, "%s %" PRIu64 " %s\n",
+            mrn_printf(FLF, stderr, "%s %u %s\n",
                     report, ((perfdata_t*)data->vec[k])->u, mi->units);
         } else if (mi->type == PERFDATA_TYPE_INT) {
-            mrn_printf(FLF, stderr, "%s %" PRIi64 "%s\n",
+            mrn_printf(FLF, stderr, "%s %i %s\n",
                     report, ((perfdata_t*)data->vec[k])->i, mi->units);
         } else if (mi->type == PERFDATA_TYPE_FLOAT) {
             mrn_printf(FLF, stderr, "%s %lf %s\n",
@@ -224,19 +249,23 @@ void PerfDataMgr_collect (PerfDataMgr_t* perf_data,
                         perfdata_context_t ctx,
                         vector_t* data)
 {
+	map_t* ctx_map;
+	vector_t* met_data;
+
+
     mrn_dbg_func_begin();
 
-    map_t* ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
+    ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
     if (ctx_map->size > 0) {
         //vector_t* met_data = ctx_map[met];
-        vector_t* met_data = (vector_t*)(get_val(ctx_map, met));
+        met_data = (vector_t*)(get_val(ctx_map, met));
         //data = met_data;
         if ((met_data!= NULL) && (met_data->size)) {
             *data = *met_data;
             clear(met_data);    
         }
     } else {
-        vector_t* met_data = new_empty_vector_t();
+        met_data = new_empty_vector_t();
         insert(ctx_map, met, met_data);
     }
 

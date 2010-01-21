@@ -1,17 +1,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include <unistd.h>
 #include <string.h>
 
 #include "xplat/NetUtils.h"
 
-int GetLastError()
+int NetUtils_GetLastError()
 {
   return WSAGetLastError();
 }
 
-int GetLocalHostName(char* this_host) 
+int NetUtils_GetLocalHostName(char* this_host) 
 {
     char host[256];
     gethostname(host,256);

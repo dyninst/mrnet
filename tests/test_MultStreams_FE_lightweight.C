@@ -13,6 +13,7 @@
 
 #include <assert.h>
 #include <vector>
+#include <sstream>
 using namespace MRN;
 using namespace MRN_test;
 Test * test;

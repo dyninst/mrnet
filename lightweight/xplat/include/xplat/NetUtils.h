@@ -14,6 +14,6 @@ int NetUtils_FindNetworkName(char* ihostname, char* ohostname);
 int NetUtils_GetHostName(char* ihostname, char* ohostname);
 
 // has -unix and -win versions
-int GetLastError();
-int GetLocalHostName(char* this_host);
+int NetUtils_GetLastError();
+int NetUtils_GetLocalHostName(char* this_host);
 #endif /* __netutils_h */

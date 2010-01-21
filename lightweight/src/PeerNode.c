@@ -68,8 +68,9 @@ int PeerNode_send(PeerNode_t* peer, /*const*/ Packet_t* ipacket)
 
 int PeerNode_sendDirectly (PeerNode_t* peer, /*const*/ Packet_t* ipacket) 
 {
-  mrn_dbg_func_begin();
   int retval = 0;
+
+  mrn_dbg_func_begin();
 
   peer->msg_out.packet = ipacket;
 
@@ -87,16 +88,18 @@ int PeerNode_sendDirectly (PeerNode_t* peer, /*const*/ Packet_t* ipacket)
 int PeerNode_has_data(PeerNode_t* node)
 {
   struct timeval zeroTimeout;
+  fd_set rfds;
+  int sret;
+
   zeroTimeout.tv_sec = 0;
   zeroTimeout.tv_usec = 0;
   
   // set up file descriptor set for the poll
-  fd_set rfds;
   FD_ZERO(&rfds);
   FD_SET(node->data_sock_fd, &rfds);
 
   // check if data is available
-  int sret = select(node->data_sock_fd + 1, &rfds, NULL, NULL, &zeroTimeout);
+  sret = select(node->data_sock_fd + 1, &rfds, NULL, NULL, &zeroTimeout);
   if (sret == -1) {
     mrn_dbg(1, mrn_printf(FLF, stderr, "select() failed\n"));
     return false;
@@ -121,10 +124,7 @@ int PeerNode_recv(PeerNode_t* node, /* Packet_t* packet */ vector_t* packet_list
 
 int PeerNode_flush(PeerNode_t* peer)
 {
-    mrn_dbg_func_begin();
     int retval = 0;
-
-    mrn_dbg_func_end();
     return retval;
 }
 

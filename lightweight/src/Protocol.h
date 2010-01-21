@@ -6,6 +6,9 @@
 #if !defined(__protocol_h)
 #define __protocol_h 1
 
+
+
+
 enum ProtocolTags {
     PROT_SUBTREE_INFO_REQ = FirstSystemTag,
     PROT_NEW_SUBTREE,
@@ -17,6 +20,7 @@ enum ProtocolTags {
     PROT_DEL_STREAM,
     PROT_CLOSE_STREAM,
     PROT_NEW_FILTER,
+    PROT_SET_FILTERPARAMS_TRANS,
     PROT_SET_FILTERPARAMS_UPSTREAM,
     PROT_SET_FILTERPARAMS_DOWNSTREAM,
     PROT_EVENT,

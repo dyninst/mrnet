@@ -23,13 +23,16 @@ int NCSend(XPSOCKET s, NCBuf_t* ncbuf, unsigned int nBufs)
  
   // convert our buffer spec into writev's buffer spec
   unsigned int nBytesToSend = 0;
+#if 0
+  // We're only sending one buf here, so this becomes unnecessary
   struct iovec* currIov = (struct iovec*)malloc(sizeof(struct iovec));
   assert(currIov);
   
   currIov->iov_len = currBuf->len;
   
   currIov->iov_base = currBuf->buf;
-  
+#endif  
+
   nBytesToSend += currBuf->len;
   
   // do the send
@@ -45,7 +48,7 @@ int NCSend(XPSOCKET s, NCBuf_t* ncbuf, unsigned int nBufs)
   }
 
   // free things that were malloc'd
-  free(currIov);
+  //free(currIov);
 
   return ret;
 

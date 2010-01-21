@@ -6,11 +6,25 @@
 #if !defined( __event_detector_h )
 #define __event_detector_h 1
 
+#ifndef os_windows
 #include <poll.h>
+#endif //os_windows
 #include <set>
 
 #include "PeerNode.h"
 #include "TimeKeeper.h"
+
+#ifdef os_windows
+
+	struct pollfd {
+		int   fd;         /* file descriptor */
+		short events;     /* requested events */
+		short revents;    /* returned events */
+	} ;
+	
+#define POLLIN 1
+
+#endif
 
 namespace MRN {
 
