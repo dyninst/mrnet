@@ -44,13 +44,46 @@ static int proc_NewChildFDConnection( PacketPtr ipacket, int isock );
 
 bool EventDetector::stop( void )
 {
+    int edt_port, sock_fd=0;
+    string edt_host;
+    Message msg;
+    PacketPtr packet( new Packet( 0, PROT_KILL_SELF, "" ) );
+
     mrn_dbg_func_begin();
 
-    if( _thread_id ) {
+    if( 0 == _thread_id )
+        return true;
+
+    if( _global_network->is_LocalNodeParent() ) {
+        // send KILL_SELF message to EDT on listening port
+        edt_host = _global_network->get_LocalHostName();
+        edt_port = _global_network->get_LocalPort();
+        mrn_dbg(3, mrn_printf( FLF, stderr, "Telling EDT(%s:%d) to go away\n",
+                               edt_host.c_str(), edt_port )); 
+        if( connectHost( &sock_fd, edt_host.c_str(), edt_port ) == -1 ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost(%s:%d) failed\n",
+                                  edt_host.c_str(), edt_port ));
+            return false;
+        }
+        msg.add_Packet( packet );
+        if( msg.send( sock_fd ) == -1 ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "Message.sendDirectly() failed\n" ));
+            return false;
+        }
+        XPlat::SocketUtils::Close( sock_fd );
+    
+    }
+    else {
+        // backends don't have a listening port, so cancel EDT
         if( XPlat::Thread::Cancel( _thread_id ) != 0 )
             return false;
     }
 
+    // wait for EDT to exit
+    if( XPlat::Thread::Join( _thread_id, (void**)NULL ) != 0 )
+        return false;
+
+    mrn_dbg_func_end();
     return true;
 }
 
@@ -74,24 +107,12 @@ bool EventDetector::start( Network * /* inetwork */ )
 
 bool EventDetector::add_FD( int ifd )
 {
-    int retval = 0;
+    int nchild;
 
     mrn_dbg_func_begin();
 
     if( _pollfds == NULL ) {
-
-        NetworkTopology* topol = _global_network->get_NetworkTopology();
-        if( topol == NULL ) return false;
-
-        Rank lrank = _global_network->get_LocalRank();
-        NetworkTopology::Node* lnode =  topol->find_Node(lrank);
-        if( lnode == NULL ) return false;
-
-        unsigned int nchild = lnode->get_NumChildren();
-        if( nchild == 0 ) {
-            // is leaf, but could be commnode so pre-allocate for BEs that may attach
-            nchild = 256;
-        }
+        nchild = 256;
         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "allocating %u slots for pollfds\n", nchild) );
         _pollfds = (struct pollfd*) malloc( nchild * sizeof(struct pollfd) );
@@ -101,9 +122,18 @@ bool EventDetector::add_FD( int ifd )
         _max_pollfds = nchild;
     }
     else if( _num_pollfds == _max_pollfds ) {
-        mrn_dbg( 5, mrn_printf(FLF, stderr,
-                               "can't add, already have %u pollfds\n", _max_pollfds) );
-        return false;
+
+        struct pollfd* newfds = NULL;
+        nchild = _max_pollfds * 2;
+
+        newfds = (struct pollfd*) realloc( (void*)_pollfds, nchild * sizeof(struct pollfd) );
+        if( newfds == NULL ) {
+            mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                   "can't add, already have %u pollfds and realloc failed\n", _max_pollfds) );
+            return false;
+        }
+        _pollfds = newfds;
+        _max_pollfds = nchild;
     }
 
     if( ifd > _max_fd )
@@ -120,7 +150,8 @@ bool EventDetector::add_FD( int ifd )
 
 bool EventDetector::remove_FD( int ifd )
 {
-    int i, new_max = -1;
+    int new_max = -1;
+    unsigned int i, j;
 
     mrn_dbg_func_begin();
 
@@ -133,7 +164,7 @@ bool EventDetector::remove_FD( int ifd )
     if( i == _num_pollfds ) return false;
 
     // shift rest of array
-    for( int j=i; j < _num_pollfds-1; j++ ) {
+    for( j=i; j < _num_pollfds-1; j++ ) {
         _pollfds[j].fd = _pollfds[j+1].fd;
         if( _pollfds[j].fd > new_max )
             new_max = _pollfds[j].fd;
@@ -163,7 +194,7 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
     else { // select
 
         FD_ZERO( &readfds );
-        for( int num=0; num < _num_pollfds; num++ )
+        for( unsigned int num=0; num < _num_pollfds; num++ )
             FD_SET( _pollfds[num].fd, &readfds );
  
         struct timeval* tvp = NULL;
@@ -187,7 +218,7 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
     if( retval <= 0 )
         return retval;
     
-    for( int num=0; num < _num_pollfds; num++ ) {
+    for( unsigned int num=0; num < _num_pollfds; num++ ) {
         bool add = false;
         if( use_poll ) {
             if( _pollfds[num].revents & POLLIN )
@@ -346,13 +377,20 @@ void * EventDetector::main( void * /* iarg */ )
 
         Timer waitTimer;
         int timeout = -1; /* block */
-        TimeKeeper* tk = _global_network->get_TimeKeeper();
+        TimeKeeper* tk = NULL;
+        Network* net = _global_network;
+
+        if( net == NULL ) /* Network going away */
+            break;
+
+        tk = net->get_TimeKeeper();
 	if( tk != NULL ) {
 	    timeout = tk->get_Timeout();
 	    waitTimer.start();
 	}
 
         std::set< int > eventfds;
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "eventWait(timeout=%dms)\n", timeout));
         int retval = eventWait( eventfds, timeout );
 
         if( retval == -1 ) {
@@ -365,7 +403,8 @@ void * EventDetector::main( void * /* iarg */ )
 	    waitTimer.stop();
 	    elapsed_ms = waitTimer.get_latency_msecs();
 	    elapsed = (int)elapsed_ms;
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "timeout after %d ms ...\n", elapsed));
+	    if( elapsed == 0 ) elapsed++;
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "timeout after %d ms\n", elapsed));
                 
 	    // notify streams with registered timeouts
 	    handle_Timeout( tk, elapsed );
@@ -376,7 +415,7 @@ void * EventDetector::main( void * /* iarg */ )
                                    "checking event fds"));
             if( eventfds.find(local_sock) != eventfds.end() ) {
                 //Activity on our local listening sock, accept connection
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "Activity on listening socket ...\n"));
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "Activity on listening socket\n"));
                 int connected_sock = getSocketConnection( local_sock );
                 if( connected_sock == -1 ){
                     mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
@@ -397,7 +436,7 @@ void * EventDetector::main( void * /* iarg */ )
                     switch ( cur_packet->get_Tag() ) {
 
                     case PROT_KILL_SELF:
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_KILL_SELF ...\n"));
+                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_KILL_SELF\n"));
 
                         //close event sockets explicitly
                         mrn_dbg(5, mrn_printf(FLF, stderr,
@@ -406,22 +445,21 @@ void * EventDetector::main( void * /* iarg */ )
                         for(iter=watch_list.begin(); iter!=watch_list.end(); iter++){
                             mrn_dbg(5, mrn_printf(FLF, stderr,
                                                   "Closing event socket: %d\n", *iter ));
-                            char buf[16];
-                            mrn_dbg(5, mrn_printf(FLF, stderr, "writing ...\n"));
-                            if( write( *iter, buf, 1) == -1 ) {
+                            char c = 1;
+                            mrn_dbg(5, mrn_printf(FLF, stderr, "... writing\n"));
+                            if( write( *iter, &c, 1) == -1 ) {
                                 perror("write(event_fd)");
                             }
-                            mrn_dbg(5, mrn_printf(FLF, stderr, "closing ...\n"));
+                            mrn_dbg(5, mrn_printf(FLF, stderr, "... closing\n"));
                             if( XPlat::SocketUtils::Close( *iter ) == -1 ){
                                 perror("close(event_fd)");
                             }
                         }
-                        mrn_dbg(5, mrn_printf(FLF, stderr, "bye!\n"));
+                        mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
                         return NULL;
-                        break;
 
                     case PROT_NEW_CHILD_FD_CONNECTION:
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION ...\n"));
+                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION\n"));
                         add_FD(connected_sock);
                         if( connected_sock > max_sock )
                             max_sock = connected_sock;
@@ -434,9 +472,9 @@ void * EventDetector::main( void * /* iarg */ )
                         break;
 
                     case PROT_NEW_CHILD_DATA_CONNECTION:
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_DATA_CONNECTION ...\n"));
+                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_DATA_CONNECTION\n"));
                         //get ParentNode obj. Try internal node, then FE
-                        p = _global_network->get_LocalParentNode();
+                        p = net->get_LocalParentNode();
                         assert(p);
 
                         p->proc_NewChildDataConnection( cur_packet,
@@ -448,9 +486,9 @@ void * EventDetector::main( void * /* iarg */ )
                         // NOTE: needed since back-ends are now threaded, and we can't
                         //       guarantee a packet containing this protocol message
                         //       won't arrive in a group with NEW_CHILD_DATA_CONNECTION
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT ...\n"));
+                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
                         //get ParentNode obj. Try internal node, then FE
-                        p = _global_network->get_LocalParentNode();
+                        p = net->get_LocalParentNode();
                         assert(p);
 
                         if( p->proc_newSubTreeReport( cur_packet ) == -1 ) {
@@ -467,8 +505,8 @@ void * EventDetector::main( void * /* iarg */ )
                 }
             }
 
-            if( _global_network->is_LocalNodeChild() && 
-                 ( eventfds.find(parent_sock) != eventfds.end() ) ) {
+            if( net->is_LocalNodeChild() && 
+                ( eventfds.find(parent_sock) != eventfds.end() ) ) {
                 mrn_dbg( 3, mrn_printf(FLF, stderr, "Parent failure detected ...\n"));
                 //event happened on parent monitored connections, likely failure
 
@@ -476,12 +514,12 @@ void * EventDetector::main( void * /* iarg */ )
                 remove_FD(parent_sock);
                 watch_list.remove( parent_sock );
 
-                if( _global_network->recover_FromFailures() ) {
+                if( net->recover_FromFailures() ) {
                     mrn_dbg( 3, mrn_printf(FLF, stderr, "... recovering from parent failure\n"));
                     recover_FromParentFailure( _global_network );
 
                     //add new parent sock to monitor for failure
-                    parent_node = _global_network->get_ParentNode();
+                    parent_node = net->get_ParentNode();
                     parent_sock = parent_node->get_EventSocketFd();
                     add_FD(parent_sock);
                     if( parent_sock > max_sock )
@@ -506,7 +544,7 @@ void * EventDetector::main( void * /* iarg */ )
                 int cur_sock = *iter;
                 //skip local_sock and parent_sock or if socket isn't set
                 if( ( cur_sock == local_sock ) ||
-                    ( (_global_network->is_LocalNodeChild() ) && (cur_sock == parent_sock) ) ||
+                    ( (net->is_LocalNodeChild() ) && (cur_sock == parent_sock) ) ||
                     ( eventfds.find(cur_sock)==eventfds.end() ) ) {
                     mrn_dbg( 5, mrn_printf(0,0,0, stderr, "Is socket:%d set? NO!\n", cur_sock));
                     iter++;
@@ -525,7 +563,7 @@ void * EventDetector::main( void * /* iarg */ )
                                            "Child[%u] failure detected ...\n",
                                            failed_rank ));
 
-                    if( _global_network->recover_FromFailures() )
+                    if( net->recover_FromFailures() )
                         recover_FromChildFailure( _global_network, failed_rank );
 
                     childRankByEventDetectionSocket.erase( iter2 );
