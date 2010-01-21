@@ -56,7 +56,7 @@ int main(int argc, char **argv)
         // Create a stream that will use the Integer_Add filter for aggregation
         Stream * add_stream = net->new_Stream( comm_BC, filter_id,
                                                SFILTER_TIMEOUT );
-	add_stream->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 500 );
+	add_stream->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
 
         int num_backends = comm_BC->get_EndPoints().size();
 
@@ -131,10 +131,7 @@ int main(int argc, char **argv)
                         }
 
                         total_sum += recv_val;
-
-                        i++;
                     }
-                
                 }
                 else
                     fprintf(stderr, "not found\n");
