@@ -569,16 +569,23 @@ PacketPtr Stream::get_IncomingPacket( )
 
 void Stream::add_IncomingPacket( PacketPtr ipacket )
 {
+    // cache a valid Network pointer for later
+    Network* net = _network;
+
+    // push packet and notify posted Stream::recv()s
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Stream[%d]: signaling \"got packet\"\n",
+                          _id));
     _incoming_packet_buffer_sync.Lock();
     _incoming_packet_buffer.push_back( ipacket );
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Stream[%d](%p): signaling \"got packet\"\n",
-                          _id, this));
     _incoming_packet_buffer_sync.SignalCondition( PACKET_BUFFER_NONEMPTY );
     _incoming_packet_buffer_sync.Unlock();
 
-    // Note: the following should never be moved inside the Lock/Unlock above
-    //       as it can (and has) cause a circular dependency deadlock
-    _network->signal_NonEmptyStream();
+    // notify any posted Network::recv()s
+    /* Note: the following should never be moved inside the Lock/Unlock 
+     *       above as it can (and has) cause a circular dependency deadlock.
+     *       we use the cached net because by the time we return from
+     *       signaling, someone may have deleted this stream */ 
+    net->signal_NonEmptyStream();
 }
 
 unsigned int Stream::size( void ) const
