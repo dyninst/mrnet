@@ -117,7 +117,6 @@ class Network: public Error {
     static Network* CreateNetworkIN( int argc, char* argv[] );    // create obj for internal node
     InternalNode* get_LocalInternalNode( void ) const;
     PeerNodePtr get_PeerNode( Rank );
-    mutable XPlat::Mutex printf_mutex;
 
 protected:
     // constructor
