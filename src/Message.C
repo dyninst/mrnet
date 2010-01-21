@@ -212,14 +212,14 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
 
 int Message::send( int sock_fd )
 {
-    /* send an array of packet_sizes */
     unsigned int i;
-    uint32_t *packet_sizes=NULL, no_packets;
-    char *buf=NULL;
-    int buf_len;
+    uint32_t no_packets;
+    uint32_t *packet_sizes = NULL;
+    char *buf = NULL;
+    int buf_len, total_bytes = 0;
     PDR pdrs;
     enum pdr_op op = PDR_ENCODE;
-
+    bool go_away = false;
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Sending packets from message %p\n",
                 this ));
@@ -230,39 +230,40 @@ int Message::send( int sock_fd )
         _packet_sync.Unlock();
         return 0;
     }
+
+    /* Process packets in list to prepare for send() */
     no_packets = _packets.size( );
-
-    /* send packet buffers */
     XPlat::NCBuf* ncbufs = new XPlat::NCBuf[no_packets];
-
-    //Process packets in list to prepare for send()
     packet_sizes = ( uint32_t * ) malloc( sizeof( uint32_t ) * no_packets );
     assert( packet_sizes );
+
     std::list < PacketPtr >::iterator iter = _packets.begin( );
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Writing %d packets of size: [ ",
                            no_packets ));
-    int total_bytes = 0;
     for( i = 0; iter != _packets.end( ); iter++, i++ ) {
 
         PacketPtr curPacket( *iter );
 
-        ncbufs[i].buf = const_cast< char * >( curPacket->get_Buffer( ) );
-        ncbufs[i].len = curPacket->get_BufferLen( );
-        packet_sizes[i] = curPacket->get_BufferLen( );
+        /* check for final packet */
+        int tag = curPacket->get_Tag();
+        if( (tag == PROT_SHUTDOWN) || (tag == PROT_SHUTDOWN_ACK) )
+            go_away = true;
 
-        total_bytes += ncbufs[i].len;
-        mrn_dbg( 3, mrn_printf(0,0,0, stderr, "%d, ", ( int )ncbufs[i].len ));
+        uint32_t psz = curPacket->get_BufferLen();
+        ncbufs[i].buf = const_cast< char * >( curPacket->get_Buffer( ) );
+        ncbufs[i].len = psz;
+        packet_sizes[i] = psz;
+        total_bytes += psz;
+        mrn_dbg( 3, mrn_printf(0,0,0, stderr, "%u, ", psz ));
     }
     mrn_dbg( 3, mrn_printf(0,0,0, stderr, "]\n" ));
 
     /* put how many packets are going */
-
     buf_len = pdr_sizeof( ( pdrproc_t )( pdr_uint32 ), &no_packets );
     assert( buf_len );
     buf = ( char * )malloc( buf_len );
     assert( buf );
     pdrmem_create( &pdrs, buf, buf_len, op );
-
 
     if( !pdr_uint32( &pdrs, &no_packets ) ) {
         error( ERR_PACKING, UnknownRank, "pdr_uint32() failed\n" );
@@ -350,6 +351,13 @@ int Message::send( int sock_fd )
 
     delete[] ncbufs;
     mrn_dbg( 3, mrn_printf(FLF, stderr, "msg(%p)::send() succeeded\n", this ));
+
+    if( go_away ) {
+        // exit send thread
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));
+        XPlat::Thread::Exit(NULL);
+    }
+
     return 0;
 }
 

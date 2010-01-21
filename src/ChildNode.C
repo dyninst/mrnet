@@ -52,7 +52,7 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
 
     switch ( cur_packet->get_Tag() ) {
 
-    case PROT_DEL_SUBTREE:
+    case PROT_SHUTDOWN:
         if( _network->is_LocalNodeParent() ) {
             if( _network->get_LocalParentNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n" ));
@@ -596,12 +596,13 @@ bool ChildNode::ack_DeleteSubTree( void ) const
 {
     mrn_dbg_func_begin();
 
-    PacketPtr packet( new Packet( 0, PROT_DEL_SUBTREE_ACK, "" ));
+    PacketPtr packet( new Packet( 0, PROT_SHUTDOWN_ACK, "" ));
 
     if( !packet->has_Error( ) ) {
-        if( ( _network->get_ParentNode()->send( packet ) == -1 ) ||
-            ( _network->get_ParentNode()->flush(  ) == -1 ) ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n" ));
+        /* note: don't request flush as send thread will exit 
+                 before notifying flush completion */
+        if( _network->get_ParentNode()->send( packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send failed\n" ));
             return false;
         }
     }
