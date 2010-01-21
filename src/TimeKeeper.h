@@ -19,11 +19,11 @@ class TimeKeeper {
  public:
 
     TimeKeeper(void) : 
-        _min_timeout(0)
+        _min_timeout(default_timeout)
     {}
 
     /* get minimum timeout in milliseconds */
-    unsigned int get_Timeout() const;
+    int get_Timeout() const;
 
     /* update registered timeouts based on elapsed time,
        fills set of stream ids whose timers have expired */
@@ -35,8 +35,10 @@ class TimeKeeper {
 
  private:
 
+    static int default_timeout;
+
     /* minimum timeout in ms */
-    unsigned int _min_timeout;
+    int _min_timeout;
 
     /* map< stream id, timeout in ms > */
     std::map< unsigned int, unsigned int > _strm_timeouts;

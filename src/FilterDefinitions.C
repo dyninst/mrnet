@@ -1467,6 +1467,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
 	    TimeKeeper* tk = _global_network->get_TimeKeeper();
 	    if( tk != NULL ) {
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "registering timeout=%dms\n", timeout_ms ));
 	        if( tk->register_Timeout( stream_id, timeout_ms ) ) {
 	            state->active_timeout = true;
 	        }
