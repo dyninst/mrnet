@@ -182,12 +182,21 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
         mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
     }
 
+    // sleep to let message be sent before tearing down network
+    sleep(1);
+
     // kill threads, topology, and events
     _network->shutdown_Network();
 
-    if( goaway ) exit(0);
+    if( goaway ) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Backend exiting!\n"));
+        exit(0);
+    }
    
-    mrn_dbg_func_end();
+    // exit recv thread from parent
+    mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
+    XPlat::Thread::Exit(NULL);
+
     return 0;
 }
 

@@ -8,8 +8,10 @@
 namespace MRN
 {
 
+int TimeKeeper::default_timeout = 100; /* 100 ms */
+
 /* get minimum timeout in milliseconds */
-unsigned int TimeKeeper::get_Timeout(void) const
+int TimeKeeper::get_Timeout(void) const
 {
     return _min_timeout;
 }
@@ -19,7 +21,7 @@ unsigned int TimeKeeper::get_Timeout(void) const
 void TimeKeeper::notify_Elapsed( unsigned int elapsed_ms, 
                                  std::set< unsigned int >& expired_streams )
 {
-    unsigned int new_min_to = (unsigned int)-1;
+    int new_min_to = TimeKeeper::default_timeout;
 
     _tk_mutex.Lock();
 
@@ -40,15 +42,14 @@ void TimeKeeper::notify_Elapsed( unsigned int elapsed_ms,
             miter->second -= elapsed_ms;
         
             // update min timeout if appropriate
-            if( miter->second < new_min_to )
+            if( (int)miter->second < new_min_to )
                 new_min_to = miter->second;
     
             miter++;
         }
     }
 
-    if( new_min_to != (unsigned int)-1 )
-        _min_timeout = new_min_to;
+    _min_timeout = new_min_to;
 
     _tk_mutex.Unlock();
 }
@@ -67,8 +68,8 @@ bool TimeKeeper::register_Timeout( unsigned int strm_id, unsigned int timeout_ms
         _strm_timeouts[strm_id] = timeout_ms;
 
         // update min timeout if appropriate
-        if( timeout_ms < _min_timeout )
-            _min_timeout = timeout_ms;
+        if( (int)timeout_ms < _min_timeout )
+            _min_timeout = (int)timeout_ms;
     }
     else
         rc = false;
@@ -90,7 +91,7 @@ bool TimeKeeper::clear_Timeout( unsigned int strm_id )
         unsigned int strm_to = miter->second;
         _strm_timeouts.erase( miter );        
 
-        if( _min_timeout == strm_to ) {
+        if( _min_timeout == (int)strm_to ) {
             // find new minimum timeout
             std::set< unsigned int > dummy;
             notify_Elapsed( 0, dummy );

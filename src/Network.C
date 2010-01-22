@@ -124,17 +124,16 @@ void Network::shutdown_Network( void )
                 if( _terminate_backends )
                     delete_backends = 't';
             
-                PacketPtr packet( new Packet( 0, PROT_DEL_SUBTREE, "%c", delete_backends ) );
+                PacketPtr packet( new Packet( 0, PROT_SHUTDOWN, "%c", delete_backends ) );
                 get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
             }
         }
 
         // turn off debug output to prevent cancelled threads from causing mrn_printf deadlock
-        MRN::set_OutputLevel( -1 );
+        //MRN::set_OutputLevel( -1 );
         
-        //kill all threads, should allow downstream threads to flush
         EventDetector::stop();
-        cancel_IOThreads();
+        //cancel_IOThreads();
         
         if( _network_topology != NULL ) {
             string empty("");

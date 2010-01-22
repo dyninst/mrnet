@@ -36,6 +36,7 @@ using namespace XPlat;
 #endif // defined(os_solaris)
 
 static XPlat::Mutex gethostbyname_mutex;
+static XPlat::Mutex mrn_printf_mutex;
 
 namespace MRN
 {
@@ -389,7 +390,7 @@ int mrn_printf( const char *file, int line, const char * func,
     struct timeval tv;
     while( gettimeofday( &tv, NULL ) == -1 ) {}
 
-    _global_network->printf_mutex.Lock();
+    mrn_printf_mutex.Lock();
 
     int rank = getrank();
 
@@ -452,7 +453,7 @@ int mrn_printf( const char *file, int line, const char * func,
     va_end( arglist );
     fflush( f );
     
-    _global_network->printf_mutex.Unlock();
+    mrn_printf_mutex.Unlock();
     return retval;
 }
 

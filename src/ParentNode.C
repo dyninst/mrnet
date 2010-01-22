@@ -88,8 +88,6 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
 
     switch ( cur_packet->get_Tag(  ) ) {
     case PROT_CLOSE_STREAM:
-        mrn_dbg( 5, mrn_printf(FLF, stderr,
-                               "Calling proc_closeStream() ...\n" ));
         if( proc_closeStream( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_closeStream() failed\n" ));
@@ -97,17 +95,13 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
         }
         break;
     case PROT_NEW_SUBTREE_RPT:
-        mrn_dbg( 5, mrn_printf(FLF, stderr,
-                               "Calling proc_newSubTreeReport() ...\n" ));
         if( proc_newSubTreeReport( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_newSubTreeReport() failed\n" ));
             retval = -1;
         }
         break;
-    case PROT_DEL_SUBTREE_ACK:
-        mrn_dbg( 5, mrn_printf(FLF, stderr,
-                               "Calling proc_DeleteSubTreeAck() ...\n" ));
+    case PROT_SHUTDOWN_ACK:
         if( proc_DeleteSubTreeAck( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_DeleteSubTreeAck() failed\n" ));
@@ -115,8 +109,6 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
         }
         break;
     case PROT_TOPOLOGY_ACK:
-        mrn_dbg( 5, mrn_printf(FLF, stderr,
-                               "Calling proc_TopologyReportAck() ...\n" ));
         if( proc_TopologyReportAck( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_TopologyReportAck() failed\n" ));
@@ -234,9 +226,10 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     }
 
     //send delete_subtree message to all children
-    if( ( _network->send_PacketToChildren( ipacket ) == -1 ) ||
-        ( _network->flush_PacketsToChildren( ) == -1 ) ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush_PacketToChildren() failed\n" ));
+    /* note: don't request flush as send threads will exit 
+       before notifying flush completion */
+    if( _network->send_PacketToChildren( ipacket ) == -1 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
     }
 
     //wait for acks -- so children don't initiate failure recovery when we exit
@@ -247,6 +240,10 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     //if internal, signal network termination
     if( _network->is_LocalNodeInternal() ) {
         _network->get_LocalInternalNode()->signal_NetworkTermination();
+
+        // exit recv thread from parent
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));
+        XPlat::Thread::Exit(NULL);
     }
 
     mrn_dbg_func_end();
@@ -292,7 +289,7 @@ int ParentNode::proc_TopologyReport( PacketPtr ipacket ) const
 
     subtreereport_sync.Unlock( );
 
-    //send delete_subtree message to all children
+    //send message to all children
     if( ( _network->send_PacketToChildren( ipacket ) == -1 ) ||
         ( _network->flush_PacketsToChildren( ) == -1 ) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush_PacketToChildren() failed\n" ));
@@ -371,7 +368,10 @@ int ParentNode::proc_DeleteSubTreeAck( PacketPtr /* ipacket */ ) const
     }
     subtreereport_sync.Unlock( );
 	
-    mrn_dbg_func_end();
+    // exit recv thread from child
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));
+    XPlat::Thread::Exit(NULL);
+
     return 0;
 }
 
