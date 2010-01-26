@@ -13,7 +13,7 @@
 #include "mrnet/NetworkTopology.h"
 #include "ChildNode.h"
 #include "PeerNode.h"
-#include "Utils.h"
+#include "utils.h"
 
 // from xplat
 #include "xplat/NetUtils.h"
@@ -35,7 +35,7 @@ void init_local(void)
     signal (SIGPIPE, SIG_IGN);
 #else
     // init Winsock
-    WORD version = MAKEWORK(2,2); /* socket version 2.2 supported by all moddern Windows */
+    WORD version = MAKEWORD(2,2); /* socket version 2.2 supported by all moddern Windows */
     WSADATA data;
     if (WSAStartup(version, &data) != 0)
         fprintf(stderr, "WSAStartup failed!\n");
@@ -233,7 +233,7 @@ get_packet_from_stream_label:
     do {
         // get the Stream associated with the current stream_iter,
         // which is an index into the keys array
-        cur_stream = get_val(net->streams, net->streams->keys[net->stream_iter]);
+        cur_stream = (Stream_t*)get_val(net->streams, net->streams->keys[net->stream_iter]);
 
         mrn_dbg(5, mrn_printf(FLF, stderr,
                     "Checking for packets on stream[%d]...\n",

@@ -8,13 +8,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/uio.h>
-#include <sys/socket.h>
 
 #include "mrnet/Network.h"
 #include "mrnet/Packet.h"
 #include "pdr.h"
 #include "vector.h"
+
+#ifndef os_windows
+#include <sys/uio.h>
+#include <sys/socket.h>
+#endif
 
 typedef struct {
    Packet_t* packet;

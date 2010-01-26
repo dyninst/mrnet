@@ -1,13 +1,17 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
-#include <netdb.h>
-#include <errno.h>
-#include <sys/socket.h>
 #include <string.h>
+#include <errno.h>
 
-#include "xplat/Types.h"
 #include "xplat/NetUtils.h"
+
+#if defined(os_windows)
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#include <netdb.h>
+#endif /* os_windows */
 
 static int checked_resolve_env = 0;
 static int use_resolve = 1;
@@ -17,8 +21,10 @@ static int use_canonical = 0;
 
 void get_resolve_env()
 {
+  const char* varval;
+
   if ( ! checked_resolve_env ) {
-    const char* varval = getenv( "XPLAT_RESOLVE_HOSTS" );
+    varval = getenv( "XPLAT_RESOLVE_HOSTS" );
     if (varval != NULL ) {
       if (strcmp("0", varval) )
         use_resolve = 1;
@@ -44,6 +50,7 @@ int NetUtils_FindNetworkName( char* ihostname, char* ohostname)
 {
   struct addrinfo *addrs, hints;
   int error;
+  char hostname[XPLAT_MAX_HOSTNAME_LEN];
 
   if ( ihostname == "")
     return -1;
@@ -63,7 +70,6 @@ int NetUtils_FindNetworkName( char* ihostname, char* ohostname)
       return -1;
     }
   
-    char hostname[XPLAT_MAX_HOSTNAME_LEN];
     if ( use_canonical && ( addrs->ai_canonname != NULL) ) {
       strncpy( hostname, addrs->ai_canonname, sizeof(hostname));
       hostname[XPLAT_MAX_HOSTNAME_LEN-1] = '\0';
@@ -89,6 +95,8 @@ int NetUtils_FindNetworkName( char* ihostname, char* ohostname)
 
 int NetUtils_GetHostName( char* ihostname, char* ohostname )
 {
+  char* tok;
+  char* delim = ".";
   char* fqdn = (char*)malloc(sizeof(char)*256);
   assert(fqdn);
   if ( NetUtils_FindNetworkName ( ihostname, fqdn ) == -1 ) {
@@ -99,8 +107,7 @@ int NetUtils_GetHostName( char* ihostname, char* ohostname )
   // extract host name from the fully-qualified domain name
   // find first occurence of "."
   // if substring does not equal the entire string
-  char* tok;
-  char* delim = ".";
+
   tok = strtok(fqdn, delim);
   if (!strcmp(fqdn, tok))
     strncpy(ohostname, tok, 256);

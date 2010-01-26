@@ -8,7 +8,7 @@
 #include <assert.h>
 
 #include "Filter.h"
-#include "Utils.h"
+#include "utils.h"
 
 Filter_t* new_Filter_t(unsigned short iid)
 {

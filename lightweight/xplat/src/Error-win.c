@@ -1,7 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
+/****************************************************************************
+ * Copyright © 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ *                  Detailed MRNet usage rights in "LICENSE" file.          *
+ ****************************************************************************/
+
 #include <winsock2.h>
 
 #include "xplat/Error.h"
@@ -30,7 +31,7 @@ int Error_ETimedOut(int code)
 
 int Error_EAddrInUse(int code)
 {
-    return (code == WSAEADDERINUSE);
+    return (code == WSAEADDRINUSE);
 }
 
 int Error_EConnRefused(int code)

@@ -92,6 +92,8 @@ int NetworkTopology_remove_Orphan(NetworkTopology_t* net_top, Rank r);
 
 Node_t* NetworkTopology_find_Node( NetworkTopology_t* net_top, Rank irank);
 
+int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, SerialGraph_t* isg, int iupdate);
+
 void NetworkTopology_remove_SubGraph(NetworkTopology_t* net_top, Node_t* inode);
 
 void NetworkTopology_print(NetworkTopology_t* net_top, FILE * f);
@@ -124,8 +126,6 @@ Rank NetworkTopology_Node_get_Rank(Node_t* node);
 Rank NetworkTopology_Node_get_Parent(Node_t* node);
 
 void NetworkTopology_Node_set_Parent(Node_t* node, Node_t* parent);
-
-int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, SerialGraph_t* isg, int iupdate);
 
 unsigned int NetworkTopology_Node_find_SubTreeHeight(Node_t* node);
 

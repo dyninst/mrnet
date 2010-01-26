@@ -7,7 +7,7 @@
 #include "mrnet/Error.h"
 #include "mrnet/Network.h"
 #include "PeerNode.h"
-#include "Utils.h"
+#include "utils.h"
 #include "vector.h"
 
 PeerNode_t* new_PeerNode_t(Network_t* inetwork, 

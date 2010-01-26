@@ -12,7 +12,7 @@
 #include <assert.h>
 
 #include "vector.h"
-#include "Utils.h"
+#include "utils.h"
 
 vector_t* new_empty_vector_t()
 {
@@ -42,10 +42,9 @@ void clear(vector_t* vector)
 
 void pushBackElement(vector_t* vector, void* elem)
 {
-    void* vec[vector->size+1];
-    assert(vec);
+	void* vec[1];
 
-    vector->vec = (void**)realloc(vector->vec, sizeof(vec));
+    vector->vec = (void**)realloc(vector->vec, sizeof(vec)*(vector->size+1));
     assert(vector->vec);
 
     vector->vec[vector->size] = (void*)malloc(sizeof(elem));
@@ -61,11 +60,9 @@ void* popBackElement( vector_t* vector)
 {
     void* elem = vector->vec[vector->size-1];
 
-    //void* vec[vector->size-1];
-	void** vec = (void**)malloc(sizeof(elem)*(vector->size-1));
-    assert(vec);
+	void* vec[1];
 
-    vector->vec = (void**)realloc(vector->vec, sizeof(vec));
+    vector->vec = (void**)realloc(vector->vec, sizeof(vec)*(vector->size-1));
     assert(vector->vec);
 
     vector->size--;

@@ -3,7 +3,9 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+#ifndef os_windows
 #include <unistd.h>
+#endif
 
 #include "mrnet/MRNet.h"
 #include "test_NativeFilters_lightweight.h"
@@ -16,13 +18,13 @@ int main(int argc, char **argv)
     int success=1;
 
     Network_t * net = Network_CreateNetworkBE( argc, argv );
+    DataType type;
 
     do{
         if ( Network_recv(net, &tag, buf, &stream) != 1){
             fprintf(stderr, "stream_recv() failure\n");
         }
 
-        DataType type;
         Packet_unpack(buf,  "%d", &type );
 
         switch(tag){

@@ -24,7 +24,7 @@ MAKEDEPENDS = $(srcdir)/../conf/makedepends.sh
 
 BUILD_SHARED_LIBS = @BUILDSHARED@
 
-INCFLAGS = -I$(srcdir)/include -I$(srcdir)/src -I$(srcdir) -I$(srcdir)/xplat/include
+INCFLAGS = -I$(srcdir)/include -I$(srcdir)/src -I$(srcdir) -I$(srcdir)/xplat/include -I$(srcdir)/../src
 
 COMPILER_TYPE = @COMPILER_TYPE@
 CXX = gcc
@@ -69,7 +69,7 @@ SRCS    = BackEndNode.c \
           Router.c \
           SerialGraph.c \
           Stream.c \
-          Utils.c \
+          utils.c \
           vector.c \
           byte_order.c \
           pdr.c \
@@ -103,7 +103,7 @@ $(TARGET_SO): $(OBJS)
 	fi
 
 install: $(TARGETS)
-	for dir in $(libdir) $(includedir) $(includedir)/lightweight ; do \
+	for dir in $(libdir) $(includedir) $(includedir)/mrnet_lightweight ; do \
 	    if [ ! -d $$dir ] ; then \
 	        mkdir -p $$dir ; \
 	        chmod 755 $$dir ; \
@@ -118,7 +118,7 @@ install: $(TARGETS)
         fi
 	for hdr in $(srcdir)/include/mrnet/*.h ; do \
 	    if [ -f $$hdr ] ; then \
-	        $(INSTALL) -p -m 644 $$hdr $(includedir)/lightweight/ ; \
+	        $(INSTALL) -p -m 644 $$hdr $(includedir)/mrnet_lightweight/ ; \
 	    fi \
 	done
 

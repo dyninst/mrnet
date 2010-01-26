@@ -16,11 +16,11 @@
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
 #include "mrnet/Types.h"
-#include "Utils.h"
+#include "utils.h"
 
 #include "xplat/Process.h"
 
-//#define SYS_gettid 224
+#define SYS_gettid 224
 #define SEC_PER_JIFFIES (.01)
 #define MSEC_PER_JIFFIES (10)
 

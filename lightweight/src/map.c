@@ -12,11 +12,11 @@
 #endif
 
 #include "map.h"
-#include "Utils.h"
+#include "utils.h"
 
 map_t* new_map_t()
 {
-    int keys[0];
+    int keys[1];
     map_t* new_map = (map_t*)malloc(sizeof(map_t));
     assert(new_map);
 
@@ -92,7 +92,7 @@ void insert(map_t* map, int key, void* val)
 {
     int i;
     int new_val = 1;
-    int* keys;
+    int keys[1];
 
     for (i = 0; i < map->size; i++) {
         if (map->keys[i] == key) 
@@ -104,8 +104,7 @@ void insert(map_t* map, int key, void* val)
         // update map size
         map->size++;
         // insert key into key array
-        keys = (int*)malloc(sizeof(int)*(map->size));
-        map->keys = (int*)realloc(map->keys, sizeof(keys));
+        map->keys = (int*)realloc(map->keys, sizeof(keys)*(map->size));
         assert(map->keys);
         map->keys[map->size-1] = key;
     }
@@ -116,9 +115,9 @@ void insert(map_t* map, int key, void* val)
 
 void* get_val_recursive(map_node_t* root, int key)
 {
-    if (root == NULL)
+	if (root == NULL)
         return NULL;
-    else if (root->key == key) {
+	else if (root->key == key) {
         return root->val;
     }
     else if (key < root->key)

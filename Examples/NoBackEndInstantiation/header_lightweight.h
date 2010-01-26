@@ -7,7 +7,6 @@
 #define __header_lightweight_h
 
 #include "mrnet/Types.h"
-#include "Protocol.h"
 
 enum { PROT_EXIT=FirstApplicationTag, 
        PROT_INT };

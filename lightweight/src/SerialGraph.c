@@ -11,7 +11,7 @@
 #include "mrnet/Network.h"
 #include "SerialGraph.h"
 #include "mrnet/Types.h"
-#include "Utils.h"
+#include "utils.h"
 
 SerialGraph_t* new_SerialGraph_t(char* ibyte_array)
 {

@@ -14,7 +14,7 @@
 #include "Protocol.h"
 #include "mrnet/Stream.h"
 #include "mrnet/Types.h"
-#include "Utils.h"
+#include "utils.h"
 #include "vector.h"
 
 int ChildNode_init_newChildDataConnection (BackEndNode_t* be, 
@@ -139,7 +139,8 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
           }
           break;
           
-    case PROT_SET_FILTERPARAMS_UPSTREAM:
+    case PROT_SET_FILTERPARAMS_UPSTREAM_SYNC:
+	case PROT_SET_FILTERPARAMS_UPSTREAM_TRANS:
           if( BackEndNode_proc_UpstreamFilterParams( be, packet ) == -1 ) {
               mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_UpstreamFilterParams() failed\n" ));
               retval = -1;

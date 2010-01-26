@@ -15,7 +15,7 @@
 #include "Protocol.h"
 #include "mrnet/Stream.h"
 #include "mrnet/Types.h"
-#include "Utils.h"
+#include "utils.h"
 
 #include "xplat/NetUtils.h"
 

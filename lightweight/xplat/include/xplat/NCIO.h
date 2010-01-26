@@ -1,8 +1,9 @@
 #if !defined(__ncio_h)
 #define __ncio_h 1
 
-#include <sys/uio.h>
-#include <sys/socket.h>
+//#include <sys/uio.h>
+//#include <sys/socket.h>
+#include <winsock2.h>
 
 #if defined(WIN32)
 typedef SOCKET XPSOCKET;

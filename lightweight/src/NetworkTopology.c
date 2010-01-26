@@ -12,7 +12,7 @@
 #include "mrnet/NetworkTopology.h"
 #include "Router.h"
 #include "mrnet/Types.h"
-#include "Utils.h"
+#include "utils.h"
 
 #include "xplat/NetUtils.h"
 

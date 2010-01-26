@@ -3,21 +3,22 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <sys/time.h>
 #include <assert.h>
 
 #ifndef os_windows
 #include <unistd.h>
+#include <sys/time.h>
 #endif
 
 #include "mrnet/Network.h"
 #include "PeerNode.h"
 #include "Protocol.h"
 #include "mrnet/Stream.h"
-#include "Utils.h"
+#include "utils.h"
 #include "PerfDataSysEvent.h"
 
 Stream_t* new_Stream_t(Network_t* net,

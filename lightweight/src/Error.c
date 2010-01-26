@@ -6,7 +6,7 @@
 #include <stdarg.h>
 
 #include "mrnet/Error.h"
-#include "Utils.h"
+#include "utils.h"
 
 ErrorDef errors[] = {
     { ERR_NONE, ERR_INFO, ERR_IGNORE, "No Error"},
@@ -26,12 +26,17 @@ void error(ErrorCode e, Rank _rank, char* fmt, ... )
 
     ErrorCode MRN_errno = e;
 
+#ifndef os_windows
+    ErrorResponse resp = errors[e].response;
+#else
+	int resp = errors[e].response;
+#endif
+
     va_list arglist;
     va_start(arglist, fmt);
     vsnprintf(buf, 1024, fmt, arglist);
     va_end(arglist);
 
-    ErrorResponse resp = errors[e].response;
 
     switch(resp) {
     case ERR_ABORT:
