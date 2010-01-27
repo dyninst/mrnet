@@ -352,6 +352,8 @@ void * EventDetector::main( void * /* iarg */ )
         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "Parent socket:%d added to list.\n", parent_sock));
     }
+    else mrn_dbg(5, mrn_printf(FLF, stderr, "not a child\n"));
+
 
     if( _global_network->is_LocalNodeParent() ) {
         //(2) Add local socket to event list
@@ -364,6 +366,7 @@ void * EventDetector::main( void * /* iarg */ )
                 max_sock = local_sock;
         }
     }
+    else mrn_dbg(5, mrn_printf(FLF, stderr, "not a parent\n"));
 
     //3) do EventDetection Loop, current events are:
     //   - PROT_KILL_SELF 
