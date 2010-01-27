@@ -49,13 +49,14 @@ typedef struct
 
 extern ErrorDef errors[];
 
-class Error{
+class Error {
+
  protected:
     mutable ErrorCode MRN_errno;
 
  public:
-    Error(): MRN_errno(ERR_NONE) { }
-    virtual ~Error() { }
+
+    // BEGIN MRNET API
 
     inline bool has_Error() const {
         return (MRN_errno != ERR_NONE);
@@ -64,6 +65,11 @@ class Error{
     inline void perror(const char *str) const {
         fprintf(stderr, "%s: %s\n", errors[MRN_errno].msg, str );
     }
+
+    // END MRNET API
+
+    Error(): MRN_errno(ERR_NONE) { }
+    virtual ~Error() { }
 
     virtual void error( ErrorCode, Rank, const char *, ... ) const;
 };

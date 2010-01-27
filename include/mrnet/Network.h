@@ -41,28 +41,42 @@ class PeerNode;
 typedef boost::shared_ptr< PeerNode > PeerNodePtr; 
 
 class Network: public Error {
+
  public:
+
+    // BEGIN MRNET API
+
     static Network* CreateNetworkFE( const char* itopology,
                                      const char* ibackend_exe,
                                      const char** ibackend_argv,
                                      const std::map< std::string, std::string >* attrs=NULL,
                                      bool irank_backends=true,
                                      bool iusing_mem_buf=false );
-
     static Network* CreateNetworkBE( int argc, char* argv[] );
 
-    virtual ~Network( );
     void set_TerminateBackEndsOnShutdown( bool terminate ); 
 
-    CommunicationNode* get_EndPoint( Rank ) const;
+    NetworkTopology* get_NetworkTopology( void ) const;
+    
+    /* Local node information */
+    std::string get_LocalHostName( void ) const ;
+    Port get_LocalPort( void ) const ;
+    Rank get_LocalRank( void ) const ;
+    bool is_LocalNodeChild( void ) const ;
+    bool is_LocalNodeParent( void ) const ;
+    bool is_LocalNodeInternal( void ) const ;
+    bool is_LocalNodeFrontEnd( void ) const ;
+    bool is_LocalNodeBackEnd( void ) const ;
 
+    /* Communicators */
     Communicator* get_BroadcastCommunicator( void ) const;
     Communicator* new_Communicator( void );
     Communicator* new_Communicator( Communicator& );
     Communicator* new_Communicator( std::set< CommunicationNode* > & );
+    CommunicationNode* get_EndPoint( Rank ) const;
 
+    /* Streams */
     int load_FilterFunc( const char * so_file, const char * func );
-
     Stream* new_Stream( Communicator*,
                         int us_filter_id=TFILTER_NULL,
                         int sync_id=SFILTER_WAITFORALL,
@@ -72,9 +86,9 @@ class Network: public Error {
                         std::string sync_filters,
                         std::string ds_filters );
     Stream* get_Stream( unsigned int iid ) const;
-
     int recv( int* otag, PacketPtr& opacket, Stream** ostream, bool iblocking=true );
 
+    /* Performance data collection */
     bool enable_PerformanceData( perfdata_metric_t metric, perfdata_context_t context );
     bool disable_PerformanceData( perfdata_metric_t metric, perfdata_context_t context );
     bool collect_PerformanceData( std::map< int, rank_perfdata_map >& results,
@@ -83,40 +97,27 @@ class Network: public Error {
                                   int aggr_filter_id = TFILTER_ARRAY_CONCAT );
     void print_PerformanceData( perfdata_metric_t metric, perfdata_context_t context );
 
-    /* The following is deprecated in favor of get_EventNotificationFd(DATA_EVENT),
-     * and select()ing on these fds will most likely not behave as you might expect
-     * due to recv threads quickly consuming new data
-     */
-    //int get_DataSocketFds( int **oarray, unsigned int *oarray_size ) const;
-
+    /* Event notification */
     int get_EventNotificationFd( EventType etyp );
     void clear_EventNotificationFd( EventType etyp );
     void close_EventNotificationFd( EventType etyp );
-
-    void set_BlockingTimeOut( int timeout );
-    int get_BlockingTimeOut( void );
-
-    NetworkTopology* get_NetworkTopology( void ) const;
-
+    
     void print_error( const char * );
-    bool node_Failed( Rank );
 
-    std::string get_LocalHostName( void ) const ;
-    Port get_LocalPort( void ) const ;
-    Rank get_LocalRank( void ) const ;
+    // END MRNET API
 
-    bool is_LocalNodeChild( void ) const ;
-    bool is_LocalNodeParent( void ) const ;
-    bool is_LocalNodeInternal( void ) const ;
-    bool is_LocalNodeFrontEnd( void ) const ;
-    bool is_LocalNodeBackEnd( void ) const ;
+    virtual ~Network( );
 
-    //NOT IN PUBLIC API
-    TimeKeeper* get_TimeKeeper( void );
-    const std::set< PeerNodePtr > get_ChildPeers() const;
+    /* internal node stuff */
     static Network* CreateNetworkIN( int argc, char* argv[] );    // create obj for internal node
     InternalNode* get_LocalInternalNode( void ) const;
+
+    TimeKeeper* get_TimeKeeper( void );
+
+    const std::set< PeerNodePtr > get_ChildPeers() const;
     PeerNodePtr get_PeerNode( Rank );
+
+    bool node_Failed( Rank );
 
 protected:
     // constructor

@@ -14,19 +14,19 @@ namespace MRN
 {
 
 class CommunicationNode {
- protected:
-    std::string _hostname;
-    Port _port;
-    Rank _rank;
-    
+
  public:
 
-    ~CommunicationNode(){}
-    CommunicationNode( std::string const& ihostname, Port iport, Rank irank );
+    // BEGIN MRNET API
 
     std::string get_HostName( ) const;
     Port get_Port( ) const;
     Rank get_Rank( ) const;
+
+    // END MRNET API
+
+    ~CommunicationNode() {}
+    CommunicationNode( std::string const& ihostname, Port iport, Rank irank );
 
     struct ltnode {
         bool operator()(const CommunicationNode* n1, const CommunicationNode* n2) const
@@ -34,6 +34,12 @@ class CommunicationNode {
             return n1->get_Rank() < n2->get_Rank();
         }
     };
+
+ protected:
+    std::string _hostname;
+    Port _port;
+    Rank _rank;
+    
 };
 
 } /* namespace MRN */

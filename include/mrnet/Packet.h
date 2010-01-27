@@ -22,7 +22,8 @@ namespace MRN
 class Packet;
 typedef boost::shared_ptr< Packet > PacketPtr;
 
-class Packet: public Error{
+class Packet: public Error {
+
     friend class ParentNode;
     friend class BackEndNode;
     friend class Stream;
@@ -30,11 +31,12 @@ class Packet: public Error{
 
  public:
 
+    // BEGIN MRNET API
+
     static PacketPtr NullPacket;
 
     Packet( unsigned short _stream_id, int _tag, const char *fmt, ... );
     Packet( unsigned short _stream_id, int _tag, const void **data, const char *fmt);
-    ~Packet();
 
     int unpack( const char *ifmt, ... );
     const DataElement * operator[] ( unsigned int i ) const;
@@ -48,6 +50,10 @@ class Packet: public Error{
     bool operator!=(const Packet &)const;
 
     void set_DestroyData( bool b );
+
+    // END MRNET API
+
+    ~Packet();
 
     int ExtractVaList( const char *fmt, va_list arg_list ) const;
     int ExtractArgList( const char *fmt, ... ) const;
