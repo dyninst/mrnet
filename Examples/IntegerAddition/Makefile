@@ -4,6 +4,7 @@
 
 TARGETS = $(BINDIR)/IntegerAddition_FE \
           $(BINDIR)/IntegerAddition_async_FE \
+          $(BINDIR)/IntegerAddition_asyncStreams_FE \
           $(BINDIR)/IntegerAddition_timeout_FE \
           $(BINDIR)/IntegerAddition_BE
 
@@ -20,6 +21,9 @@ $(BINDIR)/IntegerAddition_FE: IntegerAddition_FE.C
 
 $(BINDIR)/IntegerAddition_async_FE: IntegerAddition_FE_async.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ IntegerAddition_FE_async.C $(LIBS)
+
+$(BINDIR)/IntegerAddition_asyncStreams_FE: IntegerAddition_FE_asyncStreams.C
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ IntegerAddition_FE_asyncStreams.C $(LIBS)
 
 $(BINDIR)/IntegerAddition_timeout_FE: IntegerAddition_FE_timeout.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ IntegerAddition_FE_timeout.C $(LIBS)

@@ -58,6 +58,10 @@ class Stream{
     unsigned int size( void ) const ;
     bool has_Data( void );
 
+    int  get_DataNotificationFd( void );
+    void clear_DataNotificationFd( void );
+    void close_DataNotificationFd( void );
+
     int set_FilterParameters( FilterType ftype, const char *format_str, ... ) const;
     int set_FilterParameters( const char *params_fmt, va_list params, FilterType ftype ) const;
 
@@ -119,6 +123,7 @@ class Stream{
     std::set< Rank > _end_points;  //end-points of stream
 
     //Dynamic Data Members
+    EventPipe * _evt_pipe;
     PerfDataMgr * _perf_data;
     bool _us_closed;
     bool _ds_closed;
