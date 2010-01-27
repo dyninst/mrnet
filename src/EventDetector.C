@@ -242,7 +242,7 @@ void EventDetector::handle_Timeout( TimeKeeper* tk, int elapsed_ms )
 {
     std::set< unsigned int > elapsed_strms;
 
-    mrn_dbg_func_begin();
+    //mrn_dbg_func_begin();
 
     assert( tk != NULL );
     tk->notify_Elapsed( elapsed_ms, elapsed_strms );
@@ -297,7 +297,7 @@ void EventDetector::handle_Timeout( TimeKeeper* tk, int elapsed_ms )
 	}
     }
 
-    mrn_dbg_func_end();
+    //mrn_dbg_func_end();
 }
 
 void * EventDetector::main( void * /* iarg */ )
