@@ -20,14 +20,15 @@ FrontEndNode::FrontEndNode( Network * inetwork, std::string const& ihostname, Ra
 {
     mrn_dbg_func_begin();
 
-    _network->set_LocalHostName( _hostname  );
-    _network->set_LocalPort( _port );
-    _network->set_LocalRank( _rank );
-    _network->set_NetworkTopology( new NetworkTopology( inetwork, _hostname, _port, _rank ));
-    _network->set_FailureManager( new CommunicationNode( _hostname, _port, _rank ) );
+    inetwork->set_LocalHostName( _hostname  );
+    inetwork->set_LocalPort( _port );
+    inetwork->set_LocalRank( _rank );
+    inetwork->set_FrontEndNode( this );
+    inetwork->set_NetworkTopology( new NetworkTopology( inetwork, _hostname, _port, _rank ));
+    inetwork->set_FailureManager( new CommunicationNode( _hostname, _port, _rank ) );
     
     mrn_dbg( 5, mrn_printf(FLF, stderr, "start_EventDetectionThread() ...\n" ));
-    if( EventDetector::start( _network ) == false ){
+    if( EventDetector::start( inetwork ) == false ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "start_EventDetectionThread() failed\n" ));
         error( ERR_INTERNAL, _rank, "start_EventDetectionThread failed\n" );
         return;

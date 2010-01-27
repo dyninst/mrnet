@@ -38,12 +38,13 @@ typedef enum {
     FLOAT_ARRAY_T, DOUBLE_ARRAY_T
 } DataType;
 
-class DataElement{
+class DataElement {
+
     friend class Packet;
+
  public:
-    DataValue val;
-    DataElement( void );
-    ~DataElement();
+
+    // BEGIN MRNET API
 
     void set_DestroyData( bool d );
     DataType get_Type( void ) const;
@@ -83,6 +84,12 @@ class DataElement{
 
     const void * get_array( DataType *t, uint32_t *len ) const;
     void set_array( const void *p, DataType t, uint32_t len );
+
+    // END MRNET API
+
+    DataValue val;
+    DataElement( void );
+    ~DataElement();
 
  private:
     DataType type;

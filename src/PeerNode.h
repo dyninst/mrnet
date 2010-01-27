@@ -67,9 +67,6 @@ class PeerNode: public CommunicationNode, public Error {
     void signal_FlushComplete( void ) const ;
     void mark_Failed( void );
 
-    static void set_BlockingTimeOut( int _timeout );
-    static int get_BlockingTimeOut( void );
-
     static void cancel_ChildrenSendThreads( void );
 
     static PeerNodePtr new_PeerNode( std::string const& ihostname,
@@ -99,9 +96,6 @@ class PeerNode: public CommunicationNode, public Error {
     bool _available;
     mutable XPlat::Monitor _flush_sync;
     enum{ MRN_FLUSH_COMPLETE };
-
-    static int poll_timeout;
-    static XPlat::Mutex poll_timeout_mutex;
 };
 
 } // namespace MRN

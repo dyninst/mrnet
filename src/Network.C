@@ -218,8 +218,10 @@ void Network::init_FrontEnd( const char * itopology,
 
     if( ! XPlat::NetUtils::IsLocalHost( prettyHost ) ) {
         char warnmsg[1024];
+	string lhost;
+	XPlat::NetUtils::GetLocalHostName(lhost);
         sprintf( warnmsg, "FE host (%s) != Topology Root (%s)",
-                 get_LocalHostName().c_str(), prettyHost.c_str() );
+                 lhost.c_str(), prettyHost.c_str() );
         error( ERR_TOPOLOGY_FORMAT, rootRank, warnmsg );
         return;
     }
@@ -237,7 +239,10 @@ void Network::init_FrontEnd( const char * itopology,
 
     _bcast_communicator = new Communicator( this );
     
-    _local_front_end_node = CreateFrontEndNode( this, rootHost, rootRank );
+    FrontEndNode* fen = CreateFrontEndNode( this, rootHost, rootRank );
+    assert( fen != NULL );
+    if( fen->has_Error() ) 
+        error( ERR_SYSTEM, rootRank, "Failed to initialize via CreateFrontEndNode()\n" );
 
     const char* mrn_commnode_path = FindCommnodePath();
     assert( mrn_commnode_path != NULL );
@@ -314,13 +319,11 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
                     strerror( status ) ));
     }
 
-    BackEndNode* be = CreateBackEndNode( this, myhostname, imyrank,
+    BackEndNode* ben = CreateBackEndNode( this, myhostname, imyrank,
                                          iphostname, ipport, iprank );
-    assert( be != NULL );
-    set_BackEndNode( be );
-
-    if( be->has_Error() ) 
-        error( ERR_SYSTEM, imyrank, "Failed to initialize via BackEndNode()\n" );
+    assert( ben != NULL );
+    if( ben->has_Error() ) 
+        error( ERR_SYSTEM, imyrank, "Failed to initialize via CreateBackEndNode()\n" );
 }
 
 void Network::init_InternalNode( const char* iphostname,
@@ -366,10 +369,8 @@ void Network::init_InternalNode( const char* iphostname,
                                            iphostname, ipport, iprank,
                                            idataSocket, idataPort );
     assert( in != NULL );
-    set_InternalNode( in );
-
     if( in->has_Error() )
-        error( ERR_SYSTEM, imyrank, "Failed to initialize InternalNode\n" );
+        error( ERR_SYSTEM, imyrank, "Failed to initialize using CreateInternalNode()\n" );
 }
 
 int Network::parse_Configuration( const char* itopology, bool iusing_mem_buf )
@@ -1076,18 +1077,6 @@ int Network::load_FilterFunc( const char* so_file, const char* func_name )
     }
     mrn_dbg_func_end();
     return rc;
-}
-
-
-void Network::set_BlockingTimeOut( int timeout )
-{
-    mrn_dbg(3, mrn_printf(FLF, stderr, "set_BlockingTimeOut(%d)\n", timeout ));
-    PeerNode::set_BlockingTimeOut( timeout );
-}
-
-int Network::get_BlockingTimeOut(  )
-{
-    return PeerNode::get_BlockingTimeOut(  );
 }
 
 void Network::waitfor_NonEmptyStream( void )

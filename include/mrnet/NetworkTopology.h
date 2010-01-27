@@ -38,15 +38,20 @@ class SerialGraph;
 class TopologyLocalInfo;
 
 class NetworkTopology: public Error {
+
     friend class Router;
     friend class TopologyLocalInfo;
 
   public:
+
     class Node{
         friend class NetworkTopology;
         friend class TopologyLocalInfo;
         
     public:
+
+        // BEGIN MRNET API
+
         std::string get_HostName( void ) const;
         Port get_Port( void ) const;
         Rank get_Rank( void ) const;
@@ -54,6 +59,9 @@ class NetworkTopology: public Error {
         const std::set< Node * > & get_Children( void ) const;
         unsigned int get_NumChildren( void ) const;
         unsigned int find_SubTreeHeight( void );
+
+        // END MRNET API
+
         double get_AdoptionScore( void ) const;
         double get_WRSKey( void ) const;
         double get_RandKey( void ) const;
@@ -88,6 +96,33 @@ class NetworkTopology: public Error {
     };
 
   public:
+
+    // BEGIN MRNET API
+
+    void print_TopologyFile( const char * filename ) const;
+    void print_DOTGraph( const char * filename ) const;
+    void print( FILE * ) const;
+    
+    unsigned int get_NumNodes() const;
+    void get_TreeStatistics( unsigned int &onum_nodes,
+                             unsigned int &odepth,
+                             unsigned int &omin_fanout, 
+                             unsigned &omax_fanout,
+                             double &oavg_fanout,
+                             double &ostddev_fanout);
+
+    Node * get_Root() { return _root; }
+    Node * find_Node( Rank ) const;
+    void get_Leaves( std::vector< Node * > &leaves ) const;
+
+    /* For get_XXXNodes, cannot guarantee that set nodes are valid
+       in the presence of an updating NetworkTopology, so use carefully */ 
+    void get_ParentNodes( std::set<NetworkTopology::Node*> & ) const;
+    void get_OrphanNodes( std::set<NetworkTopology::Node*> & ) const;
+    void get_BackEndNodes( std::set<NetworkTopology::Node*> & ) const;
+
+    // END MRNET API
+
     NetworkTopology( Network *, SerialGraph & );
     NetworkTopology( Network *, std::string &ihostname, Port iport, Rank irank, 
                      bool iis_backend = false );
@@ -95,6 +130,7 @@ class NetworkTopology: public Error {
     //Topology update operations
     bool add_SubGraph( Rank, SerialGraph &, bool iupdate );
     bool remove_Node( Rank, bool iupdate );
+    bool remove_Node( Node * );
     bool set_Parent( Rank c,  Rank p, bool iupdate );
     bool reset( std::string serial_graph="", bool iupdate=true );
 
@@ -104,32 +140,12 @@ class NetworkTopology: public Error {
     char * get_TopologyStringPtr( );
     char * get_LocalSubTreeStringPtr();
 
-    void print_TopologyFile( const char * filename ) const;
-    void print_DOTGraph( const char * filename ) const;
-    void print( FILE * ) const;
 
     Node * find_NewParent( Rank ichild_rank, unsigned int iretry=0,
                            ALGORITHM_T algorithm=ALG_WRS );
-    void get_TreeStatistics( unsigned int &onum_nodes,
-                             unsigned int &odepth,
-                             unsigned int &omin_fanout, 
-                             unsigned &omax_fanout,
-                             double &oavg_fanout,
-                             double &ostddev_fanout);
+
     void compute_TreeStatistics( void );
 
-    unsigned int get_NumNodes() const;
-    void get_Leaves( std::vector< Node * > &leaves ) const;
-
-    /* For get_XXXNodes, cannot guarantee that set nodes are valid
-       in the presence of an updating NetworkTopology, so use carefully */ 
-    void get_ParentNodes( std::set<NetworkTopology::Node*> & ) const;
-    void get_OrphanNodes( std::set<NetworkTopology::Node*> & ) const;
-    void get_BackEndNodes( std::set<NetworkTopology::Node*> & ) const;
-    Node * get_Root() { return _root; }
-
-    Node * find_Node( Rank ) const;
-    bool remove_Node( Node * );
 
   private:
     Node * find_NodeHoldingLock( Rank ) const;

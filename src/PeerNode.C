@@ -27,8 +27,6 @@ namespace MRN
 /*====================================================*/
 
 PeerNodePtr PeerNode::NullPeerNode;
-XPlat::Mutex PeerNode::poll_timeout_mutex;
-int PeerNode::poll_timeout=0;
 
 PeerNode::PeerNode( Network * inetwork, std::string const& ihostname, Port iport,
                     Rank irank, bool iis_parent, bool iis_internal )
@@ -348,24 +346,6 @@ bool PeerNode::is_parent() const {
 
 bool PeerNode::is_child() const {
     return !_is_parent;
-}
-
-void PeerNode::set_BlockingTimeOut(int itimeout)
-{
-    poll_timeout_mutex.Lock();
-    poll_timeout = itimeout;
-    poll_timeout_mutex.Unlock();
-}
-
-int PeerNode::get_BlockingTimeOut( )
-{
-    int ret;
-
-    poll_timeout_mutex.Lock();
-    ret = poll_timeout;
-    poll_timeout_mutex.Unlock();
-
-    return ret;
 }
 
 } // namespace MRN

@@ -18,14 +18,20 @@ namespace MRN
 
 class Network;
 
-class Communicator{
+class Communicator {
+
     friend class Stream;
     friend class Network;
 
  public:
+
+    // BEGIN MRNET API
+
     bool add_EndPoint(Rank irank);
     bool add_EndPoint(CommunicationNode *);
     const std::set<CommunicationNode *>& get_EndPoints() const;
+
+    // END MRNET API
 
  private:
     Network * _network;

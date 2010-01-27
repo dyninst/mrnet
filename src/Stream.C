@@ -35,14 +35,15 @@ Stream::Stream( Network * inetwork,
                 int ius_filter_id,
                 int isync_filter_id,
                 int ids_filter_id )
-  : _network(inetwork),
+  : _network( inetwork ),
     _id( iid ),
-    _sync_filter_id(isync_filter_id),
+    _sync_filter_id( isync_filter_id ),
     _sync_filter( new Filter( isync_filter_id ) ),
-    _us_filter_id(ius_filter_id),
-    _us_filter ( new Filter(ius_filter_id) ),
-    _ds_filter_id(ids_filter_id),
-    _ds_filter( new Filter(ids_filter_id) ),
+    _us_filter_id( ius_filter_id ),
+    _us_filter( new Filter( ius_filter_id ) ),
+    _ds_filter_id( ids_filter_id ),
+    _ds_filter( new Filter( ids_filter_id ) ),
+    _evt_pipe(NULL),
     _perf_data( new PerfDataMgr() ),
     _us_closed(false),
     _ds_closed(false)
@@ -245,6 +246,8 @@ int Stream::recv(int *otag, PacketPtr & opacket, bool iblocking)
     if( cur_packet != Packet::NullPacket ) {
         *otag = cur_packet->get_Tag();
         opacket = cur_packet;
+	if( _evt_pipe != NULL )
+	    _evt_pipe->clear();
         return 1;
     }
 
@@ -279,6 +282,8 @@ int Stream::recv(int *otag, PacketPtr & opacket, bool iblocking)
     assert( cur_packet != Packet::NullPacket );
     *otag = cur_packet->get_Tag();
     opacket = cur_packet;
+    if( _evt_pipe != NULL )
+        _evt_pipe->clear();
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Received packet tag: %d\n", *otag ));
     mrn_dbg_func_end();
@@ -577,6 +582,8 @@ void Stream::add_IncomingPacket( PacketPtr ipacket )
                           _id));
     _incoming_packet_buffer_sync.Lock();
     _incoming_packet_buffer.push_back( ipacket );
+    if( _evt_pipe != NULL )
+        _evt_pipe->signal();	
     _incoming_packet_buffer_sync.SignalCondition( PACKET_BUFFER_NONEMPTY );
     _incoming_packet_buffer_sync.Unlock();
 
@@ -610,6 +617,27 @@ bool Stream::has_Data( void )
     _incoming_packet_buffer_sync.Unlock();
 
     return !empty;
+}
+
+int Stream::get_DataNotificationFd( void )
+{
+    _evt_pipe = new EventPipe;
+    return _evt_pipe->get_ReadFd();
+}
+
+void Stream::clear_DataNotificationFd( void )
+{
+    if( _evt_pipe != NULL ) {
+	_evt_pipe->clear();
+    }
+}
+
+void Stream::close_DataNotificationFd( void )
+{
+    if( _evt_pipe != NULL ) {
+	delete _evt_pipe;
+	_evt_pipe = NULL;
+    }
 }
 
 int Stream::set_FilterParameters( const char *iparams_fmt, va_list iparams, 

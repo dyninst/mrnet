@@ -30,7 +30,8 @@ typedef enum {
     FILTER_UPSTREAM_SYNC
 } FilterType; 
 
-class Stream{
+class Stream {
+
     friend class Network;
     friend class FrontEndNode;
     friend class BackEndNode;
@@ -40,32 +41,25 @@ class Stream{
     friend class EventDetector;
 
  public:
-    Stream( Network * inetwork, int iid, Rank *ibackends, unsigned int inum_backends,
-            int ius_filter_id, int isync_filter_id, int ids_filter_id );
 
-    ~Stream();
+    // BEGIN MRNET API
 
     int send( int tag, const char *format_str, ... );
     int send( int tag, const void **data, const char *format_str);
-    
     int flush( ) const;
-
     int recv( int *otag, PacketPtr &opacket, bool iblocking = true );
-    //int close( void );
 
     const std::set< Rank > & get_EndPoints( void ) const ;
     unsigned int get_Id( void ) const ;
     unsigned int size( void ) const ;
     bool has_Data( void );
 
+    int  get_DataNotificationFd( void );
+    void clear_DataNotificationFd( void );
+    void close_DataNotificationFd( void );
+
     int set_FilterParameters( FilterType ftype, const char *format_str, ... ) const;
     int set_FilterParameters( const char *params_fmt, va_list params, FilterType ftype ) const;
-
-    bool is_PeerClosed( Rank irank ) const;
-    unsigned int num_ClosedPeers( void ) const ;
-    bool is_Closed( void ) const;
-    const std::set< Rank > & get_ClosedPeers( void ) const ;
-    std::set< Rank > get_ChildPeers() const;
 
     bool enable_PerformanceData( perfdata_metric_t metric, 
                                  perfdata_context_t context );
@@ -78,7 +72,20 @@ class Stream{
     void print_PerformanceData( perfdata_metric_t metric, 
                                 perfdata_context_t context );
 
-    // NOT IN PUBLIC API
+    // END MRNET API
+
+    Stream( Network * inetwork, int iid, Rank *ibackends, unsigned int inum_backends,
+            int ius_filter_id, int isync_filter_id, int ids_filter_id );
+
+    ~Stream();
+
+
+    bool is_PeerClosed( Rank irank ) const;
+    unsigned int num_ClosedPeers( void ) const ;
+    bool is_Closed( void ) const;
+    const std::set< Rank > & get_ClosedPeers( void ) const ;
+    std::set< Rank > get_ChildPeers() const;
+
     PacketPtr collect_PerfData( perfdata_metric_t metric, 
                                 perfdata_context_t context, 
                                 int aggr_strm_id );
@@ -119,6 +126,7 @@ class Stream{
     std::set< Rank > _end_points;  //end-points of stream
 
     //Dynamic Data Members
+    EventPipe * _evt_pipe;
     PerfDataMgr * _perf_data;
     bool _us_closed;
     bool _ds_closed;
