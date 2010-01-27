@@ -1079,18 +1079,6 @@ int Network::load_FilterFunc( const char* so_file, const char* func_name )
     return rc;
 }
 
-
-void Network::set_BlockingTimeOut( int timeout )
-{
-    mrn_dbg(3, mrn_printf(FLF, stderr, "set_BlockingTimeOut(%d)\n", timeout ));
-    PeerNode::set_BlockingTimeOut( timeout );
-}
-
-int Network::get_BlockingTimeOut(  )
-{
-    return PeerNode::get_BlockingTimeOut(  );
-}
-
 void Network::waitfor_NonEmptyStream( void )
 {
     mrn_dbg_func_begin();
