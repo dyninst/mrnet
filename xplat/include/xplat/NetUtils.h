@@ -29,36 +29,69 @@ public:
     class NetworkAddress
     {
     private:
-        std::string str;        // IPv4 address in dotted decimal
-        in_addr_t iaddr;        // IPv4 address in host byte order
+        bool isv6;               // true if IPv6
+        std::string str;         // IP address as string
+        in_addr_t ip4addr;       // IPv4 address in host byte order
+        struct in6_addr ip6addr; // IPv6 address in network byte order
 
     public:
         NetworkAddress( ): str("")
         {
-            iaddr = ntohl(INADDR_ANY);
+            isv6 = false;
+            ip4addr = ntohl(INADDR_ANY);
+            ip6addr = in6addr_any;
         }
         NetworkAddress( in_addr_t inaddr );
+        NetworkAddress( struct sockaddr_in6* inaddr );
         NetworkAddress( const NetworkAddress& obj )
-          : str( obj.str ),
-            iaddr( obj.iaddr )
-        { }
+          : isv6( obj.isv6 ), str( obj.str )
+        { 
+            if( ! isv6 )
+                ip4addr = obj.ip4addr;
+            else
+                memcpy( (void*)&ip6addr,
+                        (const void*)&obj.ip6addr,
+                        sizeof(struct in6_addr) );
+        }
 
         NetworkAddress&
         operator=( const NetworkAddress& obj )
         {
             if( &obj != this )
             {
+                isv6 = obj.isv6;
                 str = obj.str;
-                iaddr = obj.iaddr;
+                if( ! isv6 )
+                    ip4addr = obj.ip4addr;
+                else
+                    memcpy( (void*)&ip6addr,
+                            (const void*)&obj.ip6addr,
+                            sizeof(struct in6_addr) );
             }
             return *this;
         }
 
         bool operator==( const NetworkAddress & in )
-            { return iaddr == in.iaddr; }
+        { 
+            if( ! isv6 )
+                return ip4addr == in.ip4addr;
+            else
+                return 0 == memcmp( (const void*)&ip6addr,
+                                    (const void*)&in.ip6addr,
+                                    sizeof(struct in6_addr) );
+        }
 
+	bool IsV4( void ) const { return !isv6; } 
+	bool IsV6( void ) const { return isv6; } 
         std::string GetString( void ) const { return str; }
-        in_addr_t GetInAddr( void ) const   { return iaddr; }
+        in_addr_t GetInAddr( void ) const { return ip4addr; }
+        void GetIn6Addr( struct in6_addr* inaddr ) const 
+        { 
+            if( inaddr != NULL )
+                memcpy( (void*)inaddr,
+                        (const void*)&ip6addr,
+                        sizeof(struct in6_addr) );
+        }
     };
 private:
     static int FindNetworkName( std::string ihostname, std::string& );

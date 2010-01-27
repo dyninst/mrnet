@@ -81,11 +81,22 @@ int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
             hostname[XPLAT_MAX_HOSTNAME_LEN-1] = '\0';
         }
         else {
-            if( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr), 
-                                    hostname, sizeof(hostname), NULL,0,0) ) {
-                fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
-                return -1;
+            if( addrs->ai_family == AF_INET6 ) {
+                if( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in6), 
+                                        hostname, sizeof(hostname), NULL, 0, 0) ) {
+                    fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
+                    return -1;
+                }
             }
+            else if( addrs->ai_family == AF_INET ) {
+                if( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in), 
+                                        hostname, sizeof(hostname), NULL, 0, 0) ) {
+                    fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
+                    return -1;
+                }
+            }
+            else
+                strncpy( hostname, ihostname.c_str(), sizeof(hostname) );
         }
         ohostname = hostname;
 
@@ -148,12 +159,12 @@ int NetUtils::GetNetworkAddress( std::string ihostname, NetworkAddress & oaddr )
 // Note: does not use inet_ntoa or similar functions because they are not
 // necessarily thread safe, or not available on all platforms of interest.
 NetUtils::NetworkAddress::NetworkAddress( in_addr_t inaddr )
-  : iaddr( inaddr )
+  : ip4addr( inaddr )
 {
     // find the dotted decimal form of the address
 
     // get address in network byte order
-    in_addr_t nboaddr = htonl( iaddr );
+    in_addr_t nboaddr = htonl( ip4addr );
 
     // access the address as an array of bytes
     const unsigned char* cp = (const unsigned char*)&nboaddr;
@@ -165,6 +176,27 @@ NetUtils::NetworkAddress::NetworkAddress( in_addr_t inaddr )
         << '.' << (unsigned int)cp[3];
 
     str = astr.str();
+}
+
+// Note: does not use inet_ntoa or similar functions because they are not
+// necessarily thread safe, or not available on all platforms of interest.
+NetUtils::NetworkAddress::NetworkAddress( struct sockaddr_in6* inaddr )
+{
+    if( NULL != inaddr ) {
+        memcpy( (void*)&ip6addr,
+                (void*)&inaddr->sin6_addr,
+                sizeof(struct in6_addr) );
+    }
+
+    // find the hex form of the address
+    char hostname[64];
+    int error;
+    if( error = getnameinfo((struct sockaddr*)inaddr, sizeof(struct sockaddr_in6), 
+			    hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST) ) {
+        fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
+    }
+    hostname[63] = '\0';
+    str = hostname;
 }
 
 int NetUtils::GetNumberOfNetworkInterfaces( void )
@@ -194,7 +226,7 @@ int NetUtils::GetLocalNetworkInterfaces( std::vector<NetUtils::NetworkAddress> &
 
 int NetUtils::FindNetworkAddress( std::string ihostname, NetUtils::NetworkAddress &oaddr )
 {
-    struct addrinfo *addrs, hints;
+    struct addrinfo *addrs, *addrs_iter, hints;
     int error;
 
     if( ihostname == "" )
@@ -214,13 +246,19 @@ int NetUtils::FindNetworkAddress( std::string ihostname, NetUtils::NetworkAddres
         return -1;
     }
 
-    struct in_addr in;
-    struct sockaddr_in *sinptr = ( struct sockaddr_in * )(addrs->ai_addr);
-    memcpy( &in.s_addr, ( void * )&( sinptr->sin_addr ), sizeof( in.s_addr ) );
-    oaddr = NetworkAddress( ntohl(in.s_addr) );
+    addrs_iter = addrs;
+    while( addrs_iter != NULL ) {
+        if( addrs_iter->ai_family == AF_INET ) {
+            struct in_addr in;
+	    struct sockaddr_in *sinptr = ( struct sockaddr_in * )(addrs_iter->ai_addr);
+	    memcpy( &in.s_addr, ( void * )&( sinptr->sin_addr ), sizeof( in.s_addr ) );
+	    oaddr = NetworkAddress( ntohl(in.s_addr) );
+	    break;
+	}
+	addrs_iter = addrs_iter->ai_next;
+    }
 
     freeaddrinfo(addrs);
-
     return 0;
 }
 

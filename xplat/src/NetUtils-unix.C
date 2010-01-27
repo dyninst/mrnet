@@ -113,9 +113,9 @@ NetUtils::FindLocalNetworkInterfaces( std::vector< NetUtils::NetworkAddress >& l
     int ifc_count_guess = 5;
     struct ifconf ifc;
 
-    int fd = socket( AF_INET6, SOCK_STREAM, 0 );
+    int fd = socket( AF_INET, SOCK_STREAM, 0 );
     if( fd < 0 ) {
-        fd = socket( AF_INET, SOCK_STREAM, 0 );
+        return -1;
     }
 
 #if defined( SIOCGIFCOUNT )
@@ -162,6 +162,7 @@ NetUtils::FindLocalNetworkInterfaces( std::vector< NetUtils::NetworkAddress >& l
             rq_len *= 2;
         }
     }
+    close(fd);
 
     num_ifs = ifc.ifc_len / sizeof(struct ifreq);
 
