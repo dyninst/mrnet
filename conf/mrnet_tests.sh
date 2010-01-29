@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 bin_dir=`dirname $0`
 TOPGEN="${bin_dir}/mrnet_topgen"
