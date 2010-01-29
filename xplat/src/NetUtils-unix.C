@@ -49,11 +49,9 @@ int NetUtils::FindNumberOfLocalNetworkInterfaces( void )
     int rq_len;
     int ifc_count_guess=5;
 
-    //IP6 suport?
-    int fd=socket(AF_INET6,SOCK_DGRAM,0);
-    if ( fd<0 ){
-        //NO IP6, use IP4
-        fd=socket(AF_INET,SOCK_DGRAM,0);
+    int fd = socket( AF_INET, SOCK_DGRAM, 0);
+    if ( fd < 0 ) {
+        return -1;
     }
 
 #if defined( SIOCGIFCOUNT )

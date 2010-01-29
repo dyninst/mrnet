@@ -159,7 +159,7 @@ int NetUtils::GetNetworkAddress( std::string ihostname, NetworkAddress & oaddr )
 // Note: does not use inet_ntoa or similar functions because they are not
 // necessarily thread safe, or not available on all platforms of interest.
 NetUtils::NetworkAddress::NetworkAddress( in_addr_t inaddr )
-  : ip4addr( inaddr )
+    : isv6(false), ip4addr( inaddr )
 {
     // find the dotted decimal form of the address
 
@@ -181,6 +181,7 @@ NetUtils::NetworkAddress::NetworkAddress( in_addr_t inaddr )
 // Note: does not use inet_ntoa or similar functions because they are not
 // necessarily thread safe, or not available on all platforms of interest.
 NetUtils::NetworkAddress::NetworkAddress( struct sockaddr_in6* inaddr )
+    : isv6(true), ip4addr(ntohl(INADDR_NONE))
 {
     if( NULL != inaddr ) {
         memcpy( (void*)&ip6addr,
