@@ -13,6 +13,9 @@
 #include "Router.h"
 #include "mrnet/Types.h"
 #include "utils.h"
+#include "map.h"
+#include "vector.h"
+#include "SerialGraph.h"
 
 #include "xplat/NetUtils.h"
 

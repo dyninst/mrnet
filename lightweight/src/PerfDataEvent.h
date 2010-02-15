@@ -9,11 +9,13 @@
 #include "mrnet/Types.h"
 #include "vector.h"
 
-typedef struct {
+struct PerfDataMgr_t {
   // bitfield of enabled metrics per context
   char active_metrics[PERFDATA_MAX_CTX];
   vector_t* the_data;
-} PerfDataMgr_t;
+} ;
+
+typedef struct PerfDataMgr_t PerfDataMgr_t;
 
 static perfdata_metinfo_t perfdata_metric_info[PERFDATA_MAX_MET];
 static const char* perfdata_context_names[PERFDATA_MAX_CTX];

@@ -7,24 +7,26 @@
 #if !defined(__stream_h)
 #define __stream_h 1
 
-#include "Filter.h"
 #include "mrnet/Network.h"
 #include "mrnet/Packet.h"
 #include "mrnet/Types.h"
-#include "PerfDataEvent.h"
+
+struct vector_t;
+struct PerfDataMgr_t;
+struct Filter_t;
 
 struct Stream_t{
   Network_t* network;
   unsigned short id;
   int sync_filter_id;
-  Filter_t* sync_filter;
+  struct Filter_t* sync_filter;
   int us_filter_id;
-  Filter_t* us_filter;
+  struct Filter_t* us_filter;
   int ds_filter_id;
-  Filter_t *ds_filter;
+  struct Filter_t *ds_filter;
   Packet_t* incoming_packet_buffer;
-  vector_t* peers; // peers in stream
-  PerfDataMgr_t* perf_data;
+  struct vector_t* peers; // peers in stream
+  struct PerfDataMgr_t* perf_data;
 } ;
 
 typedef struct Stream_t Stream_t;

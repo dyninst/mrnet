@@ -7,18 +7,24 @@
 #if !defined(__network_topology_h)
 #define __network_topology_h 1
 
+#include <stdio.h>
+
+
 #include "mrnet/Network.h"
 #include "mrnet/Types.h"
-#include "Router.h"
-#include "SerialGraph.h"
+
+struct map_t;
+struct node_t;
+struct Router_t;
+struct SerialGraph_t;
 
 struct Node_t {
   char* hostname;
   Port port;
   Rank rank;
   int failed;
-  vector_t* children; 
-  vector_t* ascendants; 
+  struct vector_t* children; 
+  struct vector_t* ascendants; 
   struct Node_t* parent;
   int is_backend;
   unsigned int depth;
@@ -33,18 +39,18 @@ typedef struct Node_t Node_t;
 struct NetworkTopology_t {
    Network_t* net;
    Node_t* root;
-   Router_t* router;
+   struct Router_t* router;
   unsigned int min_fanout;
   unsigned int max_fanout;
   unsigned int depth;
   double avg_fanout;
   double stddev_fanout;
   double var_fanout;
-   map_t* nodes;
-   vector_t* orphans;
-   vector_t* backend_nodes;
-   vector_t* parent_nodes;
-   SerialGraph_t* serial_graph;
+   struct map_t* nodes;
+   struct vector_t* orphans;
+   struct vector_t* backend_nodes;
+   struct vector_t* parent_nodes;
+   struct SerialGraph_t* serial_graph;
 } ; 
 
 typedef struct NetworkTopology_t NetworkTopology_t;
@@ -92,7 +98,7 @@ int NetworkTopology_remove_Orphan(NetworkTopology_t* net_top, Rank r);
 
 Node_t* NetworkTopology_find_Node( NetworkTopology_t* net_top, Rank irank);
 
-int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, SerialGraph_t* isg, int iupdate);
+int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, struct SerialGraph_t* isg, int iupdate);
 
 void NetworkTopology_remove_SubGraph(NetworkTopology_t* net_top, Node_t* inode);
 
@@ -104,7 +110,7 @@ Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top,
                                         ALGORITHM_T ialgorithm);
 
 void NetworkTopology_compute_AdoptionScores(NetworkTopology_t* net_top,
-                                            vector_t* iadopters,
+                                            struct vector_t* iadopters,
                                             Node_t* orphan);
 
 void NetworkTopology_compute_TreeStatistics(NetworkTopology_t* net_top);
@@ -112,7 +118,7 @@ void NetworkTopology_compute_TreeStatistics(NetworkTopology_t* net_top);
 void NetworkTopology_find_PotentialAdopters(NetworkTopology_t* net_top,
                                             Node_t* iorphan,
                                             Node_t* ipotential_adopter,
-                                            vector_t* potential_adopters);
+                                            struct vector_t* potential_adopters);
 
 /* NetworkTopology_Node */
 int NetworkTopology_Node_is_BackEnd(Node_t* node);

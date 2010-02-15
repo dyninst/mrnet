@@ -15,11 +15,13 @@ struct map_node_t {
 
 typedef struct map_node_t map_node_t;
 
-typedef struct {
+struct map_t {
    map_node_t* root;
    int size;
    int* keys;
-} map_t;
+};
+
+typedef struct map_t map_t;
 
  map_t* new_map_t();
 

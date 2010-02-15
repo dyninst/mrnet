@@ -3,7 +3,12 @@
  *                Detailed MRNet usage rights in "LICENSE" file.          *
  **************************************************************************/
 
+#ifndef os_windows
 #include <unistd.h>
+#endif
+
+#include <stdlib.h>
+#include <stdio.h>
 #include "mrnet/MRNet.h"
 #include "test_HeteroFilters_lightweight.h"
 

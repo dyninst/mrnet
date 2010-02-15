@@ -14,10 +14,12 @@
 #include <unistd.h>
 #endif
 
-typedef struct {
+struct vector_t{
     void** vec;
     int size;
-} vector_t;
+} ;
+
+typedef struct vector_t vector_t;
 
 vector_t* new_empty_vector_t();
 

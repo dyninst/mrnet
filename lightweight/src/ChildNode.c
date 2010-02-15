@@ -125,7 +125,7 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
   mrn_dbg(5, mrn_printf(FLF, stderr, "ChildNode_proc_PacketFromParent, packet->tag = %d\n", packet->tag));
 
   switch (packet->tag) {
-    case PROT_DEL_SUBTREE:
+    case PROT_SHUTDOWN:
       if (BackEndNode_proc_DeleteSubTree(be, packet) == -1) {
         mrn_dbg(1, mrn_printf(FLF, stderr,"BackEndNode_proc_deleteSubTree() failed\n"));
         retval = -1;
@@ -238,7 +238,7 @@ int ChildNode_ack_DeleteSubTree(BackEndNode_t* be)
     
     mrn_dbg_func_begin();
 
-    packet = new_Packet_t_2(0, PROT_DEL_SUBTREE_ACK, "");
+    packet = new_Packet_t_2(0, PROT_SHUTDOWN_ACK, "");
 
   if (packet != NULL) {
       if ( (PeerNode_sendDirectly(be->network->parent, packet) == -1 ) ||

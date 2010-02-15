@@ -55,7 +55,8 @@ struct hostent * copy_hostent (struct hostent *in)
   unsigned int i = 0;
   unsigned int count = 0;
   char** tmp;
-  char tmp2[4];
+  char** tmp2;
+  char tmp3[4];
 
   // copy h_name, h_addrtype, and h_length
   out->h_name = strdup(in->h_name);
@@ -79,9 +80,10 @@ struct hostent * copy_hostent (struct hostent *in)
   while (in->h_addr_list[count] != 0)
     count++;
 
-  out->h_addr_list = tmp;
+  tmp2 = (char**)malloc(sizeof(char)*(count+1));
+  out->h_addr_list = tmp2;
   for (i = 0; i < count; i++) {
-    out->h_addr_list[i] = tmp2;
+    out->h_addr_list[i] = tmp3;
     out->h_addr_list[i][0] = in->h_addr_list[i][0];
     out->h_addr_list[i][1] = in->h_addr_list[i][1];
     out->h_addr_list[i][2] = in->h_addr_list[i][2];
@@ -93,30 +95,8 @@ struct hostent * copy_hostent (struct hostent *in)
 
 void delete_hostent(struct hostent *in)
 {
-    //TODO
-#if 0 
-    free(in->h_name);
-
-
-    unsigned int count=0;
-    while(in->h_aliases[count] != NULL)
-        free(in->h_aliases[count++]);
-    
-    free(in->h_aliases);
-
-    
-    count = 0;
-    while (in->h_addr_list[count] != NULL)
-        free(in->h_addr_list[count++]);
-    
-
-    free(in->h_addr_list);
-    
-    
-    free(in);
-#endif
+    //STUB
 }
-
 struct hostent * mrnet_gethostbyname(const char* name)
 {
 

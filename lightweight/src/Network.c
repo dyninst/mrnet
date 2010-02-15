@@ -13,7 +13,9 @@
 #include "mrnet/NetworkTopology.h"
 #include "ChildNode.h"
 #include "PeerNode.h"
+#include "map.h"
 #include "utils.h"
+#include "vector.h"
 
 // from xplat
 #include "xplat/NetUtils.h"

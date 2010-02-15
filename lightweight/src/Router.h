@@ -8,9 +8,11 @@
 
 #include "mrnet/Network.h"
 
-typedef struct {
+struct Router_t{
   Network_t* net;
-} Router_t;
+};
+
+typedef struct Router_t Router_t;
 
 Router_t* new_Router_t(Network_t* net);
 

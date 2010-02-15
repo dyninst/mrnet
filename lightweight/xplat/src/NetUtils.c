@@ -73,14 +73,22 @@ int NetUtils_FindNetworkName( char* ihostname, char* ohostname)
     if ( use_canonical && ( addrs->ai_canonname != NULL) ) {
       strncpy( hostname, addrs->ai_canonname, sizeof(hostname));
       hostname[XPLAT_MAX_HOSTNAME_LEN-1] = '\0';
-      //added
     }
     else {
-      if ( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr),
+        if (addrs->ai_family = AF_INET6) {
+            if ( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in6),
                                 hostname, sizeof(hostname), NULL, 0, 0)) {
-
-        return -1;
-      }
+                fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
+                return -1;
+            }
+        }
+        else if (addrs->ai_family == AF_INET) {
+            if (error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in),
+                        hostname, sizeof(hostname), NULL, 0, 0)) {
+                fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
+                return -1;
+            }
+        }
     }
     strncpy(ohostname, hostname, XPLAT_MAX_HOSTNAME_LEN);
   

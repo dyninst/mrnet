@@ -8,12 +8,14 @@
 
 #include "mrnet/Types.h"
 
-typedef struct {
+struct SerialGraph_t{
   char* byte_array;
   unsigned int buf_idx;
   unsigned int num_nodes;
   unsigned int num_backends;
-} SerialGraph_t;
+};
+
+typedef struct SerialGraph_t SerialGraph_t;
 
 SerialGraph_t* new_SerialGraph_t(char* byte_array);
 

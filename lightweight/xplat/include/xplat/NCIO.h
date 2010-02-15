@@ -1,14 +1,13 @@
 #if !defined(__ncio_h)
 #define __ncio_h 1
 
-//#include <sys/uio.h>
-//#include <sys/socket.h>
-#include <winsock2.h>
-
 #if defined(WIN32)
 typedef SOCKET XPSOCKET;
+#include <winsock2.h>
 #else
 typedef int XPSOCKET;
+#include <sys/uio.h>
+#include <sys/socket.h>
 #endif // defined(WIN32)
 
 typedef struct

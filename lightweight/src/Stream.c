@@ -18,8 +18,13 @@
 #include "PeerNode.h"
 #include "Protocol.h"
 #include "mrnet/Stream.h"
+#include "mrnet/NetworkTopology.h"
 #include "utils.h"
+#include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
+#include "map.h"
+#include "vector.h"
+#include "Filter.h"
 
 Stream_t* new_Stream_t(Network_t* net,
                       int iid, 

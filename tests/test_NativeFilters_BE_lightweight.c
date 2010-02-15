@@ -2,6 +2,8 @@
  * Copyright © 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifndef os_windows
 #include <unistd.h>

@@ -4,6 +4,8 @@
  ****************************************************************************/
 
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifndef os_windows
 #include <unistd.h>

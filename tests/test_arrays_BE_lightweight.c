@@ -3,7 +3,12 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifndef os_windows
 #include <unistd.h>
+#endif
 
 #include "mrnet/MRNet.h"
 #include "test_arrays_lightweight.h"

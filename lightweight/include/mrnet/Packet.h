@@ -9,10 +9,11 @@
 
 #include <stdarg.h>
 
-#include "pdr.h"
 #include "mrnet/DataElement.h"
 #include "mrnet/Types.h"
-#include "vector.h"
+
+struct vector_t;
+struct PDR;
 
 typedef struct {
   uint16_t stream_id;
@@ -23,7 +24,7 @@ typedef struct {
   unsigned int buf_len;
   Rank inlet_rank;
   int destroy_data;
-  vector_t* data_elements;
+  struct vector_t* data_elements;
 } Packet_t;
 
 /* function prototypes */
@@ -47,7 +48,7 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list);
 
 Packet_t* Packet_pushBackElement(Packet_t* packet, DataElement_t* cur_elem);
 
-bool_t Packet_pdr_packet(PDR *pdrs,  Packet_t* pkt);
+bool_t Packet_pdr_packet(struct PDR *pdrs,  Packet_t* pkt);
 
 int Packet_unpack( Packet_t* packet, const char *ifmt_str, ... );
 

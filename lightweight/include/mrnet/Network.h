@@ -7,10 +7,8 @@
 #if !defined(__network_h)
 #define __network_h 1
 
-#include "map.h"
 #include "mrnet/Packet.h"
 #include "mrnet/Types.h"
-#include "vector.h"
 
 static const Port UnknownPort = (Port)-1;
 static const Rank UnknownRank = (Rank)-1;
@@ -19,16 +17,18 @@ struct PeerNode_t;
 struct BackEndNode_t; 
 struct NetworkTopology_t ;
 struct Stream_t ;
+struct vector_t;
+struct map_t;
 
 typedef struct {
   char* local_hostname;
   Port local_port;
   Rank local_rank;
   struct PeerNode_t* parent;
-  vector_t* children;
+  struct vector_t* children;
   struct BackEndNode_t* local_back_end_node;
   struct NetworkTopology_t* network_topology;
-  map_t* streams;
+  struct map_t* streams;
   int stream_iter;
   int recover_from_failures;
 } Network_t;
@@ -59,7 +59,7 @@ int Network_is_LocalNodeBackEnd( Network_t* net);
 
 int Network_has_PacketsFromParent( Network_t* net);
 
-int Network_recv_PacketsFromParent( Network_t* net,  /* Packet_t* opacket*/ vector_t* opacket);
+int Network_recv_PacketsFromParent( Network_t* net,  /* Packet_t* opacket*/ struct vector_t* opacket);
 
 void Network_shutdown_Network( Network_t* net);
 
