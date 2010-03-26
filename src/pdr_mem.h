@@ -11,6 +11,20 @@
 
 #if defined(__cplusplus)
 extern "C" {
+#else
+#define TRUE true
+#define FALSE false
+#define SIZEOF_CHAR 1
+#define SIZEOF_INT 4
+#define SIZEOF_SHORT 2
+#define SIZEOF_LONG 4
+#define SIZEOF_FLOAT 4
+#define SIZEOF_DOUBLE 8
+
+#define SIZEOF_INT16 2
+#define SIZEOF_INT32 4
+#define SIZEOF_INT64 8
+
 #endif
 
 bool_t   pdrmem_putchar(PDR *, char *);

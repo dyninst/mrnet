@@ -10,12 +10,23 @@
  * most common data items.  See pdr.h for more info on the interface to
  * pdr.
  */
-
+#ifdef __cplusplus
 #include "utils.h"
+#else
+#include "utils_lightweight.h"
+#endif
 #include "pdr.h"
 #include "pdr_mem.h"
 
 #define LASTUNSIGNED    ((uint32_t) 0-1)
+
+#ifndef __cplusplus
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define TRUE true
+#define FALSE false
+#endif
 
 /*
  * Free a data structure using PDR
@@ -28,7 +39,7 @@ void pdr_free(pdrproc_t proc, char *objp)
     (*proc)(&x, objp);
 }
 
-bool_t pdr_void(PDR *,  char * )
+bool_t pdr_void(PDR *pdrs,  char *cp )
 {
     return (TRUE);
 }

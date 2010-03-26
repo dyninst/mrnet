@@ -6,8 +6,8 @@
 #if !defined(__backendnode_h)
 #define __backendnode_h 1
 
-#include "mrnet/Network.h"
-#include "mrnet/Types.h"
+#include "mrnet_lightweight/Network.h"
+#include "mrnet_lightweight/Types.h"
 #include "PeerNode.h"
 
 /*  definition */

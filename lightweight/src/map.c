@@ -12,7 +12,7 @@
 #endif
 
 #include "map.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 
 map_t* new_map_t()
 {

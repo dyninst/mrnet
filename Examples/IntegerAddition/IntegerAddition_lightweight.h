@@ -6,7 +6,7 @@
 #if !defined(integer_addition_lightweight_h )
 #define integer_addition_lightweight_h 1
 
-#include "mrnet/Types.h"
+#include "mrnet_lightweight/Types.h"
 
 typedef enum { PROT_EXIT=FirstApplicationTag, 
                PROT_SUM } Protocol;

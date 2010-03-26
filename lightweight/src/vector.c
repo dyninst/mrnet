@@ -12,7 +12,7 @@
 #include <assert.h>
 
 #include "vector.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 
 vector_t* new_empty_vector_t()
 {

@@ -4,10 +4,10 @@
  ****************************************************************************/
 
 #include <assert.h>
-#include "mrnet/Error.h"
-#include "mrnet/Network.h"
+#include "mrnet_lightweight/Error.h"
+#include "mrnet_lightweight/Network.h"
 #include "PeerNode.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 #include "vector.h"
 
 PeerNode_t* new_PeerNode_t(Network_t* inetwork, 

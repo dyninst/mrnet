@@ -33,7 +33,7 @@ $(BINDIR)/IntegerAddition_BE: IntegerAddition_BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ IntegerAddition_BE.C $(LIBS)
 
 $(BINDIR)/IntegerAddition_BE_lightweight: IntegerAddition_BE_lightweight.c
-	$(CXX_LIGHTWEIGHT) $(CXXFLAGS_LIGHTWEIGHT) $(LDFLAGS) -o $@ IntegerAddition_BE_lightweight.c $(LIBS_LIGHTWEIGHT)
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o $@ IntegerAddition_BE_lightweight.c $(LIBS_LIGHTWEIGHT)
 
 $(LIBDIR)/IntegerAdditionFilter.so: IntegerAdditionFilter.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ IntegerAdditionFilter.C

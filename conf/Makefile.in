@@ -59,13 +59,13 @@ LIBS = $(LIBXPLAT) @LIBS@
 LIBS_LIGHTWEIGHT = $(LIBXPLAT_LIGHTWEIGHT) @LIBS@
 
 INCDIR = -I$(SRCDIR)/include -I$(SRCDIR)/src -I$(SRCDIR)/xplat/include -I$(SRCDIR)/tests
-INCDIR_LIGHTWEIGHT = -I$(SRCDIR)/lightweight/include -I$(SRCDIR)/lightweight/src -I$(SRCDIR)/lightweight/xplat/include -I$(SRCDIR)/tests
+INCDIR_LIGHTWEIGHT = -I$(SRCDIR)/lightweight/include -I$(SRCDIR)/lightweight/src -I$(SRCDIR)/lightweight/xplat/include -I$(SRCDIR)/tests -I$(SRCDIR)/src
 
 ifeq ($(COMPILER_TYPE), gnu)
     ifndef SILENCE_WARNINGS
     WARNFLAGS = -Wall \
                 -W \
-	        	-Wno-system-headers \
+                -Wno-system-headers \
                 -Wfloat-equal \
                 -Wconversion \
                 -Wshadow \
@@ -76,8 +76,8 @@ ifeq ($(COMPILER_TYPE), gnu)
                 -Wsign-compare \
                 -Wredundant-decls \
                 -Wlong-long \
-	        	-Woverloaded-virtual   \
-	        	-Wno-non-template-friend
+                -Woverloaded-virtual \
+                -Wno-non-template-friend
    endif # SILENCE_WARNINGS
 endif #GNU options
 
@@ -85,7 +85,7 @@ ifeq ($(COMPILER_TYPE), gnu)
     ifndef SILENCE_WARNINGS
     WARNFLAGS_LIGHTWEIGHT = -Wall \
                 -W \
-	        	-Wno-system-headers \
+                -Wno-system-headers \
                 -Wfloat-equal \
                 -Wconversion \
                 -Wshadow \
@@ -106,11 +106,11 @@ ifeq ($(COMPILER_TYPE), forte)
 endif #Forte (Sun) compiler warnings
 
 CXX = @CXX@
-CXX_LIGHTWEIGHT = gcc
+CC = @CC@
 CXXFLAGS = @CXXFLAGS@ $(INCDIR) $(WARNFLAGS)
-CXXFLAGS_LIGHTWEIGHT = -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Dcompiler_gnu -DDEBUG -Dos_linux=26 $(INCDIR_LIGHTWEIGHT) $(WARNFLAGS_LIGHTWEIGHT)
+CCFLAGS = @CFLAGS@ $(INCDIR_LIGHTWEIGHT) $(WARNFLAGS_LIGHTWEIGHT)
 TEST_CXXFLAGS := $(CXXFLAGS)
-TEST_CXXFLAGS_LIGHTWEIGHT := $(CXXFLAGS_LIGHTWEIGHT)
+TEST_CCFLAGS := $(CCFLAGS)
 
 # Check for older PGI compilers (before 6.0) that require 
 # special handling for template libraries
@@ -120,6 +120,8 @@ ifeq ($(COMPILER_TYPE), pgi)
         CXXFLAGS += --one_instantiation_per_object
     endif
 endif
+
+export
 
 #############################
 # System Specific Definitions
@@ -138,6 +140,7 @@ TOPGEN      = $(BINDIR)/mrnet_topgen
 TARGETS     = $(LIBMRNET) $(COMMNODE) $(TOPGEN)
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
+    TARGETS += $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
 endif
 
 STD_TESTS_FE = $(BINDIR)/test_basic_FE \
@@ -226,8 +229,6 @@ LIBMRNET_SRCS += $(SRCDIR)/src/XTNetwork.C \
                  $(SRCDIR)/src/XTFrontEndNode.C \
                  $(SRCDIR)/src/XTBackEndNode.C \
                  $(SRCDIR)/src/XTInternalNode.C
-
-CXXFLAGS += -Darch_crayxt
 
 else
     ifeq ($(MRNET_STARTUP_METHOD),ssh)
@@ -439,12 +440,12 @@ $(STD_TESTS_FE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(
 $(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o \
 				$(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
-	$(PURIFY) $(CXX_LIGHTWEIGHT) $(TEST_CXXFLAGS_LIGHTWEIGHT) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
+	$(PURIFY) $(CC) $(TEST_CCFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 		$(LIBMRNET_LIGHTWEIGHT) $(LIBS_LIGHTWEIGHT)
 
 $(OBJDIR)/microbench_BE_lightweight.o: microbench_BE_lightweight.c $(FRC)
 	@echo Compiling microbench_BE_lightweight ...
-	$(CXX_LIGHTWEIGHT) $(TEST_CXXFLAGS_LIGHTWEIGHT) -o $@ -c $<
+	$(CC) $(TEST_CCFLAGS) -o $@ -c $<
 
 $(BINDIR)/mrnet_tests.sh: $(SRCDIR)/conf/mrnet_tests.sh
 	$(CP) $(SRCDIR)/conf/mrnet_tests.sh $(BINDIR)/
@@ -543,7 +544,7 @@ lightweight-distclean:
 
 xplat_lightweight-distclean:
 	@echo "Cleaning xplat for lightweight back-end library (distclean)"
-	cd ./lightweight ; $(MAKE) distclean
+	cd ./lightweight/xplat ; $(MAKE) distclean
 
 
 #################################
@@ -555,7 +556,7 @@ xplat_lightweight-distclean:
 
 $(OBJDIR)/test_%.o: test_%.c $(FRC)
 	@echo Compiling `basename $@` ...
-	$(CXX_LIGHTWEIGHT) $(TEST_CXXFLAGS_LIGHTWEIGHT) -o $@ -c $<
+	$(CC) $(TEST_CCFLAGS) -o $@ -c $<
 
 $(OBJDIR)/test_%.o: test_%.C $(FRC)
 	@echo Compiling `basename $@` ...

@@ -6,10 +6,12 @@
 #if !defined(__byte_order_h)
 #define __byte_order_h
 
-#include "mrnet/Types.h"
 
 #if defined(__cplusplus)
+#include "mrnet/Types.h"
 extern "C" {
+#else
+#include "mrnet_lightweight/Types.h"
 #endif /* defined(__cplusplus) */
 
 #define ntoh_bytes hton_bytes

@@ -21,7 +21,7 @@ $(BINDIR)/FaultRecovery_BE: FaultRecovery_BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ FaultRecovery_BE.C $(LIBS)
 
 $(BINDIR)/FaultRecovery_BE_lightweight: FaultRecovery_BE_lightweight.c
-	$(CXX_LIGHTWEIGHT) $(CXXFLAGS_LIGHTWEIGHT) $(LDFLAGS) -o $@ FaultRecovery_BE_lightweight.c $(LIBS_LIGHTWEIGHT)
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o $@ FaultRecovery_BE_lightweight.c $(LIBS_LIGHTWEIGHT)
 
 $(LIBDIR)/FaultRecoveryFilter.so: FaultRecoveryFilter.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ FaultRecoveryFilter.C

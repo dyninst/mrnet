@@ -5,7 +5,7 @@
 
 #include <windows.h>
 #include <shlwapi.h>
-#include "xplat/PathUtils.h"
+#include "xplat_lightweight/PathUtils.h"
 
 
 char* GetFilename(const char* path)

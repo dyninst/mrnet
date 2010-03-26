@@ -5,16 +5,16 @@
 
 #include <assert.h>
 
-#include "mrnet/Network.h"
+#include "mrnet_lightweight/Network.h"
 #include "BackEndNode.h"
 #include "ChildNode.h"
-#include "mrnet/NetworkTopology.h"
-#include "mrnet/Packet.h"
+#include "mrnet_lightweight/NetworkTopology.h"
+#include "mrnet_lightweight/Packet.h"
 #include "PeerNode.h"
 #include "Protocol.h"
-#include "mrnet/Stream.h"
-#include "mrnet/Types.h"
-#include "utils.h"
+#include "mrnet_lightweight/Stream.h"
+#include "mrnet_lightweight/Types.h"
+#include "utils_lightweight.h"
 #include "vector.h"
 
 int ChildNode_init_newChildDataConnection (BackEndNode_t* be, 

@@ -9,12 +9,12 @@
 #include <errno.h>
 #include <string.h>
 
-#include "mrnet/MRNet.h"
+#include "mrnet_lightweight/MRNet.h"
 #include "Message.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 #include "vector.h"
 
-#include "xplat/NCIO.h"
+#include "xplat_lightweight/NCIO.h"
 
 #ifdef os_windows
 #include <winsock2.h>

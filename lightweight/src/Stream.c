@@ -14,12 +14,12 @@
 #include <sys/time.h>
 #endif
 
-#include "mrnet/Network.h"
+#include "mrnet_lightweight/Network.h"
 #include "PeerNode.h"
 #include "Protocol.h"
-#include "mrnet/Stream.h"
-#include "mrnet/NetworkTopology.h"
-#include "utils.h"
+#include "mrnet_lightweight/Stream.h"
+#include "mrnet_lightweight/NetworkTopology.h"
+#include "utils_lightweight.h"
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
 #include "map.h"

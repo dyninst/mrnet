@@ -8,7 +8,7 @@
 
 #include "BackEndNode.h"
 #include "PeerNode.h"
-#include "mrnet/Network.h"
+#include "mrnet_lightweight/Network.h"
 #include "vector.h"
 
 int ChildNode_init_newChildDataConnection (  BackEndNode_t* be, 

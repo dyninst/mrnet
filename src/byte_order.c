@@ -3,12 +3,21 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+#ifdef __cplusplus
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 
-#include "byte_order.h"
 #include "config.h"
+
+#else
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#endif //__cplusplus
+
+#include "byte_order.h"
 
 void byte_swap(char * out, char * in, uint32_t nelems, uint32_t elemsize)
 {

@@ -6,10 +6,10 @@
 #if !defined(__peernode_h)
 #define __peernode_h 1
 
-#include "mrnet/Network.h"
+#include "mrnet_lightweight/Network.h"
 #include "Message.h"
-#include "mrnet/Packet.h"
-#include "mrnet/Types.h"
+#include "mrnet_lightweight/Packet.h"
+#include "mrnet_lightweight/Types.h"
 #include "vector.h"
 
 struct PeerNode_t { 

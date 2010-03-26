@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "xplat/NetUtils.h"
+#include "xplat_lightweight/NetUtils.h"
 
 int NetUtils_GetLastError()
 {

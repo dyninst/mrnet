@@ -3,13 +3,17 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "mrnet/MRNet.h"
+#include "mrnet_lightweight/MRNet.h"
 #include "FaultRecovery_lightweight.h"
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <time.h>
+
+#ifndef os_windows
+#include <unistd.h>
+#endif
 
 int main(int argc, char **argv)
 {

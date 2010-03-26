@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "mrnet/MRNet.h"
+#include "mrnet_lightweight/MRNet.h"
 #include "test_DynamicFilters_lightweight.h"
 
 int main(int argc, char **argv)

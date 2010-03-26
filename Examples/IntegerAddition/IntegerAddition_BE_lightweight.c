@@ -3,8 +3,10 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include "mrnet/MRNet.h"
+#include "mrnet_lightweight/MRNet.h"
 #include "IntegerAddition_lightweight.h"
 
 int main(int argc, char **argv)

@@ -6,7 +6,7 @@
 #if !defined(__router_h)
 #define __router_h 1
 
-#include "mrnet/Network.h"
+#include "mrnet_lightweight/Network.h"
 
 struct Router_t{
   Network_t* net;
