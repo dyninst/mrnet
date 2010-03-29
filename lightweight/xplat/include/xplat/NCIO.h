@@ -2,8 +2,8 @@
 #define __ncio_h 1
 
 #if defined(WIN32)
-typedef SOCKET XPSOCKET;
 #include <winsock2.h>
+typedef SOCKET XPSOCKET;
 #else
 typedef int XPSOCKET;
 #include <sys/uio.h>

@@ -19,7 +19,7 @@
 #include "pdr_mem.h"
 #include "mrnet/Packet.h"
 #include "mrnet/Types.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 #include "vector.h"
 
 void free_Packet_t(Packet_t* packet)

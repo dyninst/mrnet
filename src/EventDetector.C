@@ -185,6 +185,10 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
 
     mrn_dbg( 5, mrn_printf(FLF, stderr,
                            "waiting on %u fds\n", _num_pollfds) );
+
+#ifdef os_windows
+	use_poll=false;
+#else
     if( use_poll ) { 
 
         retval = poll( _pollfds, _num_pollfds, timeout_ms );
@@ -192,6 +196,7 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
                                "poll() returned %d\n", retval) );
     }
     else { // select
+#endif
 
         FD_ZERO( &readfds );
         for( unsigned int num=0; num < _num_pollfds; num++ )
@@ -211,7 +216,9 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
         retval = select( _max_fd+1, &readfds, NULL, NULL, tvp );
         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "select() returned %d\n", retval) );
-    }
+#ifndef os_windows
+	}
+#endif
     if( retval == -1 )
         perror("select() or poll()");
 
@@ -424,7 +431,9 @@ void * EventDetector::main( void * /* iarg */ )
                     mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
                     perror("getSocketConnection()");
                     continue;
-                }
+				} else {
+					mrn_dbg(1, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
+				}
 
                 packets.clear();
                 msg.recv( connected_sock, packets, UnknownRank );
@@ -446,14 +455,18 @@ void * EventDetector::main( void * /* iarg */ )
                                               "Closing %d sockets\n",
                                               watch_list.size() ));
                         for(iter=watch_list.begin(); iter!=watch_list.end(); iter++){
-                            mrn_dbg(5, mrn_printf(FLF, stderr,
+							int fd = *iter;
+                            mrn_dbg(1, mrn_printf(FLF, stderr,
                                                   "Closing event socket: %d\n", *iter ));
                             char c = 1;
-                            mrn_dbg(5, mrn_printf(FLF, stderr, "... writing\n"));
-                            if( write( *iter, &c, 1) == -1 ) {
+                            mrn_dbg(1, mrn_printf(FLF, stderr, "... writing \n"));
+							// TODO: Commented out for Windows because of write assert() failure.
+#ifndef os_windows
+							if( write( *iter, &c, 1) == -1 ) {
                                 perror("write(event_fd)");
                             }
-                            mrn_dbg(5, mrn_printf(FLF, stderr, "... closing\n"));
+#endif
+                            mrn_dbg(1, mrn_printf(FLF, stderr, "... closing\n"));
                             if( XPlat::SocketUtils::Close( *iter ) == -1 ){
                                 perror("close(event_fd)");
                             }
@@ -467,7 +480,7 @@ void * EventDetector::main( void * /* iarg */ )
                         if( connected_sock > max_sock )
                             max_sock = connected_sock;
                         watch_list.push_back( connected_sock );
-                        mrn_dbg( 5, mrn_printf(FLF, stderr,
+                        mrn_dbg( 1, mrn_printf(FLF, stderr,
                                                "FD socket:%d added to list.\n",
                                                connected_sock));
                         

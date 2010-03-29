@@ -14,7 +14,7 @@
 #include "Protocol.h"
 #include "mrnet/Stream.h"
 #include "mrnet/Types.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 #include "vector.h"
 
 int ChildNode_init_newChildDataConnection (BackEndNode_t* be, 

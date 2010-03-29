@@ -61,7 +61,7 @@ NetUtils::FindLocalNetworkInterfaces( std::vector< NetUtils::NetworkAddress > &l
     delete[] pAdapterInfo;
     //loopback not returned by GetAdaptersInfo() -- we add
     FindNetworkAddress( "127.0.0.1", addr ); 
-    local_addresses.push_back( addr );
+    local_addrs.push_back( addr );
 
     return 0;
 }

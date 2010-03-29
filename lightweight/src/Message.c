@@ -11,7 +11,7 @@
 
 #include "mrnet/MRNet.h"
 #include "Message.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 #include "vector.h"
 
 #include "xplat/NCIO.h"

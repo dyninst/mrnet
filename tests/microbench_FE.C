@@ -111,6 +111,7 @@ main( int argc, char* argv[] )
     std::cout << "FE: deleting net" << std::endl;
     delete net;
 
+
     return ret;
 }
 

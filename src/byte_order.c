@@ -3,9 +3,11 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+#ifndef os_windows
 #include <cassert>
 #include <cstdio>
 #include <cstring>
+#endif
 
 #include "byte_order.h"
 #include "config.h"

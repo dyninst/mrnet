@@ -11,7 +11,11 @@
  * pdr.
  */
 
+#ifndef __cplusplus
+#include "utils_lightweight.h"
+#else
 #include "utils.h"
+#endif
 #include "pdr.h"
 #include "pdr_mem.h"
 
@@ -28,7 +32,7 @@ void pdr_free(pdrproc_t proc, char *objp)
     (*proc)(&x, objp);
 }
 
-bool_t pdr_void(PDR *,  char * )
+bool_t pdr_void(PDR *prds,  char *cp )
 {
     return (TRUE);
 }

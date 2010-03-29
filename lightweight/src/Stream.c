@@ -19,7 +19,7 @@
 #include "Protocol.h"
 #include "mrnet/Stream.h"
 #include "mrnet/NetworkTopology.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
 #include "map.h"

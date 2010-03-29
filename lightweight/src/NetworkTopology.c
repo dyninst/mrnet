@@ -12,7 +12,7 @@
 #include "mrnet/NetworkTopology.h"
 #include "Router.h"
 #include "mrnet/Types.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 #include "map.h"
 #include "vector.h"
 #include "SerialGraph.h"

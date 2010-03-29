@@ -13,7 +13,9 @@
 #include <string>
 #include <vector>
 
+#ifndef os_windows
 #include <inttypes.h> /* integer printf format macros */ 
+#endif
 
 namespace MRN {
 

@@ -16,7 +16,7 @@
 
 #include <cassert>
 #include <climits>
-#include "xplat/src/Monitor-win.h"
+#include "Monitor-win.h"
 
 namespace XPlat
 {

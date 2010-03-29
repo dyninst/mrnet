@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 bin_dir=`dirname $0`
 TOPGEN="${bin_dir}/mrnet_topgen"
@@ -90,22 +90,22 @@ run_test()
 
         case "$front_end" in
         "test_DynamicFilters_FE" )
-            ./$front_end"/"$front_end"_FE.exe" $4 $topology_file $back_end"/"$back_end.exe > $outfile 2> $logfile
+            "./"$front_end".exe" $4 $topology_file $back_end".exe" > $outfile 2> $logfile
             ;;
         "microbench_FE" )
-            ./$front_end"/"$front_end"_FE.exe" 5 500 $topology_file $back_end"/"$back_end.exe > $outfile 2> $logfile
+            "./"$front_end".exe" 5 500 $topology_file $back_end".exe" > $outfile 2> $logfile
             ;;
         "microbench_FE_lightweight" )
-            ./$front_end"/"$front_end"_FE.exe" 5 500 $topology_file $back_end"/"$back_end.exe > $outfile 2> $logfile
+            "./"$front_end".exe" 5 500 $topology_file $back_end".exe" > $outfile 2> $logfile
             ;;
         "test_MultStreams_FE" )
-            ./$front_end"/"$front_end"_FE.exe" $topology_file 5 $back_end"/"$back_end.exe > $outfile 2> $logfile
+            "./"$front_end".exe" $topology_file 5 $back_end".exe" > $outfile 2> $logfile
             ;;
         "test_MultStreams_FE_lightweight" )
-            ./$front_end"/"$front_end"_FE.exe" $topology_file 5 $back_end"/"$back_end.exe > $outfile 2> $logfile
+            "./"$front_end".exe" $topology_file 5 $back_end".exe" > $outfile 2> $logfile
             ;;
         * )
-            ./$front_end"/"$front_end"_FE.exe" $topology_file $back_end"/"$back_end.exe > $outfile 2> $logfile
+            "./"$front_end".exe" $topology_file $back_end".exe" > $outfile 2> $logfile
             ;;
         esac
         if [ "$?" = 0 ]; then
@@ -204,13 +204,13 @@ do
 done
 
 if [ "$local" == "true" ]; then
-    run_test "test_basic" "test_basic_BE" "local" "" ""
+    run_test "test_basic_FE" "test_basic_BE" "local" "" ""
     echo
-    run_test "test_arrays" "test_arrays_BE" "local" "" ""
+    run_test "test_arrays_FE" "test_arrays_BE" "local" "" ""
     echo
-    run_test "test_MultStreams" "test_MultStreams_BE" "local" "" ""
+    run_test "test_MultStreams_FE" "test_MultStreams_BE" "local" "" ""
     echo 
-    run_test "test_NativeFilters" "test_NativeFilters_BE" "local" "" "" 
+    run_test "test_NativeFilters_FE" "test_NativeFilters_BE" "local" "" "" 
     echo
     if [ "$sharedobject" != "" ]; then
         run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE" "local" $sharedobject ""
@@ -219,19 +219,19 @@ if [ "$local" == "true" ]; then
     run_test "microbench_FE" "microbench_BE" "local" "" 
     echo
     if [ "$lightweight" == "true" ]; then
-        run_test "test_basiclightweight" "test_basic_BE_lightweight" "local" "" "lightweight" 
+        run_test "test_basic_FE_lightweight" "test_basic_BE_lightweight" "local" "" "lightweight" 
         echo
-        run_test "test_array_lightweight" "test_arrays_BE_lightweight" "local" "" "lightweight" 
+        run_test "test_arrays_FE_lightweight" "test_arrays_BE_lightweight" "local" "" "lightweight" 
         echo
-        run_test "test_MultStreams_lightweight" "test_MultStreams_BE_lightweight" "local" "" "lightweight" 
+        run_test "test_MultStreams_FE_lightweight" "test_MultStreams_BE_lightweight" "local" "" "lightweight" 
         echo
-        run_test "test_Native_Filters" "test_NativeFilters_BE_lightweight" "local" "" "lightweight"
+        run_test "test_Native_Filters_FE" "test_NativeFilters_BE_lightweight" "local" "" "lightweight"
         echo
         if [ "$sharedobject" != "" ]; then
-            run_test "test_DynamicFilters" "test_DynamicFilters_BE_lightweight" "local" $sharedobject "lightweight" 
+            run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE_lightweight" "local" $sharedobject "lightweight" 
             echo
         fi
-        run_test "microbench" "microbench_lightweight" "local" "" "lightweight" 
+        run_test "microbench_FE" "microbench_FE_lightweight" "local" "" "lightweight" 
         echo
     fi
 fi
@@ -239,34 +239,34 @@ fi
 if [ "$remote" == "true" ]; then
 	create_remote_topologies $hostfile
 
-    run_test "test_basic" "test_basic_BE" "remote" "" ""
+    run_test "test_basic_FE" "test_basic_BE" "remote" "" ""
     echo
-    run_test "test_arrays" "test_arrays_BE" "remote" "" ""
+    run_test "test_arrays_FE" "test_arrays_BE" "remote" "" ""
     echo
-    run_test "test_MultStreams" "test_MultStreams_BE" "remote" "" ""
+    run_test "test_MultStreams_FE" "test_MultStreams_BE" "remote" "" ""
     echo
-    run_test "test_NativeFilters" "test_NativeFilters_BE" "remote" "" ""
+    run_test "test_NativeFilters_FE" "test_NativeFilters_BE" "remote" "" ""
     echo
     if [ "$sharedobject" != "" ]; then
-        run_test "test_DynamicFilters" "test_DynamicFilters_BE" "remote" $sharedobject ""
+        run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE" "remote" $sharedobject ""
         echo
     fi
-    run_test "microbench" "microbench_BE" "remote" "" ""
+    run_test "microbench_FE" "microbench_BE" "remote" "" ""
     echo
     if [ "$lightweight" == "true" ]; then
-        run_test "test_basic_lightweight" "test_basic_BE_lightweight" "remote" "" "lightweight"
+        run_test "test_basic_FE_lightweight" "test_basic_BE_lightweight" "remote" "" "lightweight"
         echo
-        run_test "test_arrays_lightweight" "test_arrays_BE_lightweight" "remote" "" "lightweight"
+        run_test "test_arrays_FE_lightweight" "test_arrays_BE_lightweight" "remote" "" "lightweight"
         echo
-        run_test "test_MultStreams_lightweight" "test_MultStreams_BE_lightweight" "remote" "" "lightweight" 
+        run_test "test_MultStreams_FE_lightweight" "test_MultStreams_BE_lightweight" "remote" "" "lightweight" 
         echo
-        run_test "test_Native_Filters" "test_NativeFilters_BE_lightweight" "remote" "" "lightweight" 
+        run_test "test_Native_Filters_FE" "test_NativeFilters_BE_lightweight" "remote" "" "lightweight" 
         echo
         if [ "$sharedobject" != "" ]; then
-            run_test "test_DynamicFilters" "test_DynamicFilters_BE_lightweight" "remote" $sharedobject "lightweight"
+            run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE_lightweight" "remote" $sharedobject "lightweight"
             echo
         fi
-        run_test "microbench" "microbench_lightweight" "remote" "" "lightweight" 
+        run_test "microbench_FE" "microbench_FE_lightweight" "remote" "" "lightweight" 
         echo
     fi
 

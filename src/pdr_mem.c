@@ -6,7 +6,12 @@
 #include "byte_order.h"
 #include "config.h"
 #include "pdr_mem.h"
+#include <assert.h>
+#ifdef __cplusplus
 #include "utils.h"
+#else
+#include "utils_lightweight.h"
+#endif
 
 static struct pdr_ops pdrmem_ops = {
     pdrmem_putchar,
@@ -110,6 +115,7 @@ bool_t pdrmem_getchar(PDR *pdrs, char *p)
  */
 bool_t pdrmem_putint16(PDR *pdrs, int16_t *p)
 {
+	int i;
     if((pdrs->space -= SIZEOF_INT16) < 0){
         return FALSE;
     }
@@ -117,7 +123,7 @@ bool_t pdrmem_putint16(PDR *pdrs, int16_t *p)
 
     assert(pdrs->p_op == PDR_ENCODE);
 
-		for(int i  = 0 ; i < SIZEOF_INT16 ; i++)
+		for(i  = 0 ; i < SIZEOF_INT16 ; i++)
 			*(((int8_t *)(pdrs->cur))+i)= (int8_t)*(((int8_t *)p)+i);
 
     //*((int16_t *)(pdrs->cur)) = *p;
@@ -128,12 +134,13 @@ bool_t pdrmem_putint16(PDR *pdrs, int16_t *p)
 
 bool_t pdrmem_getint16(PDR *pdrs, int16_t *p)
 {
-    if((pdrs->space -= SIZEOF_INT16) < 0){
+    int i;
+	if((pdrs->space -= SIZEOF_INT16) < 0){
         return FALSE;
     }
     assert(pdrs->p_op == PDR_DECODE);
 
-		for(int i  = 0 ; i < SIZEOF_INT16 ; i++)
+		for(i  = 0 ; i < SIZEOF_INT16 ; i++)
 			*(((int8_t *)p)+i) = *(((int8_t *)(pdrs->cur))+i);
 
     //*p = *((int16_t *)(pdrs->cur));
@@ -157,7 +164,8 @@ bool_t pdrmem_getint16_swap(PDR *pdrs, int16_t *p)
  */
 bool_t pdrmem_putint32(PDR *pdrs, int32_t *p)
 {
-    if((pdrs->space -= SIZEOF_INT32) < 0){
+    int i;
+	if((pdrs->space -= SIZEOF_INT32) < 0){
         return FALSE;
     }
 
@@ -169,7 +177,7 @@ bool_t pdrmem_putint32(PDR *pdrs, int32_t *p)
 
 		//#if(arch_sparc)
 
-		for(int i  = 0 ; i < SIZEOF_INT32 ; i++)
+		for(i  = 0 ; i < SIZEOF_INT32 ; i++)
 			*(((int8_t *)(pdrs->cur))+i)= (int8_t)*(((int8_t *)p)+i);
 
 		//#else
@@ -183,12 +191,13 @@ bool_t pdrmem_putint32(PDR *pdrs, int32_t *p)
 
 bool_t pdrmem_getint32(PDR *pdrs, int32_t *p)
 {
-    if((pdrs->space -= SIZEOF_INT32) < 0){
+    int i;
+	if((pdrs->space -= SIZEOF_INT32) < 0){
         return FALSE;
     }
     assert(pdrs->p_op == PDR_DECODE);
 
-		for(int i  = 0 ; i < SIZEOF_INT32 ; i++)
+		for(i  = 0 ; i < SIZEOF_INT32 ; i++)
 			*(((int8_t *)p)+i) = *(((int8_t *)(pdrs->cur))+i);
 
 	 	//*p = *((int32_t *)(pdrs->cur));
@@ -212,12 +221,13 @@ bool_t pdrmem_getint32_swap(PDR *pdrs, int32_t *p)
  */
 bool_t pdrmem_putint64(PDR *pdrs, int64_t *p)
 {
-    if((pdrs->space -= SIZEOF_INT64) < 0){
+    int i;
+	if((pdrs->space -= SIZEOF_INT64) < 0){
         return FALSE;
     }
 
     assert(pdrs->p_op == PDR_ENCODE);
-		for(int i  = 0 ; i < SIZEOF_INT64 ; i++)
+		for(i  = 0 ; i < SIZEOF_INT64 ; i++)
 			*(((int8_t *)(pdrs->cur))+i)= (int8_t)*(((int8_t *)p)+i);
 
     //*((int64_t *)(pdrs->cur)) = *p;
@@ -228,12 +238,13 @@ bool_t pdrmem_putint64(PDR *pdrs, int64_t *p)
 
 bool_t pdrmem_getint64(PDR *pdrs, int64_t *p)
 {
-    if((pdrs->space -= SIZEOF_INT64) < 0){
+    int i;
+	if((pdrs->space -= SIZEOF_INT64) < 0){
         return FALSE;
     }
     assert(pdrs->p_op == PDR_DECODE);
 
-		for(int i  = 0 ; i < SIZEOF_INT64 ; i++)
+		for(i  = 0 ; i < SIZEOF_INT64 ; i++)
 			*(((int8_t *)p)+i) = *(((int8_t *)(pdrs->cur))+i);
 
     //*p = *((int64_t *)(pdrs->cur));
@@ -259,12 +270,13 @@ bool_t pdrmem_getint64_swap(PDR *pdrs, int64_t *p)
  */
 bool_t pdrmem_putfloat(PDR *pdrs, float *p)
 {
-    if((pdrs->space -= SIZEOF_FLOAT) < 0){
+    int i;
+	if((pdrs->space -= SIZEOF_FLOAT) < 0){
         return FALSE;
     }
 
     assert(pdrs->p_op == PDR_ENCODE);
-		for(int i  = 0 ; i < SIZEOF_FLOAT ; i++)
+		for(i  = 0 ; i < SIZEOF_FLOAT ; i++)
 			*(((int8_t *)(pdrs->cur))+i)= (int8_t)*(((int8_t *)p)+i);
 
     //*((float *)(pdrs->cur)) = *p;
@@ -275,11 +287,12 @@ bool_t pdrmem_putfloat(PDR *pdrs, float *p)
 
 bool_t pdrmem_getfloat(PDR *pdrs, float *p)
 {
-    if((pdrs->space -= SIZEOF_FLOAT) < 0){
+    int i;
+	if((pdrs->space -= SIZEOF_FLOAT) < 0){
         return FALSE;
     }
     assert(pdrs->p_op == PDR_DECODE);
-		for(int i  = 0 ; i < SIZEOF_FLOAT ; i++)
+		for(i  = 0 ; i < SIZEOF_FLOAT ; i++)
 			*(((int8_t *)p)+i) = *(((int8_t *)(pdrs->cur))+i);
     //*p = *((float *)(pdrs->cur));
     pdrs->cur += SIZEOF_FLOAT;
@@ -302,12 +315,13 @@ bool_t pdrmem_getfloat_swap(PDR *pdrs, float *p)
  */
 bool_t pdrmem_putdouble(PDR *pdrs, double *p)
 {
-    if((pdrs->space -= SIZEOF_DOUBLE) < 0){
+    int i;
+	if((pdrs->space -= SIZEOF_DOUBLE) < 0){
         return FALSE;
     }
 
     assert(pdrs->p_op == PDR_ENCODE);
-		for(int i  = 0 ; i < SIZEOF_DOUBLE ; i++)
+		for(i  = 0 ; i < SIZEOF_DOUBLE ; i++)
 			*(((int8_t *)(pdrs->cur))+i)= (int8_t)*(((int8_t *)p)+i);
     //*((double *)(pdrs->cur)) = *p;
     pdrs->cur += SIZEOF_DOUBLE;
@@ -317,11 +331,12 @@ bool_t pdrmem_putdouble(PDR *pdrs, double *p)
 
 bool_t pdrmem_getdouble(PDR *pdrs, double *p)
 {
-    if((pdrs->space -= SIZEOF_DOUBLE) < 0){
+    int i;
+	if((pdrs->space -= SIZEOF_DOUBLE) < 0){
         return FALSE;
     }
     assert(pdrs->p_op == PDR_DECODE);
-		for(int i  = 0 ; i < SIZEOF_DOUBLE ; i++)
+		for(i  = 0 ; i < SIZEOF_DOUBLE ; i++)
 			*(((int8_t *)p)+i) = *(((int8_t *)(pdrs->cur))+i);
     //*p = *((double *)(pdrs->cur));
     pdrs->cur += SIZEOF_DOUBLE;
@@ -376,7 +391,8 @@ uint32_t pdrmem_getpos( PDR *pdrs )
 /* TODO: is the parameter size right, given 64-bit pointers? */
 bool_t pdrmem_setpos( PDR *pdrs, uint32_t pos )
 {
-    char * newaddr = pdrs->base + pos;
+    unsigned long difference;
+	char * newaddr = pdrs->base + pos;
     char * lastaddr = pdrs->cur + pdrs->space;
 
 	if( newaddr > lastaddr )
@@ -385,7 +401,7 @@ bool_t pdrmem_setpos( PDR *pdrs, uint32_t pos )
 		}
 
     pdrs->cur = newaddr;
-	unsigned long difference = ((unsigned long)lastaddr) - ((unsigned long)newaddr);
+	difference = ((unsigned long)lastaddr) - ((unsigned long)newaddr);
 	assert( difference < UINT32_MAX );   	
     pdrs->space = difference;
     return (TRUE);
@@ -403,6 +419,6 @@ int32_t * pdrmem_inline(PDR *pdrs, int32_t len)
     return (buf);
 }
 
-void pdrmem_destroy(PDR *)
+void pdrmem_destroy(PDR *pdrs)
 {
 }

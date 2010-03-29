@@ -17,7 +17,7 @@
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
 #include "mrnet/Types.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 
 #include "xplat/Process.h"
 

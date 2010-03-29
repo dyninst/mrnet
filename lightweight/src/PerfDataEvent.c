@@ -16,7 +16,7 @@
 #include "PerfDataSysEvent.h"
 #include "map.h"
 #include "mrnet/Types.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 #include "vector.h"
 
 #define PERFDATA_MET_FLAG(x) ((char)(1 << x))

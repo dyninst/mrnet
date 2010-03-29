@@ -6,7 +6,7 @@
 #include <stdarg.h>
 
 #include "mrnet/Error.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 
 ErrorDef errors[] = {
     { ERR_NONE, ERR_INFO, ERR_IGNORE, "No Error"},

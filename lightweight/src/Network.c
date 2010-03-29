@@ -14,7 +14,7 @@
 #include "ChildNode.h"
 #include "PeerNode.h"
 #include "map.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 #include "vector.h"
 
 // from xplat

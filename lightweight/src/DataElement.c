@@ -9,7 +9,7 @@
 #include <assert.h>
 
 #include "mrnet/DataElement.h"
-#include "utils.h"
+#include "utils_lightweight.h"
 
 DataElement_t* new_DataElement_t()
 {

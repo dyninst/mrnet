@@ -9,7 +9,12 @@
 #include "mrnet/Packet.h"
 #include "mrnet/Types.h"
 
+#ifndef os_windows
 #include <inttypes.h> /* integer printf format macros */ 
+#else 
+#define PRIu64 "u"
+#define PRIi64 "i"
+#endif
 using namespace MRN;
 
 namespace MRN {
