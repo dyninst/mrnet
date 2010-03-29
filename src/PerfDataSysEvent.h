@@ -15,6 +15,7 @@
 #define PRIu64 "u"
 #define PRIi64 "i"
 #endif
+
 using namespace MRN;
 
 namespace MRN {

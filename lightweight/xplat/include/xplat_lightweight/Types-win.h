@@ -7,7 +7,7 @@
 #ifndef XPLAT_TYPES_WIN_H
 #define XPLAT_TYPES_WIN_H
 
-#include <climits>
+//#include <climits>
 #include <winsock2.h>
 
 // Microsoft's compiler does not provide typedefs for specific-sized integers

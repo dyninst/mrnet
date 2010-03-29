@@ -13,6 +13,7 @@
 #include <winsock2.h>
 #endif
 
+#include "mrnet_lightweight/MRNet.h"
 #include "microbench_lightweight.h"
 #include "mrnet/MRNet.h"
 

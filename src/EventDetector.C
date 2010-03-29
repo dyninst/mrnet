@@ -197,7 +197,6 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
     }
     else { // select
 #endif
-
         FD_ZERO( &readfds );
         for( unsigned int num=0; num < _num_pollfds; num++ )
             FD_SET( _pollfds[num].fd, &readfds );
@@ -459,14 +458,15 @@ void * EventDetector::main( void * /* iarg */ )
                             mrn_dbg(1, mrn_printf(FLF, stderr,
                                                   "Closing event socket: %d\n", *iter ));
                             char c = 1;
-                            mrn_dbg(1, mrn_printf(FLF, stderr, "... writing \n"));
+                            mrn_dbg(5, mrn_printf(FLF, stderr, "... writing \n"));
 							// TODO: Commented out for Windows because of write assert() failure.
 #ifndef os_windows
 							if( write( *iter, &c, 1) == -1 ) {
                                 perror("write(event_fd)");
                             }
+							mrn_dbg(5, mrn_printf(FLF, stderr, "... closing\n"));
 #endif
-                            mrn_dbg(1, mrn_printf(FLF, stderr, "... closing\n"));
+
                             if( XPlat::SocketUtils::Close( *iter ) == -1 ){
                                 perror("close(event_fd)");
                             }

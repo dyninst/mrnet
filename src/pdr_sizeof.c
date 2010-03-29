@@ -8,8 +8,12 @@
 #include "pdr_mem.h"
 
 #if defined(__cplusplus)
+#ifndef os_windows
 #include <cstdlib>
 #include <cstdio>
+#else
+#include <stdio.h>
+#endif
 
 #include "config.h"
 

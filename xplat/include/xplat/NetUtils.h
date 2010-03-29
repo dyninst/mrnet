@@ -96,7 +96,7 @@ public:
         std::string GetString( void ) const { return str; }
         in_addr_t GetInAddr( void ) const { return ip4addr; }
         void GetIn6Addr( struct in6_addr* inaddr ) const 
-        { 
+		{
 #ifndef os_windows
             if( inaddr != NULL )
                 memcpy( (void*)inaddr,

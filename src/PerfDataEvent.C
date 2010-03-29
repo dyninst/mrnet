@@ -136,6 +136,7 @@ void PerfDataMgr::print( perfdata_metric_t met, perfdata_context_t ctx )
 
 #else
 	char* report = NULL;
+
     asprintf( &report, "PERFDATA @ T=%d.%06dsec: %s %s -",
               (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, 
               perfdata_context_names[(unsigned)ctx] );
