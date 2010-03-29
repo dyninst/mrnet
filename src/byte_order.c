@@ -4,9 +4,11 @@
  ****************************************************************************/
 
 #ifdef __cplusplus
+#ifndef os_windows
 #include <cassert>
 #include <cstdio>
 #include <cstring>
+#endif
 
 #include "config.h"
 

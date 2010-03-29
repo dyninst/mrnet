@@ -5,6 +5,7 @@
 
 #include "byte_order.h"
 #include "pdr_mem.h"
+#include <assert.h>
 
 #ifdef __cplusplus
 #include "config.h"

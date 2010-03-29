@@ -29,6 +29,8 @@ using namespace XPlat;
 # include <netdb.h>
 # include <netinet/in.h>
 # include <netinet/tcp.h>
+#else
+#define sleep(x) Sleep(1000*(DWORD)x)
 #endif // defined(os_windows)
 
 #if defined(os_solaris)

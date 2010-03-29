@@ -32,14 +32,18 @@ public:
         bool isv6;               // true if IPv6
         std::string str;         // IP address as string
         in_addr_t ip4addr;       // IPv4 address in host byte order
+#ifndef os_windows
         struct in6_addr ip6addr; // IPv6 address in network byte order
+#endif
 
     public:
         NetworkAddress( ): str("")
         {
             isv6 = false;
             ip4addr = ntohl(INADDR_ANY);
+#ifndef os_windows
             ip6addr = in6addr_any;
+#endif
         }
         NetworkAddress( in_addr_t inaddr );
         NetworkAddress( struct sockaddr_in6* inaddr );
@@ -48,10 +52,12 @@ public:
         { 
             if( ! isv6 )
                 ip4addr = obj.ip4addr;
+#ifndef os_windows
             else
                 memcpy( (void*)&ip6addr,
                         (const void*)&obj.ip6addr,
                         sizeof(struct in6_addr) );
+#endif
         }
 
         NetworkAddress&
@@ -63,10 +69,12 @@ public:
                 str = obj.str;
                 if( ! isv6 )
                     ip4addr = obj.ip4addr;
+#ifndef os_windows
                 else
                     memcpy( (void*)&ip6addr,
                             (const void*)&obj.ip6addr,
                             sizeof(struct in6_addr) );
+#endif
             }
             return *this;
         }
@@ -75,10 +83,12 @@ public:
         { 
             if( ! isv6 )
                 return ip4addr == in.ip4addr;
+#ifndef os_windows
             else
                 return 0 == memcmp( (const void*)&ip6addr,
                                     (const void*)&in.ip6addr,
                                     sizeof(struct in6_addr) );
+#endif
         }
 
 	bool IsV4( void ) const { return !isv6; } 
@@ -86,11 +96,13 @@ public:
         std::string GetString( void ) const { return str; }
         in_addr_t GetInAddr( void ) const { return ip4addr; }
         void GetIn6Addr( struct in6_addr* inaddr ) const 
-        { 
+        {
+#ifndef os_windows 
             if( inaddr != NULL )
                 memcpy( (void*)inaddr,
                         (const void*)&ip6addr,
                         sizeof(struct in6_addr) );
+#endif
         }
     };
 private:

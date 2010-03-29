@@ -121,11 +121,23 @@ void PerfDataMgr::print( perfdata_metric_t met, perfdata_context_t ctx )
     gettimeofday(&tv, NULL);
 
     perfdata_metinfo_t* mi= perfdata_metric_info + (unsigned)met;
+#ifdef os_windows
+    int size = 12;
+    size += 10;
+    size += 11;
+    size += strlen(mi->name);
+    size += strlen(perfdata_context_names[(unsigned)ctx]);
+    size += 1;
+    char * report = (char*)malloc(sizeof(char)*size);
+    sprintf( report, "PERFDATA @ T=%d.%06dsec: %s %s -",
+              (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, 
+              perfdata_context_names[(unsigned)ctx] );
+#else 
     char* report = NULL;
     asprintf( &report, "PERFDATA @ T=%d.%06dsec: %s %s -",
               (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, 
               perfdata_context_names[(unsigned)ctx] );
-
+#endif
     for( iter = data.begin() ; iter != data.end(); iter++ ) {
         if( mi->type == PERFDATA_TYPE_UINT ) {
             mrn_printf(FLF, stderr, "%s %" PRIu64 " %s\n", 

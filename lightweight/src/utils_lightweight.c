@@ -28,6 +28,9 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#else 
+#define sleep(x) Sleep(1000*(DWORD)x)
+#include <winsock2.h>
 #endif // defined(os_windows)
 
 #if defined(os_solaris)
