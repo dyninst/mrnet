@@ -3,22 +3,24 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#ifndef os_windows
-#include <cstdlib>
-#include <cstdio>
-#else
-#include <stdio.h>
-#endif
 
 #include "pdr.h"
 #include "pdr_mem.h"
-#include "config.h"
 
 #if defined(__cplusplus)
+#include <cstdlib>
+#include <cstdio>
+
+#include "config.h"
+
 extern "C" {
-#else
+#else 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #define TRUE true
 #define FALSE false
+#define bool_t int
 #endif
 static bool_t _putchar(PDR *pdrs, char *c)
 {
@@ -30,17 +32,17 @@ static bool_t _getchar(PDR *prds, char *c)
     return FALSE;
 }
 
-static bool_t _putint16(PDR *pdrs, int16_t *t)
+static bool_t _putint16(PDR *pdrs, int16_t *i)
 {
     pdrs->space += SIZEOF_INT16;
     return TRUE;
 }
-static bool_t _getint16(PDR *pdrs, int16_t *t)
+static bool_t _getint16(PDR *pdrs, int16_t *i)
 {
     return FALSE;
 }
 
-static bool_t _putint32(PDR *pdrs, int32_t *t)
+static bool_t _putint32(PDR *pdrs, int32_t *i)
 {
     pdrs->space += SIZEOF_INT32;
     return TRUE;
@@ -85,7 +87,7 @@ static bool_t _putbytes(PDR *pdrs, char *c, uint32_t len)
     pdrs->space += SIZEOF_CHAR*len;
     return TRUE;
 }
-static bool_t _getbytes(PDR *pdrs, char *c, uint32_t t)
+static bool_t _getbytes(PDR *pdrs, char *c, uint32_t u)
 {
     return FALSE;
 }

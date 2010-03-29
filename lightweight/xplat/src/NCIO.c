@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "xplat/NCIO.h"
+#include "xplat_lightweight/NCIO.h"
 
 NCBuf_t* new_NCBuf_t()
 {

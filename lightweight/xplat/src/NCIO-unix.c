@@ -4,11 +4,10 @@
 #include <sys/uio.h>
 #include <string.h>
 #include <unistd.h>
-#include <bits/uio.h>
 #include <limits.h>
 #include <sys/socket.h>
 
-#include "xplat/NCIO.h"
+#include "xplat_lightweight/NCIO.h"
 
 const int XPlat_NCBlockingRecvFlag = MSG_WAITALL;
 

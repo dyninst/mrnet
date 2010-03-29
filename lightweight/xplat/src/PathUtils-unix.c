@@ -3,18 +3,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "xplat/PathUtils.h"
+#include "xplat_lightweight/PathUtils.h"
 
 char* GetFilename(const char* path)
 {
-  //basename modifies the path
-  int len = strlen(path)+1;
-  char pathCopy[len];
-  strncpy(pathCopy, path, len);
-
-  char* ret = (char*)malloc(sizeof(char)*256);
+  // basename() may modify the path, and may return static memory
+  char* pathCopy = strdup( path );
+  char* pathBase = basename( pathCopy );
+  char* ret = strdup( pathBase );
   assert(ret);
-  strncpy(ret, basename(pathCopy), 255);
-
+  free( pathCopy );
   return ret;
 }

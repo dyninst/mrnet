@@ -6,7 +6,7 @@
 #if !defined(__header_lightweight_h)
 #define __header_lightweight_h
 
-#include "mrnet/Types.h"
+#include "mrnet_lightweight/Types.h"
 
 enum { PROT_EXIT=FirstApplicationTag, 
        PROT_INT };

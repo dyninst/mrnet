@@ -8,9 +8,9 @@
 #include <string.h>
 
 #include <assert.h>
-#include "mrnet/Network.h"
+#include "mrnet_lightweight/Network.h"
 #include "SerialGraph.h"
-#include "mrnet/Types.h"
+#include "mrnet_lightweight/Types.h"
 #include "utils_lightweight.h"
 
 SerialGraph_t* new_SerialGraph_t(char* ibyte_array)

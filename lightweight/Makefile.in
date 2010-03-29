@@ -5,12 +5,12 @@
 # $Id: Makefile.in,v 1.14 2008/10/09 19:50:12 mjbrim Exp $
 @SET_MAKE@
 
-AR      = @AR@
-ARFLAGS = @ARFLAGS@
-RANLIB  = @RANLIB@
-RM      = @RM@
-INSTALL = @INSTALL@
-MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
+#AR      = @AR@
+#ARFLAGS = @ARFLAGS@
+#RANLIB  = @RANLIB@
+#RM      = @RM@
+#INSTALL = @INSTALL@
+#MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
 
 prefix  = @prefix@
 exec_prefix=@exec_prefix@
@@ -20,26 +20,17 @@ includedir  = @includedir@
 
 VPATH   = @abs_srcdir@/src
 
-MAKEDEPENDS = $(srcdir)/../conf/makedepends.sh
+#MAKEDEPENDS = $(srcdir)/../conf/makedepends.sh
 
-BUILD_SHARED_LIBS = @BUILDSHARED@
+#BUILD_SHARED_LIBS = @BUILDSHARED@
 
-INCFLAGS = -I$(srcdir)/include -I$(srcdir)/src -I$(srcdir) -I$(srcdir)/xplat/include -I$(srcdir)/../src
+#INCFLAGS = -I$(srcdir)/include -I$(srcdir)/src -I$(srcdir) -I$(srcdir)/xplat/include -I$(srcdir)/../src 
 
-COMPILER_TYPE = @COMPILER_TYPE@
-CXX = gcc
-CXXFLAGS = -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Dcompiler_gnu -DDEBUG -Dos_linux=26 $(INCFLAGS)
+#COMPILER_TYPE = @COMPILER_TYPE@
+#CXX = @CC@
+#CXXFLAGS = @CFLAGS@
 
-# Check for older PGI compilers (before 6.0) that require 
-# special handling for template libraries
-PGI_OLD_TEMPLATES = @PGI_OLD_TEMPLATES@
-ifeq ($(COMPILER_TYPE), pgi)
-    ifeq ($(PGI_OLD_TEMPLATES), yes)
-        CXXFLAGS += --one_instantiation_per_object
-    endif
-endif
-
-SOFLAGS  = @SOFLAGS@
+#SOFLAGS  = @SOFLAGS@
 
 TARGET    = libmrnet_lightweight.a
 TARGET_SO = libmrnet_lightweight.so
@@ -49,15 +40,11 @@ ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(TARGET_SO)
 endif 
 
-ifeq ($(MRNET_STARTUP_METHOD),cray_xt)
-    CXXFLAGS += -Darch_crayxt
-endif
-
 SRCS    = BackEndNode.c \
           ChildNode.c \
-		  DataElement.c \
+          DataElement.c \
           Error.c \
-		  Filter.c \
+          Filter.c \
           map.c \
           Message.c \
           Network.c \
@@ -69,15 +56,15 @@ SRCS    = BackEndNode.c \
           Router.c \
           SerialGraph.c \
           Stream.c \
-          utils.c \
+          utils_lightweight.c \
           vector.c \
-          byte_order.c \
-          pdr.c \
-          pdr_mem.c \
-          pdr_sizeof.c
+          $(srcdir)/../src/byte_order.c \
+          $(srcdir)/../src/pdr.c \
+          $(srcdir)/../src/pdr_mem.c \
+          $(srcdir)/../src/pdr_sizeof.c
 
-OBJS    = $(SRCS:.c=.o)
-DEPS    = $(SRCS:.c=.d)
+OBJS = $(subst $(srcdir)/../src/, , $(SRCS:.c=.o))
+DEPS = $(subst $(srcdir)/../src/, , $(SRCS:.c=.d))
 
 all: $(TARGETS)
 
@@ -85,22 +72,12 @@ sharedobj: $(TARGET_SO)
 
 $(TARGET): $(OBJS)
 	@echo Archiving `basename $@` ...
-	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
-	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
-	    $(AR) $(ARFLAGS) $@ $^ Template.dir/*.o ; \
-	else \
-	    $(AR) $(ARFLAGS) $@ $^ ; \
-	fi
+	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
 
 $(TARGET_SO): $(OBJS)
 	@echo Building `basename $@` ...
-	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
-	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
-	    $(CXX) $(SOFLAGS) -o $@ $^ Template.dir/*.o ; \
-	else \
-	    $(CXX) $(SOFLAGS) -o $@ $^ ; \
-	fi
+	$(CC) $(SOFLAGS) -o $@ $^
 
 install: $(TARGETS)
 	for dir in $(libdir) $(includedir) $(includedir)/mrnet_lightweight ; do \
@@ -116,17 +93,16 @@ install: $(TARGETS)
 	if [ -f $(TARGET_SO) ] ; then \
             $(INSTALL) -p -m 755 $(TARGET_SO) $(libdir)/ ; \
         fi
-	for hdr in $(srcdir)/include/mrnet/*.h ; do \
+	for hdr in $(srcdir)/include/mrnet_lightweight/*.h ; do \
 	    if [ -f $$hdr ] ; then \
 	        $(INSTALL) -p -m 644 $$hdr $(includedir)/mrnet_lightweight/ ; \
 	    fi \
 	done
 
 clean:
-	for file in $(OBJS) $(OBJS:.o=.ii) $(OBJS:.o=.ti) $(TARGETS) ; do \
+	for file in $(OBJS) $(TARGETS) ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
-	if [ -d Template.dir ] ; then $(RM) -r Template.dir ; fi
 
 distclean: clean
 	for file in $(DEPS) config.status config.log config.h Makefile ; do \
@@ -146,11 +122,19 @@ distclean: clean
 
 %.d: %.c
 	@echo Building depends file `basename $@` ...
-	$(MAKEDEPENDS)  $< $*.o $@ $(INCFLAGS)
+	$(MAKEDEPENDS)  $< $*.o $@ $(INCDIR_LIGHTWEIGHT)
 
 %.o: %.c
 	@echo Compiling `basename $@` ...
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CC) $(CCFLAGS) -o $@ -c $<
+
+%.d: $(srcdir)/../src/%.c
+	@echo Building depends file `basename $@` ...
+	$(MAKEDEPENDS)  $< $*.o $@ $(INCDIR_LIGHTWEIGHT)
+
+%.o: $(srcdir)/../src/%.c
+	@echo Compiling `basename $@` ...
+	$(CC) $(CCFLAGS) -o $@ -c $<
 
 # make sure file dependencies are determiend and used
 -include $(DEPS)

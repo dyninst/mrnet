@@ -6,8 +6,8 @@
 #if !defined( microbench_lightweight_h )
 #define microbench_lightweight_h 1
 
-#include "mrnet/Types.h"
-#include "mrnet/MRNet.h"
+#include "mrnet_lightweight/Types.h"
+#include "mrnet_lightweight/MRNet.h"
 
 typedef enum {
     MB_EXIT=FirstApplicationTag,

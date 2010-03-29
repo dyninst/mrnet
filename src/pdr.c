@@ -21,6 +21,14 @@
 
 #define LASTUNSIGNED    ((uint32_t) 0-1)
 
+#ifndef __cplusplus
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define TRUE true
+#define FALSE false
+#endif
+
 /*
  * Free a data structure using PDR
  * Not a filter, but a convenient utility nonetheless

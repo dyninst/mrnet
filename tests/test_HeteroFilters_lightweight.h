@@ -6,9 +6,9 @@
 #if !defined(test_heterofilters_lightweight_h)
 #define test_heterofilters_lightweight_h 1
 
-#include "mrnet/MRNet.h"
-#include "mrnet/Types.h"
-#include "mrnet/Packet.h"
+#include "mrnet_lightweight/MRNet.h"
+#include "mrnet_lightweight/Types.h"
+#include "mrnet_lightweight/Packet.h"
 
 typedef enum {
     PROT_EXIT = FirstApplicationTag, 

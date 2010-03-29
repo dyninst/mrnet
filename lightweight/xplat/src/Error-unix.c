@@ -3,7 +3,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "xplat/Error.h"
+#include "xplat_lightweight/Error.h"
 
 char* Error_GetErrorString(int code)
 {

@@ -4,14 +4,18 @@
  ****************************************************************************/
 
 #include "byte_order.h"
-#include "config.h"
 #include "pdr_mem.h"
 #include <assert.h>
+
 #ifdef __cplusplus
+#include "config.h"
 #include "utils.h"
 #else
 #include "utils_lightweight.h"
-#endif
+#include <string.h>
+#include <assert.h>
+#endif //ifdef __cplusplus 
+
 
 static struct pdr_ops pdrmem_ops = {
     pdrmem_putchar,

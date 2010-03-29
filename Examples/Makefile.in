@@ -41,7 +41,7 @@ LDFLAGS = @LDFLAGS@
 SOFLAGS = @SOFLAGS@
 
 INCDIRS = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include
-INCDIRS_LIGHTWEIGHT = -I$(MRNET_ROOT)/lightweight/include -I$(MRNET_ROOT)/lightweight/src -I$(MRNET_ROOT)/lightweight/xplat/include
+INCDIRS_LIGHTWEIGHT = -I$(MRNET_ROOT)/lightweight/include -I$(MRNET_ROOT)/lightweight/xplat/include
 
 #####################################
 #### System Specific Definitions ####
@@ -72,9 +72,9 @@ ifeq ($(COMPILER_TYPE), forte)
 endif # Sun Forte options
 
 CXX = @CXX@
-CXX_LIGHTWEIGHT = gcc
+CC = gcc
 CXXFLAGS = @CXXFLAGS@ $(INCDIRS) $(WARNFLAGS)
-CXXFLAGS_LIGHTWEIGHT = -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Dcompiler_gnu -DDEBUG -Dos_linux=26 $(INCDIRS_LIGHTWEIGHT) $(WARNFLAGS)
+CCFLAGS = -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Dcompiler_gnu -DDEBUG -Dos_linux=26 $(INCDIRS_LIGHTWEIGHT) $(WARNFLAGS)
 
 export
 

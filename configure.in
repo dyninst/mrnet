@@ -12,6 +12,7 @@ abs_srcdir=`cd $srcdir && pwd`
 
 dnl === C++ COMPILERS ===
 dnl TODO: figure out dlopen()/shared object idiosyncracies when using non-GNU compilers
+AC_PROG_CC(xlc_r cc gcc pgcc icc)
 AC_PROG_CXX(xlC_r CC g++ pgCC icpc)
 AC_LANG(C++)
 
@@ -86,9 +87,11 @@ AC_SUBST(FLEX)
 
 dnl === Get necessary macros
 CXXFLAGS="$CXXFLAGS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS"
+CFLAGS="$FLAGS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS"
 
 dnl === Ignore user-requested debug/optimization levels
 CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
+CFLAGS=`echo $CFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
 
 dnl === COMPILER-SPECIFIC OPTIONS ===
 
@@ -97,8 +100,10 @@ PD_COMPILER_TYPE
 if test $COMPILER_TYPE = "gnu" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_gnu -fno-default-inline"
+    CFLAGS="$CFLAGS -Dcompiler_gnu"
     if test $BUILDSHARED = "yes" ; then
         CXXFLAGS="$CXXFLAGS -fPIC"
+        CFLAGS="$CFLAGS -fPIC"
     fi
 
     SOFLAGS="-fPIC -shared -rdynamic"
@@ -113,6 +118,7 @@ if test $COMPILER_TYPE = "gnu" ; then
 elif test $COMPILER_TYPE = "aix-native" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_ibm"
+    CFLAGS="$CFLAGS -Dcompiler_ibm"
 
     SOFLAGS="-G"
 
@@ -126,8 +132,10 @@ elif test $COMPILER_TYPE = "aix-native" ; then
 elif test $COMPILER_TYPE = "forte" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_sun"
+    CFLAGS="$CFLAGS -Dcompiler_sun"
     if test $BUILDSHARED = "yes" ; then
         CXXFLAGS="$CXXFLAGS -KPIC"
+        CFLAGS="$CFLAGS -KPIC"
     fi
 
     SOFLAGS="-G"
@@ -140,11 +148,14 @@ elif test $COMPILER_TYPE = "forte" ; then
 elif test $COMPILER_TYPE = "pgi" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_pgi -D_GNU_SOURCE"
+    CFLAGS="$CFLAGS -Dcompiler_pgi -D_GNU_SOURCE"
     if test $BUILDSHARED = "yes" ; then
         CXXFLAGS="$CXXFLAGS -fPIC"
+        CFLAGS="$CFLAGS -fPIC"
     fi
     if test "$debug_mode" = "yes" ; then
         CXXFLAGS="$CXXFLAGS -O0"
+        CFLAGS="$CFLAGS -O0"
     fi
 
     GOOD_CXXFLAGS="$CXXFLAGS"
@@ -166,11 +177,14 @@ elif test $COMPILER_TYPE = "pgi" ; then
 elif test $COMPILER_TYPE = "intel" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_intel"
+    CFLAGS="$CFLAGS -Dcompiler_intel"
     if test $BUILDSHARED = "yes" ; then
         CXXFLAGS="$CXXFLAGS -fPIC"
+        CFLAGS="$CFLAGS -fPIC"
     fi
     if test "$debug_mode" = "yes" ; then
         CXXFLAGS="$CXXFLAGS -O0"
+        CFLAGS="$CFLAGS -O0"
     fi
 
     SOFLAGS="-fPIC -shared"
@@ -185,8 +199,10 @@ fi
 dnl === Use OUR debug/optimization levels
 if test $debug_mode = "yes" ; then
     CXXFLAGS="-g $CXXFLAGS -DDEBUG"
+    CFLAGS="-g $CFLAGS -DDEBUG"
 else
     CXXFLAGS="-O2 $CXXFLAGS"
+    CFLAGS="-O2 $CFLAGS"
 fi
 
 dnl === SETTING MRNET PLATFORM VARIABLES ===
@@ -222,34 +238,42 @@ case "$host_os" in
     case "$os_release" in
       2.4*)
         CXXFLAGS="$CXXFLAGS -Dos_linux=24"
+        CFLAGS="$CFLAGS -Dos_linux=24"
         ;;
       2.6*)
         CXXFLAGS="$CXXFLAGS -Dos_linux=26"
+        CFLAGS="$CFLAGS -Dos_linux=26"
         ;;
       *)
         CXXFLAGS="$CXXFLAGS -Dos_linux"
+        CFLAGS="$CFLAGS -Dos_linux"
         ;;
     esac
     ;;
   *aix4*)
     LIBS="$LIBS -lm -ldl -lpthread"
     CXXFLAGS="$CXXFLAGS -Dos_aix=4"
+    CFLAGS="$CFLAGS -Dos_aix=4"
     ;;
   *aix5*)
     LIBS="$LIBS -lm -ldl -lpthread"
     CXXFLAGS="$CXXFLAGS -Dos_aix=5"
+    CFLAGS="$CFLAGS -Dos_aix=5"
     ;;
   *solaris2.8*)
     LIBS="$LIBS -lrpcsvc -lsocket -lnsl -lm -lpthread -ldl"
     CXXFLAGS="$CXXFLAGS -Dos_solaris=8"
+    CFLAGS="$CFLAGS -Dos_solaris=8"
     ;;
   *solaris2.9*)
     LIBS="$LIBS -lrpcsvc -lsocket -lnsl -lm -lpthread -ldl"
     CXXFLAGS="$CXXFLAGS -Dos_solaris=9"
+    CFLAGS="$CFLAGS -Dos_solaris=9"
     ;;
   *sunos*)
     LIBS="$LIBS -lrpcsvc -lsocket -lnsl -lm -lpthread -ldl"
     CXXFLAGS="$CXXFLAGS -Dos_sunos"
+    CFLAGS="$CFLAGS -Dos_sunos"
     ;;
   *)
     LIBS="$LIBS -lm -lpthread"
@@ -263,6 +287,7 @@ fi
 if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 
     CXXFLAGS="$CXXFLAGS -Darch_crayxt"
+    CFLAGS="$CFLAGS -Darch_crayxt"
     if test "$CRAYXT_ATH_INCDIR" != "" ; then
         CXXFLAGS="$CXXFLAGS -I$CRAYXT_ATH_INCDIR"
     fi
@@ -321,6 +346,8 @@ AC_LINK_IFELSE( [AC_LANG_PROGRAM([],[])],
 
 AC_SUBST(CXX)
 AC_SUBST(CXXFLAGS)
+AC_SUBST(CC)
+AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(CN_LDFLAGS)
 AC_SUBST(SOFLAGS)

@@ -6,8 +6,8 @@
 #if !defined(__filter_h)
 #define __filter_h
 
-#include "mrnet/NetworkTopology.h"
-#include "mrnet/Packet.h"
+#include "mrnet_lightweight/NetworkTopology.h"
+#include "mrnet_lightweight/Packet.h"
 
 struct Filter_t {
   unsigned short id;

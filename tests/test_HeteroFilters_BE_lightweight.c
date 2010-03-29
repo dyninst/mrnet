@@ -9,7 +9,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "mrnet/MRNet.h"
+#include "mrnet_lightweight/MRNet.h"
 #include "test_HeteroFilters_lightweight.h"
 
 int main(int argc, char **argv)

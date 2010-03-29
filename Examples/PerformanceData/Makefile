@@ -21,7 +21,7 @@ $(BINDIR)/PerfData_BE: BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ BE.C $(LIBS)
 
 $(BINDIR)/PerfData_BE_lightweight: BE_lightweight.c
-	$(CXX_LIGHTWEIGHT) $(CXXFLAGS_LIGHTWEIGHT) $(LDFLAGS) -o $@ BE_lightweight.c $(LIBS_LIGHTWEIGHT)
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o $@ BE_lightweight.c $(LIBS_LIGHTWEIGHT)
 
 $(LIBDIR)/PerfDataFilter.so: PerfDataFilter.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ PerfDataFilter.C

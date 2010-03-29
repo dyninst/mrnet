@@ -4,7 +4,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "xplat/NetUtils.h"
+#include "xplat_lightweight/NetUtils.h"
 
 #if defined(os_windows)
 #include <ws2tcpip.h>

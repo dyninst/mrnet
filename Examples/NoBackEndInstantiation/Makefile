@@ -29,7 +29,7 @@ $(BINDIR)/BackendAttach_BE: BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ BE.C $(LIBS)
 
 $(BINDIR)/BackendAttach_BE_lightweight: BE_lightweight.c
-	$(CXX_LIGHTWEIGHT) $(CXXFLAGS_LIGHTWEIGHT) $(LDFLAGS) -o $@ BE_lightweight.c $(LIBS_LIGHTWEIGHT)
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o $@ BE_lightweight.c $(LIBS_LIGHTWEIGHT)
 
 clean:
 	$(RM) -f $(TARGETS) $(MPI_TARGETS)

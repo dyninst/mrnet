@@ -5,7 +5,7 @@
 
 #include <winsock2.h>
 
-#include "xplat/Error.h"
+#include "xplat_lightweight/Error.h"
 
 char* Error_GetErrorString(int code)
 {

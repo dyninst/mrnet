@@ -15,7 +15,7 @@
 #include "PerfDataEvent.h" 
 #include "PerfDataSysEvent.h"
 #include "map.h"
-#include "mrnet/Types.h"
+#include "mrnet_lightweight/Types.h"
 #include "utils_lightweight.h"
 #include "vector.h"
 

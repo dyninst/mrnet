@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mrnet/Types.h"
-#include "xplat/Types.h"
+#include "mrnet_lightweight/Types.h"
+#include "xplat_lightweight/Types.h"
 
 #ifndef os_windows
 #include <signal.h>

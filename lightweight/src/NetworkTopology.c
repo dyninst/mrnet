@@ -9,15 +9,15 @@
 #include <assert.h>
 #include <math.h>
 
-#include "mrnet/NetworkTopology.h"
+#include "mrnet_lightweight/NetworkTopology.h"
 #include "Router.h"
-#include "mrnet/Types.h"
+#include "mrnet_lightweight/Types.h"
 #include "utils_lightweight.h"
 #include "map.h"
 #include "vector.h"
 #include "SerialGraph.h"
 
-#include "xplat/NetUtils.h"
+#include "xplat_lightweight/NetUtils.h"
 
 Node_t* new_Node_t(char* ihostname, 
                   Port iport, 

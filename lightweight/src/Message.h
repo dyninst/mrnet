@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mrnet/Network.h"
-#include "mrnet/Packet.h"
+#include "mrnet_lightweight/Network.h"
+#include "mrnet_lightweight/Packet.h"
 #include "pdr.h"
 #include "vector.h"
 

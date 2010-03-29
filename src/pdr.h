@@ -7,11 +7,13 @@
 #define __PDR_HEADER__
 
 
-#include "mrnet/Types.h"
 
 
 #if defined(__cplusplus)
+#include "mrnet/Types.h"
 extern "C" {
+#else
+#include "mrnet_lightweight/Types.h"
 #endif /* defined(__cplusplus) */
 
 enum pdr_op {

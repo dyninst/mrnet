@@ -26,7 +26,7 @@ $(BINDIR)/HeteroFilters_BE: HeteroFilters_BE.C file_util.h
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ HeteroFilters_BE.C $(LIBS)
 
 $(BINDIR)/HeteroFilters_BE_lightweight: HeteroFilters_BE_lightweight.c file_util_lightweight.h
-	$(CXX_LIGHTWEIGHT) $(CXXFLAGS_LIGHTWEIGHT) $(LDFLAGS) -o $@ HeteroFilters_BE_lightweight.c $(LIBS_LIGHTWEIGHT)
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o $@ HeteroFilters_BE_lightweight.c $(LIBS_LIGHTWEIGHT)
 
 $(LIBDIR)/HeteroFilters.so: HeteroFilters.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ HeteroFilters.C

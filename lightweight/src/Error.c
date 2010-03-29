@@ -5,7 +5,7 @@
 
 #include <stdarg.h>
 
-#include "mrnet/Error.h"
+#include "mrnet_lightweight/Error.h"
 #include "utils_lightweight.h"
 
 ErrorDef errors[] = {

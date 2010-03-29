@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "test_basic_lightweight.h"
-#include "mrnet/MRNet.h"
+#include "mrnet_lightweight/MRNet.h"
 
 int main(int argc, char **argv){
     Stream_t * stream = (Stream_t*)malloc(sizeof(Stream_t));

@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include "mrnet/MRNet.h"
+#include "mrnet_lightweight/MRNet.h"
 #include "header_lightweight.h"
 
 int main(int argc, char **argv) {

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "mrnet/Network.h"
+#include "mrnet_lightweight/Network.h"
 #include "Router.h"
 
 Router_t* new_Router_t(Network_t* net)

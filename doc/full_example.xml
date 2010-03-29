@@ -161,7 +161,7 @@ int main(int argc, char **argv)
 <programlisting>
 #include "assert.h"
         
-#include "mrnet/Mrnet.h"
+#include "mrnet_lightweight/Mrnet.h"
 #include "IntegerAddition_lightweight.h"
 int main(int argc, char **argv)
 {

@@ -12,12 +12,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mrnet/Network.h"
+#include "mrnet_lightweight/Network.h"
 #include "utils_lightweight.h"
 
-#include "xplat/NetUtils.h"
-#include "xplat/Error.h"
-#include "xplat/PathUtils.h"
+#include "xplat_lightweight/NetUtils.h"
+#include "xplat_lightweight/Error.h"
+#include "xplat_lightweight/PathUtils.h"
 
 #if !defined(os_windows)
 #include <sys/time.h>

@@ -7,7 +7,7 @@
 #include <winsock2.h>
 #include <assert.h>
 
-#include "xplat/NCIO.h"
+#include "xplat_lightweight/NCIO.h"
 
 // the Winsock version of recv doesn't take an argument to 
 // say to do a blocking receive

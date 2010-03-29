@@ -10,7 +10,7 @@
 #include <unistd.h>
 #endif
 
-#include "mrnet/MRNet.h"
+#include "mrnet_lightweight/MRNet.h"
 #include "test_arrays_lightweight.h"
 
 int main(int argc, char **argv){

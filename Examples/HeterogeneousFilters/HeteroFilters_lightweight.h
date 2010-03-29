@@ -6,7 +6,7 @@
 #if !defined(__HETERO_FILTERS_LIGHTWEIGHT_H__)
 #define __HETERO_FILTERS_LIGHTWEIGHT_H__
 
-#include "mrnet/Types.h"
+#include "mrnet_lightweight/Types.h"
 #include "file_util_lightweight.h"
 
 typedef enum {

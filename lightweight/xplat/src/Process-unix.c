@@ -3,7 +3,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "xplat/Process.h"
+#include "xplat_lightweight/Process.h"
 
 int Process_GetProcessId(void)
 {

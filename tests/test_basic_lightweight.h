@@ -6,7 +6,7 @@
 #if !defined(test_basic_lightweight_h)
 #define test_basic_lightweight_h 1
 
-#include "mrnet/Types.h"
+#include "mrnet_lightweight/Types.h"
 
 typedef enum {PROT_EXIT=FirstApplicationTag,
               PROT_CHAR, PROT_UCHAR,

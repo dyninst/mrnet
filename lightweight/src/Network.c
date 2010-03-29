@@ -7,10 +7,10 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "mrnet/MRNet.h"
+#include "mrnet_lightweight/MRNet.h"
 
 #include "BackEndNode.h"
-#include "mrnet/NetworkTopology.h"
+#include "mrnet_lightweight/NetworkTopology.h"
 #include "ChildNode.h"
 #include "PeerNode.h"
 #include "map.h"
@@ -18,7 +18,7 @@
 #include "vector.h"
 
 // from xplat
-#include "xplat/NetUtils.h"
+#include "xplat_lightweight/NetUtils.h"
 
 const int MIN_OUTPUT_LEVEL=0;
 const int MAX_OUTPUT_LEVEL=5;

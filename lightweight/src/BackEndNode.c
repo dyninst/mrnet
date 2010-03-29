@@ -6,18 +6,18 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "mrnet/Network.h"
+#include "mrnet_lightweight/Network.h"
 #include "BackEndNode.h"
 #include "ChildNode.h"
 #include "FilterDefinitions.h"
-#include "mrnet/NetworkTopology.h"
+#include "mrnet_lightweight/NetworkTopology.h"
 #include "PeerNode.h"
 #include "Protocol.h"
-#include "mrnet/Stream.h"
-#include "mrnet/Types.h"
+#include "mrnet_lightweight/Stream.h"
+#include "mrnet_lightweight/Types.h"
 #include "utils_lightweight.h"
 
-#include "xplat/NetUtils.h"
+#include "xplat_lightweight/NetUtils.h"
 
 Port defaultTopoPort = 26500;
 
