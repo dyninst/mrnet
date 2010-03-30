@@ -72,6 +72,7 @@ class Network: public Error {
     Communicator* get_BroadcastCommunicator( void ) const;
     Communicator* new_Communicator( void );
     Communicator* new_Communicator( Communicator& );
+    Communicator* new_Communicator( const std::set< Rank > & );
     Communicator* new_Communicator( std::set< CommunicationNode* > & );
     CommunicationNode* get_EndPoint( Rank ) const;
 
