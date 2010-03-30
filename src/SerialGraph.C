@@ -12,22 +12,26 @@ namespace MRN
 
 void SerialGraph::add_Leaf( std::string ihostname, Port iport, Rank irank )
 {
+    
     std::ostringstream hoststr;
 
     hoststr << "[" << ihostname << ":" << iport << ":" << irank << ":0" << "]";
     _byte_array += hoststr.str();
 
     _num_nodes++; _num_backends++;
+
 }
 
 void SerialGraph::add_SubTreeRoot( std::string ihostname, Port iport, Rank irank )
 {
+    
     std::ostringstream hoststr;
 
     hoststr << "[" << ihostname << ":" << iport << ":" << irank << ":1";
     _byte_array += hoststr.str();
 
     _num_nodes++;
+
 }
 
 bool SerialGraph::is_RootBackEnd( void ) const

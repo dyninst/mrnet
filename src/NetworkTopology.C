@@ -250,7 +250,7 @@ void NetworkTopology::Node::compute_AdoptionScore( Node * iorphan,
     else
         fanout_score = (double)(imax_fanout - fanout) /
             (double)(imax_fanout - imin_fanout);
-
+    
     double depth_increase_score = (double)( (idepth-1) - depth_increase ) /
         (double)(idepth-1);
 

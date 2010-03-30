@@ -252,7 +252,7 @@ int bindPort( int *sock_in, Port *port_in )
     soVal = 1;
 #ifndef os_windows
     soRet = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, 
-                        (const char*)&soVal, sizeof(soVal) );*/
+                        (const char*)&soVal, sizeof(soVal) );
 
     if( soRet < 0 ) {
         err = XPlat::NetUtils::GetLastError();
