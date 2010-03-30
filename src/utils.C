@@ -250,8 +250,10 @@ int bindPort( int *sock_in, Port *port_in )
     // the process exits (needed because on at least some platforms we
     // use well-known ports when connecting sockets)
     soVal = 1;
+#ifndef os_windows
     soRet = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, 
-                        (const char*)&soVal, sizeof(soVal) );
+                        (const char*)&soVal, sizeof(soVal) );*/
+
     if( soRet < 0 ) {
         err = XPlat::NetUtils::GetLastError();
         perror( "setsockopt()" );
@@ -259,6 +261,7 @@ int bindPort( int *sock_in, Port *port_in )
                                        XPlat::Error::GetErrorString( err ).c_str() ) );
         return -1;
     }
+#endif
 
     memset( &local_addr, 0, sizeof( local_addr ) );
     local_addr.sin_family = AF_INET;
@@ -279,7 +282,7 @@ int bindPort( int *sock_in, Port *port_in )
         port = 49152;
         local_addr.sin_port = htons( port );
 
-        while( bind( sock, (sockaddr*)&local_addr, sizeof( local_addr ) ) == -1 ) {
+        while( bind( sock, (sockaddr*)&local_addr, sizeof( local_addr ) ) != 0/*== -1*/ ) {
             err = XPlat::NetUtils::GetLastError();
             if( XPlat::Error::EAddrInUse( err ) ) {
                 local_addr.sin_port = htons( ++port );
