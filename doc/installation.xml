@@ -21,10 +21,6 @@ we have successfully built and tested MRNet on the following systems:
 <listitem>sparc-sun-solaris2.8</listitem>
 <listitem>i386-unknown-nt4.0 (MS Visual Studio 2005)</listitem>
 </itemizedlist>
-<note>
-    Currently, the lightweight backend library does not run on Windows
-    systems.
-</note>
 
 Our build system attempts to use native system compilers where appropriate.
 </para>
