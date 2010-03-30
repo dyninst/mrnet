@@ -18,13 +18,13 @@ SerialGraph_t* new_SerialGraph_t(char* ibyte_array)
     SerialGraph_t* serial_graph;
     
     mrn_dbg_func_begin();
-    
+   
     serial_graph = (SerialGraph_t*)malloc(sizeof(SerialGraph_t));
     assert(serial_graph != NULL);
 
     if (ibyte_array) {
-        serial_graph->byte_array = (char*)malloc(sizeof(char)*strlen(ibyte_array)+1);
-        strncpy(serial_graph->byte_array, ibyte_array, strlen(ibyte_array)+1);
+        serial_graph->byte_array = strdup(ibyte_array);
+        
         mrn_dbg(5, mrn_printf(FLF, stderr, "Creating new serial graph with byte_array=%s\n", serial_graph->byte_array));
     } else {
         serial_graph->byte_array = (char*)malloc(sizeof(char)*2);
@@ -99,9 +99,11 @@ SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* _serial_graph, char*  ih
         num_rightbrackets++;
     }
 
-    new_byte_array = (char*)malloc(sizeof(char)*(strlen(byte_array)+1));
+
+    new_byte_array = (char*)malloc(sizeof(char)*(end+1));
     assert(new_byte_array);
     strncpy(new_byte_array, byte_array, end);
+    new_byte_array[end]='\0';
     retval = new_SerialGraph_t(new_byte_array);
 
     // free malloc'd stuff
