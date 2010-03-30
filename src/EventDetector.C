@@ -421,8 +421,8 @@ void * EventDetector::main( void * /* iarg */ )
                 mrn_dbg( 5, mrn_printf(FLF, stderr, "Activity on listening socket\n"));
                 int connected_sock = getSocketConnection( local_sock );
                 if( connected_sock == -1 ){
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
                     perror("getSocketConnection()");
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
                     continue;
                 }
 
