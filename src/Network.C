@@ -703,7 +703,12 @@ Communicator* Network::new_Communicator( Communicator& comm )
     return new Communicator( this, comm );
 }
 
-Communicator* Network::new_Communicator( set <CommunicationNode *> & endpoints )
+Communicator* Network::new_Communicator( const set< Rank >& endpoints )
+{
+    return new Communicator( this, endpoints );
+}
+
+Communicator* Network::new_Communicator( set< CommunicationNode* >& endpoints )
 {
     return new Communicator( this, endpoints );
 }

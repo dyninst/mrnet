@@ -85,12 +85,12 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
     free( buf );
     mrn_dbg( 3, mrn_printf(FLF, stderr, "pdr_uint32() succeeded. Receive %d packets\n",
                            no_packets ));
-    assert( no_packets < 2000 );
 
-    if( no_packets == 0 ) {
-        mrn_dbg( 2, mrn_printf(FLF, stderr, "warning: Receiving %d packets\n",
-                    no_packets ));
-    }
+    if( no_packets > 10000 )
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "WARNING: Receiving more than 10000 packets\n"));
+    if( no_packets == 0 )
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "WARNING: Receiving zero packets\n"));
+    
 
     //
     // packet size vector
