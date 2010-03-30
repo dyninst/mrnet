@@ -10,10 +10,11 @@
  * most common data items.  See pdr.h for more info on the interface to
  * pdr.
  */
-#ifdef __cplusplus
-#include "utils.h"
-#else
+
+#ifndef __cplusplus
 #include "utils_lightweight.h"
+#else
+#include "utils.h"
 #endif
 #include "pdr.h"
 #include "pdr_mem.h"
@@ -39,7 +40,7 @@ void pdr_free(pdrproc_t proc, char *objp)
     (*proc)(&x, objp);
 }
 
-bool_t pdr_void(PDR *pdrs,  char *cp )
+bool_t pdr_void(PDR *prds,  char *cp )
 {
     return (TRUE);
 }

@@ -82,11 +82,13 @@ int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
         }
         else {
             if( addrs->ai_family == AF_INET6 ) {
+#ifndef os_windows
                 if( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in6), 
                                         hostname, sizeof(hostname), NULL, 0, 0) ) {
                     fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
                     return -1;
                 }
+#endif
             }
             else if( addrs->ai_family == AF_INET ) {
                 if( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in), 
@@ -183,6 +185,7 @@ NetUtils::NetworkAddress::NetworkAddress( in_addr_t inaddr )
 NetUtils::NetworkAddress::NetworkAddress( struct sockaddr_in6* inaddr )
     : isv6(true), ip4addr(ntohl(INADDR_NONE))
 {
+#ifndef os_windows
     if( NULL != inaddr ) {
         memcpy( (void*)&ip6addr,
                 (void*)&inaddr->sin6_addr,
@@ -198,6 +201,7 @@ NetUtils::NetworkAddress::NetworkAddress( struct sockaddr_in6* inaddr )
     }
     hostname[63] = '\0';
     str = hostname;
+#endif
 }
 
 int NetUtils::GetNumberOfNetworkInterfaces( void )

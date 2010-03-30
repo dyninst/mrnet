@@ -3,8 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined(__utils_h)
-#define __utils_h 1
+#if !defined(__utils_lightweight_h)
+#define __utils_lightweight_h 1
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +19,7 @@
 #else
 #include <io.h>
 #include <sys/timeb.h>
+#include <winsock2.h>
 
 #define srand48 srand
 #define drand48 (double)rand

@@ -109,10 +109,6 @@ int main( int argc, char* argv[] )
     }
 
     // FE delete net will shut us down, so just go to sleep!!
-#ifndef os_windows
 	sleep(10);
-#else
-	Sleep(10);
-#endif
     return 0;
 }

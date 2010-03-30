@@ -32,7 +32,8 @@ public:
         }
     }
 
-    virtual HMODULE GetHandle( void ) const   { return handle; }
+    //virtual HMODULE GetHandle( void ) const   { return handle; }
+	virtual void* GetHandle(void) const {return (void*)handle;}
 
     virtual void* GetSymbol( const char* sym ) const
     {

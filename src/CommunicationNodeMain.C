@@ -45,6 +45,7 @@ int main(int argc, char **argv)
         }
 
         // build our object allowing access to the MRNet network
+
         net = Network::CreateNetworkIN( argc, argv );
         if( (net == NULL) || net->has_Error() )
             return 1;

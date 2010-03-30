@@ -53,7 +53,7 @@ public:
             if( ! isv6 )
                 ip4addr = obj.ip4addr;
 #ifndef os_windows
-            else
+			else
                 memcpy( (void*)&ip6addr,
                         (const void*)&obj.ip6addr,
                         sizeof(struct in6_addr) );
@@ -96,8 +96,8 @@ public:
         std::string GetString( void ) const { return str; }
         in_addr_t GetInAddr( void ) const { return ip4addr; }
         void GetIn6Addr( struct in6_addr* inaddr ) const 
-        {
-#ifndef os_windows 
+		{
+#ifndef os_windows
             if( inaddr != NULL )
                 memcpy( (void*)inaddr,
                         (const void*)&ip6addr,

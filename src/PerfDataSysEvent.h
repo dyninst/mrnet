@@ -11,7 +11,7 @@
 
 #ifndef os_windows
 #include <inttypes.h> /* integer printf format macros */ 
-#else
+#else 
 #define PRIu64 "u"
 #define PRIi64 "i"
 #endif

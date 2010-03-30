@@ -31,7 +31,7 @@ static bool_t _putchar(PDR *pdrs, char *c)
     pdrs->space += SIZEOF_CHAR;
     return TRUE;
 }
-static bool_t _getchar(PDR *pdrs, char *c)
+static bool_t _getchar(PDR *prds, char *c)
 {
     return FALSE;
 }

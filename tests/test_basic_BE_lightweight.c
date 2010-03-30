@@ -12,7 +12,8 @@
 int main(int argc, char **argv){
     Stream_t * stream = (Stream_t*)malloc(sizeof(Stream_t));
     Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
-    Network_t * net;
+	Network_t * net;
+
     int tag;
     char recv_char;
     char recv_uchar;
