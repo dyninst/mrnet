@@ -15,7 +15,6 @@
 
 #include "mrnet_lightweight/MRNet.h"
 #include "microbench_lightweight.h"
-#include "mrnet/MRNet.h"
 
 int main( int argc, char* argv[] )
 {

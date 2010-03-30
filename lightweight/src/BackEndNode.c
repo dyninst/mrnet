@@ -111,7 +111,7 @@ int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
   Network_shutdown_Network(be->network);
 
   if (goaway) {
-    mrn_dbg(1, mrn_printf(FLF, stderr, "Back-end exiting ... \n"));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Back-end exiting ... \n"));
     exit(0);
   }
 
