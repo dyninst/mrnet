@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 
 <example><title>A Complete MRNet Lightweight Back-End</title>
 <programlisting>
-#include "assert.h"
+#include &lt;assert.h&gt;
         
 #include "mrnet_lightweight/Mrnet.h"
 #include "IntegerAddition_lightweight.h"

@@ -110,9 +110,6 @@ builds the MRNet test files. In addition to those files above, you will also gen
 <listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_tests.sh</filename>: 
     A shell script that runs the test programs and checks for errors in an 
     automated fashion.</listitem>
-<listitem><filename>$MRNET_ROOT/bin/$MRNET_ARCH/mrnet_tests_lightweight.sh</filename>: 
-    A shell script that runs the test programs using the lightweight back-end 
-    library and checks for errors in an automated fashion.</listitem>
 <listitem><filename>$MRNET_ROOT/lib/$MRNET_ARCH/test_DynamicFilters.so</filename>: Shared object used in tests of dynamic filter loading.</listitem>
 </itemizedlist>
 
