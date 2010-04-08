@@ -50,13 +50,13 @@ int NCSend(XPSOCKET s, NCBuf_t* ncbuf, unsigned int nBufs)
 
 }
 
-int NCRecv(XPSOCKET s, NCBuf_t** ncbufs, unsigned int nBufs)
+int NCRecv(XPSOCKET s, NCBuf_t* ncbufs, unsigned int nBufs)
 {
 
   int ret = 0;
 
   unsigned int nBufsLeftToRecv = nBufs;
-  NCBuf_t** currBuf = ncbufs;
+  NCBuf_t* currBuf = ncbufs;
   while (nBufsLeftToRecv > 0) {
     // determine how many bufs we will try to receive
     int IOV_MAX = 1000; //this should get loaded from inc'd file
@@ -67,7 +67,8 @@ int NCRecv(XPSOCKET s, NCBuf_t** ncbufs, unsigned int nBufs)
     
     msg.msg_name = NULL;
     msg.msg_namelen = 0;
-    struct iovec iovec_new[nBufsLeftToRecv];
+    struct iovec * iovec_new = (struct iovec *)malloc(sizeof(struct iovec) * nBufsToRecv);
+    assert(iovec_new);
     msg.msg_iov = iovec_new;
     msg.msg_iovlen = nBufsToRecv;
 # if defined(compiler_sun)
@@ -81,8 +82,8 @@ int NCRecv(XPSOCKET s, NCBuf_t** ncbufs, unsigned int nBufs)
     unsigned int i;
     for (i = 0; i < nBufsToRecv; i++)
     {
-      msg.msg_iov[i].iov_base = currBuf[i]->buf;
-      msg.msg_iov[i].iov_len = currBuf[i]->len;
+      msg.msg_iov[i].iov_base = currBuf[i].buf;
+      msg.msg_iov[i].iov_len = currBuf[i].len;
     }
 
     // do the receive
@@ -91,6 +92,8 @@ int NCRecv(XPSOCKET s, NCBuf_t** ncbufs, unsigned int nBufs)
     if (sret < 0) {
       perror("recvmsg()");
       ret = sret;
+      int err = msg.msg_flags;
+      fprintf(stderr, "NCRecv errno=%d, error=%s\n", err, strerror(err));
       break;
     } else {
       ret += sret;

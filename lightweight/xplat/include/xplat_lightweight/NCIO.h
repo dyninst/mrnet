@@ -21,6 +21,6 @@ NCBuf_t* new_NCBuf_t();
 
 int NCSend( XPSOCKET s, NCBuf_t* bufs, unsigned int nBufs);
 
-int NCRecv (XPSOCKET s, NCBuf_t** bufs, unsigned int nBufs);
+int NCRecv (XPSOCKET s, NCBuf_t* bufs, unsigned int nBufs);
 
 #endif /* __ncio_h */

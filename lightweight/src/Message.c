@@ -46,7 +46,8 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
   enum pdr_op op = PDR_DECODE;
   int retval;
   int readRet;
-  NCBuf_t** ncbufs;
+  //NCBuf_t** ncbufs;
+  NCBuf_t* ncbufs;
   int total_bytes = 0;
   Packet_t* new_packet;
     
@@ -137,16 +138,15 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
   free(buf);
 
   /* recv packet buffers */
-  //NCBuf_t* ncbufs[no_packets];
-  ncbufs = (NCBuf_t**)malloc(sizeof(NCBuf_t)*no_packets);
+  ncbufs = (NCBuf_t*)malloc(sizeof(NCBuf_t*)*no_packets);
+  assert(ncbufs);
 
   mrn_dbg(3, mrn_printf(FLF, stderr, "Reading %d packets of size: [", no_packets));
 
   for (i = 0; i < no_packets; i++) {
-    ncbufs[i] = new_NCBuf_t();
-    ncbufs[i]->buf = (char*)malloc(packet_sizes[i]);
-    assert(ncbufs[i]->buf);
-    ncbufs[i]->len = packet_sizes[i];
+    ncbufs[i].buf = (char*)malloc(packet_sizes[i]);
+    assert(ncbufs[i].buf);
+    ncbufs[i].len = packet_sizes[i];
     total_bytes += packet_sizes[i];
     mrn_dbg(3, mrn_printf(0,0,0, stderr, "%d, ", packet_sizes[i]));
   }
@@ -162,7 +162,7 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
     mrn_dbg(3, mrn_printf(FLF, stderr, "NCRecv %d of %d received\n", retval, total_bytes));
 
     for (i = 0; i < no_packets; i++)
-      free((void*)(ncbufs[i]->buf));
+      free((void*)(ncbufs[i].buf));
     free(ncbufs);
     free(packet_sizes);
     return -1;
@@ -175,13 +175,13 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
   for (i = 0; i < no_packets; i++) {
     mrn_dbg(3, mrn_printf(FLF, stderr, "Creating packet[%d] ...\n",i));
 
-    new_packet = new_Packet_t_3(ncbufs[i]->len, ncbufs[i]->buf, iinlet_rank);
+    new_packet = new_Packet_t_3(ncbufs[i].len, ncbufs[i].buf, iinlet_rank);
 
     if (new_packet == NULL) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "packet creation failed\n"));
 
         for (i = 0; i < no_packets; i++)
-                free((void*)(ncbufs[i]->buf));
+                free((void*)(ncbufs[i].buf));
         free (ncbufs);
         free(packet_sizes);
         return -1;
@@ -316,7 +316,6 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
     return -1;
   }
   
-  //MRN_bytes_send.Add(sret);
 
   free(ncbuf);
   mrn_dbg(3, mrn_printf(FLF, stderr, "msg(%p)_send() succeeded\n", msg_out));
