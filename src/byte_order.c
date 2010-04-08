@@ -10,8 +10,6 @@
 #include <cstring>
 #endif
 
-#include "config.h"
-
 #else
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +17,7 @@
 #include <assert.h>
 #endif //__cplusplus
 
+#include "config.h"
 #include "byte_order.h"
 
 void byte_swap(char * out, char * in, uint32_t nelems, uint32_t elemsize)
