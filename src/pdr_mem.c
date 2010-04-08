@@ -7,8 +7,9 @@
 #include "pdr_mem.h"
 #include <assert.h>
 
-#ifdef __cplusplus
 #include "config.h"
+
+#ifdef __cplusplus
 #include "utils.h"
 #else
 #include "utils_lightweight.h"

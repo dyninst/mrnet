@@ -543,4 +543,31 @@ Timer::Timer( void ) {
 
 Rank getrank() {return myrank;}
 void setrank( Rank ir ) {myrank=ir;}
+
+bool isBigEndian() {
+    unsigned int one = 1;
+    unsigned char * arr = (unsigned char *)&one;
+
+    if (!arr[0])
+        return true;
+    else
+        return false;   
+}
+
+void endianTest() {
+    #if defined(WORDS_BIGENDIAN)
+    mrn_dbg(1, mrn_printf(FLF, stderr, "BIG_ENDIAN\n"));
+#else
+    mrn_dbg(1, mrn_printf(FLF, stderr, "LITTLE_ENDIAN\n"));
+#endif
+
+    if (isBigEndian()) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "test returns big endian\n"));
+    } else {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "test returns little endian\n"));
+    }
+
+}
+
 }                               // namespace MRN
+

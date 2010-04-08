@@ -89,7 +89,9 @@ struct NetworkTopology_t* Network_get_NetworkTopology(Network_t* net) {
 Network_t*
 Network_CreateNetworkBE ( int argc, char* argv[] )
 { 
-  
+ 
+  endianTest();
+
   char* phostname;
   Port pport;
   Rank prank;

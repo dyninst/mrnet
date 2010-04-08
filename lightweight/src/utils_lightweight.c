@@ -327,3 +327,29 @@ void setrank(Rank ir) {
     myrank=ir;
 }
 
+int isBigEndian() {
+    unsigned int one = 1;
+    unsigned char * arr = (unsigned char *)&one;
+
+    if (!arr[0])
+        return 1;
+    else
+        return 0;   
+
+}
+
+void endianTest() {
+    #if defined(WORDS_BIGENDIAN)
+    mrn_dbg(1, mrn_printf(FLF, stderr, "BIG_ENDIAN\n"));
+#else
+    mrn_dbg(1, mrn_printf(FLF, stderr, "LITTLE_ENDIAN\n"));
+#endif
+
+    if (isBigEndian()) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "test returns big endian\n"));
+    } else {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "test returns little endian\n"));
+    }
+
+}
+

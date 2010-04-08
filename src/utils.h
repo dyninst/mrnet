@@ -153,5 +153,11 @@ class Timer{
 
 Rank getrank();
 void setrank( Rank ir );
-}                               // namespace MRN
+bool isBigEndian();
+void endianTest();
+
+}// namespace MRN
+
+
+
 #endif                          /* utils_h */
