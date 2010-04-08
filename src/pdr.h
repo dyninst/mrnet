@@ -10,10 +10,14 @@
 
 
 #if defined(__cplusplus)
+
 #include "mrnet/Types.h"
 extern "C" {
-#else
+
+#else /* ! defined(__cplusplus) */
+
 #include "mrnet_lightweight/Types.h"
+
 #endif /* defined(__cplusplus) */
 
 enum pdr_op {

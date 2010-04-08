@@ -4,18 +4,21 @@
  ****************************************************************************/
 
 #ifdef __cplusplus
+
 #ifndef os_windows
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #endif
 
-#else
+#else /* defined(__cplusplus) */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#endif //__cplusplus
+
+#endif /* ! defined(__cplusplus) */
 
 #include "config.h"
 #include "byte_order.h"
