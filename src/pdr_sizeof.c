@@ -7,7 +7,10 @@
 #include "pdr.h"
 #include "pdr_mem.h"
 
+#include "config.h"
+
 #if defined(__cplusplus)
+
 #ifndef os_windows
 #include <cstdlib>
 #include <cstdio>
@@ -15,17 +18,16 @@
 #include <stdio.h>
 #endif
 
-#include "config.h"
-
 extern "C" {
-#else 
+
+#else /* ! defined(__cplusplus) */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define TRUE true
-#define FALSE false
-#define bool_t int
-#endif
+
+#endif /* defined(__cplusplus) */
+
 static bool_t _putchar(PDR *pdrs, char *c)
 {
     pdrs->space += SIZEOF_CHAR;

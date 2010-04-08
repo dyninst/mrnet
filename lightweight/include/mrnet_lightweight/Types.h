@@ -21,6 +21,14 @@
 #define true 1
 #define false 0
 
+#if !defined (TRUE)
+#define TRUE true
+#endif
+
+#if !defined (FALSE)
+#define FALSE false
+#endif
+
 typedef uint16_t Port;
 typedef uint32_t Rank;
 

@@ -11,23 +11,25 @@
  * pdr.
  */
 
-#ifndef __cplusplus
-#include "utils_lightweight.h"
-#else
-#include "utils.h"
-#endif
 #include "pdr.h"
 #include "pdr_mem.h"
 
-#define LASTUNSIGNED    ((uint32_t) 0-1)
-
 #ifndef __cplusplus
+
+#include "utils_lightweight.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define TRUE true
-#define FALSE false
-#endif
+
+#else /* defined(__cplusplus) */
+
+#include "utils.h"
+
+#endif /* ! defined(__cplusplus) */
+
+#define LASTUNSIGNED    ((uint32_t) 0-1)
+
 
 /*
  * Free a data structure using PDR
