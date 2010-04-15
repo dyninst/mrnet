@@ -90,7 +90,7 @@ Stream::~Stream()
     _network->delete_Stream( _id );
 }
 
-int Stream::send(int itag, const char *iformat_str, ...)
+int Stream::send( int itag, const char *iformat_str, ... )
 {
     mrn_dbg_func_begin();
 
@@ -103,17 +103,36 @@ int Stream::send(int itag, const char *iformat_str, ...)
         mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
         return -1;
     }
-    mrn_dbg(3, mrn_printf(FLF, stderr, "packet() succeeded. Calling send_aux()\n"));
 
     va_end(arg_list);
 
+    mrn_dbg(3, mrn_printf(FLF, stderr, "packet() succeeded. Calling send_aux()\n"));
     status = send_aux( itag, iformat_str, packet );
 
     mrn_dbg_func_end();
     return status;
 }
 
-int Stream::send(int itag, const void **idata, const char *iformat_str)
+int Stream::send( const char *idata_fmt, va_list idata, int itag )
+{
+    mrn_dbg_func_begin();
+
+    int status;
+
+    PacketPtr packet( new Packet(true, _id, itag, idata_fmt, idata) );
+    if( packet->has_Error() ){
+        mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+        return -1;
+    }
+
+    mrn_dbg(3, mrn_printf(FLF, stderr, "packet() succeeded. Calling send_aux()\n"));
+    status = send_aux( itag, idata_fmt, packet );
+
+    mrn_dbg_func_end();
+    return status;
+}
+
+int Stream::send( int itag, const void **idata, const char *iformat_str )
 {
     mrn_dbg_func_begin();
 
@@ -124,15 +143,34 @@ int Stream::send(int itag, const void **idata, const char *iformat_str)
         mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
         return -1;
     }
-    mrn_dbg(3, mrn_printf(FLF, stderr, "packet() succeeded. Calling send_aux()\n"));
 
+    mrn_dbg(3, mrn_printf(FLF, stderr, "packet() succeeded. Calling send_aux()\n"));
     status = send_aux( itag, iformat_str, packet );
 
     mrn_dbg_func_end();
     return status;
 }
 
-int Stream::send_aux(int itag, char const *ifmt, PacketPtr &ipacket )
+int Stream::send( PacketPtr& ipacket )
+{
+    mrn_dbg_func_begin();
+
+    int status;
+
+    if( ipacket->has_Error() ){
+        mrn_dbg(1, mrn_printf(FLF, stderr, "input packet has error\n"));
+        return -1;
+    }
+    ipacket->stream_id = _id;
+
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Calling send_aux()\n"));
+    status = send_aux( ipacket->get_Tag(), ipacket->get_FormatString(), ipacket );
+
+    mrn_dbg_func_end();
+    return status;
+}
+
+int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket )
 {
     mrn_dbg_func_begin();
     mrn_dbg(3, mrn_printf(FLF, stderr,

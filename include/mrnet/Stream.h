@@ -44,8 +44,10 @@ class Stream {
 
     // BEGIN MRNET API
 
-    int send( int tag, const char *format_str, ... );
-    int send( int tag, const void **data, const char *format_str);
+    int send( int itag, const char *iformat_str, ... );
+    int send( const char *idata_fmt, va_list idata, int itag );
+    int send( int itag, const void **idata, const char *iformat_str );
+    int send( PacketPtr& ipacket );
     int flush( ) const;
     int recv( int *otag, PacketPtr &opacket, bool iblocking = true );
 
