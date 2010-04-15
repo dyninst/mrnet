@@ -115,9 +115,9 @@ void insert(map_t* map, int key, void* val)
 
 void* get_val_recursive(map_node_t* root, int key)
 {
-	if (root == NULL)
+    if (root == NULL)
         return NULL;
-	else if (root->key == key) {
+    else if (root->key == key) {
         return root->val;
     }
     else if (key < root->key)
