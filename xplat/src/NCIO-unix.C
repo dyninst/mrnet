@@ -33,13 +33,11 @@ NCSend( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
             ((nBufsLeftToSend > IOV_MAX ) ? IOV_MAX : nBufsLeftToSend);
         
         // convert our buffer spec to writev's buffer spec
-        unsigned int nBytesToSend = 0;
         struct iovec* currIov = new iovec[nBufsToSend];
         for( unsigned int i = 0; i < nBufsToSend; i++ )
         {
             currIov[i].iov_base = currBuf[i].buf;
             currIov[i].iov_len = currBuf[i].len;
-            nBytesToSend += currBuf[i].len;
         }
 
         // do the send
@@ -80,6 +78,7 @@ NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
         // convert our buffer spec to recvmsg/readv's buffer spec
         msghdr msg;
 
+        msg.msg_flags = 0;
         msg.msg_name = NULL;
         msg.msg_namelen = 0;
         msg.msg_iov = new iovec[nBufsToRecv];
@@ -92,20 +91,18 @@ NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
         msg.msg_controllen = 0;
 #endif
 
-        unsigned int nBytesToSend = 0;
-        for( unsigned int i = 0; i < nBufsToRecv; i++ )
-        {
+        for( unsigned int i = 0; i < nBufsToRecv; i++ ) {
             msg.msg_iov[i].iov_base = currBuf[i].buf;
             msg.msg_iov[i].iov_len = currBuf[i].len;
-            nBytesToSend += currBuf[i].len;
         }
 
         // do the receive
         int sret = recvmsg( s, &msg, NCBlockingRecvFlag );
-
         if( sret < 0 ) {
             perror( "recvmsg()");
             ret = sret;
+            int err = msg.msg_flags;
+            fprintf(stderr, "NCRecv error msg_flags=%x\n", err);
             break;
         } else {
             ret += sret;
