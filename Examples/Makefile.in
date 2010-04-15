@@ -72,7 +72,7 @@ ifeq ($(COMPILER_TYPE), forte)
 endif # Sun Forte options
 
 CXX = @CXX@
-CC = gcc
+CC = @CC@
 CXXFLAGS = @CXXFLAGS@ $(INCDIRS) $(WARNFLAGS)
 CCFLAGS = -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Dcompiler_gnu -DDEBUG -Dos_linux=26 $(INCDIRS_LIGHTWEIGHT) $(WARNFLAGS)
 
