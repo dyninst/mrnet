@@ -128,12 +128,29 @@ void Network::shutdown_Network( void )
                 get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
             }
         }
+        else if( is_LocalNodeBackEnd() ) {
 
-        // turn off debug output to prevent cancelled threads from causing mrn_printf deadlock
-        //MRN::set_OutputLevel( -1 );
-        
+            // send shutdown notice to parent, which will cause send thread to exit
+            if( ! get_LocalChildNode()->ack_DeleteSubTree() ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
+            }
+
+            // cancel recv thread, if that's not this thread
+            XPlat::Thread::Id my_id = 0;
+            tsd_t *tsd = ( tsd_t * )tsd_key.Get();
+            if( tsd != NULL )
+                my_id = tsd->thread_id;
+            if( _parent->recv_thread_id != my_id ) {
+                // turn off debug output to prevent mrn_printf deadlock
+                MRN::set_OutputLevel( -1 );
+                XPlat::Thread::Cancel( _parent->recv_thread_id );
+            }
+
+            // let send/recv threads exit
+            sleep(1);
+        }
+
         EventDetector::stop();
-        //cancel_IOThreads();
         
         if( _network_topology != NULL ) {
             string empty("");
@@ -1413,6 +1430,7 @@ bool Network::update( void )
     return true;
 }
 
+#if 0
 #include <signal.h>
 void Network::cancel_IOThreads( void )
 {
@@ -1453,6 +1471,7 @@ void Network::cancel_IOThreads( void )
         }
     }
 }
+#endif
 
 void Network::close_PeerNodeConnections( void )
 {

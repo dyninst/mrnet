@@ -177,14 +177,6 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     // processes will be exiting -- disable failure recovery
     _network->disable_FailureRecovery();
 
-    // send ack to parent
-    if( !_network->get_LocalChildNode()->ack_DeleteSubTree() ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
-    }
-
-    // sleep to let message be sent before tearing down network
-    sleep(1);
-
     // kill threads, topology, and events
     _network->shutdown_Network();
 
