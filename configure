@@ -3520,12 +3520,6 @@ fi
 fi
 if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 
-    CXXFLAGS="$CXXFLAGS -Darch_crayxt"
-    CFLAGS="$CFLAGS -Darch_crayxt"
-    if test "$CRAYXT_ATH_INCDIR" != "" ; then
-        CXXFLAGS="$CXXFLAGS -I$CRAYXT_ATH_INCDIR"
-    fi
-
     ac_ext=cc
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -4160,9 +4154,19 @@ fi
 
 done
 
-    echo "$as_me:$LINENO: checking for libalps.h" >&5
-echo $ECHO_N "checking for libalps.h... $ECHO_C" >&6
-if test "${ac_cv_header_libalps_h+set}" = set; then
+
+    CXXFLAGS="$CXXFLAGS -Darch_crayxt"
+    CFLAGS="$CFLAGS -Darch_crayxt"
+
+    if test "$CRAYXT_ATH_INCDIR" != "" ; then
+        CXXFLAGS="$CXXFLAGS -I$CRAYXT_ATH_INCDIR"
+
+for ac_header in libalps.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -4181,7 +4185,8 @@ cat >>conftest.$ac_ext <<_ACEOF
 # include <alps/apInfo.h>
 #endif
 
-#include <libalps.h>
+
+#include <$ac_header>
 _ACEOF
 rm -f conftest.$ac_objext
 if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
@@ -4205,104 +4210,35 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_header_libalps_h=yes
+  eval "$as_ac_Header=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_header_libalps_h=no
+eval "$as_ac_Header=no"
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:$LINENO: result: $ac_cv_header_libalps_h" >&5
-echo "${ECHO_T}$ac_cv_header_libalps_h" >&6
-if test $ac_cv_header_libalps_h = yes; then
-  :
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
 else
   { { echo "$as_me:$LINENO: error: Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc" >&5
 echo "$as_me: error: Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
+done
 
+    fi
 
-    LIBS_HOLD=$LIBS
-    ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
-    if test "$CRAYXT_ATH_LIBDIR" = "" ; then
-        echo "$as_me:$LINENO: checking for alps_launch_tool_helper in -lalps" >&5
-echo $ECHO_N "checking for alps_launch_tool_helper in -lalps... $ECHO_C" >&6
-if test "${ac_cv_lib_alps_alps_launch_tool_helper+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lalps -lxmlrpc $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char alps_launch_tool_helper ();
-int
-main ()
-{
-alps_launch_tool_helper ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_cxx_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_alps_alps_launch_tool_helper=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_alps_alps_launch_tool_helper=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_alps_alps_launch_tool_helper" >&5
-echo "${ECHO_T}$ac_cv_lib_alps_alps_launch_tool_helper" >&6
-if test $ac_cv_lib_alps_alps_launch_tool_helper = yes; then
-  LIBS="$ATH_LIBS $LIBS_HOLD"
-else
-  { { echo "$as_me:$LINENO: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&5
-echo "$as_me: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-    else
-        LIBS="-L$CRAYXT_ATH_LIBDIR"
+    if test "$CRAYXT_ATH_LIBDIR" != "" ; then
+        LIBS_HOLD=$LIBS
+        ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
         echo "$as_me:$LINENO: checking for alps_launch_tool_helper in -lalps" >&5
 echo $ECHO_N "checking for alps_launch_tool_helper in -lalps... $ECHO_C" >&6
 if test "${ac_cv_lib_alps_alps_launch_tool_helper+set}" = set; then
@@ -4370,8 +4306,8 @@ echo "${ECHO_T}$ac_cv_lib_alps_alps_launch_tool_helper" >&6
 if test $ac_cv_lib_alps_alps_launch_tool_helper = yes; then
   LIBS="-L$CRAYXT_ATH_LIBDIR $ATH_LIBS $LIBS_HOLD"
 else
-  { { echo "$as_me:$LINENO: error: No/invalid libalps found in $CRAYXT_ATH_LIBDIR" >&5
-echo "$as_me: error: No/invalid libalps found in $CRAYXT_ATH_LIBDIR" >&2;}
+  { { echo "$as_me:$LINENO: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&5
+echo "$as_me: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&2;}
    { (exit 1); exit 1; }; }
 fi
 

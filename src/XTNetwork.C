@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#include "config.h"
 #include "utils.h"
 #include "SerialGraph.h"
 #include "XTNetwork.h"
@@ -22,7 +23,9 @@
 
 extern "C"
 {
+#ifdef HAVE_LIBALPS_H
 #include "libalps.h"
+#endif
 }
 
 namespace MRN
@@ -826,6 +829,7 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         }
     }
 
+#ifdef HAVE_LIBALPS_H
     // start processes (if any) that need to be started with alps tool helper
     if( !athHosts.empty() ) {
         assert( apid != -1 );
@@ -847,18 +851,21 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         cmds[1] = NULL;
 
         // launch the processes using ALPS tool helper
-        const char* launchRet = alps_launch_tool_helper( apid,  // app id 
-                                            athFirstNodeNid,    // nid of first node in placement list
-                                            1,      // transfer helper program
-                                            1,      // execute helper program
-                                            1,      // number of helper program commands
-                                            cmds ); // helper program and args
+        const char* launchRet = alps_launch_tool_helper( 
+                                   apid,            // app id 
+                                   athFirstNodeNid, // nid of first node in placement list
+                                   1,               // transfer helper program
+                                   1,               // execute helper program
+                                   1,               // number of helper program commands
+                                   cmds             // helper program and args
+                                                        ); 
         delete[] cmds[0];
         delete[] cmds;
         if( launchRet != NULL ) {
             return -1;
         }
     }
+#endif // HAVE_LIBALPS_H
 
     return ret;
 }
@@ -1135,6 +1142,24 @@ XTNetwork::GetNodename( void )
 }
 
 void
+XTNetwork::FindAppNodes( int nPlaces,
+                         placeList_t* places,
+                         std::set<std::string>& hosts )
+{
+    for( int i = 0; i < nPlaces; i++ ) {
+        int currNid = places[i].nid;
+        std::ostringstream nodeNameStr;
+        nodeNameStr << "nid" 
+                    << std::setw( 5 ) 
+                    << std::setfill('0') 
+                    << currNid;
+
+        // add node name into set, unless it is already there
+        hosts.insert( nodeNameStr.str() );
+    }
+}
+
+void
 XTNetwork::DetermineProcessTypes( ParsedGraph::Node* node,
                                   int apid,
                                   std::set<std::string>& aprunHosts,
@@ -1143,6 +1168,7 @@ XTNetwork::DetermineProcessTypes( ParsedGraph::Node* node,
 {
     std::set<std::string> appHosts;
 
+#ifdef HAVE_LIBALPS_H
     // figure out whehter we will be co-locating processes with app processes,
     // and if so, where they are
     if( -1 != apid ) {
@@ -1171,6 +1197,7 @@ XTNetwork::DetermineProcessTypes( ParsedGraph::Node* node,
         free( alpsPlaces );
         alpsPlaces = NULL;
     }
+#endif // HAVE_LIBALPS_H
 
     // now figure out hosts where processes will have to be
     // created with aprun (if any) and where they will have to be
@@ -1219,23 +1246,6 @@ XTNetwork::DetermineProcessTypesAux( ParsedGraph::Node* node,
     }
 }
 
-void
-XTNetwork::FindAppNodes( int nPlaces,
-                         placeList_t* places,
-                         std::set<std::string>& hosts )
-{
-    for( int i = 0; i < nPlaces; i++ ) {
-        int currNid = places[i].nid;
-        std::ostringstream nodeNameStr;
-        nodeNameStr << "nid" 
-                    << std::setw( 5 ) 
-                    << std::setfill('0') 
-                    << currNid;
-
-        // add node name into set, unless it is already there
-        hosts.insert( nodeNameStr.str() );
-    }
-}
 
 } // namespace MRN
 

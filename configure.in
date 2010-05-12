@@ -286,16 +286,15 @@ if test $MRNET_STARTUP_METHOD = "ssh" ; then
 fi
 if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 
+    AC_CHECK_HEADERS([alps/apInfo.h])
+
     CXXFLAGS="$CXXFLAGS -Darch_crayxt"
     CFLAGS="$CFLAGS -Darch_crayxt"
+
     if test "$CRAYXT_ATH_INCDIR" != "" ; then
         CXXFLAGS="$CXXFLAGS -I$CRAYXT_ATH_INCDIR"
-    fi
-
-    AC_CHECK_HEADERS([alps/apInfo.h])
-    AC_CHECK_HEADER([libalps.h], 
-                    [], 
-                    [AC_MSG_ERROR(Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc)],
+        AC_CHECK_HEADERS([libalps.h], [], 
+                         [AC_MSG_ERROR(Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc)],
 [#if HAVE_STDINT_H
 # include <stdint.h>
 #endif
@@ -304,20 +303,16 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 #endif
 #if HAVE_ALPS_APINFO_H 
 # include <alps/apInfo.h> 
-#endif] )
+#endif]
+                        )
+    fi
 
-    LIBS_HOLD=$LIBS
-    ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
-    if test "$CRAYXT_ATH_LIBDIR" = "" ; then
-        AC_CHECK_LIB(alps, [alps_launch_tool_helper], 
-                     [LIBS="$ATH_LIBS $LIBS_HOLD"], 
-                     [AC_MSG_ERROR(Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib)],
-                     [-lxmlrpc])
-    else
-        LIBS="-L$CRAYXT_ATH_LIBDIR"
+    if test "$CRAYXT_ATH_LIBDIR" != "" ; then
+        LIBS_HOLD=$LIBS
+        ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
         AC_CHECK_LIB(alps, [alps_launch_tool_helper], 
                      [LIBS="-L$CRAYXT_ATH_LIBDIR $ATH_LIBS $LIBS_HOLD"], 
-                     [AC_MSG_ERROR(No/invalid libalps found in $CRAYXT_ATH_LIBDIR)],
+                     [AC_MSG_ERROR(Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib)],
                      [-lxmlrpc])
     fi
 
