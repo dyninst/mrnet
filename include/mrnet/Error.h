@@ -17,14 +17,16 @@ typedef enum{
     ERR_INFO=0,
     ERR_WARN,
     ERR_ERR,
-    ERR_CRIT
+    ERR_CRIT,
+    ERR_LEVEL_LAST
 } ErrorLevel;
 
 typedef enum {
     ERR_IGNORE=0,
     ERR_ALERT,
     ERR_RETRY,
-    ERR_ABORT
+    ERR_ABORT,
+    ERR_RESPONSE_LAST
 } ErrorResponse;
 
 typedef enum {
@@ -36,7 +38,8 @@ typedef enum {
     ERR_FORMATSTR,
     ERR_PACKING,
     ERR_INTERNAL,
-    ERR_SYSTEM
+    ERR_SYSTEM,
+    ERR_CODE_LAST
 } ErrorCode;
 
 typedef struct 
@@ -60,6 +63,17 @@ class Error {
 
     inline bool has_Error() const {
         return (MRN_errno != ERR_NONE);
+    }
+
+    inline ErrorCode get_Error() const {
+        return MRN_errno;
+    }
+
+    inline const char* get_ErrorStr( ErrorCode err ) const {
+        if( err < ERR_CODE_LAST )
+            return errors[err].msg;
+        else
+            return errors[ERR_CODE_LAST].msg;
     }
 
     inline void perror(const char *str) const {
