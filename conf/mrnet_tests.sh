@@ -225,7 +225,7 @@ if [ "$local" == "true" ]; then
         echo
         run_test "test_MultStreams_FE_lightweight" "test_MultStreams_BE_lightweight" "local" "" "lightweight" 
         echo
-        run_test "test_Native_Filters_FE" "test_NativeFilters_BE_lightweight" "local" "" "lightweight"
+        run_test "test_NativeFilters_FE" "test_NativeFilters_BE_lightweight" "local" "" "lightweight"
         echo
         if [ "$sharedobject" != "" ]; then
             run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE_lightweight" "local" $sharedobject "lightweight" 
