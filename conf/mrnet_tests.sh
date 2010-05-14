@@ -95,9 +95,6 @@ run_test()
         "microbench_FE" )
             $front_end 5 500 $topology_file $back_end > $outfile 2> $logfile
             ;;
-        "microbench_FE_lightweight" )
-            $front_end 5 500 $topology_file $back_end > $outfile 2> $logfile
-            ;;
         "test_MultStreams_FE" )
             $front_end $topology_file 5 $back_end > $outfile 2> $logfile
             ;;
@@ -231,7 +228,7 @@ if [ "$local" == "true" ]; then
             run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE_lightweight" "local" $sharedobject "lightweight" 
             echo
         fi
-        run_test "microbench_FE" "microbench_FE_lightweight" "local" "" "lightweight" 
+        run_test "microbench_FE" "microbench_BE_lightweight" "local" "" "lightweight" 
         echo
     fi
 fi
@@ -266,7 +263,7 @@ if [ "$remote" == "true" ]; then
             run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE_lightweight" "remote" $sharedobject "lightweight"
             echo
         fi
-        run_test "microbench_FE" "microbench_FE_lightweight" "remote" "" "lightweight" 
+        run_test "microbench_FE" "microbench_BE_lightweight" "remote" "" "lightweight" 
         echo
     fi
 
