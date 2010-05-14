@@ -261,6 +261,7 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
 Packet_t* Packet_pushBackElement(Packet_t* packet, DataElement_t* cur_elem)
 {
 	DataElement_t* new_elem = (DataElement_t*)malloc(sizeof(DataElement_t));
+    assert(new_elem);
 	*new_elem = *cur_elem;
 	pushBackElement(packet->data_elements, new_elem);
 

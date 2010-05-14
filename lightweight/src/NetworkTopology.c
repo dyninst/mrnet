@@ -233,7 +233,7 @@ int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, Seri
                             SerialGraph_get_RootRank(isg),
                             SerialGraph_is_RootBackEnd(isg));
         new_node = (Node_t*)malloc(sizeof(Node_t));
-        assert(node);
+        assert(new_node);
         *new_node = *node;
         insert(net_top->nodes, node->rank, new_node);
     } else {

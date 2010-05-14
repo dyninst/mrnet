@@ -138,7 +138,7 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
     free(buf);
 
     /* recv packet buffers */
-    ncbufs = (NCBuf_t*)malloc(sizeof(NCBuf_t*)*no_packets);
+    ncbufs = (NCBuf_t*)malloc(sizeof(NCBuf_t)*no_packets);
     assert(ncbufs);
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Reading %d packets of size: [", no_packets));

@@ -222,6 +222,7 @@ void PerfDataMgr_print(PerfDataMgr_t* perf_data,
 	size += 1;
 	
 	report= (char*)malloc(sizeof(char)*size);
+    assert(report);
     sprintf( report, "PERFDATA @ T=%d.%06dsec: %s %s -",
              (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, 
               perfdata_context_names[(unsigned)ctx] );

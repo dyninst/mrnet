@@ -64,6 +64,7 @@ SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* _serial_graph, char*  ih
     size += strlen(rank);
 
     hoststr = (char*)malloc(sizeof(char)*size);
+    assert(hoststr);
 
     strcpy(hoststr, ""); 
     strcat(hoststr, "["); //[
