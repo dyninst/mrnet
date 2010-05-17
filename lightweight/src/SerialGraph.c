@@ -37,6 +37,12 @@ SerialGraph_t* new_SerialGraph_t(char* ibyte_array)
     return serial_graph;
 }
 
+void free_SerialGraph_t(SerialGraph_t* sg)
+{
+    free(sg->byte_array);
+    free(sg);
+}
+
 SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* _serial_graph, char*  ihostname, Port iport, Rank irank) 
 { 
     char* hoststr;
@@ -111,6 +117,7 @@ SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* _serial_graph, char*  ih
     free(hoststr);
     free(port);
     free(rank);
+    free(new_byte_array);
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "returned sg byte array :\"%s\"\n", retval->byte_array));
 
@@ -274,7 +281,7 @@ Port SerialGraph_get_RootPort(SerialGraph_t* serial_graph)
     retval = atoi(port_string);
 
     free(port_string);
-
+        
     return retval;
 }
 
@@ -305,7 +312,9 @@ Rank SerialGraph_get_RootRank(SerialGraph_t* serial_graph)
             retval = atoi(tok);
         }
     }
-    
+   
+    free(buf);
+
     mrn_dbg_func_end();
 
     return retval;
@@ -365,6 +374,8 @@ SerialGraph_t* SerialGraph_get_NextChild(SerialGraph_t* serial_graph)
 
     retval = new_SerialGraph_t(buf3);
     mrn_dbg(5, mrn_printf(FLF, stderr, "returned sg byte array :\"%s\"\n", retval->byte_array));
+
+    free(buf3);
 
     mrn_dbg_func_end();
 

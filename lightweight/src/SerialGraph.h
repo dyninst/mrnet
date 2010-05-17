@@ -19,6 +19,8 @@ typedef struct SerialGraph_t SerialGraph_t;
 
 SerialGraph_t* new_SerialGraph_t(char* byte_array);
 
+void free_SerialGraph_t(SerialGraph_t* sg);
+
 SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* serial_graph, char* ihostname, Port iport, Rank irank);
 
 void SerialGraph_add_Leaf(SerialGraph_t* serial_graph, char* hostname, Port iport, Rank irank);

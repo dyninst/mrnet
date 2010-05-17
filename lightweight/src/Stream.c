@@ -317,7 +317,7 @@ int Stream_send_aux(Stream_t* stream, int itag, char* ifmt, Packet_t* ipacket)
             mrn_dbg(1, mrn_printf(FLF, stderr, "Network_send_PacketToParent failed\n"));
             return -1;
         }
-        opacket = NULL;         
+        free(opacket);         
   }
   Timer_stop(tsend);
   mrn_dbg(5, mrn_printf(FLF, stderr, "agg_lat: %.5lf send_lat: %.5lf\n", Timer_get_latency_msecs(tagg), Timer_get_latency_msecs(tsend)));

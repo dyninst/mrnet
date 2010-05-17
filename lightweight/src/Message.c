@@ -46,7 +46,6 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
     enum pdr_op op = PDR_DECODE;
     int retval;
     int readRet;
-    //NCBuf_t** ncbufs;
     NCBuf_t* ncbufs;
     int total_bytes = 0;
     Packet_t* new_packet;
@@ -196,6 +195,10 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
     }
 
     // release dynamically allocated memory
+    for (i = 0; i < no_packets; i++) {
+            char * b = ncbufs[i].buf;
+            free(b);
+    }
     free( ncbufs );
     free( packet_sizes );
     mrn_dbg(3, mrn_printf(FLF, stderr, "Msg(_recv() succeeded\n"));
@@ -231,8 +234,6 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
     assert(packet_sizes);
 
     // Process packet to prepare for send()
-    //ncbuf->buf = (char*)malloc(sizeof(msg_out->packet->buf_len));
-    //assert(ncbuf->buf);
     ncbuf->buf = msg_out->packet->buf;
     ncbuf->len = msg_out->packet->buf_len;
     packet_sizes[0] = ncbuf->len;

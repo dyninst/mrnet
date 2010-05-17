@@ -18,7 +18,6 @@ DataElement_t* new_DataElement_t()
   return data_element;
 }
 
-
 DataType DataType_Fmt2Type (char* cur_fmt) 
 {
    

@@ -110,7 +110,8 @@ char* NetworkTopology_get_LocalSubTreeStringPtr(NetworkTopology_t* net_top)
   mrn_dbg_func_begin();
 
   if (net_top->serial_graph != NULL)
-    free(net_top->serial_graph);
+    //free(net_top->serial_graph);
+    free_SerialGraph_t(net_top->serial_graph);
   net_top->serial_graph = new_SerialGraph_t(NULL);
   
   NetworkTopology_serialize (net_top, net_top->root);
@@ -161,7 +162,8 @@ int NetworkTopology_reset(NetworkTopology_t* net_top, char* itopology_str)
   mrn_dbg(5, mrn_printf(FLF, stderr, "Reseting topology to \"%s\"\n", itopology_str));
 
   if (net_top->serial_graph != NULL) {
-    free(net_top->serial_graph);
+    //free(net_top->serial_graph);
+    free_SerialGraph_t(net_top->serial_graph);
   }
   mrn_dbg(5, mrn_printf(FLF, stderr, "About to call new_SerialGraph_t\n"));
   net_top->serial_graph = new_SerialGraph_t(itopology_str);
@@ -310,7 +312,8 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
   }
   
   free(inode);
-  
+  free(node_to_delete);
+
   mrn_dbg_func_end();
   return true;
 }
@@ -480,6 +483,9 @@ void NetworkTopology_print(NetworkTopology_t* net_top, FILE * f)
             mrn_dbg(5, mrn_printf(0,0,0, f, "\n"));
         }
     }// end iterate over network topology nodes
+
+    free(cur_parent_str);
+    free(cur_child_str);
 }
 
 Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top, 
@@ -494,8 +500,8 @@ Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top,
     Node_t* cur;
     Node_t* cur_node;
 
-    adopter = (Node_t*)malloc(sizeof(Node_t*));
-    assert(adopter);
+    //adopter = (Node_t*)malloc(sizeof(Node_t*));
+    //assert(adopter);
 
     mrn_dbg_func_begin();
 

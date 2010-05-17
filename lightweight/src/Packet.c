@@ -246,13 +246,13 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
         break;
     }
 
-    //DataElement_t* new_elem = new_DataElement_t();
-    //*new_elem = *cur_elem;
-    //pushBackElement(packet->data_elements, new_elem);
 	packet = Packet_pushBackElement(packet, cur_elem);
 
     tok = strtok(NULL, delim);
   }
+
+  free(cur_elem);
+  free(fmt);
 
   mrn_dbg_func_end();
 
@@ -460,7 +460,7 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
             return retval;
         }
         if( pdrs->p_op == PDR_DECODE ) {
-            pushBackElement(pkt->data_elements, (void*)cur_elem);
+            Packet_pushBackElement(pkt, cur_elem);
         }
 
         tok = strtok(NULL, delim);
@@ -738,6 +738,8 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
 
       tok = strtok(NULL, delim);
   }
+
+  free(cur_elem);
 
   mrn_dbg_func_end();
   return;

@@ -108,6 +108,10 @@ vector_t* eraseElement(vector_t* vector, void* elem)
         }
     }
 
+    /* free the vector, but don't free the element because
+     * it might be referenced elsewhere */
+    free(vector);
+
     return new_vec;
 }
 

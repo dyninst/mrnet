@@ -156,6 +156,8 @@ Network_t* Network_init_BackEnd(/*const*/ char* iphostname, Port ipport,
   mrn_dbg(5, mrn_printf(FLF, stderr, "Setting network's local BE\n"));
   net->local_back_end_node = be;
 
+  free(pretty_host);
+
   return net;
 
 }
