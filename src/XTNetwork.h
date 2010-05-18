@@ -38,6 +38,7 @@ private:
                                    const std::set<std::string>& appHosts,
                                    std::set<std::string>& aprunHosts,
                                    std::set<std::string>& athHosts ) const;
+
     static void FindAppNodes( int nPlaces,
                               placeList_t* places,
                               std::set<std::string>& hosts );

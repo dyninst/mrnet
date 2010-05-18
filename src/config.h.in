@@ -1,5 +1,5 @@
 /****************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -32,6 +32,9 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <libalps.h> header file. */
+#undef HAVE_LIBALPS_H
 
 /* Define to 1 if you have the `fl' library (-lfl). */
 #undef HAVE_LIBFL

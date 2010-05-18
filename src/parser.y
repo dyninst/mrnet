@@ -17,6 +17,8 @@ static std::list <MRN::ParsedGraph::Node *> hostlist;
 static std::list <MRN::ParsedGraph::Node *> potential_root;
 
 int yylex(void);
+#define YYMALLOC ::malloc
+#define YYFREE ::free
 
 namespace MRN
 {

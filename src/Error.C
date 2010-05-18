@@ -18,7 +18,8 @@ ErrorDef errors[] = {
     { ERR_FORMATSTR, ERR_ERR, ERR_ALERT, "Format string mismatch"},
     { ERR_PACKING, ERR_CRIT, ERR_ABORT, "Packet encoding/decoding failure"},
     { ERR_INTERNAL, ERR_CRIT, ERR_ABORT, "Internal failure"},
-    { ERR_SYSTEM, ERR_ERR, ERR_ABORT, "System/library call failure"}
+    { ERR_SYSTEM, ERR_ERR, ERR_ABORT, "System/library call failure"},
+    { ERR_CODE_LAST, ERR_LEVEL_LAST, ERR_RESPONSE_LAST, "Bad error code"}
 };
 
 
