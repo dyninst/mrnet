@@ -196,8 +196,8 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
 
     // release dynamically allocated memory
     for (i = 0; i < no_packets; i++) {
-            char * b = ncbufs[i].buf;
-            free(b);
+        char * b = ncbufs[i].buf;
+        free(b);
     }
     free( ncbufs );
     free( packet_sizes );

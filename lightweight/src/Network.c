@@ -340,7 +340,6 @@ Stream_t* Network_new_Stream(Network_t* net,
                                   ius_filter_id, isync_filter_id,
                                   ids_filter_id);
   insert(net->streams, iid, stream);
-  mrn_dbg(5, mrn_printf(FLF, stderr, "Created Stream with iid=%d\n",iid));
 
   mrn_dbg_func_end();
   return stream;
@@ -412,7 +411,6 @@ int Network_have_Streams(Network_t* net)
 
 Stream_t* Network_get_Stream(Network_t* net, unsigned int iid)
 {
-  
   Stream_t* ret = (Stream_t*)get_val(net->streams, iid);
 
   if (ret == NULL)

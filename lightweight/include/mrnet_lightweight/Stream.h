@@ -14,6 +14,7 @@
 struct vector_t;
 struct PerfDataMgr_t;
 struct Filter_t;
+struct vector_t;
 
 struct Stream_t{
   Network_t* network;
@@ -24,7 +25,7 @@ struct Stream_t{
   struct Filter_t* us_filter;
   int ds_filter_id;
   struct Filter_t *ds_filter;
-  Packet_t* incoming_packet_buffer;
+  struct vector_t * incoming_packet_buffer;
   struct vector_t* peers; // peers in stream
   struct PerfDataMgr_t* perf_data;
 } ;
@@ -44,6 +45,8 @@ unsigned int Stream_get_Id(Stream_t* stream);
 int Stream_find_FilterAssignment(char* assignments, 
                                 Rank me, 
                                 int filter_id);
+
+int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket);
 
 Packet_t* Stream_get_IncomingPacket(Stream_t* stream);
 

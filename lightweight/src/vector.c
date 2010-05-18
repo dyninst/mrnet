@@ -105,7 +105,7 @@ vector_t* eraseElement(vector_t* vector, void* elem)
     for ( i = 0; i < vector->size; i++) {
         if (vector->vec[i] != elem) {
             pushBackElement(new_vec, vector->vec[i]);
-        }
+        } 
     }
 
     /* free the vector, but don't free the element because

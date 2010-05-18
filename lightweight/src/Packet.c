@@ -498,7 +498,7 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
 {
   int i = 0;
   int array_len = 0;
-  DataElement_t* cur_elem = new_DataElement_t();
+  DataElement_t* cur_elem;
   void *tmp_ptr;
   void *tmp_array;
   char* fmt;
@@ -738,8 +738,6 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
 
       tok = strtok(NULL, delim);
   }
-
-  free(cur_elem);
 
   mrn_dbg_func_end();
   return;

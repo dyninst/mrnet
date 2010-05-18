@@ -257,7 +257,7 @@ if [ "$remote" == "true" ]; then
         echo
         run_test "test_MultStreams_FE_lightweight" "test_MultStreams_BE_lightweight" "remote" "" "lightweight" 
         echo
-        run_test "test_Native_Filters_FE" "test_NativeFilters_BE_lightweight" "remote" "" "lightweight" 
+        run_test "test_NativeFilters_FE" "test_NativeFilters_BE_lightweight" "remote" "" "lightweight" 
         echo
         if [ "$sharedobject" != "" ]; then
             run_test "test_DynamicFilters_FE" "test_DynamicFilters_BE_lightweight" "remote" $sharedobject "lightweight"

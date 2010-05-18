@@ -45,7 +45,8 @@ Stream_t* new_Stream_t(Network_t* net,
   new_stream->ds_filter_id = ids_filter_id;
   new_stream->ds_filter = new_Filter_t(ids_filter_id);
   new_stream->perf_data = new_PerfDataMgr_t();
-  new_stream->incoming_packet_buffer = NULL;
+  new_stream->incoming_packet_buffer = new_empty_vector_t();
+  //new_stream->incoming_packet_buffer = NULL;
   new_stream->peers = new_empty_vector_t();
 
   mrn_dbg(3, mrn_printf(FLF, stderr,
@@ -68,16 +69,16 @@ int Stream_find_FilterAssignment(char* assignments, Rank me, int filter_id)
 
 Packet_t* Stream_get_IncomingPacket(Stream_t* stream)
 {
-  Packet_t* cur_packet = NULL;
+  Packet_t* cur_packet;
   perfdata_t val;
 
   mrn_dbg_func_begin();
-     
-  // assumption: only one packet in buffer at time
-  if (stream->incoming_packet_buffer != NULL) {
-    cur_packet = stream->incoming_packet_buffer;
-    stream->incoming_packet_buffer = NULL;
-    
+
+  if (stream->incoming_packet_buffer->size > 0) {
+    cur_packet = (Packet_t*)(stream->incoming_packet_buffer->vec[0]);
+    mrn_dbg(5, mrn_printf(FLF, stderr, "cur_packet->tag=%d\n", cur_packet->tag));
+    stream->incoming_packet_buffer = eraseElement(stream->incoming_packet_buffer, cur_packet);
+
     //performance data update for STREAM_RECV
     if (PerfDataMgr_is_Enabled(stream->perf_data, 
                               PERFDATA_MET_NUM_PKTS,
@@ -228,10 +229,46 @@ int Stream_push_Packet(Stream_t* stream,
     return 0;
 }
 
+int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket)
+{
+    mrn_dbg_func_begin();
+
+    Packet_t* cur_packet = Stream_get_IncomingPacket(stream);
+
+    if (cur_packet != NULL) {
+        *otag = Packet_get_Tag(cur_packet);
+        *opacket = *cur_packet; 
+        mrn_dbg(5, mrn_printf(FLF, stderr, "cur_packet tag:%d\n", opacket->tag));
+        return 1;
+    }
+
+    // At this point, no packets are available for this stream
+
+    // Block until this stream gets a packet 
+    while (stream->incoming_packet_buffer->size == 0) {
+        if (Network_recv_2(stream->network) == -1) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "FrontEnd::recv() failed\n"));
+            return -1;
+        }
+    }
+
+    // we should have a packet now
+    cur_packet = Stream_get_IncomingPacket(stream);
+
+    assert(cur_packet);
+    *otag = Packet_get_Tag(cur_packet);
+    *opacket = *cur_packet;
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Received packet tag: %d\n", *otag));
+
+    mrn_dbg_func_end();
+    return 1;
+}
+
 void Stream_add_IncomingPacket(Stream_t* stream, Packet_t* ipacket)
 {
     mrn_dbg_func_begin();
-    stream->incoming_packet_buffer = ipacket;
+    pushBackElement(stream->incoming_packet_buffer, ipacket);
     mrn_dbg_func_end();
 }
 
@@ -317,7 +354,7 @@ int Stream_send_aux(Stream_t* stream, int itag, char* ifmt, Packet_t* ipacket)
             mrn_dbg(1, mrn_printf(FLF, stderr, "Network_send_PacketToParent failed\n"));
             return -1;
         }
-        free(opacket);         
+        free(opacket);
   }
   Timer_stop(tsend);
   mrn_dbg(5, mrn_printf(FLF, stderr, "agg_lat: %.5lf send_lat: %.5lf\n", Timer_get_latency_msecs(tagg), Timer_get_latency_msecs(tsend)));
