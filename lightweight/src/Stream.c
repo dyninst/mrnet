@@ -69,15 +69,17 @@ int Stream_find_FilterAssignment(char* assignments, Rank me, int filter_id)
 
 Packet_t* Stream_get_IncomingPacket(Stream_t* stream)
 {
-  Packet_t* cur_packet;
+  Packet_t* cur_packet = NULL;
   perfdata_t val;
 
   mrn_dbg_func_begin();
 
   if (stream->incoming_packet_buffer->size > 0) {
+      mrn_dbg(5, mrn_printf(FLF, stderr, "incoming_packet_buffer->size=%d\n", stream->incoming_packet_buffer->size));
     cur_packet = (Packet_t*)(stream->incoming_packet_buffer->vec[0]);
     mrn_dbg(5, mrn_printf(FLF, stderr, "cur_packet->tag=%d\n", cur_packet->tag));
     stream->incoming_packet_buffer = eraseElement(stream->incoming_packet_buffer, cur_packet);
+    mrn_dbg(5, mrn_printf(FLF, stderr, "incoming_packet_buffer->size now=%d\n", stream->incoming_packet_buffer->size));
 
     //performance data update for STREAM_RECV
     if (PerfDataMgr_is_Enabled(stream->perf_data, 
