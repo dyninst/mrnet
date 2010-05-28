@@ -44,7 +44,7 @@ LICENSE contains the usage terms for MRNet.
 
     * Open source licensing.
 
-2. MRNet v2.2beta RELEASE NOTES
+2. MRNet v3.0beta RELEASE NOTES
 
   This release of MRNet includes a source distribution for all platforms, 
   as well as associated manuals. The release incorporates improvements made 
@@ -55,6 +55,7 @@ LICENSE contains the usage terms for MRNet.
       http://www.paradyn.org/mrnet
 
   Release Highlights:
+    * Cray XT support
     * New lightweight C-based, threadless backend API
     * Numerous bug fixes and enhancements
 
