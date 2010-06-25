@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "config.h"
 
@@ -74,6 +75,7 @@ struct hostent * copy_hostent (struct hostent *in)
 
     //char* tmp[count+1];
     tmp = (char**)malloc(sizeof(char)*(count+1));
+    assert(tmp);
     out->h_aliases = tmp;
     for (i=0; i < count; i++) {
         out->h_aliases[i] = strdup(in->h_aliases[i]);
@@ -86,6 +88,7 @@ struct hostent * copy_hostent (struct hostent *in)
         count++;
 
     tmp2 = (char**)malloc(sizeof(char)*(count+1));
+    assert(tmp2);
     out->h_addr_list = tmp2;
     for (i = 0; i < count; i++) {
         out->h_addr_list[i] = tmp3;
@@ -217,6 +220,7 @@ int mrn_printf( const char *file, int line, const char * func,
     int rank = getrank();
     FILE * tmp_fp = NULL;
     char* this_host = (char*)malloc(sizeof(char)*256);
+    assert(this_host);
     struct stat s;
     char host[256];
     char logdir[256];

@@ -36,6 +36,30 @@ PerfDataMgr_t* new_PerfDataMgr_t()
   return newperf;
 }
 
+char * PerfDataMgr_get_MetricName(PerfDataMgr_t* perf_data,
+        perfdata_metric_t met)
+{
+    return perfdata_metric_info[(unsigned)met].name;
+}
+
+char * PerfDataMgr_get_MetricUnits(PerfDataMgr_t* perf_data,
+        perfdata_metric_t met)
+{
+    return perfdata_metric_info[(unsigned)met].units;
+}
+
+char * PerfDataMgr_get_MetricDescription(PerfDataMgr_t* perf_data,
+        perfdata_metric_t met)
+{
+    return perfdata_metric_info[(unsigned)met].description;
+}
+
+perfdata_mettype_t PerfDataMgr_get_MetricType(PerfDataMgr_t* perf_data,
+        perfdata_metric_t met)
+{
+    return perfdata_metric_info[(unsigned)met].type;
+}
+
 void PerfDataMgr_enable(PerfDataMgr_t* perf_data,
                         perfdata_metric_t met,
                         perfdata_context_t ctx)
@@ -193,6 +217,7 @@ void PerfDataMgr_get_MemData(PerfDataMgr_t* perf_data,
                                     PERFDATA_CTX_NONE,
                                     val);   
     }
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Are we really segfaulting here?\n"));
     mrn_dbg_func_end();
 }
 
@@ -214,7 +239,9 @@ void PerfDataMgr_print(PerfDataMgr_t* perf_data,
     gettimeofday(&tv, NULL);
 
     mi = perfdata_metric_info + (unsigned)met;
-	size = 12; // "PERFDATA @ T="
+
+#ifdef os_windows
+	size = 13; // "PERFDATA @ T="
 	size += 10; // "%d"
 	size += 11; // "%06dsec: " 
 	size += strlen(mi->name);
@@ -226,6 +253,12 @@ void PerfDataMgr_print(PerfDataMgr_t* perf_data,
     sprintf( report, "PERFDATA @ T=%d.%06dsec: %s %s -",
              (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, 
               perfdata_context_names[(unsigned)ctx] );
+#else
+    if (!asprintf(&report, "PERFDATA @ T=%d.%.06dsec: %s %s -",
+            (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, perfdata_context_names[(unsigned)ctx])) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "asprintf to report data failed\n"));
+    }
+#endif
 
     for (k = 0; k < data->size; k++) {
         if (mi->type == PERFDATA_TYPE_UINT) {
@@ -246,12 +279,12 @@ void PerfDataMgr_print(PerfDataMgr_t* perf_data,
 }
 
 void PerfDataMgr_collect (PerfDataMgr_t* perf_data,
-                        perfdata_metric_t met,
-                        perfdata_context_t ctx,
-                        vector_t* data)
+        perfdata_metric_t met,
+        perfdata_context_t ctx,
+        vector_t* data)
 {
-	map_t* ctx_map;
-	vector_t* met_data;
+    map_t* ctx_map;
+    vector_t* met_data;
 
 
     mrn_dbg_func_begin();
@@ -273,7 +306,3 @@ void PerfDataMgr_collect (PerfDataMgr_t* perf_data,
     mrn_dbg_func_end();
 }
 
-perfdata_mettype_t PerfDataMgr_get_MetricType(perfdata_metric_t met)
-{
-    return perfdata_metric_info[(unsigned)met].type;
-}

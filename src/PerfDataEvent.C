@@ -123,7 +123,7 @@ void PerfDataMgr::print( perfdata_metric_t met, perfdata_context_t ctx )
     perfdata_metinfo_t* mi= perfdata_metric_info + (unsigned)met;
 
 #ifdef os_windows
-	int size = 12;
+	int size = 13;
 	size += 10;
 	size += 11;
 	size += strlen(mi->name);

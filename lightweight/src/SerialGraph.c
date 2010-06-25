@@ -274,9 +274,10 @@ Port SerialGraph_get_RootPort(SerialGraph_t* serial_graph)
     
     // find location of next ":"
     loc = strcspn(buf, delim);
-    port_string = (char*)malloc(sizeof(char)*loc);
+    port_string = (char*)malloc(sizeof(char)*loc+1);
     assert(port_string);
     strncpy(port_string, buf, loc);
+    port_string[loc] = '\n';
 
     retval = atoi(port_string);
 
