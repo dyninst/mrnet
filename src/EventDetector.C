@@ -430,9 +430,9 @@ void * EventDetector::main( void * /* iarg */ )
                     perror("getSocketConnection()");
                     mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
                     continue;
-				} else {
-					mrn_dbg(1, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
-				}
+                } else {
+                    mrn_dbg(1, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
+                }
 
                 packets.clear();
                 msg.recv( connected_sock, packets, UnknownRank );
