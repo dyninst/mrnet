@@ -21,23 +21,22 @@ int main( int argc, char* argv[] )
     Stream_t* stream = (Stream_t*)malloc(sizeof(Stream_t));
     int tag;
     Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
-	int bCont;
-	Network_t* net;
-	int done;
-	int rret;
-	int nReductions = 0;
+    int bCont;
+    Network_t* net;
+    int done;
+    int rret;
+    int nReductions = 0;
     int ival;
-	int i;
+    int i;
 
     if( getenv( "MRN_DEBUG_BE" ) != NULL ) {
 #ifndef os_windows
-		fprintf( stderr, "BE: spinning for debugger, pid=%d\n", getpid() );
+        fprintf( stderr, "BE: spinning for debugger, pid=%d\n", getpid() );
 #else
-		fprintf(stderr, "BE: spinning for debugger, pid=%d\n", (int)GetCurrentProcessId());
+        fprintf(stderr, "BE: spinning for debugger, pid=%d\n", (int)GetCurrentProcessId());
 #endif
         bCont=false;
-        while( !bCont )
-        {
+        while( !bCont ) {
             // spin
         }
     }
@@ -109,7 +108,17 @@ int main( int argc, char* argv[] )
         fprintf(stderr, "BE: received unexpected go-away tag %d\n", tag);
     }
 
-    Network_recv(net,  &tag, pkt, &stream);
+    if( pkt != NULL )
+        free( pkt );
+
+    if( stream != NULL )
+        free( stream );
+
+    // wait for final teardown packet from FE; this will cause
+    // us to exit
+    Network_waitfor_ShutDown(net);
+    if( net != NULL )
+        free( net );
 
     return 0;
 }

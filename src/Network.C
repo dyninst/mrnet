@@ -96,6 +96,8 @@ Network::Network( void )
     init_local();
     _global_network=this;
     set_OutputLevelFromEnvironment();
+
+    _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
 }
 
 Network::~Network( void )
@@ -158,9 +160,39 @@ void Network::shutdown_Network( void )
         }
 
         Event::clear_Events();
+
+        signal_ShutDown();        
     }
 }
 
+bool Network::is_ShutDown( void ) const
+{
+    bool rc;
+    _shutdown_sync.Lock();
+    rc = _was_shutdown;
+    _shutdown_sync.Unlock();
+    return rc;
+}
+
+void Network::waitfor_ShutDown( void ) const
+{
+    mrn_dbg_func_begin();
+
+    _shutdown_sync.Lock();
+    _shutdown_sync.WaitOnCondition( NETWORK_TERMINATION );
+    _shutdown_sync.Unlock();
+
+    mrn_dbg_func_end();
+}
+
+void Network::signal_ShutDown( void )
+{
+    mrn_dbg_func_begin();
+
+    _shutdown_sync.Lock();
+    _shutdown_sync.SignalCondition( NETWORK_TERMINATION );
+    _shutdown_sync.Unlock();
+}
 
 const char* Network::FindCommnodePath( void )
 {

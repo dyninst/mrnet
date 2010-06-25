@@ -239,7 +239,7 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 
     //if internal, signal network termination
     if( _network->is_LocalNodeInternal() ) {
-        _network->get_LocalInternalNode()->signal_NetworkTermination();
+        _network->signal_ShutDown();
 
         // exit recv thread from parent
         mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));

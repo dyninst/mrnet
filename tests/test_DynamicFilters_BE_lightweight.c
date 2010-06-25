@@ -13,7 +13,7 @@
 int main(int argc, char **argv)
 {
     Stream_t * stream = (Stream_t*)malloc(sizeof(Stream_t)); 
-    Packet_t* buf = (Packet_t*)malloc(sizeof(Packet_t));
+    Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
     int tag;
 
     srandom( (unsigned) time(NULL) ); //arbitrary seed to random()
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     Network_t* net = Network_CreateNetworkBE( argc, argv );
 
     do{
-        if ( Network_recv(net,&tag, buf, &stream) != 1){
+        if ( Network_recv(net,&tag, pkt, &stream) != 1){
             fprintf(stderr, "stream_recv() failure\n");
         }
 
@@ -56,7 +56,18 @@ int main(int argc, char **argv)
             fprintf(stderr, "stream_flush() failure\n");
         }
     } while ( tag != PROT_EXIT );
-    
-    Network_recv(net,&tag, buf, &stream);
+
+    if( pkt != NULL )
+        free( pkt );
+
+    if( stream != NULL )
+        free( stream );
+
+    // wait for final teardown packet from FE; this will cause
+    // us to exit
+    Network_waitfor_ShutDown(net);
+    if( net != NULL )
+        free( net );
+
     return 0;
 }

@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 
     do {
         if( Network_recv(net, &tag, p, &stream) != 1 ) {
-            fprintf(stderr, "BE: stream::recv() failure\n");
+            fprintf(stderr, "BE: network::recv() failure\n");
             break;
         }
 
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
             int i;
             for( i=0; i<num_iters; i++ ) {
                 fprintf( stdout, "BE: Sending wave %u ...\n", i);
-                if( Stream_send(stream,tag, "%d", recv_val*i) == -1 ){
+                if( Stream_send(stream, tag, "%d", recv_val*i) == -1 ){
                     fprintf(stderr, "BE: stream::send(%%d) failure\n");
                     tag = PROT_EXIT;
                     break;
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
             break;
 
         case PROT_EXIT:
-	    if( Stream_send(stream,tag, "%d", 0) == -1 ) {
+	    if( Stream_send(stream, tag, "%d", 0) == -1 ) {
                 fprintf(stderr, "BE: stream::send(%%s) failure\n");
                 break;
             }
@@ -70,9 +70,17 @@ int main(int argc, char **argv)
 
     } while ( tag != PROT_EXIT );
 
+    if( p != NULL )
+        free( p );
+
+    if( stream != NULL )
+        free( stream );
+
     // wait for final teardown packet from FE; this will cause
     // us to exit
-    Network_recv(net, &tag, p, &stream);
+    Network_waitfor_ShutDown(net);
+    if( net != NULL )
+        free( net );
     
     return 0;
 }

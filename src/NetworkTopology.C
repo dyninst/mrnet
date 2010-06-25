@@ -821,7 +821,6 @@ NetworkTopology::Node * NetworkTopology::find_NewParent( Rank ichild_rank,
     if( potential_adopters.empty() ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "No Adopters left :(\n"));
         _sync.Unlock();
-        _network->shutdown_Network();
         exit(-1);
     }
 

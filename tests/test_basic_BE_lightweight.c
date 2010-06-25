@@ -9,10 +9,11 @@
 #include "test_basic_lightweight.h"
 #include "mrnet_lightweight/MRNet.h"
 
-int main(int argc, char **argv){
+int main(int argc, char **argv)
+{
     Stream_t * stream = (Stream_t*)malloc(sizeof(Stream_t));
     Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
-	Network_t * net;
+    Network_t * net;
 
     int tag;
     char recv_char;
@@ -209,7 +210,17 @@ int main(int argc, char **argv){
 
     } while( tag != PROT_EXIT );
     
-    Network_recv(net, &tag, pkt, &stream);
-    
+    if( pkt != NULL )
+        free( pkt );
+
+    if( stream != NULL )
+        free( stream );
+
+    // wait for final teardown packet from FE; this will cause
+    // us to exit
+    Network_waitfor_ShutDown(net);
+    if( net != NULL )
+        free( net );
+
     return 0;
 }

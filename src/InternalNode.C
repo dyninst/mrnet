@@ -23,7 +23,6 @@ InternalNode::InternalNode( Network * inetwork,
     ParentNode( inetwork, ihostname, irank, listeningSocket, listeningPort ),
     ChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank )
 {
-    _sync.RegisterCondition( NETWORK_TERMINATION );
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Local[%u]: %s:%u, parent[%u]: %s:%u\n",
                            ParentNode::_rank, ParentNode::_hostname.c_str(),
                            ParentNode::_port,
@@ -59,26 +58,6 @@ InternalNode::InternalNode( Network * inetwork,
 
 InternalNode::~InternalNode( void )
 {
-}
-
-void InternalNode::waitfor_NetworkTermination( )
-{
-    mrn_dbg_func_begin();
-
-    _sync.Lock();
-    _sync.WaitOnCondition( NETWORK_TERMINATION );
-    _sync.Unlock();
-
-    mrn_dbg_func_end();
-}
-
-void InternalNode::signal_NetworkTermination( )
-{
-    mrn_dbg_func_begin();
-
-    _sync.Lock();
-    _sync.SignalCondition( NETWORK_TERMINATION );
-    _sync.Unlock();
 }
 
 int InternalNode::proc_DataFromParent( PacketPtr ipacket ) const

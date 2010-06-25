@@ -35,12 +35,6 @@ class InternalNode: public virtual ParentNode,
     virtual int proc_DataFromChildren( PacketPtr ipacket ) const;
     virtual int proc_FailureReportFromParent( PacketPtr ipacket ) const;
     virtual int proc_NewParentReportFromParent( PacketPtr ipacket ) const;
-    void signal_NetworkTermination( );
-    void waitfor_NetworkTermination( );
-
- private:
-    XPlat::Monitor _sync;
-    enum {NETWORK_TERMINATION};
 };
 
 } // namespace MRN

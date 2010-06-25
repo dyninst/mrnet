@@ -15,7 +15,7 @@
 int main(int argc, char **argv)
 {
     Stream_t * stream = (Stream_t*)malloc(sizeof(Stream_t));
-    Packet_t* p = (Packet_t*)malloc(sizeof(Packet_t));
+    Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
     int tag = 0 ;
     
     char * message;
@@ -24,14 +24,14 @@ int main(int argc, char **argv)
     Rank node_rank = net->local_rank;
 
     do{
-        if( Network_recv(net, &tag, p, &stream) != 1 ){
+        if( Network_recv(net, &tag, pkt, &stream) != 1 ){
             fprintf(stderr, "stream_recv( ) failure\n");
             return -1;
         }
 
         switch(tag) {
         case PROT_TEST:
-            Packet_unpack(p,  "%s", &message );
+            Packet_unpack(pkt,  "%s", &message );
             fprintf( stdout, "BE %d: Processing PROT_TEST - got '%s'\n", node_rank, message );
             if( Stream_send(stream,tag, "%s", message) == -1 ){
                 fprintf(stderr, "stream_send(%%d) failure\n");
@@ -53,7 +53,17 @@ int main(int argc, char **argv)
 
     } while( tag != PROT_EXIT );
     
-    Network_recv(net, &tag, p, &stream);
+    if( pkt != NULL )
+        free( pkt );
+
+    if( stream != NULL )
+        free( stream );
+
+    // wait for final teardown packet from FE; this will cause
+    // us to exit
+    Network_waitfor_ShutDown(net);
+    if( net != NULL )
+        free( net );
     
     return 0;
 }
