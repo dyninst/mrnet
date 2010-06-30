@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <fcntl.h>
 #include <sys/types.h>
 
 #ifndef os_windows

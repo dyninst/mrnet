@@ -200,6 +200,19 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
         return -1;
     }
 
+      /* Code for closing descriptor on exec*/
+      int fdflag = fcntl(sock, F_GETFD );
+      if( fdflag == -1 )
+      {
+          // failed to retrieve the socket  descriptor flags
+	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );
+      }
+      int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
+      if( fret == -1 )
+      {
+          // we failed to set the socket descriptor flags
+	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+      }
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
     int optVal = 1;
@@ -302,6 +315,19 @@ int bindPort( int *sock_in, Port *port_in )
         return -1;
     }
 
+      /* Code for closing descriptor on exec*/
+      int fdflag = fcntl(sock, F_GETFD );
+      if( fdflag == -1 )
+      {
+          // failed to retrieve the socket  descriptor flags
+	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );     
+      }
+      int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
+      if( fret == -1 )
+      {
+          // we failed to set the socket descriptor flags
+	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+      }
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
     int optVal = 1;
@@ -349,6 +375,19 @@ int getSocketConnection( int bound_socket )
         }
     } while ( ( connected_socket == -1 ) && ( errno == EINTR ) );
 
+      /* Code for closing descriptor on exec*/
+      int fdflag = fcntl(connected_socket, F_GETFD );
+      if( fdflag == -1 )
+      {
+          // failed to retrieve the socket  descriptor flags 
+	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );    
+      }
+      int fret = fcntl( connected_socket, F_SETFD, fdflag | FD_CLOEXEC );
+      if( fret == -1 )
+      {
+          // we failed to set the socket descriptor flags
+	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+      }
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
     int optVal = 1;

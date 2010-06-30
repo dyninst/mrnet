@@ -107,6 +107,9 @@ class Network: public Error {
     
     void print_error( const char * );
 
+    /*Newly added code for turning Fault Recovery ON or OFF*/
+    bool set_FailureRecovery( bool enable_recovery );
+
     // END MRNET API
 
     virtual ~Network( );

@@ -41,6 +41,11 @@ class ChildNode: public virtual Error,
     int proc_CollectPerfData( PacketPtr ipacket ) const;
     int proc_PrintPerfData( PacketPtr ipacket ) const;
 
+    /*Failure Recovery */
+
+   int proc_EnableFailReco( PacketPtr ipacket ) const;
+   int proc_DisableFailReco( PacketPtr ipacket ) const;
+
     int recv_PacketsFromParent( std::list<PacketPtr> &packet_list ) const;
     int send_EventsToParent( ) const;
     bool has_PacketsFromParent( ) const;
