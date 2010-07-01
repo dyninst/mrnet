@@ -222,6 +222,21 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
             retval = -1;
         }
         break;
+
+    case PROT_ENABLE_RECOVERY:
+        if( proc_EnableFailReco( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_EnableFailReco() failed\n" ));
+            retval = -1;
+        }
+        break;
+    case PROT_DISABLE_RECOVERY:
+        if( proc_DisableFailReco( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_DisableFailReco() failed\n" ));
+            retval = -1;
+        }
+        break;
     default:
         //Any Unrecognized tag is assumed to be data
         if( proc_DataFromParent( cur_packet ) == -1 ) {
@@ -650,5 +665,68 @@ bool ChildNode::has_PacketsFromParent( ) const
 {
     return _network->has_PacketsFromParent();
 }
+
+/*Failure Recovery Code*/
+
+
+
+int ChildNode::proc_EnableFailReco( PacketPtr ipacket ) const
+{
+    int stream_id;
+    
+
+    mrn_dbg_func_begin();
+
+    stream_id = ipacket->get_StreamId();
+    if( stream_id != 0 ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "The current stream is not control stream and its stream_id = %d",
+                               stream_id ));
+        return -1;
+    }
+
+    if( _network->is_LocalNodeParent() ) {
+        // forward packet to children nodes
+        if( _network->send_PacketToChildren( ipacket ) == -1 ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            return -1;
+        }
+    }
+
+   
+    //local update
+
+   _network->enable_FailureRecovery();
+    mrn_dbg_func_end();
+    return 0;
+}
+
+int ChildNode::proc_DisableFailReco( PacketPtr ipacket ) const
+{
+    int stream_id;
+
+    mrn_dbg_func_begin();
+
+    stream_id = ipacket->get_StreamId();
+    if( stream_id != 0 ){
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "The current stream is not control stream and its stream_id = %d \n",
+                               stream_id ));
+        return -1;
+    }
+
+    if( _network->is_LocalNodeParent() ) {
+        // forward packet to children nodes
+        if( _network->send_PacketToChildren( ipacket ) == -1 ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            return -1;
+        }
+    }
+
+
+    //local update
+   _network->disable_FailureRecovery();
+    mrn_dbg_func_end();
+    return 0;
+}
+
 
 } // namespace MRN
