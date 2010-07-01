@@ -170,7 +170,7 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     char delete_backend;
     ipacket->unpack( "%c", &delete_backend );
     if( delete_backend == 't' ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Back-end will exit\n" ));
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend will exit\n" ));
         goaway = true;
     }
 
@@ -181,7 +181,7 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     _network->shutdown_Network();
 
     if( goaway ) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Backend exiting!\n"));
+        mrn_dbg(3, mrn_printf(FLF, stderr, "Backend exiting!\n"));
         exit(0);
     }
    

@@ -51,14 +51,12 @@ int main(int argc, char **argv)
             return 1;
         
         // handle events
-        comm_node = net->get_LocalInternalNode();
-        assert( comm_node != NULL );
-        comm_node->waitfor_NetworkTermination();
+        net->waitfor_ShutDown();
     }
     catch( std::exception& e )
     {
         mrn_dbg( 1, mrn_printf( FLF, stderr, e.what() ) );
-        ret = 1;        
+        ret = 1;
     }
 
     if( comm_node != NULL ) {
@@ -70,8 +68,7 @@ int main(int argc, char **argv)
     net = NULL;
 
     tsd_t* tsd = (tsd_t*)tsd_key.Get();
-    if( tsd != NULL )
-    {
+    if( tsd != NULL ) {
         free( const_cast<char*>( tsd->thread_name ) );
         delete tsd;
     }

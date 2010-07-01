@@ -15,7 +15,7 @@
 int main(int argc, char **argv)
 {
     Stream_t * stream = (Stream_t*)malloc(sizeof(Stream_t));
-    Packet_t* buf = (Packet_t*)malloc(sizeof(Packet_t));
+    Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
     int tag;
     int success=1;
 
@@ -23,11 +23,11 @@ int main(int argc, char **argv)
     DataType type;
 
     do{
-        if ( Network_recv(net, &tag, buf, &stream) != 1){
+        if ( Network_recv(net, &tag, pkt, &stream) != 1){
             fprintf(stderr, "stream_recv() failure\n");
         }
 
-        Packet_unpack(buf,  "%d", &type );
+        Packet_unpack(pkt, "%d", &type );
 
         switch(tag){
         case PROT_SUM:
@@ -118,6 +118,17 @@ int main(int argc, char **argv)
         }
     } while ( tag != PROT_EXIT );
     
-    Network_recv(net, &tag, buf, &stream);
+    if( pkt != NULL )
+        free( pkt );
+
+    if( stream != NULL )
+        free( stream );
+
+    // wait for final teardown packet from FE; this will cause
+    // us to exit
+    Network_waitfor_ShutDown(net);
+    if( net != NULL )
+        free( net );
+
     return 0;
 }

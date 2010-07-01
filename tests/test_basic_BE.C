@@ -206,7 +206,13 @@ int main(int argc, char **argv){
 
     } while( tag != PROT_EXIT );
 
-    // FE delete net will shut us down, so just go to sleep!!
-    sleep(10);
+    if( stream != NULL )
+        delete stream;
+
+    // FE delete net will shut us down, wait for it
+    net->waitfor_ShutDown();
+    if( net != NULL )
+        delete net;
+
     return 0;
 }

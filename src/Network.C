@@ -59,6 +59,20 @@ void init_local( void )
     // to avoid nasty bugs where fprintf(stdout/stderr) writes to data sockets.
     int fd;
     while( (fd = socket( AF_INET, SOCK_STREAM, 0 )) <= 2 ) {
+        /* Code for closing descriptor on exec*/
+        int fdflag = fcntl(fd, F_GETFD );
+        if( fdflag == -1 )
+        {
+            // failed to retrive the fd  flags
+	    fprintf(stderr, "F_GETFD failed!\n");
+        }
+        int fret = fcntl( fd, F_SETFD, fdflag | FD_CLOEXEC );
+        if( fret == -1 )
+        {
+            // we failed to set the fd flags
+           fprintf(stderr, "F_SETFD failed!\n");
+        }
+
         if( fd == -1 ) break;
     } 
     if( fd > 2 ) close(fd);
@@ -96,6 +110,8 @@ Network::Network( void )
     init_local();
     _global_network=this;
     set_OutputLevelFromEnvironment();
+
+    _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
 }
 
 Network::~Network( void )
@@ -158,9 +174,39 @@ void Network::shutdown_Network( void )
         }
 
         Event::clear_Events();
+
+        signal_ShutDown();        
     }
 }
 
+bool Network::is_ShutDown( void ) const
+{
+    bool rc;
+    _shutdown_sync.Lock();
+    rc = _was_shutdown;
+    _shutdown_sync.Unlock();
+    return rc;
+}
+
+void Network::waitfor_ShutDown( void ) const
+{
+    mrn_dbg_func_begin();
+
+    _shutdown_sync.Lock();
+    _shutdown_sync.WaitOnCondition( NETWORK_TERMINATION );
+    _shutdown_sync.Unlock();
+
+    mrn_dbg_func_end();
+}
+
+void Network::signal_ShutDown( void )
+{
+    mrn_dbg_func_begin();
+
+    _shutdown_sync.Lock();
+    _shutdown_sync.SignalCondition( NETWORK_TERMINATION );
+    _shutdown_sync.Unlock();
+}
 
 const char* Network::FindCommnodePath( void )
 {
@@ -1715,6 +1761,7 @@ void set_OutputLevelFromEnvironment( void )
     }
 }
 
+<<<<<<< HEAD:src/Network.C
 SerialGraph*
 Network::readTopology( int topoSocket ){
 
@@ -1776,6 +1823,53 @@ Network::writeTopology( int topoFd,
 
     // deliver the child rank
     //write( topoFd, &childRank, sizeof(childRank) );
+=======
+/* Failure Recovery - New code */
+
+bool Network::set_FailureRecovery( bool enable_recovery )
+{
+    mrn_dbg_func_begin();
+    int tag;
+
+
+    if( is_LocalNodeFrontEnd() ) {
+
+	//enable or disable Failure Recovery
+	
+	if(enable_recovery == 1)
+	{
+        	tag = PROT_ENABLE_RECOVERY;
+		enable_FailureRecovery();
+	}
+	else
+	{
+        	tag = PROT_DISABLE_RECOVERY;
+		disable_FailureRecovery();
+	}
+	
+	
+        PacketPtr packet( new Packet( 0, tag, "%d", (int)enable_recovery ));
+        
+	if( packet->has_Error() ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+            return false;
+        }
+
+            if( send_PacketToChildren( packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+                return false;
+            }
+
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+			       "set_FailureRecovery() can only be used by Network front-end\n" )); 
+        return false;
+    }
+
+    mrn_dbg_func_end();
+    return true;
+>>>>>>> 4cfd8fa713ad59aa75388fcdb8056279942a7fea:src/Network.C
 }
 
 }  // namespace MRN

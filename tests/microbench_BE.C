@@ -108,7 +108,11 @@ int main( int argc, char* argv[] )
         std::cerr << "BE: received unexpected go-away tag " << tag << std::endl;
     }
 
-    // FE delete net will shut us down, so just go to sleep!!
-	sleep(10);
+    if( stream != NULL )
+        delete stream;
+
+    // wait for FE to delete network, which will shut us down
+    net->waitfor_ShutDown();
+    delete net;
     return 0;
 }

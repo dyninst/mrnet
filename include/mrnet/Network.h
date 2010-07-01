@@ -102,8 +102,13 @@ class Network: public Error {
     int get_EventNotificationFd( EventType etyp );
     void clear_EventNotificationFd( EventType etyp );
     void close_EventNotificationFd( EventType etyp );
+    bool is_ShutDown( void ) const;
+    void waitfor_ShutDown( void ) const;
     
     void print_error( const char * );
+
+    /*Newly added code for turning Fault Recovery ON or OFF*/
+    bool set_FailureRecovery( bool enable_recovery );
 
     // END MRNET API
 
@@ -202,6 +207,13 @@ protected:
                         SerialGraph* topology );
     #endif			
 
+    // some conditions we waitfor/signal
+    enum {
+        STREAMS_NONEMPTY,
+        PARENT_NODE_AVAILABLE,
+        NETWORK_TERMINATION
+    };
+
     void update_BcastCommunicator( void );
 
     int parse_Configuration( const char* itopology, bool iusing_mem_buf );
@@ -217,9 +229,6 @@ protected:
     bool have_Streams( void );
     void waitfor_NonEmptyStream( void );
     void signal_NonEmptyStream( void );
-    enum {STREAMS_NONEMPTY};
-
-    enum {PARENT_NODE_AVAILABLE};
 
     int send_PacketsToParent( std::vector< PacketPtr >& );
     int send_PacketToParent( PacketPtr );
@@ -246,6 +255,7 @@ protected:
     void set_FailureManager( CommunicationNode* );
 
     void cancel_IOThreads( void );
+    void signal_ShutDown( void );
 
     PeerNodePtr get_OutletNode( Rank ) const ;
     char* get_LocalSubTreeStringPtr( void ) const ;
@@ -306,6 +316,7 @@ protected:
     mutable XPlat::Monitor _streams_sync;
     mutable XPlat::Mutex _children_mutex;
     mutable XPlat::Mutex _endpoints_mutex;
+    mutable XPlat::Monitor _shutdown_sync;
 };
 
 extern Network* _global_network;

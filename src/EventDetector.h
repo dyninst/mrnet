@@ -43,6 +43,7 @@ class EventDetector {
 
     static int recover_FromChildFailure( Network *inetwork, Rank ifailed_rank );
     static int recover_FromParentFailure( Network *inetwork );
+    static int recover_off_FromParentFailure( Network *inetwork );
     
     static bool add_FD( int ifd );
     static bool remove_FD( int ifd );

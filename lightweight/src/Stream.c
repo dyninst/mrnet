@@ -434,7 +434,7 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
     data_arr = NULL;
     fmt = NULL;
 
-    switch (PerfDataMgr_get_MetricType(metric)) {
+    switch (PerfDataMgr_get_MetricType(stream->perf_data, metric)) {
         case PERFDATA_TYPE_UINT: {
             fmt = "%ad %ad %auld";
             if (num_elems) {
