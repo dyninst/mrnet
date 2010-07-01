@@ -47,7 +47,7 @@ Stream::Stream( Network * inetwork,
     _perf_data( new PerfDataMgr() ),
     _us_closed(false),
     _ds_closed(false),
-    _was_shutdown(false);
+    _was_shutdown(false)
 {
 
     set< PeerNodePtr > node_set;
