@@ -153,7 +153,6 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
     return retval;
 }
 
-#if NEW_TOPO ==1
 bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
 {
     std::list < PacketPtr >packet_list;
@@ -176,7 +175,6 @@ bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
                 _num_children )); 
     return true;
 }
-#endif
 
 
 

@@ -329,27 +329,29 @@ void Network::init_FrontEnd( const char * itopology,
                        iattrs );
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
-
-    #if NEW_TOPO == 1
+    
+    // NEW_TOPO propagation code
     if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() )
             error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
-    #else	    
-    if( ! get_LocalFrontEndNode()->waitfor_SubTreeReports() )
-        error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
-    #endif 
+    // end of NEW_TOPO propagation code
+
+    //old topo propagation code
+    //if( ! get_LocalFrontEndNode()->waitfor_SubTreeReports() )
+    //    error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
+    //end of old topo propagation code
 
     //We should have a topology available after subtrees report
     _network_topology->print( stderr );
 
+    //NEW_TOPO proagation code
     //broadcast topology, not necessary since sent for subtree creation, right?
-    #if NEW_TOPO == 0
     char * topology = _network_topology->get_TopologyStringPtr();
     PacketPtr packet( new Packet( 0, PROT_TOPOLOGY_RPT, "%s", topology ) );
     mrn_dbg(5, mrn_printf(FLF, stderr, "Broadcasting topology ... \n" ));
     if( -1 == get_LocalFrontEndNode()->proc_TopologyReport( packet ) )
         error( ERR_INTERNAL, rootRank, "proc_TopologyReport() failed");
     free( topology );
-    #endif
+    //end of NEW_TOPO propagation code
   
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating bcast communicator ... \n" ));
     update_BcastCommunicator( );
@@ -789,11 +791,11 @@ CommunicationNode* Network::new_EndPoint( string &ihostname,
     return new CommunicationNode(ihostname, iport, irank);
 }
 
-#if NEW_TOPO ==1
+//NEW_TOPO propagation code
 static unsigned int next_stream_id=2;
-#else
-static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
-#endif
+
+//old topo propagation code
+//static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
 
 Stream* Network::new_Stream( Communicator *icomm, 
                              int ius_filter_id /*=TFILTER_NULL*/,
@@ -1761,7 +1763,6 @@ void set_OutputLevelFromEnvironment( void )
     }
 }
 
-<<<<<<< HEAD:src/Network.C
 SerialGraph*
 Network::readTopology( int topoSocket ){
 
@@ -1823,7 +1824,8 @@ Network::writeTopology( int topoFd,
 
     // deliver the child rank
     //write( topoFd, &childRank, sizeof(childRank) );
-=======
+
+}
 /* Failure Recovery - New code */
 
 bool Network::set_FailureRecovery( bool enable_recovery )
@@ -1869,7 +1871,6 @@ bool Network::set_FailureRecovery( bool enable_recovery )
 
     mrn_dbg_func_end();
     return true;
->>>>>>> 4cfd8fa713ad59aa75388fcdb8056279942a7fea:src/Network.C
 }
 
 }  // namespace MRN

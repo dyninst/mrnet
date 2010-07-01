@@ -198,14 +198,13 @@ protected:
     friend class Router;
     friend class PeerNode;
     friend class EventDetector;
-  
-    #if NEW_TOPO ==1 
+    
+    //NEW_TOPO propagation code
     //The topology is propagated from parent to child when child connects to parent not when child first
     //gets the topology
     SerialGraph* readTopology( int topoFd);
     void writeTopology( int topoFd,
                         SerialGraph* topology );
-    #endif			
 
     // some conditions we waitfor/signal
     enum {
