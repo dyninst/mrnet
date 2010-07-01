@@ -28,6 +28,7 @@ struct Stream_t{
   struct vector_t * incoming_packet_buffer;
   struct vector_t* peers; // peers in stream
   struct PerfDataMgr_t* perf_data;
+  char _was_shutdown;
 } ;
 
 typedef struct Stream_t Stream_t;
@@ -82,5 +83,7 @@ void Stream_print_PerfData(Stream_t* stream,
                             perfdata_metric_t metric,
                             perfdata_context_t context);
 int Stream_remove_Node(Stream_t* stream, Rank irank);
+
+char Stream_is_ShutDown(Stream_t* stream);
 
 #endif /* __stream_h */

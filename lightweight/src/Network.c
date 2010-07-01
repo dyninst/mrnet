@@ -442,6 +442,11 @@ int Network_send_PacketToParent(Network_t* net, Packet_t* ipacket)
     return 0;
 }
 
+void Network_delete_Stream(Network_t * net, unsigned int iid)
+{
+    
+}
+
 PeerNode_t* Network_new_PeerNode(Network_t* network,
                                  char* ihostname,
                                  Port iport,

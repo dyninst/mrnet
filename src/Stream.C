@@ -46,8 +46,10 @@ Stream::Stream( Network * inetwork,
     _evt_pipe(NULL),
     _perf_data( new PerfDataMgr() ),
     _us_closed(false),
-    _ds_closed(false)
+    _ds_closed(false),
+    _was_shutdown(false);
 {
+
     set< PeerNodePtr > node_set;
     mrn_dbg( 3, mrn_printf(FLF, stderr,
                            "id:%d, us_filter:%d, sync_id:%d, ds_filter:%d\n",
@@ -1274,6 +1276,14 @@ bool Stream::find_FilterAssignment(const std::string& assignments,
     }
     return false;
 }
-    
+
+bool Stream::is_ShutDown()
+{
+    bool rc;
+    _shutdown_sync.Lock();
+    rc = _was_shutdown;
+    _shutdown_sync.Unlock();
+    return rc;
+}
 
 } // namespace MRN

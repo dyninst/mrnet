@@ -29,6 +29,7 @@ class BackEndNode: public virtual ChildNode
     virtual int proc_NewParentReportFromParent( PacketPtr  ) const;
 
     int proc_newStream( PacketPtr ) const;
+    int proc_deleteStream(PacketPtr) const;
     int proc_DeleteSubTree( PacketPtr ) const;
     int proc_newFilter( PacketPtr ) const;
     int proc_FilterParams( FilterType, PacketPtr &ipacket ) const;
