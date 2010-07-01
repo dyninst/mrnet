@@ -223,7 +223,11 @@ int BackEndNode_proc_deleteStream(BackEndNode_t* be, Packet_t* ipacket)
     Stream_t * strm;
     
     mrn_dbg_func_begin();
-    stream_id = ipacket->stream_id;
+
+    if (Packet_ExtractArgList(ipacket, "%d", &stream_id) == -1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Packet_ExtractArgList() failed\n"));
+        return -1;
+    }
     
     strm = Network_get_Stream(be->network, stream_id);
     if (strm == NULL) {

@@ -135,6 +135,7 @@ class Stream {
     PerfDataMgr * _perf_data;
     bool _us_closed;
     bool _ds_closed;
+    bool _was_shutdown;
     std::set< Rank > _peers; //peers in stream
     std::set< Rank > _closed_peers;
     mutable XPlat::Mutex _peers_sync;
@@ -144,7 +145,6 @@ class Stream {
     mutable XPlat::Monitor _shutdown_sync;
     enum {PACKET_BUFFER_NONEMPTY};
 
-    bool _was_shutdown;
 };
 
 

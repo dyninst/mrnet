@@ -165,18 +165,23 @@ int BackEndNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
 int BackEndNode::proc_deleteStream(PacketPtr ipacket) const
 {
     int stream_id;
+    Stream * strm;
 
     mrn_dbg_func_begin();
 
-    stream_id = ipacket->get_StreamId();
-    Stream * strm = _network->get_Stream(stream_id);
+    if (ipacket->ExtractArgList("%d", &stream_id) == -1) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+        return -1;
+    } 
+
+    strm = _network->get_Stream(stream_id);
     if (strm == NULL) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", 
                     stream_id));
         return -1;
     } 
 
-    strm->_was_shutdown = 1;
+    strm->_was_shutdown = true;
 
     mrn_dbg_func_end();
 
