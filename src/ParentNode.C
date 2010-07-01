@@ -153,6 +153,33 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
     return retval;
 }
 
+#if NEW_TOPO ==1
+bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
+{
+    std::list < PacketPtr >packet_list;
+
+    initdonereport_sync.Lock( );
+
+    while( _num_children > _num_children_reported ) {
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u subtree reports ...\n",
+                               _num_children - _num_children_reported,
+                               _num_children ));
+        initdonereport_sync.WaitOnCondition( ALLNODESREPORTED );
+        mrn_dbg( 3, mrn_printf(FLF, stderr,
+                               "%d of %d children have checked in.\n",
+                               _num_children_reported, _num_children ));
+    }
+
+    initdonereport_sync.Unlock( );
+
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "All %d children nodes have reported\n",
+                _num_children )); 
+    return true;
+}
+#endif
+
+
+
 bool ParentNode::waitfor_SubTreeReports( void ) const
 {
     std::list < PacketPtr >packet_list;

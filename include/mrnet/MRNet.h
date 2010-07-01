@@ -16,5 +16,6 @@
 #include "mrnet/Stream.h"
 #include "mrnet/Tree.h"
 #include "mrnet/Types.h"
+#include "mrnet/new_topo.h"
 
 #endif /* mrnet_h */

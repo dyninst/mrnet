@@ -283,20 +283,27 @@ void Network::init_FrontEnd( const char * itopology,
                        iattrs );
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
+
+    #if NEW_TOPO == 1
+    if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() )
+            error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
+    #else	    
     if( ! get_LocalFrontEndNode()->waitfor_SubTreeReports() )
         error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
-  
+    #endif 
+
     //We should have a topology available after subtrees report
     _network_topology->print( stderr );
 
     //broadcast topology, not necessary since sent for subtree creation, right?
+    #if NEW_TOPO == 0
     char * topology = _network_topology->get_TopologyStringPtr();
     PacketPtr packet( new Packet( 0, PROT_TOPOLOGY_RPT, "%s", topology ) );
     mrn_dbg(5, mrn_printf(FLF, stderr, "Broadcasting topology ... \n" ));
     if( -1 == get_LocalFrontEndNode()->proc_TopologyReport( packet ) )
         error( ERR_INTERNAL, rootRank, "proc_TopologyReport() failed");
     free( topology );
- 
+    #endif
   
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating bcast communicator ... \n" ));
     update_BcastCommunicator( );
@@ -736,7 +743,12 @@ CommunicationNode* Network::new_EndPoint( string &ihostname,
     return new CommunicationNode(ihostname, iport, irank);
 }
 
+#if NEW_TOPO ==1
+static unsigned int next_stream_id=2;
+#else
 static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
+#endif
+
 Stream* Network::new_Stream( Communicator *icomm, 
                              int ius_filter_id /*=TFILTER_NULL*/,
                              int isync_filter_id /*=SFILTER_WAITFORALL*/, 
@@ -1701,6 +1713,69 @@ void set_OutputLevelFromEnvironment( void )
         int l = atoi( output_level );
         set_OutputLevel( l );
     }
+}
+
+SerialGraph*
+Network::readTopology( int topoSocket ){
+
+    mrn_dbg_func_begin(); 
+
+    char* sTopology = NULL;
+    size_t sTopologyLen = 0;
+    
+    // obtain topology from our parent
+    read( topoSocket, &sTopologyLen, sizeof(sTopologyLen) );
+    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%d\n", (int)sTopologyLen ));
+
+    sTopology = new char[sTopologyLen + 1];
+    char* currBufPtr = sTopology;
+    size_t nRemaining = sTopologyLen;
+    while( nRemaining > 0 ) {
+        ssize_t nread = read( topoSocket, currBufPtr, nRemaining );
+        nRemaining -= nread;
+        currBufPtr += nread;
+    }
+    *currBufPtr = 0;
+
+    // get my rank
+    //read( topoSocket, &myRank, sizeof(myRank) );
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s\n",
+                          sTopology));
+
+    SerialGraph* sg = new SerialGraph( sTopology );
+    delete[] sTopology;
+
+    return sg;
+}
+
+void
+Network::writeTopology( int topoFd,
+                        SerialGraph* topology) {
+    mrn_dbg_func_begin();
+
+    std::string sTopology = topology->get_ByteArray();
+    size_t sTopologyLen = sTopology.length();
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "sending topology=%s\n",
+                          sTopology.c_str() ));
+
+    // send serialized topology size
+    ssize_t nwritten = write( topoFd, &sTopologyLen, sizeof(sTopologyLen) );
+
+    // send the topology itself
+    // NOTE this code assumes the byte array underneath the std::string
+    // remains valid throughout this function
+    size_t nRemaining = sTopologyLen;
+    const char* currBufPtr = sTopology.c_str();
+    while( nRemaining > 0 ) {
+        nwritten = write( topoFd, currBufPtr, nRemaining );
+        nRemaining -= nwritten;
+        currBufPtr += nwritten;
+    }
+
+    // deliver the child rank
+    //write( topoFd, &childRank, sizeof(childRank) );
 }
 
 }  // namespace MRN

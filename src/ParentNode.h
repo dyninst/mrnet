@@ -17,6 +17,7 @@
 #include "xplat/Mutex.h"
 #include "Protocol.h"
 #include "PeerNode.h"
+#include "mrnet/new_topo.h"
 
 namespace MRN
 {
@@ -73,6 +74,9 @@ class ParentNode: public virtual Error,
     PeerNodePtr find_ChildNodeByRank( int irank );
 
     bool waitfor_SubTreeReports( void ) const;
+    #if NEW_TOPO ==1
+    bool waitfor_SubTreeInitDoneReports( void ) const;
+    #endif
     bool waitfor_DeleteSubTreeAcks( void ) const ;
     bool waitfor_TopologyReportAcks( void ) const ;
 
@@ -84,6 +88,7 @@ class ParentNode: public virtual Error,
 
     enum { ALLNODESREPORTED };
     mutable XPlat::Monitor subtreereport_sync;
+    mutable XPlat::Monitor initdonereport_sync;
     mutable unsigned int _num_children, _num_children_reported;
 
     virtual int proc_PacketFromChildren( PacketPtr ipacket );
