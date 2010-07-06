@@ -46,8 +46,8 @@ Stream_t* new_Stream_t(Network_t* net,
   new_stream->ds_filter = new_Filter_t(ids_filter_id);
   new_stream->perf_data = new_PerfDataMgr_t();
   new_stream->incoming_packet_buffer = new_empty_vector_t();
-  //new_stream->incoming_packet_buffer = NULL;
   new_stream->peers = new_empty_vector_t();
+  new_stream->_was_shutdown = 0;
 
   mrn_dbg(3, mrn_printf(FLF, stderr,
           "id:%d, us_filter:%d, sync_id:%d, ds_filter:%d\n", new_stream->id, new_stream->us_filter_id, new_stream->sync_filter_id, new_stream->ds_filter_id));
@@ -540,3 +540,7 @@ int Stream_remove_Node(Stream_t* stream, Rank irank)
     return 1;
 }
 
+char Stream_is_ShutDown(Stream_t* stream)
+{
+    return stream->_was_shutdown;
+}

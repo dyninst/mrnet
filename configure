@@ -3030,12 +3030,8 @@ echo "${ECHO_T}unknown" >&6
 
 if test $COMPILER_TYPE = "gnu" ; then
 
-    CXXFLAGS="$CXXFLAGS -Dcompiler_gnu -fno-default-inline"
-    CFLAGS="$CFLAGS -Dcompiler_gnu"
-    if test $BUILDSHARED = "yes" ; then
-        CXXFLAGS="$CXXFLAGS -fPIC"
-        CFLAGS="$CFLAGS -fPIC"
-    fi
+    CXXFLAGS="$CXXFLAGS -Dcompiler_gnu -fno-default-inline -fPIC"
+    CFLAGS="$CFLAGS -Dcompiler_gnu -fPIC"
 
     SOFLAGS="-fPIC -shared -rdynamic"
 
@@ -3138,12 +3134,8 @@ fi
 
 elif test $COMPILER_TYPE = "forte" ; then
 
-    CXXFLAGS="$CXXFLAGS -Dcompiler_sun"
-    CFLAGS="$CFLAGS -Dcompiler_sun"
-    if test $BUILDSHARED = "yes" ; then
-        CXXFLAGS="$CXXFLAGS -KPIC"
-        CFLAGS="$CFLAGS -KPIC"
-    fi
+    CXXFLAGS="$CXXFLAGS -Dcompiler_sun -KPIC"
+    CFLAGS="$CFLAGS -Dcompiler_sun -KPIC"
 
     SOFLAGS="-G"
 
@@ -3192,12 +3184,8 @@ fi
 
 elif test $COMPILER_TYPE = "pgi" ; then
 
-    CXXFLAGS="$CXXFLAGS -Dcompiler_pgi -D_GNU_SOURCE"
-    CFLAGS="$CFLAGS -Dcompiler_pgi -D_GNU_SOURCE"
-    if test $BUILDSHARED = "yes" ; then
-        CXXFLAGS="$CXXFLAGS -fPIC"
-        CFLAGS="$CFLAGS -fPIC"
-    fi
+    CXXFLAGS="$CXXFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
+    CFLAGS="$CFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
     if test "$debug_mode" = "yes" ; then
         CXXFLAGS="$CXXFLAGS -O0"
         CFLAGS="$CFLAGS -O0"
@@ -3305,12 +3293,8 @@ fi
 
 elif test $COMPILER_TYPE = "intel" ; then
 
-    CXXFLAGS="$CXXFLAGS -Dcompiler_intel"
-    CFLAGS="$CFLAGS -Dcompiler_intel"
-    if test $BUILDSHARED = "yes" ; then
-        CXXFLAGS="$CXXFLAGS -fPIC"
-        CFLAGS="$CFLAGS -fPIC"
-    fi
+    CXXFLAGS="$CXXFLAGS -Dcompiler_intel -fPIC"
+    CFLAGS="$CFLAGS -Dcompiler_intel -fPIC"
     if test "$debug_mode" = "yes" ; then
         CXXFLAGS="$CXXFLAGS -O0"
         CFLAGS="$CFLAGS -O0"

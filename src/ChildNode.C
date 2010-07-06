@@ -143,6 +143,11 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_delStream() failed\n" ));
                 retval = -1;
             }
+        } else if (_network->is_LocalNodeBackEnd()) {
+            if (_network->get_LocalBackEndNode()->proc_deleteStream(cur_packet) == -1) {
+                mrn_dbg(1, mrn_printf(FLF, stderr, "proc_deleteStream() failed\n"));
+                retval = -1;
+            }
         }
         break;
 

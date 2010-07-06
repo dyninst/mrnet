@@ -162,6 +162,33 @@ int BackEndNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
     return 0;
 }
 
+int BackEndNode::proc_deleteStream(PacketPtr ipacket) const
+{
+    int stream_id;
+    Stream * strm;
+
+    mrn_dbg_func_begin();
+
+    if (ipacket->ExtractArgList("%d", &stream_id) == -1) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+        return -1;
+    } 
+
+    strm = _network->get_Stream(stream_id);
+    if (strm == NULL) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", 
+                    stream_id));
+        return -1;
+    } 
+
+    strm->_was_shutdown = true;
+
+    mrn_dbg_func_end();
+
+    return 0;
+}
+
+
 int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
@@ -236,5 +263,6 @@ int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
     mrn_dbg_func_end();
     return retval;
 }
+
 
 } // namespace MRN

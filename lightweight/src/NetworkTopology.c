@@ -300,6 +300,7 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
         }
     }
     net_top->parent_nodes = eraseElement(net_top->parent_nodes, node_to_delete);
+    free(node_to_delete);
   }
 
   // remove me as my children's parent, and set children as oprhans
@@ -312,7 +313,6 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
   }
   
   free(inode);
-  free(node_to_delete);
 
   mrn_dbg_func_end();
   return true;

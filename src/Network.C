@@ -206,6 +206,8 @@ void Network::signal_ShutDown( void )
     _shutdown_sync.Lock();
     _shutdown_sync.SignalCondition( NETWORK_TERMINATION );
     _shutdown_sync.Unlock();
+
+    mrn_dbg_func_end();
 }
 
 const char* Network::FindCommnodePath( void )

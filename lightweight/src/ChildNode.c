@@ -155,7 +155,11 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
           break;
 
     case PROT_DEL_STREAM:
-          mrn_dbg(1, mrn_printf(FLF, stderr, "BE ignoring PROT_DEL_STREAM, as in standard MRNet\n"));
+          /* We're always a leaf node in the lightweight library, so don't have to do the InternalNode check */
+            if (BackEndNode_proc_deleteStream(be, packet) == -1) {
+                mrn_dbg(1, mrn_printf(FLF, stderr, "proc_deleteStream() failed\n"));
+                retval = -1;
+            }
           break;
 
     case PROT_NEW_FILTER:

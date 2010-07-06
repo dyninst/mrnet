@@ -74,6 +74,8 @@ class Stream {
     void print_PerformanceData( perfdata_metric_t metric, 
                                 perfdata_context_t context );
 
+    bool is_ShutDown(void);
+
     // END MRNET API
 
     Stream( Network * inetwork, int iid, Rank *ibackends, unsigned int inum_backends,
@@ -93,6 +95,7 @@ class Stream {
                                 int aggr_strm_id );
 
  private:
+    
     int send_aux( int tag, const char *format_str, PacketPtr &packet );
     void add_IncomingPacket( PacketPtr );
     PacketPtr get_IncomingPacket( void );
@@ -132,13 +135,16 @@ class Stream {
     PerfDataMgr * _perf_data;
     bool _us_closed;
     bool _ds_closed;
+    bool _was_shutdown;
     std::set< Rank > _peers; //peers in stream
     std::set< Rank > _closed_peers;
     mutable XPlat::Mutex _peers_sync;
 
     std::list< PacketPtr > _incoming_packet_buffer;
     mutable XPlat::Monitor _incoming_packet_buffer_sync;
+    mutable XPlat::Monitor _shutdown_sync;
     enum {PACKET_BUFFER_NONEMPTY};
+
 };
 
 

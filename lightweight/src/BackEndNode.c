@@ -217,6 +217,30 @@ int BackEndNode_proc_DownstreamFilterParams(BackEndNode_t* be, Packet_t* ipacket
   
 }
 
+int BackEndNode_proc_deleteStream(BackEndNode_t* be, Packet_t* ipacket)
+{
+    int stream_id;
+    Stream_t * strm;
+    
+    mrn_dbg_func_begin();
+
+    if (Packet_ExtractArgList(ipacket, "%d", &stream_id) == -1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Packet_ExtractArgList() failed\n"));
+        return -1;
+    }
+    
+    strm = Network_get_Stream(be->network, stream_id);
+    if (strm == NULL) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", stream_id));
+        return -1;
+    }
+
+    strm->_was_shutdown = 1;
+
+    mrn_dbg_func_end();
+    return 0;
+}
+
 int BackEndNode_proc_newFilter(BackEndNode_t* be, Packet_t* ipacket)
 {
   int retval = 0;

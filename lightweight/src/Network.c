@@ -654,4 +654,6 @@ void Network_waitfor_ShutDown(Network_t* net)
 
     } while(1);
 
+    free(stream);
+    free(p);
 }
