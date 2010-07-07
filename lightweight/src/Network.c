@@ -46,6 +46,14 @@ void init_local(void)
 
 }
 
+void cleanup_local(void)
+{
+#if defined(os_windows)
+    // cleanup Winsock
+    WSACleanup();
+#endif
+}
+
 Network_t* new_Network_t()
 {
     Network_t* net = (Network_t*)malloc(sizeof(Network_t));
@@ -63,6 +71,24 @@ Network_t* new_Network_t()
     Network_set_OutputLevelFromEnvironment();
 
     return net;
+}
+
+void delete_Network_t(Network_t * net)
+{
+    int i;
+    Stream_t * cur_stream;
+
+    cleanup_local();
+
+    delete_vector_t(net->children);
+
+    for (i = 0; i < net->streams->size; i++) {
+        cur_stream = (Stream_t*)get_val(net->streams, net->streams->keys[i]);
+        delete_Stream_t(cur_stream);
+    }
+
+    delete_map_t(net->streams);
+    free(net);
 }
 
 char* Network_get_LocalHostName(Network_t* net) {
@@ -269,25 +295,22 @@ int Network_recv(Network_t* net, int *otag, Packet_t* opacket, Stream_t** ostrea
         return 1;
     }
 
-    // always enter this case because we're always blocking
-    else if (true) {
-        // No packets are already in the stream
-        // check whether there is data waiting to be read on our socket
-        mrn_dbg(5, mrn_printf(FLF, stderr, "No packets waiting in stream, checking for data on socket\n"));
-        retval = Network_recv_2(net);
+    // No packets are already in the stream
+    // check whether there is data waiting to be read on our socket
+    mrn_dbg(5, mrn_printf(FLF, stderr, "No packets waiting in stream, checking for data on socket\n"));
+    retval = Network_recv_2(net);
 
-        checked_network = true;
+    checked_network = true;
 
-        if (retval == -1) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Network_recv() failed\n"));
-            return -1;
-        }
-        else if (retval == 1) {
-            // go back if we found a packet
-            mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv() found packet!\n"));
-            goto get_packet_from_stream_label;
-        } 
+    if (retval == -1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Network_recv() failed\n"));
+        return -1;
     }
+    else if (retval == 1) {
+        // go back if we found a packet
+        mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv() found packet!\n"));
+        goto get_packet_from_stream_label;
+    } 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv() No packets found\n"));
 
     return 0;
@@ -419,6 +442,21 @@ Stream_t* Network_get_Stream(Network_t* net, unsigned int iid)
     if (ret == NULL)
         mrn_dbg(5, mrn_printf(FLF, stderr, "ret == NULL\n"));
     return ret;
+}
+
+void Network_delete_Stream(Network_t * net, unsigned int iid)
+{
+    Stream_t* ret = (Stream_t*)get_val(net->streams, iid);
+
+    /* if we're deleting the iter, set to the next element */
+    if (ret == (Stream_t*)get_val(net->streams, net->streams->keys[net->stream_iter])) {
+        net->stream_iter++;
+        // wrap around to the beginning of the map, if necessary
+        if (net->stream_iter == net->streams->size)
+            net->stream_iter = 0;
+    }   
+
+    net->streams = erase(net->streams, iid);
 }
 
 int Network_send_PacketToParent(Network_t* net, Packet_t* ipacket)
@@ -634,8 +672,7 @@ char Network_is_ShutDown(Network_t* net)
 
 void Network_waitfor_ShutDown(Network_t* net)
 {
-    Stream_t* stream = (Stream_t*) malloc(sizeof(Stream_t));
-    assert(stream);
+    Stream_t* stream;
     Packet_t* p = (Packet_t*) malloc(sizeof(Packet_t));
     assert(p);
     int tag = 0;
@@ -654,6 +691,6 @@ void Network_waitfor_ShutDown(Network_t* net)
 
     } while(1);
 
-    free(stream);
     free(p);
+
 }

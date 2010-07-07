@@ -18,7 +18,9 @@ struct Filter_t {
 
 typedef struct Filter_t Filter_t;
 
- Filter_t* new_Filter_t(unsigned short iid);
+Filter_t* new_Filter_t(unsigned short iid);
+
+void delete_Filter_t(Filter_t* filter);
 
 int Filter_push_Packets( Filter_t* filter, 
                          Packet_t* ipacket, 

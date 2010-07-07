@@ -37,8 +37,7 @@ int main(int argc, char **argv) {
 
     int32_t recv_int=0;
     int tag;   
-    Stream_t* stream = (Stream_t*)malloc(sizeof(Stream_t));
-    assert(stream);
+    Stream_t* stream;
     char* fmt_str = "%d";
     
     do {
@@ -81,9 +80,14 @@ int main(int argc, char **argv) {
 
     } while ( tag != PROT_EXIT );
     
-    // wait for final teardown packet from FE; this will cause
-    // us to exit
-    Network_recv(net, &tag, p, &stream);
+
+    if (p != NULL)
+        free(p);
+    
+    // wait for final teardown packet from FE
+    Network_waitfor_ShutDown(net);
+    if (net != NULL )
+        delete_Network_t(net);
 
     return 0;
 }

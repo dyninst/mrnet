@@ -18,7 +18,7 @@
 
 int main( int argc, char* argv[] )
 {
-    Stream_t* stream = (Stream_t*)malloc(sizeof(Stream_t));
+    Stream_t* stream;
     int tag;
     Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
     int bCont;
@@ -29,6 +29,8 @@ int main( int argc, char* argv[] )
     int ival;
     int i;
 
+    assert(pkt);
+    
     if( getenv( "MRN_DEBUG_BE" ) != NULL ) {
 #ifndef os_windows
         fprintf( stderr, "BE: spinning for debugger, pid=%d\n", getpid() );
@@ -109,16 +111,13 @@ int main( int argc, char* argv[] )
     }
 
     if( pkt != NULL )
-        free( pkt );
-
-    if( stream != NULL )
-        free( stream );
+        free(pkt);    
 
     // wait for final teardown packet from FE; this will cause
     // us to exit
     Network_waitfor_ShutDown(net);
     if( net != NULL )
-        free( net );
+        delete_Network_t(net);
 
     return 0;
 }

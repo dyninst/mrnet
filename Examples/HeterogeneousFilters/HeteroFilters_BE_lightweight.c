@@ -11,18 +11,19 @@
 int main(int argc, char **argv)
 {
     int tag = 0;
-    Stream_t * stream = (Stream_t*)malloc(sizeof(Stream_t));
-    assert(stream);
+    Stream_t * stream;
     Packet_t* p = (Packet_t*)malloc(sizeof(Packet_t));
-    assert(p);
+    Network_t * net;
 
     int blocksz = 0, max_blocks = 0, num_blocks = 0;
     char *file = NULL, *contents = NULL;
     struct stat s;
     size_t length = 0;
     int mapped = 0;
+    
+    assert(p);
 
-    Network_t * net = Network_CreateNetworkBE( argc, argv );
+    net = Network_CreateNetworkBE( argc, argv );
     assert(net);
 
     do {
@@ -104,10 +105,14 @@ int main(int argc, char **argv)
         fflush( stderr );
 
     } while ( tag != PROT_EXIT );
+       
+    if ( p != NULL)
+        free(p);
 
-    // wait for final teardown packet from FE; this will cause
-    // us to exit
-    Network_recv(net,&tag, p, &stream);
-        
+    // wait for final teardown packet from FE
+    Network_waitfor_ShutDown(net);
+    if (net != NULL)
+        delete_Network_t(net);
+
     return 0;
 }

@@ -36,6 +36,8 @@ typedef struct {
 
 Network_t* new_Network_t();
 
+void delete_Network_t( Network_t * net);
+
 char* Network_get_LocalHostName( Network_t* net );
 
 Port Network_get_LocalPort( Network_t* net );

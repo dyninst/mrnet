@@ -9,19 +9,24 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 #include "mrnet_lightweight/MRNet.h"
 #include "test_HeteroFilters_lightweight.h"
 
 int main(int argc, char **argv)
 {
-    Stream_t * stream = (Stream_t*)malloc(sizeof(Stream_t));
+    Stream_t * stream;
     Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
+    Network_t * net;
     int tag = 0 ;
     
     char * message;
+    Rank node_rank;
 
-    Network_t * net = Network_CreateNetworkBE( argc, argv );
-    Rank node_rank = net->local_rank;
+    assert(pkt);
+    
+    net = Network_CreateNetworkBE( argc, argv );
+    node_rank = net->local_rank;
 
     do{
         if( Network_recv(net, &tag, pkt, &stream) != 1 ){
@@ -54,16 +59,13 @@ int main(int argc, char **argv)
     } while( tag != PROT_EXIT );
     
     if( pkt != NULL )
-        free( pkt );
-
-    if( stream != NULL )
-        free( stream );
+        free(pkt);
 
     // wait for final teardown packet from FE; this will cause
     // us to exit
     Network_waitfor_ShutDown(net);
     if( net != NULL )
-        free( net );
-    
+        delete_Network_t(net);
+
     return 0;
 }

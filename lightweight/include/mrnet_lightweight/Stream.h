@@ -41,6 +41,8 @@ Stream_t* new_Stream_t(Network_t* net,
                       int isync_filter_id,
                       int ids_filter_id);
 
+void delete_Stream_t(Stream_t * stream);
+
 unsigned int Stream_get_Id(Stream_t* stream);
 
 int Stream_find_FilterAssignment(char* assignments, 

@@ -57,6 +57,19 @@ Stream_t* new_Stream_t(Network_t* net,
   return new_stream;
 }
 
+void delete_Stream_t(Stream_t * stream)
+{
+    /* clean up data structures */
+    delete_vector_t(stream->incoming_packet_buffer);
+    delete_vector_t(stream->peers);
+
+    /* remove the stream from Network streams map */
+    Network_delete_Stream(stream->network, stream->id);
+
+    /* free the stream */
+    free(stream);
+}
+
 unsigned int Stream_get_Id(Stream_t* stream) {
     return stream->id;
 }
@@ -164,6 +177,9 @@ int Stream_push_Packet(Stream_t* stream,
     }
 
     // run transformation filter
+    // NOTE: Currently, we do not support filtering at lightweight
+    // backend nodes. Thus, nothing happens during this process
+    // except *ipacket = *opacket;
     if (Filter_push_Packets(trans_filter, 
                             ipacket, 
                             opacket, 
@@ -379,6 +395,8 @@ int Stream_flush(Stream_t* stream)
 
 void Stream_set_FilterParams(Stream_t* stream, int upstream, Packet_t* iparams)
 {
+    /* NOTE: Currently, we do not support filtering at lightweight
+     * backend nodes, so this has no effect. */
     if (upstream) {
         Filter_set_FilterParams(stream->us_filter, iparams);
     }
