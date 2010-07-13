@@ -30,6 +30,9 @@ BackEndNode::BackEndNode( Network * inetwork,
     _network->set_BackEndNode( this );
     _network->set_NetworkTopology( new NetworkTopology( inetwork, _hostname, _port, _rank, true ) );
 
+    _network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_NULL );
+
+
     //establish data connection w/ parent
     if( init_newChildDataConnection( _network->get_ParentNode() ) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
@@ -43,7 +46,37 @@ BackEndNode::BackEndNode( Network * inetwork,
       error( ERR_INTERNAL, _rank, "start_EventDetector failed\n" );
       return;
     }
+    
+    NetworkTopology* nt=_network->get_NetworkTopology();
+    if( nt!=NULL )
+    {
+      if( !(nt->isInTopology(imyhostname,_port,imyrank)) ) //if backend already not in the topology. this is false in back end attach cases
+      {
+        
+	mrn_dbg( 1, mrn_printf(FLF, stderr,
+               " Backend not already in the topology\n" ));
 
+        //new topo propagation code - create a new update packet
+        Stream *s = _network->get_Stream(1); // getting handle for stream id 1 which was reserved for topology propagation
+        int type=0;
+        char *host_arr=strdup(imyhostname.c_str());
+        uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
+        *send_iprank=iprank;
+        uint32_t* send_myrank = (uint32_t*) malloc(sizeof(uint32_t));
+        *send_myrank=imyrank;
+        uint16_t* send_port = (uint16_t*)malloc(sizeof(uint16_t));
+        *send_port = _port;
+
+        s->send(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", &type, 1, send_iprank, 1, send_myrank, 1, &host_arr,1, send_port, 1);
+	free(host_arr);
+      }	
+      else
+          mrn_dbg( 1, mrn_printf(FLF, stderr,
+	                                 " Backend already in the topology\n" ));
+
+    }  
+
+    /*
     //send new subtree report
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Sending new child report.\n" ));
     if( send_NewSubTreeReport( ) == -1 ) {
@@ -52,6 +85,14 @@ BackEndNode::BackEndNode( Network * inetwork,
     }
     mrn_dbg( 5, mrn_printf(FLF, stderr,
                            "send_newSubTreeReport() succeded!\n" ));
+
+   */
+
+   if( send_SubTreeInitDoneReport( ) == -1 ) {
+           mrn_dbg( 1, mrn_printf(FLF, stderr,
+	                                  "send_newSubTreeReport() failed\n" ));
+   }
+
 }
 
 BackEndNode::~BackEndNode(void)
@@ -203,6 +244,14 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 
     // processes will be exiting -- disable failure recovery
     _network->disable_FailureRecovery();
+
+    // send ack to parent
+    if( !_network->get_LocalChildNode()->ack_DeleteSubTree() ) {
+      mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
+    }
+   
+    //sleep to let message be sent before tearing down network
+    sleep(1);
 
     // kill threads, topology, and events
     _network->shutdown_Network();

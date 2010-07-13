@@ -119,6 +119,23 @@ namespace MRN
         PERFDATA_MAX_CTX = 5
     } perfdata_context_t;
 
+    typedef enum update_type {
+        NEW_RANK = 0,
+        REMOVE_RANK =1 ,
+	CHANGE_PARENT =2 ,
+	CHANGE_PORT = 3
+    } update_type_t; 	
+
+    typedef struct  
+    {
+        int type;
+        uint32_t  prank;
+	uint32_t  crank;
+	char* chost;
+	uint16_t  cport;
+    }update_contents_t;	
+
+
 } /* namespace MRN */
 
 #endif /* !defined(Types_h) */

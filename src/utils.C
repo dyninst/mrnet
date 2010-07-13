@@ -356,7 +356,7 @@ int bindPort( int *sock_in, Port *port_in )
     return 0;
 }
 
-int getSocketConnection( int bound_socket )
+int getSocketConnection( int bound_socket , int& inout_errno)
 {
     int connected_socket;
 
@@ -366,10 +366,14 @@ int getSocketConnection( int bound_socket )
     do{
         connected_socket = accept( bound_socket, NULL, NULL );
         if( connected_socket == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "%s", "" ) );
-            perror( "accept()" );
+	    inout_errno=errno;
+	    if( (inout_errno!=EAGAIN) && (inout_errno!=EWOULDBLOCK) )
+	    {
+              mrn_dbg( 1, mrn_printf(FLF, stderr, "%s", "" ) );
+              perror( "accept()" );
+	    }  
 
-            if ( errno != EINTR ) {
+            if ( inout_errno != EINTR ) {
                 return -1;
             }
         }

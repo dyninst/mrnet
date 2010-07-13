@@ -122,7 +122,6 @@ class Network: public Error {
 
     const std::set< PeerNodePtr > get_ChildPeers() const;
     PeerNodePtr get_PeerNode( Rank );
-
     bool node_Failed( Rank );
 
 protected:
@@ -186,6 +185,9 @@ protected:
     static const char* FindCommnodePath( void );
 
     void shutdown_Network( void );
+    bool reset_Topology(std::string& itopology);
+    PeerNodePtr _parent;
+
 
  private:
     friend class Stream;
@@ -198,6 +200,7 @@ protected:
     friend class Router;
     friend class PeerNode;
     friend class EventDetector;
+    friend class RSHParentNode;
     
     //NEW_TOPO propagation code
     //The topology is propagated from parent to child when child connects to parent not when child first
@@ -267,7 +270,7 @@ protected:
     bool is_LocalNodeThreaded( void ) const ;
     int send_FilterStatesToParent( void );
     bool update( void );
-    bool reset_Topology( std::string& itopology );
+    //bool reset_Topology( std::string& itopology );
     bool add_SubGraph( Rank iroot_rank, SerialGraph& sg  );
     bool remove_Node( Rank ifailed_rank, bool iupdate=true );
     bool change_Parent( Rank ichild_rank, Rank inew_parent_rank );
@@ -282,6 +285,7 @@ protected:
     void disable_FailureRecovery( void );
     void enable_FailureRecovery( void );
     bool recover_FromFailures( void ) const ;
+    void send_BufferedTopoUpdates();
 
     void collect_PerfData( void );
 
@@ -297,7 +301,7 @@ protected:
     InternalNode* _local_internal_node;
     TimeKeeper* _local_time_keeper;
 
-    PeerNodePtr _parent;
+    //PeerNodePtr _parent;
     std::set< PeerNodePtr > _children;
     std::map< unsigned int, Stream* > _streams;
     std::map< Rank, CommunicationNode* > _end_points;

@@ -25,12 +25,14 @@ RSHInternalNode::RSHInternalNode( Network * inetwork,
     RSHChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank )
 {
     //request subtree information
+    
     if( request_SubTreeInfo() == -1 ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "request_SubTreeInfo() failed\n" ));
         ParentNode::error( ERR_INTERNAL, ParentNode::_rank, "request_SubTreeInfofailed\n" );
         ChildNode::error( ERR_INTERNAL, ParentNode::_rank, "request_SubTreeInfofailed\n" );
         return;
     }
+    
 }
 
 
@@ -54,14 +56,14 @@ RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
             retval = -1;
         }
         mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
-        if( ! waitfor_SubTreeReports() ) {
+        if( ! waitfor_SubTreeInitDoneReports() ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_SubTreeReports() failed\n" ));
             retval = -1;
         }
         mrn_dbg(5, mrn_printf(FLF, stderr, "Subtrees reported\n" ));
 
         //must send reports upwards
-        if( send_NewSubTreeReport( ) == -1 ) {
+        if( send_SubTreeInitDoneReport( ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                         "send_newSubTreeReport() failed\n" ));
             retval = -1;

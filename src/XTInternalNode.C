@@ -45,14 +45,14 @@ XTInternalNode::PropagateSubtreeReports( void )
 {
     int retval = 0;
 
-    if( ! waitfor_SubTreeReports() ) {
+    if( ! waitfor_SubTreeInitDoneReports() ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_SubTreeReports() failed\n" ));
         retval = -1;
     }
     mrn_dbg(5, mrn_printf(FLF, stderr, "Subtrees reported\n" ));
 
     //must send reports upwards
-    if( send_NewSubTreeReport( ) == -1 ) {
+    if( send_SubTreeInitDoneReport( ) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                     "send_newSubTreeReport() failed\n" ));
         retval = -1;

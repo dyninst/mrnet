@@ -337,6 +337,10 @@ void Network::init_FrontEnd( const char * itopology,
             error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
     // end of NEW_TOPO propagation code
 
+    NetworkTopology* nt = get_NetworkTopology();
+    std::vector<update_contents_t* > vuc = nt->get_updates_buffer();
+    send_BufferedTopoUpdates( vuc ); 
+
     //old topo propagation code
     //if( ! get_LocalFrontEndNode()->waitfor_SubTreeReports() )
     //    error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
@@ -358,6 +362,35 @@ void Network::init_FrontEnd( const char * itopology,
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating bcast communicator ... \n" ));
     update_BcastCommunicator( );
 }
+
+void Network::send_BufferedTopoUpdates( std::vector<update_contents_t* > vuc )
+{
+  std::vector<update_contents_t* > it;
+  update_type_t type = CHANGE_PORT ;
+  char *host_arr = NULL;
+  uint32_t* prank = NULL;
+  uint32_t* crank = (uint32_t*) malloc( sizeof(uint32_t) * vuc.size() );
+  uint16_t* port = (uint16_t*) malloc( sizeof(uint16_t) * vuc.size() );
+  int i= 0;
+
+  for( it = vuc.begin() ; it!= vuc.end() ; it++)
+  {
+     if( (*it)->type == 2)
+     {
+       crank[i] = (*it)->crank;
+       cport[i] = (*it)->cport;
+       i++;
+     }
+  }   
+  
+  Stream *s = _network->get_Stream(1); // getting handle for stream id 1 which was reserved for topology propagation
+
+  //broadcast of all topology updates
+  //stream end points of stream id=1 contains all the backend end points. 
+  s->send(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", &type, 1, prank, 1, crank, 1, &host_arr,1, port, 1);
+
+}
+
 
 void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
                            const char *imyhostname, Rank imyrank )

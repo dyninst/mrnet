@@ -217,7 +217,9 @@ void waitFor_FailureRecoveryReports( int isock_fd )
 
         //Activity on our local listening sock, accept connection
         mrn_dbg( 5, mrn_printf(FLF, stderr, "Activity on listening socket ...\n"));
-        int connected_sock = getSocketConnection( isock_fd );
+        int inout_errno;
+	int connected_sock = getSocketConnection( isock_fd , inout_errno);
+	
         if( connected_sock == -1 ){
             mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
             perror("getSocketConnection()");
@@ -294,8 +296,7 @@ NetworkTopology::Node * find_NodeToKill( NetworkTopology * itopology )
 {
 
     itopology->print( NULL );
-    set<NetworkTopology::Node*> parent_nodes;
-	itopology->get_ParentNodes(parent_nodes);
+    set<NetworkTopology::Node*> parent_nodes = itopology->get_ParentNodes(parent_nodes);
 
     //for now, pick non-root parent node w/ most children
     set<NetworkTopology::Node*> ::iterator iter;

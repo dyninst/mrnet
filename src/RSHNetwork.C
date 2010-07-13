@@ -160,6 +160,14 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
     // so that we don't build a packet with a pointer into a temporary
     std::string sg = _parsed_graph->get_SerializedGraphString();
 
+    reset_Topology(sg);
+    NetworkTopology* nt=get_NetworkTopology();
+    if(nt!=NULL)
+    {
+       NetworkTopology::Node* localnode = nt->_nodes[get_LocalRank()];
+       localnode->set_Port(get_LocalPort() );
+    }   
+
     PacketPtr packet( new Packet( 0, PROT_NEW_SUBTREE, "%s%s%s%as", sg.c_str( ),
                                   mrn_commnode_path, ibackend_exe, ibackend_args,
                                   backend_argc ) );

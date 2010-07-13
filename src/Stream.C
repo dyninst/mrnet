@@ -58,6 +58,8 @@ Stream::Stream( Network * inetwork,
     _incoming_packet_buffer_sync.RegisterCondition( PACKET_BUFFER_NONEMPTY );
 
     //parent nodes set up relevant downstream nodes 
+    if(ibackends != NULL)
+    {
     if( _network->is_LocalNodeParent() ) {
 
         _end_points.insert( ibackends, ibackends + inum_backends );
@@ -75,7 +77,7 @@ Stream::Stream( Network * inetwork,
             }
         }
     }
-   
+    }//if backends not null 
     mrn_dbg_func_end();
 }
 
@@ -91,6 +93,11 @@ Stream::~Stream()
 
     _network->delete_Stream( _id );
 }
+
+void Stream::add_Stream_EndPoint(Rank irank)
+{
+  _end_points.insert(irank);
+}  
 
 int Stream::send( int itag, const char *iformat_str, ... )
 {

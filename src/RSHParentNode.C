@@ -43,7 +43,8 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
 
     mrn_dbg_func_begin();
 
-    _initial_subtree_packet = ipacket;
+    // _initial_subtree_packet = ipacket;
+
     if( ipacket->ExtractArgList( "%s%s%s%as", &byte_array, &commnode_path,
                                &backend_exe, &backend_argv, &backend_argc ) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
@@ -51,12 +52,32 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
     }
 
     SerialGraph sg( byte_array );
+    
+    //change the bytearray extracted from the packet - the local port should be changed to actual dynamic local port
+    //assign the changed byte array to initial subtree packet
+    //assign the changed byte array to local network Topology
+    
+    sg.set_Port(_network->get_LocalHostName(), _network->get_LocalPort(), _network->get_LocalRank() );
+    std::string new_topo = sg.get_ByteArray();
+
+    _network->reset_Topology( new_topo );
+
+    PacketPtr packet( new Packet( 0, PROT_NEW_SUBTREE, "%s%s%s%as", new_topo.c_str( ),
+                                      commnode_path, backend_exe, backend_argv, backend_argc ) );  
+
+    _initial_subtree_packet = packet;
+
+    Stream* topo_stream= _network->get_Stream(1);
+    topo_stream->send( PROT_TOPO_UPDATE ,"%ad %aud %aud %as %auhd", 
+                       1, 1, NULL , 1, _network->get_LocalRank() , 1 , NULL , 1, _network->get_LocalPort(), 1 );
+
+
     std::string backend_exe_str( ( backend_exe == NULL ) ? "" : backend_exe );
 
     SerialGraph *cur_sg, *my_sg;
 
     //use "UnknownPort" in lookup since this is what serialgraph was created w/
-    my_sg = sg.get_MySubTree( _hostname, UnknownPort, _rank );
+    my_sg = sg.get_MySubTree( _hostname, _network->get_LocalPort(), _rank );
     if( my_sg == NULL ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "get_MySubTree() failed\n" ));
         return -1;

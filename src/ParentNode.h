@@ -47,6 +47,7 @@ class ParentNode: public virtual Error,
 
     virtual int proc_NewParentReportFromParent( PacketPtr ipacket ) const=0;
 
+    int proc_SubTreeInitDoneReport ( PacketPtr ipacket ) const;
     int proc_newSubTreeReport( PacketPtr ipacket ) const;
     int proc_DeleteSubTree( PacketPtr ipacket ) const;
     int proc_DeleteSubTreeAck( PacketPtr ipacket ) const;

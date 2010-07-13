@@ -260,7 +260,8 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
                                   "failed to create topology listening socket\n" ));
             exit( 1 );
         }
-        topoFd = getSocketConnection( listeningTopoSocket );
+	int inout_errno;
+        topoFd = getSocketConnection( listeningTopoSocket, inout_errno );
     }
     else {
         // we are not the first process on this node
@@ -381,6 +382,23 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
                               "failed to create listening data socket\n" ));
         exit( 1 );
     }
+    
+    int flags;
+    if( (flags=fcntl(listeningDataSocket,F_GETFL,0))<0)
+    {
+        mrn_dbg ( 1, mrn_printf(FLF,stderr, 
+                  "failed to get flags on the listening data socket\n"));
+        exit(1);
+    }  
+    
+    
+    if(fcntl(listeningDataSocket,F_SETFL,flags|O_NONBLOCK) < 0)
+    {
+        mrn_dbg(1, mrn_printf(FLF, stderr,
+                "failed to set non blocking flags on listening data socket \n" ));
+        exit( 1 );
+    }
+
     Network::init_InternalNode( my_tpos->parentHostname.c_str(),
                                 my_tpos->parentPort,
                                 my_tpos->parentRank,
@@ -1022,7 +1040,9 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology )
     mrn_dbg(5, mrn_printf(FLF, stderr, "expecting %u children\n", 
                           fe->get_numChildrenExpected() ));
 
-    // tell our children about the topology
+    // tell our children about the topology and update front end topology
+    std::string reset_topo=sgnew;
+    reset_Topology(reset_topo);
     SerialGraph* sgo = new SerialGraph( sgnew );
     assert( sgo != NULL );
     free( sgnew );
@@ -1044,6 +1064,21 @@ XTNetwork::CreateFrontEndNode( Network* n, std::string ihost, Rank irank )
                               "failed to create listening data socket\n" ));
         return NULL;
     }
+    int flags;
+    if((flags=fcntl(listeningSocket,F_GETFL,0))<0)
+    {
+           mrn_dbg(1, mrn_printf(FLF, stderr,
+                   "failed to get flags on the listening data socket\n" ));
+           exit( 1 );
+    }
+
+    if(fcntl(listeningSocket,F_SETFL,flags|O_NONBLOCK) < 0)
+    {
+           mrn_dbg(1, mrn_printf(FLF, stderr,
+                   "failed to set non blocking flags on listening data socket \n" ));
+           exit( 1 );
+    }
+
     return new XTFrontEndNode( n, ihost, irank, 
                                listeningSocket, listeningPort );
 }

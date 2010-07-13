@@ -55,7 +55,8 @@ ParentNode::ParentNode( Network* inetwork,
     }
 
     subtreereport_sync.RegisterCondition( ALLNODESREPORTED );
-    
+    initdonereport_sync.RegisterCondition( ALLNODESREPORTED );
+
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Leaving ParentNode()\n" ));
 }
 
@@ -101,6 +102,16 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
             retval = -1;
         }
         break;
+    
+
+
+     case PROT_SUBTREE_INITDONE_RPT:
+        if( proc_SubTreeInitDoneReport( cur_packet ) == -1 ) {
+	    mrn_dbg( 1, mrn_printf(FLF, stderr,
+	            "proc_SubTreeInitDoneReport() failed\n" ));
+	    retval = -1;
+	}
+	break;
     case PROT_SHUTDOWN_ACK:
         if( proc_DeleteSubTreeAck( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
@@ -338,6 +349,39 @@ int ParentNode::proc_TopologyReport( PacketPtr ipacket ) const
     mrn_dbg_func_end();
     return 0;
 }
+
+int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ipacket ) const
+{
+    mrn_dbg_func_begin();
+
+    initdonereport_sync.Lock( );
+
+    if( _num_children_reported == _num_children ) {
+        
+	initdonereport_sync.Unlock( );
+        if( _network->is_LocalNodeChild() ) {
+            _network->get_LocalChildNode()->send_SubTreeInitDoneReport();
+        }
+    }
+    else {
+        _num_children_reported++;
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "%d of %d descendants reported\n",
+                               _num_children_reported, _num_children ));
+        if( _num_children_reported == _num_children ) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "Signalling condition\n"
+                               ));
+            initdonereport_sync.SignalCondition( ALLNODESREPORTED );
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "Signalling condition done \n"
+                               ));
+
+        }
+        initdonereport_sync.Unlock( );
+    }
+
+    mrn_dbg_func_end();
+    return 0;
+}
+
 
 int ParentNode::proc_newSubTreeReport( PacketPtr ipacket ) const
 {
@@ -647,6 +691,17 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                                                      is_internal );
 
     child_node->set_DataSocketFd( isock );
+    
+    //new topo prop code
+    NetworkTopology* nt=_global_network->get_NetworkTopology();
+    char * topology = nt->get_TopologyStringPtr();
+    SerialGraph* init_topo= new SerialGraph( topology);
+    _global_network->writeTopology(isock, init_topo);
+    free( topology );
+
+    //add child to peers of the topo stream when a child connects to parent
+    Stream* s = _global_network->get_Stream(1);
+    s->_peers.insert( child_node->get_Rank() );
 
     SerialGraph sg( topo_ptr );
     if( !_network->add_SubGraph( _network->get_LocalRank(), sg ) ){
