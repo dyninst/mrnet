@@ -174,6 +174,8 @@ int main(int argc, char **argv)
         }
         delete ctl_stream;
         if( tag == PROT_EXIT ) {
+            net->close_EventNotificationFd( DATA_EVENT );
+
             // The Network destructor will cause all internal and leaf tree nodes to exit
             delete net;
         }

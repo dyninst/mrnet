@@ -65,8 +65,10 @@ int main(int argc, char **argv)
 
     } while ( tag != PROT_EXIT );
 
-    if( stream != NULL )
-        delete stream;
+    while( ! stream->is_ShutDown() )
+        sleep(1);
+
+    delete stream;
 
     // FE delete of the net will cause us to exit, wait for it
     net->waitfor_ShutDown();

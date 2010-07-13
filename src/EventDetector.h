@@ -9,6 +9,8 @@
 #ifndef os_windows
 #include <poll.h>
 #endif //os_windows
+
+#include <map>
 #include <set>
 
 #include "PeerNode.h"
@@ -31,31 +33,41 @@ namespace MRN {
 class EventDetector {
  
  public:
-    static bool start( Network *inetwork );
-    static bool stop( void );
+
+    EventDetector( Network* inetwork )
+        : _network(inetwork), _thread_id(0), _pollfds(NULL), 
+          _num_pollfds(0), _max_pollfds(0), _max_fd(-1)
+    { }
+
+    static bool start( Network* inetwork );
+    bool stop( void );
 
  private:
 
-    static void * main( void * iarg );
+    friend class Network;
 
-    static int init_NewChildFDConnection( Network * inetwork,
-                                          PeerNodePtr iparent_node );
+    static void * main( void* iarg );
 
-    static int recover_FromChildFailure( Network *inetwork, Rank ifailed_rank );
-    static int recover_FromParentFailure( Network *inetwork );
-    static int recover_off_FromParentFailure( Network *inetwork );
+    int proc_NewChildFDConnection( PacketPtr ipacket, int isock );
+    int init_NewChildFDConnection( PeerNodePtr iparent_node );
+
+    int recover_FromChildFailure( Rank ifailed_rank );
+    int recover_FromParentFailure( );
+    int recover_off_FromParentFailure( );
     
-    static bool add_FD( int ifd );
-    static bool remove_FD( int ifd );
-    static int eventWait( std::set< int >& event_fds, int timeout,
-                          bool use_poll/*=true*/ );
+    bool add_FD( int ifd );
+    bool remove_FD( int ifd );
+    int eventWait( std::set< int >& event_fds, int timeout,
+                   bool use_poll/*=true*/ );
 
-    static void handle_Timeout( TimeKeeper*, int );
+    void handle_Timeout( TimeKeeper*, int );
 
-    static long _thread_id;
-    static struct pollfd* _pollfds;
-    static unsigned int _num_pollfds, _max_pollfds;
-    static int _max_fd;
+    Network* _network;
+    long _thread_id;
+    struct pollfd* _pollfds;
+    unsigned int _num_pollfds, _max_pollfds;
+    int _max_fd;
+    std::map< int, Rank > childRankByEventDetectionSocket;
 };
 
 } // namespace MRN

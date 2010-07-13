@@ -1188,12 +1188,25 @@ unsigned int TopologyLocalInfo::get_RootDistance() const
     return 0;
 }
 
-unsigned int TopologyLocalInfo::get_MaxChildDistance() const
+unsigned int TopologyLocalInfo::get_MaxLeafDistance() const
 {
     if( local_node != NULL )
         return local_node->find_SubTreeHeight();
 
     return 0;
+}
+
+const NetworkTopology* TopologyLocalInfo::get_Topology() const
+{
+    return topol;
+}
+
+const Network* TopologyLocalInfo::get_Network() const
+{
+    if( topol != NULL ) {
+        return topol->_network;
+    }
+    return NULL;
 }
 
 } // namespace MRN

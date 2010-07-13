@@ -890,10 +890,11 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
                        vector< PacketPtr >& opackets,
                        vector< PacketPtr >& /* opackets_reverse */,
                        void ** /* client data */, PacketPtr& params,
-                       const TopologyLocalInfo& )
+                       const TopologyLocalInfo& info)
 {
     // fast path when no aggregation necessary
-    bool is_BE = _global_network->is_LocalNodeBackEnd();
+    const Network* net = info.get_Network();
+    bool is_BE = net->is_LocalNodeBackEnd();
     if( (ipackets.size() == 1) && is_BE ) {
         opackets.push_back( ipackets[0] );
         return;
@@ -906,7 +907,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
         return;
     }
     params->unpack( "%d %d %d %d", &metric, &context, &aggr_id, &strm_id );
-    Stream* strm = _global_network->get_Stream( strm_id );
+    Stream* strm = net->get_Stream( strm_id );
     assert(strm);
 
     // determine type of data
@@ -1231,14 +1232,16 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
                          vector< PacketPtr >& opackets,
                          vector< PacketPtr >& /* opackets_reverse */,
                          void **local_storage, PacketPtr&,
-                         const TopologyLocalInfo& )
+                         const TopologyLocalInfo& info )
 {
     mrn_dbg_func_begin();
     map < Rank, vector< PacketPtr >* >::iterator map_iter, del_iter;
     wfa_state * state;
     
+    Network* net = const_cast< Network* >( info.get_Network() );
+
     int stream_id = ipackets[0]->get_StreamId();
-    Stream * stream = _global_network->get_Stream( stream_id );
+    Stream * stream = net->get_Stream( stream_id );
     assert(stream);
 
     //1. Setup/Recover Filter State
@@ -1257,7 +1260,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
         while ( map_iter != state->packets_by_rank.end() ) {
 
             Rank rank = (*map_iter).first;
-            if( _global_network->node_Failed( rank ) ) {
+            if( net->node_Failed( rank ) ) {
                 mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? Yes!!\n", rank ));
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
@@ -1285,7 +1288,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
         map_iter = state->packets_by_rank.find( cur_inlet_rank );
 
-        if( _global_network->node_Failed( cur_inlet_rank ) ) {
+        if( net->node_Failed( cur_inlet_rank ) ) {
             //Drop packets from failed node
             continue;
         }
@@ -1373,11 +1376,13 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 		      vector< PacketPtr >& opackets,
 		      vector< PacketPtr >& /* opackets_reverse */,
 		      void **local_storage, PacketPtr& config,
-		      const TopologyLocalInfo& )
+		      const TopologyLocalInfo& info )
 {
     mrn_dbg_func_begin();
     map < Rank, vector< PacketPtr >* >::iterator map_iter, del_iter;
     to_state* state;
+
+    Network* net = const_cast< Network* >( info.get_Network() );
 
     bool active = false;
     unsigned int timeout_ms = 0;
@@ -1411,7 +1416,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         while ( map_iter != state->packets_by_rank.end() ) {
 
             Rank rank = map_iter->first;
-            if( _global_network->node_Failed( rank ) ) {
+            if( net->node_Failed( rank ) ) {
                 mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? Yes!!\n", rank ));
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
@@ -1439,7 +1444,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
         map_iter = state->packets_by_rank.find( cur_inlet_rank );
 
-        if( _global_network->node_Failed( cur_inlet_rank ) ) {
+        if( net->node_Failed( cur_inlet_rank ) ) {
             //Drop packets from failed node
             continue;
         }
@@ -1461,7 +1466,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     if( ipackets.size() > 0 ) {
 
         int stream_id = ipackets[0]->get_StreamId();
-        Stream* stream = _global_network->get_Stream( stream_id );
+        Stream* stream = net->get_Stream( stream_id );
         assert(stream);
 
         set< Rank > peers = stream->get_ChildPeers( );
@@ -1473,7 +1478,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
         if( ! active ) {
 	    // set timeout
-	    TimeKeeper* tk = _global_network->get_TimeKeeper();
+	    TimeKeeper* tk = net->get_TimeKeeper();
 	    if( tk != NULL ) {
                 mrn_dbg( 5, mrn_printf(FLF, stderr, "registering timeout=%dms\n", timeout_ms ));
 	        if( tk->register_Timeout( stream_id, timeout_ms ) ) {

@@ -22,6 +22,11 @@ using namespace std;
 namespace MRN
 {
 
+typedef struct send_recv_thr_args {
+    Network* net;
+    Rank r;
+} send_recv_args_t;
+
 /*====================================================*/
 /*  PeerNode CLASS METHOD DEFINITIONS            */
 /*====================================================*/
@@ -72,10 +77,17 @@ int PeerNode::connect_EventSocket( void )
 
 int PeerNode::start_CommunicationThreads( void )
 {
-    int retval;
+    int retval = 0;
+    send_recv_args_t* args = (send_recv_args_t*) malloc( sizeof(send_recv_args_t) );
+    if( args == NULL ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() failed...\n"));
+        return -1;
+    }
+    args->net = _network;
+    args->r = _rank;
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Creating recv_thread ...\n"));
-    retval = XPlat::Thread::Create( recv_thread_main, &_rank, &recv_thread_id  );
+    retval = XPlat::Thread::Create( recv_thread_main, (void*)args, &recv_thread_id  );
     mrn_dbg(3, mrn_printf(FLF, stderr, "id: 0x%x\n", recv_thread_id));
     if(retval != 0){
         error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s\n",
@@ -84,7 +96,7 @@ int PeerNode::start_CommunicationThreads( void )
     }
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Creating send_thread ...\n"));
-    retval = XPlat::Thread::Create( send_thread_main, &_rank, &send_thread_id );
+    retval = XPlat::Thread::Create( send_thread_main, (void*)args, &send_thread_id );
     mrn_dbg(3, mrn_printf(FLF, stderr, "id: 0x%x\n", send_thread_id));
     if(retval != 0){
         error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s\n",
@@ -176,12 +188,15 @@ int PeerNode::flush( bool ignore_threads /*=false*/ ) const
     return retval;
 }
 
-void * PeerNode::recv_thread_main(void * args)
+void * PeerNode::recv_thread_main( void* iargs )
 {
     std::list< PacketPtr > packet_list;
 
-    Rank rank = *((Rank*)args);
-    PeerNodePtr peer_node = _global_network->get_PeerNode( rank );
+    send_recv_args_t* args = (send_recv_args_t*) iargs;
+    Network* net = args->net;
+    Rank rank = args->r;
+
+    PeerNodePtr peer_node = net->get_PeerNode( rank );
     assert( peer_node != PeerNode::NullPeerNode );
 
     //TLS: setup thread local storage for recv thread
@@ -239,10 +254,13 @@ void * PeerNode::recv_thread_main(void * args)
     return NULL;
 }
 
-void * PeerNode::send_thread_main(void * args)
+void * PeerNode::send_thread_main( void* iargs )
 {
-    Rank rank = *((Rank*)args);
-    PeerNodePtr peer_node = _global_network->get_PeerNode( rank );
+    send_recv_args_t* args = (send_recv_args_t*) iargs;
+    Network* net = args->net;
+    Rank rank = args->r;
+
+    PeerNodePtr peer_node = net->get_PeerNode( rank );
     assert( peer_node != PeerNode::NullPeerNode );
 
     //TLS: setup thread local storage for send thread
