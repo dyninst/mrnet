@@ -219,7 +219,10 @@ class TopologyLocalInfo {
     unsigned int get_NumLeafDescendants() const;
 
     unsigned int get_RootDistance() const;
-    unsigned int get_MaxChildDistance() const;
+    unsigned int get_MaxLeafDistance() const;
+
+    const NetworkTopology* get_Topology() const;
+    const Network* get_Network() const;
 };
 
 }                               // namespace MRN

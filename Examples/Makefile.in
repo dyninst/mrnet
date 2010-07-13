@@ -1,6 +1,12 @@
+#/****************************************************************************
+# * Copyright © 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+# *                  Detailed MRNet usage rights in "LICENSE" file.          *
+# ****************************************************************************/
+
 MRNET_ROOT     = @MRNET_ROOT@
 MRNET_PLATFORM = @host@
 MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
+
 @SET_MAKE@
 
 #############################
@@ -30,12 +36,12 @@ INSTALL = @INSTALL@
 #### General Definitions ####
 #############################
 
-LIBMRNET   = -lmrnet
-LIBXPLAT   = -lxplat
+LIBMRNET             = -lmrnet
+LIBXPLAT             = -lxplat
 LIBMRNET_LIGHTWEIGHT = -lmrnet_lightweight
 LIBXPLAT_LIGHTWEIGHT = -lxplat_lightweight
-LIBS       = -L$(LIBDIR) $(LIBMRNET) $(LIBXPLAT) @LIBS@ -lfl -lm -lpthread -ldl
-LIBS_LIGHTWEIGHT = -L$(LIBDIR) $(LIBMRNET_LIGHTWEIGHT)  $(LIBXPLAT_LIGHTWEIGHT) @LIBS@ -lfl -lm -ldl
+LIBS                 = -L$(LIBDIR) $(LIBMRNET) $(LIBXPLAT) @LIBS@
+LIBS_LIGHTWEIGHT     = -L$(LIBDIR) $(LIBMRNET_LIGHTWEIGHT) $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@
 
 LDFLAGS = @LDFLAGS@
 SOFLAGS = @SOFLAGS@
@@ -74,7 +80,7 @@ endif # Sun Forte options
 CXX = @CXX@
 CC = @CC@
 CXXFLAGS = @CXXFLAGS@ $(INCDIRS) $(WARNFLAGS)
-CCFLAGS = -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -Dcompiler_gnu -DDEBUG -Dos_linux=26 $(INCDIRS_LIGHTWEIGHT) $(WARNFLAGS)
+CCFLAGS = @CFLAGS@ $(INCDIRS_LIGHTWEIGHT) $(WARNFLAGS)
 
 export
 

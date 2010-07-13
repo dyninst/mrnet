@@ -36,6 +36,7 @@ class NetworkTopology;
 class SerialGraph;
 class ParsedGraph;
 class TimeKeeper;
+class EventDetector;
 
 class PeerNode;
 typedef boost::shared_ptr< PeerNode > PeerNodePtr; 
@@ -300,6 +301,7 @@ protected:
     BackEndNode* _local_back_end_node;
     InternalNode* _local_internal_node;
     TimeKeeper* _local_time_keeper;
+    EventDetector* _edt;
 
     //PeerNodePtr _parent;
     std::set< PeerNodePtr > _children;

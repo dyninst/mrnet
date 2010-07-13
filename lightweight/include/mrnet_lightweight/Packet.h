@@ -27,9 +27,6 @@ typedef struct {
   struct vector_t* data_elements;
 } Packet_t;
 
-/* function prototypes */
-void free_Packet_t(Packet_t* packet);
-
 Packet_t* new_Packet_t(int, unsigned short _stream_id,
                         int _tag, char* fmt,
                         va_list arg_list);

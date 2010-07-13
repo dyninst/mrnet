@@ -1,3 +1,8 @@
+#/****************************************************************************
+# * Copyright © 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+# *                  Detailed MRNet usage rights in "LICENSE" file.          *
+# ****************************************************************************/
+
 MRNET_VERSION  = @MRNET_VERSION@
 MRNET_ROOT     = @MRNET_ROOT@
 MRNET_PLATFORM = @host@
@@ -56,7 +61,7 @@ COMMNODE_LDFLAGS = @CN_LDFLAGS@
 SOFLAGS = @SOFLAGS@
 
 LIBS = $(LIBXPLAT) @LIBS@
-LIBS_LIGHTWEIGHT = $(LIBXPLAT_LIGHTWEIGHT) @LIBS@
+LIBS_LIGHTWEIGHT = $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@
 
 INCDIR = -I$(SRCDIR)/include -I$(SRCDIR)/src -I$(SRCDIR)/xplat/include -I$(SRCDIR)/tests
 INCDIR_LIGHTWEIGHT = -I$(SRCDIR)/lightweight/include -I$(SRCDIR)/lightweight/src -I$(SRCDIR)/lightweight/xplat/include -I$(SRCDIR)/tests -I$(SRCDIR)/src
@@ -148,28 +153,25 @@ STD_TESTS_FE = $(BINDIR)/test_basic_FE \
                $(BINDIR)/test_arrays_FE \
                $(BINDIR)/test_NativeFilters_FE \
                $(BINDIR)/test_DynamicFilters_FE \
-               $(BINDIR)/test_HeteroFilters_FE \
-			   $(BINDIR)/test_MultStreams_FE
+               $(BINDIR)/test_MultStreams_FE
 
 STD_TESTS_BE = $(BINDIR)/test_basic_BE  \
                $(BINDIR)/microbench_BE \
                $(BINDIR)/test_arrays_BE \
                $(BINDIR)/test_NativeFilters_BE \
                $(BINDIR)/test_DynamicFilters_BE \
-               $(BINDIR)/test_HeteroFilters_BE \
-			   $(BINDIR)/test_MultStreams_BE
+               $(BINDIR)/test_MultStreams_BE
 
 STD_TESTS_FE_LIGHTWEIGHT = $(BINDIR)/test_basic_FE_lightweight \
-						   $(BINDIR)/test_arrays_FE_lightweight \
-						   $(BINDIR)/test_MultStreams_FE_lightweight
+                           $(BINDIR)/test_arrays_FE_lightweight \
+                           $(BINDIR)/test_MultStreams_FE_lightweight
 
 STD_TESTS_BE_LIGHTWEIGHT = $(BINDIR)/test_basic_BE_lightweight \
-						   $(BINDIR)/microbench_BE_lightweight \
-						   $(BINDIR)/test_arrays_BE_lightweight \
-						   $(BINDIR)/test_NativeFilters_BE_lightweight \
-						   $(BINDIR)/test_DynamicFilters_BE_lightweight \
-						   $(BINDIR)/test_HeteroFilters_BE_lightweight \
-						   $(BINDIR)/test_MultStreams_BE_lightweight
+                           $(BINDIR)/microbench_BE_lightweight \
+                           $(BINDIR)/test_arrays_BE_lightweight \
+                           $(BINDIR)/test_NativeFilters_BE_lightweight \
+                           $(BINDIR)/test_DynamicFilters_BE_lightweight \
+                           $(BINDIR)/test_MultStreams_BE_lightweight
 
 STD_TESTS = ${STD_TESTS_FE} ${STD_TESTS_BE}
 
@@ -326,7 +328,6 @@ install-tests: tests $(BINDIR)/mrnet_tests.sh
 	@echo Installing standard tests
 	$(INSTALL) -p -m 755 $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(BINDIR)/mrnet_tests.sh  $(IBINDIR)/
 	$(INSTALL) -p -m 755 $(LIBDIR)/test_DynamicFilters.so $(ILIBDIR)/
-	$(INSTALL) -p -m 755 $(LIBDIR)/test_HeteroFilters.so $(ILIBDIR)/
 	if [ ! -d $(IBINDIR)/topology_files ] ; then \
             mkdir -p $(IBINDIR)/topology_files ; \
 	    chmod 755 $(IBINDIR)/topology_files ; \
@@ -355,7 +356,7 @@ xplat_lightweight-install:
 	@echo Installing xplat library for lightweight backend library
 	cd ./lightweight/xplat ; $(MAKE) install
 
-tests: all $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(LIBDIR)/test_DynamicFilters.so $(LIBDIR)/test_HeteroFilters.so
+tests: all $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(LIBDIR)/test_DynamicFilters.so
 
 tests-opt: $(OPT_TESTS)
 
@@ -454,10 +455,6 @@ $(BINDIR)/mrnet_tests.sh: $(SRCDIR)/conf/mrnet_tests.sh
 $(LIBDIR)/test_DynamicFilters.so: $(SRCDIR)/tests/test_DynamicFilters.C
 	@echo "Building `basename $@` ..."
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_DynamicFilters.C
-
-$(LIBDIR)/test_HeteroFilters.so: $(SRCDIR)/tests/test_HeteroFilters.C
-	@echo "Building `basename $@` ..."
-	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_HeteroFilters.C
 
 $(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(LIBMRNET) \
                             $(OBJDIR)/%.o \

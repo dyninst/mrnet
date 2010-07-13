@@ -10,21 +10,18 @@
 #include "Filter.h"
 #include "utils_lightweight.h"
 
+/* NOTE: Currently, we do not support filtering at lightweight backend
+ * nodes, so these functions are in place only as placeholders
+ * if we choose to implement the functionality at a later time. */
+
 Filter_t* new_Filter_t(unsigned short iid)
 {
-#if 0
-  Filter_t* new_filter = (Filter_t*)malloc(sizeof(Filter_t));
-  assert(new_filter);
-
-  new_filter->id=iid;
-  new_filter->filter_state = NULL;
-  new_filter->params = (Packet_t*)malloc(sizeof(Packet_t));
-  assert(new_filter->params);
-
-  return new_filter;
-#endif
-
   return NULL;
+}
+
+void delete_Filter_t(Filter_t* filter)
+{
+    
 }
 
 int Filter_push_Packets(Filter_t* filter, 
@@ -32,19 +29,11 @@ int Filter_push_Packets(Filter_t* filter,
                         Packet_t* opacket,
                         TopologyLocalInfo_t topol_info)
 {
-    mrn_dbg_func_begin();
     *opacket = *ipacket;
-    mrn_dbg(3, mrn_printf(FLF, stderr, "NULL FILTER: returning %d packets\n", 1));
-    mrn_dbg_func_end();
     return 0;
 }
 
 void Filter_set_FilterParams(Filter_t* filter, Packet_t* iparams)
 {
-#if 0
-    mrn_dbg_func_begin();
-    filter->params = iparams;
-    mrn_dbg_func_end();
-#endif
 }   
 

@@ -145,7 +145,7 @@ map_t* erase(map_t* map, int ikey)
 
     /* free the struct, but don't free the element since it might eb 
      * referenced elsewhere */ 
-    free(map);
+    delete_map_t(map);
 
     return new_map;
 }

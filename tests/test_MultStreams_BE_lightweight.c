@@ -11,9 +11,9 @@
 
 int main(int argc, char **argv)
 {
-    Stream_t * stream = (Stream_t*)malloc(sizeof(Stream_t));
+    Stream_t * stream;
     Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
-	Network_t * net;
+    Network_t * net;
     int tag;
     char recv_char;
     char recv_uchar;
@@ -27,6 +27,8 @@ int main(int argc, char **argv)
     double recv_double;
     char * recv_string;
     int success=1;
+
+    assert(pkt);
 
     if( argc != 6 ) {
         fprintf(stderr, "Usage: %s parent_hostname parent_port parent_rank my_hostname my_rank\n",
@@ -210,16 +212,13 @@ int main(int argc, char **argv)
     } while( tag != PROT_EXIT );
     
     if( pkt != NULL )
-        free( pkt );
-
-    if( stream != NULL )
-        free( stream );
+        free(pkt);
 
     // wait for final teardown packet from FE; this will cause
     // us to exit
     Network_waitfor_ShutDown(net);
     if( net != NULL )
-        free( net );
+        delete_Network_t(net);
 
     return 0;
 }

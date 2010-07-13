@@ -1,16 +1,10 @@
 #/****************************************************************************
-# * Copyright © 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+# * Copyright © 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
 # *                  Detailed MRNet usage rights in "LICENSE" file.          *
 # ****************************************************************************/
 # $Id: Makefile.in,v 1.14 2008/10/09 19:50:12 mjbrim Exp $
-@SET_MAKE@
 
-#AR      = @AR@
-#ARFLAGS = @ARFLAGS@
-#RANLIB  = @RANLIB@
-#RM      = @RM@
-#INSTALL = @INSTALL@
-#MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
+@SET_MAKE@
 
 prefix  = @prefix@
 exec_prefix=@exec_prefix@
@@ -19,18 +13,6 @@ libdir  = @libdir@
 includedir  = @includedir@
 
 VPATH   = @abs_srcdir@/src
-
-#MAKEDEPENDS = $(srcdir)/../conf/makedepends.sh
-
-#BUILD_SHARED_LIBS = @BUILDSHARED@
-
-#INCFLAGS = -I$(srcdir)/include -I$(srcdir)/src -I$(srcdir) -I$(srcdir)/xplat/include -I$(srcdir)/../src 
-
-#COMPILER_TYPE = @COMPILER_TYPE@
-#CXX = @CC@
-#CXXFLAGS = @CFLAGS@
-
-#SOFLAGS  = @SOFLAGS@
 
 TARGET    = libmrnet_lightweight.a
 TARGET_SO = libmrnet_lightweight.so

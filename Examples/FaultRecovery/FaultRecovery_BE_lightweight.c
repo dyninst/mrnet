@@ -17,14 +17,16 @@
 
 int main(int argc, char **argv)
 {
-    Stream_t * stream = (Stream_t*)malloc(sizeof(Stream_t));
-    assert(stream);
+    Stream_t * stream;
     Packet_t* p = (Packet_t*)malloc(sizeof(Packet_t));
+    Network_t * net;
     assert(p);
     int tag=0;
     unsigned int min_val=100, max_val=0, num_iters=0;
 
-    Network_t* net = Network_CreateNetworkBE(argc, argv);
+    assert(p);
+
+    net = Network_CreateNetworkBE(argc, argv);
     assert(net);
 
     Rank me = Network_get_LocalRank(net);
@@ -116,9 +118,13 @@ int main(int argc, char **argv)
 
     } while ( tag != PROT_EXIT );
 
-    // wait for final teardown packet from FE; this will cause us
-    // to exit
-    Network_recv(net, &tag, p, &stream);
-        
+    if (p != NULL)
+        free(p);
+
+    // wait for final teardown packet from FE
+    Network_waitfor_ShutDown(net);
+    if ( net != NULL )
+        delete_Network_t(net);
+
     return 0;
 }

@@ -34,7 +34,6 @@ using namespace std;
 namespace MRN
 {
 
-Network* _global_network=NULL;
 int mrnparse( );
 
 extern const char* mrnBufPtr;
@@ -104,11 +103,12 @@ Network::Network( void )
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
+      _edt( new EventDetector(this) ),
       _threaded(true), _recover_from_failures(true), 
       _terminate_backends(true), _was_shutdown(false) 
 {
     init_local();
-    _global_network=this;
+
     set_OutputLevelFromEnvironment();
 
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
@@ -122,7 +122,7 @@ Network::~Network( void )
         delete parsed_graph;
         parsed_graph = NULL;
     }
-    _global_network=NULL;
+    _edt->_network = NULL;
 }
 
 void Network::shutdown_Network( void )
@@ -166,7 +166,7 @@ void Network::shutdown_Network( void )
             sleep(1);
         }
 
-        EventDetector::stop();
+        _edt->stop();
         
         if( _network_topology != NULL ) {
             string empty("");
@@ -329,6 +329,8 @@ void Network::init_FrontEnd( const char * itopology,
                        ibackend_args, 
                        backend_argc,
                        iattrs );
+    delete parsed_graph;
+    parsed_graph = NULL;
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
     
@@ -357,7 +359,10 @@ void Network::init_FrontEnd( const char * itopology,
     if( -1 == get_LocalFrontEndNode()->proc_TopologyReport( packet ) )
         error( ERR_INTERNAL, rootRank, "proc_TopologyReport() failed");
     free( topology );
+<<<<<<< HEAD:src/Network.C
     //end of NEW_TOPO propagation code
+=======
+>>>>>>> 6d01589aff64e171aa557adb739dc031d774aab5:src/Network.C
   
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating bcast communicator ... \n" ));
     update_BcastCommunicator( );

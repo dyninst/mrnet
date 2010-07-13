@@ -72,9 +72,9 @@ int waitFor_FailureManager( )
     return 0;
 }
 
-void * FailureInjectionThreadMain( void * /* iarg */ )
+void * FailureInjectionThreadMain( void* iarg )
 {
-    //Network * network = (Network *) iarg;
+    Network* net = (Network *) iarg;
     NetworkTopology * topology;
     NetworkTopology::Node * node_to_kill;
     set<NetworkTopology::Node *> orphans;
@@ -108,7 +108,7 @@ void * FailureInjectionThreadMain( void * /* iarg */ )
 
         //fprintf( stderr, "Sleeping for %u seconds\n", FailureFrequency );
         sleep(FailureFrequency);
-        topology = _global_network->get_NetworkTopology();
+        topology = net->get_NetworkTopology();
 
         //Print .dot and .top files
         snprintf( filename, sizeof(filename), "%s.%u.dot",

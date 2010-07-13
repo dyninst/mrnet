@@ -26,23 +26,7 @@ using namespace std;
 
 namespace MRN {
 
-long EventDetector::_thread_id=0;
-struct pollfd* EventDetector::_pollfds=NULL;
-unsigned int EventDetector::_num_pollfds=0;
-unsigned int EventDetector::_max_pollfds=0;
-int EventDetector::_max_fd=-1;
-
-static map< int, Rank > childRankByEventDetectionSocket;
-
-static int proc_NewChildFDConnection( PacketPtr ipacket, int isock );
-
-// typedef struct
-// {
-//     Network *network;
-//     PeerNodePtr parent_node;
-// } EDTArg ;
-
-bool EventDetector::stop( void )
+bool EventDetector::stop( )
 {
     int edt_port, sock_fd=0;
     string edt_host;
@@ -54,10 +38,10 @@ bool EventDetector::stop( void )
     if( 0 == _thread_id )
         return true;
 
-    if( _global_network->is_LocalNodeParent() ) {
+    if( _network->is_LocalNodeParent() ) {
         // send KILL_SELF message to EDT on listening port
-        edt_host = _global_network->get_LocalHostName();
-        edt_port = _global_network->get_LocalPort();
+        edt_host = _network->get_LocalHostName();
+        edt_port = _network->get_LocalPort();
         mrn_dbg(3, mrn_printf( FLF, stderr, "Telling EDT(%s:%d) to go away\n",
                                edt_host.c_str(), edt_port )); 
         if( connectHost( &sock_fd, edt_host.c_str(), edt_port ) == -1 ) {
@@ -87,19 +71,18 @@ bool EventDetector::stop( void )
     return true;
 }
 
-bool EventDetector::start( Network * /* inetwork */ )
+bool EventDetector::start( Network* inetwork )
 {
-    mrn_dbg_func_begin();
-    //EDTArg * thread_arg = new EDTArg;
-
-    //thread_arg->network = inetwork;
-    //thread_arg->parent_node = inetwork->get_ParentNode();
+    long thread_id = 0;
     mrn_dbg(3, mrn_printf(FLF, stderr, "Creating Event Detection thread ...\n"));
 
-    if( XPlat::Thread::Create( main, NULL, &_thread_id ) == -1 ) {
+    if( XPlat::Thread::Create( main, (void*)inetwork->_edt, &thread_id ) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Thread creation failed...\n"));
         return false;
     }
+
+    // record the thread id
+    inetwork->_edt->_thread_id = thread_id;
 
     mrn_dbg_func_end();
     return true;
@@ -112,7 +95,7 @@ bool EventDetector::add_FD( int ifd )
     mrn_dbg_func_begin();
 
     if( _pollfds == NULL ) {
-        nchild = 256;
+        nchild = 256; /* a huge fan-out ; bigger than we ever expect */
         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "allocating %u slots for pollfds\n", nchild) );
         _pollfds = (struct pollfd*) malloc( nchild * sizeof(struct pollfd) );
@@ -186,11 +169,8 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
     mrn_dbg( 5, mrn_printf(FLF, stderr,
                            "waiting on %u fds\n", _num_pollfds) );
   
-	
-
-
 #ifdef os_windows
-	use_poll=false;
+    use_poll=false;
 #else
     if( use_poll ) { 
 
@@ -219,7 +199,7 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "select() returned %d\n", retval) );
 #ifndef os_windows
-	}
+    }
 #endif
     if( retval == -1 )
         perror("select() or poll()");
@@ -231,9 +211,7 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
         bool add = false;
         if( use_poll ) {
             if(( _pollfds[num].revents & POLLIN ) )
-                add = true;
-	   
-	   
+                add = true;   
         }
         else { // select
             if( FD_ISSET( _pollfds[num].fd, &readfds ) )
@@ -263,7 +241,7 @@ void EventDetector::handle_Timeout( TimeKeeper* tk, int elapsed_ms )
 	std::set< unsigned int >::iterator siter = elapsed_strms.begin();
 	for( ; siter != elapsed_strms.end(); siter++ ) {
 
-	    Stream* strm = _global_network->get_Stream( *siter );
+	    Stream* strm = _network->get_Stream( *siter );
 	    if( strm == NULL ) continue;
 
 	    // push NullPacket to indicate timeout
@@ -274,7 +252,7 @@ void EventDetector::handle_Timeout( TimeKeeper* tk, int elapsed_ms )
 
 	    // forward output packets as necessary
 	    if( ! opackets.empty() ) {
-	        if( _global_network->is_LocalNodeFrontEnd() ) {
+	        if( _network->is_LocalNodeFrontEnd() ) {
 		    for( unsigned int i = 0; i < opackets.size(); i++ ) {
 		        PacketPtr cur_packet( opackets[i] );
 			mrn_dbg( 3, mrn_printf(FLF, stderr, "Put packet in stream %d\n",
@@ -283,14 +261,14 @@ void EventDetector::handle_Timeout( TimeKeeper* tk, int elapsed_ms )
 		    }
 		}
 		else {
-		    if( _global_network->send_PacketsToParent( opackets ) == -1 ) {
+		    if( _network->send_PacketsToParent( opackets ) == -1 ) {
 			 mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToParent() failed\n"));
 		    }
 		}
 		opackets.clear();
 	    }
 	    if( ! opackets_rev.empty() ) {
-		if( _global_network->is_LocalNodeBackEnd() ) {
+		if( _network->is_LocalNodeBackEnd() ) {
 		    for( unsigned int i = 0; i < opackets_rev.size(); i++ ) {
 			PacketPtr cur_packet( opackets_rev[i] );
 			mrn_dbg( 3, mrn_printf(FLF, stderr, "Put packet in stream %d\n",
@@ -299,7 +277,7 @@ void EventDetector::handle_Timeout( TimeKeeper* tk, int elapsed_ms )
 		    }
 		}
 		else {
-		    if( _global_network->send_PacketsToChildren( opackets ) == -1 ) {
+		    if( _network->send_PacketsToChildren( opackets ) == -1 ) {
 			mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToChildren() failed\n"));
 		    }
 		}
@@ -311,28 +289,35 @@ void EventDetector::handle_Timeout( TimeKeeper* tk, int elapsed_ms )
     //mrn_dbg_func_end();
 }
 
-void * EventDetector::main( void * /* iarg */ )
+void * EventDetector::main( void* iarg )
 {
     list< int > watch_list; //list of sockets to detect events on
     int parent_sock=0;
     int local_sock=0;
+<<<<<<< HEAD:src/EventDetector.C
     int max_sock=0;
     bool goto_outer;
 
 
+=======
+
+    EventDetector* edt = (EventDetector*) iarg;
+    Network* net = edt->_network;;
+ 
+>>>>>>> 6d01589aff64e171aa557adb739dc031d774aab5:src/EventDetector.C
     PeerNodePtr  parent_node = PeerNode::NullPeerNode;
-    if( _global_network->is_LocalNodeChild() ) {
-        parent_node = _global_network->get_ParentNode();
+    if( net->is_LocalNodeChild() ) {
+        parent_node = net->get_ParentNode();
     }
     
     //set up debugging stuff
     string prettyHost;
-    XPlat::NetUtils::GetHostName( _global_network->get_LocalHostName(), prettyHost );
+    XPlat::NetUtils::GetHostName( net->get_LocalHostName(), prettyHost );
     std::ostringstream namestr;
     namestr << "EDT("
             << prettyHost
             << ':'
-            << _global_network->get_LocalRank()
+            << net->get_LocalRank()
             << ')'
             << std::ends;
 
@@ -346,11 +331,11 @@ void * EventDetector::main( void * /* iarg */ )
         return NULL;
     }
 
-    srand48( _global_network->get_LocalRank() );
+    srand48( net->get_LocalRank() );
     
     //(1) Establish connection with parent Event Detection Thread
-    if( _global_network->is_LocalNodeChild() ) {
-        if( init_NewChildFDConnection( _global_network, parent_node ) == -1 ) {
+    if( net->is_LocalNodeChild() ) {
+        if( edt->init_NewChildFDConnection( parent_node ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "init_NewChildFDConnection() failed\n") );
         }
@@ -358,9 +343,8 @@ void * EventDetector::main( void * /* iarg */ )
 
         //monitor parent sock for failure
         parent_sock = parent_node->get_EventSocketFd();
-        add_FD(parent_sock);
+        edt->add_FD(parent_sock);
 
-        max_sock = parent_sock;
         watch_list.push_back( parent_sock );
         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "Parent socket:%d added to list.\n", parent_sock));
@@ -368,15 +352,13 @@ void * EventDetector::main( void * /* iarg */ )
     else mrn_dbg(5, mrn_printf(FLF, stderr, "not a child\n"));
 
 
-    if( _global_network->is_LocalNodeParent() ) {
+    if( net->is_LocalNodeParent() ) {
         //(2) Add local socket to event list
-        local_sock = _global_network->get_ListeningSocket();
+        local_sock = net->get_ListeningSocket();
         if( local_sock != -1 ){
-            add_FD(local_sock);
+            edt->add_FD(local_sock);
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "Monitoring local socket:%d.\n", local_sock));
-            if( local_sock > max_sock )
-                max_sock = local_sock;
         }
     }
     else mrn_dbg(5, mrn_printf(FLF, stderr, "not a parent\n"));
@@ -394,9 +376,8 @@ void * EventDetector::main( void * /* iarg */ )
         Timer waitTimer;
         int timeout = -1; /* block */
         TimeKeeper* tk = NULL;
-        Network* net = _global_network;
 
-        if( net == NULL ) /* Network going away */
+        if( edt->_network == NULL ) /* Network going away */
             break;
 
         tk = net->get_TimeKeeper();
@@ -407,7 +388,7 @@ void * EventDetector::main( void * /* iarg */ )
 
         std::set< int > eventfds;
         mrn_dbg( 5, mrn_printf(FLF, stderr, "eventWait(timeout=%dms)\n", timeout));
-        int retval = eventWait( eventfds, timeout );
+        int retval = edt->eventWait( eventfds, timeout );
 
         if( retval == -1 ) {
             continue;
@@ -423,7 +404,7 @@ void * EventDetector::main( void * /* iarg */ )
             mrn_dbg( 5, mrn_printf(FLF, stderr, "timeout after %d ms\n", elapsed));
                 
 	    // notify streams with registered timeouts
-	    handle_Timeout( tk, elapsed );
+	    edt->handle_Timeout( tk, elapsed );
 	    continue;
         }
         else{
@@ -445,6 +426,7 @@ void * EventDetector::main( void * /* iarg */ )
                 if ( connected_sock == -1) {
                     perror("getSocketConnection()");
                     mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
+<<<<<<< HEAD:src/EventDetector.C
                     perror("getSocketConnection()");
 		    goto_outer=true;
 		    break;
@@ -454,6 +436,12 @@ void * EventDetector::main( void * /* iarg */ )
 	        //			} else {
 		//			mrn_dbg(1, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
 	        // 			}
+=======
+                    continue;
+                } else {
+                    mrn_dbg(1, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
+                }
+>>>>>>> 6d01589aff64e171aa557adb739dc031d774aab5:src/EventDetector.C
 
                 packets.clear();
                 msg.recv( connected_sock, packets, UnknownRank );
@@ -462,7 +450,7 @@ void * EventDetector::main( void * /* iarg */ )
 
                 for( packet_list_iter = packets.begin();
                      packet_list_iter != packets.end();
-                     packet_list_iter++  ) {
+                     packet_list_iter++ ) {
                     ParentNode* p;
                     PacketPtr cur_packet( *packet_list_iter );
                     switch ( cur_packet->get_Tag() ) {
@@ -474,18 +462,17 @@ void * EventDetector::main( void * /* iarg */ )
                         mrn_dbg(5, mrn_printf(FLF, stderr,
                                               "Closing %d sockets\n",
                                               watch_list.size() ));
-                        for(iter=watch_list.begin(); iter!=watch_list.end(); iter++){
-							int fd = *iter;
+                        for( iter=watch_list.begin(); iter!=watch_list.end(); iter++ ) {
                             mrn_dbg(1, mrn_printf(FLF, stderr,
                                                   "Closing event socket: %d\n", *iter ));
                             char c = 1;
                             mrn_dbg(5, mrn_printf(FLF, stderr, "... writing \n"));
-							// TODO: Commented out for Windows because of write assert() failure.
+                            // TODO: Commented out for Windows because of write assert() failure.
 #ifndef os_windows
-							if( write( *iter, &c, 1) == -1 ) {
+                            if( write( *iter, &c, 1) == -1 ) {
                                 perror("write(event_fd)");
                             }
-							mrn_dbg(5, mrn_printf(FLF, stderr, "... closing\n"));
+                            mrn_dbg(5, mrn_printf(FLF, stderr, "... closing\n"));
 #endif
 
                             if( XPlat::SocketUtils::Close( *iter ) == -1 ){
@@ -497,15 +484,13 @@ void * EventDetector::main( void * /* iarg */ )
 
                     case PROT_NEW_CHILD_FD_CONNECTION:
                         mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION\n"));
-                        add_FD(connected_sock);
-                        if( connected_sock > max_sock )
-                            max_sock = connected_sock;
+                        edt->add_FD(connected_sock);
                         watch_list.push_back( connected_sock );
                         mrn_dbg( 1, mrn_printf(FLF, stderr,
                                                "FD socket:%d added to list.\n",
                                                connected_sock));
                         
-                        proc_NewChildFDConnection( cur_packet, connected_sock );
+                        edt->proc_NewChildFDConnection( cur_packet, connected_sock );
                         break;
 
                     case PROT_NEW_CHILD_DATA_CONNECTION:
@@ -566,29 +551,27 @@ void * EventDetector::main( void * /* iarg */ )
                 //event happened on parent monitored connections, likely failure
 
                 //remove old parent socket from "select" sockets list
-                remove_FD(parent_sock);
+                edt->remove_FD(parent_sock);
                 watch_list.remove( parent_sock );
 
 		//fprintf(stdout,"Debug FR in main() : Recovering from parent failure\n");
                 if( net->recover_FromFailures() ) {
 
-                    	mrn_dbg( 3, mrn_printf(FLF, stderr, "... recovering from parent failure\n"));
-                    	recover_FromParentFailure( _global_network);
+                    mrn_dbg( 3, mrn_printf(FLF, stderr, "... recovering from parent failure\n"));
+                    edt->recover_FromParentFailure();
 
-                    	//add new parent sock to monitor for failure
-                    	parent_node = net->get_ParentNode();
-                    	parent_sock = parent_node->get_EventSocketFd();
-                    	add_FD(parent_sock);
-                    	if( parent_sock > max_sock )
-                        	max_sock = parent_sock;
-                    	watch_list.push_back( parent_sock );
-                    	mrn_dbg( 5, mrn_printf(FLF, stderr,
-                        	                   "Parent socket:%d added to list.\n", parent_sock));
+                    //add new parent sock to monitor for failure
+                    parent_node = net->get_ParentNode();
+                    parent_sock = parent_node->get_EventSocketFd();
+                    edt->add_FD(parent_sock);
+                    watch_list.push_back( parent_sock );
+                    mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                           "Parent socket:%d added to list.\n", parent_sock));
 			                       
                 }
                 else {
 			
-			recover_off_FromParentFailure( _global_network );
+                    edt->recover_off_FromParentFailure();
 
 		    mrn_dbg( 3, mrn_printf(FLF, stderr, "NOT recovering from parent failure ...\n"));
                     if( watch_list.size() == 0 ) {
@@ -620,9 +603,9 @@ void * EventDetector::main( void * /* iarg */ )
                 mrn_dbg( 5, mrn_printf(0,0,0, stderr, "Is socket:%d set? YES!\n", cur_sock));
 
                 map< int, Rank >:: iterator iter2 =
-                    childRankByEventDetectionSocket.find( cur_sock );
+                    edt->childRankByEventDetectionSocket.find( cur_sock );
 
-                if( iter2 != childRankByEventDetectionSocket.end() ) {
+                if( iter2 != edt->childRankByEventDetectionSocket.end() ) {
                     //this child has failed
                     int failed_rank = (*iter2).second;
 
@@ -632,7 +615,7 @@ void * EventDetector::main( void * /* iarg */ )
                                            failed_rank ));
 
                     if( net->recover_FromFailures() ) {
-                        	recover_FromChildFailure( _global_network, failed_rank );
+                        edt->recover_FromChildFailure( failed_rank );
 		    }
 		    else	
 		    {
@@ -640,10 +623,10 @@ void * EventDetector::main( void * /* iarg */ )
 			net->remove_Node(failed_rank);
 	             }
 		    fflush(stdout);
-                    childRankByEventDetectionSocket.erase( iter2 );
+                    edt->childRankByEventDetectionSocket.erase( iter2 );
 
                     //remove from "select" sockets list
-                    remove_FD(cur_sock);
+                    edt->remove_FD(cur_sock);
 
                     //remove socket from socket watch list
                     list< int >::iterator tmp_iter;
@@ -659,11 +642,11 @@ void * EventDetector::main( void * /* iarg */ )
     return NULL;
 }
 
-int EventDetector::init_NewChildFDConnection( Network * inetwork, PeerNodePtr iparent_node )
+int EventDetector::init_NewChildFDConnection( PeerNodePtr iparent_node )
 {
-    string lhostname = inetwork->get_LocalHostName();
-    Port lport = inetwork->get_LocalPort();
-    Rank lrank = inetwork->get_LocalRank();
+    string lhostname = _network->get_LocalHostName();
+    Port lport = _network->get_LocalPort();
+    Rank lrank = _network->get_LocalRank();
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Initializing new Child FD Connection ...\n"));
     if( iparent_node->connect_EventSocket() == -1 ){
@@ -685,7 +668,7 @@ int EventDetector::init_NewChildFDConnection( Network * inetwork, PeerNodePtr ip
     return 0;
 }
 
-int proc_NewChildFDConnection( PacketPtr ipacket, int isock )
+int EventDetector::proc_NewChildFDConnection( PacketPtr ipacket, int isock )
 {
     char * child_hostname_ptr;
     Port child_port;
@@ -706,17 +689,16 @@ int proc_NewChildFDConnection( PacketPtr ipacket, int isock )
     return 0;
 }
 
-int EventDetector::recover_FromChildFailure( Network *inetwork, Rank ifailed_rank )
+int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
 {
     PacketPtr packet( new Packet( 0, PROT_FAILURE_RPT, "%ud", ifailed_rank ) );
 
-    assert( inetwork->is_LocalNodeParent() );
+    assert( _network->is_LocalNodeParent() );
 
-    
-		//fprintf(stdout," Debug FR Recovering from child failure inside recover_FRomchildFailure()\n");
+    //fprintf(stdout," Debug FR Recovering from child failure inside recover_FRomchildFailure()\n");
 
-    mrn_dbg(1, mrn_printf(FLF, stderr, "proc_FailureReport(node:%u) ...\n", ifailed_rank));
-    if( inetwork->get_LocalParentNode()-> proc_FailureReport( packet ) == -1 ) {
+    mrn_dbg(1, mrn_printf(FLF, stderr, "calling proc_FailureReport(node:%u)\n", ifailed_rank));
+    if( _network->get_LocalParentNode()->proc_FailureReport( packet ) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "proc_FailureReport() failed\n"));
         return -1;
     }
@@ -724,31 +706,30 @@ int EventDetector::recover_FromChildFailure( Network *inetwork, Rank ifailed_ran
     return 0;
 }
 
-int EventDetector::recover_FromParentFailure( Network *inetwork)
+int EventDetector::recover_FromParentFailure( )
 {
-    Timer new_parent_timer, cleanup_timer, connection_timer, filter_state_timer,
-        overall_timer;
-
+    Timer new_parent_timer, cleanup_timer, connection_timer, 
+          filter_state_timer, overall_timer;
 
    //fprintf(stdout,"Debug FR Recovering from parent failure inside the recover_Parent()\n");
     mrn_dbg_func_begin();
 
    
-    inetwork->get_ParentNode()->mark_Failed();
-    Rank failed_rank = inetwork->get_ParentNode()->get_Rank();
-    inetwork->set_ParentNode( PeerNode::NullPeerNode );
+    _network->get_ParentNode()->mark_Failed();
+    Rank failed_rank = _network->get_ParentNode()->get_Rank();
+    _network->set_ParentNode( PeerNode::NullPeerNode );
     mrn_dbg(3, mrn_printf( FLF, stderr, "Recovering from parent[%d]'s failure\n",
                            failed_rank ));
 	
-    inetwork->get_NetworkTopology()->print(NULL);
+    _network->get_NetworkTopology()->print(NULL);
   
     
  
     //Step 1: Compute new parent
     overall_timer.start();
     new_parent_timer.start();
-    NetworkTopology::Node * new_parent_node =inetwork->get_NetworkTopology()->
-        find_NewParent( inetwork->get_LocalRank() );
+    NetworkTopology::Node * new_parent_node = _network->get_NetworkTopology()->
+        find_NewParent( _network->get_LocalRank() );
     if( !new_parent_node ) {
         mrn_dbg(1, mrn_printf( FLF, stderr, "Can't find new parent! Exiting ...\n" ));
         exit(-1);
@@ -760,7 +741,7 @@ int EventDetector::recover_FromParentFailure( Network *inetwork)
                            new_parent_node->get_Rank() ));
     
     string new_parent_name = new_parent_node->get_HostName();
-    PeerNodePtr new_parent = inetwork->new_PeerNode( new_parent_name,
+    PeerNodePtr new_parent = _network->new_PeerNode( new_parent_name,
                                                      new_parent_node->get_Port(),
                                                      new_parent_node->get_Rank(),
                                                      true, true );
@@ -769,7 +750,7 @@ int EventDetector::recover_FromParentFailure( Network *inetwork)
     //Step 2. Establish data connection w/ new Parent
     connection_timer.start();
     mrn_dbg(3, mrn_printf( FLF, stderr, "Establish new data connection ...\n"));
-    if( inetwork->get_LocalChildNode()->init_newChildDataConnection( new_parent,
+    if( _network->get_LocalChildNode()->init_newChildDataConnection( new_parent,
                                                                      failed_rank ) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr,
                               "PeerNode::init_newChildDataConnection() failed\n"));
@@ -778,7 +759,7 @@ int EventDetector::recover_FromParentFailure( Network *inetwork)
 
     //Step 3. Establish event detection connection w/ new Parent
     mrn_dbg(3, mrn_printf( FLF, stderr, "Establish new event connection ...\n"));
-    if( init_NewChildFDConnection( inetwork, new_parent ) == -1 ){
+    if( init_NewChildFDConnection( new_parent ) == -1 ){
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                                "init_NewChildFDConnection() failed\n") );
         return -1;
@@ -789,7 +770,7 @@ int EventDetector::recover_FromParentFailure( Network *inetwork)
     //Step 4. Propagate filter state for active streams to new parent
     filter_state_timer.start();
     mrn_dbg(3, mrn_printf( FLF, stderr, "Sending filter states ...\n"));
-    if( inetwork->send_FilterStatesToParent() == -1 ) {
+    if( _network->send_FilterStatesToParent() == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                                "send_FilterStatesToParent() failed\n") );
         return -1;
@@ -804,9 +785,9 @@ int EventDetector::recover_FromParentFailure( Network *inetwork)
     
 
      //remove node, but don't update datastructs since following procedure will
-    inetwork->remove_Node( failed_rank, false );
+    _network->remove_Node( failed_rank, false );
    
-    inetwork->change_Parent( inetwork->get_LocalRank(),
+    _network->change_Parent( _network->get_LocalRank(),
                              new_parent_node->get_Rank() );
     cleanup_timer.stop();
 
@@ -814,14 +795,14 @@ int EventDetector::recover_FromParentFailure( Network *inetwork)
 
     //Internal nodes must report parent failure to children
     mrn_dbg(3, mrn_printf( FLF, stderr, "Report failure to children ...\n"));
-    if( inetwork->is_LocalNodeInternal() ) {
+    if( _network->is_LocalNodeInternal() ) {
         //format is my_rank, failed_parent_rank, new_parent_rank
         PacketPtr packet( new Packet( 0, PROT_RECOVERY_RPT, "%ud %ud %ud",
-                                      inetwork->get_LocalRank(),
+                                      _network->get_LocalRank(),
                                       failed_rank,
-                                      inetwork->get_ParentNode()->get_Rank() ) );
+                                      _network->get_ParentNode()->get_Rank() ) );
 
-        if( inetwork->send_PacketToChildren( packet ) == -1 ){
+        if( _network->send_PacketToChildren( packet ) == -1 ){
             mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketDownStream() failed\n"));
         }
     }
@@ -830,7 +811,7 @@ int EventDetector::recover_FromParentFailure( Network *inetwork)
    //Notify Failure Manager that recovery is complete
     PacketPtr packet( new Packet( 0, PROT_RECOVERY_RPT,
                                   "%ud %ud %lf %lf %lf %lf %lf %lf",
-                                  inetwork->get_LocalRank(),
+                                  _network->get_LocalRank(),
                                   failed_rank,
                                   overall_timer._stop_d,
                                   new_parent_timer.get_latency_msecs(),
@@ -846,7 +827,7 @@ int EventDetector::recover_FromParentFailure( Network *inetwork)
 
 
     mrn_dbg(3, mrn_printf( FLF, stderr, "%u %u %lf %lf %lf %lf %lf %lf\n",
-                           inetwork->get_LocalRank(),
+                           _network->get_LocalRank(),
                            failed_rank,
                            overall_timer._stop_d,
                            new_parent_timer.get_latency_msecs(),
@@ -858,10 +839,10 @@ int EventDetector::recover_FromParentFailure( Network *inetwork)
     mrn_dbg(3, mrn_printf( FLF, stderr, "Notifying FIS...\n"));
     int sock_fd=0;
     mrn_dbg(3, mrn_printf( FLF, stderr, "Sending recovery report to FIS:%s:%d ...\n",
-                           inetwork->get_FailureManager()->get_HostName().c_str(),
-                           inetwork->get_FailureManager()->get_Port() )); 
-    if(connectHost( &sock_fd, inetwork->get_FailureManager()->get_HostName().c_str(),
-                    inetwork->get_FailureManager()->get_Port() ) == -1){
+                           _network->get_FailureManager()->get_HostName().c_str(),
+                           _network->get_FailureManager()->get_Port() )); 
+    if(connectHost( &sock_fd, _network->get_FailureManager()->get_HostName().c_str(),
+                    _network->get_FailureManager()->get_Port() ) == -1){
         mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost() failed\n"));
         return -1;
     }
@@ -880,13 +861,11 @@ int EventDetector::recover_FromParentFailure( Network *inetwork)
     return 0;
 }
 
-int EventDetector::recover_off_FromParentFailure( Network *inetwork )
+int EventDetector::recover_off_FromParentFailure( )
 {
-		
-
-    		    inetwork->get_ParentNode()->mark_Failed();
-		    Rank fail_rank = inetwork->get_ParentNode()->get_Rank();
-		    inetwork->remove_Node( fail_rank);  
+    _network->get_ParentNode()->mark_Failed();
+    Rank fail_rank = _network->get_ParentNode()->get_Rank();
+    _network->remove_Node( fail_rank);  
 }
 
 };

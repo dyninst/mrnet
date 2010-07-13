@@ -163,7 +163,7 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
           break;
 
     case PROT_NEW_FILTER:
-          mrn_dbg(1, mrn_printf(FLF, stderr, "BE ignoring PROT_NEW_FILTER; different behavior than standard MRNet\n"));
+          mrn_dbg(5, mrn_printf(FLF, stderr, "BE ignoring new filter; currently, lightweight backend nodes do not perform any filtering. This is different than standard MRNet behavior.\n"));
           break;
 
     case PROT_FAILURE_RPT:

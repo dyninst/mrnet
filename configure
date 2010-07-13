@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION CXXCPP EGREP MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION CXXCPP EGREP MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -867,7 +867,6 @@ Optional Packages:
                           libalps library
   --with-alpstoolhelp-inc (CrayXT only) Absolute path to directory containing
                           libalps.h
-  --with-libfldir         Absolute path to directory containing flex library
   --with-purify           Use purify for memory debugging
 
 Some influential environment variables:
@@ -2454,13 +2453,6 @@ else
   CRAYXT_ATH_INCDIR=""
 fi;
 
-
-# Check whether --with-libfldir or --without-libfldir was given.
-if test "${with_libfldir+set}" = set; then
-  withval="$with_libfldir"
-  FLEX_LIBDIR="${withval}";
-fi;
-
 # Check whether --enable-shared or --disable-shared was given.
 if test "${enable_shared+set}" = set; then
   enableval="$enable_shared"
@@ -3428,9 +3420,11 @@ _ACEOF
 
 
 
+LIBS="-lm -lpthread -ldl"
+LIBS_LIGHTWEIGHT="-lm"
+
 case "$host_os" in
   *linux*)
-    LIBS="$LIBS -lm -lpthread -ldl"
     LDFLAGS="$LDFLAGS -Wl,-E"
     CN_LDFLAGS="$CN_LDFLAGS -Wl,-E"
     os_release=`uname -r`
@@ -3450,32 +3444,32 @@ case "$host_os" in
     esac
     ;;
   *aix4*)
-    LIBS="$LIBS -lm -ldl -lpthread"
     CXXFLAGS="$CXXFLAGS -Dos_aix=4"
     CFLAGS="$CFLAGS -Dos_aix=4"
     ;;
   *aix5*)
-    LIBS="$LIBS -lm -ldl -lpthread"
     CXXFLAGS="$CXXFLAGS -Dos_aix=5"
     CFLAGS="$CFLAGS -Dos_aix=5"
     ;;
   *solaris2.8*)
-    LIBS="$LIBS -lrpcsvc -lsocket -lnsl -lm -lpthread -ldl"
+    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
+    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
     CXXFLAGS="$CXXFLAGS -Dos_solaris=8"
     CFLAGS="$CFLAGS -Dos_solaris=8"
     ;;
   *solaris2.9*)
-    LIBS="$LIBS -lrpcsvc -lsocket -lnsl -lm -lpthread -ldl"
+    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
+    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
     CXXFLAGS="$CXXFLAGS -Dos_solaris=9"
     CFLAGS="$CFLAGS -Dos_solaris=9"
     ;;
   *sunos*)
-    LIBS="$LIBS -lrpcsvc -lsocket -lnsl -lm -lpthread -ldl"
+    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
+    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
     CXXFLAGS="$CXXFLAGS -Dos_sunos"
     CFLAGS="$CFLAGS -Dos_sunos"
     ;;
   *)
-    LIBS="$LIBS -lm -lpthread"
     ;;
 esac
 
@@ -4299,162 +4293,6 @@ fi
 
 fi
 
-
-if test "$FLEX_LIBDIR" = "" ; then
-
-echo "$as_me:$LINENO: checking for yywrap in -lfl" >&5
-echo $ECHO_N "checking for yywrap in -lfl... $ECHO_C" >&6
-if test "${ac_cv_lib_fl_yywrap+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lfl  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char yywrap ();
-int
-main ()
-{
-yywrap ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_cxx_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_fl_yywrap=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_fl_yywrap=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_fl_yywrap" >&5
-echo "${ECHO_T}$ac_cv_lib_fl_yywrap" >&6
-if test $ac_cv_lib_fl_yywrap = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBFL 1
-_ACEOF
-
-  LIBS="-lfl $LIBS"
-
-else
-  { { echo "$as_me:$LINENO: error: Can't find flex library libfl. Must specify proper directory with --with-libfldir" >&5
-echo "$as_me: error: Can't find flex library libfl. Must specify proper directory with --with-libfldir" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-else
-    LIBS_HOLD=$LIBS
-    LIBS="-L$FLEX_LIBDIR"
-    echo "$as_me:$LINENO: checking for yywrap in -lfl" >&5
-echo $ECHO_N "checking for yywrap in -lfl... $ECHO_C" >&6
-if test "${ac_cv_lib_fl_yywrap+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lfl  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char yywrap ();
-int
-main ()
-{
-yywrap ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_cxx_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_fl_yywrap=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_fl_yywrap=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_fl_yywrap" >&5
-echo "${ECHO_T}$ac_cv_lib_fl_yywrap" >&6
-if test $ac_cv_lib_fl_yywrap = yes; then
-  LIBS="-L$FLEX_LIBDIR -lfl $LIBS_HOLD"
-else
-  { { echo "$as_me:$LINENO: error: No/invalid flex library found in ${FLEX_LIBDIR}" >&5
-echo "$as_me: error: No/invalid flex library found in ${FLEX_LIBDIR}" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-fi
 
 
 echo "$as_me:$LINENO: checking whether we can compile/link with \"$CXX $CXXFLAGS $LIBS\"" >&5
@@ -9254,6 +9092,7 @@ s,@MRNET_STARTUP_METHOD@,$MRNET_STARTUP_METHOD,;t t
 s,@CN_LDFLAGS@,$CN_LDFLAGS,;t t
 s,@SOFLAGS@,$SOFLAGS,;t t
 s,@C_AS_CPLUSPLUS@,$C_AS_CPLUSPLUS,;t t
+s,@LIBS_LIGHTWEIGHT@,$LIBS_LIGHTWEIGHT,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
