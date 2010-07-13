@@ -148,28 +148,25 @@ STD_TESTS_FE = $(BINDIR)/test_basic_FE \
                $(BINDIR)/test_arrays_FE \
                $(BINDIR)/test_NativeFilters_FE \
                $(BINDIR)/test_DynamicFilters_FE \
-               $(BINDIR)/test_HeteroFilters_FE \
-			   $(BINDIR)/test_MultStreams_FE
+               $(BINDIR)/test_MultStreams_FE
 
 STD_TESTS_BE = $(BINDIR)/test_basic_BE  \
                $(BINDIR)/microbench_BE \
                $(BINDIR)/test_arrays_BE \
                $(BINDIR)/test_NativeFilters_BE \
                $(BINDIR)/test_DynamicFilters_BE \
-               $(BINDIR)/test_HeteroFilters_BE \
-			   $(BINDIR)/test_MultStreams_BE
+               $(BINDIR)/test_MultStreams_BE
 
 STD_TESTS_FE_LIGHTWEIGHT = $(BINDIR)/test_basic_FE_lightweight \
-						   $(BINDIR)/test_arrays_FE_lightweight \
-						   $(BINDIR)/test_MultStreams_FE_lightweight
+                           $(BINDIR)/test_arrays_FE_lightweight \
+                           $(BINDIR)/test_MultStreams_FE_lightweight
 
 STD_TESTS_BE_LIGHTWEIGHT = $(BINDIR)/test_basic_BE_lightweight \
-						   $(BINDIR)/microbench_BE_lightweight \
-						   $(BINDIR)/test_arrays_BE_lightweight \
-						   $(BINDIR)/test_NativeFilters_BE_lightweight \
-						   $(BINDIR)/test_DynamicFilters_BE_lightweight \
-						   $(BINDIR)/test_HeteroFilters_BE_lightweight \
-						   $(BINDIR)/test_MultStreams_BE_lightweight
+                           $(BINDIR)/microbench_BE_lightweight \
+                           $(BINDIR)/test_arrays_BE_lightweight \
+                           $(BINDIR)/test_NativeFilters_BE_lightweight \
+                           $(BINDIR)/test_DynamicFilters_BE_lightweight \
+                           $(BINDIR)/test_MultStreams_BE_lightweight
 
 STD_TESTS = ${STD_TESTS_FE} ${STD_TESTS_BE}
 
