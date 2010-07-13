@@ -32,6 +32,14 @@ void yyerror(const char *s);
 #define YYDEBUG 1
 extern int lineNum;
 
+#if YYBYACC			/* Make sure byacc defines MRN::mrnparse */
+int mrnparse();
+#ifdef yyparse
+#undef yyparse
+#endif
+#define yyparse MRN::mrnparse
+#endif
+
 %}
 
 %union {
@@ -51,7 +59,8 @@ config: line config
 | line
 {
     if(potential_root.size() != 1){
-	    fprintf(stderr, "graph is not connected\n");
+        fprintf(stderr, "graph is not connected, found %d potential roots\n",
+                potential_root.size());
         YYABORT;
     }
     parsed_graph->set_Root( *potential_root.begin() );
@@ -93,8 +102,11 @@ hosts: hosts host
 
 host: HOSTNAME COLON MRN_UINT
 {
-    if( !parsed_graph )
+    if( !parsed_graph ){
+        hostlist.clear(); 
+        potential_root.clear();
         parsed_graph = new ParsedGraph;
+    }
 
     ParsedGraph::Node * cur_node = parsed_graph->find_Node($1, $3);
     if(cur_node == NULL){
@@ -120,3 +132,7 @@ void yyerror(const char * /* s */)
 }
 
 } // namespace MRN
+
+#if YYBYACC			/* Make sure byacc uses the MRN namespace */
+using namespace MRN;
+#endif
