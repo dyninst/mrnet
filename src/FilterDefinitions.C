@@ -1261,7 +1261,6 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
 
             Rank rank = (*map_iter).first;
             if( net->node_Failed( rank ) ) {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? Yes!!\n", rank ));
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
                                        rank ));
@@ -1285,8 +1284,16 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
 
     //2. Place input packets
     for( unsigned int i=0; i < ipackets.size(); i++ ) {
+
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
-        map_iter = state->packets_by_rank.find( cur_inlet_rank );
+
+        //special case for back-end synchronization; packets have unknown inlet
+        if( cur_inlet_rank == UnknownRank ) {
+            if( ipackets.size() == 1 ) {
+                opackets.push_back( ipackets[i] );
+                return;
+            }
+        }
 
         if( net->node_Failed( cur_inlet_rank ) ) {
             //Drop packets from failed node
@@ -1294,6 +1301,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
         }
 
         //Insert packet into map
+        map_iter = state->packets_by_rank.find( cur_inlet_rank );
 
         //Allocate new slot if necessary
         if( map_iter == state->packets_by_rank.end() ) {
@@ -1391,7 +1399,8 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     }
     if( timeout_ms == 0 ) {
 	 opackets = ipackets;
-	 return;
+	 mrn_dbg( 3, mrn_printf(FLF, stderr, "No timeout specified, pushing all inputs\n"));
+         return;
     }
     
     //1. Setup/Recover Filter State
@@ -1417,7 +1426,6 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
             Rank rank = map_iter->first;
             if( net->node_Failed( rank ) ) {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? Yes!!\n", rank ));
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
                                        rank ));
@@ -1442,7 +1450,19 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     for( unsigned int i=0; i < ipackets.size(); i++ ) {
 
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
-        map_iter = state->packets_by_rank.find( cur_inlet_rank );
+
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "Placing packet[%d] from node[%d]\n",
+                               i, cur_inlet_rank ));
+
+        //special case for back-end synchronization; packets have unknown inlet
+        if( cur_inlet_rank == UnknownRank ) {
+            if( ipackets.size() == 1 ) {
+                opackets.push_back( ipackets[i] );
+                mrn_dbg( 3, mrn_printf(FLF, stderr,
+                                       "pushing locally sourced packet\n"));
+                return;
+            }
+        }
 
         if( net->node_Failed( cur_inlet_rank ) ) {
             //Drop packets from failed node
@@ -1450,6 +1470,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         }
 
         //Insert packet into map (allocate new slot if necessary)
+        map_iter = state->packets_by_rank.find( cur_inlet_rank );
         if( map_iter == state->packets_by_rank.end() ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "Allocating new map slot for node[%d] ...\n",
