@@ -106,7 +106,8 @@ int main( int argc, char *argv[] ) {
     MPI_Finalize();
 
     // FE delete of the network will cause us to exit, wait for it
-    sleep(60);
+    net->waitfor_ShutDown();
+    delete net;
 
     return 0;
 }
