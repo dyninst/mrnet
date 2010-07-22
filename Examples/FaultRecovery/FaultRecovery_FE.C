@@ -5,7 +5,7 @@
 
 #include "mrnet/MRNet.h"
 #include "FaultRecovery.h"
-#include <bitset>
+
 #include <iostream>
 #include <string>
 using namespace std;
@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 {
     unsigned int min_val=0;
     unsigned int max_val=0;
-    unsigned int bits_val;
+    unsigned long bits_val;
     int tag, retval;
     PacketPtr p;
 
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     // Broadcast a control message to back-ends to send us "num_iters"
     // waves of integers
     tag = PROT_START;
-    unsigned int num_iters=50;
+    unsigned int num_iters=10;
     if( add_stream->send( tag, "%ud", num_iters ) == -1 ){
         fprintf( stderr, "stream::send() failure\n");
         return -1;
@@ -93,11 +93,11 @@ int main(int argc, char **argv)
             return -1;
         }
         assert( tag == PROT_WAVE );
-        if( p->unpack( "%ud %ud %ud", &bits_val, &max_val, &min_val ) == -1 ){
+        if( p->unpack( "%uld %ud %ud", &bits_val, &max_val, &min_val ) == -1 ){
             fprintf( stderr, "stream::unpack() failure\n");
             return -1;
         }
-        fprintf(stdout, "FE: min %u max %u bits %u\n", min_val, max_val, bits_val);
+        fprintf(stdout, "FE: min %u max %u bits %lu\n", min_val, max_val, bits_val);
         fflush(stdout);
     }
     delete add_stream;
@@ -169,10 +169,10 @@ int main(int argc, char **argv)
          fprintf( stderr, "stream::recv() failure\n");
          return -1;
     }
-    unsigned int good_pct;
-    p->unpack("%ud", &good_pct);
-    string bits = bitset<10>(bits_val).to_string<char,char_traits<char>,allocator<char> >();
-    string good = bitset<10>(good_pct).to_string<char,char_traits<char>,allocator<char> >();
+    unsigned long good_pct;
+    p->unpack("%uld", &good_pct);
+    string bits = fr_bin_set(bits_val).to_string<char,char_traits<char>,allocator<char> >();
+    string good = fr_bin_set(good_pct).to_string<char,char_traits<char>,allocator<char> >();
     fprintf(stdout, "FE: check of PERCENTILES ");
     if( good_pct != bits_val ) fprintf(stdout, "failed, filter %s != check %s\n", 
                                        bits.c_str(), good.c_str());
