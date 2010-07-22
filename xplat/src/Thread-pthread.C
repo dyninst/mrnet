@@ -7,14 +7,45 @@
 #include <pthread.h>
 #include "xplat/Thread.h"
 
+#include <signal.h>
 
 namespace XPlat
 {
 
-int
-Thread::Create( Func func, void* data, Id* id )
+struct sigblock_wrapper_data_t
 {
-    return pthread_create( (pthread_t*)id, NULL, func, data );
+    Thread::Func func;
+    void* data;
+    
+    sigblock_wrapper_data_t( Thread::Func ifunc, void* idata )
+        : func(ifunc), data(idata)
+    {}
+};
+    
+static void* 
+sigblock_wrapper_func( void *idata )
+{
+    sigblock_wrapper_data_t *wrapper_data = (sigblock_wrapper_data_t *) idata;
+    Thread::Func func = wrapper_data->func;
+    void* data = wrapper_data->data;
+    delete wrapper_data;
+    wrapper_data = 0;
+    
+    sigset_t set;
+    sigemptyset( &set );
+    sigaddset( &set, SIGCHLD );
+    sigaddset( &set, SIGALRM );
+    sigaddset( &set, SIGINT );
+    sigaddset( &set, SIGQUIT );
+    pthread_sigmask( SIG_BLOCK, &set, 0 );
+    return (*func)( data );
+}
+
+int
+Thread::Create( Func ifunc, void* idata, Id* id )
+{
+    sigblock_wrapper_data_t* args = new sigblock_wrapper_data_t( ifunc, idata );
+    return pthread_create( (pthread_t*)id, NULL, sigblock_wrapper_func, (void*)args );
 }
 
 
@@ -40,9 +71,9 @@ Thread::Cancel( Thread::Id iid )
 }
 
 void
-Thread::Exit( void* val )
+Thread::Exit( void* ival )
 {
-    pthread_exit( val );
+    pthread_exit( ival );
 }
 
 } // namespace XPlat
