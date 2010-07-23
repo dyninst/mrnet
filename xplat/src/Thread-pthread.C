@@ -31,13 +31,18 @@ sigblock_wrapper_func( void *idata )
     delete wrapper_data;
     wrapper_data = 0;
     
-    sigset_t set;
-    sigemptyset( &set );
-    sigaddset( &set, SIGCHLD );
-    sigaddset( &set, SIGALRM );
-    sigaddset( &set, SIGINT );
-    sigaddset( &set, SIGQUIT );
-    pthread_sigmask( SIG_BLOCK, &set, 0 );
+    // Block all signals execpt for machine faults and other synchronous exceptions
+    sigset_t block_set;
+    sigfillset( &block_set );
+    sigdelset( &block_set, SIGTRAP );
+    sigdelset( &block_set, SIGSEGV );
+    sigdelset( &block_set, SIGBUS );
+    sigdelset( &block_set, SIGILL );
+    sigdelset( &block_set, SIGSYS );
+    sigdelset( &block_set, SIGPROF );
+    sigdelset( &block_set, SIGTERM );
+    pthread_sigmask( SIG_BLOCK, &block_set, 0 );
+
     return (*func)( data );
 }
 
