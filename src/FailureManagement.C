@@ -13,6 +13,7 @@
 #include "PeerNode.h"
 #include "utils.h"
 #include "xplat/Thread.h"
+#include "xplat/SocketUtils.h"
 
 using namespace std;
 
@@ -190,7 +191,7 @@ int inject_Failure( NetworkTopology::Node * inode )
 
     //TODO: get ack for better timing
     failure_event->_timer.start();
-    close( sock_fd );
+    XPlat::SocketUtils::Close( sock_fd );
 
     mrn_dbg_func_end();
     return 0;
@@ -280,7 +281,7 @@ void waitFor_FailureRecoveryReports( int isock_fd )
             }
             //failure_event->_timer.stop();
         }
-        close( connected_sock ); //transient connections
+        XPlat::SocketUtils::Close( connected_sock ); //transient connections
     } while ( !OrphanRanksToReport.empty() );
 
     //char statfile[256];

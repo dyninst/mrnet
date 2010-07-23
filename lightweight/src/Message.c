@@ -340,11 +340,14 @@ int MRN_write(Network_t* net, int ifd, /* const */ void *ibuf, int ibuf_len)
 
     int ret;
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "%d, %p, %d\n", ifd, ibuf, ibuf_len));
+    // don't generate SIGPIPE
+    int flags = MSG_NOSIGNAL;
 
-    ret = send(ifd, (char*)ibuf, ibuf_len, 0);
+    mrn_dbg(5, mrn_printf(FLF, stderr, "%d, %p, %d\n", ifd, ibuf, ibuf_len));
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "send => %d\n", ret));
+    ret = send(ifd, (char*)ibuf, ibuf_len, flags);
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "send => %d\n", ret));
   
     return ret;
 
@@ -366,9 +369,10 @@ int MRN_read(Network_t* net, int fd, void *buf, int count)
             }
       
             else {
-                mrn_dbg(3,mrn_printf(FLF, stderr,
+                mrn_dbg(3, mrn_printf(FLF, stderr,
                                      "premature return from read(). Got %d of %d" 
-                                     " bytes. error: %s\n", bytes_recvd, count, strerror(errno)));
+                                     " bytes. error: %s\n", 
+                                      bytes_recvd, count, strerror(errno)));
                 return -1;
             }
         }
@@ -385,9 +389,11 @@ int MRN_read(Network_t* net, int fd, void *buf, int count)
             else {
                 // bytes_recvd is either count, or error other than "EINTR" has occurred
                 if (bytes_recvd != count) {
-                    mrn_dbg(3, mrn_printf(FLF, stderr, "premature return from read(). %d of %d bytes. errno: %s\n", bytes_recvd, count, strerror(errno)));
+                    mrn_dbg(3, mrn_printf(FLF, stderr, 
+                                          "premature return from read(). %d of %d bytes. errno: %s\n", 
+                                          bytes_recvd, count, strerror(errno)));
                 }
-                mrn_dbg(5, mrn_printf(FLF, stderr, "MRN_read returning %d\n", bytes_recvd));
+                mrn_dbg(5, mrn_printf(FLF, stderr, "returning %d\n", bytes_recvd));
                 return bytes_recvd;
             }
         }

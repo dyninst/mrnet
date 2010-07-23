@@ -24,6 +24,7 @@
 
 #include "mrnet/MRNet.h"
 #include "xplat/NetUtils.h"
+#include "xplat/SocketUtils.h"
 #include "xplat/Thread.h"
 using namespace XPlat;
 
@@ -74,10 +75,8 @@ void init_local( void )
 
         if( fd == -1 ) break;
     } 
-    if( fd > 2 ) close(fd);
+    if( fd > 2 ) XPlat::SocketUtils::Close(fd);
 
-    // ignore SIGPIPE
-    signal( SIGPIPE, SIG_IGN );
 #else
     // init Winsock
     WORD version = MAKEWORD(2, 2); /* socket version 2.2 supported by all modern Windows */
@@ -127,10 +126,12 @@ Network::~Network( void )
 
 void Network::shutdown_Network( void )
 {
-    if( ! _was_shutdown ) {
+    if( ! is_ShutDown() ) {
 
+        _shutdown_sync.Lock();
         _was_shutdown = true;
-
+        _shutdown_sync.Unlock();
+    
         if( is_LocalNodeFrontEnd() ) {
 
             if( ( _network_topology != NULL ) && 
@@ -1538,10 +1539,10 @@ void Network::close_PeerNodeConnections( void )
                                   cur_node->_event_sock_fd,
                                   cur_node->get_HostName().c_str(),
                                   cur_node->get_Rank() ));
-            if( close( cur_node->_data_sock_fd ) == -1 ) {
+            if( XPlat::SocketUtils::Close( cur_node->_data_sock_fd ) == -1 ) {
                 perror("close(data_fd)");
             }
-            if( close( cur_node->_event_sock_fd ) == -1 ){
+            if( XPlat::SocketUtils::Close( cur_node->_event_sock_fd ) == -1 ){
                 perror("close(event_fd)");
             }
         }
@@ -1550,10 +1551,10 @@ void Network::close_PeerNodeConnections( void )
 
     if( is_LocalNodeChild() ) {
         _parent_sync.Lock();
-        if( close( _parent->_data_sock_fd ) == -1 ) {
+        if( XPlat::SocketUtils::Close( _parent->_data_sock_fd ) == -1 ) {
             perror("close(data_fd)");
         }
-        if( close( _parent->_event_sock_fd ) == -1 ){
+        if( XPlat::SocketUtils::Close( _parent->_event_sock_fd ) == -1 ){
             perror("close(event_fd)");
         }
         _parent_sync.Unlock();

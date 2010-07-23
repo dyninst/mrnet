@@ -179,6 +179,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n",
                                        host, port,
                                        XPlat::Error::GetErrorString( err ).c_str()) );
+                XPlat::SocketUtils::Close( sock );
                 return -1;
             }
 
@@ -197,22 +198,22 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
         mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n",
                                host, port,
 			       XPlat::Error::GetErrorString( err ).c_str() ) );
+        XPlat::SocketUtils::Close( sock );
         return -1;
     }
 
-      /* Code for closing descriptor on exec*/
-      int fdflag = fcntl(sock, F_GETFD );
-      if( fdflag == -1 )
-      {
-          // failed to retrieve the socket  descriptor flags
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );
-      }
-      int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
-      if( fret == -1 )
-      {
-          // we failed to set the socket descriptor flags
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
-      }
+    // Close socket on exec
+    int fdflag = fcntl(sock, F_GETFD );
+    if( fdflag == -1 ) {
+        // failed to retrieve the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );
+    }
+    int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
+    if( fret == -1 ) {
+        // we failed to set the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+    }
+
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
     int optVal = 1;
@@ -234,7 +235,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
 
 int bindPort( int *sock_in, Port *port_in )
 {
-    int err, soVal, soRet;
+    int err;
     int sock = *sock_in;
     Port port;
 
@@ -259,20 +260,30 @@ int bindPort( int *sock_in, Port *port_in )
         return -1;
     }
 
+    // Close socket on exec
+    int fdflag = fcntl(sock, F_GETFD );
+    if( fdflag == -1 ) {
+        // failed to retrieve the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );     
+    }
+    int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
+    if( fret == -1 ) {
+        // failed to set the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+    }
+
+#ifndef os_windows
     // set the socket so that it does not hold onto its port after
     // the process exits (needed because on at least some platforms we
     // use well-known ports when connecting sockets)
-    soVal = 1;
-#ifndef os_windows
-    soRet = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, 
-                        (const char*)&soVal, sizeof(soVal) );
+    int soVal = 1;
+    int soRet = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, 
+                            (const char*)&soVal, sizeof(soVal) );
 
     if( soRet < 0 ) {
         err = XPlat::NetUtils::GetLastError();
-        perror( "setsockopt()" );
         mrn_dbg( 1, mrn_printf(FLF, stderr, "setsockopt() failed: %s\n",
                                        XPlat::Error::GetErrorString( err ).c_str() ) );
-        return -1;
     }
 #endif
 
@@ -287,6 +298,7 @@ int bindPort( int *sock_in, Port *port_in )
             perror( "bind()" );
             mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to static port %d failed: %s\n",
                                    port, XPlat::Error::GetErrorString( err ).c_str() ) );
+            XPlat::SocketUtils::Close( sock );
             return -1;
         }
     }
@@ -304,30 +316,20 @@ int bindPort( int *sock_in, Port *port_in )
             else {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to dynamic port %d failed: %s\n",
                                        port, XPlat::Error::GetErrorString( err ).c_str() ) );
+                XPlat::SocketUtils::Close( sock );
                 return -1;
             }
         }
     }
 
     if( listen( sock, 64 ) == -1 ) {
-        perror( "listen()" );
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "%s", "" ) );
+        err = XPlat::NetUtils::GetLastError();
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
+                                       XPlat::Error::GetErrorString( err ).c_str() ) );
+        XPlat::SocketUtils::Close( sock );
         return -1;
     }
 
-      /* Code for closing descriptor on exec*/
-      int fdflag = fcntl(sock, F_GETFD );
-      if( fdflag == -1 )
-      {
-          // failed to retrieve the socket  descriptor flags
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );     
-      }
-      int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
-      if( fret == -1 )
-      {
-          // we failed to set the socket descriptor flags
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
-      }
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
     int optVal = 1;
@@ -375,19 +377,18 @@ int getSocketConnection( int bound_socket )
         }
     } while ( ( connected_socket == -1 ) && ( errno == EINTR ) );
 
-      /* Code for closing descriptor on exec*/
-      int fdflag = fcntl(connected_socket, F_GETFD );
-      if( fdflag == -1 )
-      {
-          // failed to retrieve the socket  descriptor flags 
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );    
-      }
-      int fret = fcntl( connected_socket, F_SETFD, fdflag | FD_CLOEXEC );
-      if( fret == -1 )
-      {
-          // we failed to set the socket descriptor flags
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
-      }
+    // Close socket on exec
+    int fdflag = fcntl(connected_socket, F_GETFD );
+    if( fdflag == -1 ) {
+        // failed to retrieve the socket descriptor flags 
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );    
+    }
+    int fret = fcntl( connected_socket, F_SETFD, fdflag | FD_CLOEXEC );
+    if( fret == -1 ) {
+        // we failed to set the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+    }
+
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
     int optVal = 1;

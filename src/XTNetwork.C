@@ -20,6 +20,7 @@
 
 #include "mrnet/MRNet.h"
 #include "xplat/Process.h"
+#include "xplat/SocketUtils.h"
 
 extern "C"
 {
@@ -197,7 +198,7 @@ XTNetwork::PropagateTopologyOffNode( Port topoPort,
                     continue;
                 }
                 PropagateTopology( childTopoSocket, topology, childRank );
-                close( childTopoSocket );
+                XPlat::SocketUtils::Close( childTopoSocket );
             }
             hostsSeen.insert( childHost );
         }
@@ -275,9 +276,9 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
     Rank myRank;
     SerialGraph* topology = GetTopology( topoFd, myRank );
     assert( topology != NULL );
-    close( topoFd );
+    XPlat::SocketUtils::Close( topoFd );
     if( listeningTopoSocket != -1 )
-        close( listeningTopoSocket );
+        XPlat::SocketUtils::Close( listeningTopoSocket );
 
     TopologyPosition* my_tpos = NULL;
 
@@ -331,7 +332,7 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
        
                     // deliver the full topology
                     PropagateTopology( currTopoFd, topology, tpos->myRank );
-                    close( currTopoFd );
+                    XPlat::SocketUtils::Close( currTopoFd );
                 }
 
                 delete tpos;
@@ -431,7 +432,7 @@ XTNetwork::SpawnIN( const char* mrn_commnode_path,
         // we are the parent
         // close our read end of the pipe
         mrn_dbg(3, mrn_printf( FLF, stderr, "parent closing %d, returning %d\n", topoFds[0], topoFds[1] ));
-        close( topoFds[0] );
+        XPlat::SocketUtils::Close( topoFds[0] );
 
         // return the write end of the pipe
         *topoFd = topoFds[1];
@@ -441,7 +442,7 @@ XTNetwork::SpawnIN( const char* mrn_commnode_path,
         // we are the child
 
         mrn_dbg(3, mrn_printf( FLF, stderr, "child closing %d\n", topoFds[1] ));
-        close( topoFds[1] );
+        XPlat::SocketUtils::Close( topoFds[1] );
 
         // we need to become another IN process
         // we also need to pass the fd of the topology 
