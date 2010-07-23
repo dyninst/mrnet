@@ -21,7 +21,6 @@
 #include "xplat/NetUtils.h"
 #include "xplat/SocketUtils.h"
 
-
 using namespace std;
 
 namespace MRN {
@@ -304,19 +303,22 @@ void * EventDetector::main( void* iarg )
     }
     
     //set up debugging stuff
+    Rank myrank = net->get_LocalRank();
     string prettyHost;
     XPlat::NetUtils::GetHostName( net->get_LocalHostName(), prettyHost );
     std::ostringstream namestr;
     namestr << "EDT("
             << prettyHost
             << ':'
-            << net->get_LocalRank()
+            << myrank
             << ')'
             << std::ends;
 
     tsd_t * local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId();
     local_data->thread_name = strdup( namestr.str().c_str() );
+    local_data->process_rank = myrank;
+    local_data->node_type = UNKNOWN_NODE;
 
     int status;
     if( (status = tsd_key.Set( local_data )) != 0){
@@ -818,7 +820,8 @@ int EventDetector::recover_off_FromParentFailure( )
 {
     _network->get_ParentNode()->mark_Failed();
     Rank fail_rank = _network->get_ParentNode()->get_Rank();
-    _network->remove_Node( fail_rank);  
+    _network->remove_Node( fail_rank);
+    return 0;
 }
 
 };

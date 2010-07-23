@@ -56,7 +56,7 @@ inline int gettimeofday( struct timeval *tv, struct timezone *tz )
 #include <vector>
 #include <string>
 
-#define MRN_RELEASE_DATE_SECS 1208100000
+#define MRN_RELEASE_DATE_SECS 1277800000
 
 using namespace MRN;
 namespace MRN
@@ -85,10 +85,19 @@ struct ltstr
 
 extern XPlat::TLSKey tsd_key;
 
+typedef enum {
+     UNKNOWN_NODE = 0,
+     FE_NODE,
+     BE_NODE,
+     CP_NODE
+} node_type_t;
+
 class tsd_t {
  public:
     XPlat::Thread::Id thread_id;
     const char *thread_name;
+    Rank process_rank;
+    node_type_t node_type;
 };
 
 #if defined(DEBUG_MRNET)
@@ -105,7 +114,7 @@ do{ \
     if( MRN::CUR_OUTPUT_LEVEL >= x ){           \
         y;                                      \
     }                                           \
-}while(0);
+}while(0)
 
 
 //FLF is used to call mrn_printf(FLF, ...)
@@ -122,12 +131,12 @@ int mrn_printf( const char *file, int line, const char * func, FILE * fp,
 #define mrn_dbg_func_end()                    \
 do { \
     mrn_dbg(3, MRN::mrn_printf(FLF, stderr, "Function exit\n"));    \
-} while(0);
+} while(0)
 
 #define mrn_dbg_func_begin()                    \
 do { \
     mrn_dbg(3, MRN::mrn_printf(FLF, stderr, "Function start ...\n")); \
-} while(0);
+} while(0)
 
 /* struct timeval/double conversion */
 double tv2dbl( struct timeval tv);
@@ -152,8 +161,6 @@ class Timer{
     static bool first_time;
 };
 
-Rank getrank();
-void setrank( Rank ir );
 bool isBigEndian();
 void endianTest();
 

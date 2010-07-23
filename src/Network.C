@@ -47,7 +47,6 @@ int CUR_OUTPUT_LEVEL=1;
 const Port UnknownPort = (Port)-1;
 const Rank UnknownRank = (Rank)-1;
 
-const char *node_type="";
 const char *empty_str="";
 
 void set_OutputLevelFromEnvironment( void );
@@ -248,8 +247,6 @@ void Network::init_FrontEnd( const char * itopology,
                              bool irank_backends,
                              bool iusing_mem_buf )
 {
-    node_type="fe";
-
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
 
@@ -266,9 +263,7 @@ void Network::init_FrontEnd( const char * itopology,
 
     parsed_graph->assign_NodeRanks( irank_backends );
 
-    //TLS: setup thread local storage for frontend
     Rank rootRank = parsed_graph->get_Root( )->get_Rank();
-    setrank(rootRank);
     _local_rank = rootRank;
 
     string prettyHost, rootHost;
@@ -292,10 +287,14 @@ void Network::init_FrontEnd( const char * itopology,
         return;
     }
 
+    //TLS: setup thread local storage for frontend
     int status;
     tsd_t *local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId( );
     local_data->thread_name = strdup( nameStream.str().c_str() );
+    local_data->process_rank = _local_rank;
+    local_data->node_type = FE_NODE;
+
     status = tsd_key.Set( local_data );
 
     if( status != 0 ) {
@@ -355,15 +354,11 @@ void Network::init_FrontEnd( const char * itopology,
 void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
                            const char *imyhostname, Rank imyrank )
 {
-    node_type="be";
-
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
 
-    setrank( imyrank );
     _local_rank = imyrank;
 
-    //TLS: setup thread local storage for backend
     string prettyHost, myhostname;
     XPlat::NetUtils::GetNetworkName( imyhostname, myhostname );
     XPlat::NetUtils::GetHostName( myhostname, prettyHost );
@@ -375,10 +370,13 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
             << ")"
             << std::ends;
 
+    //TLS: setup thread local storage for backend
     int status;
     tsd_t *local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId();
     local_data->thread_name = strdup( nameStream.str().c_str() );
+    local_data->process_rank = _local_rank;
+    local_data->node_type = BE_NODE;
     if( ( status = tsd_key.Set( local_data ) ) != 0 ) {
         //TODO: add event to notify upstream
         error( ERR_SYSTEM, imyrank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
@@ -401,13 +399,9 @@ void Network::init_InternalNode( const char* iphostname,
                                  int idataSocket,
                                  Port idataPort )
 {
-    node_type="comm";
-
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
 
-    //TLS: set up thread name
     _local_rank = imyrank;
-    setrank( imyrank );
 
     string prettyHost, myhostname;
     XPlat::NetUtils::GetNetworkName( imyhostname, myhostname );
@@ -420,10 +414,13 @@ void Network::init_InternalNode( const char* iphostname,
             << ")"
             << std::ends;
 
+    //TLS: set up thread name
     int status;
     tsd_t *local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId();
     local_data->thread_name = strdup( nameStream.str().c_str() );
+    local_data->process_rank = _local_rank;
+    local_data->node_type = CP_NODE;    
     if( ( status = tsd_key.Set( local_data ) ) != 0 )
     {
         //TODO: add event to notify upstream

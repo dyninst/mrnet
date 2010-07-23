@@ -12,7 +12,6 @@
 #include "PeerNode.h"
 
 #include "mrnet/MRNet.h"
-#include "xplat/Process.h"
 #include "xplat/SocketUtils.h"
 #include "xplat/Error.h"
 #include "xplat/NetUtils.h"
@@ -221,6 +220,8 @@ void * PeerNode::recv_thread_main( void* iargs )
     tsd_t * local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId();
     local_data->thread_name = strdup( namestr.str().c_str() );
+    local_data->process_rank = rank;
+    local_data->node_type = UNKNOWN_NODE;
     if( (status = tsd_key.Set(local_data)) != 0 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
                    strerror(status)));
@@ -285,6 +286,8 @@ void * PeerNode::send_thread_main( void* iargs )
     tsd_t * local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId();
     local_data->thread_name = strdup( namestr.str().c_str() );
+    local_data->process_rank = rank;
+    local_data->node_type = UNKNOWN_NODE;
     if( (status = tsd_key.Set(local_data)) != 0 ) {
         mrn_dbg(1, mrn_printf(0,0,0, stderr, "XPlat::TLSKey::Set(): %s\n",
                               strerror(status))); 

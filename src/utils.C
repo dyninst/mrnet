@@ -43,8 +43,6 @@ static XPlat::Mutex mrn_printf_mutex;
 namespace MRN
 {
 
-static Rank myrank=UnknownRank;
-
 std::string LocalHostName="";
 std::string LocalDomainName="";
 std::string LocalNetworkName="";
@@ -424,11 +422,62 @@ int getPortFromSocket( int sock, Port *port )
     return 0;
 }
 
+FILE* mrn_printf_setup( int rank, node_type_t type )
+{
+    FILE* fp = NULL;
+    std::string this_host;
+    struct stat s;
+    char node_type[3];
+    char host[256];
+    char logdir[256];
+    char logfile[512];
+    logfile[0] = '\0';
+
+    switch( type ) {
+    case FE_NODE:
+        sprintf( node_type, "FE" );
+        break;
+    case BE_NODE:
+        sprintf( node_type, "BE" );
+        break;
+    case CP_NODE:
+        sprintf( node_type, "CP" );
+        break;
+    default:
+        sprintf( node_type, "xx" );
+        break;
+    };
+
+    const char* home = getenv("HOME");
+
+    XPlat::NetUtils::GetLocalHostName(this_host);
+    strncpy( host, this_host.c_str(), 256 );
+    host[255] = '\0';
+
+    // find log directory
+    const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
+    if( varval != NULL ) {
+        if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
+            snprintf( logdir, sizeof(logdir), "%s", varval );
+    }
+    else if( home != NULL ) {
+        snprintf( logdir, sizeof(logdir), "%s/mrnet-log", home );
+        if( ! ((stat(logdir, &s) == 0) && (S_IFDIR & s.st_mode)) )
+            snprintf( logdir, sizeof(logdir), "/tmp" );
+    }
+    // set file name format
+    int pid = XPlat::Process::GetProcessId();
+    snprintf( logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
+              logdir, node_type, host, rank, pid );
+
+    fp = fopen( logfile, "w" );
+    return fp;
+}
+
 int mrn_printf( const char *file, int line, const char * func,
                 FILE * ifp, const char *format, ... )
 {
     static FILE * fp = NULL;
-    extern const char *node_type;
     int retval;
     va_list arglist;
 
@@ -437,62 +486,41 @@ int mrn_printf( const char *file, int line, const char * func,
 
     mrn_printf_mutex.Lock();
 
-    int rank = getrank();
-
-    if( (fp == NULL) && (rank != UnknownRank) ) {
-
-        FILE * tmp_fp = NULL;
-        std::string this_host;
-        struct stat s;
-        char host[256];
-        char logdir[256];
-        char logfile[512];
-        logfile[0] = '\0';
-
-        const char* home = getenv("HOME");
-
-        XPlat::NetUtils::GetLocalHostName(this_host);
-        strncpy( host, this_host.c_str(), 256 );
-        host[255] = '\0';
-
-        // find log directory
-        const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
-        if( varval != NULL ) {
-            if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
-                snprintf( logdir, sizeof(logdir), "%s", varval );
-        }
-        else if( home != NULL ) {
-            snprintf( logdir, sizeof(logdir), "%s/mrnet-log", home );
-            if( ! ((stat(logdir, &s) == 0) && (S_IFDIR & s.st_mode)) )
-                snprintf( logdir, sizeof(logdir), "/tmp" );
-        }
-        // set file name format
-        snprintf( logfile, sizeof(logfile), "%s/%s_%s_%d",
-                  logdir, node_type, host, rank );
-        tmp_fp = fopen( logfile, "w" );
-	if( tmp_fp != NULL )
-            fp = tmp_fp;
+    // get thread info
+    XPlat::Thread::Id tid = -1;
+    const char* thread_name = NULL;
+    int rank = UnknownRank;
+    node_type_t node_type = UNKNOWN_NODE;
+    
+    tsd_t *tsd = ( tsd_t * )tsd_key.Get();
+    if( tsd != NULL ) {
+        tid = tsd->thread_id;
+        thread_name = tsd->thread_name;
+        rank = tsd->process_rank;
+        node_type = tsd->node_type;
     }
+
+    // try to open log file
+    if( (fp == NULL) && (rank != UnknownRank) )
+        fp = mrn_printf_setup( rank, node_type );
 
     FILE *f = fp;
     if( f == NULL ) 
         f = ifp;
 
-    if( file ) {
-        // get thread name
-        const char *thread_name = NULL;
+    // print timestamp and thread info
+    fprintf( f, "%ld.%ld: %s(0x%lx): ", 
+             tv.tv_sec-MRN_RELEASE_DATE_SECS, tv.tv_usec,
+             ( thread_name != NULL ) ? thread_name : "<unknown thread>",
+             tid );
 
-        tsd_t *tsd = ( tsd_t * )tsd_key.Get();
-        if( tsd != NULL )
-            thread_name = tsd->thread_name;
-            
-        fprintf( f, "%ld.%ld: %s(0x%lx): %d %s: %s(): %d: ",
-                 tv.tv_sec-MRN_RELEASE_DATE_SECS, tv.tv_usec,
-                 ( thread_name != NULL ) ? thread_name : "<unknown thread>",
-                 XPlat::Thread::GetId(), XPlat::Process::GetProcessId(), 
-                 XPlat::PathUtils::GetFilename( file ).c_str(), func, line );
+    if( file ) {
+        // print file, function, and line info
+        fprintf( f, "%s[%d] %s() - ", 
+                 XPlat::PathUtils::GetFilename( file ).c_str(), line, func );
     }
 
+    // print message
     va_start( arglist, format );
     retval = vfprintf( f, format, arglist );
     va_end( arglist );
@@ -580,9 +608,6 @@ Timer::Timer( void ) {
 #endif
 
 }
-
-Rank getrank() {return myrank;}
-void setrank( Rank ir ) {myrank=ir;}
 
 bool isBigEndian() {
     unsigned int one = 1;
