@@ -162,7 +162,7 @@ bool EventDetector::remove_FD( int ifd )
 int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms, 
                               bool use_poll=true )
 {
-    int retval;
+    int retval, err;
     fd_set readfds;
 
     mrn_dbg( 5, mrn_printf(FLF, stderr,
@@ -174,6 +174,7 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
     if( use_poll ) { 
 
         retval = poll( _pollfds, _num_pollfds, timeout_ms );
+        err = errno;
         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "poll() returned %d\n", retval) );
     }
@@ -195,12 +196,13 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
         }
 
         retval = select( _max_fd+1, &readfds, NULL, NULL, tvp );
+        err = errno;
         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "select() returned %d\n", retval) );
 #ifndef os_windows
     }
 #endif
-    if( retval == -1 )
+    if( retval == -1 && err != EINTR )
         perror("select() or poll()");
 
     if( retval <= 0 )
@@ -414,7 +416,7 @@ void * EventDetector::main( void* iarg )
                     mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
                     continue;
                 } else {
-                    mrn_dbg(1, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
+                    mrn_dbg(5, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
                 }
 
                 packets.clear();
@@ -437,7 +439,7 @@ void * EventDetector::main( void* iarg )
                                               "Closing %d sockets\n",
                                               watch_list.size() ));
                         for( iter=watch_list.begin(); iter!=watch_list.end(); iter++ ) {
-                            mrn_dbg(1, mrn_printf(FLF, stderr,
+                            mrn_dbg(5, mrn_printf(FLF, stderr,
                                                   "Closing event socket: %d\n", *iter ));
                             char c = 1;
                             mrn_dbg(5, mrn_printf(FLF, stderr, "... writing \n"));
@@ -457,10 +459,10 @@ void * EventDetector::main( void* iarg )
                         return NULL;
 
                     case PROT_NEW_CHILD_FD_CONNECTION:
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION\n"));
+                        mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION\n"));
                         edt->add_FD(connected_sock);
                         watch_list.push_back( connected_sock );
-                        mrn_dbg( 1, mrn_printf(FLF, stderr,
+                        mrn_dbg(5, mrn_printf(FLF, stderr,
                                                "FD socket:%d added to list.\n",
                                                connected_sock));
                         
@@ -468,7 +470,7 @@ void * EventDetector::main( void* iarg )
                         break;
 
                     case PROT_NEW_CHILD_DATA_CONNECTION:
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_DATA_CONNECTION\n"));
+                        mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_DATA_CONNECTION\n"));
                         //get ParentNode obj. Try internal node, then FE
                         p = net->get_LocalParentNode();
                         assert(p);
@@ -482,7 +484,7 @@ void * EventDetector::main( void* iarg )
                         // NOTE: needed since back-ends are now threaded, and we can't
                         //       guarantee a packet containing this protocol message
                         //       won't arrive in a group with NEW_CHILD_DATA_CONNECTION
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
+                        mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
                         //get ParentNode obj. Try internal node, then FE
                         p = net->get_LocalParentNode();
                         assert(p);
@@ -493,9 +495,9 @@ void * EventDetector::main( void* iarg )
                         break;
 
                     default:
-                        mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                                               "### PROTOCOL ERROR: Unexpected tag %d ###\n",
-                                               cur_packet->get_Tag()));
+                        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                              "### PROTOCOL ERROR: Unexpected tag %d ###\n",
+                                              cur_packet->get_Tag()));
                         break;
                     }
                 }
@@ -513,7 +515,7 @@ void * EventDetector::main( void* iarg )
 		//fprintf(stdout,"Debug FR in main() : Recovering from parent failure\n");
                 if( net->recover_FromFailures() ) {
 
-                    mrn_dbg( 3, mrn_printf(FLF, stderr, "... recovering from parent failure\n"));
+                    mrn_dbg(3, mrn_printf(FLF, stderr, "... recovering from parent failure\n"));
                     edt->recover_FromParentFailure();
 
                     //add new parent sock to monitor for failure
@@ -521,15 +523,15 @@ void * EventDetector::main( void* iarg )
                     parent_sock = parent_node->get_EventSocketFd();
                     edt->add_FD(parent_sock);
                     watch_list.push_back( parent_sock );
-                    mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                           "Parent socket:%d added to list.\n", parent_sock));
+                    mrn_dbg(5, mrn_printf(FLF, stderr,
+                                          "Parent socket:%d added to list.\n", parent_sock));
 			                       
                 }
                 else {
 			
                     edt->recover_off_FromParentFailure();
 
-		    mrn_dbg( 3, mrn_printf(FLF, stderr, "NOT recovering from parent failure ...\n"));
+		    mrn_dbg(3, mrn_printf(FLF, stderr, "NOT recovering from parent failure ...\n"));
                     if( watch_list.size() == 0 ) {
                         mrn_dbg(5, mrn_printf(FLF, stderr, "No more sockets to watch, bye!\n"));
                         return NULL;
