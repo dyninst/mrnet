@@ -169,13 +169,9 @@ int NetUtils::GetNetworkAddress( std::string ihostname, NetworkAddress & oaddr )
 NetUtils::NetworkAddress::NetworkAddress( in_addr_t inaddr )
     : isv6(false), ip4addr( inaddr )
 {
-    // find the dotted decimal form of the address
-
-    // get address in network byte order
-    in_addr_t nboaddr = htonl( ip4addr );
-
-    // access the address as an array of bytes
-    const unsigned char* cp = (const unsigned char*)&nboaddr;
+    // find the dotted decimal form of the address by
+    // accessing the address as an array of bytes
+    const unsigned char* cp = (const unsigned char*)&ip4addr;
 
     std::ostringstream astr;
     astr << (unsigned int)cp[0] 
@@ -189,9 +185,8 @@ NetUtils::NetworkAddress::NetworkAddress( in_addr_t inaddr )
 // Note: does not use inet_ntoa or similar functions because they are not
 // necessarily thread safe, or not available on all platforms of interest.
 NetUtils::NetworkAddress::NetworkAddress( struct sockaddr_in6* inaddr )
-    : isv6(true), ip4addr(ntohl(INADDR_NONE))
+    : isv6(true), ip4addr(INADDR_NONE)
 {
-#ifndef os_windows
     if( NULL != inaddr ) {
         memcpy( (void*)&ip6addr,
                 (void*)&inaddr->sin6_addr,
@@ -207,7 +202,6 @@ NetUtils::NetworkAddress::NetworkAddress( struct sockaddr_in6* inaddr )
     }
     hostname[63] = '\0';
     str = hostname;
-#endif
 }
 
 int NetUtils::GetNumberOfNetworkInterfaces( void )
@@ -263,7 +257,7 @@ int NetUtils::FindNetworkAddress( std::string ihostname, NetUtils::NetworkAddres
             struct in_addr in;
 	    struct sockaddr_in *sinptr = ( struct sockaddr_in * )(addrs_iter->ai_addr);
 	    memcpy( &in.s_addr, ( void * )&( sinptr->sin_addr ), sizeof( in.s_addr ) );
-	    oaddr = NetworkAddress( ntohl(in.s_addr) );
+	    oaddr = NetworkAddress( in.s_addr );
 	    break;
 	}
 	addrs_iter = addrs_iter->ai_next;

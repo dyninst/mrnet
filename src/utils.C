@@ -37,7 +37,6 @@ using namespace XPlat;
 # include <sys/sockio.h>         //only for solaris
 #endif // defined(os_solaris)
 
-static XPlat::Mutex gethostbyname_mutex;
 static XPlat::Mutex mrn_printf_mutex;
 
 namespace MRN
@@ -53,83 +52,6 @@ double Timer::offset=0;
 bool Timer::first_time=true;
 
 XPlat::TLSKey tsd_key;
-
-static struct hostent * copy_hostent( struct hostent *);
-static void delete_hostent( struct hostent *in );
-static struct hostent * mrnet_gethostbyname( const char * name );
-
-struct hostent * copy_hostent( struct hostent *in)
-{
-    struct hostent * out = new struct hostent;
-    unsigned int i=0;
-
-    //copy h_name, h_addrtype, and h_length
-    out->h_name = strdup( in->h_name );
-    out->h_addrtype = in->h_addrtype;
-    out->h_length = in->h_length;
-
-    //deep copy h_aliases
-    unsigned int count=0;
-    while( in->h_aliases[count] != NULL )
-        count++;
-
-    out->h_aliases = new char * [ count+1 ];
-    for(i=0; i<count; i++ ){
-        out->h_aliases[i] = strdup( in->h_aliases[i] );
-    }
-    out->h_aliases[count] = NULL;
-
-    //deep copy h_addr_list
-    count=0;
-    while( in->h_addr_list[count] != 0 )
-        count++;
-
-    out->h_addr_list = new char * [ count+1 ];
-    for(i=0; i<count; i++ ){
-        out->h_addr_list[i] = new char[4];
-        out->h_addr_list[i][0] = in->h_addr_list[i][0];
-        out->h_addr_list[i][1] = in->h_addr_list[i][1];
-        out->h_addr_list[i][2] = in->h_addr_list[i][2];
-        out->h_addr_list[i][3] = in->h_addr_list[i][3];
-    }
-    out->h_addr_list[count] = NULL;
-
-    return out;
-}
-
-void delete_hostent( struct hostent *in )
-{
-    free(in->h_name);
-
-    unsigned int count=0;
-    while( in->h_aliases[count] != NULL )
-        free( in->h_aliases[count++] );
-    delete [] in->h_aliases;
-
-    count=0;
-    while( in->h_addr_list[count] != NULL )
-        delete [] in->h_addr_list[count++];
-
-    delete [] in->h_addr_list;
-    delete in;
-}
-
-struct hostent * mrnet_gethostbyname( const char * name )
-{
-
-    gethostbyname_mutex.Lock();
-
-    struct hostent * temp_hostent = gethostbyname( name );
-
-    if( temp_hostent == NULL ){
-        gethostbyname_mutex.Unlock();
-        return NULL;
-    }
-    struct hostent * ret_hostent = copy_hostent(temp_hostent);
-  
-    gethostbyname_mutex.Unlock();
-    return ret_hostent;
-}
 
 int connectHost( int *sock_in, const std::string & hostname, Port port, 
                  int num_retry /*=-1*/ )
@@ -154,18 +76,14 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
         mrn_dbg( 5, mrn_printf(FLF, stderr, "socket() => %d\n", sock ));
     }
 
-    server_hostent = mrnet_gethostbyname( host );
-    if( server_hostent == NULL ) {
-        perror( "gethostbyname()" );
-        return -1;
-    }
-
     memset( &server_addr, 0, sizeof( server_addr ) );
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons( port );
-    memcpy( &server_addr.sin_addr, server_hostent->h_addr_list[0],
-            sizeof( struct in_addr ) );
-    delete_hostent( server_hostent );
+
+    XPlat::NetUtils::NetworkAddress naddr;
+    XPlat::NetUtils::GetNetworkAddress( hostname, naddr );
+    in_addr_t addr = naddr.GetInAddr();
+    memcpy( &server_addr.sin_addr, &addr, sizeof(addr) );
 
     unsigned int nConnectTries = 0;
     int cret = -1;

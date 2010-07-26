@@ -607,10 +607,9 @@ int EventDetector::init_NewChildFDConnection( PeerNodePtr iparent_node )
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Initializing new Child FD Connection ...\n"));
     if( iparent_node->connect_EventSocket() == -1 ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect( %s:%u ) failed\n",
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect_EventSocket( %s:%u ) failed\n",
                                iparent_node->get_HostName().c_str(),
                                iparent_node->get_Port() ) );
-        perror("connect()");
     }
 
     PacketPtr packet( new Packet( 0, PROT_NEW_CHILD_FD_CONNECTION, "%s %uhd %ud",

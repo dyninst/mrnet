@@ -486,7 +486,7 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
 
     // Establish data detection connection w/ new Parent
     if( iparent->connect_DataSocket() == -1 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "PeerNode::connect() failed\n"));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "connect_DataSocket() failed\n"));
         return -1;
     }
 
