@@ -22,6 +22,7 @@ extern FilterId TFILTER_INT_EQ_CLASS;
 extern FilterId TFILTER_EPK_UNIFY;
 extern FilterId TFILTER_PERFDATA;
 extern FilterId TFILTER_TOPO_UPDATE;
+extern FilterId TFILTER_TOPO_UPDATE_DOWNSTREAM;
 
 // IDs for built-in synchronization filters
 extern FilterId SFILTER_DONTWAIT;
