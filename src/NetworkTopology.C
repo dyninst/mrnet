@@ -374,6 +374,15 @@ bool NetworkTopology::add_SubGraph( Rank irank, SerialGraph & isg, bool iupdate 
     return retval;
 }
 
+void NetworkTopology::update_Router_Table( )
+{
+
+   mrn_dbg_func_begin();
+   _router->update_Table();
+   mrn_dbg_func_end();
+
+}
+
 bool NetworkTopology::add_SubGraph( Node * inode, SerialGraph & isg, bool iupdate )
 {
     // assumes we are holding the lock
@@ -554,7 +563,7 @@ bool NetworkTopology::set_Parent( Rank ichild_rank, Rank inew_parent_rank, bool 
     return true;
 }
 
-std::vector<update_contents_t* > NetworkTopology::get_updates_buffer();
+std::vector<update_contents_t* > NetworkTopology::get_updates_buffer()
 {
   return _updates_buffer;
 }  
@@ -719,7 +728,8 @@ bool NetworkTopology::isInTopology(std::string hostname, Port _port, Rank _rank)
 {
   std::map< Rank, Node * >::iterator _nodes_it;
   bool found=false;
-  
+   
+  _sync.Lock(); 
   for( _nodes_it = _nodes.begin(); _nodes_it != _nodes.end(); _nodes_it++)
   {
     Node* tmp = (*_nodes_it).second;
@@ -729,6 +739,7 @@ bool NetworkTopology::isInTopology(std::string hostname, Port _port, Rank _rank)
        break;
     }
   } 
+  _sync.Unlock();
   return found;
 }
 

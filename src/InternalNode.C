@@ -40,16 +40,16 @@ InternalNode::InternalNode( Network * inetwork,
 								   ParentNode::_port,
 								   ParentNode::_rank ) );
    
-    ParentNode::_network->new_Stream( 1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_NULL );
-    Stream *st = ParentNode::_network->_streams[1];
+//    ParentNode::_network->new_Stream( 1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+  //  Stream *st = ParentNode::_network->_streams[1];
 
 
-    PacketPtr packet( new Packet(1, PROT_SET_FILTERPARAMS_UPSTREAM_SYNC, "%ud", 250));
-    if( packet->has_Error() ) {
-       mrn_dbg(1, mrn_printf(FLF, stderr, "new packet fail when trying to construct packet for set filter parameters \n"));
-    }
+    //PacketPtr packet( new Packet(1, PROT_SET_FILTERPARAMS_UPSTREAM_SYNC, "%ud", 250));
+    //if( packet->has_Error() ) {
+     //  mrn_dbg(1, mrn_printf(FLF, stderr, "new packet fail when trying to construct packet for set filter parameters \n"));
+   // }
 
-    st->set_FilterParams( FILTER_UPSTREAM_SYNC, packet );
+    //st->set_FilterParams( FILTER_UPSTREAM_SYNC, packet ); 
 
     //establish data connection w/ parent
     if( init_newChildDataConnection( ParentNode::_network->get_ParentNode() ) == -1 ) {

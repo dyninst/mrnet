@@ -26,9 +26,10 @@ FrontEndNode::FrontEndNode( Network * inetwork, std::string const& ihostname, Ra
     inetwork->set_FrontEndNode( this );
     inetwork->set_NetworkTopology( new NetworkTopology( inetwork, _hostname, _port, _rank ));
     inetwork->set_FailureManager( new CommunicationNode( _hostname, _port, _rank ) );
-    inetwork->new_Stream( 1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_NULL );
-    Stream *st = inetwork->_streams[1];
-    st->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
+    
+   // inetwork->new_Stream( 1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+   // Stream *st = inetwork->_streams[1];
+   // st->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "start_EventDetectionThread() ...\n" ));
     if( EventDetector::start( inetwork ) == false ){

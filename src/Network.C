@@ -311,7 +311,7 @@ void Network::init_FrontEnd( const char * itopology,
 
     const char* mrn_commnode_path = FindCommnodePath();
     assert( mrn_commnode_path != NULL );
-
+    
     if( ibackend_exe == NULL ) {
         ibackend_exe = empty_str;
     }
@@ -332,16 +332,22 @@ void Network::init_FrontEnd( const char * itopology,
     delete parsed_graph;
     parsed_graph = NULL;
 
+    /*update_BcastCommunicator();
+   // Stream* topo_UpdateStream=new_Stream(_bcast_communicator, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_NULL ); 
+
+    //assert(topo_UpdateStream->get_Id() == 1);
+    //topo_UpdateStream->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );*/
+
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
     
     // NEW_TOPO propagation code
     if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() )
             error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
     // end of NEW_TOPO propagation code
-
-    NetworkTopology* nt = get_NetworkTopology();
-    std::vector<update_contents_t* > vuc = nt->get_updates_buffer();
-    send_BufferedTopoUpdates( vuc ); 
+   
+    //NetworkTopology* nt = get_NetworkTopology();
+    //std::vector<update_contents_t* > vuc = nt->get_updates_buffer();
+    //send_BufferedTopoUpdates( vuc ); 
 
     //old topo propagation code
     //if( ! get_LocalFrontEndNode()->waitfor_SubTreeReports() )
@@ -353,46 +359,104 @@ void Network::init_FrontEnd( const char * itopology,
 
     //NEW_TOPO proagation code
     //broadcast topology, not necessary since sent for subtree creation, right?
-    char * topology = _network_topology->get_TopologyStringPtr();
-    PacketPtr packet( new Packet( 0, PROT_TOPOLOGY_RPT, "%s", topology ) );
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Broadcasting topology ... \n" ));
-    if( -1 == get_LocalFrontEndNode()->proc_TopologyReport( packet ) )
-        error( ERR_INTERNAL, rootRank, "proc_TopologyReport() failed");
-    free( topology );
-<<<<<<< HEAD:src/Network.C
+    //char * topology = _network_topology->get_TopologyStringPtr();
+    //PacketPtr packet( new Packet( 0, PROT_TOPOLOGY_RPT, "%s", topology ) );
+    //mrn_dbg(5, mrn_printf(FLF, stderr, "Broadcasting topology ... \n" ));
+    //if( -1 == get_LocalFrontEndNode()->proc_TopologyReport( packet ) )
+    //    error( ERR_INTERNAL, rootRank, "proc_TopologyReport() failed");
+    //free( topology );
     //end of NEW_TOPO propagation code
-=======
->>>>>>> 6d01589aff64e171aa557adb739dc031d774aab5:src/Network.C
-  
+
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating bcast communicator ... \n" ));
     update_BcastCommunicator( );
+    Stream* s=new_Stream(_bcast_communicator, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+    assert(s->get_Id() == 1);
+    s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
+
+    //collect_PortUpdates();
+    PacketPtr packet( new Packet( 0, PROT_PORT_UPDATE, "" ) );
+    if( -1 == get_LocalFrontEndNode()->proc_PortUpdates( packet ) )
+      error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
+    
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is init_frontend last  %s\n", _network_topology->get_TopologyStringPtr() ));
+
+}
+
+void Network::update_TopoStream()
+{
+   update_BcastCommunicator();
+   Stream *s=get_Stream(1);
+   
+   const set<CommunicationNode*>& be = _bcast_communicator->get_EndPoints();
+   set <CommunicationNode*>:: const_iterator iter;
+
+   for( iter=be.begin(); iter!=be.end(); iter++ )
+   {
+     printf("Adding %d to stream 1 end point \n", (*iter)->get_Rank());
+     s->add_Stream_EndPoint( (*iter)->get_Rank() );
+   }
+   update();
+   mrn_dbg(5, mrn_printf(FLF, stderr, "Topo Stream update complete \n" ));
+
 }
 
 void Network::send_BufferedTopoUpdates( std::vector<update_contents_t* > vuc )
 {
-  std::vector<update_contents_t* > it;
-  update_type_t type = CHANGE_PORT ;
-  char *host_arr = NULL;
-  uint32_t* prank = NULL;
-  uint32_t* crank = (uint32_t*) malloc( sizeof(uint32_t) * vuc.size() );
-  uint16_t* port = (uint16_t*) malloc( sizeof(uint16_t) * vuc.size() );
+  mrn_dbg(5, mrn_printf(FLF, stderr, "send_BufferedTopoUpdates begin \n" ));
+  update_TopoStream();
+
+  int vuc_size=vuc.size();
+  std::vector<update_contents_t* >::iterator it;
+  
+  int* type = (int*)malloc (sizeof(int)  * vuc_size ); 
+  char** host_arr;
+  host_arr=(char**)malloc (sizeof(char*) * vuc_size );
+  
+  for( int j=0 ; j< vuc_size; j++)
+    host_arr[j]=(char*)malloc (sizeof(char) * 100 );
+
+  uint32_t* prank =(uint32_t*)malloc (sizeof(uint32_t) * vuc_size );
+  uint32_t* crank = (uint32_t*) malloc( sizeof(uint32_t) * vuc_size );
+  uint16_t* cport = (uint16_t*) malloc( sizeof(uint16_t) * vuc_size );
   int i= 0;
 
+  if( !(vuc.empty() ) )
+  {
+    printf("inside vuc not empty\n");
   for( it = vuc.begin() ; it!= vuc.end() ; it++)
   {
-     if( (*it)->type == 2)
+     printf("type is %d\n", (*it)->type);
+     if( (*it)->type == 3 ) 
      {
+       type[i] = 3;
+       prank[i]= 1;
+       host_arr[i]="NULL";
+       if(host_arr[i] == NULL) assert(0);
        crank[i] = (*it)->crank;
        cport[i] = (*it)->cport;
        i++;
      }
-  }   
-  
-  Stream *s = _network->get_Stream(1); // getting handle for stream id 1 which was reserved for topology propagation
+  } 
+    
+  Stream *s = get_Stream(1); // getting handle for stream id 1 which was reserved for topology propagation
+  int no_updates=i;
 
+  if(host_arr==NULL) assert(0);
   //broadcast of all topology updates
   //stream end points of stream id=1 contains all the backend end points. 
-  s->send(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", &type, 1, prank, 1, crank, 1, &host_arr,1, port, 1);
+   
+  printf("Sending : %d updates\n", no_updates);
+  mrn_dbg(5, mrn_printf(FLF, stderr, "sending %d updates\n", no_updates) );
+
+  for ( int k=0; k< no_updates; k++)
+   printf("Contents : type =%d, prank= %d, host_arr = %s, crank= %d, cport= %d \n", type[k], prank[k], (host_arr[k]), crank[k], cport[k] ); 
+  
+  if(i > 0 )
+    s->send(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", type,no_updates, prank, no_updates, crank, no_updates, host_arr, no_updates, cport, no_updates);
+  
+  } //if vuc not empty
+  
+  mrn_dbg(5, mrn_printf(FLF, stderr, "send_BufferedTopoUpdates end \n" ));
 
 }
 
@@ -591,15 +655,25 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
             return -1;
         }
         peer_ranks = stream->get_ChildPeers();
+	if(peer_ranks.empty() )
+	   mrn_dbg( 5, mrn_printf(FLF, stderr, "child ranks are empty\n") );
+
         for( iter= peer_ranks.begin(); iter!=peer_ranks.end(); iter++) {
             PeerNodePtr cur_peer = get_OutletNode( *iter );
             if( cur_peer != PeerNode::NullPeerNode ) {
                 peers.insert( cur_peer );
             }
+	    else
+	       mrn_dbg( 5, mrn_printf(FLF, stderr, "outlet node returns null peer\n") );
+
         }
     }
     
     std::set < PeerNodePtr >::const_iterator iter;
+    if(peers.empty() )
+       mrn_dbg(5,mrn_printf( FLF, stderr, " peers is empty\n") );
+
+
     for( iter=peers.begin(); iter!=peers.end(); iter++ ) {
         PeerNodePtr cur_node = *iter;
         mrn_dbg(3, mrn_printf( FLF, stderr, "node \"%s:%d:%d\": %s, %s\n",
@@ -832,7 +906,7 @@ CommunicationNode* Network::new_EndPoint( string &ihostname,
 }
 
 //NEW_TOPO propagation code
-static unsigned int next_stream_id=2;
+static unsigned int next_stream_id=1;
 
 //old topo propagation code
 //static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
@@ -1274,6 +1348,7 @@ void Network::set_LocalRank( Rank irank )
 
 void Network::set_FailureManager( CommunicationNode* icomm )
 {
+    mrn_dbg(5, mrn_printf( FLF, stderr, "inside set failure manager\n") );
     if( _failure_manager != NULL ) {
         delete _failure_manager;
     }
@@ -1398,11 +1473,11 @@ bool Network::reset_Topology( string& itopology )
     return true;
 }
 
-bool Network::add_SubGraph( Rank iroot_rank, SerialGraph& sg )
+bool Network::add_SubGraph( Rank iroot_rank, SerialGraph& sg, bool iupdate ) 
 {
     unsigned topsz = _network_topology->get_NumNodes();
 
-    if( !_network_topology->add_SubGraph( iroot_rank, sg, true ) ){
+    if( !_network_topology->add_SubGraph( iroot_rank, sg, iupdate ) ){
         mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
         return false;
     }
@@ -1682,6 +1757,7 @@ PeerNodePtr Network::new_PeerNode( string const& ihostname, Port iport,
     }
     else {
         _children_mutex.Lock();
+	 mrn_dbg( 5, mrn_printf(FLF, stderr, "inserted into children\n") );
         _children.insert( node );
         _children_mutex.Unlock();
     }
@@ -1706,6 +1782,7 @@ bool Network::delete_PeerNode( Rank irank )
     _children_mutex.Lock();
     for( iter=_children.begin(); iter!=_children.end(); iter++ ) {
         if( (*iter)->get_Rank() == irank ) {
+	     mrn_dbg( 5, mrn_printf(FLF, stderr, "deleted into children\n") );
             _children.erase( *iter );
             _children_mutex.Unlock();
             return true;
@@ -1732,7 +1809,10 @@ PeerNodePtr Network::get_PeerNode( Rank irank )
 
     if( peer == PeerNode::NullPeerNode ) {
         _children_mutex.Lock();
+	if(_children.empty())
+	   mrn_dbg ( 5, mrn_printf ( FLF, stderr, "children is empty \n"));
         for( iter=_children.begin(); iter!=_children.end(); iter++ ) {
+	    mrn_dbg ( 5, mrn_printf ( FLF, stderr, "rank is %d, irank is %d \n", (*iter)->get_Rank(), irank ) ); 
             if( (*iter)->get_Rank() == irank ) {
                 peer = *iter;
                 break;
