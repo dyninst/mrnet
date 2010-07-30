@@ -6,10 +6,12 @@
 #include <iostream>
 
 #include "utils.h"
+#include "ChildNode.h"
 #include "RSHParentNode.h"
 #include "SerialGraph.h"
 #include "xplat/Process.h"
 #include "xplat/Error.h"
+#include "mrnet/MRNet.h"
 
 
 namespace MRN
@@ -30,6 +32,89 @@ RSHParentNode::RSHParentNode( Network* inetwork,
 RSHParentNode::~RSHParentNode( void )
 {
     // nothing else to do
+}
+
+
+int RSHParentNode::proc_PortUpdateAck( PacketPtr /* ipacket */ ) const
+{
+    mrn_dbg_func_begin();
+
+    subtreereport_sync.Lock( );
+    _num_children_reported++;
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
+             _num_children_reported, _num_children ));
+    if( _num_children_reported == _num_children ) {
+      subtreereport_sync.SignalCondition( ALLNODESREPORTED );
+    }
+    subtreereport_sync.Unlock( );
+
+    mrn_dbg_func_end();
+   return 0;
+}
+
+
+int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
+{
+    mrn_dbg_func_begin();
+
+    subtreereport_sync.Lock( );
+
+    _num_children_reported = _num_children = 0;
+    const std::set < PeerNodePtr > peers = _network->get_ChildPeers();
+    std::set < PeerNodePtr >::const_iterator iter;
+    for( iter=peers.begin(); iter!=peers.end(); iter++ ) {
+        if( (*iter)->is_child() ) {
+            _num_children++;
+        }
+    }
+
+    subtreereport_sync.Unlock( );
+
+    //send message to all children
+    if( ( _network->send_PacketToChildren( ipacket ) == -1 ) ||
+        ( _network->flush_PacketsToChildren( ) == -1 ) ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush_PacketToChildren() failed\n" ));
+        return -1;
+    }
+
+    //wait for acks
+    if( ! waitfor_PortUpdateAcks() ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_TopologyReportAcks() failed\n" ));
+        return -1;
+    }
+
+    //Send ack to parent, if any
+    if( _network->is_LocalNodeChild() ) {
+        if( ! _network->get_LocalChildNode()->ack_TopologyReport() ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_TopologyReport() failed\n" ));
+            return -1;
+        }
+    }
+
+    mrn_dbg_func_end();
+    return 0;
+}
+
+bool RSHParentNode::waitfor_PortUpdateAcks( void ) const
+{
+    mrn_dbg_func_begin();
+
+    subtreereport_sync.Lock( );
+
+    while( _num_children > _num_children_reported ) {
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u topol report acks ...\n",
+                               _num_children - _num_children_reported,
+                               _num_children ));
+        subtreereport_sync.WaitOnCondition( ALLNODESREPORTED );
+        mrn_dbg( 3, mrn_printf(FLF, stderr,
+                               "%d of %d children have ack'd.\n",
+                               _num_children, _num_children_reported ));
+    }
+
+    subtreereport_sync.Unlock( );
+
+    mrn_dbg_func_end();
+    return true;
 }
 
 int 
@@ -60,17 +145,46 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
     sg.set_Port(_network->get_LocalHostName(), _network->get_LocalPort(), _network->get_LocalRank() );
     std::string new_topo = sg.get_ByteArray();
 
-    _network->reset_Topology( new_topo );
+    //NetworkTopology::Node* n = _network->get_NetworkTopology()->find_Node( _network->get_LocalRank() );
+    //n->set_Port(_network->get_LocalPort() );
+
+    //_network->get_NetworkTopology()->reset( new_topo, false );
 
     PacketPtr packet( new Packet( 0, PROT_NEW_SUBTREE, "%s%s%s%as", new_topo.c_str( ),
                                       commnode_path, backend_exe, backend_argv, backend_argc ) );  
 
     _initial_subtree_packet = packet;
+    
+    /*
+    _network->update_TopoStream();
 
     Stream* topo_stream= _network->get_Stream(1);
-    topo_stream->send( PROT_TOPO_UPDATE ,"%ad %aud %aud %as %auhd", 
-                       1, 1, NULL , 1, _network->get_LocalRank() , 1 , NULL , 1, _network->get_LocalPort(), 1 );
+    int type=3; //type 0 is add packet
+    char *host_arr=strdup("NULL");
+    uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
+    *send_iprank=1;
+    uint32_t* send_myrank = (uint32_t*) malloc(sizeof(uint32_t));
+    *send_myrank=_network->get_LocalRank();
+    uint16_t* send_port = (uint16_t*)malloc(sizeof(uint16_t));
+    *send_port = _network->get_LocalPort();
+     
+    if ( !(_network->is_LocalNodeFrontEnd() ) ) 
+       topo_stream->send_internal(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", &type, 1, send_iprank, 1, send_myrank, 1, &host_arr,1, send_port, 1);
+    else
+       topo_stream->send(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", &type, 1, send_iprank, 1, send_myrank, 1, &host_arr,1, send_port, 1);
+    free(host_arr);
+    */
 
+    /*char* null_arr=strdup("NULL");
+    Stream* topo_stream= _network->get_Stream(1);
+    int* type;
+    uint32_t junk=1;
+    uint32_t send_rank=_network->get_LocalRank();
+    uint16_t send_port=_network->get_LocalPort();
+
+    topo_stream->send( PROT_TOPO_UPDATE ,"%ad %aud %aud %as %auhd", 
+                       &type, 1, &junk , 1, &send_rank , 1 , &null_arr , 1, &send_port, 1 );
+    */
 
     std::string backend_exe_str( ( backend_exe == NULL ) ? "" : backend_exe );
 
@@ -249,25 +363,33 @@ RSHParentNode::proc_SubTreeInfoRequest( PacketPtr  ipacket ) const
     return 0;
 }
 
+
 int
 RSHParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
 {
+  
     int retval = 0;
 
     switch ( cur_packet->get_Tag(  ) ) {
-    case PROT_SUBTREE_INFO_REQ:
+      case PROT_SUBTREE_INFO_REQ:
         if( proc_SubTreeInfoRequest( cur_packet ) == -1 ){
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                     "proc_SubTreeInfoRequest() failed\n" ));
+	    retval = -1;
+	}
+	break;
+      case PROT_PORT_UPDATE_ACK:
+        if( proc_PortUpdateAck( cur_packet ) == -1 ){
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_SubTreeInfoRequest() failed\n" ));
             retval = -1;
         }
         break;
-    default:
+      default:
         retval = ParentNode::proc_PacketFromChildren( cur_packet );
+	break;
     }
     return retval;
 }
-
-
 
 } // namespace MRN
