@@ -164,6 +164,11 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
     return retval;
 }
 
+int ParentNode::proc_PortUpdates( PacketPtr ipacket ) const
+{
+  return 1;
+}
+
 bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
 {
     std::list < PacketPtr >packet_list;
@@ -184,6 +189,10 @@ bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "All %d children nodes have reported\n",
                 _num_children )); 
+
+    if( _network->is_LocalNodeFrontEnd() )
+      _network->get_NetworkTopology()->update_Router_Table();
+     
     return true;
 }
 
@@ -392,7 +401,7 @@ int ParentNode::proc_newSubTreeReport( PacketPtr ipacket ) const
     ipacket->unpack( "%s", &topo_ptr ); 
 
     SerialGraph sg( topo_ptr );
-    if( !_network->add_SubGraph( _network->get_LocalRank(), sg ) ){
+    if( !_network->add_SubGraph( _network->get_LocalRank(), sg, true ) ){
         mrn_dbg(1, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
         return -1;
     }
@@ -693,21 +702,26 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
     child_node->set_DataSocketFd( isock );
     
     //new topo prop code
-    NetworkTopology* nt=_global_network->get_NetworkTopology();
+    NetworkTopology* nt=_network->get_NetworkTopology();
     char * topology = nt->get_TopologyStringPtr();
     SerialGraph* init_topo= new SerialGraph( topology);
-    _global_network->writeTopology(isock, init_topo);
+    _network->writeTopology(isock, init_topo);
     free( topology );
 
     //add child to peers of the topo stream when a child connects to parent
-    Stream* s = _global_network->get_Stream(1);
-    s->_peers.insert( child_node->get_Rank() );
+    //Stream* s = _network->get_Stream(1);
+    //s->_peers.insert( child_node->get_Rank() );
+    
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is , proc new child data conn before %s\n", nt->get_TopologyStringPtr() ));
 
     SerialGraph sg( topo_ptr );
-    if( !_network->add_SubGraph( _network->get_LocalRank(), sg ) ){
+    if( !_network->add_SubGraph( _network->get_LocalRank(), sg, false) ){
         mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
         return -1;
     }
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is proc new child data conn after %s\n", nt->get_TopologyStringPtr() ));
+
 
     //Create send/recv threads
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating comm threads for new child\n" ));

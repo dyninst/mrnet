@@ -160,8 +160,9 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
     // so that we don't build a packet with a pointer into a temporary
     std::string sg = _parsed_graph->get_SerializedGraphString();
 
-    reset_Topology(sg);
+    get_NetworkTopology()->reset(sg,false);
     NetworkTopology* nt=get_NetworkTopology();
+    
     if(nt!=NULL)
     {
        NetworkTopology::Node* localnode = nt->_nodes[get_LocalRank()];
@@ -176,6 +177,7 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
 
     RSHFrontEndNode* fe = dynamic_cast<RSHFrontEndNode*>( get_LocalFrontEndNode() );
     assert( fe != NULL );
+
     if( fe->proc_newSubTree( packet ) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: FrontEndNode::proc_newSubTree()!\n" ));
         error( ERR_INTERNAL, UnknownRank, "");

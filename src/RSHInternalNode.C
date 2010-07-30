@@ -70,6 +70,10 @@ RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
         }
         break;
 
+    case PROT_PORT_UPDATE:
+        retval = RSHChildNode::proc_PacketFromParent( cur_packet );
+	break;
+
     default:
         retval = InternalNode::proc_PacketFromParent( cur_packet );
     }

@@ -4,6 +4,7 @@
  ******************************************************************************/
 
 #include "RSHBackEndNode.h"
+#include "utils.h"
 
 namespace MRN
 {
@@ -20,10 +21,46 @@ RSHBackEndNode::RSHBackEndNode( Network * inetwork,
     RSHChildNode( inetwork, imyhostname, imyrank, iphostname, ipport, iprank ),
     BackEndNode( inetwork, imyhostname, imyrank, iphostname, ipport, iprank )
 {
+   /*
+   if( request_SubTreeInfo() == -1 ){
+       mrn_dbg( 1, mrn_printf(FLF, stderr, "request_SubTreeInfo() failed\n" ));
+       return;
+    } */
 }
 
 RSHBackEndNode::~RSHBackEndNode(void)
 {
 }
+	
+/*
+int
+RSHBackEndNode::proc_PacketFromParent( PacketPtr cur_packet )
+{
+    int retval = 0;
+
+    switch( cur_packet->get_Tag() )
+    {
+    case PROT_NEW_SUBTREE:
+        mrn_dbg(3, mrn_printf(FLF, stderr, "Processing PROT_NEW_SUBTREE\n"));
+
+        if( proc_newSubTree( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTree() failed\n" ));
+            retval = -1;
+        }
+
+        //must send reports upwards
+        if( send_SubTreeInitDoneReport( ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                        "send_newSubTreeReport() failed\n" ));
+            retval = -1;
+        }
+        break;
+
+    default:
+        retval = RSHChildNode::proc_PacketFromParent( cur_packet );
+    }
+    return retval;
+}
+*/
 
 } // namespace MRN

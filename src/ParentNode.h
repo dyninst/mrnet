@@ -80,6 +80,7 @@ class ParentNode: public virtual Error,
 
     void init_numChildrenExpected( SerialGraph& sg );
     unsigned int get_numChildrenExpected( void ) const  { return _num_children; }
+    virtual int proc_PortUpdates( PacketPtr ipacket ) const;
 
  protected:
     Network * _network;
@@ -93,6 +94,7 @@ class ParentNode: public virtual Error,
 
  private:
     int listening_sock_fd;
+
 };
 
 //bool lt_PeerNodePtr( PeerNodePtr p1, PeerNodePtr p2 );
