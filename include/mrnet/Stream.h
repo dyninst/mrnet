@@ -45,6 +45,7 @@ class Stream {
     // BEGIN MRNET API
 
     int send( int itag, const char *iformat_str, ... );
+    int send_internal( int itag, const char *iformat_str, ... );
     int send( const char *idata_fmt, va_list idata, int itag );
     int send( int itag, const void **idata, const char *iformat_str );
     int send( PacketPtr& ipacket );
@@ -75,7 +76,7 @@ class Stream {
                                 perfdata_context_t context );
 
     bool is_ShutDown(void);
-
+     
     // END MRNET API
 
     Stream( Network * inetwork, int iid, Rank *ibackends, unsigned int inum_backends,
@@ -90,6 +91,7 @@ class Stream {
     const std::set< Rank > & get_ClosedPeers( void ) const ;
     std::set< Rank > get_ChildPeers() const;
     void add_Stream_EndPoint(Rank irank);
+    void add_Stream_Peer(Rank irank) ;
 
     PacketPtr collect_PerfData( perfdata_metric_t metric, 
                                 perfdata_context_t context, 
@@ -98,6 +100,7 @@ class Stream {
  private:
     
     int send_aux( int tag, const char *format_str, PacketPtr &packet );
+    int send_aux_internal( int tag, const char *format_str, PacketPtr &packet );
     void add_IncomingPacket( PacketPtr );
     PacketPtr get_IncomingPacket( void );
     int push_Packet( PacketPtr, std::vector<PacketPtr> &, std::vector<PacketPtr> &, 

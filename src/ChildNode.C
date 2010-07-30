@@ -37,7 +37,8 @@ int ChildNode::proc_PacketsFromParent( std::list< PacketPtr > & packets )
 
     std::list < PacketPtr >::iterator iter = packets.begin();
     for( ; iter != packets.end(); iter++ ) {
-        if( this->proc_PacketFromParent( *iter ) == -1 )
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "tag is %d\n", (*iter)->get_Tag() ));
+        if( proc_PacketFromParent( *iter ) == -1 )
             retval = -1;
     }
 
@@ -53,6 +54,7 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
     int retval = 0;
 
     switch ( cur_packet->get_Tag() ) {
+      printf("inside childnode\n");
 
     case PROT_SHUTDOWN:
         if( _network->is_LocalNodeParent() ) {
@@ -390,8 +392,6 @@ int ChildNode::proc_PrintPerfData( PacketPtr ipacket ) const
     return 0;
 }
 
-
-
 int ChildNode::proc_TopologyReport( PacketPtr ipacket ) const 
 {
     char * topology_ptr;
@@ -490,7 +490,7 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
 
     // Establish data detection connection w/ new Parent
     if( iparent->connect_DataSocket() == -1 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "PeerNode::connect() failed\n"));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "connect_DataSocket() failed\n"));
         return -1;
     }
 
@@ -527,7 +527,8 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     assert(init_topo!=NULL);
     std::string sg_str=init_topo->get_ByteArray();
 
-    tmp_nt->reset(sg_str);
+    tmp_nt->reset(sg_str, false );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s\n", tmp_nt->get_TopologyStringPtr() ));
 
     //Create send/recv threads
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating comm threads for parent\n" ));
@@ -549,6 +550,7 @@ int ChildNode::send_SubTreeInitDoneReport( ) const
     // report. Since the last topology report wins, we would like the reports
     // to proceed in the order they were started.
     //_sync.Lock();
+    _network->get_NetworkTopology()->update_Router_Table();
 
     //char * topo_ptr = _network->get_LocalSubTreeStringPtr();
     PacketPtr packet( new Packet( 0, PROT_SUBTREE_INITDONE_RPT,"") );

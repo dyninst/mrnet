@@ -150,16 +150,15 @@ class NetworkTopology: public Error {
     bool new_Node( const std::string &, Port, Rank, bool iis_backend );
     bool isInTopology(std::string hostname, Port _port, Rank _rank);
     void insert_updates_buffer( update_contents_t* uc);
-    std::vector<update_contents_t* > get_updates_buffer();
+    std::vector<update_contents_t* > get_updates_buffer( void );
 
     //these two members are made public from private for topo prop change
     std::map< Rank, Node * > _nodes;
     void serialize( Node * );
-    
-     
-
+    void update_Router_Table();
 
   private:
+   
     Node * find_NodeHoldingLock( Rank ) const;
     bool remove_Orphan( Rank );
     void remove_SubGraph( Node * inode );

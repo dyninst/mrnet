@@ -29,9 +29,14 @@ BackEndNode::BackEndNode( Network * inetwork,
     _network->set_LocalRank( _rank );
     _network->set_BackEndNode( this );
     _network->set_NetworkTopology( new NetworkTopology( inetwork, _hostname, _port, _rank, true ) );
-
-    _network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_NULL );
-
+    
+    NetworkTopology* nt=_network->get_NetworkTopology();
+    //if( nt!=NULL )
+    //{
+      //if( !(nt->isInTopology(imyhostname,_port,imyrank)) ) //if backend already not in the topology. for back end attach cases
+//        _network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+	//for regular cases, stream 1 would have been created already
+    //}
 
     //establish data connection w/ parent
     if( init_newChildDataConnection( _network->get_ParentNode() ) == -1 ) {
@@ -47,18 +52,18 @@ BackEndNode::BackEndNode( Network * inetwork,
       return;
     }
     
-    NetworkTopology* nt=_network->get_NetworkTopology();
     if( nt!=NULL )
     {
       if( !(nt->isInTopology(imyhostname,_port,imyrank)) ) //if backend already not in the topology. this is false in back end attach cases
       {
         
+	_network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
 	mrn_dbg( 1, mrn_printf(FLF, stderr,
                " Backend not already in the topology\n" ));
 
         //new topo propagation code - create a new update packet
         Stream *s = _network->get_Stream(1); // getting handle for stream id 1 which was reserved for topology propagation
-        int type=0;
+        int type=0; //type 0 is add packet
         char *host_arr=strdup(imyhostname.c_str());
         uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
         *send_iprank=iprank;
