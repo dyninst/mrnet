@@ -68,6 +68,12 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >&,
 		       std::vector < PacketPtr>&,
 		       void**, PacketPtr&, const TopologyLocalInfo& );
 
+extern const char* TFILTER_TOPO_UPDATE_DOWNSTREAM_FORMATSTR;
+void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >&,
+                       std::vector < PacketPtr>&,
+	               std::vector < PacketPtr>&,
+	               void**, PacketPtr&, const TopologyLocalInfo& );
+
 // synchronization filters
 void sfilter_WaitForAll( const std::vector < PacketPtr >&, 
                          std::vector < PacketPtr >&, 

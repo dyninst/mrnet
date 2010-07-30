@@ -294,17 +294,11 @@ void * EventDetector::main( void* iarg )
     list< int > watch_list; //list of sockets to detect events on
     int parent_sock=0;
     int local_sock=0;
-<<<<<<< HEAD:src/EventDetector.C
-    int max_sock=0;
     bool goto_outer;
-
-
-=======
 
     EventDetector* edt = (EventDetector*) iarg;
     Network* net = edt->_network;;
  
->>>>>>> 6d01589aff64e171aa557adb739dc031d774aab5:src/EventDetector.C
     PeerNodePtr  parent_node = PeerNode::NullPeerNode;
     if( net->is_LocalNodeChild() ) {
         parent_node = net->get_ParentNode();
@@ -426,7 +420,6 @@ void * EventDetector::main( void* iarg )
                 if ( connected_sock == -1) {
                     perror("getSocketConnection()");
                     mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
-<<<<<<< HEAD:src/EventDetector.C
                     perror("getSocketConnection()");
 		    goto_outer=true;
 		    break;
@@ -436,12 +429,9 @@ void * EventDetector::main( void* iarg )
 	        //			} else {
 		//			mrn_dbg(1, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
 	        // 			}
-=======
-                    continue;
-                } else {
-                    mrn_dbg(1, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
-                }
->>>>>>> 6d01589aff64e171aa557adb739dc031d774aab5:src/EventDetector.C
+                //} else {
+                //    mrn_dbg(1, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
+                //}
 
                 packets.clear();
                 msg.recv( connected_sock, packets, UnknownRank );
@@ -861,11 +851,13 @@ int EventDetector::recover_FromParentFailure( )
     return 0;
 }
 
-int EventDetector::recover_off_FromParentFailure( )
+
+int EventDetector::recover_off_FromParentFailure(void)
 {
     _network->get_ParentNode()->mark_Failed();
     Rank fail_rank = _network->get_ParentNode()->get_Rank();
     _network->remove_Node( fail_rank);  
+    return 0;
 }
 
 };

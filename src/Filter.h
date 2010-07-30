@@ -119,6 +119,10 @@ inline void Filter::initialize_static_stuff( )
     register_Filter( TFILTER_TOPO_UPDATE, (void(*)())tfilter_TopoUpdate, NULL,
                      TFILTER_TOPO_UPDATE_FORMATSTR );
 
+    TFILTER_TOPO_UPDATE_DOWNSTREAM = tfilter_start++;
+    register_Filter( TFILTER_TOPO_UPDATE_DOWNSTREAM, (void(*)())tfilter_TopoUpdate_Downstream, NULL,
+                     TFILTER_TOPO_UPDATE_DOWNSTREAM_FORMATSTR );
+
     TFILTER_INT_EQ_CLASS = tfilter_start++;
     register_Filter( TFILTER_INT_EQ_CLASS, 
                      (void(*)())tfilter_IntEqClass, NULL,
