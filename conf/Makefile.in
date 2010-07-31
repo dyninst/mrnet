@@ -62,6 +62,7 @@ SOFLAGS = @SOFLAGS@
 
 LIBS = $(LIBXPLAT) @LIBS@
 LIBS_LIGHTWEIGHT = $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@
+FE_LIBS = @FE_LIBS@
 
 INCDIR = -I$(SRCDIR)/include -I$(SRCDIR)/src -I$(SRCDIR)/xplat/include -I$(SRCDIR)/tests
 INCDIR_LIGHTWEIGHT = -I$(SRCDIR)/lightweight/include -I$(SRCDIR)/lightweight/src -I$(SRCDIR)/lightweight/xplat/include -I$(SRCDIR)/tests -I$(SRCDIR)/src
@@ -422,7 +423,7 @@ $(STD_TESTS_FE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o 
               $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
+	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS) $(FE_LIBS)
 
 $(STD_TESTS_BE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
               $(SRCDIR)/tests/test_common.h \
@@ -436,17 +437,13 @@ $(STD_TESTS_FE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(
               $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
+	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS) $(FE_LIBS)
 
 $(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o \
 				$(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CC) $(TEST_CCFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 		$(LIBMRNET_LIGHTWEIGHT) $(LIBS_LIGHTWEIGHT)
-
-$(OBJDIR)/microbench_BE_lightweight.o: microbench_BE_lightweight.c $(FRC)
-	@echo Compiling microbench_BE_lightweight ...
-	$(CC) $(TEST_CCFLAGS) -o $@ -c $<
 
 $(BINDIR)/mrnet_tests.sh: $(SRCDIR)/conf/mrnet_tests.sh
 	$(CP) $(SRCDIR)/conf/mrnet_tests.sh $(BINDIR)/
@@ -550,6 +547,10 @@ xplat_lightweight-distclean:
 @VERBOSEMAKE@
 .SUFFIXES:
 .SUFFIXES: .c .C .o .d
+
+$(OBJDIR)/microbench_BE_lightweight.o: microbench_BE_lightweight.c $(FRC)
+	@echo Compiling `basename $@` ...
+	$(CC) $(TEST_CCFLAGS) -o $@ -c $<
 
 $(OBJDIR)/test_%.o: test_%.c $(FRC)
 	@echo Compiling `basename $@` ...
