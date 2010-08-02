@@ -92,12 +92,11 @@ int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
     }
    
     //TODO: Place holder for bcast of port updates
-    /* if (is_LocalNodeFrontEnd() ) {
-         NetworkTopology* nt = get_NetworkTopology();
-         std::vector<update_contents_t* > vuc = nt->get_updates_buffer();
-	 _network->send_BufferedTopoUpdates( vuc );
+    if( _network->is_LocalNodeFrontEnd() ) {
+        NetworkTopology* nt = _network->get_NetworkTopology();
+        std::vector<update_contents_t* > vuc = nt->get_updates_buffer();
+	_network->send_BufferedTopoUpdates( vuc );
     }	 
-    */	 
 
     mrn_dbg_func_end();
     return 0;

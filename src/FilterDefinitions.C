@@ -1381,7 +1381,7 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 		  }
 		  else {
 		  
-		      //we do update table only for the last update.
+		    //we do update table only for the last update.
 		    if( i == (rarray_len-1) ) {
 		      
 			  nt->set_Parent( rcrank_arr[i], rprank_arr[i] , true );
@@ -1425,14 +1425,13 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 	      if(net->is_LocalNodeFrontEnd() ) {
 	
 		  update_contents_t* ub = (update_contents_t*) malloc ( sizeof (update_contents_t) );
-		  ub->type = 3;
+		  ub->type = TOPO_CHANGE_PORT ;
 		  ub->crank = rcrank_arr[i];
 		  ub->cport = rcport_arr[i];
 		  nt->insert_updates_buffer(ub); 
 	      }
 
 	      mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is after port update %s\n", nt->get_TopologyStringPtr() ));
-
 	      break;
 	  }
 	  default:
@@ -1460,9 +1459,8 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
         opackets.push_back( new_packet );
                                                       
     }
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "End of topo filter update  ...\n"));
-   
 
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "End of topo filter update  ...\n"));
     mrn_dbg_func_end();
 
 }

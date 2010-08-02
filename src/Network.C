@@ -377,60 +377,57 @@ void Network::update_TopoStream()
 
 void Network::send_BufferedTopoUpdates( std::vector<update_contents_t* > vuc )
 {
-  mrn_dbg(5, mrn_printf(FLF, stderr, "send_BufferedTopoUpdates begin \n" ));
-  //update_TopoStream();
+    mrn_dbg(5, mrn_printf(FLF, stderr, "send_BufferedTopoUpdates begin \n" ));
 
-  int vuc_size=vuc.size();
-  std::vector<update_contents_t* >::iterator it;
+    int vuc_size=vuc.size();
+    std::vector<update_contents_t* >::iterator it;
   
-  int* type = (int*)malloc (sizeof(int)  * vuc_size ); 
-  char** host_arr;
-  host_arr=(char**)malloc (sizeof(char*) * vuc_size );
+    int* type = (int*)malloc (sizeof(int)  * vuc_size ); 
+    char** host_arr;
+    host_arr=(char**)malloc (sizeof(char*) * vuc_size );
   
-  for( int j=0 ; j< vuc_size; j++)
-    host_arr[j]=(char*)malloc (sizeof(char) * 100 );
+    for( int j=0 ; j< vuc_size; j++)
+        host_arr[j]=(char*)malloc (sizeof(char) * 100 );
 
-  uint32_t* prank =(uint32_t*)malloc (sizeof(uint32_t) * vuc_size );
-  uint32_t* crank = (uint32_t*) malloc( sizeof(uint32_t) * vuc_size );
-  uint16_t* cport = (uint16_t*) malloc( sizeof(uint16_t) * vuc_size );
-  int i= 0;
+    uint32_t* prank =(uint32_t*)malloc (sizeof(uint32_t) * vuc_size );
+    uint32_t* crank = (uint32_t*) malloc( sizeof(uint32_t) * vuc_size );
+    uint16_t* cport = (uint16_t*) malloc( sizeof(uint16_t) * vuc_size );
+    int i= 0;
 
-  if( !(vuc.empty() ) )
-  {
-  for( it = vuc.begin() ; it!= vuc.end() ; it++)
-  {
-     printf("type is %d\n", (*it)->type);
-     if( (*it)->type == 3 ) 
-     {
-       type[i] = 3;
-       prank[i]= 1;
-       host_arr[i]="NULL";
-       if(host_arr[i] == NULL) assert(0);
-       crank[i] = (*it)->crank;
-       cport[i] = (*it)->cport;
-       i++;
-     }
-  } 
+    if( !(vuc.empty() ) )
+    {
+        for( it = vuc.begin() ; it!= vuc.end() ; it++)
+        {
+             if( (*it)->type == TOPO_CHANGE_PORT ) 
+             {
+                 type[i] = TOPO_CHANGE_PORT;
+                 prank[i]= 1;
+                 host_arr[i]="NULL";
+                 if(host_arr[i] == NULL) assert(0);
+                 crank[i] = (*it)->crank;
+                 cport[i] = (*it)->cport;
+                 i++;
+             }
+        } 
     
-  Stream *s = get_Stream(1); // getting handle for stream id 1 which was reserved for topology propagation
-  int no_updates=i;
+        Stream *s = get_Stream(1); // getting handle for stream id 1 which was reserved for topology propagation
+        int no_updates=i;
 
-  if(host_arr==NULL) assert(0);
-  //broadcast of all topology updates
-  //stream end points of stream id=1 contains all the backend end points. 
+        if(host_arr==NULL) assert(0);
+        //broadcast of all topology updates
+        //stream end points of stream id=1 contains all the backend end points. 
    
-  printf("Sending : %d updates\n", no_updates);
-  mrn_dbg(5, mrn_printf(FLF, stderr, "sending %d updates\n", no_updates) );
+        mrn_dbg(5, mrn_printf(FLF, stderr, "sending %d updates\n", no_updates) );
 
-  for ( int k=0; k< no_updates; k++)
-   printf("Contents : type =%d, prank= %d, host_arr = %s, crank= %d, cport= %d \n", type[k], prank[k], (host_arr[k]), crank[k], cport[k] ); 
+        //for ( int k=0; k< no_updates; k++)
+            // printf("Contents : type =%d, prank= %d, host_arr = %s, crank= %d, cport= %d \n", type[k], prank[k], (host_arr[k]), crank[k], cport[k] ); 
   
-  if(i > 0 )
-    s->send(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", type,no_updates, prank, no_updates, crank, no_updates, host_arr, no_updates, cport, no_updates);
+        if(i > 0 )
+              s->send(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", type,no_updates, prank, no_updates, crank, no_updates, host_arr, no_updates, cport, no_updates);
   
-  } //if vuc not empty
+    } //if vuc not empty
   
-  mrn_dbg(5, mrn_printf(FLF, stderr, "send_BufferedTopoUpdates end \n" ));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "send_BufferedTopoUpdates end \n" ));
 
 }
 
