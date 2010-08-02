@@ -730,6 +730,7 @@ bool NetworkTopology::isInTopology(std::string hostname, Port _port, Rank _rank)
   bool found=false;
    
   _sync.Lock(); 
+  //TODO: can call find_Node and then check for port and rank
   for( _nodes_it = _nodes.begin(); _nodes_it != _nodes.end(); _nodes_it++)
   {
     Node* tmp = (*_nodes_it).second;

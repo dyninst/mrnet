@@ -90,6 +90,14 @@ int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
             return -1;
         }
     }
+   
+    //TODO: Place holder for bcast of port updates
+    /* if (is_LocalNodeFrontEnd() ) {
+         NetworkTopology* nt = get_NetworkTopology();
+         std::vector<update_contents_t* > vuc = nt->get_updates_buffer();
+	 _network->send_BufferedTopoUpdates( vuc );
+    }	 
+    */	 
 
     mrn_dbg_func_end();
     return 0;
@@ -145,47 +153,11 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
     sg.set_Port(_network->get_LocalHostName(), _network->get_LocalPort(), _network->get_LocalRank() );
     std::string new_topo = sg.get_ByteArray();
 
-    //NetworkTopology::Node* n = _network->get_NetworkTopology()->find_Node( _network->get_LocalRank() );
-    //n->set_Port(_network->get_LocalPort() );
-
-    //_network->get_NetworkTopology()->reset( new_topo, false );
-
     PacketPtr packet( new Packet( 0, PROT_NEW_SUBTREE, "%s%s%s%as", new_topo.c_str( ),
                                       commnode_path, backend_exe, backend_argv, backend_argc ) );  
 
     _initial_subtree_packet = packet;
     
-    /*
-    _network->update_TopoStream();
-
-    Stream* topo_stream= _network->get_Stream(1);
-    int type=3; //type 0 is add packet
-    char *host_arr=strdup("NULL");
-    uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
-    *send_iprank=1;
-    uint32_t* send_myrank = (uint32_t*) malloc(sizeof(uint32_t));
-    *send_myrank=_network->get_LocalRank();
-    uint16_t* send_port = (uint16_t*)malloc(sizeof(uint16_t));
-    *send_port = _network->get_LocalPort();
-     
-    if ( !(_network->is_LocalNodeFrontEnd() ) ) 
-       topo_stream->send_internal(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", &type, 1, send_iprank, 1, send_myrank, 1, &host_arr,1, send_port, 1);
-    else
-       topo_stream->send(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", &type, 1, send_iprank, 1, send_myrank, 1, &host_arr,1, send_port, 1);
-    free(host_arr);
-    */
-
-    /*char* null_arr=strdup("NULL");
-    Stream* topo_stream= _network->get_Stream(1);
-    int* type;
-    uint32_t junk=1;
-    uint32_t send_rank=_network->get_LocalRank();
-    uint16_t send_port=_network->get_LocalPort();
-
-    topo_stream->send( PROT_TOPO_UPDATE ,"%ad %aud %aud %as %auhd", 
-                       &type, 1, &junk , 1, &send_rank , 1 , &null_arr , 1, &send_port, 1 );
-    */
-
     std::string backend_exe_str( ( backend_exe == NULL ) ? "" : backend_exe );
 
     SerialGraph *cur_sg, *my_sg;

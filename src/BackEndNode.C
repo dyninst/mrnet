@@ -31,12 +31,6 @@ BackEndNode::BackEndNode( Network * inetwork,
     _network->set_NetworkTopology( new NetworkTopology( inetwork, _hostname, _port, _rank, true ) );
     
     NetworkTopology* nt=_network->get_NetworkTopology();
-    //if( nt!=NULL )
-    //{
-      //if( !(nt->isInTopology(imyhostname,_port,imyrank)) ) //if backend already not in the topology. for back end attach cases
-//        _network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
-	//for regular cases, stream 1 would have been created already
-    //}
 
     //establish data connection w/ parent
     if( init_newChildDataConnection( _network->get_ParentNode() ) == -1 ) {
@@ -81,22 +75,10 @@ BackEndNode::BackEndNode( Network * inetwork,
 
     }  
 
-    /*
-    //send new subtree report
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "Sending new child report.\n" ));
-    if( send_NewSubTreeReport( ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "send_newSubTreeReport() failed\n" ));
-    }
-    mrn_dbg( 5, mrn_printf(FLF, stderr,
-                           "send_newSubTreeReport() succeded!\n" ));
-
-   */
-
-   if( send_SubTreeInitDoneReport( ) == -1 ) {
+    if( send_SubTreeInitDoneReport( ) == -1 ) {
            mrn_dbg( 1, mrn_printf(FLF, stderr,
 	                                  "send_newSubTreeReport() failed\n" ));
-   }
+    }
 
 }
 

@@ -332,54 +332,28 @@ void Network::init_FrontEnd( const char * itopology,
     delete parsed_graph;
     parsed_graph = NULL;
 
-    /*update_BcastCommunicator();
-   // Stream* topo_UpdateStream=new_Stream(_bcast_communicator, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_NULL ); 
-
-    //assert(topo_UpdateStream->get_Id() == 1);
-    //topo_UpdateStream->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );*/
-
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
     
-    // NEW_TOPO propagation code
     if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() )
             error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
-    // end of NEW_TOPO propagation code
    
     //NetworkTopology* nt = get_NetworkTopology();
     //std::vector<update_contents_t* > vuc = nt->get_updates_buffer();
     //send_BufferedTopoUpdates( vuc ); 
 
-    //old topo propagation code
-    //if( ! get_LocalFrontEndNode()->waitfor_SubTreeReports() )
-    //    error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
-    //end of old topo propagation code
-
-    //We should have a topology available after subtrees report
-    _network_topology->print( stderr );
-
-    //NEW_TOPO proagation code
-    //broadcast topology, not necessary since sent for subtree creation, right?
-    //char * topology = _network_topology->get_TopologyStringPtr();
-    //PacketPtr packet( new Packet( 0, PROT_TOPOLOGY_RPT, "%s", topology ) );
-    //mrn_dbg(5, mrn_printf(FLF, stderr, "Broadcasting topology ... \n" ));
-    //if( -1 == get_LocalFrontEndNode()->proc_TopologyReport( packet ) )
-    //    error( ERR_INTERNAL, rootRank, "proc_TopologyReport() failed");
-    //free( topology );
-    //end of NEW_TOPO propagation code
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Creating bcast communicator ... \n" ));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Updating bcast communicator ... \n" ));
     update_BcastCommunicator( );
+
+    //creating topology propagation stream
     Stream* s=new_Stream(_bcast_communicator, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
     assert(s->get_Id() == 1);
     s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
 
-    //collect_PortUpdates();
+    //collect_PortUpdates - For XT this call just returns as there is no port update for XT
     PacketPtr packet( new Packet( 0, PROT_PORT_UPDATE, "" ) );
     if( -1 == get_LocalFrontEndNode()->proc_PortUpdates( packet ) )
       error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
     
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is init_frontend last  %s\n", _network_topology->get_TopologyStringPtr() ));
-
 }
 
 void Network::update_TopoStream()
@@ -422,7 +396,6 @@ void Network::send_BufferedTopoUpdates( std::vector<update_contents_t* > vuc )
 
   if( !(vuc.empty() ) )
   {
-    printf("inside vuc not empty\n");
   for( it = vuc.begin() ; it!= vuc.end() ; it++)
   {
      printf("type is %d\n", (*it)->type);
@@ -1346,7 +1319,6 @@ void Network::set_LocalRank( Rank irank )
 
 void Network::set_FailureManager( CommunicationNode* icomm )
 {
-    mrn_dbg(5, mrn_printf( FLF, stderr, "inside set failure manager\n") );
     if( _failure_manager != NULL ) {
         delete _failure_manager;
     }

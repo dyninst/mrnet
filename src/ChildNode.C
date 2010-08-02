@@ -54,7 +54,6 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
     int retval = 0;
 
     switch ( cur_packet->get_Tag() ) {
-      printf("inside childnode\n");
 
     case PROT_SHUTDOWN:
         if( _network->is_LocalNodeParent() ) {

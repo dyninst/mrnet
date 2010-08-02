@@ -29,7 +29,7 @@ int RSHChildNode::proc_PortUpdate( PacketPtr ipacket ) const
     mrn_dbg_func_begin();
     Stream *s = _network->get_Stream(1);
 
-    int type=3; //type 0 is add packet
+    int type=3; //type 3 is topology update packet 
     char *host_arr=strdup("NULL");
     uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
     *send_iprank=1;
@@ -38,8 +38,6 @@ int RSHChildNode::proc_PortUpdate( PacketPtr ipacket ) const
     uint16_t* send_port = (uint16_t*)malloc(sizeof(uint16_t));
     *send_port = _network->get_LocalPort();
     
-   // mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() %d %d %d %s %d\n", type, *send_iprank, *send_myrank, *host_arr, *send_port ));
-
     if ( _network->is_LocalNodeInternal() )
        s->send_internal(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", &type, 1, send_iprank, 1, send_myrank, 1, &host_arr,1, send_port, 1);
     else
