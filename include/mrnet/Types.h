@@ -120,10 +120,10 @@ namespace MRN
     } perfdata_context_t;
 
     typedef enum update_type {
-        NEW_RANK = 0,
-        REMOVE_RANK =1 ,
-	CHANGE_PARENT =2 ,
-	CHANGE_PORT = 3
+        TOPO_NEW_RANK = 0,
+        TOPO_REMOVE_RANK =1 ,
+	TOPO_CHANGE_PARENT =2 ,
+	TOPO_CHANGE_PORT = 3
     } update_type_t; 	
 
     typedef struct  

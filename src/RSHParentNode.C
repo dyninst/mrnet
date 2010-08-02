@@ -136,8 +136,6 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
 
     mrn_dbg_func_begin();
 
-    // _initial_subtree_packet = ipacket;
-
     if( ipacket->ExtractArgList( "%s%s%s%as", &byte_array, &commnode_path,
                                &backend_exe, &backend_argv, &backend_argc ) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));

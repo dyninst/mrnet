@@ -33,7 +33,7 @@ private:
     PacketPtr _initial_subtree_packet;
 
     int proc_SubTreeInfoRequest( PacketPtr ipacket ) const;
-    int proc_PortUpdateAck(MRN::PacketPtr) const;
+    int proc_PortUpdateAck(PacketPtr) const;
     virtual int proc_PortUpdates( PacketPtr ipacket ) const ;
     bool waitfor_PortUpdateAcks() const;
 };

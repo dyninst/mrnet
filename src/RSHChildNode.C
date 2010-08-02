@@ -29,7 +29,7 @@ int RSHChildNode::proc_PortUpdate( PacketPtr ipacket ) const
     mrn_dbg_func_begin();
     Stream *s = _network->get_Stream(1);
 
-    int type=3; //type 3 is topology update packet 
+    int type = TOPO_CHANGE_PORT ;  
     char *host_arr=strdup("NULL");
     uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
     *send_iprank=1;

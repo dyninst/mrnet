@@ -60,23 +60,23 @@ Stream::Stream( Network * inetwork,
     //parent nodes set up relevant downstream nodes 
     if(ibackends != NULL)
     {
-    if( _network->is_LocalNodeParent() ) {
+        if( _network->is_LocalNodeParent() ) {
 
-        _end_points.insert( ibackends, ibackends + inum_backends );
+            _end_points.insert( ibackends, ibackends + inum_backends );
 
-        //for each backend in the stream, we add the proper forwarding node
-        for( unsigned int i = 0; i < inum_backends; i++ ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "getting outlet for backend[%d] ... ",
+            //for each backend in the stream, we add the proper forwarding node
+            for( unsigned int i = 0; i < inum_backends; i++ ) {
+                mrn_dbg( 3, mrn_printf(FLF, stderr, "getting outlet for backend[%d] ... ",
                                    ibackends[i] ));
-            PeerNodePtr outlet = _network->get_OutletNode( ibackends[i] );
-            if( outlet != NULL ) {
-                mrn_dbg( 3, mrn_printf(FLF, stderr,
+                PeerNodePtr outlet = _network->get_OutletNode( ibackends[i] );
+                if( outlet != NULL ) {
+                    mrn_dbg( 3, mrn_printf(FLF, stderr,
                                        "Adding Endpoint %d to stream %d\n",
                                        ibackends[i], _id ));
-                _peers.insert( outlet->get_Rank() );
+                    _peers.insert( outlet->get_Rank() );
+                }
             }
         }
-    }
     }//if backends not null 
     mrn_dbg_func_end();
 }

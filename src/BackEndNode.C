@@ -46,7 +46,7 @@ BackEndNode::BackEndNode( Network * inetwork,
       return;
     }
     
-    if( nt!=NULL )
+    if( nt != NULL )
     {
       if( !(nt->isInTopology(imyhostname,_port,imyrank)) ) //if backend already not in the topology. this is false in back end attach cases
       {
@@ -57,7 +57,7 @@ BackEndNode::BackEndNode( Network * inetwork,
 
         //new topo propagation code - create a new update packet
         Stream *s = _network->get_Stream(1); // getting handle for stream id 1 which was reserved for topology propagation
-        int type=0; //type 0 is add packet
+        int type = TOPO_NEW_RANK; //type 0 is add packet
         char *host_arr=strdup(imyhostname.c_str());
         uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
         *send_iprank=iprank;
@@ -231,14 +231,6 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 
     // processes will be exiting -- disable failure recovery
     _network->disable_FailureRecovery();
-
-    // send ack to parent
-    if( !_network->get_LocalChildNode()->ack_DeleteSubTree() ) {
-      mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
-    }
-   
-    //sleep to let message be sent before tearing down network
-    sleep(1);
 
     // kill threads, topology, and events
     _network->shutdown_Network();

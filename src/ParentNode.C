@@ -708,10 +708,6 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
     _network->writeTopology(isock, init_topo);
     free( topology );
 
-    //add child to peers of the topo stream when a child connects to parent
-    //Stream* s = _network->get_Stream(1);
-    //s->_peers.insert( child_node->get_Rank() );
-    
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is , proc new child data conn before %s\n", nt->get_TopologyStringPtr() ));
 
     SerialGraph sg( topo_ptr );

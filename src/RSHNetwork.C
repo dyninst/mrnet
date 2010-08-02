@@ -163,9 +163,9 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
     get_NetworkTopology()->reset(sg,false);
     NetworkTopology* nt=get_NetworkTopology();
     
-    if(nt!=NULL)
+    if( nt != NULL )
     {
-       NetworkTopology::Node* localnode = nt->_nodes[get_LocalRank()];
+       NetworkTopology::Node* localnode = nt->find_Node( get_LocalRank() );
        localnode->set_Port(get_LocalPort() );
     }   
 

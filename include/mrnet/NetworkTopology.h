@@ -153,7 +153,6 @@ class NetworkTopology: public Error {
     std::vector<update_contents_t* > get_updates_buffer( void );
 
     //these two members are made public from private for topo prop change
-    std::map< Rank, Node * > _nodes;
     void serialize( Node * );
     void update_Router_Table();
 
@@ -184,7 +183,7 @@ class NetworkTopology: public Error {
     Router *_router;
     unsigned int _min_fanout, _max_fanout, _depth;
     double _avg_fanout, _stddev_fanout, _var_fanout;
-    //std::map< Rank, Node * > _nodes;
+    std::map< Rank, Node * > _nodes;
     std::set< Node * > _orphans;
     std::set< Node * > _backend_nodes;
     std::set< Node * > _parent_nodes;

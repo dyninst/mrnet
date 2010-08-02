@@ -40,7 +40,6 @@ NetworkTopology::Node::Node( const string & ihostname, Port iport, Rank irank,
         srand48( time(NULL) );
     }
     _rand_key = drand48();
-    _children.clear();
 }
 
 bool NetworkTopology::Node::failed( void ) const 
@@ -787,12 +786,9 @@ void NetworkTopology::serialize(Node * inode)
     }
 
     set < Node * > ::iterator iter;
-    if(!(inode->_children).empty())
-    {
-      for( iter=inode->_children.begin(); iter!=inode->_children.end(); iter++ ){
+    for( iter=inode->_children.begin(); iter!=inode->_children.end(); iter++ ){
          serialize( *iter );
-      }	 
-    }
+    }	 
 
     //Ending sub-tree component in graph serialization:
     _serial_graph->end_SubTree();

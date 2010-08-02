@@ -15,8 +15,6 @@ class Network;
 class RSHBackEndNode : public RSHChildNode,
                         public BackEndNode 
 {
-//protected:
-//    int proc_PacketFromParent( PacketPtr cur_packet );
 
 public:
     RSHBackEndNode(Network * inetwork, 

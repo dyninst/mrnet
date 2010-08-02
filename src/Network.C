@@ -337,9 +337,6 @@ void Network::init_FrontEnd( const char * itopology,
     if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() )
             error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
    
-    //NetworkTopology* nt = get_NetworkTopology();
-    //std::vector<update_contents_t* > vuc = nt->get_updates_buffer();
-    //send_BufferedTopoUpdates( vuc ); 
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Updating bcast communicator ... \n" ));
     update_BcastCommunicator( );
@@ -356,6 +353,8 @@ void Network::init_FrontEnd( const char * itopology,
     
 }
 
+/*
+//TODO: NOT NEEDED as we create topology stream with the backend 
 void Network::update_TopoStream()
 {
    update_BcastCommunicator();
@@ -374,10 +373,12 @@ void Network::update_TopoStream()
 
 }
 
+*/
+
 void Network::send_BufferedTopoUpdates( std::vector<update_contents_t* > vuc )
 {
   mrn_dbg(5, mrn_printf(FLF, stderr, "send_BufferedTopoUpdates begin \n" ));
-  update_TopoStream();
+  //update_TopoStream();
 
   int vuc_size=vuc.size();
   std::vector<update_contents_t* >::iterator it;
