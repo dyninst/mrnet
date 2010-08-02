@@ -3,23 +3,25 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <bitset>
-#include <cmath>
-#include <cstring>
 
 #include "mrnet/Packet.h"
 #include "mrnet/NetworkTopology.h"
 
 #include "FaultRecovery.h"
 
+#include <cmath>
+#include <cstring>
+
 using namespace MRN;
 
 extern "C" {
 
+typedef 
+
 struct IP_state {
     unsigned int min;
     unsigned int max;
-    std::bitset<10> percentiles;
+    fr_bin_set percentiles;
 };
 
 const char * IntegerPercentiles_format_string = ""; // no format, can recv multiple types
@@ -34,35 +36,35 @@ void IntegerPercentiles( std::vector< PacketPtr >& packets_in,
     if( *filter_state == NULL ) {
         state = new IP_state;
         state->max = 0;
-        state->min = 100;
+        state->min = fr_range_max;
         *filter_state = (void*)state; 
     }
 
-    std::bitset<10>& aggr_bits = state->percentiles;
+    fr_bin_set& aggr_bits = state->percentiles;
     
     for( unsigned int i = 0; i < packets_in.size( ); i++ ) {
         PacketPtr cur_packet = packets_in[i];
 
         unsigned int cur_min=0;
         unsigned int cur_max=0;
-        unsigned int cbits_long=0;
-        std::bitset<10> cbits;
+        unsigned long cbits_long=0;
+        fr_bin_set cbits;
  
         const char* cur_fmt = cur_packet->get_FormatString();
-        if( ! strcmp("%ud %ud %ud", cur_fmt) ) {
+        if( ! strcmp("%uld %ud %ud", cur_fmt) ) {
 
-            cur_packet->unpack("%ud %ud %ud", &cbits_long, &cur_max, &cur_min);
-            cbits |= std::bitset<10>(cbits_long);
+            cur_packet->unpack("%uld %ud %ud", &cbits_long, &cur_max, &cur_min);
+            cbits |= fr_bin_set(cbits_long);
 
         } else if( ! strcmp("%ud", cur_fmt) ) {
 
             cur_packet->unpack("%ud", &cur_min);
-            assert( cur_min < 100 );
+            assert( cur_min < fr_range_max );
             cur_max = cur_min;
 
-            double p = floor( (double)cur_max / 10 );
+            double p = floor( (double)cur_max / (fr_range_max / fr_bins) );
             unsigned int ndx = (unsigned int) p;
-            assert( ndx < cbits.size() );
+            assert( ndx < fr_bins );
             cbits.set(ndx);
 
         }
@@ -80,8 +82,8 @@ void IntegerPercentiles( std::vector< PacketPtr >& packets_in,
     }
     
     PacketPtr new_packet ( new Packet( packets_in[0]->get_StreamId(),
-                                       PROT_WAVE, "%ud %ud %ud",
-                                       (unsigned int)aggr_bits.to_ulong(), state->max, state->min ) );
+                                       PROT_WAVE, "%uld %ud %ud",
+                                       aggr_bits.to_ulong(), state->max, state->min ) );
     packets_out.push_back( new_packet );
 }
 
@@ -97,15 +99,15 @@ PacketPtr IntegerPercentiles_get_state( void ** ifilter_state, int istream_id )
     else{
 
         packet = PacketPtr( new Packet( istream_id, PROT_WAVE,
-                                        "%ud %ud %ud",
-                                        (unsigned int)state->percentiles.to_ulong(),
+                                        "%uld %ud %ud",
+                                        state->percentiles.to_ulong(),
                                         state->max,
                                         state->min ) );
     }
     return packet;
 }
 
-const char * BitsetOr_format_string = "%ud";
+const char * BitsetOr_format_string = "%uld";
 void BitsetOr( std::vector< PacketPtr >& packets_in,
                std::vector< PacketPtr >& packets_out,
                std::vector< PacketPtr >&, void **, PacketPtr&,
@@ -116,12 +118,12 @@ void BitsetOr( std::vector< PacketPtr >& packets_in,
     for( unsigned int i = 0; i < packets_in.size( ); i++ ) {
         PacketPtr cur_packet = packets_in[i];
         unsigned long cval;
-        cur_packet->unpack("%ud", &cval);
+        cur_packet->unpack("%uld", &cval);
         aggr_val |= cval;
     }
 
     PacketPtr new_packet ( new Packet( packets_in[0]->get_StreamId(),
-                                       packets_in[0]->get_Tag(), "%ud",
+                                       packets_in[0]->get_Tag(), "%uld",
                                        aggr_val ) );
     packets_out.push_back( new_packet );
 }

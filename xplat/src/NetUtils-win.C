@@ -19,8 +19,8 @@ int NetUtils::FindNumberOfLocalNetworkInterfaces( void )
     unsigned long output_buffer_len = sizeof(IP_ADAPTER_INFO);
 
     // Make call to GetAdaptersInfo to get number of addapters
-	DWORD ret = GetAdaptersInfo( pAdapterInfo, &output_buffer_len );
-	delete pAdapterInfo;
+    DWORD ret = GetAdaptersInfo( pAdapterInfo, &output_buffer_len );
+    delete pAdapterInfo;
     if( (ret == ERROR_BUFFER_OVERFLOW) || (ret == ERROR_SUCCESS) ) {
 		int nif = output_buffer_len / sizeof(IP_ADAPTER_INFO);
 		if( output_buffer_len > (nif * sizeof(IP_ADAPTER_INFO)) )
@@ -35,15 +35,15 @@ int NetUtils::FindNumberOfLocalNetworkInterfaces( void )
 int 
 NetUtils::FindLocalNetworkInterfaces( std::vector< NetUtils::NetworkAddress > &local_addrs )
 {
-	unsigned long num_interfaces = FindNumberOfLocalNetworkInterfaces();
+    unsigned long num_interfaces = FindNumberOfLocalNetworkInterfaces();
     if( num_interfaces == -1 ){
         fprintf( stderr, "FindLocalNetworkInterfaces() failed\n" );
         return -1;
     }
 
-	PIP_ADAPTER_INFO pAdapterInfo = new IP_ADAPTER_INFO[num_interfaces];
+    PIP_ADAPTER_INFO pAdapterInfo = new IP_ADAPTER_INFO[num_interfaces];
     unsigned long OutBufLen = sizeof( IP_ADAPTER_INFO ) * num_interfaces;
-	DWORD ret = GetAdaptersInfo( pAdapterInfo, &OutBufLen );
+    DWORD ret = GetAdaptersInfo( pAdapterInfo, &OutBufLen );
     if( ret != ERROR_SUCCESS ) {
         fprintf( stderr, "GetAdaptersInfo() failed (rc = %d) ", ret);
         return -1;

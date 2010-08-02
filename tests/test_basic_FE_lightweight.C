@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 
     fprintf(stdout, "\n"
             " ##########################################\n"
-            " # MRNet C++ Interface *Basic* Test Suite #\n"
+            " # MRNet C Interface *Basic* Test Suite #\n"
             " ##########################################\n\n"
             "   This test suite performs many tests that exercise\n"
             " MRNet's basic functionality. These tests use all MRNet\n"
@@ -186,7 +186,7 @@ int test_char( Network * net, Stream *stream, bool anonymous, bool block)
         int retval;
 
         //In non-blocking mode we sleep b/n recv attempts
-        if( ! block ) sleep(2);
+        if( ! block ) sleep(1);
             
         if( ! anonymous ) {
             retval = stream->recv( &tag, pkt, block );
@@ -209,11 +209,11 @@ int test_char( Network * net, Stream *stream, bool anonymous, bool block)
             char tmp_buf[256];
 
             num_received++;
-						//#if defined(DEBUG)
+#if defined(DEBUG)
             sprintf(tmp_buf, "Received %d packets; %d left.\n",
                     num_received, num_to_receive-num_received);
             test->print(tmp_buf, testname);
-						//#endif
+#endif
 
             if( pkt->unpack( "%c", &recv_val ) == -1 ) {
                 test->print("stream::unpack() failure\n", testname);
@@ -294,9 +294,7 @@ int test_short( Network * net, Stream *stream, bool anonymous, bool block )
         int retval;
 
         //In non-blocking mode we sleep b/n recv attempts
-        if( ! block ) {
-            sleep(2);
-        }
+        if( ! block ) sleep(1);
 
         if( ! anonymous ) {
             retval = stream->recv( &tag, pkt, block );
@@ -405,7 +403,7 @@ int test_ushort( Network * net, Stream *stream, bool anonymous, bool block )
         int retval;
 
         //In non-blocking mode we sleep b/n recv attempts
-        if( ! block ) sleep(2);
+        if( ! block ) sleep(1);
 
         if( ! anonymous ) {
             retval = stream->recv( &tag, pkt, block );
@@ -514,7 +512,7 @@ int test_int( Network * net, Stream *stream, bool anonymous, bool block )
         int retval;
 
         //In non-blocking mode we sleep b/n recv attempts
-        if( ! block ) sleep(2);
+        if( ! block ) sleep(1);
 
         if( ! anonymous ) {
             retval = stream->recv( &tag, pkt, block );
@@ -623,7 +621,7 @@ int test_uint( Network * net, Stream *stream, bool anonymous, bool block )
         int retval;
 
         //In non-blocking mode we sleep b/n recv attempts
-        if( ! block ) sleep(2);
+        if( ! block ) sleep(1);
 
         if( ! anonymous ) {
             retval = stream->recv( &tag, pkt, block );
@@ -732,7 +730,7 @@ int test_long( Network * net, Stream *stream, bool anonymous, bool block )
         int retval;
 
         //In non-blocking mode we sleep b/n recv attempts
-        if( ! block ) sleep(2);
+        if( ! block ) sleep(1);
 
         if( ! anonymous ) {
             retval = stream->recv( &tag, pkt, block );
@@ -841,7 +839,7 @@ int test_ulong( Network * net, Stream *stream, bool anonymous, bool block )
         int retval;
 
         //In non-blocking mode we sleep b/n recv attempts
-        if( ! block ) sleep(2);
+        if( ! block ) sleep(1);
 
         if( ! anonymous ) {
             retval = stream->recv( &tag, pkt, block );
@@ -951,7 +949,7 @@ int test_float( Network * net, Stream *stream, bool anonymous, bool block )
         int retval;
 
         //In non-blocking mode we sleep b/n recv attempts
-        if( ! block ) sleep(2);
+        if( ! block ) sleep(1);
 
         if( ! anonymous ) {
             retval = stream->recv( &tag, pkt, block );
@@ -1060,7 +1058,7 @@ int test_double( Network * net, Stream *stream, bool anonymous, bool block )
         int retval;
 
         //In non-blocking mode we sleep b/n recv attempts
-        if( ! block ) sleep(2);
+        if( ! block ) sleep(1);
 
         if( ! anonymous ) {
             retval = stream->recv( &tag, pkt, block );
@@ -1169,7 +1167,7 @@ int test_string( Network * net, Stream *stream, bool anonymous, bool block )
         int retval;
 
         //In non-blocking mode we sleep b/n recv attempts
-        if( ! block ) sleep(2);
+        if( ! block ) sleep(1);
        
         if( ! anonymous ) {
             retval = stream->recv( &tag, pkt, block );
@@ -1296,7 +1294,7 @@ int test_alltypes( Network * net, Stream *stream, bool anonymous, bool block )
         int retval;
 
         //In non-blocking mode we sleep b/n recv attempts
-        if( ! block ) sleep(2);
+        if( ! block ) sleep(1);
 
         if( ! anonymous ) {
             retval = stream->recv( &tag, pkt, block );

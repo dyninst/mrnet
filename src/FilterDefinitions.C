@@ -1364,7 +1364,6 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
     {
       //update Network Topology Object
       //type can be 0,1,2 for add, move, remove respectively
-      //mrn_dbg(5,mrn_printf(FLF,stderr, "inside positive array length\n"));
 
       NetworkTopology* nt=net->get_NetworkTopology();
       Stream* str_one=net->get_Stream(1);
@@ -1377,7 +1376,6 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
           
 	  {
 	  mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is before add %s\n", nt->get_TopologyStringPtr() ));
-          //mrn_dbg(5,mrn_printf(FLF,stderr, inside add new node\n"));
           //create a node for the child node and add it to network topology set of nodes. Assume only backends can be added
           NetworkTopology::Node* n = nt->find_Node( rcrank_arr[i] );
 	  if (n == NULL)
@@ -1389,7 +1387,6 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
                                   rcrank_arr[i], rprank_arr[i] ) );
           if( net->is_LocalNodeBackEnd() )
           {
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "calling set parent inside if  ...\n"));
             if( ! ( nt->set_Parent( rcrank_arr[i], rprank_arr[i] , false ) ) )
                 assert(0);
           }
@@ -1447,7 +1444,6 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 	   break;
 	 }
 	default:
-          mrn_dbg(5, mrn_printf(FLF, stderr, "Inside default case\n"));
           //mrnet error that update packet in the topo stream contains invalid update type and exit
           //check with mike on error handling semantics
           break;
@@ -1616,7 +1612,6 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
     {
       //update Network Topology Object
       //type can be 0,1,2 for add, move, remove respectively
-      //mrn_dbg(5,mrn_printf(FLF,stderr, "inside positive array length\n"));
 
       NetworkTopology* nt=net->get_NetworkTopology();
       Stream* str_one=net->get_Stream(1);
@@ -1627,7 +1622,6 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
         //ADD a new child with rank rcrank[i],rchost[i], rcport[i] to parent of rank rprank[i] in the topology
         case 0:
 
-          //mrn_dbg(5,mrn_printf(FLF,stderr, inside add new node\n"));
           //create a node for the child node and add it to network topology set of nodes. Assume only backends can be added
           nt->new_Node(rchost_arr[i], rcport_arr[i], rcrank_arr[i], true);
           str_one->add_Stream_EndPoint(rcrank_arr[i]);
@@ -1636,7 +1630,6 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
                                   rcrank_arr[i], rprank_arr[i] ) );
           if( net->is_LocalNodeBackEnd() )
           {
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "calling set parent inside if  ...\n"));
             if( ! ( nt->set_Parent( rcrank_arr[i], rprank_arr[i] , false ) ) )
                 assert(0);
 
@@ -1688,7 +1681,6 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
 	   break;
 	 }
 	default:
-          mrn_dbg(5, mrn_printf(FLF, stderr, "Inside default case\n"));
           //mrnet error that update packet in the topo stream contains invalid update type and exit
           //check with mike on error handling semantics
           break;
@@ -1767,7 +1759,6 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
 
             Rank rank = (*map_iter).first;
             if( net->node_Failed( rank ) ) {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? Yes!!\n", rank ));
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
                                        rank ));
@@ -1791,8 +1782,16 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
 
     //2. Place input packets
     for( unsigned int i=0; i < ipackets.size(); i++ ) {
+
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
-        map_iter = state->packets_by_rank.find( cur_inlet_rank );
+
+        //special case for back-end synchronization; packets have unknown inlet
+        if( cur_inlet_rank == UnknownRank ) {
+            if( ipackets.size() == 1 ) {
+                opackets.push_back( ipackets[i] );
+                return;
+            }
+        }
 
         if( net->node_Failed( cur_inlet_rank ) ) {
             //Drop packets from failed node
@@ -1800,6 +1799,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
         }
 
         //Insert packet into map
+        map_iter = state->packets_by_rank.find( cur_inlet_rank );
 
         //Allocate new slot if necessary
         if( map_iter == state->packets_by_rank.end() ) {
@@ -1897,7 +1897,8 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     }
     if( timeout_ms == 0 ) {
 	 opackets = ipackets;
-	 return;
+	 mrn_dbg( 3, mrn_printf(FLF, stderr, "No timeout specified, pushing all inputs\n"));
+         return;
     }
     
     //1. Setup/Recover Filter State
@@ -1923,7 +1924,6 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
             Rank rank = map_iter->first;
             if( net->node_Failed( rank ) ) {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? Yes!!\n", rank ));
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
                                        rank ));
@@ -1949,10 +1949,6 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     //2. Place input packets
     for( unsigned int i=0; i < ipackets.size(); i++ ) {
        
-         mrn_dbg( 5, mrn_printf(FLF, stderr,
-	                                    "Inside for loop of place input packets ...\n" ) )
-
-
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
 	mrn_dbg( 5, mrn_printf(FLF, stderr, "inlet rank is %u \n", cur_inlet_rank ) );
 
@@ -1967,15 +1963,13 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
         if( net->node_Failed( cur_inlet_rank ) ) {
             //Drop packets from failed node
-	     mrn_dbg( 5, mrn_printf(FLF, stderr, "inside net node failed and continue \n") );
-	                                       
-
             continue;
         }
         
 	map_iter = state->packets_by_rank.find( cur_inlet_rank );
 
         //Insert packet into map (allocate new slot if necessary)
+        map_iter = state->packets_by_rank.find( cur_inlet_rank );
         if( map_iter == state->packets_by_rank.end() ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "Allocating new map slot for node[%d] ...\n",

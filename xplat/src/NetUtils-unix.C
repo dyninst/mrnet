@@ -173,7 +173,7 @@ NetUtils::FindLocalNetworkInterfaces( std::vector< NetUtils::NetworkAddress >& l
         memcpy( &in.s_addr, ( void * )&( sinptr->sin_addr ),
                 sizeof( in.s_addr ) );
         
-        local_addrs.push_back( NetworkAddress( ntohl( in.s_addr ) ) );
+        local_addrs.push_back( NetworkAddress(in.s_addr) );
     }
 
     if( ifc.ifc_buf != NULL )

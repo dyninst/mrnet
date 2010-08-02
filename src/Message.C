@@ -12,7 +12,9 @@
 
 #include "mrnet/Packet.h"
 #include "xplat/Atomic.h"
+#include "xplat/Error.h"
 #include "xplat/NCIO.h"
+#include "xplat/NetUtils.h"
 
 namespace MRN
 {
@@ -58,10 +60,10 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
                 buf_len ));
     int retval;
     if( ( retval = MRN::read( sock_fd, buf, buf_len ) ) != buf_len ) {
-       
+
         if( retval == -1 )
             error( ERR_SYSTEM, iinlet_rank, "MRN::read() %s", strerror(errno) );
-        
+       
         mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN::read() %d of %d bytes received\n", 
                                retval, buf_len ));
         free( buf );
@@ -402,53 +404,63 @@ int Message::size_Bytes( void )
 
 int write( int ifd, const void *ibuf, int ibuf_len )
 {
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "%d, %p, %d\n", ifd, ibuf, ibuf_len ));
-    //fprintf(stderr, "write(): %d, %p, %d\n", ifd, ibuf, ibuf_len );
-    int ret = ::send( ifd, (const char*)ibuf, ibuf_len, 0 );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "%d, %p, %d\n", ifd, ibuf, ibuf_len ));
 
-    //fprintf(stderr, "write(): send => %d\n", ret );
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "send => %d\n", ret ));
-    //TODO: recursive call checking for syscall interuption
+    // don't generate SIGPIPE
+    int flags = MSG_NOSIGNAL;
+
+    int ret = ::send( ifd, (const char*)ibuf, ibuf_len, flags );
+    if( ret == -1 ) {
+        int err = XPlat::NetUtils::GetLastError();
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "send() failed with error '%s'\n", 
+                               XPlat::Error::GetErrorString( err ).c_str()) );
+    }
+    else mrn_dbg( 5, mrn_printf(FLF, stderr, "send => %d\n", ret ));
     return ret;
 }
 
 int read( int fd, void *buf, int count )
 {
-    int bytes_recvd = 0, retval;
+    int bytes_recvd = 0, retval, err;
     while( bytes_recvd != count ) {
+
         retval = ::recv( fd, ( ( char * )buf ) + bytes_recvd,
                        count - bytes_recvd,
                        XPlat::NCBlockingRecvFlag );
 
+        err = XPlat::NetUtils::GetLastError();
+
         if( retval == -1 ) {
-            if( errno == EINTR ) {
+            if( err == EINTR ) {
                 continue;
             }
             else {
+                std::string errstr = XPlat::Error::GetErrorString( err );
                 mrn_dbg( 3, mrn_printf(FLF, stderr,
                                        "premature return from read(). Got %d of %d "
-                                       " bytes. errno: %s\n", bytes_recvd, count,
-                                       strerror(errno) ));
+                                       " bytes. error '%s'\n", bytes_recvd, count,
+                                       errstr.c_str()) );
                 return -1;
             }
         }
-        else if( ( retval == 0 ) && ( errno == EINTR ) ) {
+        else if( ( retval == 0 ) && ( err == EINTR ) ) {
             // this situation has been seen to occur on Linux
             // when the remote endpoint has gone away
             return -1;
         }
         else {
             bytes_recvd += retval;
-            if( bytes_recvd < count && errno == EINTR ) {
+            if( bytes_recvd < count && err == EINTR ) {
                 continue;
             }
             else {
-                //bytes_recvd is either count, or error other than "eintr" occured
+                // bytes_recvd == count, or error other than EINTR occurred
                 if( bytes_recvd != count ) {
+                    std::string errstr = XPlat::Error::GetErrorString( err );
                     mrn_dbg( 3, mrn_printf(FLF, stderr,
                                 "premature return from read(). %d of %d "
-                                " bytes. errno: %s\n", bytes_recvd, count,
-                                           strerror(errno) ));
+                                " bytes. error '%s'\n", bytes_recvd, count,
+                                errstr.c_str()) );
                 }
                 return bytes_recvd;
             }
@@ -458,4 +470,4 @@ int read( int fd, void *buf, int count )
     return -1;
 }
 
-}                               // namespace MRN
+} // namespace MRN

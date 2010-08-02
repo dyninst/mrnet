@@ -5,6 +5,7 @@
 
 #include "utils.h"
 #include "mrnet/Event.h"
+#include "xplat/SocketUtils.h"
 
 using namespace std;
 
@@ -41,11 +42,11 @@ EventPipe::~EventPipe()
 #if !defined(os_windows)
     _sync.Lock();
     if( _pipe_fds[0] != -1 ) {
-        close( _pipe_fds[0] );
+        XPlat::SocketUtils::Close( _pipe_fds[0] );
         set_ReadFd( -1 );
     }
     if( _pipe_fds[1] != -1 ) {
-        close( _pipe_fds[1] );
+        XPlat::SocketUtils::Close( _pipe_fds[1] );
         set_WriteFd( -1 );
     }
     _sync.Unlock();

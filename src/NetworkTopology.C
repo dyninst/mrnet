@@ -957,7 +957,6 @@ void NetworkTopology::find_PotentialAdopters( Node * iorphan,
                                               Node * ipotential_adopter,
                                               vector<Node*> &opotential_adopters )
 {
-    mrn_dbg_func_begin();
     _sync.Lock();
 
     mrn_dbg(5, mrn_printf(FLF, stderr,
@@ -999,7 +998,6 @@ void NetworkTopology::find_PotentialAdopters( Node * iorphan,
     }
 
     _sync.Unlock();
-    mrn_dbg_func_end();
 }
 
 bool NetworkTopology::reset( string itopology_str, bool iupdate /* =true */ )

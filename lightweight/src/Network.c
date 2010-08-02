@@ -34,8 +34,6 @@ void init_local(void)
     }
     if (fd > 2) close(fd);
 
-    // ignore SIGPIPE
-    signal (SIGPIPE, SIG_IGN);
 #else
     // init Winsock
     WORD version = MAKEWORD(2,2); /* socket version 2.2 supported by all moddern Windows */

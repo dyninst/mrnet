@@ -37,13 +37,10 @@ using namespace XPlat;
 # include <sys/sockio.h>         //only for solaris
 #endif // defined(os_solaris)
 
-static XPlat::Mutex gethostbyname_mutex;
 static XPlat::Mutex mrn_printf_mutex;
 
 namespace MRN
 {
-
-static Rank myrank=UnknownRank;
 
 std::string LocalHostName="";
 std::string LocalDomainName="";
@@ -55,83 +52,6 @@ double Timer::offset=0;
 bool Timer::first_time=true;
 
 XPlat::TLSKey tsd_key;
-
-static struct hostent * copy_hostent( struct hostent *);
-static void delete_hostent( struct hostent *in );
-static struct hostent * mrnet_gethostbyname( const char * name );
-
-struct hostent * copy_hostent( struct hostent *in)
-{
-    struct hostent * out = new struct hostent;
-    unsigned int i=0;
-
-    //copy h_name, h_addrtype, and h_length
-    out->h_name = strdup( in->h_name );
-    out->h_addrtype = in->h_addrtype;
-    out->h_length = in->h_length;
-
-    //deep copy h_aliases
-    unsigned int count=0;
-    while( in->h_aliases[count] != NULL )
-        count++;
-
-    out->h_aliases = new char * [ count+1 ];
-    for(i=0; i<count; i++ ){
-        out->h_aliases[i] = strdup( in->h_aliases[i] );
-    }
-    out->h_aliases[count] = NULL;
-
-    //deep copy h_addr_list
-    count=0;
-    while( in->h_addr_list[count] != 0 )
-        count++;
-
-    out->h_addr_list = new char * [ count+1 ];
-    for(i=0; i<count; i++ ){
-        out->h_addr_list[i] = new char[4];
-        out->h_addr_list[i][0] = in->h_addr_list[i][0];
-        out->h_addr_list[i][1] = in->h_addr_list[i][1];
-        out->h_addr_list[i][2] = in->h_addr_list[i][2];
-        out->h_addr_list[i][3] = in->h_addr_list[i][3];
-    }
-    out->h_addr_list[count] = NULL;
-
-    return out;
-}
-
-void delete_hostent( struct hostent *in )
-{
-    free(in->h_name);
-
-    unsigned int count=0;
-    while( in->h_aliases[count] != NULL )
-        free( in->h_aliases[count++] );
-    delete [] in->h_aliases;
-
-    count=0;
-    while( in->h_addr_list[count] != NULL )
-        delete [] in->h_addr_list[count++];
-
-    delete [] in->h_addr_list;
-    delete in;
-}
-
-struct hostent * mrnet_gethostbyname( const char * name )
-{
-
-    gethostbyname_mutex.Lock();
-
-    struct hostent * temp_hostent = gethostbyname( name );
-
-    if( temp_hostent == NULL ){
-        gethostbyname_mutex.Unlock();
-        return NULL;
-    }
-    struct hostent * ret_hostent = copy_hostent(temp_hostent);
-  
-    gethostbyname_mutex.Unlock();
-    return ret_hostent;
-}
 
 int connectHost( int *sock_in, const std::string & hostname, Port port, 
                  int num_retry /*=-1*/ )
@@ -156,18 +76,14 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
         mrn_dbg( 5, mrn_printf(FLF, stderr, "socket() => %d\n", sock ));
     }
 
-    server_hostent = mrnet_gethostbyname( host );
-    if( server_hostent == NULL ) {
-        perror( "gethostbyname()" );
-        return -1;
-    }
-
     memset( &server_addr, 0, sizeof( server_addr ) );
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons( port );
-    memcpy( &server_addr.sin_addr, server_hostent->h_addr_list[0],
-            sizeof( struct in_addr ) );
-    delete_hostent( server_hostent );
+
+    XPlat::NetUtils::NetworkAddress naddr;
+    XPlat::NetUtils::GetNetworkAddress( hostname, naddr );
+    in_addr_t addr = naddr.GetInAddr();
+    memcpy( &server_addr.sin_addr, &addr, sizeof(addr) );
 
     unsigned int nConnectTries = 0;
     int cret = -1;
@@ -179,6 +95,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n",
                                        host, port,
                                        XPlat::Error::GetErrorString( err ).c_str()) );
+                XPlat::SocketUtils::Close( sock );
                 return -1;
             }
 
@@ -197,22 +114,22 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
         mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n",
                                host, port,
 			       XPlat::Error::GetErrorString( err ).c_str() ) );
+        XPlat::SocketUtils::Close( sock );
         return -1;
     }
 
-      /* Code for closing descriptor on exec*/
-      int fdflag = fcntl(sock, F_GETFD );
-      if( fdflag == -1 )
-      {
-          // failed to retrieve the socket  descriptor flags
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );
-      }
-      int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
-      if( fret == -1 )
-      {
-          // we failed to set the socket descriptor flags
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
-      }
+    // Close socket on exec
+    int fdflag = fcntl(sock, F_GETFD );
+    if( fdflag == -1 ) {
+        // failed to retrieve the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );
+    }
+    int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
+    if( fret == -1 ) {
+        // we failed to set the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+    }
+
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
     int optVal = 1;
@@ -234,7 +151,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
 
 int bindPort( int *sock_in, Port *port_in )
 {
-    int err, soVal, soRet;
+    int err;
     int sock = *sock_in;
     Port port;
 
@@ -259,20 +176,30 @@ int bindPort( int *sock_in, Port *port_in )
         return -1;
     }
 
+    // Close socket on exec
+    int fdflag = fcntl(sock, F_GETFD );
+    if( fdflag == -1 ) {
+        // failed to retrieve the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );     
+    }
+    int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
+    if( fret == -1 ) {
+        // failed to set the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+    }
+
+#ifndef os_windows
     // set the socket so that it does not hold onto its port after
     // the process exits (needed because on at least some platforms we
     // use well-known ports when connecting sockets)
-    soVal = 1;
-#ifndef os_windows
-    soRet = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, 
-                        (const char*)&soVal, sizeof(soVal) );
+    int soVal = 1;
+    int soRet = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, 
+                            (const char*)&soVal, sizeof(soVal) );
 
     if( soRet < 0 ) {
         err = XPlat::NetUtils::GetLastError();
-        perror( "setsockopt()" );
         mrn_dbg( 1, mrn_printf(FLF, stderr, "setsockopt() failed: %s\n",
                                        XPlat::Error::GetErrorString( err ).c_str() ) );
-        return -1;
     }
 #endif
 
@@ -287,6 +214,7 @@ int bindPort( int *sock_in, Port *port_in )
             perror( "bind()" );
             mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to static port %d failed: %s\n",
                                    port, XPlat::Error::GetErrorString( err ).c_str() ) );
+            XPlat::SocketUtils::Close( sock );
             return -1;
         }
     }
@@ -304,30 +232,20 @@ int bindPort( int *sock_in, Port *port_in )
             else {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to dynamic port %d failed: %s\n",
                                        port, XPlat::Error::GetErrorString( err ).c_str() ) );
+                XPlat::SocketUtils::Close( sock );
                 return -1;
             }
         }
     }
 
     if( listen( sock, 64 ) == -1 ) {
-        perror( "listen()" );
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "%s", "" ) );
+        err = XPlat::NetUtils::GetLastError();
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
+                                       XPlat::Error::GetErrorString( err ).c_str() ) );
+        XPlat::SocketUtils::Close( sock );
         return -1;
     }
 
-      /* Code for closing descriptor on exec*/
-      int fdflag = fcntl(sock, F_GETFD );
-      if( fdflag == -1 )
-      {
-          // failed to retrieve the socket  descriptor flags
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );     
-      }
-      int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
-      if( fret == -1 )
-      {
-          // we failed to set the socket descriptor flags
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
-      }
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
     int optVal = 1;
@@ -379,19 +297,18 @@ int getSocketConnection( int bound_socket , int& inout_errno)
         }
     } while ( ( connected_socket == -1 ) && ( errno == EINTR ) );
 
-      /* Code for closing descriptor on exec*/
-      int fdflag = fcntl(connected_socket, F_GETFD );
-      if( fdflag == -1 )
-      {
-          // failed to retrieve the socket  descriptor flags 
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );    
-      }
-      int fret = fcntl( connected_socket, F_SETFD, fdflag | FD_CLOEXEC );
-      if( fret == -1 )
-      {
-          // we failed to set the socket descriptor flags
-	  mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
-      }
+    // Close socket on exec
+    int fdflag = fcntl(connected_socket, F_GETFD );
+    if( fdflag == -1 ) {
+        // failed to retrieve the socket descriptor flags 
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );    
+    }
+    int fret = fcntl( connected_socket, F_SETFD, fdflag | FD_CLOEXEC );
+    if( fret == -1 ) {
+        // we failed to set the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+    }
+
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
     int optVal = 1;
@@ -427,11 +344,62 @@ int getPortFromSocket( int sock, Port *port )
     return 0;
 }
 
+FILE* mrn_printf_setup( int rank, node_type_t type )
+{
+    FILE* fp = NULL;
+    std::string this_host;
+    struct stat s;
+    char node_type[3];
+    char host[256];
+    char logdir[256];
+    char logfile[512];
+    logfile[0] = '\0';
+
+    switch( type ) {
+    case FE_NODE:
+        sprintf( node_type, "FE" );
+        break;
+    case BE_NODE:
+        sprintf( node_type, "BE" );
+        break;
+    case CP_NODE:
+        sprintf( node_type, "CP" );
+        break;
+    default:
+        sprintf( node_type, "xx" );
+        break;
+    };
+
+    const char* home = getenv("HOME");
+
+    XPlat::NetUtils::GetLocalHostName(this_host);
+    strncpy( host, this_host.c_str(), 256 );
+    host[255] = '\0';
+
+    // find log directory
+    const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
+    if( varval != NULL ) {
+        if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
+            snprintf( logdir, sizeof(logdir), "%s", varval );
+    }
+    else if( home != NULL ) {
+        snprintf( logdir, sizeof(logdir), "%s/mrnet-log", home );
+        if( ! ((stat(logdir, &s) == 0) && (S_IFDIR & s.st_mode)) )
+            snprintf( logdir, sizeof(logdir), "/tmp" );
+    }
+    // set file name format
+    int pid = XPlat::Process::GetProcessId();
+    snprintf( logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
+              logdir, node_type, host, rank, pid );
+
+    fp = fopen( logfile, "w" );
+    return fp;
+}
+
 int mrn_printf( const char *file, int line, const char * func,
                 FILE * ifp, const char *format, ... )
 {
     static FILE * fp = NULL;
-    extern const char *node_type;
     int retval;
     va_list arglist;
 
@@ -440,62 +408,41 @@ int mrn_printf( const char *file, int line, const char * func,
 
     mrn_printf_mutex.Lock();
 
-    int rank = getrank();
-
-    if( (fp == NULL) && (rank != UnknownRank) ) {
-
-        FILE * tmp_fp = NULL;
-        std::string this_host;
-        struct stat s;
-        char host[256];
-        char logdir[256];
-        char logfile[512];
-        logfile[0] = '\0';
-
-        const char* home = getenv("HOME");
-
-        XPlat::NetUtils::GetLocalHostName(this_host);
-        strncpy( host, this_host.c_str(), 256 );
-        host[255] = '\0';
-
-        // find log directory
-        const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
-        if( varval != NULL ) {
-            if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
-                snprintf( logdir, sizeof(logdir), "%s", varval );
-        }
-        else if( home != NULL ) {
-            snprintf( logdir, sizeof(logdir), "%s/mrnet-log", home );
-            if( ! ((stat(logdir, &s) == 0) && (S_IFDIR & s.st_mode)) )
-                snprintf( logdir, sizeof(logdir), "/tmp" );
-        }
-        // set file name format
-        snprintf( logfile, sizeof(logfile), "%s/%s_%s_%d",
-                  logdir, node_type, host, rank );
-        tmp_fp = fopen( logfile, "w" );
-	if( tmp_fp != NULL )
-            fp = tmp_fp;
+    // get thread info
+    XPlat::Thread::Id tid = -1;
+    const char* thread_name = NULL;
+    int rank = UnknownRank;
+    node_type_t node_type = UNKNOWN_NODE;
+    
+    tsd_t *tsd = ( tsd_t * )tsd_key.Get();
+    if( tsd != NULL ) {
+        tid = tsd->thread_id;
+        thread_name = tsd->thread_name;
+        rank = tsd->process_rank;
+        node_type = tsd->node_type;
     }
+
+    // try to open log file
+    if( (fp == NULL) && (rank != UnknownRank) )
+        fp = mrn_printf_setup( rank, node_type );
 
     FILE *f = fp;
     if( f == NULL ) 
         f = ifp;
 
-    if( file ) {
-        // get thread name
-        const char *thread_name = NULL;
+    // print timestamp and thread info
+    fprintf( f, "%ld.%ld: %s(0x%lx): ", 
+             tv.tv_sec-MRN_RELEASE_DATE_SECS, tv.tv_usec,
+             ( thread_name != NULL ) ? thread_name : "<unknown thread>",
+             tid );
 
-        tsd_t *tsd = ( tsd_t * )tsd_key.Get();
-        if( tsd != NULL )
-            thread_name = tsd->thread_name;
-            
-        fprintf( f, "%ld.%ld: %s(0x%lx): %d %s: %s(): %d: ",
-                 tv.tv_sec-MRN_RELEASE_DATE_SECS, tv.tv_usec,
-                 ( thread_name != NULL ) ? thread_name : "<unknown thread>",
-                 XPlat::Thread::GetId(), XPlat::Process::GetProcessId(), 
-                 XPlat::PathUtils::GetFilename( file ).c_str(), func, line );
+    if( file ) {
+        // print file, function, and line info
+        fprintf( f, "%s[%d] %s() - ", 
+                 XPlat::PathUtils::GetFilename( file ).c_str(), line, func );
     }
 
+    // print message
     va_start( arglist, format );
     retval = vfprintf( f, format, arglist );
     va_end( arglist );
@@ -583,9 +530,6 @@ Timer::Timer( void ) {
 #endif
 
 }
-
-Rank getrank() {return myrank;}
-void setrank( Rank ir ) {myrank=ir;}
 
 bool isBigEndian() {
     unsigned int one = 1;

@@ -5,7 +5,7 @@
 
 #include "mrnet/MRNet.h"
 #include "FaultRecovery.h"
-#include <bitset>
+
 #include <string>
 #include <cstdlib>
 #include <ctime>
@@ -19,9 +19,9 @@ int main(int argc, char **argv)
     Stream * stream = NULL;
     PacketPtr p;
     int tag=0;
-    unsigned int min_val=100, max_val=0, num_iters=0;
+    unsigned int min_val=fr_range_max, max_val=0, num_iters=0;
 
-    std::bitset<10> pct;
+    fr_bin_set pct;
 
     Network * net = Network::CreateNetworkBE( argc, argv );
 
@@ -44,13 +44,13 @@ int main(int argc, char **argv)
             // Send num_iters waves of integers
             for( unsigned int i=0; i < num_iters; i++ ) {
 
-                long int rand = random();
-                unsigned int val = rand % 100;
+                long int randval = random();
+                unsigned int val = randval % fr_range_max;
                 if( val < min_val ) min_val = val;
                 if( val > max_val ) max_val = val;
-                double tile = floor( (double)val / 10 );
+                double tile = floor( (double)val / (fr_range_max / fr_bins) );
                 unsigned int ndx = (unsigned int) tile;
-                assert( ndx < pct.size() );
+                assert( ndx < fr_bins );
                 pct.set(ndx);
 
                 fprintf( stdout, "BE %d: Sending wave %u\n", me, i);
@@ -119,7 +119,8 @@ int main(int argc, char **argv)
     } while ( tag != PROT_EXIT );
 
     // FE delete of the net will cause us to exit, wait for it
-    sleep(60);
+    net->waitfor_ShutDown();
+    delete net;
 
     return 0;
 }

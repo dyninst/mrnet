@@ -8,6 +8,9 @@
 
 #include "mrnet_lightweight/Types.h"
 
+#define fr_range_max 1000
+#define fr_bins 20
+
 typedef enum { PROT_EXIT=FirstApplicationTag, 
                PROT_START,
                PROT_WAVE,

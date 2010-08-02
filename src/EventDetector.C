@@ -21,7 +21,6 @@
 #include "xplat/NetUtils.h"
 #include "xplat/SocketUtils.h"
 
-
 using namespace std;
 
 namespace MRN {
@@ -163,7 +162,7 @@ bool EventDetector::remove_FD( int ifd )
 int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms, 
                               bool use_poll=true )
 {
-    int retval;
+    int retval, err;
     fd_set readfds;
 
     mrn_dbg( 5, mrn_printf(FLF, stderr,
@@ -175,6 +174,7 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
     if( use_poll ) { 
 
         retval = poll( _pollfds, _num_pollfds, timeout_ms );
+        err = errno;
         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "poll() returned %d\n", retval) );
     }
@@ -196,12 +196,13 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
         }
 
         retval = select( _max_fd+1, &readfds, NULL, NULL, tvp );
+        err = errno;
         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "select() returned %d\n", retval) );
 #ifndef os_windows
     }
 #endif
-    if( retval == -1 )
+    if( retval == -1 && err != EINTR )
         perror("select() or poll()");
 
     if( retval <= 0 )
@@ -305,19 +306,22 @@ void * EventDetector::main( void* iarg )
     }
     
     //set up debugging stuff
+    Rank myrank = net->get_LocalRank();
     string prettyHost;
     XPlat::NetUtils::GetHostName( net->get_LocalHostName(), prettyHost );
     std::ostringstream namestr;
     namestr << "EDT("
             << prettyHost
             << ':'
-            << net->get_LocalRank()
+            << myrank
             << ')'
             << std::ends;
 
     tsd_t * local_data = new tsd_t;
     local_data->thread_id = XPlat::Thread::GetId();
     local_data->thread_name = strdup( namestr.str().c_str() );
+    local_data->process_rank = myrank;
+    local_data->node_type = UNKNOWN_NODE;
 
     int status;
     if( (status = tsd_key.Set( local_data )) != 0){
@@ -425,14 +429,6 @@ void * EventDetector::main( void* iarg )
 		    break;
 		}    
 		 
-		//continue;
-	        //			} else {
-		//			mrn_dbg(1, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
-	        // 			}
-                //} else {
-                //    mrn_dbg(1, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
-                //}
-
                 packets.clear();
                 msg.recv( connected_sock, packets, UnknownRank );
                 list< PacketPtr >::iterator packet_list_iter;
@@ -453,7 +449,7 @@ void * EventDetector::main( void* iarg )
                                               "Closing %d sockets\n",
                                               watch_list.size() ));
                         for( iter=watch_list.begin(); iter!=watch_list.end(); iter++ ) {
-                            mrn_dbg(1, mrn_printf(FLF, stderr,
+                            mrn_dbg(5, mrn_printf(FLF, stderr,
                                                   "Closing event socket: %d\n", *iter ));
                             char c = 1;
                             mrn_dbg(5, mrn_printf(FLF, stderr, "... writing \n"));
@@ -473,10 +469,10 @@ void * EventDetector::main( void* iarg )
                         return NULL;
 
                     case PROT_NEW_CHILD_FD_CONNECTION:
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION\n"));
+                        mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION\n"));
                         edt->add_FD(connected_sock);
                         watch_list.push_back( connected_sock );
-                        mrn_dbg( 1, mrn_printf(FLF, stderr,
+                        mrn_dbg(5, mrn_printf(FLF, stderr,
                                                "FD socket:%d added to list.\n",
                                                connected_sock));
                         
@@ -484,7 +480,7 @@ void * EventDetector::main( void* iarg )
                         break;
 
                     case PROT_NEW_CHILD_DATA_CONNECTION:
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_DATA_CONNECTION\n"));
+                        mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_DATA_CONNECTION\n"));
                         //get ParentNode obj. Try internal node, then FE
                         p = net->get_LocalParentNode();
                         assert(p);
@@ -498,7 +494,7 @@ void * EventDetector::main( void* iarg )
                         // NOTE: needed since back-ends are now threaded, and we can't
                         //       guarantee a packet containing this protocol message
                         //       won't arrive in a group with NEW_CHILD_DATA_CONNECTION
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
+                        mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
                         //get ParentNode obj. Try internal node, then FE
                         p = net->get_LocalParentNode();
                         assert(p);
@@ -523,9 +519,9 @@ void * EventDetector::main( void* iarg )
                         break;
 
                     default:
-                        mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                                               "### PROTOCOL ERROR: Unexpected tag %d ###\n",
-                                               cur_packet->get_Tag()));
+                        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                              "### PROTOCOL ERROR: Unexpected tag %d ###\n",
+                                              cur_packet->get_Tag()));
                         break;
                     }//switch
                 }//for
@@ -547,7 +543,7 @@ void * EventDetector::main( void* iarg )
 		//fprintf(stdout,"Debug FR in main() : Recovering from parent failure\n");
                 if( net->recover_FromFailures() ) {
 
-                    mrn_dbg( 3, mrn_printf(FLF, stderr, "... recovering from parent failure\n"));
+                    mrn_dbg(3, mrn_printf(FLF, stderr, "... recovering from parent failure\n"));
                     edt->recover_FromParentFailure();
 
                     //add new parent sock to monitor for failure
@@ -555,15 +551,15 @@ void * EventDetector::main( void* iarg )
                     parent_sock = parent_node->get_EventSocketFd();
                     edt->add_FD(parent_sock);
                     watch_list.push_back( parent_sock );
-                    mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                           "Parent socket:%d added to list.\n", parent_sock));
+                    mrn_dbg(5, mrn_printf(FLF, stderr,
+                                          "Parent socket:%d added to list.\n", parent_sock));
 			                       
                 }
                 else {
 			
                     edt->recover_off_FromParentFailure();
 
-		    mrn_dbg( 3, mrn_printf(FLF, stderr, "NOT recovering from parent failure ...\n"));
+		    mrn_dbg(3, mrn_printf(FLF, stderr, "NOT recovering from parent failure ...\n"));
                     if( watch_list.size() == 0 ) {
                         mrn_dbg(5, mrn_printf(FLF, stderr, "No more sockets to watch, bye!\n"));
                         return NULL;
@@ -625,7 +621,7 @@ void * EventDetector::main( void* iarg )
                     watch_list.erase( tmp_iter );
                 }
             }
-	  }//fkag goto_outer  
+	  }//flag goto_outer  
         }//else
     }//while
 
@@ -640,10 +636,9 @@ int EventDetector::init_NewChildFDConnection( PeerNodePtr iparent_node )
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Initializing new Child FD Connection ...\n"));
     if( iparent_node->connect_EventSocket() == -1 ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect( %s:%u ) failed\n",
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect_EventSocket( %s:%u ) failed\n",
                                iparent_node->get_HostName().c_str(),
                                iparent_node->get_Port() ) );
-        perror("connect()");
     }
 
     PacketPtr packet( new Packet( 0, PROT_NEW_CHILD_FD_CONNECTION, "%s %uhd %ud",
@@ -684,8 +679,6 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
     PacketPtr packet( new Packet( 0, PROT_FAILURE_RPT, "%ud", ifailed_rank ) );
 
     assert( _network->is_LocalNodeParent() );
-
-    //fprintf(stdout," Debug FR Recovering from child failure inside recover_FRomchildFailure()\n");
 
     mrn_dbg(1, mrn_printf(FLF, stderr, "calling proc_FailureReport(node:%u)\n", ifailed_rank));
     if( _network->get_LocalParentNode()->proc_FailureReport( packet ) == -1 ) {

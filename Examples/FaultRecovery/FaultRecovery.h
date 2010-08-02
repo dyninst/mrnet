@@ -7,6 +7,12 @@
 #define fault_recovery_h 1
 
 #include "mrnet/Types.h"
+#include <bitset>
+
+#define fr_range_max 1000
+#define fr_bins 20
+
+typedef std::bitset<fr_bins> fr_bin_set;
 
 typedef enum { PROT_EXIT=FirstApplicationTag, 
                PROT_START,

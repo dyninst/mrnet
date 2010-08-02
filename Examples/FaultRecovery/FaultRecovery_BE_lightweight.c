@@ -22,9 +22,10 @@ int main(int argc, char **argv)
     Network_t * net;
     assert(p);
     int tag=0;
-    unsigned int min_val=100, max_val=0, num_iters=0;
+    unsigned int min_val=fr_range_max, max_val=0, num_iters=0;
 
-    assert(p);
+    char pct[fr_bins];
+    memset( (void*)pct, 0, (size_t)fr_bins );
 
     net = Network_CreateNetworkBE(argc, argv);
     assert(net);
@@ -42,18 +43,21 @@ int main(int argc, char **argv)
 
         switch(tag) {
 
-        case PROT_START:
+        case PROT_START: {
             Packet_unpack(p, "%ud", &num_iters );
 
             // Send num_iters waves of integers
             unsigned int i;
             for( i=0; i < num_iters; i++ ) {
 
-                long int rand = random();
-                unsigned int val = rand % 100;
+                long int randval = random();
+                unsigned int val = randval % fr_range_max;
                 if( val < min_val ) min_val = val;
                 if( val > max_val ) max_val = val;
-                double tile = floor( (double)val / 10 );
+                double tile = floor( (double)val / (fr_range_max / fr_bins) );
+                unsigned int ndx = (unsigned int) tile;
+                assert( ndx < fr_bins );
+                pct[ndx] = 1;
 
                 fprintf( stdout, "BE %d: Sending wave %u\n", me, i);
                 fflush( stdout );
@@ -67,7 +71,7 @@ int main(int argc, char **argv)
                 sleep(2); // stagger sends
             }
             break;
-
+        }
         case PROT_CHECK_MIN:
             fprintf( stdout, "BE %d: Sending min %u\n", me, min_val);
             if( Stream_send(stream,tag, "%ud", min_val) == -1 ) {
@@ -89,7 +93,19 @@ int main(int argc, char **argv)
             break;
 
         case PROT_CHECK_PCT: {
-            unsigned long percent = 1;
+            unsigned int u;
+            unsigned long percent = 0;
+            char bits[fr_bins+1];
+            bits[fr_bins] = '\0';
+            for( u = 0; u < fr_bins; u++ ) {
+                percent += (pct[u] << u);
+                // need to match bitset printing, where max bin is on left
+                if( pct[u] )
+                    bits[(fr_bins-1)-u] = '1';
+                else
+                    bits[(fr_bins-1)-u] = '0';
+            }
+            fprintf( stdout, "BE %d: Sending pct (%s)\n", me, bits );
             if( Stream_send(stream,tag, "%uld", percent) == -1 ){
                 fprintf(stderr, "BE: stream::send(%%d) failure\n");
                 tag = PROT_EXIT;
