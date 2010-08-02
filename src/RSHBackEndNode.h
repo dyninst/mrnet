@@ -15,6 +15,7 @@ class Network;
 class RSHBackEndNode : public RSHChildNode,
                         public BackEndNode 
 {
+
 public:
     RSHBackEndNode(Network * inetwork, 
                 std::string imy_hostname, Rank imy_rank,

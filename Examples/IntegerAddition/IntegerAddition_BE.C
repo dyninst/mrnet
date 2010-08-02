@@ -21,6 +21,7 @@ int main(int argc, char **argv)
             fprintf(stderr, "BE: stream::recv() failure\n");
             break;
         }
+         
 
         switch(tag) {
 

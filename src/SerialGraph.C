@@ -137,6 +137,36 @@ SerialGraph * SerialGraph::get_MySubTree( std::string &ihostname, Port iport, Ra
     return retval;
 }
 
+bool SerialGraph::set_Port(std::string hostname, Port port, Rank irank)
+{
+    
+    std::ostringstream hoststr, port_str;
+    size_t begin,port_pos; 
+     
+    std::string begin_str;
+
+    hoststr << "[" << hostname << ":" << UnknownPort << ":" << irank << ":" ;
+    port_str <<  port ;
+    
+    begin = _byte_array.find( hoststr.str() );
+    if( begin == std::string::npos ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr,
+                 "Host :\"%s\" whose port is to changed is not found in byte_array:\"%s\"\n",
+                 hoststr.str().c_str(), _byte_array.c_str() ));
+       return false; //return value of false means not succesful set_Port
+    }
+
+    begin_str = _byte_array.substr(begin);
+
+    port_pos = begin_str.find_first_of(':', 0);
+
+    _byte_array.replace( begin + port_pos+1, 5, port_str.str() );
+
+    return true;
+
+}
+
+
 SerialGraph * SerialGraph::get_NextChild()
 {
     SerialGraph * retval;

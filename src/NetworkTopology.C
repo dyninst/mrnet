@@ -57,6 +57,11 @@ Port NetworkTopology::Node::get_Port( void ) const
     return _port;
 }
 
+void NetworkTopology::Node::set_Port(Port port)
+{
+    _port = port;
+}    
+
 Rank NetworkTopology::Node::get_Rank( void ) const
 {
     return _rank;
@@ -85,6 +90,10 @@ Rank NetworkTopology::Node::get_Parent( void) const
 
 void NetworkTopology::Node::add_Child( Node * c )
 {
+    
+    mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding child %s to parent %s\n",
+                           c->get_HostName().c_str(), this->get_HostName().c_str() ) );
+    _is_backend=false;
     _children.insert(c);
 }
 
@@ -281,6 +290,25 @@ bool NetworkTopology::Node::remove_Child( NetworkTopology::Node * c )
     return true;
 }
 
+
+bool NetworkTopology::new_Node( const std::string &host, Port port, Rank rank, bool iis_backend )
+{
+  //TODO : can do some error checking and return true if successful
+  std::string host_name=host;
+  mrn_dbg( 5, mrn_printf( FLF, stderr, "Creating back node[%d] %s:%d\n",
+                          rank, host_name.c_str(), port ) );
+  Node* node=new Node(host,port,rank,iis_backend);
+  _nodes[rank ] = node;
+  if(iis_backend)
+  {
+     mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as backend\n", rank ) );
+                            _backend_nodes.insert( node );
+  }
+  _network->insert_EndPoint( host_name, port, rank );
+  return true;
+}   
+
+
 NetworkTopology::NetworkTopology( Network *inetwork,  string &ihostname, Port iport, 
                                   Rank irank, bool iis_backend /*=false*/ )
     : _network(inetwork),
@@ -343,6 +371,15 @@ bool NetworkTopology::add_SubGraph( Rank irank, SerialGraph & isg, bool iupdate 
 
     _sync.Unlock();
     return retval;
+}
+
+void NetworkTopology::update_Router_Table( )
+{
+
+   mrn_dbg_func_begin();
+   _router->update_Table();
+   mrn_dbg_func_end();
+
 }
 
 bool NetworkTopology::add_SubGraph( Node * inode, SerialGraph & isg, bool iupdate )
@@ -525,6 +562,16 @@ bool NetworkTopology::set_Parent( Rank ichild_rank, Rank inew_parent_rank, bool 
     return true;
 }
 
+std::vector<update_contents_t* > NetworkTopology::get_updates_buffer()
+{
+  return _updates_buffer;
+}  
+
+void NetworkTopology::insert_updates_buffer(update_contents_t* uc)
+{
+   _updates_buffer.push_back(uc);
+}   
+
 bool NetworkTopology::remove_Orphan( Rank r )
 {
     // assumes we are holding the lock
@@ -676,6 +723,27 @@ char * NetworkTopology::get_TopologyStringPtr( )
     return retval;
 }
 
+bool NetworkTopology::isInTopology(std::string hostname, Port _port, Rank _rank)
+{
+  std::map< Rank, Node * >::iterator _nodes_it;
+  bool found=false;
+   
+  _sync.Lock(); 
+  //TODO: can call find_Node and then check for port and rank
+  for( _nodes_it = _nodes.begin(); _nodes_it != _nodes.end(); _nodes_it++)
+  {
+    Node* tmp = (*_nodes_it).second;
+    if( (hostname.compare(tmp->_hostname) == 0)  && (_port == tmp->_port) && (_rank == tmp->_rank)  )
+    {
+       found=true;
+       break;
+    }
+  } 
+  _sync.Unlock();
+  return found;
+}
+
+
 char * NetworkTopology::get_LocalSubTreeStringPtr( )
 {
     _sync.Lock();
@@ -719,8 +787,8 @@ void NetworkTopology::serialize(Node * inode)
 
     set < Node * > ::iterator iter;
     for( iter=inode->_children.begin(); iter!=inode->_children.end(); iter++ ){
-        serialize( *iter );
-    }
+         serialize( *iter );
+    }	 
 
     //Ending sub-tree component in graph serialization:
     _serial_graph->end_SubTree();

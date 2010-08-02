@@ -79,6 +79,7 @@ class PeerNode: public CommunicationNode, public Error {
     static const std::map < Rank, PeerNodePtr > & get_PeerNodes();
 
  private:
+    friend class ChildNode;
     PeerNode( Network *, std::string const& ihostname, Port iport, Rank irank,
               bool iis_parent, bool iis_internal );
 

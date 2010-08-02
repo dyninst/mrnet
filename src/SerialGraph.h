@@ -43,6 +43,8 @@ class SerialGraph {
         _buf_idx = _byte_array.find('[',1);
     }
 
+    bool set_Port(std::string hostname, Port port, Rank irank); 
+
     SerialGraph *get_NextChild(  );
     bool is_RootBackEnd( void ) const;
 };

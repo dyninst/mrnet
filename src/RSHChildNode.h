@@ -19,7 +19,13 @@ public:
                     std::string const& iphostname, 
                     Port ipport, 
                     Rank iprank );
+
+    virtual int proc_PortUpdate(PacketPtr ipacket ) const;
+    virtual bool ack_PortUpdate() const;
     virtual ~RSHChildNode(void);
+
+protected:
+    virtual int proc_PacketFromParent( PacketPtr cur_packet );
 };
 
 } // namespace MRN

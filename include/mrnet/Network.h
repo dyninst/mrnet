@@ -123,8 +123,9 @@ class Network: public Error {
 
     const std::set< PeerNodePtr > get_ChildPeers() const;
     PeerNodePtr get_PeerNode( Rank );
-
     bool node_Failed( Rank );
+    PeerNodePtr get_OutletNode( Rank ) const ;
+
 
 protected:
     // constructor
@@ -185,8 +186,12 @@ protected:
 
     void set_LocalHostName( std::string const& );
     static const char* FindCommnodePath( void );
-
+    
     void shutdown_Network( void );
+    bool reset_Topology(std::string& itopology);
+    void update_TopoStream();
+    PeerNodePtr _parent;
+
 
  private:
     friend class Stream;
@@ -199,6 +204,15 @@ protected:
     friend class Router;
     friend class PeerNode;
     friend class EventDetector;
+    friend class RSHParentNode;
+    friend class RSHChildNode;
+    
+    //NEW_TOPO propagation code
+    //The topology is propagated from parent to child when child connects to parent not when child first
+    //gets the topology
+    SerialGraph* readTopology( int topoFd);
+    void writeTopology( int topoFd,
+                        SerialGraph* topology );
 
     // some conditions we waitfor/signal
     enum {
@@ -250,7 +264,7 @@ protected:
     void cancel_IOThreads( void );
     void signal_ShutDown( void );
 
-    PeerNodePtr get_OutletNode( Rank ) const ;
+    //PeerNodePtr get_OutletNode( Rank ) const ;
     char* get_LocalSubTreeStringPtr( void ) const ;
     char* get_TopologyStringPtr( void ) const ;
     BackEndNode* get_LocalBackEndNode( void ) const ;
@@ -261,8 +275,8 @@ protected:
     bool is_LocalNodeThreaded( void ) const ;
     int send_FilterStatesToParent( void );
     bool update( void );
-    bool reset_Topology( std::string& itopology );
-    bool add_SubGraph( Rank iroot_rank, SerialGraph& sg  );
+    //bool reset_Topology( std::string& itopology );
+    bool add_SubGraph( Rank iroot_rank, SerialGraph& sg, bool iupdate  );
     bool remove_Node( Rank ifailed_rank, bool iupdate=true );
     bool change_Parent( Rank ichild_rank, Rank inew_parent_rank );
     bool insert_EndPoint( std::string& hostname, Port port, Rank rank );
@@ -276,6 +290,7 @@ protected:
     void disable_FailureRecovery( void );
     void enable_FailureRecovery( void );
     bool recover_FromFailures( void ) const ;
+    void send_BufferedTopoUpdates(std::vector< update_contents_t* > );
 
     void collect_PerfData( void );
 
@@ -292,7 +307,7 @@ protected:
     TimeKeeper* _local_time_keeper;
     EventDetector* _edt;
 
-    PeerNodePtr _parent;
+    //PeerNodePtr _parent;
     std::set< PeerNodePtr > _children;
     std::map< unsigned int, Stream* > _streams;
     std::map< Rank, CommunicationNode* > _end_points;

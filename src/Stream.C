@@ -58,24 +58,26 @@ Stream::Stream( Network * inetwork,
     _incoming_packet_buffer_sync.RegisterCondition( PACKET_BUFFER_NONEMPTY );
 
     //parent nodes set up relevant downstream nodes 
-    if( _network->is_LocalNodeParent() ) {
+    if(ibackends != NULL)
+    {
+        if( _network->is_LocalNodeParent() ) {
 
-        _end_points.insert( ibackends, ibackends + inum_backends );
+            _end_points.insert( ibackends, ibackends + inum_backends );
 
-        //for each backend in the stream, we add the proper forwarding node
-        for( unsigned int i = 0; i < inum_backends; i++ ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "getting outlet for backend[%d] ... ",
+            //for each backend in the stream, we add the proper forwarding node
+            for( unsigned int i = 0; i < inum_backends; i++ ) {
+                mrn_dbg( 3, mrn_printf(FLF, stderr, "getting outlet for backend[%d] ... ",
                                    ibackends[i] ));
-            PeerNodePtr outlet = _network->get_OutletNode( ibackends[i] );
-            if( outlet != NULL ) {
-                mrn_dbg( 3, mrn_printf(FLF, stderr,
+                PeerNodePtr outlet = _network->get_OutletNode( ibackends[i] );
+                if( outlet != NULL ) {
+                    mrn_dbg( 3, mrn_printf(FLF, stderr,
                                        "Adding Endpoint %d to stream %d\n",
                                        ibackends[i], _id ));
-                _peers.insert( outlet->get_Rank() );
+                    _peers.insert( outlet->get_Rank() );
+                }
             }
         }
-    }
-   
+    }//if backends not null 
     mrn_dbg_func_end();
 }
 
@@ -90,6 +92,40 @@ Stream::~Stream()
     }
 
     _network->delete_Stream( _id );
+}
+
+void Stream::add_Stream_EndPoint(Rank irank)
+{
+  _end_points.insert(irank);
+}  
+
+void Stream::add_Stream_Peer(Rank irank) 
+{
+  _peers.insert(irank );
+}
+
+
+int Stream::send_internal( int itag, const char *iformat_str, ... )
+{
+    mrn_dbg_func_begin();
+
+    int status;
+    va_list arg_list;
+    va_start(arg_list, iformat_str);
+
+    PacketPtr packet( new Packet(true, _id, itag, iformat_str, arg_list) );
+    if( packet->has_Error() ){
+       mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+       return -1;
+    }
+
+    va_end(arg_list);
+
+    mrn_dbg(3, mrn_printf(FLF, stderr, "packet() succeeded. Calling send_aux()\n"));
+    status = send_aux_internal( itag, iformat_str, packet );
+
+    mrn_dbg_func_end();
+    return status;
 }
 
 int Stream::send( int itag, const char *iformat_str, ... )
@@ -170,6 +206,55 @@ int Stream::send( PacketPtr& ipacket )
 
     mrn_dbg_func_end();
     return status;
+}
+
+int Stream::send_aux_internal( int itag, const char *ifmt, PacketPtr &ipacket )
+{
+    //it always sends upstream
+
+    mrn_dbg_func_begin();
+    mrn_dbg(3, mrn_printf(FLF, stderr,
+                          "stream_id: %d, tag:%d, fmt=\"%s\"\n", _id, itag, ifmt));
+
+    vector<PacketPtr> opackets, opackets_reverse;
+
+    bool upstream = true;
+    if( _network->is_LocalNodeFrontEnd() )
+        upstream = false;
+
+
+    // filter packet
+    if( push_Packet( ipacket, opackets, opackets_reverse, upstream ) == -1){
+        mrn_dbg(1, mrn_printf(FLF, stderr, "push_Packet() failed\n"));
+        return -1;
+    }
+
+    // send filtered result packets
+    if( ! opackets.empty() ) {
+        
+	assert( _network->is_LocalNodeInternal() ) ;
+        if( _network->send_PacketsToParent( opackets ) == -1 ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToParent() failed\n"));
+            return -1;
+        }
+        
+        opackets.clear();
+    }
+    else 
+       mrn_dbg(5, mrn_printf(FLF, stderr, "output failed\n"));
+
+    if( ! opackets_reverse.empty() ) {
+        for( unsigned int i = 0; i < opackets_reverse.size( ); i++ ) {
+            PacketPtr cur_packet( opackets_reverse[i] );
+
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "Put packet in stream %d\n",
+                                   cur_packet->get_StreamId(  ) ));
+            add_IncomingPacket( cur_packet );
+        }
+    }
+
+    mrn_dbg_func_end();
+    return 0;
 }
 
 int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket )

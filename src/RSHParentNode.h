@@ -25,13 +25,17 @@ public:
                             std::string &ibackend_exe,
                             std::vector <std::string> &ibackend_args) const;
 
+
 protected:
-    virtual int proc_PacketFromChildren( PacketPtr p );
+   virtual int proc_PacketFromChildren( PacketPtr ipacket );
 
 private:
     PacketPtr _initial_subtree_packet;
 
     int proc_SubTreeInfoRequest( PacketPtr ipacket ) const;
+    int proc_PortUpdateAck(PacketPtr) const;
+    virtual int proc_PortUpdates( PacketPtr ipacket ) const ;
+    bool waitfor_PortUpdateAcks() const;
 };
 
 } // namespace MRN

@@ -23,7 +23,7 @@ int main( int argc, char *argv[] ) {
 
     int wSize, wRank;
     if( argc != 2 ) {
-        fprintf(stderr, "Incorrect usage, must pass connections file\n");
+        fprintf(stderr, "Incorrect usage, must pass connections file %d\n",argc);
         return -1;
     }
     const char* connfile = argv[1];

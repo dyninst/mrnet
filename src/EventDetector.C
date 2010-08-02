@@ -295,6 +295,7 @@ void * EventDetector::main( void* iarg )
     list< int > watch_list; //list of sockets to detect events on
     int parent_sock=0;
     int local_sock=0;
+    bool goto_outer;
 
     EventDetector* edt = (EventDetector*) iarg;
     Network* net = edt->_network;;
@@ -410,15 +411,24 @@ void * EventDetector::main( void* iarg )
             if( eventfds.find(local_sock) != eventfds.end() ) {
                 //Activity on our local listening sock, accept connection
                 mrn_dbg( 5, mrn_printf(FLF, stderr, "Activity on listening socket\n"));
-                int connected_sock = getSocketConnection( local_sock );
-                if( connected_sock == -1 ){
+
+                while(true)
+		{
+
+                int inout_errno;
+
+                int connected_sock = getSocketConnection( local_sock, inout_errno );
+                if( (connected_sock == -1 )  && ( (inout_errno == EAGAIN ) ||  (inout_errno == EWOULDBLOCK) ) ) 
+		   break;
+
+                if ( connected_sock == -1) {
                     perror("getSocketConnection()");
                     mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
-                    continue;
-                } else {
-                    mrn_dbg(5, mrn_printf(FLF, stderr, "connected_sock=%d\n", connected_sock));
-                }
-
+                    perror("getSocketConnection()");
+		    goto_outer=true;
+		    break;
+		}    
+		 
                 packets.clear();
                 msg.recv( connected_sock, packets, UnknownRank );
                 list< PacketPtr >::iterator packet_list_iter;
@@ -493,15 +503,33 @@ void * EventDetector::main( void* iarg )
                             mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTreeReport() failed\n" ));
                         }
                         break;
+                    
+                     case PROT_SUBTREE_INITDONE_RPT:
+                        // NOTE: needed since back-ends are now threaded, and we can't
+                        //       guarantee a packet containing this protocol message
+                        //       won't arrive in a group with NEW_CHILD_DATA_CONNECTION
+                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
+                        //get ParentNode obj. Try internal node, then FE
+                        p = net->get_LocalParentNode();
+                        assert(p);
+
+                        if( p->proc_SubTreeInitDoneReport( cur_packet ) == -1 ) {
+                            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_SubTreeInitDoneReport() failed\n" ));
+                        }
+                        break;
 
                     default:
                         mrn_dbg(1, mrn_printf(FLF, stderr, 
                                               "### PROTOCOL ERROR: Unexpected tag %d ###\n",
                                               cur_packet->get_Tag()));
                         break;
-                    }
-                }
-            }
+                    }//switch
+                }//for
+	      }//while	
+            }//if activity on local sock
+
+            if(!goto_outer)
+	    {
 
             if( net->is_LocalNodeChild() && 
                 ( eventfds.find(parent_sock) != eventfds.end() ) ) {
@@ -593,8 +621,9 @@ void * EventDetector::main( void* iarg )
                     watch_list.erase( tmp_iter );
                 }
             }
-        }
-    }
+	  }//flag goto_outer  
+        }//else
+    }//while
 
     return NULL;
 }
@@ -650,8 +679,6 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
     PacketPtr packet( new Packet( 0, PROT_FAILURE_RPT, "%ud", ifailed_rank ) );
 
     assert( _network->is_LocalNodeParent() );
-
-    //fprintf(stdout," Debug FR Recovering from child failure inside recover_FRomchildFailure()\n");
 
     mrn_dbg(1, mrn_printf(FLF, stderr, "calling proc_FailureReport(node:%u)\n", ifailed_rank));
     if( _network->get_LocalParentNode()->proc_FailureReport( packet ) == -1 ) {
@@ -817,11 +844,12 @@ int EventDetector::recover_FromParentFailure( )
     return 0;
 }
 
-int EventDetector::recover_off_FromParentFailure( )
+
+int EventDetector::recover_off_FromParentFailure(void)
 {
     _network->get_ParentNode()->mark_Failed();
     Rank fail_rank = _network->get_ParentNode()->get_Rank();
-    _network->remove_Node( fail_rank);
+    _network->remove_Node( fail_rank);  
     return 0;
 }
 

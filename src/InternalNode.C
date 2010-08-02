@@ -8,6 +8,7 @@
 #include "Router.h"
 #include "utils.h"
 #include "mrnet/MRNet.h"
+#include "SerialGraph.h"
 
 namespace MRN
 {
@@ -28,24 +29,26 @@ InternalNode::InternalNode( Network * inetwork,
                            ParentNode::_port,
                            iprank, iphostname.c_str(), ipport ));
 
-    inetwork->set_LocalHostName( ParentNode::_hostname  );
-    inetwork->set_LocalPort( ParentNode::_port );
-    inetwork->set_LocalRank( ParentNode::_rank );
-    inetwork->set_InternalNode( this );
-    inetwork->set_NetworkTopology( new NetworkTopology( inetwork,
-							ParentNode::_hostname,
-							ParentNode::_port,
-							ParentNode::_rank ) );
+    ParentNode::_network->set_LocalHostName( ParentNode::_hostname  );
+    ParentNode::_network->set_LocalPort( ParentNode::_port );
+    ParentNode::_network->set_LocalRank( ParentNode::_rank );
+    ParentNode::_network->set_InternalNode( this );
 
+    //new topo prop code
+    ParentNode::_network->set_NetworkTopology(new NetworkTopology (inetwork, 
+                                                                   ParentNode::_hostname,
+								   ParentNode::_port,
+								   ParentNode::_rank ) );
+   
     //establish data connection w/ parent
-    if( init_newChildDataConnection( inetwork->get_ParentNode() ) == -1 ) {
+    if( init_newChildDataConnection( ParentNode::_network->get_ParentNode() ) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                                "init_newChildDataConnection() failed\n" ));
         return;
     }
 
     //start event detection thread
-    if( EventDetector::start( inetwork ) == false ){
+    if( EventDetector::start( ParentNode::_network ) == false ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "start_EventDetectionThread() failed\n" ));
         ParentNode::error( ERR_INTERNAL, ParentNode::_rank, "start_EventDetectionThread failed\n" );
         ChildNode::error( ERR_INTERNAL, ParentNode::_rank, "start_EventDetectionThread failed\n" );
@@ -55,6 +58,9 @@ InternalNode::InternalNode( Network * inetwork,
     mrn_dbg( 5, mrn_printf(FLF, stderr, "InternalNode:%p\n", this ));
     mrn_dbg_func_end();
 }
+
+
+
 
 InternalNode::~InternalNode( void )
 {

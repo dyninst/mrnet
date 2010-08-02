@@ -9,6 +9,7 @@
 #include "PeerNode.h"
 #include "utils.h"
 #include "mrnet/MRNet.h"
+#include "SerialGraph.h"
 
 namespace MRN
 {
@@ -33,9 +34,11 @@ int ChildNode::proc_PacketsFromParent( std::list< PacketPtr > & packets )
 
     mrn_dbg_func_begin();
 
+
     std::list < PacketPtr >::iterator iter = packets.begin();
     for( ; iter != packets.end(); iter++ ) {
-        if( this->proc_PacketFromParent( *iter ) == -1 )
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "tag is %d\n", (*iter)->get_Tag() ));
+        if( proc_PacketFromParent( *iter ) == -1 )
             retval = -1;
     }
 
@@ -388,8 +391,6 @@ int ChildNode::proc_PrintPerfData( PacketPtr ipacket ) const
     return 0;
 }
 
-
-
 int ChildNode::proc_TopologyReport( PacketPtr ipacket ) const 
 {
     char * topology_ptr;
@@ -483,6 +484,8 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
                                             Rank ifailed_rank /* = UnknownRank */ )
 {
     mrn_dbg_func_begin();
+    NetworkTopology* tmp_nt=_network->get_NetworkTopology();
+
 
     // Establish data detection connection w/ new Parent
     if( iparent->connect_DataSocket() == -1 ) {
@@ -519,6 +522,13 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     }
     free( topo_ptr );
 
+    SerialGraph* init_topo = _network->readTopology(iparent->_data_sock_fd);
+    assert(init_topo!=NULL);
+    std::string sg_str=init_topo->get_ByteArray();
+
+    tmp_nt->reset(sg_str, false );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s\n", tmp_nt->get_TopologyStringPtr() ));
+
     //Create send/recv threads
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating comm threads for parent\n" ));
     iparent->start_CommunicationThreads();
@@ -528,6 +538,44 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
 
     return 0;
 }
+	
+int ChildNode::send_SubTreeInitDoneReport( ) const
+{   
+    mrn_dbg_func_begin();
+    
+    // We use mutual exclusion here to prevent the situation where we get
+    // the serialized string topology, but get preempted before sending the
+    // packet by another thread who is also trying to send a new subtree
+    // report. Since the last topology report wins, we would like the reports
+    // to proceed in the order they were started.
+    //_sync.Lock();
+    _network->get_NetworkTopology()->update_Router_Table();
+
+    //char * topo_ptr = _network->get_LocalSubTreeStringPtr();
+    PacketPtr packet( new Packet( 0, PROT_SUBTREE_INITDONE_RPT,"") );
+
+    if( !packet->has_Error( ) ) {
+        if( _network->get_ParentNode()->send( packet ) == -1 ||
+            _network->get_ParentNode()->flush(  ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n" ));
+            //_sync.Unlock();
+            return -1;
+        }
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n" ));
+        //_sync.Unlock();
+        return -1;
+    }
+
+    //_sync.Unlock();
+
+    mrn_dbg_func_end();
+    return 0;
+}
+
+
+
 
 int ChildNode::send_NewSubTreeReport( ) const
 {

@@ -47,6 +47,7 @@ class ParentNode: public virtual Error,
 
     virtual int proc_NewParentReportFromParent( PacketPtr ipacket ) const=0;
 
+    int proc_SubTreeInitDoneReport ( PacketPtr ipacket ) const;
     int proc_newSubTreeReport( PacketPtr ipacket ) const;
     int proc_DeleteSubTree( PacketPtr ipacket ) const;
     int proc_DeleteSubTreeAck( PacketPtr ipacket ) const;
@@ -73,23 +74,27 @@ class ParentNode: public virtual Error,
     PeerNodePtr find_ChildNodeByRank( int irank );
 
     bool waitfor_SubTreeReports( void ) const;
+    bool waitfor_SubTreeInitDoneReports( void ) const;
     bool waitfor_DeleteSubTreeAcks( void ) const ;
     bool waitfor_TopologyReportAcks( void ) const ;
 
     void init_numChildrenExpected( SerialGraph& sg );
     unsigned int get_numChildrenExpected( void ) const  { return _num_children; }
+    virtual int proc_PortUpdates( PacketPtr ipacket ) const;
 
  protected:
     Network * _network;
 
     enum { ALLNODESREPORTED };
     mutable XPlat::Monitor subtreereport_sync;
+    mutable XPlat::Monitor initdonereport_sync;
     mutable unsigned int _num_children, _num_children_reported;
 
     virtual int proc_PacketFromChildren( PacketPtr ipacket );
 
  private:
     int listening_sock_fd;
+
 };
 
 //bool lt_PeerNodePtr( PeerNodePtr p1, PeerNodePtr p2 );

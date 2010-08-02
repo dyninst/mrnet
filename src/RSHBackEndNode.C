@@ -4,6 +4,7 @@
  ******************************************************************************/
 
 #include "RSHBackEndNode.h"
+#include "utils.h"
 
 namespace MRN
 {
@@ -20,10 +21,12 @@ RSHBackEndNode::RSHBackEndNode( Network * inetwork,
     RSHChildNode( inetwork, imyhostname, imyrank, iphostname, ipport, iprank ),
     BackEndNode( inetwork, imyhostname, imyrank, iphostname, ipport, iprank )
 {
+
 }
 
 RSHBackEndNode::~RSHBackEndNode(void)
 {
 }
+	
 
 } // namespace MRN

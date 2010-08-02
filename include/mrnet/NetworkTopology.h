@@ -66,6 +66,7 @@ class NetworkTopology: public Error {
         double get_WRSKey( void ) const;
         double get_RandKey( void ) const;
         bool failed( void ) const ;
+	void set_Port( Port ) ;
 
     private:
         Node( const std::string &, Port, Rank, bool iis_backend );
@@ -140,14 +141,23 @@ class NetworkTopology: public Error {
     char * get_TopologyStringPtr( );
     char * get_LocalSubTreeStringPtr();
 
-
     Node * find_NewParent( Rank ichild_rank, unsigned int iretry=0,
                            ALGORITHM_T algorithm=ALG_WRS );
 
     void compute_TreeStatistics( void );
 
+    //new members added for topology propagation change
+    bool new_Node( const std::string &, Port, Rank, bool iis_backend );
+    bool isInTopology(std::string hostname, Port _port, Rank _rank);
+    void insert_updates_buffer( update_contents_t* uc);
+    std::vector<update_contents_t* > get_updates_buffer( void );
+
+    //these two members are made public from private for topo prop change
+    void serialize( Node * );
+    void update_Router_Table();
 
   private:
+   
     Node * find_NodeHoldingLock( Rank ) const;
     bool remove_Orphan( Rank );
     void remove_SubGraph( Node * inode );
@@ -160,7 +170,7 @@ class NetworkTopology: public Error {
 
     void print_DOTSubTree( NetworkTopology::Node * inode, FILE * f ) const;
 
-    void serialize( Node * );
+    //void serialize( Node * );
     bool add_SubGraph( Node *, SerialGraph &, bool iupdate );
     void find_PotentialAdopters( Node * iadoptee,
                                  Node * ipotential_adopter,
@@ -179,6 +189,8 @@ class NetworkTopology: public Error {
     std::set< Node * > _parent_nodes;
     mutable XPlat::Monitor _sync;
     SerialGraph *_serial_graph;
+    std::vector<update_contents_t* > _updates_buffer;
+
 
     void find_PotentialAdopters( Node * iadoptee,
                                  Node * ipotential_adopter,
