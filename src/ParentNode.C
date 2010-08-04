@@ -196,8 +196,6 @@ bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
     return true;
 }
 
-
-
 bool ParentNode::waitfor_SubTreeReports( void ) const
 {
     std::list < PacketPtr >packet_list;
@@ -711,13 +709,16 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is , proc new child data conn before %s\n", nt->get_TopologyStringPtr() ));
 
     SerialGraph sg( topo_ptr );
-    if( !_network->add_SubGraph( _network->get_LocalRank(), sg, false) ){
-        mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
-        return -1;
+
+    //if connecting child not in topology
+    if( !(nt->find_Node( sg.get_RootRank() ) ))
+    {
+        if( !_network->add_SubGraph( _network->get_LocalRank(), sg, false) ){
+            mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
+    	    return -1;
+        }
     }
-
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is proc new child data conn after %s\n", nt->get_TopologyStringPtr() ));
-
 
     //Create send/recv threads
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating comm threads for new child\n" ));
