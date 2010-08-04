@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION CXXCPP EGREP MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION CXXCPP EGREP MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT FE_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3422,6 +3422,7 @@ _ACEOF
 
 LIBS="-lm -lpthread -ldl"
 LIBS_LIGHTWEIGHT="-lm"
+FE_LIBS=""
 
 case "$host_os" in
   *linux*)
@@ -4214,9 +4215,10 @@ done
 
     fi
 
+    CRAYXT_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
     if test "$CRAYXT_ATH_LIBDIR" != "" ; then
         LIBS_HOLD=$LIBS
-        ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
+	LIBS="-L$CRAYXT_ATH_LIBDIR $CRAYXT_ATH_LIBS $LIBS_HOLD"
         echo "$as_me:$LINENO: checking for alps_launch_tool_helper in -lalps" >&5
 echo $ECHO_N "checking for alps_launch_tool_helper in -lalps... $ECHO_C" >&6
 if test "${ac_cv_lib_alps_alps_launch_tool_helper+set}" = set; then
@@ -4282,7 +4284,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_alps_alps_launch_tool_helper" >&5
 echo "${ECHO_T}$ac_cv_lib_alps_alps_launch_tool_helper" >&6
 if test $ac_cv_lib_alps_alps_launch_tool_helper = yes; then
-  LIBS="-L$CRAYXT_ATH_LIBDIR $ATH_LIBS $LIBS_HOLD"
+  LIBS="$LIBS_HOLD"; FE_LIBS="-L$CRAYXT_ATH_LIBDIR $CRAYXT_ATH_LIBS $FE_LIBS"
 else
   { { echo "$as_me:$LINENO: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&5
 echo "$as_me: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&2;}
@@ -4290,7 +4292,6 @@ echo "$as_me: error: Can't find libalps. Specify proper directory with --with-al
 fi
 
     fi
-
 fi
 
 
@@ -4346,6 +4347,7 @@ echo "$as_me: error: no" >&2;}
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
 
 
 
@@ -9093,6 +9095,7 @@ s,@CN_LDFLAGS@,$CN_LDFLAGS,;t t
 s,@SOFLAGS@,$SOFLAGS,;t t
 s,@C_AS_CPLUSPLUS@,$C_AS_CPLUSPLUS,;t t
 s,@LIBS_LIGHTWEIGHT@,$LIBS_LIGHTWEIGHT,;t t
+s,@FE_LIBS@,$FE_LIBS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

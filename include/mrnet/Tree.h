@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright © 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ***************************************************************************/
 
@@ -11,6 +11,7 @@
 #include <string>
 #include <set>
 #include <utility>
+#include <vector>
 
 namespace MRN {
 
@@ -23,6 +24,12 @@ class Tree {
     friend class BalancedTree;
     friend class GenericTree;
     friend class KnomialTree;
+
+    Tree();
+    Tree( std::string & fe_host,
+          std::string & topology_spec,
+          unsigned int be_procs_per_host,
+          unsigned int int_procs_per_host );
 
  public:
 
@@ -43,6 +50,7 @@ class Tree {
     };
 
     Node * get_Node( std::string );
+    bool is_Valid() { return _valid; }
 
     bool create_TopologyFile( const char* ifilename );
     bool create_TopologyFile( FILE* ifile );
@@ -55,82 +63,110 @@ class Tree {
 
     // END MRNET API
 
-    Tree();
     virtual ~Tree(){}
 
  protected:
     Node * root;
     std::map<std::string, Node *> NodesByName;
-    bool _contains_cycle, _contains_unreachable_nodes;
-    unsigned int _fanout, _num_leaves, _depth;
+    std::string _fe_host, _topology_spec;
+    bool _contains_cycle, _contains_unreachable_nodes, _valid;
+    unsigned int _num_leaves, _depth;
+    unsigned int _be_procs_per_host, _int_procs_per_host;
 
     bool validate();
     bool contains_Cycle() { return _contains_cycle; }
     bool contains_UnreachableNodes() { return _contains_unreachable_nodes; }
-    virtual bool initialize_Tree( std::string &topology_spec,
-                                  std::list< std::pair<std::string,unsigned> > &hosts)=0;
 };
 
 class BalancedTree: public Tree {
  private:
-    virtual bool initialize_Tree( std::string &topology_spec,
-                                  std::list< std::pair<std::string,unsigned> > &hosts );
-    unsigned int _fe_procs_per_host, _be_procs_per_host, _int_procs_per_host;
+    bool parse_Spec( );
+
+    bool initialize_Tree( std::list< std::pair<std::string,unsigned> > & hosts );
+    bool initialize_Tree( std::list< std::pair<std::string,unsigned> > & backend_hosts,
+                          std::list< std::pair<std::string,unsigned> > & internal_hosts );
+
+    std::vector< unsigned int > _fanouts;
 
  public:
 
     // BEGIN MRNET API
 
-    BalancedTree( std::string &topology_spec, 
-                  std::list< std::pair<std::string,unsigned> > &hosts,
-                  unsigned int ife_procs_per_host=1,
-                  unsigned int ibe_procs_per_host=1,
-                  unsigned int iint_procs_per_host=1 );
-    BalancedTree( std::string &topology_spec, 
-                  std::string &host_file,
-                  unsigned int ife_procs_per_host=1,
-                  unsigned int ibe_procs_per_host=1,
-                  unsigned int iint_procs_per_host=1 );
+    BalancedTree( std::string & topology_spec,
+                  std::string & fe_host, 
+                  std::list< std::pair<std::string,unsigned> > & hosts,
+                  unsigned int max_procs_per_host=1 );
+
+    BalancedTree( std::string & topology_spec,
+                  std::string & fe_host, 
+                  std::list< std::pair<std::string,unsigned> > & backend_hosts,
+                  std::list< std::pair<std::string,unsigned> > & internal_hosts,
+                  unsigned int be_procs_per_host=1,
+                  unsigned int int_procs_per_host=1 );
+
 
     // END MRNET API
 };
 
 class KnomialTree: public Tree {
  private:
-    virtual bool initialize_Tree( std::string &topology_spec,
-                                  std::list< std::pair<std::string,unsigned> > &hosts );
-    unsigned int _max_procs_per_host;
+    bool parse_Spec( );
+
+    bool initialize_Tree( std::list< std::pair<std::string,unsigned> > & hosts );
+    bool initialize_Tree( std::list< std::pair<std::string,unsigned> > & backend_hosts,
+                          std::list< std::pair<std::string,unsigned> > & internal_hosts );
+
+    unsigned int _kfactor;
+    unsigned int _num_nodes;
 
  public:
 
     // BEGIN MRNET API
 
-    KnomialTree( std::string &topology_spec, 
-                 std::list< std::pair<std::string,unsigned> > &hosts,
-                 unsigned int imax_procs_per_host=1 );
-    KnomialTree( std::string &topology_spec, std::string &host_file,
-                 unsigned int imax_procs_per_host=1 );
+    KnomialTree( std::string & topology_spec,
+                 std::string & fe_host,
+                 std::list< std::pair<std::string,unsigned> > & hosts,
+                 unsigned int max_procs_per_host=1 );
+
+    KnomialTree( std::string & topology_spec,
+                 std::string & fe_host,
+                 std::list< std::pair<std::string,unsigned> > & backend_hosts,
+                 std::list< std::pair<std::string,unsigned> > & internal_hosts,
+                 unsigned int be_procs_per_host=1,
+                 unsigned int int_procs_per_host=1 );
 
     // END MRNET API
 };
 
 class GenericTree: public Tree {
  private:
-    virtual bool initialize_Tree( std::string &topology_spec,
-                                  std::list< std::pair<std::string,unsigned> > &hosts );
-    unsigned int _max_procs_per_host;
+    bool parse_Spec( );
+
+    bool initialize_Tree( std::list< std::pair<std::string,unsigned> > & hosts );
+    bool initialize_Tree( std::list< std::pair<std::string,unsigned> > & backend_hosts,
+                          std::list< std::pair<std::string,unsigned> > & internal_hosts );
+ 
+    std::vector< std::vector<unsigned int>* > _children_by_level;
 
  public:
 
     // BEGIN MRNET API
 
-    GenericTree( std::string &topology_spec, 
-                 std::list< std::pair<std::string,unsigned> > &hosts,
-                 unsigned int imax_procs_per_host=1 );
-    GenericTree( std::string &topology_spec, std::string &host_file,
-                 unsigned int imax_procs_per_host=1 );
+    GenericTree( std::string & topology_spec,
+                 std::string & fe_host, 
+                 std::list< std::pair<std::string,unsigned> > & hosts,
+                 unsigned int max_procs_per_host=1 );
+
+    GenericTree( std::string & topology_spec,
+                 std::string & fe_host, 
+                 std::list< std::pair<std::string,unsigned> > & backend_hosts,
+                 std::list< std::pair<std::string,unsigned> > & internal_hosts,
+                 unsigned int be_procs_per_host=1,
+                 unsigned int int_procs_per_host=1 );
 
     // END MRNET API
+
+    ~GenericTree();
 };
 
 } /* namespace MRN */
