@@ -57,7 +57,7 @@ BackEndNode::BackEndNode( Network * inetwork,
 
         //new topo propagation code - create a new update packet
         Stream *s = _network->get_Stream(1); // getting handle for stream id 1 which was reserved for topology propagation
-        int type = TOPO_NEW_RANK; //type 0 is add packet
+        int type = TOPO_NEW_BE; //type 0 is add packet
         char *host_arr=strdup(imyhostname.c_str());
         uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
         *send_iprank=iprank;

@@ -103,7 +103,7 @@ Network::Network( void )
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
       _edt( new EventDetector(this) ),
       _threaded(true), _recover_from_failures(true), 
-      _terminate_backends(true), _was_shutdown(false) 
+      _terminate_backends(true), _was_shutdown(false), next_stream_id(1)
 {
     init_local();
 
@@ -874,10 +874,7 @@ CommunicationNode* Network::new_EndPoint( string &ihostname,
     return new CommunicationNode(ihostname, iport, irank);
 }
 
-//NEW_TOPO propagation code
-static unsigned int next_stream_id=1;
 
-//old topo propagation code
 //static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
 
 Stream* Network::new_Stream( Communicator *icomm, 

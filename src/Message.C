@@ -16,6 +16,10 @@
 #include "xplat/NCIO.h"
 #include "xplat/NetUtils.h"
 
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
+
 namespace MRN
 {
 

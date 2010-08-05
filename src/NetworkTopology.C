@@ -743,7 +743,6 @@ bool NetworkTopology::isInTopology(std::string hostname, Port _port, Rank _rank)
   return found;
 }
 
-
 char * NetworkTopology::get_LocalSubTreeStringPtr( )
 {
     _sync.Lock();
@@ -1274,5 +1273,65 @@ const Network* TopologyLocalInfo::get_Network() const
     }
     return NULL;
 }
+
+//TOPOLOGY UPDATE METHODS
+void NetworkTopology::add_BackEnd( uint32_t rprank, uint32_t rcrank, char* rchost, uint16_t rcport )
+{
+    Stream* str_one = _network->get_Stream( 1 );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is before add %s\n", get_TopologyStringPtr() ));
+    
+    //create a node for the child node and add it to network topology set of nodes. 
+    Node* n = find_Node( rcrank );
+
+    if (n == NULL) {
+        new_Node(rchost, rcport, rcrank, true );
+	str_one->add_Stream_EndPoint(rcrank );
+        mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as child of node[%d]\n",
+                                rcrank, rprank ) );
+         
+        if( !( set_Parent( rcrank, rprank , false ))) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                    "Set Parent for %s failed\n", rchost ));
+        }
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is after add %s\n", get_TopologyStringPtr() ));
+    }
+    else
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "node already present topology is after add %s\n", get_TopologyStringPtr() ));
+    
+}//add
+
+void NetworkTopology::update_TopoStreamPeers( vector<uint32_t> new_nodes )
+{
+    Stream* str_one = _network->get_Stream( 1 );
+    for(unsigned int j= 0 ; j < new_nodes.size(); j++) {
+        PeerNodePtr outlet = _network->get_OutletNode( new_nodes[j] );
+        if( outlet != NULL )
+             str_one->add_Stream_Peer( outlet->get_Rank() );
+        else
+        {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                    "No outlet for recently added backend %d\n", new_nodes[j] ));
+        }
+    }
+}//update_TopoStreamPeers()
+
+void NetworkTopology::change_Port( uint32_t rcrank, uint16_t rcport )
+{
+    Node* update_node=find_Node( rcrank );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is before update port  %s\n", get_TopologyStringPtr() ));
+   
+    //Actual port update on the local network topology's
+    update_node->set_Port(rcport );
+
+    if(_network->is_LocalNodeFrontEnd() ) {
+        update_contents_t* ub = (update_contents_t*) malloc ( sizeof (update_contents_t) );
+        ub->type = TOPO_CHANGE_PORT ;
+        ub->crank = rcrank;
+        ub->cport = rcport;
+        insert_updates_buffer(ub);
+    }
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is after port update %s\n", get_TopologyStringPtr() ));
+}//change_Port
 
 } // namespace MRN

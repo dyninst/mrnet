@@ -1,26 +1,23 @@
 
- /***************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+/****************************************************************************
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "mrnet/MRNet.h"
-#include "Message.h"
+#include <cerrno>
+
 #include "PerfDataSysEvent.h"
 #include "PerfDataEvent.h"
-#include "Protocol.h"
 #include "utils.h"
 
-#include <iostream>
-
 #include "xplat/Process.h"
-#include "xplat/Thread.h"
+
+#ifdef os_linux
 
 #define SEC_PER_JIFFIES (.01)
 #define MSEC_PER_JIFFIES (10)
-#define SYS_gettid 224
 
-using namespace XPlat;
+#define SYS_gettid 224
 
 using namespace std;
 
@@ -31,7 +28,7 @@ int PerfDataSysMgr::get_ThreadTime(long &user, long &sys)
     char procFilename[256] ;
     char buffer[1024] ;
 
-    pid_t pid = :: XPlat::Process::GetProcessId();
+    pid_t pid = XPlat::Process::GetProcessId();
 
 
     static int gettid_not_valid = 0;
@@ -84,11 +81,10 @@ int PerfDataSysMgr::get_MemUsage(double &vsize, double &psize)
     long ppages =0;
 
     char procFilename[256] ;
-    pid_t pid = :: XPlat::Process::GetProcessId();
+    pid_t pid = XPlat::Process::GetProcessId();
 
     sprintf(procFilename, "/proc/%d/statm",pid) ;
 	
-
     if ( ! syspage ) {
         syspage = sysconf(_SC_PAGESIZE);
         pageKB = (double)syspage/1024;
@@ -119,3 +115,5 @@ int PerfDataSysMgr::get_MemUsage(double &vsize, double &psize)
 
 
 } /* namespace MRN */
+
+#endif /* os_linux */

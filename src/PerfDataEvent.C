@@ -1,16 +1,12 @@
 /****************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "mrnet/MRNet.h"
-#include "Message.h"
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
-#include "Protocol.h"
 #include "utils.h"
 
-#include <iostream>
 using namespace std;
 
 #define PERFDATA_MET_FLAG(x) ((char)(1 << x))
@@ -122,21 +118,17 @@ void PerfDataMgr::print( perfdata_metric_t met, perfdata_context_t ctx )
 
     perfdata_metinfo_t* mi= perfdata_metric_info + (unsigned)met;
 
-#ifdef os_windows
-	int size = 13;
-	size += 10;
-	size += 11;
-	size += strlen(mi->name);
-	size += strlen(perfdata_context_names[(unsigned)ctx]);
-	size += 1;
-	char* report = (char*)malloc(sizeof(char)*size);
-	sprintf( report, "PERFDATA @ T=%d.%06dsec: %s %s -",
-              (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, 
-              perfdata_context_names[(unsigned)ctx] );
+    char* report = NULL;
+#ifndef os_linux
+    int size = 36;
+    size += strlen(mi->name);
+    size += strlen(perfdata_context_names[(unsigned)ctx]);
+    report = (char*)malloc(sizeof(char)*size);
+    sprintf( report, "PERFDATA @ T=%d.%06dsec: %s %s -",
+             (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, 
+             perfdata_context_names[(unsigned)ctx] );
 
 #else
-	char* report = NULL;
-
     asprintf( &report, "PERFDATA @ T=%d.%06dsec: %s %s -",
               (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, 
               perfdata_context_names[(unsigned)ctx] );
@@ -234,14 +226,12 @@ void PerfDataMgr::get_MemData(perfdata_metric_t metric)
     if (metric == PERFDATA_MET_MEM_VIRT_KB) {
         perfdata_t val;
         val.d = vsize;
-        add_DataInstance( PERFDATA_MET_MEM_VIRT_KB, PERFDATA_CTX_NONE,
-                                          val );
+        add_DataInstance( PERFDATA_MET_MEM_VIRT_KB, PERFDATA_CTX_NONE, val );
 
     } else if (metric == PERFDATA_MET_MEM_PHYS_KB) {
         perfdata_t val;
         val.d = psize;
-        add_DataInstance( PERFDATA_MET_MEM_PHYS_KB, PERFDATA_CTX_NONE,
-                                          val );
+        add_DataInstance( PERFDATA_MET_MEM_PHYS_KB, PERFDATA_CTX_NONE, val );
     }
 
     mrn_dbg_func_end();

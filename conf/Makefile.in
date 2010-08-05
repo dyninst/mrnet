@@ -223,6 +223,8 @@ endif
 
 ifeq ($(MRNET_OS), linux)
     LIBMRNET_SRCS += $(SRCDIR)/src/PerfDataSysEvent_linux.C
+else
+    LIBMRNET_SRCS += $(SRCDIR)/src/PerfDataSysEvent_none.C
 endif
 
 ifeq ($(MRNET_STARTUP_METHOD),cray_xt)

@@ -1294,7 +1294,7 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 	    rarray_len += arr_len;
 	}
 
-	for(int z=0; z < arr_len; z++) {
+	for(unsigned z=0; z < arr_len; z++) {
 	 
 	    mrn_dbg(5, mrn_printf(FLF, stderr, "Packet contents : \
                             type :%d  prank:%d crank:%d chost:%s cport:%d arrlen:%d \n", 
@@ -1349,99 +1349,49 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 	char_pos += iarray_lens[i] ;
 
     }//end of for iterating through vector of int pointers
-
+   
+    //List of Stream 1 end points whose outlet nodes should be inserted in Stream's peer set
+    vector<uint32_t > new_nodes;
+    bool update_table = false;
+    NetworkTopology* nt=net->get_NetworkTopology();
+    
     //Go through the parallelarray to make update to NetworkTopology object in network object associated with the stream in process executing this code
     for(unsigned int i=0;i <rarray_len; i++) {
-	
-	NetworkTopology* nt=net->get_NetworkTopology();
-	Stream* str_one=net->get_Stream(1);
-
 	switch( rtype_arr[i] ) {
 	 
-	  //ADD a new child with rank rcrank[i],rchost[i], rcport[i] to parent of rank rprank[i] in the topology
-	  case TOPO_NEW_RANK :
-	  {
-	      mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is before add %s\n", nt->get_TopologyStringPtr() ));
-	      
-	      //create a node for the child node and add it to network topology set of nodes. Assume only backends can be added
-	      
-	      NetworkTopology::Node* n = nt->find_Node( rcrank_arr[i] );
-	      
-	      if (n == NULL) {
-	      
-		  nt->new_Node(rchost_arr[i], rcport_arr[i], rcrank_arr[i], true);
-		  str_one->add_Stream_EndPoint(rcrank_arr[i]);
-
-		  mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as child of node[%d]\n",
-					  rcrank_arr[i], rprank_arr[i] ) );
-		  if( net->is_LocalNodeBackEnd() ) {
-		  
-		      if( ! ( nt->set_Parent( rcrank_arr[i], rprank_arr[i] , false ) ) )
-			assert(0);
-		  }
-		  else {
-		  
-		    //we do update table only for the last update.
-		    if( i == (rarray_len-1) ) {
-		      
-			  nt->set_Parent( rcrank_arr[i], rprank_arr[i] , true );
-			  for( unsigned int j= 0 ; j < rarray_len; j++) {
-			   
-			      PeerNodePtr outlet = net->get_OutletNode( rcrank_arr[j] );
-			      if( outlet == NULL ) {
-				mrn_dbg( 1, mrn_printf(FLF, stderr,
-						       "No outlet for recently added backend %d\n",
-						       rcrank_arr[j] ));
-			      }
-			      else
-				str_one->add_Stream_Peer( outlet->get_Rank() );
-			  }//for j < arraylen
-		    }
-		    else
-			  nt->set_Parent( rcrank_arr[i], rprank_arr[i] , false );
-		  }
-		  
-		  mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is after add %s\n", nt->get_TopologyStringPtr() ));
-	      }
-	      else {
-		  mrn_dbg( 5, mrn_printf(FLF, stderr, "node already present topology is after add %s\n", nt->get_TopologyStringPtr() ));
-		  nt->update_Router_Table();
-	      }	
-	    }
+	  case TOPO_NEW_BE :
+	    nt->add_BackEnd( rprank_arr[i], rcrank_arr[i] ,rchost_arr[i], rcport_arr[i] ); 
+	    new_nodes.push_back( rcrank_arr[i] );
+	    update_table = true;
 	    break;
 
 	  case TOPO_REMOVE_RANK : //remove
 	    break;
+
 	  case TOPO_CHANGE_PARENT ://change parent
 	    break;
+
 	  case TOPO_CHANGE_PORT ://update port
-	  {
-	      NetworkTopology::Node* update_node=nt->find_Node(rcrank_arr[i]);
-	      mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is before update port  %s\n", nt->get_TopologyStringPtr() ));
-           
-	      //Actual port update on the local network topology's 
-	      update_node->set_Port(rcport_arr[i] );
-
-	      if(net->is_LocalNodeFrontEnd() ) {
-	
-		  update_contents_t* ub = (update_contents_t*) malloc ( sizeof (update_contents_t) );
-		  ub->type = TOPO_CHANGE_PORT ;
-		  ub->crank = rcrank_arr[i];
-		  ub->cport = rcport_arr[i];
-		  nt->insert_updates_buffer(ub); 
-	      }
-
-	      mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is after port update %s\n", nt->get_TopologyStringPtr() ));
+              nt->change_Port( rcrank_arr[i], rcport_arr[i] );      
 	      break;
-	  }
+
+	  case TOPO_NEW_CP :
+	      update_table = true;
+
 	  default:
-	    //TODO :mrnet error that update packet in the topo stream contains invalid update type and exit
-	    break;
+	      //TODO :mrnet error that update packet in the topo stream contains invalid update type and exit
+	      break;
 
 	} //end of switch
 
-      }//end of for iterating through array elements
-
+    }//end of for iterating through array elements
+    
+    if(update_table)
+        nt->update_Router_Table();
+    
+    if(new_nodes.size() ) 
+        nt->update_TopoStreamPeers(new_nodes );
+   	
     //Create output packet
     if( !(net->is_LocalNodeFrontEnd() ) )
     {
@@ -1584,86 +1534,49 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
 
     }//end of for iterating through vector of int pointers
 
+    //List of Stream 1 end points whose outlet nodes should be inserted in Stream's peer set
+    vector<uint32_t > new_nodes;
+    bool update_table = false;
+    NetworkTopology* nt=net->get_NetworkTopology();
+
     //Go through the parallelarray to make update to NetworkTopology object in network object associated with the stream in process executing this code
-    for(unsigned int i=0;i <rarray_len; i++)
-    {
-        //update Network Topology Object
-        //type can be 0,1,2 for add, move, remove respectively
+    for(unsigned int i=0;i <rarray_len; i++) {
+        switch( rtype_arr[i] ) {
 
-        NetworkTopology* nt=net->get_NetworkTopology();
-        Stream* str_one=net->get_Stream(1);
-
-        //mrn_dbg(5, mrn_printf(FLF, stderr, "before switch and type is %d\n", rtype_arr[i]));
-        switch(rtype_arr[i])
-        {
-            //ADD a new child with rank rcrank[i],rchost[i], rcport[i] to parent of rank rprank[i] in the topology
-            case TOPO_NEW_RANK :
-
-            //create a node for the child node and add it to network topology set of nodes. Assume only backends can be added
-            nt->new_Node(rchost_arr[i], rcport_arr[i], rcrank_arr[i], true);
-            str_one->add_Stream_EndPoint(rcrank_arr[i]);
-
-            mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as child of node[%d]\n",
-                                  rcrank_arr[i], rprank_arr[i] ) );
-            if( net->is_LocalNodeBackEnd() )
-            {
-                 if( ! ( nt->set_Parent( rcrank_arr[i], rprank_arr[i] , false ) ) )
-                  assert(0);
-
-            }
-            else
-            {
-                //we do update table only for the last update.
-                if(i==(rarray_len-1))
-                {
-                     nt->set_Parent( rcrank_arr[i], rprank_arr[i] , true );
-	             for( unsigned int j= 0 ; j < rarray_len; j++)
-	             {
-                          PeerNodePtr outlet = net->get_OutletNode( rcrank_arr[j] );
-                          if( outlet == NULL ) {
-                              mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "No outlet for recently added backend %d\n",
-                                       rcrank_arr[j] ));
-                          }
-                          else
-                              str_one->add_Stream_Peer( outlet->get_Rank() );
-	             }// for j < array _len	    
-                }
-                else
-                     nt->set_Parent( rcrank_arr[i], rprank_arr[i] , false );
-            }
-
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s\n", nt->get_TopologyStringPtr() ));
+          case TOPO_NEW_BE :
+            nt->add_BackEnd( rprank_arr[i], rcrank_arr[i] ,rchost_arr[i], rcport_arr[i] );
+            new_nodes.push_back( rcrank_arr[i] );
+            update_table = true;
             break;
 
-        case TOPO_REMOVE_RANK ://remove
-            break;
-        case TOPO_CHANGE_PARENT ://change parent
-	    break;
-	case TOPO_CHANGE_PORT ://update port
-	{
-	     NetworkTopology::Node* update_node=nt->find_Node(rcrank_arr[i]);
-	     update_node->set_Port(rcport_arr[i] );
-
-             if(net->is_LocalNodeFrontEnd())
-	     {
-	         //put in update buffer
-	         update_contents_t* ub = (update_contents_t*) malloc ( sizeof (update_contents_t) );
-	         ub->type = 3;
-	         ub->crank = rcrank_arr[i];
-	         ub->cport = rcport_arr[i];
-	         nt->insert_updates_buffer(ub); 
-	     }
-	     break;
-	}
-	default:
-          //mrnet error that update packet in the topo stream contains invalid update type and exit
+          case TOPO_REMOVE_RANK : //remove
             break;
 
-      }//end of switch
+          case TOPO_CHANGE_PARENT ://change parent
+            break;
+
+          case TOPO_CHANGE_PORT ://update port
+              nt->change_Port( rcrank_arr[i], rcport_arr[i] );
+              break;
+
+          case TOPO_NEW_CP :
+              update_table = true;
+
+          default:
+              //TODO :mrnet error that update packet in the topo stream contains invalid update type and exit
+              break;
+
+        } //end of switch
 
     }//end of for iterating through array elements
 
+    if(update_table)
+        nt->update_Router_Table();
+
+    if(new_nodes.size() )
+        nt->update_TopoStreamPeers(new_nodes );
+
+    
     if( !(net->is_LocalNodeBackEnd() ) )
     {
         //Create output packet
