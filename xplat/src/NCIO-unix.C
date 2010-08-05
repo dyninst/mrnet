@@ -14,6 +14,11 @@
 #include <sys/socket.h>
 #include "xplat/NCIO.h"
 
+#ifdef compiler_sun
+#include <stdio.h>
+#include <limits.h>
+#endif
+
 namespace XPlat
 {
 
@@ -78,17 +83,17 @@ NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
         // convert our buffer spec to recvmsg/readv's buffer spec
         msghdr msg;
 
-        msg.msg_flags = 0;
         msg.msg_name = NULL;
         msg.msg_namelen = 0;
         msg.msg_iov = new iovec[nBufsToRecv];
         msg.msg_iovlen = nBufsToRecv;
-#if defined(compiler_sun)
+#if defined(os_solaris) && defined(compiler_sun)
         msg.msg_accrights=NULL;
         msg.msg_accrightslen=0;
 #else
         msg.msg_control = NULL;
         msg.msg_controllen = 0;
+        msg.msg_flags = 0;
 #endif
 
         for( unsigned int i = 0; i < nBufsToRecv; i++ ) {
@@ -101,8 +106,10 @@ NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
         if( sret < 0 ) {
             perror( "recvmsg()");
             ret = sret;
+#if ! (defined(os_solaris) && defined(compiler_sun))
             int err = msg.msg_flags;
             fprintf(stderr, "NCRecv error msg_flags=%x\n", err);
+#endif
             break;
         } else {
             ret += sret;

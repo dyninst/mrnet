@@ -76,7 +76,9 @@ unsigned int Stream_get_Id(Stream_t* stream) {
 
 int Stream_find_FilterAssignment(char* assignments, Rank me, int filter_id)
 {
-    assert(!"STUB");
+    // THIS IS A STUB
+    int stub = 1;
+    assert(!stub);
     return -1;
 }
 
@@ -300,7 +302,7 @@ int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ... )
 
   va_start(arg_list, iformat_str);
 
-  packet = new_Packet_t(true, stream->id, itag, iformat_str, arg_list);
+  packet = new_Packet_t(true, stream->id, itag, (char*)iformat_str, arg_list);
   if (packet == NULL) {
     mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));
     return -1;
@@ -309,7 +311,7 @@ int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ... )
 
   va_end(arg_list);
 
-  status = Stream_send_aux(stream, itag, iformat_str, packet);
+  status = Stream_send_aux(stream, itag, (char*)iformat_str, packet);
 
   mrn_dbg_func_end();
 
@@ -406,8 +408,8 @@ void Stream_set_FilterParams(Stream_t* stream, int upstream, Packet_t* iparams)
 }
 
 int Stream_enable_PerfData(Stream_t* stream,
-                            perfdata_metric_t metric,
-                            perfdata_context_t context)
+                           perfdata_metric_t metric,
+                           perfdata_context_t context)
 {
     PerfDataMgr_enable(stream->perf_data, metric, context);
     return true;
@@ -422,16 +424,16 @@ int Stream_disable_PerfData(Stream_t* stream,
 }
 
 Packet_t* Stream_collect_PerfData(Stream_t* stream, 
-                                perfdata_metric_t metric,
-                                perfdata_context_t context,
-                                int aggr_strm_id)
+                                  perfdata_metric_t metric,
+                                  perfdata_context_t context,
+                                  int aggr_strm_id)
 {
     vector_t* data = new_empty_vector_t();
     int iter = 0;
     Rank my_rank;
     unsigned num_elems;
     void* data_arr;
-    const char* fmt;
+    char* fmt;
     uint64_t* u64_arr;
     unsigned u;
     int64_t* i64_arr;
@@ -510,9 +512,9 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
     *rank_arr = my_rank;
     *nelems_arr = num_elems;
     packet = new_Packet_t_2(aggr_strm_id, PROT_COLLECT_PERFDATA,
-                                        fmt, rank_arr, 1, 
-                                        nelems_arr, 1, data_arr,
-                                        num_elems);
+                            fmt, rank_arr, 1, 
+                            nelems_arr, 1, data_arr,
+                            num_elems);
     if (packet == NULL) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));
         return NULL;
@@ -547,7 +549,7 @@ int Stream_remove_Node(Stream_t* stream, Rank irank)
     vector_t* new_peers = new_empty_vector_t();
     int i;
     for (i = 0; i < stream->peers->size; i++) {
-        if (stream->peers->vec[i] != irank) {
+        if ( *((Rank*)(stream->peers->vec[i])) != irank ) {
             pushBackElement(new_peers, stream->peers->vec[i]);
         }   
     }

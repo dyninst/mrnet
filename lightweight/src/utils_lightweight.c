@@ -55,69 +55,6 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 }
 #endif
 
-struct hostent * copy_hostent (struct hostent *in)
-{
-    struct hostent * out;
-    unsigned int i = 0;
-    unsigned int count = 0;
-    char** tmp;
-    char** tmp2;
-    char tmp3[4];
-
-    // copy h_name, h_addrtype, and h_length
-    out->h_name = strdup(in->h_name);
-    out->h_addrtype = in->h_addrtype;
-    out->h_length = in->h_length;
-
-    // deep copy h_aliases
-    while (in->h_aliases[count] != NULL)
-        count++;
-
-    //char* tmp[count+1];
-    tmp = (char**)malloc(sizeof(char)*(count+1));
-    assert(tmp);
-    out->h_aliases = tmp;
-    for (i=0; i < count; i++) {
-        out->h_aliases[i] = strdup(in->h_aliases[i]);
-    }
-    out->h_aliases[count]=NULL;
-
-    // deep copy h_addr_list
-    count = 0;
-    while (in->h_addr_list[count] != 0)
-        count++;
-
-    tmp2 = (char**)malloc(sizeof(char)*(count+1));
-    assert(tmp2);
-    out->h_addr_list = tmp2;
-    for (i = 0; i < count; i++) {
-        out->h_addr_list[i] = tmp3;
-        out->h_addr_list[i][0] = in->h_addr_list[i][0];
-        out->h_addr_list[i][1] = in->h_addr_list[i][1];
-        out->h_addr_list[i][2] = in->h_addr_list[i][2];
-        out->h_addr_list[i][3] = in->h_addr_list[i][3];
-    }
-    out->h_addr_list[count] = NULL;
-    return out;
-}
-
-void delete_hostent(struct hostent *in)
-{
-    //STUB
-}
-struct hostent * mrnet_gethostbyname(const char* name)
-{
-
-    struct hostent * temp_hostent = gethostbyname(name);
-    struct hostent * ret_hostent;
-
-    if (temp_hostent == NULL) {
-        return NULL;
-    }
-    ret_hostent = copy_hostent(temp_hostent);
-
-    return ret_hostent;
-}
 
 int connectHost ( int *sock_in, /*const*/ char* hostname, 
                   Port port, int num_retry)
@@ -156,9 +93,6 @@ int connectHost ( int *sock_in, /*const*/ char* hostname,
     server_addr.sin_port = htons (port);
     memcpy (&server_addr.sin_addr, server_hostent->h_addr_list[0],
             sizeof (struct in_addr ));
-    mrn_dbg(5, mrn_printf(FLF, stderr, "about to call delete_hostent\n"));
-    delete_hostent ( server_hostent );
-    mrn_dbg(5, mrn_printf(FLF, stderr, "returned from delete_hostent\n"));
 
     do {
         cret = connect (sock, (struct sockaddr *) & server_addr, sizeof (server_addr));
@@ -166,12 +100,14 @@ int connectHost ( int *sock_in, /*const*/ char* hostname,
             err = NetUtils_GetLastError(); 
             mrn_dbg(5, mrn_printf(FLF, stderr, "connectHost: connect() failed, err=%d\n", err));
             if (!(Error_ETimedOut(err) || Error_EConnRefused(err))) {
-                mrn_dbg(1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n", host, port, Error_GetErrorString(err)));
+                mrn_dbg(1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n", 
+                                      host, port, Error_GetErrorString(err)));
                 return -1;
             }
 
             nConnectTries++;
-            mrn_dbg(3, mrn_printf(FLF, stderr, "connect() to %s:%d timed out %d times\n", host, port, nConnectTries));
+            mrn_dbg(3, mrn_printf(FLF, stderr, "connect() to %s:%d timed out %d times\n", 
+                                  host, port, nConnectTries));
             if ((num_retry > 0 ) && (nConnectTries >= num_retry ))
                 break;
 
@@ -181,7 +117,8 @@ int connectHost ( int *sock_in, /*const*/ char* hostname,
     } while ( cret == -1 );
 
     if (cret == -1) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n", host, port, Error_GetErrorString(err)));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n", 
+                              host, port, Error_GetErrorString(err)));
         return -1;
     }
 

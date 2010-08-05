@@ -30,8 +30,8 @@ void free_Packet_t(Packet_t* packet)
 }
 
 Packet_t* new_Packet_t(int val, unsigned short _stream_id,
-                        int _tag, char* fmt,
-                        va_list arg_list)
+                       int _tag, char* fmt,
+                       va_list arg_list)
 {
   
   PDR pdrs;
@@ -73,7 +73,7 @@ Packet_t* new_Packet_t(int val, unsigned short _stream_id,
 
 }
 Packet_t* new_Packet_t_2(unsigned short istream_id, int itag, 
-                      /*const*/ char* ifmt_str, ... )
+                         /*const*/ char* ifmt_str, ... )
 {
   va_list arg_list;
   PDR pdrs;

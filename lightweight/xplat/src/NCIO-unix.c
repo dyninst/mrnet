@@ -11,6 +11,10 @@
 
 const int XPlat_NCBlockingRecvFlag = MSG_WAITALL;
 
+#ifndef IOV_MAX
+#define IOV_MAX sysconf(_SC_IOV_MAX)
+#endif
+
 int NCSend(XPSOCKET s, NCBuf_t* ncbuf, unsigned int nBufs)
 {
   
@@ -57,25 +61,25 @@ int NCRecv(XPSOCKET s, NCBuf_t* ncbufs, unsigned int nBufs)
     NCBuf_t* currBuf = ncbufs;
     while (nBufsLeftToRecv > 0) {
         // determine how many bufs we will try to receive
-        int IOV_MAX = 1000; //this should get loaded from inc'd file
+        //int IOV_MAX = 1000; //this should get loaded from inc'd file
         unsigned int nBufsToRecv = ((nBufsLeftToRecv > IOV_MAX) ? IOV_MAX : nBufsLeftToRecv);
 
         // convert our buffer spec to recvmsg/readv's buffer spec
         struct msghdr msg;
     
-        msg.msg_flags = 0;
         msg.msg_name = NULL;
         msg.msg_namelen = 0;
         struct iovec * iovec_new = (struct iovec *)malloc(sizeof(struct iovec) * nBufsToRecv);
         assert(iovec_new);
         msg.msg_iov = iovec_new;
         msg.msg_iovlen = nBufsToRecv;
-#if defined(compiler_sun)
+#if defined(os_solaris)
         msg.msg_accrights = NULL;
         msg.msg_accrightslen = 0;
 #else
         msg.msg_control = NULL;
         msg.msg_controllen = 0;
+        msg.msg_flags = 0;
 #endif 
 
         unsigned int i;
@@ -89,8 +93,10 @@ int NCRecv(XPSOCKET s, NCBuf_t* ncbufs, unsigned int nBufs)
         if (sret < 0) {
             perror("recvmsg()");
             ret = sret;
+#ifndef os_solaris
             err = msg.msg_flags;
             fprintf(stderr, "NCRecv error msg_flags=%x\n", err);
+#endif
             free( iovec_new );
             break;
         } else {
