@@ -163,9 +163,19 @@ int NetworkTopology_Node_remove_Child(Node_t* parent, Node_t* child);
 /* TopologyLocalInfo */
 TopologyLocalInfo_t* new_TopologyLocalInfo_t( NetworkTopology_t* topol,  Node_t* node);
 
+Network_t * Topology_LocalInfo_get_Network(TopologyLocalInfo_t* tli);
+
 void NetworkTopology_Node_set_Port(Node_t * node, Port port);
 
 int NetworkTopology_new_Node(NetworkTopology_t * net_top, const char * host, Port port, Rank rank, int iis_backend);
 
+void NetworkTopology_add_BackEnd(NetworkTopology_t * net_top, 
+        uint32_t rprank, uint32_t rcrank, 
+        char * rchost, uint16_t rcport);
+
+void NetworkTopology_update_TopoStreamPeers(NetworkTopology_t * net_top, struct vector_t * new_nodes);
+
+void NetworkTopology_change_Port(NetworkTopology_t * net_top,
+        uint32_t rcrank, uint16_t rcport);
 
 #endif /* __network_topology_h */

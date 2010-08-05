@@ -64,6 +64,7 @@ Network_t* new_Network_t()
     net->stream_iter = 0;
     net->recover_from_failures = true;
     net->_was_shutdown = 0;
+    net->next_stream_id = 1;
 
     init_local();
 

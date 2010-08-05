@@ -33,6 +33,7 @@ typedef struct {
     int stream_iter;
     int recover_from_failures;
     char _was_shutdown;
+    unsigned int next_stream_id;
 } Network_t;
 
 Network_t* new_Network_t();

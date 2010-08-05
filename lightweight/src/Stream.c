@@ -92,7 +92,6 @@ Packet_t* Stream_get_IncomingPacket(Stream_t* stream)
   if (stream->incoming_packet_buffer->size > 0) {
       mrn_dbg(5, mrn_printf(FLF, stderr, "incoming_packet_buffer->size=%d\n", stream->incoming_packet_buffer->size));
     cur_packet = (Packet_t*)(stream->incoming_packet_buffer->vec[0]);
-    mrn_dbg(5, mrn_printf(FLF, stderr, "cur_packet->tag=%d\n", cur_packet->tag));
     stream->incoming_packet_buffer = eraseElement(stream->incoming_packet_buffer, cur_packet);
     mrn_dbg(5, mrn_printf(FLF, stderr, "incoming_packet_buffer->size now=%d\n", stream->incoming_packet_buffer->size));
 
@@ -140,9 +139,7 @@ int Stream_push_Packet(Stream_t* stream,
                       vector_t * opackets_reverse,
                       int igoing_upstream)
 {
-    //EMILY
-    mrn_dbg(5, mrn_printf(FLF, stderr, "stream->id = %d\n", stream->id));
-    
+
     NetworkTopology_t* topol = stream->network->network_topology;
     TopologyLocalInfo_t* topol_info = 
       new_TopologyLocalInfo_t(topol, NetworkTopology_find_Node(topol, stream->network->local_rank));
@@ -155,6 +152,10 @@ int Stream_push_Packet(Stream_t* stream,
     
     perfdata_t val;
     double diff;
+
+    vector_t * ipackets = new_empty_vector_t();
+    if (ipacket)
+        pushBackElement(ipackets, ipacket);
     
     mrn_dbg_func_begin();
 
@@ -182,22 +183,17 @@ int Stream_push_Packet(Stream_t* stream,
         Timer_start(tagg);
     }
 
-    // HACK TO TEST THE CURRENT CODE
-    if (stream->id == 1) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Stream ID = 1, no opackets\n"));
-        return 0; 
-    }
-   
     // run transformation filter
     // NOTE: Currently, we do not support filtering at lightweight
     // backend nodes. Thus, nothing happens during this process
     // except *opacket = *ipacket;
     if (Filter_push_Packets(trans_filter, 
-                ipacket, 
+                ipackets, 
                 opackets,
                 opackets_reverse, 
-                *topol_info) == -1) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "agrr.push_packets() failed\n"));
+                topol_info,
+                igoing_upstream) == -1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Filter_push_packets() failed\n"));
         return -1;
     }
 

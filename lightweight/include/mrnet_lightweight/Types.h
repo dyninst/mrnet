@@ -94,10 +94,11 @@ typedef uint32_t Rank;
     } perfdata_context_t;
 
     typedef enum update_type {
-        TOPO_NEW_RANK = 0,
+        TOPO_NEW_BE = 0,
         TOPO_REMOVE_RANK = 1,
         TOPO_CHANGE_PARENT = 2,
-        TOPO_CHANGE_PORT = 3
+        TOPO_CHANGE_PORT = 3,
+        TOPO_NEW_CP = 4
     } update_type_t;
 
     typedef struct {

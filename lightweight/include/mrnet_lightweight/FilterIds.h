@@ -3,18 +3,9 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+#if !defined(__filterids_h)
+#define __filterids_h 1
 
-#include "mrnet_lightweight/Network.h"
-#include "Router.h"
+typedef unsigned short FilterId;
 
-Router_t* new_Router_t(Network_t* net)
-{
-  Router_t* router = (Router_t*)malloc(sizeof(Router_t));
-  assert(router != NULL);
-  router->net = net;
-
-  return router;
-}
+#endif /* __filterids_h */

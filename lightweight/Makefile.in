@@ -27,6 +27,7 @@ SRCS    = BackEndNode.c \
           DataElement.c \
           Error.c \
           Filter.c \
+	  FilterDefinitions.c \
           map.c \
           Message.c \
           Network.c \
@@ -35,7 +36,6 @@ SRCS    = BackEndNode.c \
           PeerNode.c \
           PerfDataEvent.c \
           PerfDataSysEvent_linux.c \
-          Router.c \
           SerialGraph.c \
           Stream.c \
           utils_lightweight.c \

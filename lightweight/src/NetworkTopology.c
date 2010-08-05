@@ -11,6 +11,7 @@
 #include <time.h>
 
 #include "mrnet_lightweight/NetworkTopology.h"
+#include "mrnet_lightweight/Stream.h"
 #include "mrnet_lightweight/Types.h"
 #include "utils_lightweight.h"
 #include "map.h"
@@ -386,6 +387,11 @@ TopologyLocalInfo_t* new_TopologyLocalInfo_t(NetworkTopology_t* topol, Node_t* n
   new_top->local_node = node;
 
   return new_top;
+}
+
+Network_t * TopologyLocalInfo_get_Network(TopologyLocalInfo_t * tli)
+{
+    return tli->topol->net;
 }
 
 Node_t* NetworkTopology_find_Node(NetworkTopology_t* net_top, Rank irank)
@@ -907,6 +913,7 @@ int NetworkTopology_new_Node(NetworkTopology_t* net_top, const char * host,
         mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as backend\n", rank));
         pushBackElement(net_top->backend_nodes, node);
     }
+    return true;
 }
 
 vector_t * NetworkTopology_get_updates_buffer(NetworkTopology_t * net_top)
@@ -919,3 +926,42 @@ void NetworkTopology_insert_updates_buffer(NetworkTopology_t * net_top, update_c
     pushBackElement(net_top->_updates_buffer, uc);
 }
 
+// Topology Update Methods
+void NetworkTopology_add_BackEnd(NetworkTopology_t * net_top, 
+        uint32_t rprank, uint32_t rcrank, 
+        char * rchost, uint16_t rcport)
+{
+    Stream_t * str_one = Network_get_Stream(net_top->net, 1);
+    Node_t * n;
+    
+    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is before add %s\n", NetworkTopology_get_TopologyStringPtr(net_top)));
+
+    n = NetworkTopology_find_Node(net_top, rcrank);
+
+    if (n == NULL) {
+       NetworkTopology_new_Node(net_top, rchost, rcport, rcrank, true);
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as childof node[%d]\n",
+                    rcrank, rprank));
+
+        if ( !(NetworkTopology_set_Parent(net_top, rcrank, rprank, false))) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                        "Set parent for %s failed\n", rchost));
+        }
+        mrn_dbg(5, mrn_printf(FLF, stderr, "topology is after add %s\n", NetworkTopology_get_TopologyStringPtr(net_top)));
+    } else {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "node already present, topology after add %s\n", NetworkTopology_get_TopologyStringPtr(net_top)));
+    }
+
+}
+
+void NetworkTopology_change_Port(NetworkTopology_t * net_top,
+        uint32_t rcrank, uint16_t rcport)
+{
+    Node_t * update_node = NetworkTopology_find_Node(net_top, rcrank);
+    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is before update port %s\n", NetworkTopology_get_TopologyStringPtr(net_top)));
+    
+    // Actual port update on the local network topology
+    NetworkTopology_Node_set_Port(update_node, rcport);
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is after port update %s\n", NetworkTopology_get_TopologyStringPtr(net_top)));
+}

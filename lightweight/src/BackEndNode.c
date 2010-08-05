@@ -68,7 +68,7 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
 
             // New topology propagation code - create a new update packet
             Stream_t* s = Network_get_Stream(be->network, 1); // getting handle for stream id 1 which was reserved for topology propagation
-            int type = TOPO_NEW_RANK; // type 0 is add packet
+            int type = TOPO_NEW_BE; // type 0 is add packet
             char * host_arr = strdup(imyhostname);
             uint32_t * send_iprank = (uint32_t*)malloc(sizeof(uint32_t));
             *send_iprank = iprank;
