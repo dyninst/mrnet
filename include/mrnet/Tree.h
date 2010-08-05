@@ -54,12 +54,13 @@ class Tree {
 
     bool create_TopologyFile( const char* ifilename );
     bool create_TopologyFile( FILE* ifile );
-    void get_TopologyBuffer( char** buf );
 
     static bool get_HostsFromFile( const char* ifilename, 
                                    std::list< std::pair<std::string,unsigned> >& hosts );
     static void get_HostsFromFileStream( FILE* ifile, 
                                          std::list< std::pair<std::string,unsigned> >& hosts );
+    static void get_HostsFromBuffer( const char* ibuf, 
+                                     std::list< std::pair<std::string,unsigned> >& hosts );
 
     // END MRNET API
 
