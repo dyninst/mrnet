@@ -8,9 +8,9 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <time.h>
 
 #include "mrnet_lightweight/NetworkTopology.h"
-#include "Router.h"
 #include "mrnet_lightweight/Types.h"
 #include "utils_lightweight.h"
 #include "map.h"
@@ -61,7 +61,6 @@ NetworkTopology_t* new_NetworkTopology_t(Network_t* inetwork,
   assert(net_top);
   net_top->net = inetwork;
   net_top->root = new_Node_t(ihostname, iport, irank, iis_backend);
-  net_top->router = new_Router_t(inetwork);
   net_top->orphans = new_empty_vector_t();
   net_top->backend_nodes = new_empty_vector_t();
   net_top->parent_nodes = new_empty_vector_t();
@@ -101,6 +100,41 @@ void NetworkTopology_get_OrphanNodes(NetworkTopology_t* net_top,
     nodes = net_top->orphans;
 }
 
+int NetworkTopology_isInTopology(NetworkTopology_t* net_top,
+        char * hostname, 
+        Port _port,
+        Rank _rank)
+{
+    int iter;
+    int found;
+
+    for (iter = 0; iter < net_top->nodes->size; iter++) {
+        Node_t* tmp = (Node_t*)get_val(net_top->nodes, net_top->nodes->keys[iter]);
+
+        if ( !strcmp(hostname, tmp->hostname) && 
+                    (_port == tmp->port) &&
+                    (_rank == tmp->rank) ) {
+            found=true;
+            break;
+        }
+    } 
+
+    return found;
+}
+
+char * NetworkTopology_get_TopologyStringPtr(NetworkTopology_t * net_top)
+{
+    if (net_top->serial_graph != NULL)
+        free_SerialGraph_t(net_top->serial_graph);
+    net_top->serial_graph = new_SerialGraph_t(NULL);
+
+    NetworkTopology_serialize(net_top, net_top->root);
+
+    char * retval = strdup(SerialGraph_get_ByteArray(net_top->serial_graph));
+
+    return retval;
+}
+
 char* NetworkTopology_get_LocalSubTreeStringPtr(NetworkTopology_t* net_top)
 { 
   char* localhost;
@@ -110,7 +144,6 @@ char* NetworkTopology_get_LocalSubTreeStringPtr(NetworkTopology_t* net_top)
   mrn_dbg_func_begin();
 
   if (net_top->serial_graph != NULL)
-    //free(net_top->serial_graph);
     free_SerialGraph_t(net_top->serial_graph);
   net_top->serial_graph = new_SerialGraph_t(NULL);
   
@@ -675,6 +708,10 @@ Port NetworkTopology_Node_get_Port(Node_t* node) {
     return node->port;
 }
 
+void NetworkTopology_Node_set_Port(Node_t* node, Port port) {
+    node->port = port;
+}
+
 Rank NetworkTopology_Node_get_Rank(Node_t* node) {
     return node->rank;
 }
@@ -856,3 +893,29 @@ int NetworkTopology_Node_remove_Child(Node_t* parent, Node_t* child)
 
     return true;
 }
+
+int NetworkTopology_new_Node(NetworkTopology_t* net_top, const char * host, 
+        Port port, Rank rank, int iis_backend)
+{
+    char * host_name = host;
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Creatingback node[%d] %s:%d\n",
+                rank, host_name, port));
+    Node_t* node = new_Node_t(host,port,rank,iis_backend);
+    insert(net_top->nodes, rank, node);
+
+    if (iis_backend) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as backend\n", rank));
+        pushBackElement(net_top->backend_nodes, node);
+    }
+}
+
+vector_t * NetworkTopology_get_updates_buffer(NetworkTopology_t * net_top)
+{
+    return net_top->_updates_buffer;
+}
+
+void NetworkTopology_insert_updates_buffer(NetworkTopology_t * net_top, update_contents_t * uc)
+{
+    pushBackElement(net_top->_updates_buffer, uc);
+}
+

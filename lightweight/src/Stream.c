@@ -134,9 +134,13 @@ Packet_t* Stream_get_IncomingPacket(Stream_t* stream)
 
 int Stream_push_Packet(Stream_t* stream,
                       Packet_t* ipacket,
-                      Packet_t* opacket,
+                      vector_t *  opackets,
+                      vector_t * opackets_reverse,
                       int igoing_upstream)
 {
+    //EMILY
+    mrn_dbg(5, mrn_printf(FLF, stderr, "stream->id = %d\n", stream->id));
+    
     NetworkTopology_t* topol = stream->network->network_topology;
     TopologyLocalInfo_t* topol_info = 
       new_TopologyLocalInfo_t(topol, NetworkTopology_find_Node(topol, stream->network->local_rank));
@@ -176,16 +180,23 @@ int Stream_push_Packet(Stream_t* stream,
         Timer_start(tagg);
     }
 
+    // HACK TO TEST THE CURRENT CODE
+    if (stream->id == 1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Stream ID = 1, no opackets\n"));
+        return 0; 
+    }
+   
     // run transformation filter
     // NOTE: Currently, we do not support filtering at lightweight
     // backend nodes. Thus, nothing happens during this process
-    // except *ipacket = *opacket;
+    // except *opacket = *ipacket;
     if (Filter_push_Packets(trans_filter, 
-                            ipacket, 
-                            opacket, 
-                            *topol_info) == -1) {
-      mrn_dbg(1, mrn_printf(FLF, stderr, "agrr.push_packets() failed\n"));
-      return -1;
+                ipacket, 
+                opackets,
+                opackets_reverse, 
+                *topol_info) == -1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "agrr.push_packets() failed\n"));
+        return -1;
     }
 
     if (igoing_upstream) {
@@ -320,17 +331,16 @@ int Stream_send_aux(Stream_t* stream, int itag, char* ifmt, Packet_t* ipacket)
 {
   Timer_t tagg = new_Timer_t();
   Timer_t tsend = new_Timer_t();
+  vector_t* opackets = new_empty_vector_t();
+  vector_t* opackets_reverse = new_empty_vector_t();
   Packet_t* opacket;
   int upstream = true;
   perfdata_t val;
+  int i;
 
   mrn_dbg_func_begin();
   mrn_dbg(3, mrn_printf(FLF, stderr, "stream_id: %d, tag:%d, fmt=\"%s\"\n", stream->id, itag, ifmt));
   
-  opacket = (Packet_t*)malloc(sizeof(Packet_t));
-  assert(opacket);
-
-
   // performance data update for STREAM_SEND
   if (PerfDataMgr_is_Enabled(stream->perf_data, 
                               PERFDATA_MET_NUM_PKTS,
@@ -359,7 +369,7 @@ int Stream_send_aux(Stream_t* stream, int itag, char* ifmt, Packet_t* ipacket)
 
   // filter packet
   Timer_start(tagg);
-  if (Stream_push_Packet(stream, ipacket, opacket, upstream) == -1) {
+  if (Stream_push_Packet(stream, ipacket, opackets, opackets_reverse, upstream) == -1) {
     mrn_dbg(1, mrn_printf(FLF, stderr, "Stream_push_Packet() failed\n"));
     return -1;
   }
@@ -367,12 +377,15 @@ int Stream_send_aux(Stream_t* stream, int itag, char* ifmt, Packet_t* ipacket)
 
   //send filtered result packets
   Timer_start(tsend);
-  if (opacket != NULL) {
-        if (Network_send_PacketToParent(stream->network, opacket) == -1) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Network_send_PacketToParent failed\n"));
-            return -1;
-        }
-        free(opacket);
+  for (i = 0; i < opackets->size; i++) {
+      opacket = opackets->vec[i];
+      if (opacket != NULL) {
+          if (Network_send_PacketToParent(stream->network, opacket) == -1) {
+              mrn_dbg(1, mrn_printf(FLF, stderr, "Network_send_PacketToParent failed\n"));
+              return -1;
+          }
+          free(opacket);
+      }
   }
   Timer_stop(tsend);
   mrn_dbg(5, mrn_printf(FLF, stderr, "agg_lat: %.5lf send_lat: %.5lf\n", Timer_get_latency_msecs(tagg), Timer_get_latency_msecs(tsend)));

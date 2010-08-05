@@ -19,6 +19,7 @@ struct NetworkTopology_t ;
 struct Stream_t ;
 struct vector_t;
 struct map_t;
+struct SerialGraph_t;
 
 typedef struct {
     char* local_hostname;
@@ -113,6 +114,13 @@ void Network_set_OutputLeveL( int l );
 void Network_set_OutputLevelFromEnvironment(void);
 
 char Network_is_ShutDown( Network_t* net );
+
 void Network_waitfor_ShutDown( Network_t* net );
+
+int Network_add_SubGraph(Network_t * net, Rank iroot_rank, struct SerialGraph_t * sg, int iupdate);
+
+struct SerialGraph_t * Network_readTopology(Network_t * net, int topoSocket);
+
+void Network_writeTopology(Network_t * net, int topoFd, struct SerialGraph_t * topology);
 
 #endif /* __network_h */

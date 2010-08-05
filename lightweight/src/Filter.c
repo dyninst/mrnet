@@ -26,10 +26,16 @@ void delete_Filter_t(Filter_t* filter)
 
 int Filter_push_Packets(Filter_t* filter, 
                         Packet_t* ipacket, 
-                        Packet_t* opacket,
+                        vector_t* opackets,
+                        vector_t* opackets_reverse,
                         TopologyLocalInfo_t topol_info)
 {
-    *opacket = *ipacket;
+    mrn_dbg_func_begin();
+
+    pushBackElement(opackets, ipacket);
+
+    mrn_dbg_func_end();
+
     return 0;
 }
 

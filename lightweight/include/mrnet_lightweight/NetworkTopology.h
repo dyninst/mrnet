@@ -15,7 +15,6 @@
 
 struct map_t;
 struct node_t;
-struct Router_t;
 struct SerialGraph_t;
 
 struct Node_t {
@@ -39,7 +38,6 @@ typedef struct Node_t Node_t;
 struct NetworkTopology_t {
    Network_t* net;
    Node_t* root;
-   struct Router_t* router;
   unsigned int min_fanout;
   unsigned int max_fanout;
   unsigned int depth;
@@ -51,6 +49,7 @@ struct NetworkTopology_t {
    struct vector_t* backend_nodes;
    struct vector_t* parent_nodes;
    struct SerialGraph_t* serial_graph;
+   struct vector_t * _updates_buffer;
 } ; 
 
 typedef struct NetworkTopology_t NetworkTopology_t;
@@ -81,6 +80,8 @@ NetworkTopology_t* new_NetworkTopology_t( Network_t* inetwork,
 unsigned int NetworkTopology_get_NumNodes(NetworkTopology_t* net_top);
 
 Node_t* NetworkTopology_get_Root(NetworkTopology_t* net_top);
+
+char* NetworkTopology_get_TopologyStringPtr(NetworkTopology_t * net_top);
 
 char* NetworkTopology_get_LocalSubTreeStringPtr( NetworkTopology_t* net_top); 
 
@@ -120,6 +121,15 @@ void NetworkTopology_find_PotentialAdopters(NetworkTopology_t* net_top,
                                             Node_t* ipotential_adopter,
                                             struct vector_t* potential_adopters);
 
+int NetworkTopology_isInTopology(NetworkTopology_t * net_top, 
+        char * hostname, 
+        Port _port, 
+        Rank _rank);
+
+struct vector_t * NetworkTopology_get_updates_buffer(NetworkTopology_t * net_top);
+
+void NetworkTopology_insert_updates_buffer(NetworkTopology_t * net_top, update_contents_t * uc);
+
 /* NetworkTopology_Node */
 int NetworkTopology_Node_is_BackEnd(Node_t* node);
 
@@ -152,5 +162,10 @@ int NetworkTopology_Node_remove_Child(Node_t* parent, Node_t* child);
 
 /* TopologyLocalInfo */
 TopologyLocalInfo_t* new_TopologyLocalInfo_t( NetworkTopology_t* topol,  Node_t* node);
+
+void NetworkTopology_Node_set_Port(Node_t * node, Port port);
+
+int NetworkTopology_new_Node(NetworkTopology_t * net_top, const char * host, Port port, Rank rank, int iis_backend);
+
 
 #endif /* __network_topology_h */

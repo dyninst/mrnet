@@ -56,4 +56,6 @@ int BackEndNode_proc_NewParentReportFromParent( BackEndNode_t* be,  Packet_t* ip
 
 int BackEndNode_proc_DataFromParent( BackEndNode_t* be,  Packet_t* ipacket);
 
+int BackEndNode_proc_deleteStream(BackEndNode_t * be, Packet_t * ipacket);
+
 #endif /* __backendnode_h */
