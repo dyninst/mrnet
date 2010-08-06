@@ -188,6 +188,18 @@ int bindPort( int *sock_in, Port *port_in )
         mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
     }
 
+    fdflag = fcntl(sock, F_GETFL );
+    if( fdflag == -1 ) {
+        // failed to retrieve the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFL failed\n") );
+    }
+    fret = fcntl( sock, F_SETFL, fdflag | O_NONBLOCK );
+    if(fret == -1 ) {
+        // failed to set the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "Setting listening socket to non blocking failed\n") );
+    }
+
+
 #ifndef os_windows
     // set the socket so that it does not hold onto its port after
     // the process exits (needed because on at least some platforms we
@@ -285,7 +297,7 @@ int getSocketConnection( int bound_socket , int& inout_errno)
         connected_socket = accept( bound_socket, NULL, NULL );
         if( connected_socket == -1 ) {
 	    inout_errno=errno;
-	    if( (inout_errno!=EAGAIN) && (inout_errno!=EWOULDBLOCK) )
+	    if( (inout_errno != EAGAIN) && (inout_errno != EWOULDBLOCK) )
 	    {
               mrn_dbg( 1, mrn_printf(FLF, stderr, "%s", "" ) );
               perror( "accept()" );

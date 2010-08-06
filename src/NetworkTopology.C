@@ -303,8 +303,9 @@ bool NetworkTopology::new_Node( const std::string &host, Port port, Rank rank, b
   {
      mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as backend\n", rank ) );
                             _backend_nodes.insert( node );
+     _network->insert_EndPoint( host_name, port, rank );
+
   }
-  _network->insert_EndPoint( host_name, port, rank );
   return true;
 }   
 
@@ -1333,5 +1334,31 @@ void NetworkTopology::change_Port( uint32_t rcrank, uint16_t rcport )
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is after port update %s\n", get_TopologyStringPtr() ));
 }//change_Port
+
+
+void NetworkTopology::add_CP( uint32_t rprank, uint32_t rcrank, char* rchost, uint16_t rcport )
+{
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is before add %s\n", get_TopologyStringPtr() ));
+
+    //create a node for the child and add it to network topology set of nodes.
+    Node* n = find_Node( rcrank );
+
+    if (n == NULL) {
+        new_Node(rchost, rcport, rcrank, false ); 
+        mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as child of node[%d]\n",
+                                rcrank, rprank ) );
+
+        if( !( set_Parent( rcrank, rprank , false ))) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                    "Set Parent for %s failed\n", rchost ));
+        }
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is after add %s\n", get_TopologyStringPtr() ));
+    }
+    else
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "node already present topology is after add %s\n", get_TopologyStringPtr() ));
+
+}//add_CP
+
 
 } // namespace MRN

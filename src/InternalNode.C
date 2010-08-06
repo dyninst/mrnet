@@ -46,7 +46,7 @@ InternalNode::InternalNode( Network * inetwork,
                                "init_newChildDataConnection() failed\n" ));
         return;
     }
-
+     
     //start event detection thread
     if( EventDetector::start( ParentNode::_network ) == false ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "start_EventDetectionThread() failed\n" ));
@@ -54,7 +54,39 @@ InternalNode::InternalNode( Network * inetwork,
         ChildNode::error( ERR_INTERNAL, ParentNode::_rank, "start_EventDetectionThread failed\n" );
         return;
     }
+     
+    NetworkTopology* nt = ParentNode::_network->get_NetworkTopology();  
+    if( nt != NULL )
+    {
+        if( !(nt->isInTopology( ihostname, listeningPort , irank)) ) //if internal node already not in the topology => internal node attach case 
+        {
+            ParentNode::_network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                     " Internal node not already in the topology\n" ));
 
+           //new topo propagation code - create a new update packet
+           Stream *s = ParentNode::_network->get_Stream( 1 ); // getting handle for stream id 1 which was reserved for topology propagation
+           int type = TOPO_NEW_CP; 
+           char *host_arr = strdup( ihostname.c_str() );
+
+           uint32_t* send_iprank = (uint32_t* ) malloc( sizeof( uint32_t) );
+           *send_iprank = iprank;
+
+           uint32_t* send_myrank = (uint32_t*) malloc( sizeof( uint32_t) );
+           *send_myrank = irank; 
+
+           uint16_t* send_port = (uint16_t*)malloc( sizeof( uint16_t) );
+           *send_port = listeningPort;
+
+           s->send_internal(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", &type, 1, send_iprank, 1, send_myrank, 1, &host_arr,1, send_port, 1);
+           free(host_arr);
+        } 
+        else
+           mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                         " Internal node not already in the topology\n" ));
+
+    } 
+ 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "InternalNode:%p\n", this ));
     mrn_dbg_func_end();
 }

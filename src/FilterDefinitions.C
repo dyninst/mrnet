@@ -1376,6 +1376,7 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 	      break;
 
 	  case TOPO_NEW_CP :
+              nt->add_CP( rprank_arr[i], rcrank_arr[i] ,rchost_arr[i], rcport_arr[i] );
 	      update_table = true;
 
 	  default:
@@ -1830,6 +1831,17 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     }
    
     mrn_dbg( 5, mrn_printf(FLF, stderr, " input packets size is %d\n" ,ipackets.size() ) );
+    
+    int stream_id;
+    Stream * stream;
+    set< Rank > peers;
+
+    if( ipackets.size() > 0 ){
+        stream_id = ipackets[0]->get_StreamId();
+        stream = net->get_Stream( stream_id );
+        assert(stream);
+        stream->get_ChildPeers( );
+    }	
 
     //2. Place input packets
     for( unsigned int i=0; i < ipackets.size(); i++ ) {
@@ -1848,6 +1860,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
         if( net->node_Failed( cur_inlet_rank ) ) {
             //Drop packets from failed node
+	    mrn_dbg( 3, mrn_printf (FLF, stderr, "Dropping packets from failed node %d \n", cur_inlet_rank ));
             continue;
         }
         
@@ -1863,16 +1876,21 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         mrn_dbg( 5, mrn_printf(FLF, stderr, "Placing packet[%d] from node[%d]\n",
                                i, cur_inlet_rank ));
         state->packets_by_rank[ cur_inlet_rank ]->push_back( ipackets[i] );
+	if(  ( peers.find (cur_inlet_rank) == peers.end() ) &  ( stream_id == 1 )  )
+	{
+	   stream->add_Stream_Peer( cur_inlet_rank );
+	   peers.insert( cur_inlet_rank);
+	}   
         state->ready_peers.insert( cur_inlet_rank );
     }
 
     if( ipackets.size() > 0 ) {
 
-        int stream_id = ipackets[0]->get_StreamId();
-        Stream* stream = net->get_Stream( stream_id );
-        assert(stream);
+        //int stream_id = ipackets[0]->get_StreamId();
+        //Stream* stream = net->get_Stream( stream_id );
+        //assert(stream);
 
-        set< Rank > peers = stream->get_ChildPeers( );
+        //set< Rank > peers = stream->get_ChildPeers( );
         set< Rank > closed_peers = stream->get_ClosedPeers( );
         
         mrn_dbg( 5, mrn_printf(FLF, stderr, "slots:%d ready:%d peers:%d closed:%d\n",
@@ -1892,6 +1910,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
         if( closed_peers.empty() && state->ready_peers.size() < peers.size() ) {
             //no closed peers and not all peers ready, so sync condition not met
+	    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning here\n") );
             return;
         }
 
@@ -1901,11 +1920,13 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
                         inserter( unready_peers, unready_peers.begin() ) );
         if( unready_peers != closed_peers ) {
             //some peers not ready and haven't been closed, sync condition not met
+	    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning here1\n") );
             return;
         }
 
         //check for a complete wave
         if( (state->ready_peers.size() + closed_peers.size()) < peers.size() ) {
+	    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning here\n" ) );
             return;
         }
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Complete wave.\n" )); 

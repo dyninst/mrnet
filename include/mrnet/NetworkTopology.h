@@ -151,11 +151,17 @@ class NetworkTopology: public Error {
     bool isInTopology(std::string hostname, Port _port, Rank _rank);
     void insert_updates_buffer( update_contents_t* uc);
     std::vector<update_contents_t* > get_updates_buffer( void );
+
     void update_TopoStreamPeers( std::vector<uint32_t> new_nodes );
     void add_BackEnd( uint32_t rprank, uint32_t rcrank, char* rchost, 
                       uint16_t rcport );
+    void add_CP( uint32_t rprank, uint32_t rcrank, char* rchost, 
+                      uint16_t rcport );
+
     void change_Port( uint32_t rcrank, uint16_t rcport );
     void update_Router_Table();
+   
+
 
     //made public from private for topo prop change
     void serialize( Node * );
