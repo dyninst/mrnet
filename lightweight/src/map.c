@@ -14,10 +14,10 @@
 #include "map.h"
 #include "utils_lightweight.h"
 
-map_t* new_map_t()
+mrn_map_t* new_map_t()
 {
     int keys[1];
-    map_t* new_map = (map_t*)malloc(sizeof(map_t));
+    mrn_map_t* new_map = (mrn_map_t*)malloc(sizeof(mrn_map_t));
     assert(new_map);
 
     new_map->root = NULL;
@@ -41,13 +41,13 @@ map_node_t* delete_map_recursive(map_node_t* root) {
     return root;
 }
 
-void delete_map_t(map_t* map) {
+void delete_map_t(mrn_map_t* map) {
     map->root = delete_map_recursive(map->root);
 
     free(map);
 }
 
-void clear_map_t(map_t* map) {
+void clear_map_t(mrn_map_t* map) {
     delete_map_recursive(map->root);
     map = new_map_t();
 }
@@ -88,7 +88,7 @@ map_node_t* insert_recursive(map_node_t* root, int key, void* val)
     return root;
 }
 
-void insert(map_t* map, int key, void* val)
+void insert(mrn_map_t* map, int key, void* val)
 {
     int i;
     int new_val = 1;
@@ -127,14 +127,14 @@ void* get_val_recursive(map_node_t* root, int key)
 
 }
 
-void* get_val(map_t* map, int key)
+void* get_val(mrn_map_t* map, int key)
 {
     return get_val_recursive(map->root, key);
 }
 
-map_t* erase(map_t* map, int ikey)
+mrn_map_t* erase(mrn_map_t* map, int ikey)
 {   
-    map_t* new_map = new_map_t();
+    mrn_map_t* new_map = new_map_t();
 
     int i;
     for (i = 0; i < map->size; i++) {
@@ -159,7 +159,7 @@ void print_recursive(map_node_t* node)
     }
 }
 
-void print(map_t* map)
+void print(mrn_map_t* map)
 {
     print_recursive(map->root);
 }   

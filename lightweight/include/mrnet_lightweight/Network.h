@@ -18,7 +18,7 @@ struct BackEndNode_t;
 struct NetworkTopology_t ;
 struct Stream_t ;
 struct vector_t;
-struct map_t;
+struct mrn_map_t;
 struct SerialGraph_t;
 
 typedef struct {
@@ -29,7 +29,7 @@ typedef struct {
     struct vector_t* children;
     struct BackEndNode_t* local_back_end_node;
     struct NetworkTopology_t* network_topology;
-    struct map_t* streams;
+    struct mrn_map_t* streams;
     int stream_iter;
     int recover_from_failures;
     char _was_shutdown;

@@ -12,7 +12,7 @@
 #include "mrnet_lightweight/Network.h"
 #include "mrnet_lightweight/Types.h"
 
-struct map_t;
+struct mrn_map_t;
 struct node_t;
 struct SerialGraph_t;
 
@@ -43,7 +43,7 @@ struct NetworkTopology_t {
     double avg_fanout;
     double stddev_fanout;
     double var_fanout;
-    struct map_t* nodes;
+    struct mrn_map_t* nodes;
     struct vector_t* orphans;
     struct vector_t* backend_nodes;
     struct vector_t* parent_nodes;

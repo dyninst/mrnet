@@ -15,26 +15,26 @@ struct map_node_t {
 
 typedef struct map_node_t map_node_t;
 
-struct map_t {
+struct mrn_map_t {
    map_node_t* root;
    int size;
    int* keys;
 };
 
-typedef struct map_t map_t;
+typedef struct mrn_map_t mrn_map_t;
 
- map_t* new_map_t();
+ mrn_map_t* new_map_t();
 
-void insert( map_t* map, int key, void* val);
+void insert( mrn_map_t* map, int key, void* val);
 
-void* get_val( map_t* map, int key);
+void* get_val( mrn_map_t* map, int key);
 
-void delete_map_t(map_t* map);
+void delete_map_t(mrn_map_t* map);
 
-void clear_map_t(map_t* map);
+void clear_map_t(mrn_map_t* map);
 
-map_t* erase(map_t* map, int ikey);
+mrn_map_t* erase(mrn_map_t* map, int ikey);
 
-void print(map_t* map);
+void print(mrn_map_t* map);
 
 #endif 

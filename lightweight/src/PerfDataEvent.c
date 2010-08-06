@@ -24,7 +24,7 @@
 PerfDataMgr_t* new_PerfDataMgr_t()
 {
     int i;
-    map_t* newmap;
+    mrn_map_t* newmap;
     PerfDataMgr_t* newperf = (PerfDataMgr_t*)malloc(sizeof(PerfDataMgr_t));
     assert(newperf != NULL);
     newperf->the_data = new_empty_vector_t();
@@ -103,7 +103,7 @@ void PerfDataMgr_add_DataInstance(PerfDataMgr_t* perf_data,
                                   perfdata_t data)
 {
     perfdata_t* newdata;
-    map_t* ctx_map;
+    mrn_map_t* ctx_map;
     vector_t* met_data;
 
     mrn_dbg_func_begin();
@@ -111,7 +111,7 @@ void PerfDataMgr_add_DataInstance(PerfDataMgr_t* perf_data,
     assert(newdata != NULL);
     *newdata = data;
 
-    ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
+    ctx_map = (mrn_map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
     if (ctx_map->size > 0) {
         met_data = (vector_t*)(get_val(ctx_map,met));
         if ((met_data!=NULL) && (met_data->size)) {
@@ -134,13 +134,13 @@ perfdata_t PerfDataMgr_get_DataValue(PerfDataMgr_t* perf_data,
                                      perfdata_metric_t met,
                                      perfdata_context_t ctx)
 {
-    map_t* ctx_map;
+    mrn_map_t* ctx_map;
     vector_t* met_data;
     perfdata_t zero;
 
     mrn_dbg_func_begin();
 
-    ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
+    ctx_map = (mrn_map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
     if(ctx_map->size > 0) {
         met_data = (vector_t*)(get_val(ctx_map, met));
         if( (met_data!=NULL) && (met_data->size)) {
@@ -161,7 +161,7 @@ void PerfDataMgr_set_DataValue(PerfDataMgr_t* perf_data,
                                perfdata_t data)
 {
     perfdata_t* newdata;
-    map_t* ctx_map;
+    mrn_map_t* ctx_map;
     vector_t* met_data;
     
     mrn_dbg_func_begin();
@@ -169,7 +169,7 @@ void PerfDataMgr_set_DataValue(PerfDataMgr_t* perf_data,
     assert(newdata != NULL);
     *newdata = data;
 
-    ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
+    ctx_map = (mrn_map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
     mrn_dbg(5, mrn_printf(FLF, stderr, "ctx_map->size=%d\n", ctx_map->size));
     if (ctx_map->root) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "ctx_map->root is not NULL\n"));
@@ -282,12 +282,12 @@ void PerfDataMgr_collect(PerfDataMgr_t* perf_data,
                          perfdata_context_t ctx,
                          vector_t* data)
 {
-    map_t* ctx_map;
+    mrn_map_t* ctx_map;
     vector_t* met_data;
 
     mrn_dbg_func_begin();
 
-    ctx_map = (map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
+    ctx_map = (mrn_map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
     if (ctx_map->size > 0) {
         //vector_t* met_data = ctx_map[met];
         met_data = (vector_t*)(get_val(ctx_map, met));
