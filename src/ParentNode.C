@@ -688,7 +688,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                           child_incarnation, isock ));
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "is_internal?: '%c'\n", is_internal_char ));
-    bool is_internal = ( is_internal_char  ? true : false );
+    bool is_internal = ( is_internal_char == 't' ? true : false );
 
     std::string child_hostname( child_hostname_ptr );
     PeerNodePtr child_node = _network->new_PeerNode( child_hostname,
