@@ -153,15 +153,21 @@ class NetworkTopology: public Error {
     std::vector<update_contents_t* > get_updates_buffer( void );
     void update_TopoStreamPeers( std::vector<uint32_t> new_nodes );
     void add_BackEnd( uint32_t rprank, uint32_t rcrank, char* rchost, 
-                      uint16_t rcport );
+                      uint16_t rcport, bool upst );
     void change_Port( uint32_t rcrank, uint16_t rcport );
     void update_Router_Table();
+
+   //added more update functions for topology propogation change
+    void remove_update( uint32_t rprank, uint32_t rcrank,bool upst);
+    void change_parent_update( uint32_t rprank, uint32_t rcrank,bool upst);
+    void add_CP( uint32_t rprank, uint32_t rcrank,bool upst);
 
     //made public from private for topo prop change
     void serialize( Node * );
 
   private:
    
+
     Node * find_NodeHoldingLock( Rank ) const;
     bool remove_Orphan( Rank );
     void remove_SubGraph( Node * inode );

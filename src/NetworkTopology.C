@@ -1275,8 +1275,14 @@ const Network* TopologyLocalInfo::get_Network() const
 }
 
 //TOPOLOGY UPDATE METHODS
-void NetworkTopology::add_BackEnd( uint32_t rprank, uint32_t rcrank, char* rchost, uint16_t rcport )
+void NetworkTopology::add_BackEnd( uint32_t rprank, uint32_t rcrank, char* rchost, uint16_t rcport,bool upst )
 {
+	if((upst) && (_network->is_LocalNodeFrontEnd()))
+	{
+		TopoEvent *te = new TopoEvent(rprank,rcrank);
+		Callback::executeCB(TOPOLOGY_EVENT_CB,TOPO_ADD_BE,(EventCB*)te);
+	}
+
     Stream* str_one = _network->get_Stream( 1 );
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is before add %s\n", get_TopologyStringPtr() ));
     
@@ -1299,6 +1305,39 @@ void NetworkTopology::add_BackEnd( uint32_t rprank, uint32_t rcrank, char* rchos
         mrn_dbg( 5, mrn_printf(FLF, stderr, "node already present topology is after add %s\n", get_TopologyStringPtr() ));
     
 }//add
+
+
+void NetworkTopology::remove_update( uint32_t rprank, uint32_t rcrank,bool upst)
+{
+	if((upst) && (_network->is_LocalNodeFrontEnd()))
+	{
+		TopoEvent *te = new TopoEvent(rprank,rcrank);	
+		Callback::executeCB(TOPOLOGY_EVENT_CB,TOPO_REMOVE,(EventCB*)te);
+
+	}
+}
+
+
+void NetworkTopology::change_parent_update( uint32_t rprank, uint32_t rcrank,bool upst )
+{
+	if((upst) && (_network->is_LocalNodeFrontEnd()))
+	{
+		TopoEvent *te = new TopoEvent(rprank,rcrank);
+		Callback::executeCB(TOPOLOGY_EVENT_CB,TOPO_PARENT_CHANGE,(EventCB*)te);
+	}
+
+}
+
+void NetworkTopology::add_CP( uint32_t rprank, uint32_t rcrank,bool upst )
+{
+	if((upst) && (_network->is_LocalNodeFrontEnd()))
+	{
+		TopoEvent *te = new TopoEvent(rprank,rcrank);
+		Callback::executeCB(TOPOLOGY_EVENT_CB,TOPO_ADD_CP,(EventCB*)te);
+	}
+}
+
+
 
 void NetworkTopology::update_TopoStreamPeers( vector<uint32_t> new_nodes )
 {

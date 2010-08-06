@@ -1235,6 +1235,7 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 
     mrn_dbg_func_begin();
     
+   
     Network* net = const_cast< Network* >( info.get_Network() );
 
     vector< int* > itype_arr;
@@ -1360,15 +1361,17 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 	switch( rtype_arr[i] ) {
 	 
 	  case TOPO_NEW_BE :
-	    nt->add_BackEnd( rprank_arr[i], rcrank_arr[i] ,rchost_arr[i], rcport_arr[i] ); 
+	    nt->add_BackEnd( rprank_arr[i], rcrank_arr[i] ,rchost_arr[i], rcport_arr[i],true ); 
 	    new_nodes.push_back( rcrank_arr[i] );
 	    update_table = true;
 	    break;
 
 	  case TOPO_REMOVE_RANK : //remove
+		nt->remove_update( rprank_arr[i], rcrank_arr[i], true); 
 	    break;
 
 	  case TOPO_CHANGE_PARENT ://change parent
+		nt->change_parent_update( rprank_arr[i], rcrank_arr[i],true ); 
 	    break;
 
 	  case TOPO_CHANGE_PORT ://update port
@@ -1376,6 +1379,7 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 	      break;
 
 	  case TOPO_NEW_CP :
+		nt->add_CP( rprank_arr[i], rcrank_arr[i],true); 
 	      update_table = true;
 
 	  default:
@@ -1422,7 +1426,7 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
 {
 
     mrn_dbg_func_begin();
-    
+   
     Network* net = const_cast< Network* >( info.get_Network() );
 
     vector< int* > itype_arr;
@@ -1544,15 +1548,17 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
         switch( rtype_arr[i] ) {
 
           case TOPO_NEW_BE :
-            nt->add_BackEnd( rprank_arr[i], rcrank_arr[i] ,rchost_arr[i], rcport_arr[i] );
+            nt->add_BackEnd( rprank_arr[i], rcrank_arr[i] ,rchost_arr[i], rcport_arr[i],false );
             new_nodes.push_back( rcrank_arr[i] );
             update_table = true;
             break;
 
           case TOPO_REMOVE_RANK : //remove
+		nt->remove_update( rprank_arr[i], rcrank_arr[i],false ); 
             break;
 
           case TOPO_CHANGE_PARENT ://change parent
+		nt->change_parent_update( rprank_arr[i], rcrank_arr[i],false ); 
             break;
 
           case TOPO_CHANGE_PORT ://update port
@@ -1560,6 +1566,7 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
               break;
 
           case TOPO_NEW_CP :
+		nt->add_CP( rprank_arr[i], rcrank_arr[i],false); 
               update_table = true;
 
           default:

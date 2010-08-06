@@ -112,6 +112,13 @@ class Network: public Error {
     /*Newly added code for turning Fault Recovery ON or OFF*/
     bool set_FailureRecovery( bool enable_recovery );
 
+
+    /*Callback notification for Node Failure */
+     bool register_Callback(CBClass icbcl,cb_func func,CBType icbt=ALL_EVENT);
+     bool remove_Callback(CBClass icbcl,CBType icbt=ALL_EVENT);
+     bool remove_Callback(CBClass icbcl,cb_func func,CBType icbt=ALL_EVENT);
+
+
     // END MRNET API
 
     virtual ~Network( );
@@ -127,6 +134,7 @@ class Network: public Error {
     bool node_Failed( Rank );
     PeerNodePtr get_OutletNode( Rank ) const ;
 
+     void add_Callbacks();
 
 protected:
     // constructor
