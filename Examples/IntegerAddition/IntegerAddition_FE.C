@@ -41,7 +41,7 @@ int main(int argc, char **argv)
             net->perror("Network creation failed");
             exit(-1);
         }
-
+        
         // Make sure path to "so_file" is in LD_LIBRARY_PATH
         int filter_id = net->load_FilterFunc( so_file, "IntegerAdd" );
         if( filter_id == -1 ){
