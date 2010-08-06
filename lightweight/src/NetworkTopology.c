@@ -21,9 +21,9 @@
 #include "xplat_lightweight/NetUtils.h"
 
 Node_t* new_Node_t(char* ihostname, 
-                  Port iport, 
-                  Rank irank, 
-                  int iis_backend)
+                   Port iport, 
+                   Rank irank, 
+                   int iis_backend)
 {
 
   static int first_time = true;
@@ -53,10 +53,10 @@ Node_t* new_Node_t(char* ihostname,
 }
 
 NetworkTopology_t* new_NetworkTopology_t(Network_t* inetwork, 
-                                          char* ihostname, 
-                                          Port iport, 
-                                          Rank irank, 
-                                          int iis_backend)
+                                         char* ihostname, 
+                                         Port iport, 
+                                         Rank irank, 
+                                         int iis_backend)
 { 
   NetworkTopology_t* net_top = (NetworkTopology_t*)malloc(sizeof(NetworkTopology_t));
   assert(net_top);
@@ -75,36 +75,38 @@ NetworkTopology_t* new_NetworkTopology_t(Network_t* inetwork,
 }
 
 
-unsigned int NetworkTopology_get_NumNodes(NetworkTopology_t* net_top) {
+unsigned int NetworkTopology_get_NumNodes(NetworkTopology_t* net_top)
+{
     return net_top->nodes->size;
 }
 
-Node_t* NetworkTopology_get_Root(NetworkTopology_t* net_top) {
+Node_t* NetworkTopology_get_Root(NetworkTopology_t* net_top)
+{
     return net_top->root; 
 }
 
 void NetworkTopology_get_BackEndNodes(NetworkTopology_t* net_top, 
-                                    vector_t* nodes)
+                                      vector_t* nodes)
 {
     nodes = net_top->backend_nodes;
 }
 
 void NetworkTopology_get_ParentNodes(NetworkTopology_t* net_top, 
-                                    vector_t* nodes)
+                                     vector_t* nodes)
 {
     nodes = net_top->parent_nodes;
 }
 
 void NetworkTopology_get_OrphanNodes(NetworkTopology_t* net_top, 
-                                    vector_t* nodes)
+                                     vector_t* nodes)
 {
     nodes = net_top->orphans;
 }
 
 int NetworkTopology_isInTopology(NetworkTopology_t* net_top,
-        char * hostname, 
-        Port _port,
-        Rank _rank)
+                                 char * hostname, 
+                                 Port _port,
+                                 Rank _rank)
 {
     int iter;
     int found;
@@ -381,12 +383,12 @@ int NetworkTopology_remove_Node(NetworkTopology_t* net_top, Rank irank)
 
 TopologyLocalInfo_t* new_TopologyLocalInfo_t(NetworkTopology_t* topol, Node_t* node)
 {
-  TopologyLocalInfo_t* new_top = (TopologyLocalInfo_t*)malloc(sizeof(TopologyLocalInfo_t));
-  assert(new_top);
-  new_top->topol = topol;
-  new_top->local_node = node;
+    TopologyLocalInfo_t* new_top = (TopologyLocalInfo_t*)malloc(sizeof(TopologyLocalInfo_t));
+    assert(new_top);
+    new_top->topol = topol;
+    new_top->local_node = node;
 
-  return new_top;
+    return new_top;
 }
 
 Network_t * TopologyLocalInfo_get_Network(TopologyLocalInfo_t * tli)

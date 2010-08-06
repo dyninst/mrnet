@@ -3,11 +3,21 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined(__perfdatasysevent_h)
-#define __perfdatasysevent_h 1
+#include "PerfDataEvent.h"
+#include "PerfDataSysEvent.h"
 
-int PerfDataSysMgr_get_ThreadTime(long* user, long* sys);
+int PerfDataSysMgr_get_ThreadTime(long* user, long* sys)
+{
+    *user = 0;
+    *sys = 0;
 
-int PerfDataSysMgr_get_MemUsage(double* vsize, double* psize);
+    return 0;
+}
 
-#endif 
+int PerfDataSysMgr_get_MemUsage(double* vsize, double* psize) 
+{
+    *vsize = 0;
+    *psize = 0;
+
+    return 0;
+}

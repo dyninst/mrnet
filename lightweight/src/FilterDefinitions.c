@@ -55,8 +55,7 @@ void tfilter_TopoUpdate(vector_t * ipackets,
 
     char * format_string;
     
-    unsigned i;
-    unsigned z;
+    unsigned i, u, z;
     
     int data_size;
     int uhd_size;
@@ -142,29 +141,30 @@ void tfilter_TopoUpdate(vector_t * ipackets,
     for (i = 0; i < itype_arr->size; i++) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "size of itype_arr %d\n", itype_arr->size));
         memcpy(rtype_arr + int32_pos,
-                (int *)itype_arr->vec[i],
-                (size_t)((unsigned)(iarray_lens->vec[i]) * data_size));
+               (int *)itype_arr->vec[i],
+               (size_t)((unsigned)(iarray_lens->vec[i]) * data_size));
 
         mrn_dbg(5, mrn_printf(FLF, stderr, "copying for itype_arr: %d to rtype_arr %d\n",
                     *(int*)(itype_arr->vec[i]), *rtype_arr));
 
+        u = (unsigned) (iarray_lens->vec[i]);
         memcpy(rprank_arr + uint32_pos,
                 iprank_arr->vec[i],
-                (size_t) ((unsigned)(iarray_lens->vec[i]) * ud_size));
+                (size_t) (u * ud_size));
         memcpy(rcrank_arr + uint32_pos,
                 icrank_arr->vec[i],
-                (size_t) ((unsigned)(iarray_lens->vec[i]) * ud_size));
-        uint32_pos += (unsigned)(iarray_lens->vec[i]);
+                (size_t) (u * ud_size));
         memcpy(rchost_arr + char_pos,
                 ichost_arr->vec[i],
-                (size_t) ((unsigned)(iarray_lens->vec[i]) * charptr_size));
+                (size_t) (u * charptr_size));
         memcpy(rcport_arr + uint16_pos,
                 icport_arr->vec[i],
-                (size_t) ((unsigned)(iarray_lens->vec[i]) * uhd_size));
-        uint16_pos += (unsigned)(iarray_lens->vec[i]);
+                (size_t) (u * uhd_size));
 
-        int32_pos += (unsigned)iarray_lens->vec[i];
-        char_pos += iarray_lens->vec[i];
+        uint32_pos += u;
+        uint16_pos += u;
+        int32_pos += u;
+        char_pos += u;
     } // end of iterating through vector of int pointers
 
     nt = Network_get_NetworkTopology(net);
