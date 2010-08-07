@@ -19,6 +19,12 @@
 #include <ws2tcpip.h>
 #endif /* os_windows */
 
+#if defined(os_solaris)
+#ifndef INADDR_NONE
+#define INADDR_NONE -1
+#endif
+#endif
+
 namespace XPlat
 {
 

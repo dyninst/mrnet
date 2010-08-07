@@ -17,6 +17,8 @@ struct SerialGraph_t{
 
 typedef struct SerialGraph_t SerialGraph_t;
 
+char * SerialGraph_get_ByteArray(SerialGraph_t * sg);
+
 SerialGraph_t* new_SerialGraph_t(char* byte_array);
 
 void free_SerialGraph_t(SerialGraph_t* sg);
@@ -40,5 +42,8 @@ Rank SerialGraph_get_RootRank(SerialGraph_t* serial_graph);
 SerialGraph_t* SerialGraph_get_NextChild(SerialGraph_t* serial_graph);
 
 int SerialGraph_is_RootBackEnd(SerialGraph_t* serial_graph);
+
+int SerialGraph_set_Port(SerialGraph_t * serial_graph, char * hostname, Port port, Rank irank);
+
 
 #endif /* __serial_graph_h */

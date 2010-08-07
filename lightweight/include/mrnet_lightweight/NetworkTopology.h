@@ -9,78 +9,78 @@
 
 #include <stdio.h>
 
-
 #include "mrnet_lightweight/Network.h"
 #include "mrnet_lightweight/Types.h"
 
-struct map_t;
+struct mrn_map_t;
 struct node_t;
-struct Router_t;
 struct SerialGraph_t;
 
 struct Node_t {
-  char* hostname;
-  Port port;
-  Rank rank;
-  int failed;
-  struct vector_t* children; 
-  struct vector_t* ascendants; 
-  struct Node_t* parent;
-  int is_backend;
-  unsigned int depth;
-  unsigned int subtree_height;
-  double adoption_score;
-  double rand_key;
-  double wrs_key;
+    char* hostname;
+    Port port;
+    Rank rank;
+    int failed;
+    struct vector_t* children; 
+    struct vector_t* ascendants; 
+    struct Node_t* parent;
+    int is_backend;
+    unsigned int depth;
+    unsigned int subtree_height;
+    double adoption_score;
+    double rand_key;
+    double wrs_key;
 };
 
 typedef struct Node_t Node_t;
 
 struct NetworkTopology_t {
-   Network_t* net;
-   Node_t* root;
-   struct Router_t* router;
-  unsigned int min_fanout;
-  unsigned int max_fanout;
-  unsigned int depth;
-  double avg_fanout;
-  double stddev_fanout;
-  double var_fanout;
-   struct map_t* nodes;
-   struct vector_t* orphans;
-   struct vector_t* backend_nodes;
-   struct vector_t* parent_nodes;
-   struct SerialGraph_t* serial_graph;
+    Network_t* net;
+    Node_t* root;
+    unsigned int min_fanout;
+    unsigned int max_fanout;
+    unsigned int depth;
+    double avg_fanout;
+    double stddev_fanout;
+    double var_fanout;
+    struct mrn_map_t* nodes;
+    struct vector_t* orphans;
+    struct vector_t* backend_nodes;
+    struct vector_t* parent_nodes;
+    struct SerialGraph_t* serial_graph;
+    struct vector_t * _updates_buffer;
 } ; 
 
 typedef struct NetworkTopology_t NetworkTopology_t;
 
 typedef struct  {
-   Node_t* local_node;
-   NetworkTopology_t* topol;
+    Node_t* local_node;
+    NetworkTopology_t* topol;
 } TopologyLocalInfo_t;
 
 typedef enum {ALG_RANDOM=0,
-                ALG_WRS,
-                ALG_SORTED_RR
+              ALG_WRS,
+              ALG_SORTED_RR
 } ALGORITHM_T;
 
 Node_t* new_Node_t(char* ihostname,
-                    Port iport,
-                    Rank irank,
-                    int iis_backend);
+                   Port iport,
+                   Rank irank,
+                   int iis_backend);
 
 
-NetworkTopology_t* new_NetworkTopology_t( Network_t* inetwork,
-                                        char* ihostname,
-                                        Port iport,
-                                        Rank irank,
-                                        int iis_backend);
+NetworkTopology_t* new_NetworkTopology_t(Network_t* inetwork,
+                                         char* ihostname,
+                                         Port iport,
+                                         Rank irank,
+                                         int iis_backend);
 
 /* NetworkTopology */
 unsigned int NetworkTopology_get_NumNodes(NetworkTopology_t* net_top);
 
 Node_t* NetworkTopology_get_Root(NetworkTopology_t* net_top);
+
+char* NetworkTopology_get_TopologyStringPtr(NetworkTopology_t * net_top);
 
 char* NetworkTopology_get_LocalSubTreeStringPtr( NetworkTopology_t* net_top); 
 
@@ -120,6 +120,27 @@ void NetworkTopology_find_PotentialAdopters(NetworkTopology_t* net_top,
                                             Node_t* ipotential_adopter,
                                             struct vector_t* potential_adopters);
 
+int NetworkTopology_isInTopology(NetworkTopology_t * net_top, 
+        char * hostname, 
+        Port _port, 
+        Rank _rank);
+
+struct vector_t * NetworkTopology_get_updates_buffer(NetworkTopology_t * net_top);
+
+void NetworkTopology_insert_updates_buffer(NetworkTopology_t * net_top, update_contents_t * uc);
+
+void NetworkTopology_add_BackEnd(NetworkTopology_t * net_top, 
+                                 uint32_t rprank, uint32_t rcrank, 
+                                 char * rchost, uint16_t rcport);
+
+void NetworkTopology_update_TopoStreamPeers(NetworkTopology_t * net_top, struct vector_t * new_nodes);
+
+void NetworkTopology_change_Port(NetworkTopology_t * net_top,
+                                 uint32_t rcrank, uint16_t rcport);
+
+int NetworkTopology_new_Node(NetworkTopology_t * net_top, const char * host, Port port, Rank rank, int iis_backend);
+
+
 /* NetworkTopology_Node */
 int NetworkTopology_Node_is_BackEnd(Node_t* node);
 
@@ -140,17 +161,22 @@ unsigned int NetworkTopology_Node_get_Proximity(Node_t* adopter, Node_t* iorphan
 unsigned int NetworkTopology_Node_get_DepthIncrease(Node_t* adopter, Node_t* iorphan);
 
 void NetworkTopology_Node_compute_AdoptionScore(NetworkTopology_t* net_top,
-        Node_t* adopter,
-        Node_t* orphan,
-        unsigned int imin_fanout,
-        unsigned int imax_fanout,
-        unsigned int idepth);
+                                                Node_t* adopter,
+                                                Node_t* orphan,
+                                                unsigned int imin_fanout,
+                                                unsigned int imax_fanout,
+                                                unsigned int idepth);
 
 void NetworkTopology_Node_add_Child(Node_t* parent, Node_t* child);
 
 int NetworkTopology_Node_remove_Child(Node_t* parent, Node_t* child);
 
+void NetworkTopology_Node_set_Port(Node_t * node, Port port);
+
+
 /* TopologyLocalInfo */
-TopologyLocalInfo_t* new_TopologyLocalInfo_t( NetworkTopology_t* topol,  Node_t* node);
+TopologyLocalInfo_t* new_TopologyLocalInfo_t(NetworkTopology_t* topol, Node_t* node);
+
+Network_t * TopologyLocalInfo_get_Network(TopologyLocalInfo_t* tli);
 
 #endif /* __network_topology_h */

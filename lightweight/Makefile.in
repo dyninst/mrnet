@@ -12,6 +12,8 @@ srcdir  = @abs_srcdir@
 libdir  = @libdir@
 includedir  = @includedir@
 
+MRNET_OS = @MRNET_OS@
+
 VPATH   = @abs_srcdir@/src
 
 TARGET    = libmrnet_lightweight.a
@@ -27,6 +29,7 @@ SRCS    = BackEndNode.c \
           DataElement.c \
           Error.c \
           Filter.c \
+	  FilterDefinitions.c \
           map.c \
           Message.c \
           Network.c \
@@ -34,8 +37,6 @@ SRCS    = BackEndNode.c \
           Packet.c \
           PeerNode.c \
           PerfDataEvent.c \
-          PerfDataSysEvent_linux.c \
-          Router.c \
           SerialGraph.c \
           Stream.c \
           utils_lightweight.c \
@@ -44,6 +45,12 @@ SRCS    = BackEndNode.c \
           $(srcdir)/../src/pdr.c \
           $(srcdir)/../src/pdr_mem.c \
           $(srcdir)/../src/pdr_sizeof.c
+
+ifeq ($(MRNET_OS), linux)
+    SRCS += PerfDataSysEvent_linux.c
+else
+    SRCS += PerfDataSysEvent_none.c
+endif
 
 OBJS = $(subst $(srcdir)/../src/, , $(SRCS:.c=.o))
 DEPS = $(subst $(srcdir)/../src/, , $(SRCS:.c=.d))

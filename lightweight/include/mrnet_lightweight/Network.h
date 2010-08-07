@@ -18,7 +18,8 @@ struct BackEndNode_t;
 struct NetworkTopology_t ;
 struct Stream_t ;
 struct vector_t;
-struct map_t;
+struct mrn_map_t;
+struct SerialGraph_t;
 
 typedef struct {
     char* local_hostname;
@@ -28,10 +29,11 @@ typedef struct {
     struct vector_t* children;
     struct BackEndNode_t* local_back_end_node;
     struct NetworkTopology_t* network_topology;
-    struct map_t* streams;
+    struct mrn_map_t* streams;
     int stream_iter;
     int recover_from_failures;
     char _was_shutdown;
+    unsigned int next_stream_id;
 } Network_t;
 
 Network_t* new_Network_t();
@@ -113,6 +115,13 @@ void Network_set_OutputLeveL( int l );
 void Network_set_OutputLevelFromEnvironment(void);
 
 char Network_is_ShutDown( Network_t* net );
+
 void Network_waitfor_ShutDown( Network_t* net );
+
+int Network_add_SubGraph(Network_t * net, Rank iroot_rank, struct SerialGraph_t * sg, int iupdate);
+
+struct SerialGraph_t * Network_readTopology(Network_t * net, int topoSocket);
+
+void Network_writeTopology(Network_t * net, int topoFd, struct SerialGraph_t * topology);
 
 #endif /* __network_h */

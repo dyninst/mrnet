@@ -23,7 +23,9 @@ const int NCBlockingRecvFlag = 0;
 const int NCBlockingRecvFlag = MSG_WAITALL;
 #endif
 
-
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
 
 Message_t* new_Message_t()
 {

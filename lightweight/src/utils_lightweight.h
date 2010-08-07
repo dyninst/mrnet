@@ -30,7 +30,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz);
 
 #endif //ifndef(os_windows)
 
-#define MRN_RELEASE_DATE_SECS 1208100000
+#define MRN_RELEASE_DATE_SECS 1277800000
 
 
 struct hostent *copy_hostent (struct hostent *in);

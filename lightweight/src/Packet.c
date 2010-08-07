@@ -30,8 +30,8 @@ void free_Packet_t(Packet_t* packet)
 }
 
 Packet_t* new_Packet_t(int val, unsigned short _stream_id,
-                        int _tag, char* fmt,
-                        va_list arg_list)
+                       int _tag, char* fmt,
+                       va_list arg_list)
 {
   
   PDR pdrs;
@@ -66,14 +66,14 @@ Packet_t* new_Packet_t(int val, unsigned short _stream_id,
   }
 
   mrn_dbg(3, mrn_printf(FLF, stderr,
-          "Packet(%p) constructor succeeded: src:%u, stream_id:%d"
+          "Packet(%p) constructor succeeded: src:%u, stream_id:%d "
           "tag:%d, fmt:%s\n", packet, packet->src_rank, packet->stream_id, packet->tag, packet->fmt_str));
 
   return packet;
 
 }
 Packet_t* new_Packet_t_2(unsigned short istream_id, int itag, 
-                      /*const*/ char* ifmt_str, ... )
+                         /*const*/ char* ifmt_str, ... )
 {
   va_list arg_list;
   PDR pdrs;
@@ -149,6 +149,11 @@ Packet_t* new_Packet_t_3(unsigned int ibuf_len, char* ibuf, Rank iinlet_rank)
 
   return packet;
 
+}
+
+void Packet_set_DestroyData(Packet_t * packet, int dd)
+{
+    packet->destroy_data = dd;
 }
 
 int Packet_get_Tag(Packet_t* packet)

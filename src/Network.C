@@ -247,6 +247,11 @@ void Network::init_FrontEnd( const char * itopology,
                              bool irank_backends,
                              bool iusing_mem_buf )
 {
+
+    //add Callbacks     
+
+    add_Callbacks();
+
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
 
@@ -1101,6 +1106,72 @@ void Network::close_EventNotificationFd( EventType etyp )
     }
 #endif
 }
+
+/*Register & Remove Callbacks*/
+bool Network::register_Callback(CBClass icbcl,cb_func func, CBType icbt)
+{
+
+
+                bool ret = Callback::registerCallback(icbcl,func,icbt);
+                if(ret== false){
+
+                        mrn_printf(FLF, stderr, "failed to register Callback for Topology event");
+                        return false;
+                }
+
+        return true;
+
+
+}
+
+
+
+
+
+
+bool Network::remove_Callback(CBClass icbcl,cb_func func,CBType icbt)
+{
+
+        bool ret=Callback::removeCallback(icbcl,func,icbt);
+        if(ret==false) {
+
+            mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n");
+           return false;
+        }
+        return true;
+
+}
+
+bool Network::remove_Callback(CBClass icbcl,CBType icbt)
+{
+
+
+        bool ret=Callback::removeCallback(icbcl,icbt);
+        if(ret==false) {
+
+            mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n");
+           return false;
+        }
+        return true;
+}
+
+
+
+void Network::add_Callbacks()
+{
+
+        list <CBType> topo_list;
+        topo_list.push_back(TOPO_ADD_BE);
+        topo_list.push_back(TOPO_REMOVE);
+        topo_list.push_back(TOPO_ADD_CP);
+        topo_list.push_back(TOPO_PARENT_CHANGE);
+        Callback::all_cb_cl_typ[TOPOLOGY_EVENT_CB]=topo_list;
+
+}
+
+
+
+
 
 bool Network::enable_PerformanceData( perfdata_metric_t metric, 
                                       perfdata_context_t context )

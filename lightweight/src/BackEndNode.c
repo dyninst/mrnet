@@ -22,11 +22,11 @@
 Port defaultTopoPort = 26500;
 
 BackEndNode_t* new_BackEndNode_t(Network_t* inetwork, 
-                              char* imyhostname,
-                              Rank imyrank,
-                              char* iphostname,
-                              Port ipport,
-                              Rank iprank)
+        char* imyhostname,
+        Rank imyrank,
+        char* iphostname,
+        Port ipport,
+        Rank iprank)
 {
     BackEndNode_t* be;
     PeerNode_t* parent;
@@ -48,42 +48,65 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
     be->network->local_hostname = imyhostname;
     be->network->local_rank = imyrank;
     be->network->local_back_end_node = be;
-  
+
     be->network->network_topology = new_NetworkTopology_t(inetwork, imyhostname, UnknownPort, imyrank, true);
 
+    NetworkTopology_t * nt = Network_get_NetworkTopology(be->network);
+
+    // establish data connection with parent
+    if (ChildNode_init_newChildDataConnection(be, be->network->parent, UnknownRank) == -1) {
+        mrn_dbg (1, mrn_printf(FLF, stderr,
+                    "init_newBEDataConnection() failed\n"));
+        return NULL;
+    }
+
+    if (nt != NULL) {
+        // if backend not alraedy in the topology--this is false in backend-attach cases  
+        if ( !(NetworkTopology_isInTopology(nt, imyhostname, UnknownRank, imyrank) ) ) {
+            Network_new_Stream(be->network, 1, NULL, 0, 0, 0, 0);
+            mrn_dbg(1, mrn_printf(FLF, stderr, "Backend not already in the topology\n"));
+
+            // New topology propagation code - create a new update packet
+            Stream_t* s = Network_get_Stream(be->network, 1); // getting handle for stream id 1 which was reserved for topology propagation
+            int type = TOPO_NEW_BE; // type 0 is add packet
+            char * host_arr = strdup(imyhostname);
+            uint32_t * send_iprank = (uint32_t*)malloc(sizeof(uint32_t));
+            *send_iprank = iprank;
+            uint32_t * send_myrank = (uint32_t*)malloc(sizeof(uint32_t));
+            *send_myrank = imyrank;
+            uint16_t * send_port = (uint16_t*)malloc(sizeof(uint16_t));
+            *send_port = UnknownPort;
+
+            Stream_send(s, PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
+                    &type, 1, send_iprank,
+                    1, send_myrank,
+                    1, &host_arr,
+                    1, send_port, 1);
+            free(host_arr);
+        } else {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "Backend alraedy in the topology\n"));
+        }
+
+        if (ChildNode_send_SubTreeInitDoneReport(be) == -1) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "ChildNode_send_newSubTreeReport() failed\n"));
+        }
+    } 
     return be; 
 }
 
 
 BackEndNode_t* CreateBackEndNode ( Network_t* inetwork,
-                                     char* imy_hostname,
-                                     Rank imy_rank,
-                                     char* iphostname,
-                                     Port ipport,
-                                     Rank iprank) 
+        char* imy_hostname,
+        Rank imy_rank,
+        char* iphostname,
+        Port ipport,
+        Rank iprank) 
 {
-  
-  // create the new backend node
-  BackEndNode_t* be = new_BackEndNode_t(inetwork, imy_hostname, imy_rank, iphostname, ipport, iprank); 
 
-  // establish data connection with parent
-  if (ChildNode_init_newChildDataConnection(be, be->network->parent, UnknownRank) == -1) {
-    mrn_dbg (1, mrn_printf(FLF, stderr,
-                            "init_newBEDataConnection() failed\n"));
-    return NULL;
-  }
+    // create the new backend node
+    BackEndNode_t* be = new_BackEndNode_t(inetwork, imy_hostname, imy_rank, iphostname, ipport, iprank); 
 
-  // send new subtree report
-  mrn_dbg( 5, mrn_printf(FLF, stderr, "Sending new child report.\n"));
-  if (ChildNode_send_NewSubTreeReport(be) == -1) {
-    mrn_dbg(1, mrn_printf(FLF, stderr,
-                          "ChildNode_send_newSubTreeReport() failed\n"));
-  }
-  mrn_dbg( 5, mrn_printf(FLF, stderr,
-                        "ChildNode_send_newSubTreeReport() succeeded!\n"));
-
-  return be;
-
+    return be;
 }
 
 int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
@@ -283,6 +306,9 @@ int BackEndNode_proc_DataFromParent(BackEndNode_t* be, Packet_t* ipacket)
   int retval = 0;
   Stream_t* stream;
   Packet_t* opacket;
+  vector_t * opackets = new_empty_vector_t();
+  vector_t * opackets_reverse = new_empty_vector_t();
+  int i;
 
   mrn_dbg_func_begin();
 
@@ -293,14 +319,16 @@ int BackEndNode_proc_DataFromParent(BackEndNode_t* be, Packet_t* ipacket)
     return -1;
   }
 
-  opacket = (Packet_t*)malloc(sizeof(Packet_t));
-  assert(opacket != NULL);
-  Stream_push_Packet(stream, ipacket, opacket, false);
- 
-  mrn_dbg(5, mrn_printf(FLF, stderr, "adding Packet on stream[%d]\n", stream->id));
-  Stream_add_IncomingPacket(stream, opacket);
-  mrn_dbg(5, mrn_printf(FLF, stderr, "opacket's stream_id=%d\n", opacket->stream_id));
+  if (Stream_push_Packet(stream, ipacket, opackets, opackets_reverse, false) == -1) {
+    return -1;
+  }
 
+  for (i = 0; i < opackets->size; i++) {
+      opacket = opackets->vec[i];
+      mrn_dbg(5, mrn_printf(FLF, stderr, "adding Packet on stream[%d]\n", stream->id));
+      Stream_add_IncomingPacket(stream, opacket);
+  }
+  
   mrn_dbg_func_end();
 
   return retval;

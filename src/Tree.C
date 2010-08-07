@@ -131,10 +131,6 @@ bool Tree::create_TopologyFile( const char *ifilename )
     return true;
 }
 
-void Tree::get_TopologyBuffer( char ** /* buf */ )
-{
-}
-
 bool Tree::get_HostsFromFile( const char *ifilename, list< pair<string,unsigned> > &hosts )
 {
     FILE * f = fopen( ifilename, "r" );
@@ -156,6 +152,36 @@ void Tree::get_HostsFromFileStream( FILE *ifile, list< pair<string,unsigned> > &
     map< string, unsigned >::iterator find_host;
     while( fscanf( ifile, "%s", cur_host ) != EOF ) {
 
+        char* colon = strchr( cur_host, ':' );
+        unsigned count = 1;
+        if( colon != NULL ) {
+            *colon = '\0';
+            count = (unsigned) atoi( colon+1 );
+        }
+
+        string host(cur_host);
+        find_host = host_counts.find( host );
+        if( find_host != host_counts.end() )
+            count += find_host->second; 
+        host_counts[ host ] = count;
+    }
+
+    // add them to hosts list
+    find_host = host_counts.begin();
+    for( ; find_host != host_counts.end() ; find_host++ )
+        hosts.push_back( make_pair(find_host->first, find_host->second) );
+}
+
+void Tree::get_HostsFromBuffer( const char* ibuf, list< pair<string,unsigned> > &hosts )
+{
+    const char* buf = ibuf;
+    char cur_host[HOST_NAME_MAX];
+    map< string, unsigned > host_counts;
+    map< string, unsigned >::iterator find_host;
+    while( sscanf( buf, "%s", cur_host ) != EOF ) {
+
+	buf = strstr(buf, cur_host);
+        buf += strlen(cur_host) + 1;
         char* colon = strchr( cur_host, ':' );
         unsigned count = 1;
         if( colon != NULL ) {

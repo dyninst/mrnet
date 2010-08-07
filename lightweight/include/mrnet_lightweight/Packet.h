@@ -35,6 +35,8 @@ Packet_t* new_Packet_t_2 (unsigned short istream_id, int tag, char* ifmt_str, ..
 
 Packet_t* new_Packet_t_3 (unsigned int buf_len, char* buf, Rank inlet_rank);
 
+void Packet_set_DestroyData(Packet_t * packet, int dd);
+
 int Packet_get_Tag(Packet_t* packet);
 
 unsigned short Packet_get_StreamId(Packet_t* packet);

@@ -56,14 +56,8 @@ int PeerNode_connect_DataSocket(PeerNode_t* parent)
 // don't use this one--intended for non-blocking send
 int PeerNode_send(PeerNode_t* peer, /*const*/ Packet_t* ipacket)
 {
-  
-  mrn_dbg(3, mrn_printf(FLF, stderr,
-                        "node[%d].msg(%p).add_packet()\n", peer->rank, peer->msg_out));
-                        
-  peer->msg_out.packet = ipacket;
-
-  mrn_dbg(3, mrn_printf(FLF, stderr ,"Leaving PeerNode_send()\n"));
-  return 0;
+    mrn_dbg(1, mrn_printf(FLF, stderr, "PeerNode_send is not intended for blocking send\n"));
+    return -1;
 }
 
 int PeerNode_sendDirectly (PeerNode_t* peer, /*const*/ Packet_t* ipacket) 

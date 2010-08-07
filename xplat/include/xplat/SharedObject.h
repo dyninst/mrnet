@@ -9,6 +9,10 @@
 
 #include <cstring>
 
+#ifdef compiler_sun
+#include <string.h>
+#endif
+
 namespace XPlat
 {
 

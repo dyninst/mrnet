@@ -11,9 +11,16 @@
 #include "mrnet_lightweight/Network.h"
 #include "vector.h"
 
+int ChildNode_proc_PortUpdate(BackEndNode_t * be,
+        Packet_t* packet);
+
+int ChildNode_ack_PortUpdate(BackEndNode_t* be);
+
 int ChildNode_init_newChildDataConnection (  BackEndNode_t* be, 
                                              PeerNode_t* iparent,
                                              Rank ifailed_rank);
+
+int ChildNode_send_SubTreeInitDoneReport(BackEndNode_t* be);
 
 int ChildNode_send_NewSubTreeReport( BackEndNode_t* be);
 

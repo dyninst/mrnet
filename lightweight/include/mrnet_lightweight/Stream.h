@@ -55,7 +55,8 @@ Packet_t* Stream_get_IncomingPacket(Stream_t* stream);
 
 int Stream_push_Packet(Stream_t* stream,
                       Packet_t* ipacket,
-                      Packet_t* opacket,
+                      struct vector_t* opackets,
+                      struct vector_t* opackets_reverse,
                       int igoing_upstream);
 
 void Stream_add_IncomingPacket(Stream_t* stream, Packet_t* packet);

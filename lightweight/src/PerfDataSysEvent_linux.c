@@ -3,15 +3,14 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+#ifdef os_linux
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/syscall.h>
 #include <errno.h>
-
-#ifndef os_windows
 #include <unistd.h>
-#endif
 
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
@@ -119,3 +118,5 @@ int PerfDataSysMgr_get_MemUsage(double* vsize, double* psize)
     return 0;
     
 }
+
+#endif /* os_linux */

@@ -43,6 +43,11 @@ void free_SerialGraph_t(SerialGraph_t* sg)
     free(sg);
 }
 
+char * SerialGraph_get_ByteArray(SerialGraph_t* sg)
+{
+    return sg->byte_array;
+}
+
 SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* _serial_graph, char*  ihostname, Port iport, Rank irank) 
 { 
     char* hoststr;
@@ -398,4 +403,91 @@ int SerialGraph_is_RootBackEnd(SerialGraph_t* serial_graph)
     else {
         return 0;
     }
+}
+
+int SerialGraph_set_Port(SerialGraph_t* serial_graph, char * hostname, Port port, Rank irank)
+{
+    char * hoststr = (char*)malloc(sizeof(char)*256);
+    char * port_str = (char*)malloc(sizeof(char)*20);
+    char * begin_str = (char*)malloc(sizeof(char)*20);
+    char * rank = (char*)malloc(sizeof(char)*20);
+    char * unknown_port = (char*)malloc(sizeof(char)*20);
+    char * new_byte_array;
+    char * delim = ":";
+    int i;
+    int begin, port_pos;
+    assert(hoststr);
+    assert(port_str);
+    assert(begin_str);
+    assert(rank);
+    assert(unknown_port);
+
+    sprintf(rank, "%d", irank);
+    sprintf(unknown_port, UnknownPort);
+
+    strcpy(hoststr, "");
+    strcat(hoststr, "["); // [
+    strcat(hoststr, hostname); // [hostname
+    strcat(hoststr, ":"); // [hostname:
+    strcat(hoststr, unknown_port); // [hostname:UnknownPort
+    strcat(hoststr, ":"); // [hostname:UnknownPort:
+    strcat(hoststr, rank); // [hostname:UnknownPort:rank
+    strcat(hoststr, ":"); // [hostname:UnknownPort:rank:
+
+    sprintf(port_str, "%d", port);
+    
+    new_byte_array = (char*)malloc(sizeof(char)*(strlen(serial_graph->byte_array)+strlen(port_str)+1));
+    assert(new_byte_array);
+
+    // find the hoststr in the byte_array
+    begin = strcspn(serial_graph->byte_array, hoststr);
+    
+    // copy the first part of the byte_array into the new byte array
+    strncpy(new_byte_array, serial_graph->byte_array, begin);
+    
+    begin_str = strstr(serial_graph->byte_array, hoststr);
+
+    if (!begin_str) {
+        mrn_dbg(1, mrn_printf(FLF, stderr,
+                    "Host: \"%s\" whose port is to have changed is not found in the byte_array:"
+                    "\"%s\"\n",
+                    hoststr, serial_graph->byte_array));
+        return false;
+    }
+    
+    // add the new port string to the new byte array
+    strcat(new_byte_array, port_str);
+    
+    // concat on the remainder of the byte array
+
+    // find the position of the port portion of the hoststr
+    port_pos = strcspn(begin_str, delim);
+    for (i = 0; i < port_pos; i++) {
+        begin_str++;
+    }
+
+    port_pos = strcspn(begin_str, delim);
+    for (i = 0; i < port_pos; i++) {
+        begin_str++;
+    }
+
+    strcat(new_byte_array, begin_str);
+
+    free(serial_graph->byte_array);
+
+    serial_graph->byte_array = new_byte_array;
+
+    // free things that were malloc'd
+    free(hoststr);
+    free(port_str);
+    free(begin_str);
+    free(rank);
+    free(unknown_port);
+
+    return true;
+
+
+
+    
+
 }

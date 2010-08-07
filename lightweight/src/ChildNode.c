@@ -12,10 +12,46 @@
 #include "mrnet_lightweight/Packet.h"
 #include "PeerNode.h"
 #include "Protocol.h"
+#include "SerialGraph.h"
 #include "mrnet_lightweight/Stream.h"
 #include "mrnet_lightweight/Types.h"
 #include "utils_lightweight.h"
 #include "vector.h"
+
+int ChildNode_proc_PortUpdate(BackEndNode_t * be,
+        Packet_t* ipacket)
+{
+    mrn_dbg_func_begin();
+    
+    // send ack to parent
+    if (!ChildNode_ack_PortUpdate(be)) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "ack_TopologyReport failed\n"));
+        return -1;
+    }
+
+    mrn_dbg_func_end();
+    return 0;
+}
+
+int ChildNode_ack_PortUpdate(BackEndNode_t * be)
+{
+    mrn_dbg_func_begin();
+
+    Packet_t* packet = new_Packet_t_2(0, PROT_PORT_UPDATE_ACK, "");
+
+    if (packet) {
+        if (PeerNode_sendDirectly(Network_get_ParentNode(be->network),packet) == -1) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "send/flush failed\n"));
+            return false;
+        }
+    } else {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));
+        return false;
+    }
+
+    mrn_dbg_func_end();
+    return true;
+}
 
 int ChildNode_init_newChildDataConnection (BackEndNode_t* be, 
                                             PeerNode_t* iparent, 
@@ -24,8 +60,11 @@ int ChildNode_init_newChildDataConnection (BackEndNode_t* be,
     char* topo_ptr;
     char* fmt_str;
     Packet_t* packet;
+    NetworkTopology_t * tmp_nt;
 
     mrn_dbg_func_begin();
+
+    tmp_nt = Network_get_NetworkTopology(be->network);
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "new parent rank=%d, hostname=%s, port=%d, ifailed_rank=%d\n",  iparent->rank, iparent->hostname, iparent->port, ifailed_rank));
 
@@ -61,9 +100,40 @@ int ChildNode_init_newChildDataConnection (BackEndNode_t* be,
         return -1;
     } 
 
+    free(topo_ptr);
+
+    SerialGraph_t * init_topo = Network_readTopology(be->network, iparent->data_sock_fd); // TODO
+    assert(init_topo);
+    char * sg_str = SerialGraph_get_ByteArray(init_topo);
+
+    NetworkTopology_reset(tmp_nt, sg_str);
+    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is %s\n",
+                NetworkTopology_get_TopologyStringPtr(tmp_nt)));
+
+
     mrn_dbg_func_end();
 
     return 0;
+}
+
+int ChildNode_send_SubTreeInitDoneReport(BackEndNode_t* be)
+{
+    mrn_dbg_func_begin();
+
+    Packet_t* packet  = new_Packet_t_2(0, PROT_SUBTREE_INITDONE_RPT, "");
+
+    if (packet) {
+        if (PeerNode_sendDirectly(Network_get_ParentNode(be->network), packet) == -1) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "send/flush failed\n"));
+            return false;
+        }
+    } else {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));
+        return false;
+    }
+
+    mrn_dbg_func_end();
+    return true;
 }
 
 int ChildNode_send_NewSubTreeReport(BackEndNode_t* be)
@@ -99,11 +169,14 @@ int ChildNode_proc_PacketsFromParent(BackEndNode_t* be, vector_t* packets)
 {
     int retval = 0;
     int i;
+    Packet_t * cur_packet;
 
     mrn_dbg_func_begin();
 
     for (i = 0; i < packets->size; i++) {
-        if (ChildNode_proc_PacketFromParent(be, (Packet_t*)packets->vec[i]) == -1)
+        cur_packet = (Packet_t*)packets->vec[i];
+        mrn_dbg(5, mrn_printf(FLF, stderr, "tag is %d\n", cur_packet->tag)); 
+        if (ChildNode_proc_PacketFromParent(be, cur_packet) == -1)
             retval = -1;
     }
     
@@ -220,6 +293,13 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
               mrn_dbg( 1, mrn_printf(FLF, stderr,
                                      "proc_PrintPerfData() failed\n" ));
               retval = -1;
+          }
+          break;
+    case PROT_PORT_UPDATE:
+          if (ChildNode_proc_PortUpdate(be, packet) == -1 ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr,
+                        "proc_PortUpdate() failed\n"));
+            retval = -1;
           }
           break;
     default:

@@ -1,5 +1,5 @@
 /****************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -15,8 +15,6 @@
 #define PRIu64 "u"
 #define PRIi64 "i"
 #endif
-
-using namespace MRN;
 
 namespace MRN {
 

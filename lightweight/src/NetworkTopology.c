@@ -8,9 +8,10 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <time.h>
 
 #include "mrnet_lightweight/NetworkTopology.h"
-#include "Router.h"
+#include "mrnet_lightweight/Stream.h"
 #include "mrnet_lightweight/Types.h"
 #include "utils_lightweight.h"
 #include "map.h"
@@ -20,9 +21,9 @@
 #include "xplat_lightweight/NetUtils.h"
 
 Node_t* new_Node_t(char* ihostname, 
-                  Port iport, 
-                  Rank irank, 
-                  int iis_backend)
+                   Port iport, 
+                   Rank irank, 
+                   int iis_backend)
 {
 
   static int first_time = true;
@@ -52,16 +53,15 @@ Node_t* new_Node_t(char* ihostname,
 }
 
 NetworkTopology_t* new_NetworkTopology_t(Network_t* inetwork, 
-                                          char* ihostname, 
-                                          Port iport, 
-                                          Rank irank, 
-                                          int iis_backend)
+                                         char* ihostname, 
+                                         Port iport, 
+                                         Rank irank, 
+                                         int iis_backend)
 { 
   NetworkTopology_t* net_top = (NetworkTopology_t*)malloc(sizeof(NetworkTopology_t));
   assert(net_top);
   net_top->net = inetwork;
   net_top->root = new_Node_t(ihostname, iport, irank, iis_backend);
-  net_top->router = new_Router_t(inetwork);
   net_top->orphans = new_empty_vector_t();
   net_top->backend_nodes = new_empty_vector_t();
   net_top->parent_nodes = new_empty_vector_t();
@@ -75,30 +75,67 @@ NetworkTopology_t* new_NetworkTopology_t(Network_t* inetwork,
 }
 
 
-unsigned int NetworkTopology_get_NumNodes(NetworkTopology_t* net_top) {
+unsigned int NetworkTopology_get_NumNodes(NetworkTopology_t* net_top)
+{
     return net_top->nodes->size;
 }
 
-Node_t* NetworkTopology_get_Root(NetworkTopology_t* net_top) {
+Node_t* NetworkTopology_get_Root(NetworkTopology_t* net_top)
+{
     return net_top->root; 
 }
 
 void NetworkTopology_get_BackEndNodes(NetworkTopology_t* net_top, 
-                                    vector_t* nodes)
+                                      vector_t* nodes)
 {
     nodes = net_top->backend_nodes;
 }
 
 void NetworkTopology_get_ParentNodes(NetworkTopology_t* net_top, 
-                                    vector_t* nodes)
+                                     vector_t* nodes)
 {
     nodes = net_top->parent_nodes;
 }
 
 void NetworkTopology_get_OrphanNodes(NetworkTopology_t* net_top, 
-                                    vector_t* nodes)
+                                     vector_t* nodes)
 {
     nodes = net_top->orphans;
+}
+
+int NetworkTopology_isInTopology(NetworkTopology_t* net_top,
+                                 char * hostname, 
+                                 Port _port,
+                                 Rank _rank)
+{
+    int iter;
+    int found;
+
+    for (iter = 0; iter < net_top->nodes->size; iter++) {
+        Node_t* tmp = (Node_t*)get_val(net_top->nodes, net_top->nodes->keys[iter]);
+
+        if ( !strcmp(hostname, tmp->hostname) && 
+                    (_port == tmp->port) &&
+                    (_rank == tmp->rank) ) {
+            found=true;
+            break;
+        }
+    } 
+
+    return found;
+}
+
+char * NetworkTopology_get_TopologyStringPtr(NetworkTopology_t * net_top)
+{
+    if (net_top->serial_graph != NULL)
+        free_SerialGraph_t(net_top->serial_graph);
+    net_top->serial_graph = new_SerialGraph_t(NULL);
+
+    NetworkTopology_serialize(net_top, net_top->root);
+
+    char * retval = strdup(SerialGraph_get_ByteArray(net_top->serial_graph));
+
+    return retval;
 }
 
 char* NetworkTopology_get_LocalSubTreeStringPtr(NetworkTopology_t* net_top)
@@ -110,7 +147,6 @@ char* NetworkTopology_get_LocalSubTreeStringPtr(NetworkTopology_t* net_top)
   mrn_dbg_func_begin();
 
   if (net_top->serial_graph != NULL)
-    //free(net_top->serial_graph);
     free_SerialGraph_t(net_top->serial_graph);
   net_top->serial_graph = new_SerialGraph_t(NULL);
   
@@ -347,12 +383,17 @@ int NetworkTopology_remove_Node(NetworkTopology_t* net_top, Rank irank)
 
 TopologyLocalInfo_t* new_TopologyLocalInfo_t(NetworkTopology_t* topol, Node_t* node)
 {
-  TopologyLocalInfo_t* new_top = (TopologyLocalInfo_t*)malloc(sizeof(TopologyLocalInfo_t));
-  assert(new_top);
-  new_top->topol = topol;
-  new_top->local_node = node;
+    TopologyLocalInfo_t* new_top = (TopologyLocalInfo_t*)malloc(sizeof(TopologyLocalInfo_t));
+    assert(new_top);
+    new_top->topol = topol;
+    new_top->local_node = node;
 
-  return new_top;
+    return new_top;
+}
+
+Network_t * TopologyLocalInfo_get_Network(TopologyLocalInfo_t * tli)
+{
+    return tli->topol->net;
 }
 
 Node_t* NetworkTopology_find_Node(NetworkTopology_t* net_top, Rank irank)
@@ -675,6 +716,10 @@ Port NetworkTopology_Node_get_Port(Node_t* node) {
     return node->port;
 }
 
+void NetworkTopology_Node_set_Port(Node_t* node, Port port) {
+    node->port = port;
+}
+
 Rank NetworkTopology_Node_get_Rank(Node_t* node) {
     return node->rank;
 }
@@ -855,4 +900,70 @@ int NetworkTopology_Node_remove_Child(Node_t* parent, Node_t* child)
     mrn_dbg_func_end();
 
     return true;
+}
+
+int NetworkTopology_new_Node(NetworkTopology_t* net_top, const char * host, 
+        Port port, Rank rank, int iis_backend)
+{
+    char * host_name = host;
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Creatingback node[%d] %s:%d\n",
+                rank, host_name, port));
+    Node_t* node = new_Node_t(host,port,rank,iis_backend);
+    insert(net_top->nodes, rank, node);
+
+    if (iis_backend) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as backend\n", rank));
+        pushBackElement(net_top->backend_nodes, node);
+    }
+    return true;
+}
+
+vector_t * NetworkTopology_get_updates_buffer(NetworkTopology_t * net_top)
+{
+    return net_top->_updates_buffer;
+}
+
+void NetworkTopology_insert_updates_buffer(NetworkTopology_t * net_top, update_contents_t * uc)
+{
+    pushBackElement(net_top->_updates_buffer, uc);
+}
+
+// Topology Update Methods
+void NetworkTopology_add_BackEnd(NetworkTopology_t * net_top, 
+        uint32_t rprank, uint32_t rcrank, 
+        char * rchost, uint16_t rcport)
+{
+    Stream_t * str_one = Network_get_Stream(net_top->net, 1);
+    Node_t * n;
+    
+    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is before add %s\n", NetworkTopology_get_TopologyStringPtr(net_top)));
+
+    n = NetworkTopology_find_Node(net_top, rcrank);
+
+    if (n == NULL) {
+       NetworkTopology_new_Node(net_top, rchost, rcport, rcrank, true);
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as childof node[%d]\n",
+                    rcrank, rprank));
+
+        if ( !(NetworkTopology_set_Parent(net_top, rcrank, rprank, false))) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                        "Set parent for %s failed\n", rchost));
+        }
+        mrn_dbg(5, mrn_printf(FLF, stderr, "topology is after add %s\n", NetworkTopology_get_TopologyStringPtr(net_top)));
+    } else {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "node already present, topology after add %s\n", NetworkTopology_get_TopologyStringPtr(net_top)));
+    }
+
+}
+
+void NetworkTopology_change_Port(NetworkTopology_t * net_top,
+        uint32_t rcrank, uint16_t rcport)
+{
+    Node_t * update_node = NetworkTopology_find_Node(net_top, rcrank);
+    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is before update port %s\n", NetworkTopology_get_TopologyStringPtr(net_top)));
+    
+    // Actual port update on the local network topology
+    NetworkTopology_Node_set_Port(update_node, rcport);
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is after port update %s\n", NetworkTopology_get_TopologyStringPtr(net_top)));
 }

@@ -1,5 +1,5 @@
 /****************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -10,9 +10,9 @@
 #include "vector.h"
 
 struct PerfDataMgr_t {
-  // bitfield of enabled metrics per context
-  char active_metrics[PERFDATA_MAX_CTX];
-  vector_t* the_data;
+    // bitfield of enabled metrics per context
+    char active_metrics[PERFDATA_MAX_CTX];
+    vector_t* the_data;
 } ;
 
 typedef struct PerfDataMgr_t PerfDataMgr_t;
@@ -44,10 +44,12 @@ void PerfDataMgr_enable(PerfDataMgr_t* perf_data,
                         perfdata_context_t ctx);
 
 void PerfDataMgr_disable(PerfDataMgr_t* perf_data,
-                        perfdata_metric_t met,
-                        perfdata_context_t ctx);
+                         perfdata_metric_t met,
+                         perfdata_context_t ctx);
 
-int PerfDataMgr_is_Enabled(PerfDataMgr_t* perf_data, perfdata_metric_t met, perfdata_context_t ctx);
+int PerfDataMgr_is_Enabled(PerfDataMgr_t* perf_data, 
+                           perfdata_metric_t met, 
+                           perfdata_context_t ctx);
 
 void PerfDataMgr_add_DataInstance(PerfDataMgr_t* perf_data,
                                   perfdata_metric_t met,
@@ -55,26 +57,26 @@ void PerfDataMgr_add_DataInstance(PerfDataMgr_t* perf_data,
                                   perfdata_t data);
 
 perfdata_t PerfDataMgr_get_DataValue(PerfDataMgr_t* perf_data, 
-                                    perfdata_metric_t met,
-                                    perfdata_context_t ctx);
+                                     perfdata_metric_t met,
+                                     perfdata_context_t ctx);
 
 void PerfDataMgr_set_DataValue(PerfDataMgr_t* perf_data,
-                                perfdata_metric_t met,
-                                perfdata_context_t ctx,
-                                perfdata_t data);
+                               perfdata_metric_t met,
+                               perfdata_context_t ctx,
+                               perfdata_t data);
 
 void PerfDataMgr_get_MemData(PerfDataMgr_t* perf_data,
-                            perfdata_metric_t metric);
+                             perfdata_metric_t metric);
 
 void PerfDataMgr_print(PerfDataMgr_t* perf_data,
-                        perfdata_metric_t met,
-                        perfdata_context_t ctx);
+                       perfdata_metric_t met,
+                       perfdata_context_t ctx);
 
 
-void PerfDataMgr_collect (PerfDataMgr_t* perf_data,
-                        perfdata_metric_t met,
-                        perfdata_context_t ctx,
-                        vector_t* data);
+void PerfDataMgr_collect(PerfDataMgr_t* perf_data,
+                         perfdata_metric_t met,
+                         perfdata_context_t ctx,
+                         vector_t* data);
 
 
 char * PerfDataMgr_get_MetricName(PerfDataMgr_t* perf_data, perfdata_metric_t met);
