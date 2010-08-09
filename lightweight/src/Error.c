@@ -20,23 +20,20 @@ ErrorDef errors[] = {
     { ERR_SYSTEM, ERR_ERR, ERR_ABORT, "System/library call failure"}
 };
 
-void error(ErrorCode e, Rank _rank, char* fmt, ... )
+void error(ErrorCode e, Rank r, char* fmt, ... )
 {
     static char buf[1024];
-
-    ErrorCode MRN_errno = e;
 
 #ifndef os_windows
     ErrorResponse resp = errors[e].response;
 #else
-	int resp = errors[e].response;
+    int resp = errors[e].response;
 #endif
 
     va_list arglist;
     va_start(arglist, fmt);
     vsnprintf(buf, 1024, fmt, arglist);
     va_end(arglist);
-
 
     switch(resp) {
     case ERR_ABORT:

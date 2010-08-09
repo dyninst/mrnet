@@ -2929,8 +2929,9 @@ fi
 
 
 
-CXXFLAGS="$CXXFLAGS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS"
-CFLAGS="$FLAGS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS"
+STDCFLAGS="-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS"
+CXXFLAGS="$CXXFLAGS $STDCFLAGS"
+CFLAGS="$CFLAGS $STDCFLAGS"
 
 CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
 CFLAGS=`echo $CFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
@@ -3019,6 +3020,12 @@ echo "${ECHO_T}unknown" >&6
   fi
 
 
+
+CXXDEBUGFLAGS="-g"
+CDEBUGFLAGS="-g"
+
+CXXOPTFLAGS="-O2"
+COPTFLAGS="-O2"
 
 if test $COMPILER_TYPE = "gnu" ; then
 
@@ -3129,6 +3136,12 @@ elif test $COMPILER_TYPE = "forte" ; then
     CXXFLAGS="$CXXFLAGS -Dcompiler_sun -KPIC"
     CFLAGS="$CFLAGS -Dcompiler_sun -KPIC"
 
+    CXXOPTFLAGS="-xO2"
+    COPTFLAGS="-xO2"
+
+    CXXDEBUGFLAGS="-g -xO0"
+    CDEBUGFLAGS="-g -xO0"
+
     SOFLAGS="-G"
 
     # Extract the first word of "CC", so it can be a program name with args.
@@ -3178,10 +3191,9 @@ elif test $COMPILER_TYPE = "pgi" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
     CFLAGS="$CFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
-    if test "$debug_mode" = "yes" ; then
-        CXXFLAGS="$CXXFLAGS -O0"
-        CFLAGS="$CFLAGS -O0"
-    fi
+
+    CXXDEBUGFLAGS="-g -O0"
+    CDEBUGFLAGS="-g -O0"
 
     GOOD_CXXFLAGS="$CXXFLAGS"
     CXXFLAGS="$CXXFLAGS --one_instantiation_per_object"
@@ -3287,10 +3299,9 @@ elif test $COMPILER_TYPE = "intel" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_intel -fPIC"
     CFLAGS="$CFLAGS -Dcompiler_intel -fPIC"
-    if test "$debug_mode" = "yes" ; then
-        CXXFLAGS="$CXXFLAGS -O0"
-        CFLAGS="$CFLAGS -O0"
-    fi
+
+    CXXDEBUGFLAGS="-g -O0"
+    CDEBUGFLAGS="-g -O0"
 
     SOFLAGS="-fPIC -shared"
 
@@ -3340,11 +3351,11 @@ fi
 fi
 
 if test $debug_mode = "yes" ; then
-    CXXFLAGS="-g $CXXFLAGS -DDEBUG"
-    CFLAGS="-g $CFLAGS -DDEBUG"
+    CXXFLAGS="$CXXDEBUGFLAGS $CXXFLAGS -DDEBUG"
+    CFLAGS="$CDEBUGFLAGS $CFLAGS -DDEBUG"
 else
-    CXXFLAGS="-O2 $CXXFLAGS"
-    CFLAGS="-O2 $CFLAGS"
+    CXXFLAGS="$CXXOPTFLAGS $CXXFLAGS"
+    CFLAGS="$COPTFLAGS $CFLAGS"
 fi
 
 
