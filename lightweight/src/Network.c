@@ -697,7 +697,7 @@ SerialGraph_t* Network_readTopology(Network_t * net, int topoSocket)
     char * currBufPtr = sTopology;
     size_t nRemaining = sTopologyLen;
     while (nRemaining > 0 ) {
-        ssize_t nread = read(topoSocket, currBufPtr, nRemaining);
+        ssize_t nread = recv(topoSocket, currBufPtr, nRemaining, 0);
         nRemaining -= nread;
         currBufPtr += nread;
     }
@@ -728,7 +728,7 @@ void Network_writeTopology(Network_t * net, int topoFd, SerialGraph_t* topology)
     size_t nRemaining = sTopologyLen;
     const char * currBufPtr = sTopology;
     while (nRemaining > 0) {
-        nwritten = write(topoFd, currBufPtr, nRemaining);
+        nwritten = send(topoFd, currBufPtr, nRemaining, 0);
         nRemaining -= nwritten;
         currBufPtr += nwritten;
     }
