@@ -1789,7 +1789,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     }
     if( timeout_ms == 0 ) {
 	 opackets = ipackets;
-	 mrn_dbg( 3, mrn_printf(FLF, stderr, "No timeout specified, pushing all inputs\n"));
+	 mrn_dbg( 3, mrn_printf(FLF, stderr, "No timeout specified, pushing all inputs\n") );
          return;
     }
     
@@ -1797,7 +1797,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     if( *local_storage == NULL ) {
 
         //Allocate packet buffer map as appropriate
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "No previous storage, allocating ...\n"));
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "No previous storage, allocating ...\n") );
 
         state = new to_state;
 	state->active_timeout = false;
@@ -1818,7 +1818,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
             if( net->node_Failed( rank ) ) {
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
-                                       rank ));
+                                       rank) );
                 del_iter = map_iter;
                 map_iter++;
 
@@ -1830,43 +1830,44 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
                 state->ready_peers.erase( rank );
             }
             else {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? no\n", rank ));
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? no\n", rank) );
                 map_iter++;
             }
         }
     }
    
-    mrn_dbg( 5, mrn_printf(FLF, stderr, " input packets size is %d\n" ,ipackets.size() ) );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, " input packets size is %d\n" ,ipackets.size()) );
     
     int stream_id;
     Stream * stream;
     set< Rank > peers;
 
-    if( ipackets.size() > 0 ){
+    if( ipackets.size() > 0 ) {
         stream_id = ipackets[0]->get_StreamId();
         stream = net->get_Stream( stream_id );
         assert(stream);
-        stream->get_ChildPeers( );
+        peers = stream->get_ChildPeers( );
     }	
 
     //2. Place input packets
     for( unsigned int i=0; i < ipackets.size(); i++ ) {
        
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
-	mrn_dbg( 5, mrn_printf(FLF, stderr, "inlet rank is %u \n", cur_inlet_rank ) );
+	mrn_dbg( 5, mrn_printf(FLF, stderr, "inlet rank is %u \n", cur_inlet_rank) );
 
         if(cur_inlet_rank == UnknownRank ) 
 	{
 	   if (ipackets.size() == 1 ) {
 	      opackets.push_back( ipackets[i] ) ;
-	      mrn_dbg( 3, mrn_printf (FLF, stderr, "pushing locally sourced packet \n" ));
+	      mrn_dbg( 3, mrn_printf (FLF, stderr, "pushing locally sourced packet \n") );
 	      return;
 	   }
 	}   
 
         if( net->node_Failed( cur_inlet_rank ) ) {
             //Drop packets from failed node
-	    mrn_dbg( 3, mrn_printf (FLF, stderr, "Dropping packets from failed node %d \n", cur_inlet_rank ));
+	    mrn_dbg( 3, mrn_printf(FLF, stderr, "Dropping packets from failed node %d \n", 
+                                   cur_inlet_rank) );
             continue;
         }
         
@@ -1875,39 +1876,35 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         if( map_iter == state->packets_by_rank.end() ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "Allocating new map slot for node[%d] ...\n",
-                                   cur_inlet_rank ));
+                                   cur_inlet_rank) );
             state->packets_by_rank[ cur_inlet_rank ] = new vector < PacketPtr >;
         }
 
         mrn_dbg( 5, mrn_printf(FLF, stderr, "Placing packet[%d] from node[%d]\n",
-                               i, cur_inlet_rank ));
+                               i, cur_inlet_rank) );
         state->packets_by_rank[ cur_inlet_rank ]->push_back( ipackets[i] );
-	if(  ( peers.find (cur_inlet_rank) == peers.end() ) &  ( stream_id == 1 )  )
-	{
-	   stream->add_Stream_Peer( cur_inlet_rank );
-	   peers.insert( cur_inlet_rank);
+	if( stream_id == 1 ) {
+            if( peers.find(cur_inlet_rank) == peers.end() ) {
+                stream->add_Stream_Peer( cur_inlet_rank );
+                peers.insert( cur_inlet_rank);
+            }
 	}   
         state->ready_peers.insert( cur_inlet_rank );
     }
 
     if( ipackets.size() > 0 ) {
 
-        //int stream_id = ipackets[0]->get_StreamId();
-        //Stream* stream = net->get_Stream( stream_id );
-        //assert(stream);
-
-        //set< Rank > peers = stream->get_ChildPeers( );
         set< Rank > closed_peers = stream->get_ClosedPeers( );
         
         mrn_dbg( 5, mrn_printf(FLF, stderr, "slots:%d ready:%d peers:%d closed:%d\n",
                                state->packets_by_rank.size(), state->ready_peers.size(),
-                               peers.size(), closed_peers.size() ) );
+                               peers.size(), closed_peers.size()) );
        
         if( ! active ) {
 	    // set timeout
 	    TimeKeeper* tk = net->get_TimeKeeper();
 	    if( tk != NULL ) {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "registering timeout=%dms\n", timeout_ms ));
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "registering timeout=%dms\n", timeout_ms) );
 	        if( tk->register_Timeout( stream_id, timeout_ms ) ) {
 	            state->active_timeout = true;
 	        }
@@ -1916,7 +1913,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
         if( closed_peers.empty() && state->ready_peers.size() < peers.size() ) {
             //no closed peers and not all peers ready, so sync condition not met
-	    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning here\n") );
+	    mrn_dbg( 5, mrn_printf(FLF, stderr, "no closed peers and not all peers ready\n") );
             return;
         }
 
@@ -1926,19 +1923,19 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
                         inserter( unready_peers, unready_peers.begin() ) );
         if( unready_peers != closed_peers ) {
             //some peers not ready and haven't been closed, sync condition not met
-	    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning here1\n") );
+	    mrn_dbg( 5, mrn_printf(FLF, stderr, "some closed peers and not all peers ready\n") );
             return;
         }
 
         //check for a complete wave
         if( (state->ready_peers.size() + closed_peers.size()) < peers.size() ) {
-	    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning here\n" ) );
+	    mrn_dbg( 5, mrn_printf(FLF, stderr, "not all peers ready\n" ) );
             return;
         }
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Complete wave.\n" )); 
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Complete wave.\n") ); 
     }
     else {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Timeout occurred.\n" ));
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Timeout occurred.\n") );
     }
 
     //if we get here, SYNC CONDITION MET!
@@ -1952,12 +1949,12 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         if( map_iter->second->empty() ) {
             //list should only be empty if peer closed stream
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d]'s slot is empty\n",
-                                   map_iter->first ) );
+                                   map_iter->first) );
             continue;
         }
 
         mrn_dbg( 5, mrn_printf(FLF, stderr, "Popping packet from Node[%d]\n",
-                               map_iter->first ) );
+                               map_iter->first) );
         //push head of list onto output vector
         opackets.push_back( map_iter->second->front() );
         map_iter->second->erase( map_iter->second->begin() );
@@ -1965,12 +1962,12 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         //if list now empty, remove slot from ready list
         if( map_iter->second->empty() ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Removing Node[%d] from ready list\n",
-                                   map_iter->first ) );
+                                   map_iter->first) );
             state->ready_peers.erase( map_iter->first );
         }
 
     }
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Returning %d packets\n", opackets.size(  ) ));
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "Returning %d packets\n", opackets.size()) );
 }
 
 
