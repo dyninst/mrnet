@@ -13,6 +13,16 @@
 
 using namespace MRN;
 using namespace std;
+int num_callbacks;
+
+void Callback_resTopo(CBClass icbcl,CBType icbt, EventCB* icl)
+{
+        TopoEvent* te = (TopoEvent*)icl;
+
+        //fprintf(stdout,"ResTopo: The Rank of node in topology add BE is= %d \t \t\n\n",te->get_Rank());
+
+	num_callbacks++;
+}
 
 void write_be_connections(vector< NetworkTopology::Node * >& leaves, unsigned num_be)
 {
@@ -66,7 +76,16 @@ int main(int argc, char **argv)
     // If backend_exe (2nd arg) and backend_args (3rd arg) are both NULL,
     // then all nodes specified in the topology are internal tree nodes.
     net = Network::CreateNetworkFE( topology_file, NULL, NULL );
-  
+ 
+
+    bool cbrett = net->register_Callback(TOPOLOGY_EVENT_CB,Callback_resTopo,TOPO_ADD_BE);
+    if(cbrett==true){
+        fprintf(stdout,"Register Callback for add backend success\n");
+
+        }
+        else
+                fprintf(stdout,"Register Callback func for add backend error\n");
+
     // Query net for topology object
     NetworkTopology * topology = net->get_NetworkTopology();
     vector< NetworkTopology::Node * > internal_leaves;
@@ -81,7 +100,7 @@ int main(int argc, char **argv)
     unsigned topol_size = topology->get_NumNodes();
     do {
         sleep(1);
-    } while( topology->get_NumNodes() < (topol_size + num_backends) );
+    } while( num_callbacks!=num_backends );
     fprintf( stdout, "complete!\n");
 
     comm_BC = net->get_BroadcastCommunicator();
