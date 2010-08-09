@@ -22,11 +22,11 @@
 Port defaultTopoPort = 26500;
 
 BackEndNode_t* new_BackEndNode_t(Network_t* inetwork, 
-        char* imyhostname,
-        Rank imyrank,
-        char* iphostname,
-        Port ipport,
-        Rank iprank)
+                                 char* imyhostname,
+                                 Rank imyrank,
+                                 char* iphostname,
+                                 Port ipport,
+                                 Rank iprank)
 {
     BackEndNode_t* be;
     PeerNode_t* parent;
@@ -62,13 +62,13 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
 
     if (nt != NULL) {
         // if backend not alraedy in the topology--this is false in backend-attach cases  
-        if ( !(NetworkTopology_isInTopology(nt, imyhostname, UnknownRank, imyrank) ) ) {
+        if ( ! NetworkTopology_isInTopology(nt, imyhostname, UnknownRank, imyrank) ) {
             Network_new_Stream(be->network, 1, NULL, 0, 0, 0, 0);
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Backend not already in the topology\n"));
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend not already in the topology\n") );
 
             // New topology propagation code - create a new update packet
-            Stream_t* s = Network_get_Stream(be->network, 1); // getting handle for stream id 1 which was reserved for topology propagation
-            int type = TOPO_NEW_BE; // type 0 is add packet
+            Stream_t* s = Network_get_Stream(be->network, 1); // get topol prop stream
+            int type = TOPO_NEW_BE;
             char * host_arr = strdup(imyhostname);
             uint32_t * send_iprank = (uint32_t*)malloc(sizeof(uint32_t));
             *send_iprank = iprank;
@@ -78,17 +78,17 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
             *send_port = UnknownPort;
 
             Stream_send(s, PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                    &type, 1, send_iprank,
-                    1, send_myrank,
-                    1, &host_arr,
-                    1, send_port, 1);
+                        &type, 1, send_iprank,
+                        1, send_myrank,
+                        1, &host_arr,
+                        1, send_port, 1);
             free(host_arr);
         } else {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Backend already in the topology\n"));
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend already in the topology\n") );
         }
 
-        if (ChildNode_send_SubTreeInitDoneReport(be) == -1) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "ChildNode_send_newSubTreeReport() failed\n"));
+        if( ChildNode_send_SubTreeInitDoneReport(be) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ChildNode_send_SubTreeInitDoneReport() failed\n") );
         }
     } 
     return be; 
