@@ -84,7 +84,7 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
                     1, send_port, 1);
             free(host_arr);
         } else {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Backend alraedy in the topology\n"));
+            mrn_dbg(1, mrn_printf(FLF, stderr, "Backend already in the topology\n"));
         }
 
         if (ChildNode_send_SubTreeInitDoneReport(be) == -1) {

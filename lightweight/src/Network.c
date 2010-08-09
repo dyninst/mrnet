@@ -354,8 +354,10 @@ int Network_add_SubGraph(Network_t * net, Rank iroot_rank, SerialGraph_t * sg, i
 {
     unsigned topsz = NetworkTopology_get_NumNodes(net->network_topology);
 
+    Node_t * node = NetworkTopology_find_Node(net->network_topology, iroot_rank);
+
     if (NetworkTopology_add_SubGraph(net->network_topology,
-                iroot_rank,
+                node,
                 sg,
                 iupdate)) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
