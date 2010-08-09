@@ -690,7 +690,7 @@ SerialGraph_t* Network_readTopology(Network_t * net, int topoSocket)
     size_t sTopologyLen = 0;
 
     // obtain topology from our parent
-    read(topoSocket, &sTopologyLen, sizeof(sTopologyLen));
+    recv(topoSocket, &sTopologyLen, sizeof(sTopologyLen), 0);
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%d\n", (int)sTopologyLen));
 
     sTopology = (char*)malloc(sizeof(char)*(sTopologyLen + 1));
