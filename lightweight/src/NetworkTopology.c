@@ -781,7 +781,12 @@ unsigned int NetworkTopology_Node_get_Proximity(Node_t* adopter,
         mrn_dbg(5, mrn_printf(0,0,0, stderr, "no.\n"));
         cur_ascendant = cur_ascendant->parent;
         node_ascendant_distance++;
-    } while(common_ascendant == NULL);;
+    } while( (common_ascendant == NULL) && (cur_ascendant != NULL) );
+
+    if( common_ascendant == NULL ) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "no common ascendant found\n"));
+        return (unsigned int)-1;
+    }
     
     // Find distance between orphan and common ascendant
     cur_ascendant = iorphan;
