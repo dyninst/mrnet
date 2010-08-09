@@ -63,7 +63,6 @@ int main(int argc, char **argv)
     Network * net = NULL;
     Communicator * comm_BC;
     Stream * stream;
-    unsigned int num_leaves = 0;
     int32_t send_val=57, recv_val=0;
 
     if( argc != 3 ) {
@@ -95,19 +94,19 @@ int main(int argc, char **argv)
     // Write connection information to temporary file
     write_be_connections( internal_leaves, num_backends );
 
+
+    // Wait for backends to attach
     fprintf( stdout, "Please start backends now.\n\nWaiting for %u backends to connect ...", num_backends );
     fflush(stdout);
-    unsigned topol_size = topology->get_NumNodes();
     do {
         sleep(1);
     } while( num_callbacks!=num_backends );
     fprintf( stdout, "complete!\n");
 
+
+    // A simple broadcast/gather
     comm_BC = net->get_BroadcastCommunicator();
     stream = net->new_Stream(comm_BC, TFILTER_NULL, SFILTER_DONTWAIT);
-
-    // should backends go away?
-    // net->set_TerminateBackEndsOnShutdown(false);
 
     fprintf( stdout, "broadcasting int %d to back-ends\n", send_val );
     if( (stream->send(PROT_INT, "%d", send_val) == -1) ||

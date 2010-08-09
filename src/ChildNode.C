@@ -543,43 +543,31 @@ int ChildNode::send_SubTreeInitDoneReport( ) const
 {   
     mrn_dbg_func_begin();
     
-    // We use mutual exclusion here to prevent the situation where we get
-    // the serialized string topology, but get preempted before sending the
-    // packet by another thread who is also trying to send a new subtree
-    // report. Since the last topology report wins, we would like the reports
-    // to proceed in the order they were started.
-    //_sync.Lock();
     _network->get_NetworkTopology()->update_Router_Table();
 
-    //char * topo_ptr = _network->get_LocalSubTreeStringPtr();
     PacketPtr packet( new Packet( 0, PROT_SUBTREE_INITDONE_RPT,"") );
 
     if( !packet->has_Error( ) ) {
         if( _network->get_ParentNode()->send( packet ) == -1 ||
             _network->get_ParentNode()->flush(  ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n" ));
-            //_sync.Unlock();
             return -1;
         }
     }
     else {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n" ));
-        //_sync.Unlock();
         return -1;
     }
-
-    //_sync.Unlock();
 
     mrn_dbg_func_end();
     return 0;
 }
 
-
-
-
 int ChildNode::send_NewSubTreeReport( ) const
 {
     mrn_dbg_func_begin();
+
+#if 0 // TODO: kill this function
 
     // We use mutual exclusion here to prevent the situation where we get
     // the serialized string topology, but get preempted before sending the
@@ -606,6 +594,7 @@ int ChildNode::send_NewSubTreeReport( ) const
     }
 
     _sync.Unlock();
+#endif
 
     mrn_dbg_func_end();
     return 0;
