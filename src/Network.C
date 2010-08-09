@@ -1967,7 +1967,7 @@ Network::writeTopology( int topoFd,
                           sTopology.c_str() ));
 
     // send serialized topology size
-    ssize_t nwritten = write( topoFd, &sTopologyLen, sizeof(sTopologyLen) );
+    ssize_t nwritten = ::send( topoFd, &sTopologyLen, sizeof(sTopologyLen), 0 );
 
     // send the topology itself
     // NOTE this code assumes the byte array underneath the std::string

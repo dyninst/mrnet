@@ -722,7 +722,7 @@ void Network_writeTopology(Network_t * net, int topoFd, SerialGraph_t* topology)
     mrn_dbg(5, mrn_printf(FLF, stderr, "sending topology=%s\n", sTopology));
 
     // send serialized topology size
-    ssize_t nwritten = write(topoFd, &sTopologyLen, sizeof(sTopologyLen));
+    ssize_t nwritten = send(topoFd, &sTopologyLen, sizeof(sTopologyLen), 0);
 
     // send the topology itself
     size_t nRemaining = sTopologyLen;
