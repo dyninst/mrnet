@@ -277,6 +277,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x0500;WIN32;_LIB"
 						CompileAs="2"
 					/>
 				</FileConfiguration>
@@ -499,7 +500,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\PerfDataSysEvent_win.C"
+				RelativePath=".\src\PerfDataSysEvent_none.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -855,22 +856,6 @@
 			</File>
 			<File
 				RelativePath=".\src\utils.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\XTBackEndNode.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\XTFrontEndNode.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\XTInternalNode.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\XTNetwork.h"
 				>
 			</File>
 		</Filter>

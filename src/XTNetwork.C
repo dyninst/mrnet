@@ -7,8 +7,10 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#ifndef os_windows
 #include <unistd.h>
 #include <sys/wait.h>
+#endif
 
 #include "config.h"
 #include "utils.h"

@@ -26,6 +26,8 @@
 #elif defined(os_windows)
 #include "xplat/Types.h"
 #define sleep(x) Sleep(1000*(DWORD)x)
+typedef long int ssize_t;
+#define EWOULDBLOCK WSAEWOULDBLOCK
 #endif
 
 #if !defined (bool_t)

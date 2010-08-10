@@ -35,15 +35,17 @@ int Filter_push_Packets(Filter_t* filter,
 {
     void * filter_state;
     Packet_t * params;
-    int i;
-    Packet_t * ipacket = (Packet_t*)malloc(sizeof(Packet_t));
+    Packet_t * ipacket;
+	int stream_id;
+	
+	ipacket = (Packet_t*)malloc(sizeof(Packet_t));
     *ipacket = *((Packet_t*)(ipackets->vec[0]));
     assert(ipacket);
 
     mrn_dbg_func_begin();
 
     // Special case packets on stream 1, which has topology update information
-    int stream_id = Packet_get_StreamId(ipacket);
+    stream_id = Packet_get_StreamId(ipacket);
 
     if (stream_id == 1) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "stream_id = 1, executing tfilter_TopoUpdate\n"));

@@ -31,6 +31,7 @@ using namespace XPlat;
 # include <netinet/tcp.h>
 #else
 #define sleep(x) Sleep(1000*(DWORD)x)
+#include <fcntl.h>
 #endif // defined(os_windows)
 
 #if defined(os_solaris)
@@ -119,6 +120,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
     }
 
     // Close socket on exec
+#ifndef os_windows
     int fdflag = fcntl(sock, F_GETFD );
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags
@@ -129,6 +131,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
         // we failed to set the socket descriptor flags
         mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
     }
+#endif
 
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
@@ -177,6 +180,7 @@ int bindPort( int *sock_in, Port *port_in )
     }
 
     // Close socket on exec
+#ifndef os_windows
     int fdflag = fcntl(sock, F_GETFD );
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags
@@ -187,7 +191,9 @@ int bindPort( int *sock_in, Port *port_in )
         // failed to set the socket descriptor flags
         mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
     }
+#endif
 
+#ifndef os_windows
     fdflag = fcntl(sock, F_GETFL );
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags
@@ -198,6 +204,13 @@ int bindPort( int *sock_in, Port *port_in )
         // failed to set the socket descriptor flags
         mrn_dbg( 1, mrn_printf(FLF, stderr, "Setting listening socket to non blocking failed\n") );
     }
+#else
+	 unsigned long mode = 1; // 0 is blocking, !0 is non-blocking
+	 if (ioctlsocket(sock, FIONBIO, &mode) != 0) {
+		 // failed to set the socket flags
+		 mrn_dbg(1, mrn_printf(FLF, stderr, "Setting listening socket to non blocking failed\n"));
+	 }
+#endif
 
 
 #ifndef os_windows
@@ -310,6 +323,7 @@ int getSocketConnection( int bound_socket , int& inout_errno)
     } while ( ( connected_socket == -1 ) && ( errno == EINTR ) );
 
     // Close socket on exec
+#ifndef os_windows
     int fdflag = fcntl(connected_socket, F_GETFD );
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags 
@@ -320,6 +334,7 @@ int getSocketConnection( int bound_socket , int& inout_errno)
         // we failed to set the socket descriptor flags
         mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
     }
+#endif
 
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets

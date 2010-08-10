@@ -297,7 +297,8 @@ NetworkTopology::Node * find_NodeToKill( NetworkTopology * itopology )
 {
 
     itopology->print( NULL );
-    set<NetworkTopology::Node*> parent_nodes = itopology->get_ParentNodes(parent_nodes);
+    set<NetworkTopology::Node*> parent_nodes;
+	itopology->get_ParentNodes(parent_nodes);
 
     //for now, pick non-root parent node w/ most children
     set<NetworkTopology::Node*> ::iterator iter;

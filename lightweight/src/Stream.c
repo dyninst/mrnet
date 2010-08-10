@@ -258,9 +258,11 @@ int Stream_push_Packet(Stream_t* stream,
 
 int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket)
 {
-    mrn_dbg_func_begin();
+    Packet_t * cur_packet;
+	
+	mrn_dbg_func_begin();
 
-    Packet_t* cur_packet = Stream_get_IncomingPacket(stream);
+    cur_packet = Stream_get_IncomingPacket(stream);
 
     if (cur_packet != NULL) {
         *otag = Packet_get_Tag(cur_packet);

@@ -15,6 +15,7 @@
 #elif defined(os_windows)
 #include "xplat_lightweight/Types.h"
 #define sleep(x) Sleep(1000*(DWORD)x)
+typedef long int ssize_t;
 #endif
 
 

@@ -35,9 +35,11 @@ int ChildNode_proc_PortUpdate(BackEndNode_t * be,
 
 int ChildNode_ack_PortUpdate(BackEndNode_t * be)
 {
-    mrn_dbg_func_begin();
+    Packet_t * packet;
+	
+	mrn_dbg_func_begin();
 
-    Packet_t* packet = new_Packet_t_2(0, PROT_PORT_UPDATE_ACK, "");
+    packet = new_Packet_t_2(0, PROT_PORT_UPDATE_ACK, "");
 
     if (packet) {
         if (PeerNode_sendDirectly(Network_get_ParentNode(be->network),packet) == -1) {
@@ -61,6 +63,9 @@ int ChildNode_init_newChildDataConnection (BackEndNode_t* be,
     char* fmt_str;
     Packet_t* packet;
     NetworkTopology_t * tmp_nt;
+
+	SerialGraph_t * init_topo;
+    char * sg_str;
 
     mrn_dbg_func_begin();
 
@@ -102,9 +107,9 @@ int ChildNode_init_newChildDataConnection (BackEndNode_t* be,
 
     free(topo_ptr);
 
-    SerialGraph_t * init_topo = Network_readTopology(be->network, iparent->data_sock_fd); // TODO
+    init_topo = Network_readTopology(be->network, iparent->data_sock_fd);
     assert(init_topo);
-    char * sg_str = SerialGraph_get_ByteArray(init_topo);
+    sg_str = SerialGraph_get_ByteArray(init_topo);
 
     NetworkTopology_reset(tmp_nt, sg_str);
     mrn_dbg(5, mrn_printf(FLF, stderr, "topology is %s\n",
@@ -118,9 +123,11 @@ int ChildNode_init_newChildDataConnection (BackEndNode_t* be,
 
 int ChildNode_send_SubTreeInitDoneReport(BackEndNode_t* be)
 {
-    mrn_dbg_func_begin();
+    Packet_t * packet;
+	
+	mrn_dbg_func_begin();
 
-    Packet_t* packet  = new_Packet_t_2(0, PROT_SUBTREE_INITDONE_RPT, "");
+    packet  = new_Packet_t_2(0, PROT_SUBTREE_INITDONE_RPT, "");
 
     if (packet) {
         if (PeerNode_sendDirectly(Network_get_ParentNode(be->network), packet) == -1) {

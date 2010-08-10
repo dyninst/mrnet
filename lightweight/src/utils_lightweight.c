@@ -156,8 +156,7 @@ int mrn_printf( const char *file, int line, const char * func,
     struct timeval tv;
     int rank = getrank();
     FILE * tmp_fp = NULL;
-    char* this_host = (char*)malloc(sizeof(char)*256);
-    assert(this_host);
+    char* this_host;
     struct stat s;
     char host[256];
     char logdir[256];
@@ -165,6 +164,9 @@ int mrn_printf( const char *file, int line, const char * func,
     const char* home = getenv("HOME");
     const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
     FILE *f;
+
+	this_host = (char*)malloc(sizeof(char)*256);
+	assert(this_host);
   
     while (gettimeofday( &tv, NULL ) == -1 ) {}
 

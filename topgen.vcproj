@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="include;src;xplat/include"
+				AdditionalIncludeDirectories="include;src;xplat/include;&quot;C:\Program Files\Microsoft Visual Studio 8\VC\include&quot;"
 				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x0500;WIN32;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -63,8 +63,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="Iphlpapi.lib Ws2_32.lib shlwapi.lib"
 				OutputFile="$(OutDir)/topgen.exe"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="../obj/i386-unknown-nt4.0/lightweight/"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
 			/>

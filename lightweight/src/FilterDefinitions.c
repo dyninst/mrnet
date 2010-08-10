@@ -27,9 +27,6 @@ void tfilter_TopoUpdate(vector_t * ipackets,
         TopologyLocalInfo_t * info,
         int igoingupstream)
 {
-
-    mrn_dbg_func_begin();
-
     Network_t * net = TopologyLocalInfo_get_Network(info);
 
     vector_t * itype_arr = new_empty_vector_t();
@@ -74,6 +71,8 @@ void tfilter_TopoUpdate(vector_t * ipackets,
     NetworkTopology_t * nt;
 
     Packet_t * new_packet;
+
+	mrn_dbg_func_begin();
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Start of topology filter update ...\n"));
     

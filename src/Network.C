@@ -1928,14 +1928,14 @@ Network::readTopology( int topoSocket ){
     size_t sTopologyLen = 0;
     
     // obtain topology from our parent
-    read( topoSocket, &sTopologyLen, sizeof(sTopologyLen) );
+	::recv( topoSocket, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%d\n", (int)sTopologyLen ));
 
     sTopology = new char[sTopologyLen + 1];
     char* currBufPtr = sTopology;
     size_t nRemaining = sTopologyLen;
     while( nRemaining > 0 ) {
-        ssize_t nread = read( topoSocket, currBufPtr, nRemaining );
+		ssize_t nread = ::recv(topoSocket, currBufPtr, nRemaining, 0);
         nRemaining -= nread;
         currBufPtr += nread;
     }
@@ -1965,7 +1965,7 @@ Network::writeTopology( int topoFd,
                           sTopology.c_str() ));
 
     // send serialized topology size
-    ssize_t nwritten = write( topoFd, &sTopologyLen, sizeof(sTopologyLen) );
+	ssize_t nwritten = ::send( topoFd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
 
     // send the topology itself
     // NOTE this code assumes the byte array underneath the std::string
@@ -1973,7 +1973,7 @@ Network::writeTopology( int topoFd,
     size_t nRemaining = sTopologyLen;
     const char* currBufPtr = sTopology.c_str();
     while( nRemaining > 0 ) {
-        nwritten = write( topoFd, currBufPtr, nRemaining );
+		nwritten = ::send( topoFd, currBufPtr, nRemaining, 0);
         nRemaining -= nwritten;
         currBufPtr += nwritten;
     }

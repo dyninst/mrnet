@@ -418,8 +418,9 @@ void * EventDetector::main( void* iarg )
                 int inout_errno;
 
                 int connected_sock = getSocketConnection( local_sock, inout_errno );
-                if( (connected_sock == -1 )  && ( (inout_errno == EAGAIN ) ||  (inout_errno == EWOULDBLOCK) ) ) 
-		   break;
+
+				if( (connected_sock == -1 )  && ( (inout_errno == EAGAIN ) ||  (inout_errno == EWOULDBLOCK) ) ) 
+					break;
 
                 if ( connected_sock == -1) {
                     perror("getSocketConnection()");

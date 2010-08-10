@@ -117,15 +117,14 @@ struct NetworkTopology_t* Network_get_NetworkTopology(Network_t* net) {
 Network_t*
 Network_CreateNetworkBE ( int argc, char* argv[] )
 { 
- 
-    endianTest();
-
     char* phostname;
     Port pport;
     Rank prank;
     char* myhostname;
     Rank myrank;
     Network_t* net;
+
+	endianTest();
     
     // Get parent/local info from end of BE args
     if ( argc >= 6) {
@@ -353,9 +352,14 @@ int Network_reset_Topology(Network_t* net, char* itopology)
 int Network_add_SubGraph(Network_t * net, Rank iroot_rank, SerialGraph_t * sg, int iupdate)
 {
     unsigned topsz = NetworkTopology_get_NumNodes(net->network_topology);
+	
+	Node_t * node = NetworkTopology_find_Node(net->network_topology, iroot_rank);
+
+	if (!node)
+		return false;
 
     if (NetworkTopology_add_SubGraph(net->network_topology,
-                iroot_rank,
+                node,
                 sg,
                 iupdate)) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
@@ -682,20 +686,26 @@ void Network_set_OutputLevelFromEnvironment(void)
 
 SerialGraph_t* Network_readTopology(Network_t * net, int topoSocket) 
 {
-    mrn_dbg_func_begin();
-
     char * sTopology = NULL;
     size_t sTopologyLen = 0;
+	char * currBufPtr;
+	size_t nRemaining;
+	ssize_t nread;
 
-    // obtain topology from our parent
-    read(topoSocket, &sTopologyLen, sizeof(sTopologyLen));
+	SerialGraph_t* sg;
+
+	mrn_dbg_func_begin();
+    
+	// obtain topology from our parent
+	recv(topoSocket, (char*)&sTopologyLen, sizeof(sTopologyLen), 0); 
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%d\n", (int)sTopologyLen));
 
     sTopology = (char*)malloc(sizeof(char)*(sTopologyLen + 1));
-    char * currBufPtr = sTopology;
-    size_t nRemaining = sTopologyLen;
+    assert(sTopology);
+	currBufPtr = sTopology;
+    nRemaining = sTopologyLen;
     while (nRemaining > 0 ) {
-        ssize_t nread = read(topoSocket, currBufPtr, nRemaining);
+        nread = recv(topoSocket, currBufPtr, nRemaining, 0);
         nRemaining -= nread;
         currBufPtr += nread;
     }
@@ -703,7 +713,7 @@ SerialGraph_t* Network_readTopology(Network_t * net, int topoSocket)
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s\n", sTopology));
 
-    SerialGraph_t* sg = new_SerialGraph_t(sTopology);
+    sg = new_SerialGraph_t(sTopology);
 
     free(sTopology);
 
@@ -712,21 +722,31 @@ SerialGraph_t* Network_readTopology(Network_t * net, int topoSocket)
 
 void Network_writeTopology(Network_t * net, int topoFd, SerialGraph_t* topology) 
 {
-    mrn_dbg_func_begin();
+    char * sTopology;
+	size_t sTopologyLen;
+#ifdef os_windows
+	size_t nwritten;
+#else
+	ssize_t nwritten;
+#endif
+	size_t nRemaining;
+	const char * currBufPtr;
+	
+	mrn_dbg_func_begin();
 
-    char * sTopology = SerialGraph_get_ByteArray(topology);
-    size_t sTopologyLen = strlen(sTopology);
+    sTopology = SerialGraph_get_ByteArray(topology);
+    sTopologyLen = strlen(sTopology);
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "sending topology=%s\n", sTopology));
 
     // send serialized topology size
-    ssize_t nwritten = write(topoFd, &sTopologyLen, sizeof(sTopologyLen));
+    nwritten = send(topoFd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
 
     // send the topology itself
-    size_t nRemaining = sTopologyLen;
-    const char * currBufPtr = sTopology;
+    nRemaining = sTopologyLen;
+    currBufPtr = sTopology;
     while (nRemaining > 0) {
-        nwritten = write(topoFd, currBufPtr, nRemaining);
+        nwritten = send(topoFd, currBufPtr, nRemaining, 0);
         nRemaining -= nwritten;
         currBufPtr += nwritten;
     }
@@ -740,9 +760,11 @@ char Network_is_ShutDown(Network_t* net)
 void Network_waitfor_ShutDown(Network_t* net)
 {
     Stream_t* stream;
-    Packet_t* p = (Packet_t*) malloc(sizeof(Packet_t));
+    Packet_t* p;
+	int tag = 0;
+	
+	p = (Packet_t*) malloc(sizeof(Packet_t));
     assert(p);
-    int tag = 0;
 
     do {
 
