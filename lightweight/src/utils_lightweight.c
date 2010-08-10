@@ -149,7 +149,7 @@ int mrn_printf( const char *file, int line, const char * func,
                 FILE * ifp, const char *format, ... )
 {
     static FILE * fp = NULL;
-    char *node_type = "be";
+    char *node_type = "BE";
     int retval;
     va_list arglist;
 
@@ -165,6 +165,7 @@ int mrn_printf( const char *file, int line, const char * func,
     const char* home = getenv("HOME");
     const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
     FILE *f;
+    int pid = Process_GetProcessId();
   
     while (gettimeofday( &tv, NULL ) == -1 ) {}
 
@@ -186,8 +187,8 @@ int mrn_printf( const char *file, int line, const char * func,
                 snprintf( logdir, sizeof(logdir), "/tmp" );
         }
         // set file name format
-        snprintf(logfile, sizeof(logfile), "%s/%s_%s_%d",
-                 logdir, node_type, host, rank );
+        snprintf(logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
+                 logdir, node_type, host, rank, pid);
         tmp_fp = fopen(logfile, "w");
         if (tmp_fp != NULL)
             fp = tmp_fp;
