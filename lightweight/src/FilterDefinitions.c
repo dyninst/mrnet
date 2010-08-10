@@ -69,8 +69,6 @@ void tfilter_TopoUpdate(vector_t * ipackets,
 
     Packet_t * cur_packet;
 
-    vector_t * new_nodes;
-
     NetworkTopology_t * nt;
 
     Packet_t * new_packet;
@@ -176,7 +174,6 @@ void tfilter_TopoUpdate(vector_t * ipackets,
             case TOPO_NEW_BE:
                 NetworkTopology_add_BackEnd(nt, rprank_arr[i], rcrank_arr[i],
                         rchost_arr[i], rcport_arr[i]);
-                pushBackElement(new_nodes, rcrank_arr[i]);
                 break;
             case TOPO_REMOVE_RANK: 
                 break;

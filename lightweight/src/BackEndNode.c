@@ -62,7 +62,7 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
 
     if (nt != NULL) {
         // if backend not alraedy in the topology--this is false in backend-attach cases  
-        if ( ! NetworkTopology_isInTopology(nt, imyhostname, UnknownRank, imyrank) ) {
+        if ( ! NetworkTopology_isInTopology(nt, imyhostname, UnknownPort, imyrank) ) {
             Network_new_Stream(be->network, 1, NULL, 0, 0, 0, 0);
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend not already in the topology\n") );
 

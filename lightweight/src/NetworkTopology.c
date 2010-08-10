@@ -109,7 +109,7 @@ int NetworkTopology_isInTopology(NetworkTopology_t* net_top,
                                  Rank _rank)
 {
     int iter;
-    int found;
+    int found = false;
 
     for (iter = 0; iter < net_top->nodes->size; iter++) {
         Node_t* tmp = (Node_t*)get_val(net_top->nodes, net_top->nodes->keys[iter]);
@@ -170,24 +170,24 @@ char* NetworkTopology_get_LocalSubTreeStringPtr(NetworkTopology_t* net_top)
 
 void NetworkTopology_serialize(NetworkTopology_t* net_top, Node_t* inode)
 {
-  int iter;
-  
-  if (inode->is_backend) {
-    // leaf node, just add my name to serial representation and return
-    SerialGraph_add_Leaf(net_top->serial_graph, inode->hostname, inode->port, inode->rank);
-    return;
-  }
-  else {
-    // starting new sub-tree component in graph serialization
-    SerialGraph_add_SubTreeRoot(net_top->serial_graph, inode->hostname, inode->port, inode->rank);
-  }
+    int iter;
 
-  for (iter = 0; iter < inode->children->size; iter++) {
-    NetworkTopology_serialize(net_top, (Node_t*)(inode->children->vec[iter]));
-  }
+    if (inode->is_backend) {
+        // leaf node, just add my name to serial representation and return
+        SerialGraph_add_Leaf(net_top->serial_graph, inode->hostname, inode->port, inode->rank);
+        return;
+    }
+    else {
+        // starting new sub-tree component in graph serialization
+        SerialGraph_add_SubTreeRoot(net_top->serial_graph, inode->hostname, inode->port, inode->rank);
+    }
 
-  // ending sub-tree component in graph serialization:
-  SerialGraph_end_SubTree(net_top->serial_graph);
+    for (iter = 0; iter < inode->children->size; iter++) {
+        NetworkTopology_serialize(net_top, (Node_t*)(inode->children->vec[iter]));
+    }
+
+    // ending sub-tree component in graph serialization:
+    SerialGraph_end_SubTree(net_top->serial_graph);
 
 }
 
@@ -201,11 +201,11 @@ int NetworkTopology_reset(NetworkTopology_t* net_top, char* itopology_str)
     //free(net_top->serial_graph);
     free_SerialGraph_t(net_top->serial_graph);
   }
-  mrn_dbg(5, mrn_printf(FLF, stderr, "About to call new_SerialGraph_t\n"));
   net_top->serial_graph = new_SerialGraph_t(itopology_str);
   net_top->root = NULL;
 
-  clear_map_t(net_top->nodes);
+  clear_map_t(&(net_top->nodes));
+
   clear(net_top->orphans);
   clear(net_top->backend_nodes);
 
@@ -240,6 +240,7 @@ int NetworkTopology_reset(NetworkTopology_t* net_top, char* itopology_str)
   }
 
   free(cur_sg);
+    
   return true;
 
 }
@@ -305,7 +306,6 @@ int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, Seri
     mrn_dbg_func_end();
     return 1;
 }
-
 
 int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
 {
@@ -895,6 +895,7 @@ void NetworkTopology_Node_compute_AdoptionScore(NetworkTopology_t* net_top,
 
 void NetworkTopology_Node_add_Child(Node_t* parent, Node_t* child)
 {
+    parent->is_backend=false;
     pushBackElement(parent->children, (void*)child);
 }
 
@@ -911,11 +912,11 @@ int NetworkTopology_new_Node(NetworkTopology_t* net_top, const char * host,
         Port port, Rank rank, int iis_backend)
 {
     char * host_name = host;
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Creatingback node[%d] %s:%d\n",
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Creating back node[%d] %s:%d\n",
                 rank, host_name, port));
     Node_t* node = new_Node_t(host,port,rank,iis_backend);
     insert(net_top->nodes, rank, node);
-
+   
     if (iis_backend) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as backend\n", rank));
         pushBackElement(net_top->backend_nodes, node);
@@ -947,7 +948,7 @@ void NetworkTopology_add_BackEnd(NetworkTopology_t * net_top,
 
     if (n == NULL) {
        NetworkTopology_new_Node(net_top, rchost, rcport, rcrank, true);
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as childof node[%d]\n",
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as child of node[%d]\n",
                     rcrank, rprank));
 
         if ( !(NetworkTopology_set_Parent(net_top, rcrank, rprank, false))) {

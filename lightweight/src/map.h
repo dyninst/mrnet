@@ -31,7 +31,7 @@ void* get_val( mrn_map_t* map, int key);
 
 void delete_map_t(mrn_map_t* map);
 
-void clear_map_t(mrn_map_t* map);
+void clear_map_t(mrn_map_t** map);
 
 mrn_map_t* erase(mrn_map_t* map, int ikey);
 
