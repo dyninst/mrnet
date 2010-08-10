@@ -4,7 +4,7 @@
 
 TARGETS = $(BINDIR)/FaultRecovery_FE \
           $(BINDIR)/FaultRecovery_BE \
-		  $(BINDIR)/FaultRecovery_BE_lightweight
+          $(BINDIR)/FaultRecovery_BE_lightweight
 
 TARGETS_SO = $(LIBDIR)/FaultRecoveryFilter.so
 

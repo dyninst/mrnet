@@ -5,8 +5,8 @@
 
 TARGETS = $(BINDIR)/HeteroFilters_FE \
           $(BINDIR)/HeteroFilters_BE \
-		  $(BINDIR)/HeteroFilters_FE_lightweight \
-		  $(BINDIR)/HeteroFilters_BE_lightweight
+          $(BINDIR)/HeteroFilters_FE_lightweight \
+          $(BINDIR)/HeteroFilters_BE_lightweight
 
 TARGETS_SO = $(LIBDIR)/HeteroFilters.so
 

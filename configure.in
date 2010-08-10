@@ -222,7 +222,7 @@ dnl === OS-SPECIFIC COMPILER OPTIONS ===
 
 LIBS="-lm -lpthread -ldl"
 LIBS_LIGHTWEIGHT="-lm"
-FE_LIBS=""
+EXTRA_LIBS=""
 
 case "$host_os" in
   *linux*)
@@ -306,7 +306,7 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
         LIBS_HOLD=$LIBS
 	LIBS="-L$CRAYXT_ATH_LIBDIR $CRAYXT_ATH_LIBS $LIBS_HOLD"
         AC_CHECK_LIB(alps, [alps_launch_tool_helper], 
-                     [LIBS="$LIBS_HOLD"; FE_LIBS="-L$CRAYXT_ATH_LIBDIR $CRAYXT_ATH_LIBS $FE_LIBS"], 
+                     [LIBS="$LIBS_HOLD"; EXTRA_LIBS="-L$CRAYXT_ATH_LIBDIR $CRAYXT_ATH_LIBS $EXTRA_LIBS"], 
                      [AC_MSG_ERROR(Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib)],
                      [-lxmlrpc])
     fi
@@ -329,7 +329,7 @@ AC_SUBST(SOFLAGS)
 AC_SUBST(C_AS_CPLUSPLUS)
 AC_SUBST(LIBS)
 AC_SUBST(LIBS_LIGHTWEIGHT)
-AC_SUBST(FE_LIBS)
+AC_SUBST(EXTRA_LIBS)
 
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF(char)
