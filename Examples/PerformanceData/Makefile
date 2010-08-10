@@ -4,7 +4,7 @@
 
 TARGETS = $(BINDIR)/PerfData_FE \
           $(BINDIR)/PerfData_BE \
-		  $(BINDIR)/PerfData_BE_lightweight
+          $(BINDIR)/PerfData_BE_lightweight
 
 TARGETS_SO = $(LIBDIR)/PerfDataFilter.so
 

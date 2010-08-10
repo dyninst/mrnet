@@ -1,3 +1,8 @@
+/****************************************************************************
+ * Copyright © 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ *                  Detailed MRNet usage rights in "LICENSE" file.          *
+ ****************************************************************************/
+
 #ifndef MRN_XTNetwork_h
 #define MRN_XTNetwork_h
 

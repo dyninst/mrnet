@@ -6,7 +6,7 @@ MPICXX = mpiCC
 
 TARGETS = $(BINDIR)/BackendAttach_FE \
           $(BINDIR)/BackendAttach_BE \
-		  $(BINDIR)/BackendAttach_BE_lightweight
+          $(BINDIR)/BackendAttach_BE_lightweight
 
 MPI_TARGETS = $(BINDIR)/BackendAttach_mpi_BE
 

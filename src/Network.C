@@ -1,5 +1,5 @@
 /****************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -103,9 +103,9 @@ Network::Network( void )
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
-      _edt( new EventDetector(this) ),
+      _edt( new EventDetector(this) ), next_stream_id(1),
       _threaded(true), _recover_from_failures(true), 
-      _terminate_backends(true), _was_shutdown(false), next_stream_id(1)
+      _terminate_backends(true), _was_shutdown(false)
 {
     init_local();
 
