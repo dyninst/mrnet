@@ -58,6 +58,10 @@ bool EventDetector::stop( )
     }
     else {
         // backends don't have a listening port, so cancel EDT
+
+	// turn off debug output to prevent mrn_printf deadlock
+	MRN::set_OutputLevel( -1 );
+
         if( XPlat::Thread::Cancel( _thread_id ) != 0 )
             return false;
     }
