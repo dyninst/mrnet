@@ -1,5 +1,5 @@
 /****************************************************************************
- *  Copyright 2003-2008 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ * Copyright © 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -78,7 +78,6 @@ class Network: public Error {
     CommunicationNode* get_EndPoint( Rank ) const;
 
     /* Streams */
-    unsigned int next_stream_id;
     int load_FilterFunc( const char * so_file, const char * func );
     Stream* new_Stream( Communicator*,
                         int us_filter_id=TFILTER_NULL,
@@ -315,6 +314,7 @@ protected:
     InternalNode* _local_internal_node;
     TimeKeeper* _local_time_keeper;
     EventDetector* _edt;
+    unsigned int next_stream_id;
 
     //PeerNodePtr _parent;
     std::set< PeerNodePtr > _children;

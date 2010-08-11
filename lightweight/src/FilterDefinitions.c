@@ -1,5 +1,5 @@
 /****************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -65,8 +65,6 @@ void tfilter_TopoUpdate(vector_t * ipackets,
     unsigned char_pos;
 
     Packet_t * cur_packet;
-
-    vector_t * new_nodes;
 
     NetworkTopology_t * nt;
 
@@ -175,7 +173,6 @@ void tfilter_TopoUpdate(vector_t * ipackets,
             case TOPO_NEW_BE:
                 NetworkTopology_add_BackEnd(nt, rprank_arr[i], rcrank_arr[i],
                         rchost_arr[i], rcport_arr[i]);
-                pushBackElement(new_nodes, rcrank_arr[i]);
                 break;
             case TOPO_REMOVE_RANK: 
                 break;

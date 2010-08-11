@@ -60,9 +60,8 @@ LDFLAGS = @LDFLAGS@
 COMMNODE_LDFLAGS = @CN_LDFLAGS@
 SOFLAGS = @SOFLAGS@
 
-LIBS = $(LIBXPLAT) @LIBS@
-LIBS_LIGHTWEIGHT = $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@
-FE_LIBS = @FE_LIBS@
+LIBS = $(LIBXPLAT) @LIBS@ @EXTRA_LIBS@
+LIBS_LIGHTWEIGHT = $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS@
 
 INCDIR = -I$(SRCDIR)/include -I$(SRCDIR)/src -I$(SRCDIR)/xplat/include -I$(SRCDIR)/tests
 INCDIR_LIGHTWEIGHT = -I$(SRCDIR)/lightweight/include -I$(SRCDIR)/lightweight/src -I$(SRCDIR)/lightweight/xplat/include -I$(SRCDIR)/tests -I$(SRCDIR)/src
@@ -183,8 +182,8 @@ OPT_TESTS = $(BINDIR)/test_Recovery_FE \
 # Object and Executable Definitions
 ###################################
 LIBMRNET_SRCS = \
-	         $(OBJDIR)/scanner.C \
-	         $(OBJDIR)/parser.tab.C \
+	         $(SRCDIR)/src/scanner.C \
+	         $(SRCDIR)/src/parser.tab.C \
 	         $(SRCDIR)/src/BackEndNode.C \
 	         $(SRCDIR)/src/byte_order.c \
 	         $(SRCDIR)/src/ChildNode.C \
@@ -366,18 +365,18 @@ tests-opt: $(OPT_TESTS)
 examples: all
 	$(MAKE) -C Examples
 
-$(OBJDIR)/scanner.C: $(SRCDIR)/src/scanner.l $(OBJDIR)/parser.tab.C $(FRC)
+$(SRCDIR)/src/scanner.C: $(SRCDIR)/src/scanner.l $(SRCDIR)/src/parser.tab.C $(FRC)
 	@echo Building `basename $@` ...
 	if [ -f $@ ] ; then $(RM) $@ ; fi
 	$(FLEX) -Pmrn -t $< > $@ 
 
-$(OBJDIR)/parser.tab.C $(OBJDIR)/parser.tab.h: $(SRCDIR)/src/parser.y $(FRC)
+$(SRCDIR)/src/parser.tab.C $(SRCDIR)/src/parser.tab.h: $(SRCDIR)/src/parser.y $(FRC)
 	@echo Building `basename $@` ...
 	$(BISON) -p mrn -d $<
 	if [ -f $(OBJDIR)/parser.tab.C ] ; then $(RM) $(OBJDIR)/parser.tab.C ; fi
-	mv y.tab.c $(OBJDIR)/parser.tab.C
+	mv y.tab.c $(SRCDIR)/src/parser.tab.C
 	if [ -f $(OBJDIR)/parser.tab.h ] ; then $(RM) $(OBJDIR)/parser.tab.h ; fi 
-	mv y.tab.h $(OBJDIR)/parser.tab.h
+	mv y.tab.h $(SRCDIR)/src/parser.tab.h
 
 $(LIBMRNET): $(LIBMRNET_OBJS)
 	@echo Archiving `basename $@` ...
@@ -425,7 +424,7 @@ $(STD_TESTS_FE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o 
               $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS) $(FE_LIBS)
+	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
 
 $(STD_TESTS_BE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
               $(SRCDIR)/tests/test_common.h \
@@ -439,7 +438,7 @@ $(STD_TESTS_FE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(
               $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS) $(FE_LIBS)
+	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
 
 $(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o \
 				$(BINDIR)/mrnet_tests.sh

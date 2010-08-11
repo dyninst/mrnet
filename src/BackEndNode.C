@@ -1,5 +1,5 @@
 /****************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -48,36 +48,34 @@ BackEndNode::BackEndNode( Network * inetwork,
     
     if( nt != NULL )
     {
-      if( !(nt->isInTopology(imyhostname,_port,imyrank)) ) //if backend already not in the topology. this is false in back end attach cases
-      {
-        
-	_network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
-	mrn_dbg( 1, mrn_printf(FLF, stderr,
-               " Backend not already in the topology\n" ));
+      if( ! nt->isInTopology(imyhostname, _port, imyrank) ) {
+          //if backend already not in the topology. this is false in back end attach cases
 
-        //new topo propagation code - create a new update packet
-        Stream *s = _network->get_Stream(1); // getting handle for stream id 1 which was reserved for topology propagation
-        int type = TOPO_NEW_BE; //type 0 is add packet
-        char *host_arr=strdup(imyhostname.c_str());
-        uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
-        *send_iprank=iprank;
-        uint32_t* send_myrank = (uint32_t*) malloc(sizeof(uint32_t));
-        *send_myrank=imyrank;
-        uint16_t* send_port = (uint16_t*)malloc(sizeof(uint16_t));
-        *send_port = _port;
+          _network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+          mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend not already in the topology\n") );
 
-        s->send(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", &type, 1, send_iprank, 1, send_myrank, 1, &host_arr,1, send_port, 1);
-	free(host_arr);
+          //new topo propagation code - create a new update packet
+          Stream *s = _network->get_Stream(1); // getting handle for topology propagation stream
+          int type = TOPO_NEW_BE;
+          char *host_arr = strdup(imyhostname.c_str());
+          uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
+          *send_iprank = iprank;
+          uint32_t* send_myrank = (uint32_t*) malloc(sizeof(uint32_t));
+          *send_myrank = imyrank;
+          uint16_t* send_port = (uint16_t*)malloc(sizeof(uint16_t));
+          *send_port = _port;
+
+          s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
+                   &type, 1, send_iprank, 1, send_myrank, 1, &host_arr,1, send_port, 1);
+          free(host_arr);
       }	
       else
-          mrn_dbg( 1, mrn_printf(FLF, stderr,
-	                                 " Backend already in the topology\n" ));
+          mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend already in the topology\n") );
 
     }  
 
-    if( send_SubTreeInitDoneReport( ) == -1 ) {
-           mrn_dbg( 1, mrn_printf(FLF, stderr,
-	                                  "send_newSubTreeReport() failed\n" ));
+    if( send_SubTreeInitDoneReport() == -1 ) {
+           mrn_dbg( 1, mrn_printf(FLF, stderr, "send_SubTreeInitDoneReport() failed\n") );
     }
 
 }

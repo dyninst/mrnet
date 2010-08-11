@@ -186,19 +186,6 @@ int main(int argc, char **argv)
         }
     }
 
-    // set topology output file
-    if( output_file.empty() ){
-        outfile = stdout;
-    }
-    else{
-        outfile = fopen(output_file.c_str(), "w");
-        if( !outfile ){
-            fprintf(stderr, "Error: open of %s for writing failed with '%s'\n", 
-                    output_file.c_str(), strerror(errno) );
-            exit(-1);
-        }
-    }
-
     // set fe to local host if not given on command line
     if( ! have_fe_host )
         XPlat::NetUtils::GetLocalHostName( fe_host );
@@ -244,10 +231,27 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    if( tree->is_Valid() )
+    if( tree->is_Valid() ) {
+
+        // set topology output file
+        if( output_file.empty() ){
+            outfile = stdout;
+        }
+        else{
+            outfile = fopen(output_file.c_str(), "w");
+            if( !outfile ){
+                fprintf(stderr, "Error: open of %s for writing failed with '%s'\n", 
+                        output_file.c_str(), strerror(errno) );
+                exit(-1);
+            }
+        }
+
         tree->create_TopologyFile( outfile );
-    else
+    }
+    else {
         fprintf(stderr, "Generated tree is not valid. Please check your topology specification and options.\n");
+        return -1;
+    }
     return 0;
 }
 

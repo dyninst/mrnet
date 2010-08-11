@@ -1,6 +1,6 @@
 
 /****************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -1234,39 +1234,29 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 {
 
     mrn_dbg_func_begin();
-    
-   
+       
     Network* net = const_cast< Network* >( info.get_Network() );
 
     vector< int* > itype_arr;
-    vector< uint32_t*>  iprank_arr;
-    vector< uint32_t*>  icrank_arr;
-    vector< char**> ichost_arr;
-    vector< uint16_t*>  icport_arr;
+    vector< uint32_t* > iprank_arr;
+    vector< uint32_t* > icrank_arr;
+    vector< char** > ichost_arr;
+    vector< uint16_t* > icport_arr;
     vector< unsigned > iarray_lens;
 
-    int*  rtype_arr;
-    uint32_t*  rprank_arr;
-    uint32_t*  rcrank_arr;
-    char** rchost_arr;
-    uint16_t* rcport_arr;
+    int *rtype_arr, *type_arr;
+    uint32_t *rprank_arr, *rcrank_arr, *prank_arr, *crank_arr;
+    char **rchost_arr, **chost_arr;
+    uint16_t *rcport_arr, *cport_arr;
     unsigned rarray_len=0;
-
-    int *type_arr;
-    uint32_t *prank_arr;
-    uint32_t *crank_arr;
-    char** chost_arr;
-    uint16_t* cport_arr;
     unsigned arr_len;
 
     string format_string;
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "Start of topo filter update  ...\n"));
-    
     //Process each input packet
-    //Give the format string and unpack the input array into 5 parallel arrays. type, parent rank, child rank, child host, child port in that order
+    //5 parallel arrays: type, parent rank, child rank, child host, child port
     
-    mrn_dbg(5, mrn_printf(FLF, stderr, "ipackets have size %d\n", ipackets.size()));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "ipackets has size %d\n", ipackets.size()) );
     
     for( unsigned int i = 0; i < ipackets.size( ); i++ ) {
      
@@ -1279,13 +1269,11 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 	if( cur_packet->unpack( format_string.c_str(),
 				&type_arr, &arr_len ,&prank_arr, &arr_len ,&crank_arr, 
 				&arr_len,&chost_arr, &arr_len, &cport_arr, &arr_len  ) == -1 ) {
-	    mrn_printf(FLF, stderr,
-		       "ERROR: tfilter_ArrayConcat() - unpack(%s) failure\n",
-		       cur_packet->get_FormatString() );
+	     mrn_dbg( 1, mrn_printf(FLF, stderr, "ERROR: unpack(%s) failure\n",
+                                    format_string.c_str()) );
 	}
 	else {
-	
-	    //Putting the array pointers and its length in a vector
+            //Putting the array pointers and its length in a vector
 	    itype_arr.push_back( type_arr );
 	    iprank_arr.push_back( prank_arr );
 	    icrank_arr.push_back( crank_arr );
@@ -1294,21 +1282,13 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 	    iarray_lens.push_back( arr_len );
 	    rarray_len += arr_len;
 	}
-
-	for(unsigned z=0; z < arr_len; z++) {
-	 
-	    mrn_dbg(5, mrn_printf(FLF, stderr, "Packet contents : \
-                            type :%d  prank:%d crank:%d chost:%s cport:%d arrlen:%d \n", 
-				  type_arr[z], prank_arr[z], crank_arr[z], chost_arr[z], cport_arr[z], arr_len ) );
-	} 			    
-
     }//end of iterating through the list of packets
 
     //Dynamic allocation for result arrays
-    int data_size=sizeof(int32_t);
-    int uhd_size=sizeof(uint16_t);
-    int ud_size=sizeof(uint32_t);
-    int charptr_size=sizeof(char*);
+    int data_size = sizeof(int32_t);
+    int uhd_size = sizeof(uint16_t);
+    int ud_size = sizeof(uint32_t);
+    int charptr_size = sizeof(char*);
 
     rtype_arr  = (int *) malloc( rarray_len * data_size );
     rprank_arr = (uint32_t *) malloc( rarray_len * ud_size );
@@ -1316,38 +1296,30 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
     rchost_arr = (char **) malloc( rarray_len * charptr_size );
     rcport_arr = (uint16_t*) malloc( rarray_len * uhd_size );
 
-    //Aggregating input packets to one large single result array for type, crank,prank
-    //Go through the vector of int pointers and put them in a single large result array
-    unsigned int32_pos=0;
-    unsigned uint32_pos=0;
-    unsigned uint16_pos=0;
-    unsigned char_pos=0;
-    for(unsigned int i = 0; i < itype_arr.size( ); i++ ) {
+    // Aggregating input packets to one large update array
+    unsigned arr_pos=0;
+
+    for(unsigned int i = 0; i < itype_arr.size(); i++ ) {
      
-	mrn_dbg(5, mrn_printf(FLF, stderr, "size of itype arr %d\n", itype_arr.size()));
-	memcpy( rtype_arr + int32_pos,
+	unsigned iarr_len = iarray_lens[i];
+
+	memcpy( rtype_arr + arr_pos,
 		itype_arr[i],
-		(size_t)(iarray_lens[i] * data_size));
-
-	mrn_dbg(5, mrn_printf(FLF, stderr, "copying from itypearr: %d to rtypearr %d\n", *(itype_arr[i]), *rtype_arr));
-
-	memcpy( rprank_arr + uint32_pos,
+		(size_t)(iarr_len * data_size));
+	memcpy( rprank_arr + arr_pos,
 		iprank_arr[i],
-		(size_t) (iarray_lens[i] * ud_size));
-	memcpy( rcrank_arr + uint32_pos,
+		(size_t) (iarr_len * ud_size));
+	memcpy( rcrank_arr + arr_pos,
 		icrank_arr[i],
-		(size_t) (iarray_lens[i] * ud_size));
-	uint32_pos+=(iarray_lens[i] );
-	memcpy( rchost_arr + char_pos,
+		(size_t) (iarr_len * ud_size));
+	memcpy( rchost_arr + arr_pos,
 		ichost_arr[i],
-		(size_t) (iarray_lens[i] *charptr_size));
-	memcpy( rcport_arr + uint16_pos,
+		(size_t) (iarr_len * charptr_size));
+	memcpy( rcport_arr + arr_pos,
 		icport_arr[i],
-		(size_t) (iarray_lens[i] * uhd_size));
-	uint16_pos+= (iarray_lens[i] );
+		(size_t) (iarr_len * uhd_size));
 
-	int32_pos +=  iarray_lens[i] ;
-	char_pos += iarray_lens[i] ;
+	arr_pos += iarr_len ;
 
     }//end of for iterating through vector of int pointers
    
@@ -1356,12 +1328,12 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
     bool update_table = false;
     NetworkTopology* nt=net->get_NetworkTopology();
     
-    //Go through the parallelarray to make update to NetworkTopology object in network object associated with the stream in process executing this code
+    //Apply updates to NetworkTopology object
     for(unsigned int i=0;i <rarray_len; i++) {
 	switch( rtype_arr[i] ) {
 	 
 	  case TOPO_NEW_BE :
-	    nt->add_BackEnd( rprank_arr[i], rcrank_arr[i] ,rchost_arr[i], rcport_arr[i],true ); 
+	    nt->add_BackEnd( rprank_arr[i], rcrank_arr[i] ,rchost_arr[i], rcport_arr[i], true ); 
 	    new_nodes.push_back( rcrank_arr[i] );
 	    update_table = true;
 	    break;
@@ -1383,7 +1355,7 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
 	      update_table = true;
 
 	  default:
-	      //TODO :mrnet error that update packet in the topo stream contains invalid update type and exit
+	      //TODO: report invalid update type and exit??
 	      break;
 
 	} //end of switch
@@ -1397,26 +1369,22 @@ void tfilter_TopoUpdate(const std::vector < PacketPtr >& ipackets,
         nt->update_TopoStreamPeers(new_nodes );
    	
     //Create output packet
-    if( !(net->is_LocalNodeFrontEnd() ) )
-    {
-        PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
-                                      ipackets[0]->get_Tag( ),
-                                      format_string.c_str(),
-                                      rtype_arr, rarray_len ,rprank_arr, 
-				      rarray_len ,rcrank_arr,rarray_len,
-				      rchost_arr,rarray_len,rcport_arr,rarray_len ) );
+    if( ! net->is_LocalNodeFrontEnd() ) {
+        PacketPtr new_packet( new Packet(ipackets[0]->get_StreamId(),
+                                         ipackets[0]->get_Tag(),
+                                         format_string.c_str(),
+                                         rtype_arr, rarray_len, rprank_arr, rarray_len, 
+                                         rcrank_arr, rarray_len, rchost_arr, rarray_len,
+                                         rcport_arr, rarray_len) );
 
         // tell MRNet to free result_array
         new_packet->set_DestroyData(true);
 
         //Put the newly created packet in output packet list
-        opackets.push_back( new_packet );
-                                                      
+        opackets.push_back( new_packet );                                            
     }
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "End of topo filter update  ...\n"));
     mrn_dbg_func_end();
-
 }
 
 void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
@@ -1430,33 +1398,24 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
     Network* net = const_cast< Network* >( info.get_Network() );
 
     vector< int* > itype_arr;
-    vector< uint32_t*>  iprank_arr;
-    vector< uint32_t*>  icrank_arr;
-    vector< char**> ichost_arr;
-    vector< uint16_t*>  icport_arr;
+    vector< uint32_t* > iprank_arr;
+    vector< uint32_t* > icrank_arr;
+    vector< char** > ichost_arr;
+    vector< uint16_t* > icport_arr;
     vector< unsigned > iarray_lens;
 
-    int*  rtype_arr;
-    uint32_t*  rprank_arr;
-    uint32_t*  rcrank_arr;
-    char** rchost_arr;
-    uint16_t* rcport_arr;
+    int *rtype_arr, *type_arr;
+    uint32_t *rprank_arr, *rcrank_arr, *prank_arr, *crank_arr;
+    char **rchost_arr, **chost_arr;
+    uint16_t *rcport_arr, *cport_arr;
     unsigned rarray_len=0;
-
-    int *type_arr;
-    uint32_t *prank_arr;
-    uint32_t *crank_arr;
-    char** chost_arr;
-    uint16_t* cport_arr;
     unsigned arr_len;
 
     string format_string;
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "Start of topo filter update  ...\n"));
-    
     //Process each input packet
-    //Give the format string and unpack the input array into 5 parallel arrays. type, parent rank, child rank, child host, child port in that order
-    mrn_dbg(5, mrn_printf(FLF, stderr, "ipackets have size %d\n", ipackets.size()));
+    //5 parallel arrays: type, parent rank, child rank, child host, child port
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "ipackets has size %d\n", ipackets.size()) );
     
     for( unsigned int i = 0; i < ipackets.size( ); i++ ) {
     
@@ -1467,34 +1426,34 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
 
         //Give the format string and extract the array
         if( cur_packet->unpack( format_string.c_str(),
-                              &type_arr, &arr_len ,&prank_arr, &arr_len ,&crank_arr, 
-			      &arr_len,&chost_arr, &arr_len, &cport_arr, &arr_len  ) == -1 )  {
-          mrn_printf(FLF, stderr,
-                   "ERROR: tfilter_ArrayConcat() - unpack(%s) failure\n",
-                    cur_packet->get_FormatString() );
+                                &type_arr, &arr_len, &prank_arr, &arr_len, 
+                                &crank_arr, &arr_len, &chost_arr, &arr_len, 
+                                &cport_arr, &arr_len  ) == -1 )  {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ERROR: unpack(%s) failure\n",
+                                   format_string.c_str()) );
         }
-        else
-        {
-          //Putting the array pointers and its length in a vector
-          itype_arr.push_back( type_arr );
-          iprank_arr.push_back( prank_arr );
-          icrank_arr.push_back( crank_arr );
-          ichost_arr.push_back( chost_arr );
-          icport_arr.push_back( cport_arr );
-          iarray_lens.push_back( arr_len );
-          rarray_len += arr_len;
+        else {
+            //Putting the array pointers and its length in a vector
+            itype_arr.push_back( type_arr );
+            iprank_arr.push_back( prank_arr );
+            icrank_arr.push_back( crank_arr );
+            ichost_arr.push_back( chost_arr );
+            icport_arr.push_back( cport_arr );
+            iarray_lens.push_back( arr_len );
+            rarray_len += arr_len;
         }
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Packet contents : \
-                            type :%d  prank:%d crank:%d chost:%s cport:%d arrlen:%d \n", 
-			    type_arr[0], prank_arr[0], crank_arr[0], chost_arr[0], cport_arr[0], arr_len ) );
+        mrn_dbg(5, mrn_printf(FLF, stderr, 
+                   "Packet contents : type :%d  prank:%d crank:%d chost:%s cport:%d arrlen:%d \n", 
+                              type_arr[0], prank_arr[0], crank_arr[0], 
+                              chost_arr[0], cport_arr[0], arr_len ) );
 
     }//end of iterating through the list of packets
 
     //Dynamic allocation for result arrays
-    int data_size=sizeof(int32_t);
-    int uhd_size=sizeof(uint16_t);
-    int ud_size=sizeof(uint32_t);
-    int charptr_size=sizeof(char*);
+    int data_size = sizeof(int32_t);
+    int uhd_size = sizeof(uint16_t);
+    int ud_size = sizeof(uint32_t);
+    int charptr_size = sizeof(char*);
 
     rtype_arr  = (int *) malloc( rarray_len * data_size );
     rprank_arr = (uint32_t *) malloc( rarray_len * ud_size );
@@ -1502,39 +1461,32 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
     rchost_arr = (char **) malloc( rarray_len * charptr_size );
     rcport_arr = (uint16_t*) malloc( rarray_len * uhd_size );
 
-    //Aggregating input packets to one large single result array for type, crank,prank
-    //Go through the vector of int pointers and put them in a single large result array
-   
-    unsigned int32_pos=0;
-    unsigned uint32_pos=0;
-    unsigned uint16_pos=0;
-    unsigned char_pos=0;
+    //Aggregating input packets to one large update array
+    unsigned arr_pos=0;
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "size of itype arr %d\n", itype_arr.size()) );
+
     for(unsigned int i = 0; i < itype_arr.size( ); i++ ) {
 
-        mrn_dbg(5, mrn_printf(FLF, stderr, "size of itype arr %d\n", itype_arr.size()));
-        memcpy( rtype_arr + int32_pos,
-              itype_arr[i],
-              (size_t)(iarray_lens[i] * data_size));
+        unsigned iarr_len = iarray_lens[i];
 
-        mrn_dbg(5, mrn_printf(FLF, stderr, "copying from itypearr: %d to rtypearr %d\n", *(itype_arr[i]), *rtype_arr));
-
-        memcpy( rprank_arr + uint32_pos,
-              iprank_arr[i],
-              (size_t) (iarray_lens[i] * ud_size));
-        memcpy( rcrank_arr + uint32_pos,
-              icrank_arr[i],
-              (size_t) (iarray_lens[i] * ud_size));
-        uint32_pos+=(iarray_lens[i] );
-        memcpy( rchost_arr + char_pos,
-              ichost_arr[i],
-              (size_t) (iarray_lens[i] *charptr_size));
-        memcpy( rcport_arr + uint16_pos,
-              icport_arr[i],
-              (size_t) (iarray_lens[i] * uhd_size));
-        uint16_pos+= (iarray_lens[i] );
-
-        int32_pos +=  iarray_lens[i] ;
-        char_pos += iarray_lens[i] ;
+        memcpy( rtype_arr + arr_pos,
+                itype_arr[i],
+                (size_t)(iarr_len * data_size));
+        memcpy( rprank_arr + arr_pos,
+                iprank_arr[i],
+                (size_t) (iarr_len * ud_size));
+        memcpy( rcrank_arr + arr_pos,
+                icrank_arr[i],
+                (size_t) (iarr_len * ud_size));
+        memcpy( rchost_arr + arr_pos,
+                ichost_arr[i],
+                (size_t) (iarr_len * charptr_size));
+        memcpy( rcport_arr + arr_pos,
+                icport_arr[i],
+                (size_t) (iarr_len * uhd_size));
+        
+        arr_pos += iarr_len;
 
     }//end of for iterating through vector of int pointers
 
@@ -1543,7 +1495,7 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
     bool update_table = false;
     NetworkTopology* nt=net->get_NetworkTopology();
 
-    //Go through the parallelarray to make update to NetworkTopology object in network object associated with the stream in process executing this code
+    //Apply updates to NetworkTopology object
     for(unsigned int i=0;i <rarray_len; i++) {
         switch( rtype_arr[i] ) {
 
@@ -1570,7 +1522,7 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
               update_table = true;
 
           default:
-              //TODO :mrnet error that update packet in the topo stream contains invalid update type and exit
+              //TODO: report invalid update type and exit??
               break;
 
         } //end of switch
@@ -1584,22 +1536,20 @@ void tfilter_TopoUpdate_Downstream(const std::vector < PacketPtr >& ipackets,
         nt->update_TopoStreamPeers(new_nodes );
 
     
-    if( !(net->is_LocalNodeBackEnd() ) )
-    {
+    if( ! net->is_LocalNodeBackEnd() ) {
         //Create output packet
-        PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
-                                      ipackets[0]->get_Tag( ),
-                                      format_string.c_str(),
-                                      rtype_arr, rarray_len ,rprank_arr, 
-				      rarray_len ,rcrank_arr,rarray_len,
-				      rchost_arr,rarray_len,rcport_arr,rarray_len ) );
+        PacketPtr new_packet( new Packet(ipackets[0]->get_StreamId(),
+                                         ipackets[0]->get_Tag(),
+                                         format_string.c_str(),
+                                         rtype_arr, rarray_len, rprank_arr, rarray_len, 
+                                         rcrank_arr, rarray_len, rchost_arr, rarray_len,
+                                         rcport_arr, rarray_len) );
 
         // tell MRNet to free result_array
         new_packet->set_DestroyData(true);
 
         //Put the newly created packet in output packet list
-        opackets.push_back( new_packet );
-                                                      
+        opackets.push_back( new_packet );                                                      
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "End of topo filter update  ...\n"));
@@ -1789,7 +1739,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     }
     if( timeout_ms == 0 ) {
 	 opackets = ipackets;
-	 mrn_dbg( 3, mrn_printf(FLF, stderr, "No timeout specified, pushing all inputs\n"));
+	 mrn_dbg( 3, mrn_printf(FLF, stderr, "No timeout specified, pushing all inputs\n") );
          return;
     }
     
@@ -1797,7 +1747,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     if( *local_storage == NULL ) {
 
         //Allocate packet buffer map as appropriate
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "No previous storage, allocating ...\n"));
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "No previous storage, allocating ...\n") );
 
         state = new to_state;
 	state->active_timeout = false;
@@ -1818,7 +1768,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
             if( net->node_Failed( rank ) ) {
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
-                                       rank ));
+                                       rank) );
                 del_iter = map_iter;
                 map_iter++;
 
@@ -1830,43 +1780,44 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
                 state->ready_peers.erase( rank );
             }
             else {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? no\n", rank ));
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d] failed? no\n", rank) );
                 map_iter++;
             }
         }
     }
    
-    mrn_dbg( 5, mrn_printf(FLF, stderr, " input packets size is %d\n" ,ipackets.size() ) );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, " input packets size is %d\n" ,ipackets.size()) );
     
     int stream_id;
     Stream * stream;
     set< Rank > peers;
 
-    if( ipackets.size() > 0 ){
+    if( ipackets.size() > 0 ) {
         stream_id = ipackets[0]->get_StreamId();
         stream = net->get_Stream( stream_id );
         assert(stream);
-        stream->get_ChildPeers( );
+        peers = stream->get_ChildPeers( );
     }	
 
     //2. Place input packets
     for( unsigned int i=0; i < ipackets.size(); i++ ) {
        
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
-	mrn_dbg( 5, mrn_printf(FLF, stderr, "inlet rank is %u \n", cur_inlet_rank ) );
+	mrn_dbg( 5, mrn_printf(FLF, stderr, "inlet rank is %u \n", cur_inlet_rank) );
 
         if(cur_inlet_rank == UnknownRank ) 
 	{
 	   if (ipackets.size() == 1 ) {
 	      opackets.push_back( ipackets[i] ) ;
-	      mrn_dbg( 3, mrn_printf (FLF, stderr, "pushing locally sourced packet \n" ));
+	      mrn_dbg( 3, mrn_printf (FLF, stderr, "pushing locally sourced packet \n") );
 	      return;
 	   }
 	}   
 
         if( net->node_Failed( cur_inlet_rank ) ) {
             //Drop packets from failed node
-	    mrn_dbg( 3, mrn_printf (FLF, stderr, "Dropping packets from failed node %d \n", cur_inlet_rank ));
+	    mrn_dbg( 3, mrn_printf(FLF, stderr, "Dropping packets from failed node %d \n", 
+                                   cur_inlet_rank) );
             continue;
         }
         
@@ -1875,39 +1826,35 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         if( map_iter == state->packets_by_rank.end() ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "Allocating new map slot for node[%d] ...\n",
-                                   cur_inlet_rank ));
+                                   cur_inlet_rank) );
             state->packets_by_rank[ cur_inlet_rank ] = new vector < PacketPtr >;
         }
 
         mrn_dbg( 5, mrn_printf(FLF, stderr, "Placing packet[%d] from node[%d]\n",
-                               i, cur_inlet_rank ));
+                               i, cur_inlet_rank) );
         state->packets_by_rank[ cur_inlet_rank ]->push_back( ipackets[i] );
-	if(  ( peers.find (cur_inlet_rank) == peers.end() ) &  ( stream_id == 1 )  )
-	{
-	   stream->add_Stream_Peer( cur_inlet_rank );
-	   peers.insert( cur_inlet_rank);
+	if( stream_id == 1 ) {
+            if( peers.find(cur_inlet_rank) == peers.end() ) {
+                stream->add_Stream_Peer( cur_inlet_rank );
+                peers.insert( cur_inlet_rank);
+            }
 	}   
         state->ready_peers.insert( cur_inlet_rank );
     }
 
     if( ipackets.size() > 0 ) {
 
-        //int stream_id = ipackets[0]->get_StreamId();
-        //Stream* stream = net->get_Stream( stream_id );
-        //assert(stream);
-
-        //set< Rank > peers = stream->get_ChildPeers( );
         set< Rank > closed_peers = stream->get_ClosedPeers( );
         
         mrn_dbg( 5, mrn_printf(FLF, stderr, "slots:%d ready:%d peers:%d closed:%d\n",
                                state->packets_by_rank.size(), state->ready_peers.size(),
-                               peers.size(), closed_peers.size() ) );
+                               peers.size(), closed_peers.size()) );
        
         if( ! active ) {
 	    // set timeout
 	    TimeKeeper* tk = net->get_TimeKeeper();
 	    if( tk != NULL ) {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "registering timeout=%dms\n", timeout_ms ));
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "registering timeout=%dms\n", timeout_ms) );
 	        if( tk->register_Timeout( stream_id, timeout_ms ) ) {
 	            state->active_timeout = true;
 	        }
@@ -1916,7 +1863,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
         if( closed_peers.empty() && state->ready_peers.size() < peers.size() ) {
             //no closed peers and not all peers ready, so sync condition not met
-	    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning here\n") );
+	    mrn_dbg( 5, mrn_printf(FLF, stderr, "no closed peers and not all peers ready\n") );
             return;
         }
 
@@ -1926,19 +1873,19 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
                         inserter( unready_peers, unready_peers.begin() ) );
         if( unready_peers != closed_peers ) {
             //some peers not ready and haven't been closed, sync condition not met
-	    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning here1\n") );
+	    mrn_dbg( 5, mrn_printf(FLF, stderr, "some closed peers and not all peers ready\n") );
             return;
         }
 
         //check for a complete wave
         if( (state->ready_peers.size() + closed_peers.size()) < peers.size() ) {
-	    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning here\n" ) );
+	    mrn_dbg( 5, mrn_printf(FLF, stderr, "not all peers ready\n" ) );
             return;
         }
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Complete wave.\n" )); 
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Complete wave.\n") ); 
     }
     else {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Timeout occurred.\n" ));
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Timeout occurred.\n") );
     }
 
     //if we get here, SYNC CONDITION MET!
@@ -1952,12 +1899,12 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         if( map_iter->second->empty() ) {
             //list should only be empty if peer closed stream
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d]'s slot is empty\n",
-                                   map_iter->first ) );
+                                   map_iter->first) );
             continue;
         }
 
         mrn_dbg( 5, mrn_printf(FLF, stderr, "Popping packet from Node[%d]\n",
-                               map_iter->first ) );
+                               map_iter->first) );
         //push head of list onto output vector
         opackets.push_back( map_iter->second->front() );
         map_iter->second->erase( map_iter->second->begin() );
@@ -1965,12 +1912,12 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         //if list now empty, remove slot from ready list
         if( map_iter->second->empty() ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Removing Node[%d] from ready list\n",
-                                   map_iter->first ) );
+                                   map_iter->first) );
             state->ready_peers.erase( map_iter->first );
         }
 
     }
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Returning %d packets\n", opackets.size(  ) ));
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "Returning %d packets\n", opackets.size()) );
 }
 
 

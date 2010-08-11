@@ -8,7 +8,7 @@ TARGETS = $(BINDIR)/IntegerAddition_FE \
           $(BINDIR)/IntegerAddition_timeout_FE \
           $(BINDIR)/IntegerAddition_concurrent_FE \
           $(BINDIR)/IntegerAddition_BE \
-	  $(BINDIR)/IntegerAddition_BE_lightweight		
+          $(BINDIR)/IntegerAddition_BE_lightweight		
 
 TARGETS_SO = $(LIBDIR)/IntegerAdditionFilter.so
 

@@ -1,5 +1,5 @@
 /****************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -8,6 +8,10 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <sys/types.h>
+#ifndef os_windows
+#include <sys/socket.h>
+#endif
 
 #include "config.h"
 #include "utils.h"
@@ -101,9 +105,9 @@ Network::Network( void )
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
-      _edt( new EventDetector(this) ),
+      _edt( new EventDetector(this) ), next_stream_id(1),
       _threaded(true), _recover_from_failures(true), 
-      _terminate_backends(true), _was_shutdown(false), next_stream_id(1)
+      _terminate_backends(true), _was_shutdown(false)
 {
     init_local();
 
@@ -1928,14 +1932,14 @@ Network::readTopology( int topoSocket ){
     size_t sTopologyLen = 0;
     
     // obtain topology from our parent
-	::recv( topoSocket, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
+    ::recv( topoSocket, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%d\n", (int)sTopologyLen ));
 
     sTopology = new char[sTopologyLen + 1];
     char* currBufPtr = sTopology;
     size_t nRemaining = sTopologyLen;
     while( nRemaining > 0 ) {
-		ssize_t nread = ::recv(topoSocket, currBufPtr, nRemaining, 0);
+	    ssize_t nread = ::recv( topoSocket, currBufPtr, nRemaining, 0);
         nRemaining -= nread;
         currBufPtr += nread;
     }
@@ -1973,7 +1977,7 @@ Network::writeTopology( int topoFd,
     size_t nRemaining = sTopologyLen;
     const char* currBufPtr = sTopology.c_str();
     while( nRemaining > 0 ) {
-		nwritten = ::send( topoFd, currBufPtr, nRemaining, 0);
+        nwritten = ::send( topoFd, currBufPtr, nRemaining, 0);
         nRemaining -= nwritten;
         currBufPtr += nwritten;
     }

@@ -1,5 +1,5 @@
 /****************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -351,7 +351,8 @@ int Network_reset_Topology(Network_t* net, char* itopology)
 
 int Network_add_SubGraph(Network_t * net, Rank iroot_rank, SerialGraph_t * sg, int iupdate)
 {
-    unsigned topsz = NetworkTopology_get_NumNodes(net->network_topology);
+    
+	unsigned topsz = NetworkTopology_get_NumNodes(net->network_topology);
 	
 	Node_t * node = NetworkTopology_find_Node(net->network_topology, iroot_rank);
 
@@ -724,11 +725,7 @@ void Network_writeTopology(Network_t * net, int topoFd, SerialGraph_t* topology)
 {
     char * sTopology;
 	size_t sTopologyLen;
-#ifdef os_windows
-	size_t nwritten;
-#else
 	ssize_t nwritten;
-#endif
 	size_t nRemaining;
 	const char * currBufPtr;
 	

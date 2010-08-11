@@ -1,5 +1,5 @@
 /****************************************************************************
- *  Copyright 2003-2009 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -47,9 +47,9 @@ void delete_map_t(mrn_map_t* map) {
     free(map);
 }
 
-void clear_map_t(mrn_map_t* map) {
-    delete_map_recursive(map->root);
-    map = new_map_t();
+void clear_map_t(mrn_map_t** map) {
+    delete_map_recursive((*map)->root);
+    *map = new_map_t();
 }
 
 map_node_t* insert_recursive(map_node_t* root, int key, void* val)

@@ -28,7 +28,7 @@ print_help()
 
 create_remote_topologies()
 {
-	# $1, 1st arg, is the hostfile mapping localhost:n => remotehost
+    # $1, 1st arg, is the hostfile mapping localhost:n => remotehost
     remote_topology_prefix="remote"
 
     for (( idx = 0 ; idx < ${#topologies[@]}; idx++ ));
@@ -39,12 +39,13 @@ create_remote_topologies()
 
         /bin/rm -f $remote_topology
 
-        $TOPGEN --other ${remote_topology_specs[$idx]} $1 $remote_topology
+        $TOPGEN -t g:${remote_topology_specs[$idx]} -h $1 -o $remote_topology
 
         if [ "$?" == 0 ]; then
             echo "success!"
         else
             echo "failure!"
+            /bin/rm -f $remote_topology
         fi
     done
 }
@@ -85,39 +86,45 @@ run_test()
             echo -n "Running $test(\"local\", \"$topology\") ... "
         fi
 
-        /bin/rm -f $outfile
-        /bin/rm -f $logfile
-
-        case "$front_end" in
-        "test_DynamicFilters_FE" )
-            $front_end $4 $topology_file $back_end > $outfile 2> $logfile
-            ;;
-        "microbench_FE" )
-            $front_end 5 500 $topology_file $back_end > $outfile 2> $logfile
-            ;;
-        "test_MultStreams_FE" )
-            $front_end $topology_file 5 $back_end > $outfile 2> $logfile
-            ;;
-        "test_MultStreams_FE_lightweight" )
-            $front_end $topology_file 5 $back_end > $outfile 2> $logfile
-            ;;
-        * )
-            $front_end $topology_file $back_end > $outfile 2> $logfile
-            ;;
-        esac
-        if [ "$?" = 0 ]; then
-            echo "exited with $?."
-            echo -n "   Checking results ... ";
-            grep -i failure $outfile > grep.out
-            if [ "$?" != 0 ]; then
-                echo "success!"
-                /bin/rm -f $logfile
-            else
-                echo "failure! (Details in $outfile and $logfile)"
-            fi
-            /bin/rm -f grep.out
+        if [ ! -f $topology_file ]; then
+            echo "failure! Topology file $topology_file does not exist."
         else
-            echo "Test exited with failure.(Details in $outfile and $logfile)"
+
+            /bin/rm -f $outfile
+            /bin/rm -f $logfile
+
+            case "$front_end" in
+            "test_DynamicFilters_FE" )
+                $front_end $4 $topology_file $back_end > $outfile 2> $logfile
+                ;;
+            "microbench_FE" )
+                $front_end 5 500 $topology_file $back_end > $outfile 2> $logfile
+                ;;
+            "test_MultStreams_FE" )
+                $front_end $topology_file 5 $back_end > $outfile 2> $logfile
+                ;;
+            "test_MultStreams_FE_lightweight" )
+                $front_end $topology_file 5 $back_end > $outfile 2> $logfile
+                ;;
+            * )
+                $front_end $topology_file $back_end > $outfile 2> $logfile
+                ;;
+            esac
+            if [ "$?" = 0 ]; then
+                echo "exited with $?."
+                echo -n "   Checking results ... ";
+                /bin/rm -f mrnet_tests_grep.out
+                grep -i failure $outfile > mrnet_tests_grep.out
+                if [ "$?" != 0 ]; then
+                    echo "success!"
+                    /bin/rm -f $logfile
+                else
+                    echo "failure! (details in $outfile and $logfile)"
+                fi
+                /bin/rm -f mrnet_tests_grep.out
+            else
+                echo "failure! (details in $outfile and $logfile)"
+            fi
         fi
 
     done
@@ -234,7 +241,7 @@ if [ "$local" == "true" ]; then
 fi
 
 if [ "$remote" == "true" ]; then
-	create_remote_topologies $hostfile
+    create_remote_topologies $hostfile
 
     run_test "test_basic_FE" "test_basic_BE" "remote" "" ""
     echo

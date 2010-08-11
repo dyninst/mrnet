@@ -13,6 +13,16 @@
 
 using namespace MRN;
 using namespace std;
+int num_callbacks;
+
+void Callback_resTopo(CBClass icbcl,CBType icbt, EventCB* icl)
+{
+        TopoEvent* te = (TopoEvent*)icl;
+
+        //fprintf(stdout,"ResTopo: The Rank of node in topology add BE is= %d \t \t\n\n",te->get_Rank());
+
+	num_callbacks++;
+}
 
 void write_be_connections(vector< NetworkTopology::Node * >& leaves, unsigned num_be)
 {
@@ -53,7 +63,6 @@ int main(int argc, char **argv)
     Network * net = NULL;
     Communicator * comm_BC;
     Stream * stream;
-    unsigned int num_leaves = 0;
     int32_t send_val=57, recv_val=0;
 
     if( argc != 3 ) {
@@ -66,7 +75,16 @@ int main(int argc, char **argv)
     // If backend_exe (2nd arg) and backend_args (3rd arg) are both NULL,
     // then all nodes specified in the topology are internal tree nodes.
     net = Network::CreateNetworkFE( topology_file, NULL, NULL );
-  
+ 
+
+    bool cbrett = net->register_Callback(TOPOLOGY_EVENT_CB,Callback_resTopo,TOPO_ADD_BE);
+    if(cbrett==true){
+        fprintf(stdout,"Register Callback for add backend success\n");
+
+        }
+        else
+                fprintf(stdout,"Register Callback func for add backend error\n");
+
     // Query net for topology object
     NetworkTopology * topology = net->get_NetworkTopology();
     vector< NetworkTopology::Node * > internal_leaves;
@@ -76,19 +94,19 @@ int main(int argc, char **argv)
     // Write connection information to temporary file
     write_be_connections( internal_leaves, num_backends );
 
+
+    // Wait for backends to attach
     fprintf( stdout, "Please start backends now.\n\nWaiting for %u backends to connect ...", num_backends );
     fflush(stdout);
-    unsigned topol_size = topology->get_NumNodes();
     do {
         sleep(1);
-    } while( topology->get_NumNodes() < (topol_size + num_backends) );
+    } while( num_callbacks!=num_backends );
     fprintf( stdout, "complete!\n");
 
+
+    // A simple broadcast/gather
     comm_BC = net->get_BroadcastCommunicator();
     stream = net->new_Stream(comm_BC, TFILTER_NULL, SFILTER_DONTWAIT);
-
-    // should backends go away?
-    // net->set_TerminateBackEndsOnShutdown(false);
 
     fprintf( stdout, "broadcasting int %d to back-ends\n", send_val );
     if( (stream->send(PROT_INT, "%d", send_val) == -1) ||
