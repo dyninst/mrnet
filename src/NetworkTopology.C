@@ -736,7 +736,9 @@ bool NetworkTopology::isInTopology(std::string ihostname, Port iport, Rank irank
     Node* tmp = find_NodeHoldingLock(irank);
     if( NULL != tmp ) {
         if( ihostname.compare(tmp->_hostname) == 0 ) {
-            if( (iport == UnknownPort) || (iport == tmp->_port) )
+            if( (iport == UnknownPort) || 
+                (tmp->_port == UnknownPort) || 
+                (iport == tmp->_port) )
                 found=true;
         } 
     }
