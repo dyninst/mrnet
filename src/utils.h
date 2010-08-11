@@ -65,7 +65,7 @@ namespace MRN
 int connectHost( int *sock_in, const std::string & hostname, Port port,
                  int num_retry = -1 );
 
-int bindPort( int *sock_in, Port *port_in );
+int bindPort( int *sock_in, Port *port_in, bool nonblock=false );
 int getSocketConnection( int bound_socket, int& inout_errno );
 
 #if READY

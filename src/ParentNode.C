@@ -47,7 +47,7 @@ ParentNode::ParentNode( Network* inetwork,
 
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling bind_to_port(%d)\n", _port ));
 
-        if( bindPort( &listening_sock_fd, &_port ) == -1 ) {
+        if( bindPort( &listening_sock_fd, &_port, true /*non-blocking*/ ) == -1 ) {
             error( ERR_SYSTEM, _rank, "bindPort(%d): %s\n", _port, strerror(errno) );
             mrn_dbg( 1, mrn_printf(FLF, stderr, "bind_to_port() failed\n" ));
             return;

@@ -412,120 +412,120 @@ void * EventDetector::main( void* iarg )
                 //Activity on our local listening sock, accept connection
                 mrn_dbg( 5, mrn_printf(FLF, stderr, "Activity on listening socket\n"));
 
-                while(true)
-		{
+                while(true) {
 
-                int inout_errno;
+                    int inout_errno;
 
-                int connected_sock = getSocketConnection( local_sock, inout_errno );
-                if( (connected_sock == -1 )  && ( (inout_errno == EAGAIN ) ||  (inout_errno == EWOULDBLOCK) ) ) 
-		   break;
+                    int connected_sock = getSocketConnection( local_sock, inout_errno );
+                    if( (connected_sock == -1 ) && 
+                        ((inout_errno == EAGAIN ) || (inout_errno == EWOULDBLOCK)) ) 
+                        break;
 
-                if ( connected_sock == -1) {
-                    perror("getSocketConnection()");
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
-                    perror("getSocketConnection()");
-		    goto_outer=true;
-		    break;
-		}    
+                    if ( connected_sock == -1) {
+                        perror("getSocketConnection()");
+                        mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
+                        perror("getSocketConnection()");
+                        goto_outer=true;
+                        break;
+                    }    
 		 
-                packets.clear();
-                msg.recv( connected_sock, packets, UnknownRank );
-                list< PacketPtr >::iterator packet_list_iter;
-                list< int >::iterator iter;
+                    packets.clear();
+                    msg.recv( connected_sock, packets, UnknownRank );
+                    list< PacketPtr >::iterator packet_list_iter;
+                    list< int >::iterator iter;
 
-                for( packet_list_iter = packets.begin();
-                     packet_list_iter != packets.end();
-                     packet_list_iter++ ) {
-                    ParentNode* p;
-                    PacketPtr cur_packet( *packet_list_iter );
-                    switch ( cur_packet->get_Tag() ) {
+                    for( packet_list_iter = packets.begin();
+                         packet_list_iter != packets.end();
+                         packet_list_iter++ ) {
+                        ParentNode* p;
+                        PacketPtr cur_packet( *packet_list_iter );
+                        switch ( cur_packet->get_Tag() ) {
 
-                    case PROT_KILL_SELF:
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_KILL_SELF\n"));
+                        case PROT_KILL_SELF:
+                            mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_KILL_SELF\n"));
 
-                        //close event sockets explicitly
-                        mrn_dbg(5, mrn_printf(FLF, stderr,
-                                              "Closing %d sockets\n",
-                                              watch_list.size() ));
-                        for( iter=watch_list.begin(); iter!=watch_list.end(); iter++ ) {
+                            //close event sockets explicitly
                             mrn_dbg(5, mrn_printf(FLF, stderr,
-                                                  "Closing event socket: %d\n", *iter ));
-                            char c = 1;
-                            mrn_dbg(5, mrn_printf(FLF, stderr, "... writing \n"));
-                            // TODO: Commented out for Windows because of write assert() failure.
+                                                  "Closing %d sockets\n",
+                                                  watch_list.size() ));
+                            for( iter=watch_list.begin(); iter!=watch_list.end(); iter++ ) {
+                                mrn_dbg(5, mrn_printf(FLF, stderr,
+                                                      "Closing event socket: %d\n", *iter ));
+                                char c = 1;
+                                mrn_dbg(5, mrn_printf(FLF, stderr, "... writing \n"));
+                                // TODO: Commented out for Windows because of write assert() failure.
 #ifndef os_windows
-                            if( write( *iter, &c, 1) == -1 ) {
-                                perror("write(event_fd)");
-                            }
-                            mrn_dbg(5, mrn_printf(FLF, stderr, "... closing\n"));
+                                if( write( *iter, &c, 1) == -1 ) {
+                                    perror("write(event_fd)");
+                                }
+                                mrn_dbg(5, mrn_printf(FLF, stderr, "... closing\n"));
 #endif
 
-                            if( XPlat::SocketUtils::Close( *iter ) == -1 ){
-                                perror("close(event_fd)");
+                                if( XPlat::SocketUtils::Close( *iter ) == -1 ){
+                                    perror("close(event_fd)");
+                                }
                             }
-                        }
-                        mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
-                        return NULL;
+                            mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
+                            return NULL;
 
-                    case PROT_NEW_CHILD_FD_CONNECTION:
-                        mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION\n"));
-                        edt->add_FD(connected_sock);
-                        watch_list.push_back( connected_sock );
-                        mrn_dbg(5, mrn_printf(FLF, stderr,
-                                               "FD socket:%d added to list.\n",
-                                               connected_sock));
+                        case PROT_NEW_CHILD_FD_CONNECTION:
+                            mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION\n"));
+                            edt->add_FD(connected_sock);
+                            watch_list.push_back( connected_sock );
+                            mrn_dbg(5, mrn_printf(FLF, stderr,
+                                                  "FD socket:%d added to list.\n",
+                                                  connected_sock));
                         
-                        edt->proc_NewChildFDConnection( cur_packet, connected_sock );
-                        break;
+                            edt->proc_NewChildFDConnection( cur_packet, connected_sock );
+                            break;
 
-                    case PROT_NEW_CHILD_DATA_CONNECTION:
-                        mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_DATA_CONNECTION\n"));
-                        //get ParentNode obj. Try internal node, then FE
-                        p = net->get_LocalParentNode();
-                        assert(p);
+                        case PROT_NEW_CHILD_DATA_CONNECTION:
+                            mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_DATA_CONNECTION\n"));
+                            //get ParentNode obj. Try internal node, then FE
+                            p = net->get_LocalParentNode();
+                            assert(p);
 
-                        p->proc_NewChildDataConnection( cur_packet,
-                                                        connected_sock );
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "New child connected.\n"));
-                        break;
+                            p->proc_NewChildDataConnection( cur_packet,
+                                                            connected_sock );
+                            mrn_dbg( 5, mrn_printf(FLF, stderr, "New child connected.\n"));
+                            break;
 
-                    case PROT_NEW_SUBTREE_RPT:
-                        // NOTE: needed since back-ends are now threaded, and we can't
-                        //       guarantee a packet containing this protocol message
-                        //       won't arrive in a group with NEW_CHILD_DATA_CONNECTION
-                        mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
-                        //get ParentNode obj. Try internal node, then FE
-                        p = net->get_LocalParentNode();
-                        assert(p);
+                        case PROT_NEW_SUBTREE_RPT:
+                            // NOTE: needed since back-ends are now threaded, and we can't
+                            //       guarantee a packet containing this protocol message
+                            //       won't arrive in a group with NEW_CHILD_DATA_CONNECTION
+                            mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
+                            //get ParentNode obj. Try internal node, then FE
+                            p = net->get_LocalParentNode();
+                            assert(p);
 
-                        if( p->proc_newSubTreeReport( cur_packet ) == -1 ) {
-                            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTreeReport() failed\n" ));
-                        }
-                        break;
+                            if( p->proc_newSubTreeReport( cur_packet ) == -1 ) {
+                                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTreeReport() failed\n" ));
+                            }
+                            break;
                     
-                     case PROT_SUBTREE_INITDONE_RPT:
-                        // NOTE: needed since back-ends are now threaded, and we can't
-                        //       guarantee a packet containing this protocol message
-                        //       won't arrive in a group with NEW_CHILD_DATA_CONNECTION
-                        mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
-                        //get ParentNode obj. Try internal node, then FE
-                        p = net->get_LocalParentNode();
-                        assert(p);
+                        case PROT_SUBTREE_INITDONE_RPT:
+                            // NOTE: needed since back-ends are now threaded, and we can't
+                            //       guarantee a packet containing this protocol message
+                            //       won't arrive in a group with NEW_CHILD_DATA_CONNECTION
+                            mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
+                            //get ParentNode obj. Try internal node, then FE
+                            p = net->get_LocalParentNode();
+                            assert(p);
 
-                        if( p->proc_SubTreeInitDoneReport( cur_packet ) == -1 ) {
-                            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_SubTreeInitDoneReport() failed\n" ));
-                        }
-                        break;
+                            if( p->proc_SubTreeInitDoneReport( cur_packet ) == -1 ) {
+                                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_SubTreeInitDoneReport() failed\n" ));
+                            }
+                            break;
 
-                    default:
-                        mrn_dbg(1, mrn_printf(FLF, stderr, 
-                                              "### PROTOCOL ERROR: Unexpected tag %d ###\n",
-                                              cur_packet->get_Tag()));
-                        break;
-                    }//switch
-                }//for
-	      }//while	
+                        default:
+                            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                                  "### PROTOCOL ERROR: Unexpected tag %d ###\n",
+                                                  cur_packet->get_Tag()));
+                            break;
+                        }//switch
+                    }//for
+                }//while	
             }//if activity on local sock
 
             if(!goto_outer)
