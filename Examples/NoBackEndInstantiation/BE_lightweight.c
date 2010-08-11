@@ -47,7 +47,6 @@ int main(int argc, char **argv) {
         }
    
 
-        fprintf(stderr, "switching on tag = %d\n", tag); 
         switch( tag ) {
 
         case PROT_INT: // tag 101

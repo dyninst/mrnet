@@ -148,7 +148,7 @@ class NetworkTopology: public Error {
 
     //new members added for topology propagation change
     bool new_Node( const std::string &, Port, Rank, bool iis_backend );
-    bool isInTopology(std::string hostname, Port _port, Rank _rank);
+    bool isInTopology(std::string ihostname, Port iport, Rank irank);
     void insert_updates_buffer( update_contents_t* uc);
     std::vector<update_contents_t* > get_updates_buffer( void );
 

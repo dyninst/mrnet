@@ -35,10 +35,10 @@ InternalNode::InternalNode( Network * inetwork,
     ParentNode::_network->set_InternalNode( this );
 
     //new topo prop code
-    ParentNode::_network->set_NetworkTopology(new NetworkTopology (inetwork, 
+    ParentNode::_network->set_NetworkTopology( new NetworkTopology(inetwork, 
                                                                    ParentNode::_hostname,
 								   ParentNode::_port,
-								   ParentNode::_rank ) );
+								   ParentNode::_rank) );
    
     //establish data connection w/ parent
     if( init_newChildDataConnection( ParentNode::_network->get_ParentNode() ) == -1 ) {
@@ -56,43 +56,41 @@ InternalNode::InternalNode( Network * inetwork,
     }
      
     NetworkTopology* nt = ParentNode::_network->get_NetworkTopology();  
-    if( nt != NULL )
-    {
-        if( !(nt->isInTopology( ihostname, listeningPort , irank)) ) //if internal node already not in the topology => internal node attach case 
-        {
-            ParentNode::_network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
-            mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                     " Internal node not already in the topology\n" ));
+    if( nt != NULL ) {
+    
+        if( ! nt->isInTopology(ihostname, listeningPort, irank) ) {
+            // not already in topology => internal node attach case 
+            ParentNode::_network->new_Stream( 1, NULL, 0, TFILTER_TOPO_UPDATE, 
+                                              SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+            mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                                   "Internal node not in the topology\n") );
 
-           //new topo propagation code - create a new update packet
-           Stream *s = ParentNode::_network->get_Stream( 1 ); // getting handle for stream id 1 which was reserved for topology propagation
-           int type = TOPO_NEW_CP; 
-           char *host_arr = strdup( ihostname.c_str() );
+            //new topo propagation code - create a new update packet
+            Stream *s = ParentNode::_network->get_Stream(1); // get topol prop stream
+            int type = TOPO_NEW_CP; 
+            char *host_arr = strdup( ihostname.c_str() );
 
-           uint32_t* send_iprank = (uint32_t* ) malloc( sizeof( uint32_t) );
-           *send_iprank = iprank;
+            uint32_t* send_iprank = (uint32_t* ) malloc( sizeof( uint32_t) );
+            *send_iprank = iprank;
 
-           uint32_t* send_myrank = (uint32_t*) malloc( sizeof( uint32_t) );
-           *send_myrank = irank; 
+            uint32_t* send_myrank = (uint32_t*) malloc( sizeof( uint32_t) );
+            *send_myrank = irank; 
 
-           uint16_t* send_port = (uint16_t*)malloc( sizeof( uint16_t) );
-           *send_port = listeningPort;
+            uint16_t* send_port = (uint16_t*)malloc( sizeof( uint16_t) );
+            *send_port = listeningPort;
 
-           s->send_internal(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", &type, 1, send_iprank, 1, send_myrank, 1, &host_arr,1, send_port, 1);
-           free(host_arr);
+            s->send_internal( PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", 
+                              &type, 1, send_iprank, 1, send_myrank, 1, 
+                              &host_arr,1, send_port, 1 );
+            free(host_arr);
         } 
         else
-           mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                         " Internal node not already in the topology\n" ));
-
+            mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                   "Internal node already in the topology\n") );
     } 
  
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "InternalNode:%p\n", this ));
     mrn_dbg_func_end();
 }
-
-
-
 
 InternalNode::~InternalNode( void )
 {
@@ -112,8 +110,7 @@ int InternalNode::proc_DataFromParent( PacketPtr ipacket ) const
     }
 
     std::vector< PacketPtr > packets, reverse_packets;
-
-    stream->push_Packet( ipacket, packets, reverse_packets, false );  // packet going to children
+    stream->push_Packet( ipacket, packets, reverse_packets, false );
 
     if( ! packets.empty() ) {
         // deliver all packets to all child nodes
@@ -147,7 +144,6 @@ int InternalNode::proc_DataFromChildren( PacketPtr ipacket ) const
     }
 
     std::vector< PacketPtr > packets, reverse_packets;
-
     stream->push_Packet( ipacket, packets, reverse_packets, true );
 
     if( ! packets.empty() ) {
