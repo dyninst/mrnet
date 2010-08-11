@@ -28,7 +28,7 @@ bool Router::update_Table()
     NetworkTopology::Node * local_node = net_topo->
         find_NodeHoldingLock( _network->get_LocalRank() );
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "local_node: %p\n", local_node ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "local_node: %p\n", local_node) );
 
     if( local_node != NULL ) {
    
@@ -40,26 +40,26 @@ bool Router::update_Table()
         
         std::set< NetworkTopology::Node * >::iterator iter;
         for( iter=children.begin(); iter!=children.end(); iter++ ){
-            mrn_dbg(5, mrn_printf(FLF, stderr, "Looking up peer node[%d]\n",
-                                  (*iter)->get_Rank() ));
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "Looking up peer node[%d]\n",
+                                   (*iter)->get_Rank()) );
             PeerNodePtr cur_outlet = _network->get_PeerNode( (*iter)->get_Rank() );
             if( cur_outlet == PeerNode::NullPeerNode ) {
-                mrn_dbg(5, mrn_printf(FLF, stderr, "PeerNode[%d] doesn't exist -- likely failed\n",
-                                      (*iter)->get_Rank() ));
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "PeerNode[%d] doesn't exist\n",
+                                       (*iter)->get_Rank()) );
                 continue;
             }
 
             _table[ (*iter)->get_Rank() ] = cur_outlet;
 
-            mrn_dbg(5, mrn_printf(FLF, stderr, "Getting descendants of node[%d]\n",
-                                  (*iter)->get_Rank() ));
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "Getting descendants of node[%d]\n",
+                                   (*iter)->get_Rank()) );
             net_topo->get_Descendants( (*iter), descendants );
 
             for( unsigned int j=0; j<descendants.size(); j++ ){
-                mrn_dbg(5, mrn_printf(FLF, stderr,
-                                      "Setting child[%d] as outlet for node[%d]\n",
-                                      (*iter)->get_Rank(),
-                                      descendants[j]->get_Rank() ));
+                mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                       "Setting child[%d] as outlet for node[%d]\n",
+                                       (*iter)->get_Rank(),
+                                       descendants[j]->get_Rank()) );
                 _table[ descendants[j]->get_Rank() ] = cur_outlet;
             }
             descendants.clear();

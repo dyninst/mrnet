@@ -1645,49 +1645,6 @@ bool Network::update( void )
     return true;
 }
 
-#if 0
-#include <signal.h>
-void Network::cancel_IOThreads( void )
-{
-    /* Remember, no mrn_dbg()s allowed in this function. You wouldn't
-       see your messages anyway since we have already set output level to -1 */
-
-    set< PeerNodePtr >::const_iterator iter;
-
-    // get this thread's id so we don't try to cancel ourself
-    XPlat::Thread::Id my_id = 0;
-    tsd_t *tsd = ( tsd_t * )tsd_key.Get();
-    if( tsd != NULL )
-        my_id = tsd->thread_id;
-
-    if( is_LocalNodeParent() ) {
-        _children_mutex.Lock();
-        for( iter=_children.begin(); iter!=_children.end(); iter++ ) {
-            PeerNodePtr cur_node = *iter;
-            
-            //flush outgoing packets for children threads
-            cur_node->flush();
-            if( cur_node->send_thread_id != my_id ) {
-                XPlat::Thread::Cancel( cur_node->send_thread_id ); 
-            }
-            if( cur_node->recv_thread_id != my_id ) {
-                XPlat::Thread::Cancel( cur_node->recv_thread_id );
-            }
-        }
-        _children_mutex.Unlock();
-    }
-
-    if( is_LocalNodeChild() ) {
-        if( _parent->send_thread_id != my_id ) {
-            XPlat::Thread::Cancel( _parent->send_thread_id );
-        }
-        if( _parent->recv_thread_id != my_id ) {
-            XPlat::Thread::Cancel( _parent->recv_thread_id );
-        }
-    }
-}
-#endif
-
 void Network::close_PeerNodeConnections( void )
 {
     mrn_dbg_func_begin();

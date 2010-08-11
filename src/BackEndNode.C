@@ -28,7 +28,7 @@ BackEndNode::BackEndNode( Network * inetwork,
     _network->set_LocalHostName( _hostname  );
     _network->set_LocalRank( _rank );
     _network->set_BackEndNode( this );
-    _network->set_NetworkTopology( new NetworkTopology( inetwork, _hostname, _port, _rank, true ) );
+    _network->set_NetworkTopology( new NetworkTopology(inetwork, _hostname, _port, _rank, true) );
     
     NetworkTopology* nt=_network->get_NetworkTopology();
 
@@ -46,16 +46,17 @@ BackEndNode::BackEndNode( Network * inetwork,
       return;
     }
     
-    if( nt != NULL )
-    {
+    if( nt != NULL ) {
+    
       if( ! nt->isInTopology(imyhostname, _port, imyrank) ) {
-          //if backend already not in the topology. this is false in back end attach cases
+          //not in topology. backend attach case
 
-          _network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+          _network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, 
+                               SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
           mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend not already in the topology\n") );
 
           //new topo propagation code - create a new update packet
-          Stream *s = _network->get_Stream(1); // getting handle for topology propagation stream
+          Stream *s = _network->get_Stream(1); // get topol prop stream
           int type = TOPO_NEW_BE;
           char *host_arr = strdup(imyhostname.c_str());
           uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
@@ -66,18 +67,17 @@ BackEndNode::BackEndNode( Network * inetwork,
           *send_port = _port;
 
           s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                   &type, 1, send_iprank, 1, send_myrank, 1, &host_arr,1, send_port, 1);
+                   &type, 1, send_iprank, 1, send_myrank, 1, 
+                   &host_arr, 1, send_port, 1 );
           free(host_arr);
       }	
       else
           mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend already in the topology\n") );
-
     }  
 
     if( send_SubTreeInitDoneReport() == -1 ) {
-           mrn_dbg( 1, mrn_printf(FLF, stderr, "send_SubTreeInitDoneReport() failed\n") );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "send_SubTreeInitDoneReport() failed\n") );
     }
-
 }
 
 BackEndNode::~BackEndNode(void)

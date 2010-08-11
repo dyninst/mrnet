@@ -152,7 +152,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
     return 0;
 }
 
-int bindPort( int *sock_in, Port *port_in )
+int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
 {
     int err;
     int sock = *sock_in;
@@ -175,34 +175,43 @@ int bindPort( int *sock_in, Port *port_in )
         err = XPlat::NetUtils::GetLastError();
         perror( "socket()" );
         mrn_dbg( 1, mrn_printf(FLF, stderr, "socket() failed: %s\n",
-                                       XPlat::Error::GetErrorString( err ).c_str() ) );
+                               XPlat::Error::GetErrorString( err ).c_str() ) );
         return -1;
     }
 
     // Close socket on exec
 #ifndef os_windows
-    int fdflag = fcntl(sock, F_GETFD );
+    int fdflag, fret;
+    fdflag = fcntl(sock, F_GETFD );
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags
         mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );     
     }
-    int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
-    if( fret == -1 ) {
-        // failed to set the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+    else {
+        fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
+        if( fret == -1 ) {
+            // failed to set the socket descriptor flags
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+        }
     }
 #endif
 
 #ifndef os_windows
-    fdflag = fcntl(sock, F_GETFL );
-    if( fdflag == -1 ) {
-        // failed to retrieve the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFL failed\n") );
-    }
-    fret = fcntl( sock, F_SETFL, fdflag | O_NONBLOCK );
-    if(fret == -1 ) {
-        // failed to set the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "Setting listening socket to non blocking failed\n") );
+    // Set listening socket to non-blocking if requested
+    if( nonblock ) {
+        fdflag = fcntl(sock, F_GETFL );
+        if( fdflag == -1 ) {
+            // failed to retrieve the socket status flags
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFL failed\n") );
+        }
+        else {
+            fret = fcntl( sock, F_SETFL, fdflag | O_NONBLOCK );
+            if(fret == -1 ) {
+                // failed to set the socket status flags
+                mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                        "Setting listening socket to non blocking failed\n") );
+            }
+        }
     }
 #else
 	 unsigned long mode = 1; // 0 is blocking, !0 is non-blocking
@@ -224,7 +233,7 @@ int bindPort( int *sock_in, Port *port_in )
     if( soRet < 0 ) {
         err = XPlat::NetUtils::GetLastError();
         mrn_dbg( 1, mrn_printf(FLF, stderr, "setsockopt() failed: %s\n",
-                                       XPlat::Error::GetErrorString( err ).c_str() ) );
+                               XPlat::Error::GetErrorString( err ).c_str() ) );
     }
 #endif
 
@@ -299,7 +308,7 @@ int bindPort( int *sock_in, Port *port_in )
     return 0;
 }
 
-int getSocketConnection( int bound_socket , int& inout_errno)
+int getSocketConnection( int bound_socket , int& inout_errno )
 {
     int connected_socket;
 
@@ -322,9 +331,12 @@ int getSocketConnection( int bound_socket , int& inout_errno)
         }
     } while ( ( connected_socket == -1 ) && ( errno == EINTR ) );
 
+    if( -1 == connected_socket )
+        return -1;
+
     // Close socket on exec
 #ifndef os_windows
-    int fdflag = fcntl(connected_socket, F_GETFD );
+    int fdflag = fcntl( connected_socket, F_GETFD );
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags 
         mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );    

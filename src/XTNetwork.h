@@ -113,7 +113,7 @@ private:
     bool ClosestToRoot( SerialGraph* topology,
 			const std::string& childhost, Rank childrank );
 
-    int CreateListeningSocket( int& ps, Port& pp ) const;
+    int CreateListeningSocket( int& ps, Port& pp, bool nonblock ) const;
 
 
     pid_t SpawnBE( int beArgc, char** beArgv, 

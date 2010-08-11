@@ -97,7 +97,7 @@ RSHNetwork::CreateInternalNode( Network* inetwork,
     // because other platforms need to have this information
     // in their initialization code, and it doesn't hurt us
     // to bind it early
-    int bRet = bindPort( &listeningSocket, &listeningPort );
+    int bRet = bindPort( &listeningSocket, &listeningPort, true /*non-blocking*/ );
     if( bRet == -1 )
     {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "Failure: unable to instantiate network\n" ));

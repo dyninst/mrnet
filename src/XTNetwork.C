@@ -258,7 +258,7 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
 
         // set up a listening socket that our parent will connect 
         // to to provide us the topology
-        if( -1 == CreateListeningSocket( listeningTopoSocket, topoPort ) ) {
+        if( -1 == CreateListeningSocket( listeningTopoSocket, topoPort, false ) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr,
                                   "failed to create topology listening socket\n" ));
             exit( 1 );
@@ -380,28 +380,12 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
     // Initialize as IN
     int listeningDataSocket = -1;
     Port listeningDataPort = my_tpos->subtree->get_RootPort();
-    if( -1 == CreateListeningSocket( listeningDataSocket, listeningDataPort ) ) {
+    if( -1 == CreateListeningSocket( listeningDataSocket, listeningDataPort, true ) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr,
                               "failed to create listening data socket\n" ));
         exit( 1 );
     }
     
-    int flags;
-    if( (flags=fcntl(listeningDataSocket,F_GETFL,0))<0)
-    {
-        mrn_dbg ( 1, mrn_printf(FLF,stderr, 
-                  "failed to get flags on the listening data socket\n"));
-        exit(1);
-    }  
-    
-    
-    if(fcntl(listeningDataSocket,F_SETFL,flags|O_NONBLOCK) < 0)
-    {
-        mrn_dbg(1, mrn_printf(FLF, stderr,
-                "failed to set non blocking flags on listening data socket \n" ));
-        exit( 1 );
-    }
-
     Network::init_InternalNode( my_tpos->parentHostname.c_str(),
                                 my_tpos->parentPort,
                                 my_tpos->parentRank,
@@ -1062,7 +1046,7 @@ XTNetwork::CreateFrontEndNode( Network* n, std::string ihost, Rank irank )
 
     int listeningSocket = -1;
     Port listeningPort = UnknownPort;
-    if( -1 == CreateListeningSocket( listeningSocket, listeningPort ) ) {
+    if( -1 == CreateListeningSocket( listeningSocket, listeningPort, true ) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, 
                               "failed to create listening data socket\n" ));
         return NULL;
@@ -1125,7 +1109,7 @@ XTNetwork::CreateInternalNode( Network* inetwork,
     if( listeningSocket == -1 ) {
         if( idataPort == UnknownPort )
             listeningPort = FindParentPort();
-        if( -1 == CreateListeningSocket( listeningSocket, listeningPort ) ) {
+        if( -1 == CreateListeningSocket( listeningSocket, listeningPort, true ) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr,
        	                          "failed to create listening data socket\n" ));
             return NULL;
@@ -1147,10 +1131,10 @@ XTNetwork::CreateInternalNode( Network* inetwork,
 }
 
 int
-XTNetwork::CreateListeningSocket( int& ps, Port& pp ) const
+XTNetwork::CreateListeningSocket( int& ps, Port& pp, bool nonblock ) const
 {
     ps = -1;
-    int bRet = bindPort( &ps, &pp );
+    int bRet = bindPort( &ps, &pp, nonblock );
     if( -1 == bRet ) {
         // TODO how to indicate the error to the caller?
         mrn_dbg(1, mrn_printf(FLF, stderr, 

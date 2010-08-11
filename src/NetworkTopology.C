@@ -729,24 +729,21 @@ char * NetworkTopology::get_TopologyStringPtr( )
     return retval;
 }
 
-bool NetworkTopology::isInTopology(std::string hostname, Port _port, Rank _rank)
+bool NetworkTopology::isInTopology(std::string ihostname, Port iport, Rank irank)
 {
-  std::map< Rank, Node * >::iterator _nodes_it;
-  bool found=false;
-   
-  _sync.Lock(); 
-  //TODO: can call find_Node and then check for port and rank
-  for( _nodes_it = _nodes.begin(); _nodes_it != _nodes.end(); _nodes_it++)
-  {
-    Node* tmp = (*_nodes_it).second;
-    if( (hostname.compare(tmp->_hostname) == 0)  && (_port == tmp->_port) && (_rank == tmp->_rank)  )
-    {
-       found=true;
-       break;
+    bool found = false;
+    _sync.Lock(); 
+    Node* tmp = find_NodeHoldingLock(irank);
+    if( NULL != tmp ) {
+        if( ihostname.compare(tmp->_hostname) == 0 ) {
+            if( (iport == UnknownPort) || 
+                (tmp->_port == UnknownPort) || 
+                (iport == tmp->_port) )
+                found=true;
+        } 
     }
-  } 
-  _sync.Unlock();
-  return found;
+    _sync.Unlock();
+    return found;
 }
 
 char * NetworkTopology::get_LocalSubTreeStringPtr( )
@@ -768,7 +765,7 @@ char * NetworkTopology::get_LocalSubTreeStringPtr( )
     
     _sync.Unlock();
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning '%s'\n", retval ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning '%s'\n", retval) );
 
     return retval;
 }

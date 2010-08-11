@@ -104,24 +104,20 @@ void NetworkTopology_get_OrphanNodes(NetworkTopology_t* net_top,
 }
 
 int NetworkTopology_isInTopology(NetworkTopology_t* net_top,
-                                 char * hostname, 
-                                 Port _port,
-                                 Rank _rank)
+                                 char * ihostname, 
+                                 Port iport,
+                                 Rank irank)
 {
-    int iter;
     int found = false;
-
-    for (iter = 0; iter < net_top->nodes->size; iter++) {
-        Node_t* tmp = (Node_t*)get_val(net_top->nodes, net_top->nodes->keys[iter]);
-
-        if ( !strcmp(hostname, tmp->hostname) && 
-                    (_port == tmp->port) &&
-                    (_rank == tmp->rank) ) {
-            found=true;
-            break;
+    Node_t* tmp = NetworkTopology_find_Node(net_top, irank);
+    if ( NULL != tmp ) {
+        if ( 0 == strcmp(ihostname, tmp->hostname) ) { 
+            if ( (iport == UnknownPort) ||
+                 (tmp->port == UnknownPort) ||
+                 (iport == tmp->port) )
+                found = true;
         }
     } 
-
     return found;
 }
 
