@@ -299,7 +299,7 @@ void * EventDetector::main( void* iarg )
     list< int > watch_list; //list of sockets to detect events on
     int parent_sock=0;
     int local_sock=0;
-    bool goto_outer;
+    bool goto_outer=false;
 
     EventDetector* edt = (EventDetector*) iarg;
     Network* net = edt->_network;;

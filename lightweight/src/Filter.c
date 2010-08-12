@@ -33,8 +33,8 @@ int Filter_push_Packets(Filter_t* filter,
                         TopologyLocalInfo_t * topol_info,
                         int igoing_upstream)
 {
-    void * filter_state;
-    Packet_t * params;
+    void * filter_state = NULL;
+    Packet_t * params = NULL;
     Packet_t * ipacket;
 	int stream_id;
 	
