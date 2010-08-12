@@ -220,9 +220,12 @@ const char* Network::FindCommnodePath( void )
     return path;
 }
 
+// deprecated: back-ends should call exit() after waitfor_ShutDown()
+//             if termination is desired
 void Network::set_TerminateBackEndsOnShutdown( bool terminate )
 {
-   _terminate_backends = terminate;
+    fprintf(stderr, "Network::set_TerminateBackEndsOnShutdown() is deprecated.\n");
+    _terminate_backends = terminate;
 }
 
 void Network::update_BcastCommunicator( void )
@@ -348,94 +351,69 @@ void Network::init_FrontEnd( const char * itopology,
     mrn_dbg(5, mrn_printf(FLF, stderr, "Updating bcast communicator ... \n" ));
     update_BcastCommunicator( );
 
-    //creating topology propagation stream
-    Stream* s=new_Stream(_bcast_communicator, TFILTER_TOPO_UPDATE, SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+    // create topology propagation stream
+    Stream* s = new_Stream( _bcast_communicator, TFILTER_TOPO_UPDATE, 
+                            SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
     assert(s->get_Id() == 1);
     s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
 
-    //collect_PortUpdates - For XT this call just returns as there is no port update for XT
+    // collect port updates (no-op on XT)
     PacketPtr packet( new Packet( 0, PROT_PORT_UPDATE, "" ) );
     if( -1 == get_LocalFrontEndNode()->proc_PortUpdates( packet ) )
       error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
-    
 }
-
-/*
-//TODO: NOT NEEDED as we create topology stream with the backend 
-void Network::update_TopoStream()
-{
-   update_BcastCommunicator();
-   Stream *s=get_Stream(1);
-   
-   const set<CommunicationNode*>& be = _bcast_communicator->get_EndPoints();
-   set <CommunicationNode*>:: const_iterator iter;
-
-   for( iter=be.begin(); iter!=be.end(); iter++ )
-   {
-     printf("Adding %d to stream 1 end point \n", (*iter)->get_Rank());
-     s->add_Stream_EndPoint( (*iter)->get_Rank() );
-   }
-   update();
-   mrn_dbg(5, mrn_printf(FLF, stderr, "Topo Stream update complete \n" ));
-
-}
-
-*/
 
 void Network::send_BufferedTopoUpdates( std::vector<update_contents_t* > vuc )
 {
-    mrn_dbg(5, mrn_printf(FLF, stderr, "send_BufferedTopoUpdates begin \n" ));
+    mrn_dbg_func_begin();
 
     int vuc_size=vuc.size();
-    std::vector<update_contents_t* >::iterator it;
+    std::vector< update_contents_t* >::iterator it;
   
-    int* type = (int*)malloc (sizeof(int)  * vuc_size ); 
-    char** host_arr;
-    host_arr=(char**)malloc (sizeof(char*) * vuc_size );
-  
-    for( int j=0 ; j< vuc_size; j++)
-        host_arr[j]=(char*)malloc (sizeof(char) * 100 );
+    int* type = (int*) malloc( sizeof(int) * vuc_size ); 
 
-    uint32_t* prank =(uint32_t*)malloc (sizeof(uint32_t) * vuc_size );
+    char** host_arr = (char**) malloc( sizeof(char*) * vuc_size );  
+    for( int j=0 ; j < vuc_size; j++ )
+        host_arr[j] = (char*) malloc( sizeof(char) * 100 );
+
+    uint32_t* prank = (uint32_t*) malloc( sizeof(uint32_t) * vuc_size );
     uint32_t* crank = (uint32_t*) malloc( sizeof(uint32_t) * vuc_size );
     uint16_t* cport = (uint16_t*) malloc( sizeof(uint16_t) * vuc_size );
     int i= 0;
 
-    if( !(vuc.empty() ) )
-    {
-        for( it = vuc.begin() ; it!= vuc.end() ; it++)
-        {
-             if( (*it)->type == TOPO_CHANGE_PORT ) 
-             {
-                 type[i] = TOPO_CHANGE_PORT;
-                 prank[i]= 1;
-                 host_arr[i]="NULL";
-                 if(host_arr[i] == NULL) assert(0);
-                 crank[i] = (*it)->crank;
-                 cport[i] = (*it)->cport;
-                 i++;
-             }
+    char null_host[8];
+    sprintf( null_host, "NULL" );
+
+    if( ! vuc.empty() ) {
+
+        for( it = vuc.begin() ; it!= vuc.end() ; it++) {
+
+            if( (*it)->type == TOPO_CHANGE_PORT ) {
+                type[i] = TOPO_CHANGE_PORT;
+                prank[i] = UnknownRank;
+                host_arr[i] = null_host;
+                crank[i] = (*it)->crank;
+                cport[i] = (*it)->cport;
+                i++;
+            }
         } 
     
-        Stream *s = get_Stream(1); // getting handle for stream id 1 which was reserved for topology propagation
-        int no_updates=i;
+        Stream *s = get_Stream(1); // get topol prop stream
+        int num_updates=i;
 
-        if(host_arr==NULL) assert(0);
-        //broadcast of all topology updates
-        //stream end points of stream id=1 contains all the backend end points. 
-   
-        mrn_dbg(5, mrn_printf(FLF, stderr, "sending %d updates\n", no_updates) );
+        //broadcast all topology updates
+        mrn_dbg(5, mrn_printf(FLF, stderr, "sending %d updates\n", num_updates) );
 
-        //for ( int k=0; k< no_updates; k++)
-            // printf("Contents : type =%d, prank= %d, host_arr = %s, crank= %d, cport= %d \n", type[k], prank[k], (host_arr[k]), crank[k], cport[k] ); 
-  
-        if(i > 0 )
-              s->send(PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", type,no_updates, prank, no_updates, crank, no_updates, host_arr, no_updates, cport, no_updates);
-  
-    } //if vuc not empty
-  
-    mrn_dbg(5, mrn_printf(FLF, stderr, "send_BufferedTopoUpdates end \n" ));
-
+        if( i > 0 )
+            s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
+                     type, num_updates, 
+                     prank, num_updates, 
+                     crank, num_updates, 
+                     host_arr, num_updates, 
+                     cport, num_updates );   
+    }
+    
+    mrn_dbg_func_end();
 }
 
 
@@ -1026,36 +1004,7 @@ bool Network::have_Streams( )
     return ret;
 }
 
-/***** DEPRECATED *****
- * int Network::get_DataSocketFds( int** ofds, unsigned int* onum_fds ) const
- * {
- *     if( is_LocalNodeFrontEnd() ) {
- *         _children_mutex.Lock();
- *         std::set < PeerNodePtr >::const_iterator iter;
- * 
- *         *onum_fds = _children.size( );
- *         *ofds = new int[*onum_fds];
- * 
- *         unsigned int i;
- *         for( i=0,iter=_children.begin(); iter != _children.end(); iter++,i++ ) {
- *             (*ofds)[i] = (*iter)->get_DataSocketFd();
- *         }
- *         _children_mutex.Unlock();
- *     }
- *     else if ( is_LocalNodeBackEnd() ) {
- *         _parent_sync.Lock();
- *         *onum_fds = 1;
- *         *ofds = new int;
- * 
- *         *ofds[0] = _parent->get_DataSocketFd();
- * 
- *         _parent_sync.Unlock();
- *     }
- * 
- *     return 0;
- * }
- *****/
-
+/* Event Notification by File Descriptor */
 int Network::get_EventNotificationFd( EventType etyp )
 {
 #if !defined(os_windows)
@@ -1109,72 +1058,50 @@ void Network::close_EventNotificationFd( EventType etyp )
 #endif
 }
 
-/*Register & Remove Callbacks*/
-bool Network::register_Callback(CBClass icbcl,cb_func func, CBType icbt)
+/* Register & Remove Callbacks */
+bool Network::register_Callback( CBClass icbcl, cb_func func, CBType icbt )
 {
-
-
-                bool ret = Callback::registerCallback(icbcl,func,icbt);
-                if(ret== false){
-
-                        mrn_printf(FLF, stderr, "failed to register Callback for Topology event");
-                        return false;
-                }
-
-        return true;
-
-
+    bool ret = Callback::registerCallback( icbcl, func, icbt );
+    if( ret == false ) {
+        mrn_printf(FLF, stderr, "failed to register Callback for Topology event");
+        return false;
+    }
+    return true;
 }
 
-
-
-
-
-
-bool Network::remove_Callback(CBClass icbcl,cb_func func,CBType icbt)
+bool Network::remove_Callback( CBClass icbcl, cb_func func, CBType icbt )
 {
-
-        bool ret=Callback::removeCallback(icbcl,func,icbt);
-        if(ret==false) {
-
-            mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n");
-           return false;
-        }
-        return true;
-
+    bool ret = Callback::removeCallback( icbcl, func, icbt );
+    if( ret == false ) {
+        mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n");
+        return false;
+    }
+    return true;
 }
 
-bool Network::remove_Callback(CBClass icbcl,CBType icbt)
+bool Network::remove_Callback( CBClass icbcl, CBType icbt )
 {
-
-
-        bool ret=Callback::removeCallback(icbcl,icbt);
-        if(ret==false) {
-
-            mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n");
-           return false;
-        }
-        return true;
+    bool ret = Callback::removeCallback( icbcl, icbt );
+    if( ret == false ) {    
+        mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n");
+        return false;
+    }
+    return true;
 }
-
-
 
 void Network::add_Callbacks()
 {
+    list<CBType> topo_list;
+    topo_list.push_back( TOPO_ADD_BE );
+    topo_list.push_back( TOPO_REMOVE );
+    topo_list.push_back( TOPO_ADD_CP );
+    topo_list.push_back( TOPO_PARENT_CHANGE );
 
-        list <CBType> topo_list;
-        topo_list.push_back(TOPO_ADD_BE);
-        topo_list.push_back(TOPO_REMOVE);
-        topo_list.push_back(TOPO_ADD_CP);
-        topo_list.push_back(TOPO_PARENT_CHANGE);
-        Callback::all_cb_cl_typ[TOPOLOGY_EVENT_CB]=topo_list;
-
+    Callback::all_cb_cl_typ[ TOPOLOGY_EVENT_CB ] = topo_list;
 }
 
 
-
-
-
+/* Performance Data Management */
 bool Network::enable_PerformanceData( perfdata_metric_t metric, 
                                       perfdata_context_t context )
 {
