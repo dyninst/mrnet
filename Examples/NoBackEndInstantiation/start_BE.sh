@@ -7,6 +7,8 @@ if [ $# -ne 3 ]; then
     exit 1
 fi
 
+thishost=`hostname`
+
 declare -a BE_HOSTS
 export BE_HOSTS=( `cat $2` )
 NBE=${#BE_HOSTS[*]}
@@ -30,7 +32,11 @@ while [ $ITER -lt $NBE ]; do
     cport=${BE_CONN[$CITER]}
     CITER=`expr $CITER + 1`
     crank=${BE_CONN[$CITER]}
-    $REM_SHELL -n ${BE_HOSTS[$ITER]} $1 $chost $cport $crank ${BE_HOSTS[$ITER]} `expr $ITER + 10000` & 
+    if [ "${BE_HOSTS[$ITER]}" = "localhost" -o "${BE_HOSTS[$ITER]}" = "$thishost" ] ; then
+        $1 $chost $cport $crank ${BE_HOSTS[$ITER]} `expr $ITER + 10000` &
+    else
+        $REM_SHELL -n ${BE_HOSTS[$ITER]} $1 $chost $cport $crank ${BE_HOSTS[$ITER]} `expr $ITER + 10000` &
+    fi 
     sleep 1
     ITER=`expr $ITER + 1`
 done

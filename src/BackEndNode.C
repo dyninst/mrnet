@@ -219,6 +219,7 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
 
+    // NOTE: deprecated in 3.0, kill this for next release
     bool goaway = false;
     char delete_backend;
     ipacket->unpack( "%c", &delete_backend );
@@ -233,9 +234,9 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     // kill threads, topology, and events
     _network->shutdown_Network();
 
+
     if( goaway ) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "Backend exiting!\n"));
-        exit(0);
+        mrn_dbg(1, mrn_printf(FLF, stderr, "DEPRECATED: not calling exit()\n"));
     }
    
     // exit recv thread from parent
