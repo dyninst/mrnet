@@ -55,10 +55,13 @@ class Network: public Error {
                                      bool iusing_mem_buf=false );
     static Network* CreateNetworkBE( int argc, char* argv[] );
 
-    void set_TerminateBackEndsOnShutdown( bool terminate ); 
-
     NetworkTopology* get_NetworkTopology( void ) const;
     
+    bool is_ShutDown( void ) const;
+    void waitfor_ShutDown( void ) const;
+
+    void print_error( const char * );
+
     /* Local node information */
     std::string get_LocalHostName( void ) const ;
     Port get_LocalPort( void ) const ;
@@ -103,20 +106,17 @@ class Network: public Error {
     int get_EventNotificationFd( EventType etyp );
     void clear_EventNotificationFd( EventType etyp );
     void close_EventNotificationFd( EventType etyp );
-    bool is_ShutDown( void ) const;
-    void waitfor_ShutDown( void ) const;
     
-    void print_error( const char * );
+    /* Callback-based event notification */
+    bool register_Callback( CBClass icbcl, cb_func func, CBType icbt=ALL_EVENT );
+    bool remove_Callback( CBClass icbcl, CBType icbt=ALL_EVENT );
+    bool remove_Callback( CBClass icbcl, cb_func func, CBType icbt=ALL_EVENT );
 
-    /*Newly added code for turning Fault Recovery ON or OFF*/
+    /* Turn Fault Recovery ON or OFF*/
     bool set_FailureRecovery( bool enable_recovery );
 
-
-    /*Callback notification for Node Failure */
-     bool register_Callback(CBClass icbcl,cb_func func,CBType icbt=ALL_EVENT);
-     bool remove_Callback(CBClass icbcl,CBType icbt=ALL_EVENT);
-     bool remove_Callback(CBClass icbcl,cb_func func,CBType icbt=ALL_EVENT);
-
+    /* NOTE: DEPRECATED in 3.0 */
+    void set_TerminateBackEndsOnShutdown( bool terminate ); 
 
     // END MRNET API
 
@@ -133,7 +133,7 @@ class Network: public Error {
     bool node_Failed( Rank );
     PeerNodePtr get_OutletNode( Rank ) const ;
 
-     void add_Callbacks();
+    void add_Callbacks();
 
 protected:
     // constructor
@@ -199,7 +199,6 @@ protected:
     bool reset_Topology(std::string& itopology);
     void update_TopoStream();
     PeerNodePtr _parent;
-
 
  private:
     friend class Stream;
