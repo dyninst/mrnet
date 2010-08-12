@@ -21,7 +21,6 @@ int main(int argc, char **argv)
 {
     int ret = 0;
     Network *net = NULL;
-    InternalNode *comm_node = NULL;
 
     try
     {
@@ -57,11 +56,6 @@ int main(int argc, char **argv)
     {
         mrn_dbg( 1, mrn_printf( FLF, stderr, e.what() ) );
         ret = 1;
-    }
-
-    if( comm_node != NULL ) {
-        delete comm_node;
-        comm_node = NULL;
     }
 
     delete net;
