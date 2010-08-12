@@ -704,7 +704,9 @@ XTNetwork::Instantiate( ParsedGraph* topology,
 {
     mrn_dbg_func_begin();
 
-    // determine whether we will be using the ALPS tool helper at all
+    bool have_backends = (be_path != NULL);
+ 
+   // determine whether we will be using the ALPS tool helper at all
     int apid = -1;
     if( iattrs != NULL ) {
         for( std::map<std::string, std::string>::const_iterator iter = iattrs->begin();
@@ -749,7 +751,7 @@ XTNetwork::Instantiate( ParsedGraph* topology,
     mrn_dbg(5, mrn_printf(FLF, stderr, "done spawning processes\n" ));
 
     // connect the processes we started into a tree
-    int connectRet = ConnectProcesses( topology );
+    int connectRet = ConnectProcesses( topology, have_backends );
     if( connectRet != 0 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: unable to instantiate network\n" ));
         error( ERR_INTERNAL, UnknownRank, "");  // we don't know our process' rank yet
@@ -968,7 +970,7 @@ XTNetwork::GetNidFromNodename( std::string nodename )
 }
 
 int
-XTNetwork::ConnectProcesses( ParsedGraph* topology )
+XTNetwork::ConnectProcesses( ParsedGraph* topology, bool have_backends )
 {
     mrn_dbg_func_begin();
 
@@ -976,7 +978,7 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology )
     std::string fe_host = get_LocalHostName();
 
     // get SerialGraph topology
-    std::string sg = topology->get_SerializedGraphString();
+    std::string sg = topology->get_SerializedGraphString( have_backends );
     SerialGraph sgtmp(sg);
 
     // statically assign data listening ports for all processes

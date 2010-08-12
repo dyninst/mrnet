@@ -34,6 +34,11 @@ void SerialGraph::add_SubTreeRoot( std::string ihostname, Port iport, Rank irank
 
 }
 
+void SerialGraph::end_SubTree( void )
+{
+    _byte_array += "]";
+}
+
 bool SerialGraph::is_RootBackEnd( void ) const
 {
     //format is "host:port:rank:[0|1]: where 0 means back-end and 1 means internal node
@@ -135,6 +140,11 @@ SerialGraph * SerialGraph::get_MySubTree( std::string &ihostname, Port iport, Ra
     mrn_dbg( 5, mrn_printf(FLF, stderr, "returned sg byte array :\"%s\"\n",
                            retval->_byte_array.c_str() )); 
     return retval;
+}
+
+void SerialGraph::set_ToFirstChild( void )
+{
+    _buf_idx = _byte_array.find('[',1);
 }
 
 bool SerialGraph::set_Port(std::string hostname, Port port, Rank irank)

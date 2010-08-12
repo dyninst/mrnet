@@ -162,37 +162,37 @@ void ParsedGraph::assign_NodeRanks( bool iassign_backend_ranks )
     } 
 }
 
-std::string ParsedGraph::get_SerializedGraphString( )
+std::string ParsedGraph::get_SerializedGraphString( bool have_backends )
 {
     _serial_graph = "";
-    serialize( _root );
+    serialize( _root, have_backends );
     return _serial_graph.get_ByteArray();
 }
 
-SerialGraph & ParsedGraph::get_SerializedGraph( )
+SerialGraph & ParsedGraph::get_SerializedGraph( bool have_backends )
 {
     _serial_graph = "";
-    serialize( _root );
+    serialize( _root, have_backends );
     return _serial_graph;
 }
 
-void ParsedGraph::serialize( Node * inode )
+void ParsedGraph::serialize( Node * inode, bool have_backends )
 {
     if( inode->_children.size() == 0 ) {
-        // Leaf node, just add my name to serial representation and return
-        _serial_graph.add_Leaf(inode->get_HostName(), UnknownPort,
-                               inode->get_Rank() );
-        return;
-    }
-    else {
-        //Starting new sub-tree component in graph serialization:
-        _serial_graph.add_SubTreeRoot(inode->get_HostName(), UnknownPort,
-                                      inode->get_Rank() );
-
-        for( unsigned int i=0; i < inode->_children.size(); i++ )
-            serialize( inode->_children[i] );
+        if( have_backends ) {
+            // Leaf node, just add my name to serial representation and return
+            _serial_graph.add_Leaf(inode->get_HostName(), UnknownPort,
+                                   inode->get_Rank() );
+            return;
+        }
     }
 
+    //Starting new sub-tree component in graph serialization:
+    _serial_graph.add_SubTreeRoot(inode->get_HostName(), UnknownPort,
+                                  inode->get_Rank() );
+
+    for( unsigned int i=0; i < inode->_children.size(); i++ )
+        serialize( inode->_children[i], have_backends );
 
     //Ending sub-tree component in graph serialization:
     _serial_graph.end_SubTree();

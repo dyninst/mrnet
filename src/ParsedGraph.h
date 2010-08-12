@@ -58,7 +58,7 @@ class ParsedGraph: public Error {
     bool _cycle_free;
 
     unsigned int preorder_traversal( Node * );
-    void serialize( Node * );
+    void serialize( Node *, bool have_backends );
 
     static Rank _next_node_rank;
     SerialGraph _serial_graph;
@@ -76,8 +76,8 @@ class ParsedGraph: public Error {
     int get_Size ( ) const { return _nodes.size(); }
     void assign_NodeRanks( bool iassign_backend_ranks );
 
-    std::string get_SerializedGraphString( );
-    SerialGraph & get_SerializedGraph( );
+    std::string get_SerializedGraphString( bool have_backends );
+    SerialGraph & get_SerializedGraph( bool have_backends );
 
     void print_Graph( FILE *f ) { _root->print_Node(f, 0); }
     void print_DOTGraph( const char * filename );
