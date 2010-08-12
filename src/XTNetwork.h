@@ -15,10 +15,12 @@
 
 #include "ParsedGraph.h"
 
+#ifndef os_windows
 extern "C"
 {
 #include <alps/apInfo.h>
 }
+#endif
 
 namespace MRN
 {

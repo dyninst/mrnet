@@ -30,6 +30,15 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
 {
     BackEndNode_t* be;
     PeerNode_t* parent;
+	NetworkTopology_t * nt;
+
+	Stream_t* s;
+    int type;
+    char * host_arr;
+
+	uint32_t * send_iprank;
+    uint32_t * send_myrank;
+    uint16_t * send_port;
 
     be = (BackEndNode_t*)malloc(sizeof(BackEndNode_t));
     assert(be != NULL);
@@ -51,7 +60,7 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
 
     be->network->network_topology = new_NetworkTopology_t(inetwork, imyhostname, UnknownPort, imyrank, true);
 
-    NetworkTopology_t * nt = Network_get_NetworkTopology(be->network);
+    nt = Network_get_NetworkTopology(be->network);
 
     // establish data connection with parent
     if (ChildNode_init_newChildDataConnection(be, be->network->parent, UnknownRank) == -1) {
@@ -67,14 +76,17 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend not already in the topology\n") );
 
             // New topology propagation code - create a new update packet
-            Stream_t* s = Network_get_Stream(be->network, 1); // get topol prop stream
-            int type = TOPO_NEW_BE;
-            char * host_arr = strdup(imyhostname);
-            uint32_t * send_iprank = (uint32_t*)malloc(sizeof(uint32_t));
+            s = Network_get_Stream(be->network, 1); // getting handle for stream id 1 which was reserved for topology propagation
+            type = TOPO_NEW_BE; // type 0 is add packet
+            host_arr = strdup(imyhostname);
+            send_iprank = (uint32_t*)malloc(sizeof(uint32_t));
+			assert(send_iprank);
             *send_iprank = iprank;
-            uint32_t * send_myrank = (uint32_t*)malloc(sizeof(uint32_t));
+            send_myrank = (uint32_t*)malloc(sizeof(uint32_t));
+			assert(send_myrank);
             *send_myrank = imyrank;
-            uint16_t * send_port = (uint16_t*)malloc(sizeof(uint16_t));
+            send_port = (uint16_t*)malloc(sizeof(uint16_t));
+			assert(send_port);
             *send_port = UnknownPort;
 
             Stream_send(s, PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",

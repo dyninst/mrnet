@@ -6,7 +6,7 @@
 // $Id: NetUtils-win.C,v 1.8 2008/10/09 19:54:03 mjbrim Exp $
 
 #include <winsock2.h>
-#include <Iphlpapi.h>
+#include <iphlpapi.h>
 #include "xplat/NetUtils.h"
 
 

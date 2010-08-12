@@ -123,13 +123,15 @@ int NetworkTopology_isInTopology(NetworkTopology_t* net_top,
 
 char * NetworkTopology_get_TopologyStringPtr(NetworkTopology_t * net_top)
 {
+	char * retval;
+
     if (net_top->serial_graph != NULL)
         free_SerialGraph_t(net_top->serial_graph);
     net_top->serial_graph = new_SerialGraph_t(NULL);
 
     NetworkTopology_serialize(net_top, net_top->root);
 
-    char * retval = strdup(SerialGraph_get_ByteArray(net_top->serial_graph));
+    retval = strdup(SerialGraph_get_ByteArray(net_top->serial_graph));
 
     return retval;
 }
@@ -908,9 +910,10 @@ int NetworkTopology_new_Node(NetworkTopology_t* net_top, const char * host,
         Port port, Rank rank, int iis_backend)
 {
     char * host_name = host;
+    Node_t * node;
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating back node[%d] %s:%d\n",
                 rank, host_name, port));
-    Node_t* node = new_Node_t(host,port,rank,iis_backend);
+    node = new_Node_t(host,port,rank,iis_backend);
     insert(net_top->nodes, rank, node);
    
     if (iis_backend) {
@@ -920,7 +923,7 @@ int NetworkTopology_new_Node(NetworkTopology_t* net_top, const char * host,
     return true;
 }
 
-vector_t * NetworkTopology_get_updates_buffer(NetworkTopology_t * net_top)
+struct vector_t * NetworkTopology_get_updates_buffer(NetworkTopology_t * net_top)
 {
     return net_top->_updates_buffer;
 }

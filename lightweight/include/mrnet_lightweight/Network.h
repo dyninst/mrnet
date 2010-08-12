@@ -124,6 +124,6 @@ struct SerialGraph_t * Network_readTopology(Network_t * net, int topoSocket);
 
 void Network_writeTopology(Network_t * net, int topoFd, struct SerialGraph_t * topology);
 
-void Network_delete_Stream(Network_t * net, unsigned int iid);
+void Network_delete_Stream(Network_t* net, unsigned int iid);
 
 #endif /* __network_h */

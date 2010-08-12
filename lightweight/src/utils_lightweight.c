@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 #else 
 #define sleep(x) Sleep(1000*(DWORD)x)
 #include <winsock2.h>
@@ -67,6 +68,7 @@ int connectHost ( int *sock_in, /*const*/ char* hostname,
     int cret = -1;
     int optVal;
     int ssoret;
+	int fdflag, fret;
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "In connectHost(%s:%d) sock:%d..\n",
                           host, port, sock));
@@ -124,6 +126,20 @@ int connectHost ( int *sock_in, /*const*/ char* hostname,
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "connectHost: connected!\n"));
 
+	// Close socket on exec
+#ifndef os_windows
+    fdflag = fcntl(sock, F_GETFD );
+    if( fdflag == -1 ) {
+        // failed to retrieve the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );
+    }
+    fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
+    if( fret == -1 ) {
+        // we failed to set the socket descriptor flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+    }
+#endif
+
 #if defined(TCP_NODELAY)
     // turn of Nagle algorithm for coalescing packets
     optVal = 1;
@@ -156,8 +172,7 @@ int mrn_printf( const char *file, int line, const char * func,
     struct timeval tv;
     int rank = getrank();
     FILE * tmp_fp = NULL;
-    char* this_host = (char*)malloc(sizeof(char)*256);
-    assert(this_host);
+    char* this_host;
     struct stat s;
     char host[256];
     char logdir[256];
@@ -165,7 +180,11 @@ int mrn_printf( const char *file, int line, const char * func,
     const char* home = getenv("HOME");
     const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
     FILE *f;
-    int pid = Process_GetProcessId();
+	int pid = Process_GetProcessId();
+
+    this_host = (char*)malloc(sizeof(char)*256);
+    assert(this_host);
+
   
     while (gettimeofday( &tv, NULL ) == -1 ) {}
 
@@ -189,9 +208,7 @@ int mrn_printf( const char *file, int line, const char * func,
         // set file name format
         snprintf(logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
                  logdir, node_type, host, rank, pid);
-        tmp_fp = fopen(logfile, "w");
-        if (tmp_fp != NULL)
-            fp = tmp_fp;
+        fp = fopen(logfile, "w");
     }
   
     f = fp;
