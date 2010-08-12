@@ -362,8 +362,6 @@ int getSocketConnection( int bound_socket , int& inout_errno )
 	if (ioctlsocket(connected_socket, FIONBIO, &mode) != 0) {
 		// failed to set the socket flags
 		mrn_dbg(1, mrn_printf(FLF, stderr, "Setting socket connection to blocking failed\n"));
-	} else {
-		mrn_dbg(1, mrn_printf(FLF, stderr, "Setting socket connecting to blocking succeeded\n"));
 	}
 
 #endif
