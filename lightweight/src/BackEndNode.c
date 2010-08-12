@@ -116,6 +116,7 @@ int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
   
   mrn_dbg_func_begin();
 
+  // NOTE: deprecated in 3.0, kill this for next release
   Packet_unpack(packet, "%c", &delete_backend);
   if (delete_backend == 't') {
       mrn_dbg(3, mrn_printf(FLF, stderr, "Back-end will exit\n"));
@@ -127,15 +128,14 @@ int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
 
   // Send ack to parent
   if (!ChildNode_ack_DeleteSubTree(be)) {
-    mrn_dbg(1, mrn_printf(FLF, stderr, "ChildNode_ack_DeleteSubTree() failed\n"));
+      mrn_dbg(1, mrn_printf(FLF, stderr, "ChildNode_ack_DeleteSubTree() failed\n"));
   }
   
   // kill topology  
   Network_shutdown_Network(be->network);
 
   if (goaway) {
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Back-end exiting ... \n"));
-    exit(0);
+      mrn_dbg(1, mrn_printf(FLF, stderr, "DEPRECATED: not calling exit()\n"));
   }
 
   mrn_dbg_func_end();

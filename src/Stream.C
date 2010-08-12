@@ -578,9 +578,9 @@ int Stream::push_Packet( PacketPtr ipacket,
         ipackets.push_back(ipacket);
     }
 
-    // if not back-end and going upstream, sync first
+    // if going upstream, sync first
     if( igoing_upstream ){
-        if( _sync_filter->push_Packets(ipackets, opackets, opackets_reverse, topol_info ) == -1){
+        if( _sync_filter->push_Packets(ipackets, opackets, opackets_reverse, topol_info ) == -1 ){
             mrn_dbg(1, mrn_printf(FLF, stderr, "Sync.push_packets() failed\n"));
             return -1;
         }

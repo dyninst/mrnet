@@ -315,7 +315,6 @@ protected:
     EventDetector* _edt;
     unsigned int next_stream_id;
 
-    //PeerNodePtr _parent;
     std::set< PeerNodePtr > _children;
     std::map< unsigned int, Stream* > _streams;
     std::map< Rank, CommunicationNode* > _end_points;
