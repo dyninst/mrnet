@@ -317,6 +317,7 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
 int getSocketConnection( int bound_socket , int& inout_errno )
 {
     int connected_socket;
+    int fdflag, fret;
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "In get_connection(sock:%d).\n",
                 bound_socket ) );
@@ -368,12 +369,12 @@ int getSocketConnection( int bound_socket , int& inout_errno )
 
     // Close socket on exec
 #ifndef os_windows
-    int fdflag = fcntl( connected_socket, F_GETFD );
+    fdflag = fcntl( connected_socket, F_GETFD );
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags 
         mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );    
     }
-    int fret = fcntl( connected_socket, F_SETFD, fdflag | FD_CLOEXEC );
+    fret = fcntl( connected_socket, F_SETFD, fdflag | FD_CLOEXEC );
     if( fret == -1 ) {
         // we failed to set the socket descriptor flags
         mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
