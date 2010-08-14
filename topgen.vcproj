@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Iphlpapi.lib Ws2_32.lib shlwapi.lib"
-				OutputFile="$(OutDir)/topgen.exe"
+				OutputFile="$(OutDir)/mrnet_topgen.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../obj/i386-unknown-nt4.0/lightweight/"
 				GenerateDebugInformation="true"

@@ -624,5 +624,5 @@ void endianTest() {
 
 }
 
-}                               // namespace MRN
+} // namespace MRN
 
