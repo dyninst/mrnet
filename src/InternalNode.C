@@ -58,7 +58,7 @@ InternalNode::InternalNode( Network * inetwork,
     NetworkTopology* nt = ParentNode::_network->get_NetworkTopology();  
     if( nt != NULL ) {
     
-        if( ! nt->isInTopology(ihostname, listeningPort, irank) ) {
+        if( ! nt->in_Topology(ihostname, listeningPort, irank) ) {
             // not already in topology => internal node attach case 
             ParentNode::_network->new_Stream( 1, NULL, 0, TFILTER_TOPO_UPDATE, 
                                               SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );

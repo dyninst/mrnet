@@ -134,6 +134,9 @@ void Network::shutdown_Network( void )
         _shutdown_sync.Lock();
         _was_shutdown = true;
         _shutdown_sync.Unlock();
+
+        // kill topology propagation stream
+        delete_Stream( 1 );
     
         if( is_LocalNodeFrontEnd() ) {
 
@@ -144,7 +147,8 @@ void Network::shutdown_Network( void )
                 if( _terminate_backends )
                     delete_backends = 't';
             
-                PacketPtr packet( new Packet( 0, PROT_SHUTDOWN, "%c", delete_backends ) );
+                PacketPtr packet( new Packet(0, PROT_SHUTDOWN, 
+                                             "%c", delete_backends) );
                 get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
             }
         }
@@ -226,7 +230,8 @@ const char* Network::FindCommnodePath( void )
 //             if termination is desired
 void Network::set_TerminateBackEndsOnShutdown( bool terminate )
 {
-    fprintf(stderr, "Network::set_TerminateBackEndsOnShutdown() is deprecated.\n");
+    mrn_printf(FLF, stderr, 
+               "Network::set_TerminateBackEndsOnShutdown() is deprecated.\n");
     _terminate_backends = terminate;
 }
 
@@ -359,10 +364,12 @@ void Network::init_FrontEnd( const char * itopology,
     assert(s->get_Id() == 1);
     s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
 
-    // collect port updates (no-op on XT)
+    /* collect port updates and broadcast them
+     * - this is a no-op on XT
+     */
     PacketPtr packet( new Packet( 0, PROT_PORT_UPDATE, "" ) );
     if( -1 == get_LocalFrontEndNode()->proc_PortUpdates( packet ) )
-      error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
+        error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
 }
 
 void Network::send_BufferedTopoUpdates( std::vector<update_contents_t* > vuc )
@@ -869,8 +876,23 @@ Stream* Network::new_Stream( Communicator *icomm,
                              int isync_filter_id /*=SFILTER_WAITFORALL*/, 
                              int ids_filter_id /*=TFILTER_NULL*/ )
 {
+    if( NULL == icomm ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "cannot create stream from NULL communicator\n") );
+        return NULL;
+    }
+
     //get array of back-ends from communicator
     const set <CommunicationNode*>& endpoints = icomm->get_EndPoints();
+    unsigned num_pts = endpoints.size();
+    if( num_pts == 0 ) {
+        if( icomm != _bcast_communicator ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                       "cannot create stream from communicator containing zero end-points\n") );
+            return NULL;
+        }
+    }
+
     Rank * backends = new Rank[ endpoints.size() ];
         
     mrn_dbg(5, mrn_printf(FLF, stderr, "backends[ " ));
@@ -927,9 +949,24 @@ Stream* Network::new_Stream( Communicator* icomm,
                              std::string sync_filters,
                              std::string ds_filters )
 {
+    if( NULL == icomm ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "cannot create stream from NULL communicator\n") );
+        return NULL;
+    }
+
     //get array of back-ends from communicator
     const set <CommunicationNode*>& endpoints = icomm->get_EndPoints();
-    Rank * backends = new Rank[ endpoints.size() ];
+    unsigned num_pts = endpoints.size();
+    if( num_pts == 0 ) {
+        if( icomm != _bcast_communicator ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                       "cannot create stream from communicator containing zero end-points\n") );
+            return NULL;
+        }
+    }
+
+    Rank * backends = new Rank[ num_pts ];
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "backends[ " ));
     set <CommunicationNode*>:: const_iterator iter;
@@ -941,7 +978,7 @@ Stream* Network::new_Stream( Communicator* icomm,
     mrn_dbg(5, mrn_printf(0,0,0, stderr, "]\n"));
 
     PacketPtr packet( new Packet( 0, PROT_NEW_HETERO_STREAM, "%d %ad %s %s %s",
-                                  next_stream_id, backends, endpoints.size(),
+                                  next_stream_id, backends, num_pts,
                                   us_filters.c_str(), sync_filters.c_str(), ds_filters.c_str() ) );
     next_stream_id++;
 

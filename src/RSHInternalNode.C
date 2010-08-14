@@ -20,19 +20,17 @@ RSHInternalNode::RSHInternalNode( Network * inetwork,
   : CommunicationNode( ihostname, listeningPort, irank ),
     ParentNode( inetwork, ihostname, irank, listeningSocket, listeningPort ),
     ChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank ),
-    InternalNode( inetwork, ihostname, irank, iphostname, ipport, iprank, listeningSocket, listeningPort ),
+    InternalNode( inetwork, ihostname, irank, iphostname, ipport, iprank, 
+                  listeningSocket, listeningPort ),
     RSHParentNode( inetwork, ihostname, irank ),
     RSHChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank )
 {
-    //request subtree information
-    
+    //request subtree information    
     if( request_SubTreeInfo() == -1 ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "request_SubTreeInfo() failed\n" ));
         ParentNode::error( ERR_INTERNAL, ParentNode::_rank, "request_SubTreeInfofailed\n" );
         ChildNode::error( ERR_INTERNAL, ParentNode::_rank, "request_SubTreeInfofailed\n" );
-        return;
     }
-    
 }
 
 
@@ -71,8 +69,12 @@ RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
         break;
 
     case PROT_PORT_UPDATE:
-        retval = RSHChildNode::proc_PacketFromParent( cur_packet );
-	break;
+        retval = RSHChildNode::proc_PortUpdate(cur_packet);
+        if( retval == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_PortUpdate() failed\n" ));
+        }
+        break;
 
     default:
         retval = InternalNode::proc_PacketFromParent( cur_packet );

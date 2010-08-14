@@ -21,8 +21,8 @@ namespace MRN
 /*  ParentNode CLASS METHOD DEFINITIONS            */
 /*====================================================*/
 RSHParentNode::RSHParentNode( Network* inetwork,
-                                std::string const& ihostname,
-                                Rank irank )
+                              std::string const& ihostname,
+                              Rank irank )
   : CommunicationNode( ihostname, UnknownPort, irank ),
     ParentNode( inetwork, ihostname, irank )
 {
@@ -34,94 +34,47 @@ RSHParentNode::~RSHParentNode( void )
     // nothing else to do
 }
 
-
-int RSHParentNode::proc_PortUpdateAck( PacketPtr /* ipacket */ ) const
-{
-    mrn_dbg_func_begin();
-
-    subtreereport_sync.Lock( );
-    _num_children_reported++;
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
-             _num_children_reported, _num_children ));
-    if( _num_children_reported == _num_children ) {
-      subtreereport_sync.SignalCondition( ALLNODESREPORTED );
-    }
-    subtreereport_sync.Unlock( );
-
-    mrn_dbg_func_end();
-   return 0;
-}
-
-
 int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
 
-    subtreereport_sync.Lock( );
+    Stream* port_strm = NULL;
 
-    _num_children_reported = _num_children = 0;
-    const std::set < PeerNodePtr > peers = _network->get_ChildPeers();
-    std::set < PeerNodePtr >::const_iterator iter;
-    for( iter=peers.begin(); iter!=peers.end(); iter++ ) {
-        if( (*iter)->is_child() ) {
-            _num_children++;
-        }
-    }
-
-    subtreereport_sync.Unlock( );
-
-    //send message to all children
-    if( ( _network->send_PacketToChildren( ipacket ) == -1 ) ||
-        ( _network->flush_PacketsToChildren( ) == -1 ) ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush_PacketToChildren() failed\n" ));
-        return -1;
-    }
-
-    //wait for acks
-    if( ! waitfor_PortUpdateAcks() ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_TopologyReportAcks() failed\n" ));
-        return -1;
-    }
-
-    //Send ack to parent, if any
-    if( _network->is_LocalNodeChild() ) {
-        if( ! _network->get_LocalChildNode()->ack_TopologyReport() ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_TopologyReport() failed\n" ));
+    if( _network->is_LocalNodeFrontEnd() ) {
+        // create a waitforall topology update stream
+        Communicator* bcast_comm = _network->get_BroadcastCommunicator();
+        port_strm = _network->new_Stream( bcast_comm, TFILTER_TOPO_UPDATE, 
+                                          SFILTER_WAITFORALL );
+        if( NULL == port_strm ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                   "failed to create port update stream\n") );
             return -1;
         }
     }
-   
-    //TODO: Place holder for bcast of port updates
+
+    // request port updates from children
+    if( ( _network->send_PacketToChildren( ipacket ) == -1 ) ||
+        ( _network->flush_PacketsToChildren( ) == -1 ) ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                               "send/flush_PacketToChildren() failed\n") );
+        return -1;
+    }
+
     if( _network->is_LocalNodeFrontEnd() ) {
+        // block until updates received, then kill the stream
+        int tag;
+        PacketPtr p;
+        port_strm->recv(&tag, p);
+        delete port_strm;
+
+        // broadcast the accumulated updates
         NetworkTopology* nt = _network->get_NetworkTopology();
-        std::vector<update_contents_t* > vuc = nt->get_updates_buffer();
+        std::vector< update_contents_t* > vuc = nt->get_updates_buffer();
 	_network->send_BufferedTopoUpdates( vuc );
-    }	 
+    }
 
     mrn_dbg_func_end();
     return 0;
-}
-
-bool RSHParentNode::waitfor_PortUpdateAcks( void ) const
-{
-    mrn_dbg_func_begin();
-
-    subtreereport_sync.Lock( );
-
-    while( _num_children > _num_children_reported ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u topol report acks ...\n",
-                               _num_children - _num_children_reported,
-                               _num_children ));
-        subtreereport_sync.WaitOnCondition( ALLNODESREPORTED );
-        mrn_dbg( 3, mrn_printf(FLF, stderr,
-                               "%d of %d children have ack'd.\n",
-                               _num_children, _num_children_reported ));
-    }
-
-    subtreereport_sync.Unlock( );
-
-    mrn_dbg_func_end();
-    return true;
 }
 
 int 
@@ -347,13 +300,7 @@ RSHParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
 	    retval = -1;
 	}
 	break;
-      case PROT_PORT_UPDATE_ACK:
-        if( proc_PortUpdateAck( cur_packet ) == -1 ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_SubTreeInfoRequest() failed\n" ));
-            retval = -1;
-        }
-        break;
+
       default:
         retval = ParentNode::proc_PacketFromChildren( cur_packet );
 	break;

@@ -31,11 +31,16 @@ class ChildNode: public virtual Error,
     virtual int proc_NewParentReportFromParent( PacketPtr ipacket ) const=0;
 
     int proc_TopologyReport( PacketPtr ipacket ) const;
+    bool ack_TopologyReport( void ) const ;
+
     int proc_RecoveryReport( PacketPtr ipacket ) const;
+
     int send_NewSubTreeReport( void )const;
     int send_SubTreeInitDoneReport( void ) const;
+
     bool ack_DeleteSubTree( void ) const ;
-    bool ack_TopologyReport( void ) const ;
+
+    virtual int proc_PortUpdate(PacketPtr ipacket ) const;
 
     int proc_EnablePerfData( PacketPtr ipacket ) const;
     int proc_DisablePerfData( PacketPtr ipacket ) const;
@@ -44,8 +49,8 @@ class ChildNode: public virtual Error,
 
     /*Failure Recovery */
 
-   int proc_EnableFailReco( PacketPtr ipacket ) const;
-   int proc_DisableFailReco( PacketPtr ipacket ) const;
+    int proc_EnableFailReco( PacketPtr ipacket ) const;
+    int proc_DisableFailReco( PacketPtr ipacket ) const;
 
     int recv_PacketsFromParent( std::list<PacketPtr> &packet_list ) const;
     int send_EventsToParent( ) const;
