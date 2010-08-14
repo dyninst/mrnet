@@ -126,8 +126,8 @@ int connectHost ( int *sock_in, /*const*/ char* hostname,
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "connectHost: connected!\n"));
 
-	// Close socket on exec
 #ifndef os_windows
+    // Close socket on exec
     fdflag = fcntl(sock, F_GETFD );
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags
@@ -136,23 +136,22 @@ int connectHost ( int *sock_in, /*const*/ char* hostname,
     fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
     if( fret == -1 ) {
         // we failed to set the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD close-on-exec failed\n") );
     }
 #endif
 
 #if defined(TCP_NODELAY)
     // turn of Nagle algorithm for coalescing packets
     optVal = 1;
-    ssoret = setsockopt (sock,
-                         IPPROTO_TCP,
-                         TCP_NODELAY,
-                         (const char*)&optVal,
-                         sizeof( optVal));
+    ssoret = setsockopt(sock,
+                        IPPROTO_TCP,
+                        TCP_NODELAY,
+                        (const char*)&optVal,
+                        sizeof( optVal));
     if (ssoret == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "failed to set TCP_NODELAY\n"));
     }
-
-#endif // defined (TCP_NODELAY)
+#endif
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Leaving connectHost(). Returning sock: %d\n", sock));
 

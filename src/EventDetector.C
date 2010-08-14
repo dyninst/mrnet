@@ -372,7 +372,7 @@ void * EventDetector::main( void* iarg )
     //   - socket failures
     Message msg;
     list< PacketPtr > packets;
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "EDT Main Loop ...\n"));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "starting main loop\n"));
     while ( true ) {
 
         Timer waitTimer;
@@ -409,27 +409,24 @@ void * EventDetector::main( void* iarg )
 	    edt->handle_Timeout( tk, elapsed );
 	    continue;
         }
-        else{
-            mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                   "checking event fds"));
+        else {
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "checking event fds\n"));
             if( eventfds.find(local_sock) != eventfds.end() ) {
                 //Activity on our local listening sock, accept connection
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "Activity on listening socket\n"));
+                mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                                       "activity on listening socket\n"));
 
                 while(true) {
 
                     int inout_errno;
-
-                    int connected_sock = getSocketConnection( local_sock, inout_errno );
-                    if( (connected_sock == -1 ) && 
-                        ((inout_errno == EAGAIN ) || (inout_errno == EWOULDBLOCK)) ) 
-                        break;
-
-                    if ( connected_sock == -1) {
-                        perror("getSocketConnection()");
-                        mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
-                        perror("getSocketConnection()");
-                        goto_outer=true;
+                    int connected_sock = getSocketConnection( local_sock, 
+                                                              inout_errno );
+                    if( connected_sock == -1 ) {
+                        if( inout_errno != EWOULDBLOCK ) { 
+                            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                                "getSocketConnection() failed\n"));
+                            goto_outer=true;
+                        }
                         break;
                     }    
 		 
@@ -449,23 +446,20 @@ void * EventDetector::main( void* iarg )
                             mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_KILL_SELF\n"));
 
                             //close event sockets explicitly
-                            mrn_dbg(5, mrn_printf(FLF, stderr,
-                                                  "Closing %d sockets\n",
-                                                  watch_list.size() ));
-                            for( iter=watch_list.begin(); iter!=watch_list.end(); iter++ ) {
-                                mrn_dbg(5, mrn_printf(FLF, stderr,
-                                                      "Closing event socket: %d\n", *iter ));
+                            mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                                   "Closing %d sockets\n",
+                                                   watch_list.size()) );
+                            for( iter = watch_list.begin(); iter != watch_list.end(); iter++ ) {
+                                mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                                      "Closing event socket: %d\n",
+                                                       *iter) );
+                                mrn_dbg( 5, mrn_printf(FLF, stderr, "... writing \n") );
                                 char c = 1;
-                                mrn_dbg(5, mrn_printf(FLF, stderr, "... writing \n"));
-                                // TODO: Commented out for Windows because of write assert() failure.
-#ifndef os_windows
-                                if( write( *iter, &c, 1) == -1 ) {
+                                if( ::send(*iter, &c, 1, 0) == -1 ) {
                                     perror("write(event_fd)");
                                 }
-                                mrn_dbg(5, mrn_printf(FLF, stderr, "... closing\n"));
-#endif
-
-                                if( XPlat::SocketUtils::Close( *iter ) == -1 ){
+                                mrn_dbg( 5, mrn_printf(FLF, stderr, "... closing\n"));
+                                if( XPlat::SocketUtils::Close(*iter) == -1 ) {
                                     perror("close(event_fd)");
                                 }
                             }

@@ -129,14 +129,13 @@ namespace MRN
 	TOPO_NEW_CP =4 
     } update_type_t; 	
 
-    typedef struct  
-    {
+    typedef struct  {
         int type;
-        uint32_t  prank;
-	uint32_t  crank;
+        uint32_t prank;
+	uint32_t crank;
 	char* chost;
 	uint16_t  cport;
-    }update_contents_t;	
+    } update_contents_t;	
 
 
 } /* namespace MRN */

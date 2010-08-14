@@ -102,13 +102,10 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
             retval = -1;
         }
         break;
-    
-
-
-     case PROT_SUBTREE_INITDONE_RPT:
+    case PROT_SUBTREE_INITDONE_RPT:
         if( proc_SubTreeInitDoneReport( cur_packet ) == -1 ) {
 	    mrn_dbg( 1, mrn_printf(FLF, stderr,
-	            "proc_SubTreeInitDoneReport() failed\n" ));
+                                   "proc_SubTreeInitDoneReport() failed\n" ));
 	    retval = -1;
 	}
 	break;
@@ -166,7 +163,7 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
 
 int ParentNode::proc_PortUpdates( PacketPtr ipacket ) const
 {
-  return 1;
+    return 1;
 }
 
 bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
@@ -700,28 +697,29 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
     child_node->set_DataSocketFd( isock );
     
     //new topo prop code
-    NetworkTopology* nt=_network->get_NetworkTopology();
+    NetworkTopology* nt = _network->get_NetworkTopology();
     char * topology = nt->get_TopologyStringPtr();
-    SerialGraph* init_topo= new SerialGraph( topology);
-    _network->writeTopology(isock, init_topo);
+    SerialGraph* init_topo = new SerialGraph( topology );
+    _network->writeTopology( isock, init_topo );
     free( topology );
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is , proc new child data conn before %s\n", nt->get_TopologyStringPtr() ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before adding child subgraph\n", 
+                           nt->get_TopologyStringPtr()) );
 
     SerialGraph sg( topo_ptr );
 
     //if connecting child not in topology
-    if( !(nt->find_Node( sg.get_RootRank() ) ))
-    {
-        if( !_network->add_SubGraph( _network->get_LocalRank(), sg, false) ){
-            mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
+    if( NULL == nt->find_Node(sg.get_RootRank()) ) {
+        if( ! _network->add_SubGraph(_network->get_LocalRank(), sg, false) ) {
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n") );
     	    return -1;
         }
     }
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is proc new child data conn after %s\n", nt->get_TopologyStringPtr() ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s after adding child subgraph\n", 
+                           nt->get_TopologyStringPtr()) );
 
     //Create send/recv threads
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Creating comm threads for new child\n" ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for new child\n") );
     child_node->start_CommunicationThreads();
 
     if( child_incarnation > 1 ) {
@@ -736,8 +734,8 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                                       old_parent_rank,
                                       _network->get_LocalRank() ) );
 
-        if( proc_RecoveryReport( packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_RecoveryReport() failed()\n" ));
+        if( proc_RecoveryReport(packet) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_RecoveryReport() failed()\n") );
         }
     }
 
@@ -750,7 +748,7 @@ int ParentNode::proc_FailureReport( PacketPtr ipacket ) const
 
     ipacket->unpack( "%ud", &failed_rank ); 
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "node[%u] has failed\n", failed_rank ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "node[%u] has failed\n", failed_rank) );
 
     //update local topology
     ParentNode::_network->remove_Node( failed_rank );
@@ -758,7 +756,7 @@ int ParentNode::proc_FailureReport( PacketPtr ipacket ) const
     //propagate to children except on incident channel
     if( _network->send_PacketToChildren( ipacket, false ) == -1 ){
         mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "send_PacketToChildren() failed()\n" ));
+                               "send_PacketToChildren() failed()\n") );
         return -1;
     }
 
@@ -766,7 +764,7 @@ int ParentNode::proc_FailureReport( PacketPtr ipacket ) const
         //propagate to parent
         if( ( _network->send_PacketToParent( ipacket ) == -1 ) ||
             ( _network->flush_PacketsToChildren( ) == -1 ) ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send/flush() failed()\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send/flush() failed()\n") );
             return -1;
         }
     }
@@ -789,7 +787,7 @@ int ParentNode::proc_RecoveryReport( PacketPtr ipacket ) const
     _network->change_Parent( child_rank, new_parent_rank );
 
     //send packet to all children except the one on which the packet arrived
-    if( _network->send_PacketToChildren( ipacket, false ) == -1 ){
+    if( _network->send_PacketToChildren(ipacket, false) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n"));
         return -1;
     }

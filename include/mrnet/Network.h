@@ -271,7 +271,6 @@ protected:
     void cancel_IOThreads( void );
     void signal_ShutDown( void );
 
-    //PeerNodePtr get_OutletNode( Rank ) const ;
     char* get_LocalSubTreeStringPtr( void ) const ;
     char* get_TopologyStringPtr( void ) const ;
     BackEndNode* get_LocalBackEndNode( void ) const ;
@@ -282,7 +281,6 @@ protected:
     bool is_LocalNodeThreaded( void ) const ;
     int send_FilterStatesToParent( void );
     bool update( void );
-    //bool reset_Topology( std::string& itopology );
     bool add_SubGraph( Rank iroot_rank, SerialGraph& sg, bool iupdate  );
     bool remove_Node( Rank ifailed_rank, bool iupdate=true );
     bool change_Parent( Rank ichild_rank, Rank inew_parent_rank );

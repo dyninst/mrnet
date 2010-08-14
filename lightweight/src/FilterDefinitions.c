@@ -20,12 +20,12 @@ FilterId SFILTER_TIMEOUT=0;
 
 
 void tfilter_TopoUpdate(vector_t * ipackets,
-        vector_t* opackets,
-        vector_t* opackets_reverse,
-        void ** v,
-        Packet_t* pkt,
-        TopologyLocalInfo_t * info,
-        int igoingupstream)
+                        vector_t* opackets,
+                        vector_t* opackets_reverse,
+                        void ** v,
+                        Packet_t* pkt,
+                        TopologyLocalInfo_t * info,
+                        int igoingupstream)
 {
     Network_t * net = TopologyLocalInfo_get_Network(info);
 
@@ -92,10 +92,11 @@ void tfilter_TopoUpdate(vector_t * ipackets,
 
         // Give the format string and extract the array
         if (Packet_unpack(cur_packet, format_string, &type_arr, &arr_len,
-                &prank_arr, &arr_len, &crank_arr,
-                &arr_len, &chost_arr, &arr_len, &cport_arr, &arr_len) == -1) {
+                          &prank_arr, &arr_len, &crank_arr,
+                          &arr_len, &chost_arr, &arr_len, 
+                          &cport_arr, &arr_len) == -1) {
             mrn_printf(FLF, stderr, "ERROR: tfilter_TopoUpdate() - unpack(%s) failure\n",
-                    Packet_get_FormatString(cur_packet));
+                       Packet_get_FormatString(cur_packet));
         } else {
             // Putting the array pointers and its length in a vector
             pushBackElement(itype_arr, type_arr);
@@ -110,10 +111,10 @@ void tfilter_TopoUpdate(vector_t * ipackets,
         for (z = 0; z < arr_len; z++) {
             mrn_dbg(5, mrn_printf(FLF, stderr, "Packet contents: "
                         "type:%d prank:%d crank:%d chost:%d cport:%d arrlen:%d \n",
-                        type_arr[z], prank_arr[z], crank_arr[z], 
-                        chost_arr[z], cport_arr[z], arr_len));
+                                  type_arr[z], prank_arr[z], crank_arr[z], 
+                                  chost_arr[z], cport_arr[z], arr_len));
         }
-    }// end of iterating through the list of packets
+    }
 
     // Dynamic allocation for result arrays
     data_size = sizeof(int32_t);
@@ -142,32 +143,31 @@ void tfilter_TopoUpdate(vector_t * ipackets,
                (size_t)((unsigned)(iarray_lens->vec[i]) * data_size));
 
         mrn_dbg(5, mrn_printf(FLF, stderr, "copying for itype_arr: %d to rtype_arr %d\n",
-                    *(int*)(itype_arr->vec[i]), *rtype_arr));
+                              *(int*)(itype_arr->vec[i]), *rtype_arr));
 
         u = (unsigned) (iarray_lens->vec[i]);
         memcpy(rprank_arr + uint32_pos,
-                iprank_arr->vec[i],
-                (size_t) (u * ud_size));
+               iprank_arr->vec[i],
+               (size_t) (u * ud_size));
         memcpy(rcrank_arr + uint32_pos,
-                icrank_arr->vec[i],
-                (size_t) (u * ud_size));
+               icrank_arr->vec[i],
+               (size_t) (u * ud_size));
         memcpy(rchost_arr + char_pos,
-                ichost_arr->vec[i],
-                (size_t) (u * charptr_size));
+               ichost_arr->vec[i],
+               (size_t) (u * charptr_size));
         memcpy(rcport_arr + uint16_pos,
-                icport_arr->vec[i],
-                (size_t) (u * uhd_size));
+               icport_arr->vec[i],
+               (size_t) (u * uhd_size));
 
         uint32_pos += u;
         uint16_pos += u;
         int32_pos += u;
         char_pos += u;
-    } // end of iterating through vector of int pointers
+    }
 
     nt = Network_get_NetworkTopology(net);
 
-    // Go through the parallel array to make update to NetworkTopology object in network object
-    // as associcated with the stream in process executing this code
+    // Go through the parallel array to make updates to NetworkTopology
     for (i = 0; i < arr_len; i++) {
         switch(rtype_arr[i]) {
             case TOPO_NEW_BE:
@@ -186,17 +186,19 @@ void tfilter_TopoUpdate(vector_t * ipackets,
             default:
                 // TODO: mrnet error that update packet in the topo stream contains invaild update type and exit
                 break;
-        }//switch
-    }// end of for iterating through array elements
+        }
+    }
 
     if (igoingupstream) {
         // Create output packet
         new_packet = new_Packet_t_2(Packet_get_StreamId(ipackets->vec[0]),
-                Packet_get_Tag(ipackets->vec[0]),
-                format_string,
-                rtype_arr, rarray_len, rprank_arr,
-                rarray_len, rcrank_arr, rarray_len,
-                rchost_arr, rarray_len, rcport_arr, rarray_len);
+                                    Packet_get_Tag(ipackets->vec[0]),
+                                    format_string,
+                                    rtype_arr, rarray_len, 
+                                    rprank_arr, rarray_len, 
+                                    rcrank_arr, rarray_len,
+                                    rchost_arr, rarray_len, 
+                                    rcport_arr, rarray_len);
 
         // tell MRNet to free result array
         Packet_set_DestroyData(new_packet, true);
