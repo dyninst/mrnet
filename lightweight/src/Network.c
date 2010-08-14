@@ -266,7 +266,8 @@ int Network_recv(Network_t* net, int *otag, Packet_t* opacket, Stream_t** ostrea
         do {
             // get the Stream associated with the current stream_iter,
             // which is an index into the keys array
-            cur_stream = (Stream_t*)get_val(net->streams, net->streams->keys[net->stream_iter]);
+            cur_stream = (Stream_t*)get_val(net->streams, 
+                                            net->streams->keys[net->stream_iter]);
 
             mrn_dbg(5, mrn_printf(FLF, stderr,
                                   "Checking for packets on stream[%d]...\n",
@@ -274,7 +275,7 @@ int Network_recv(Network_t* net, int *otag, Packet_t* opacket, Stream_t** ostrea
             cur_packet = Stream_get_IncomingPacket(cur_stream);
             if (cur_packet != NULL) 
                 packet_found = true;
-            mrn_dbg(5, mrn_printf(0,0,0, stderr, "%s!\n", 
+            mrn_dbg(5, mrn_printf(FLF, stderr, "... %s!\n", 
                                   (packet_found ? "found" : "not found" )));
             net->stream_iter++;
             if (net->stream_iter == net->streams->size) {
@@ -290,13 +291,15 @@ int Network_recv(Network_t* net, int *otag, Packet_t* opacket, Stream_t** ostrea
         *ostream = Network_get_Stream(net, cur_packet->stream_id);
         assert(*ostream);
         *opacket = *cur_packet;
-        mrn_dbg(4, mrn_printf(FLF, stderr, "cur_packet tag: %d, fmt: %s\n", cur_packet->tag, cur_packet->fmt_str));
+        mrn_dbg(4, mrn_printf(FLF, stderr, "cur_packet tag: %d, fmt: %s\n", 
+                              cur_packet->tag, cur_packet->fmt_str));
         return 1;
     }
 
     // No packets are already in the stream
     // check whether there is data waiting to be read on our socket
-    mrn_dbg(5, mrn_printf(FLF, stderr, "No packets waiting in stream, checking for data on socket\n"));
+    mrn_dbg(5, mrn_printf(FLF, stderr, 
+                    "No packets waiting in stream, checking for data on socket\n"));
     retval = Network_recv_2(net);
 
     checked_network = true;
@@ -402,13 +405,17 @@ int Network_remove_Node(Network_t* net, Rank ifailed_rank, int iupdate)
     mrn_dbg(3, mrn_printf(FLF, stderr, "Deleting PeerNode: node[%u] ...\n", ifailed_rank));
     Network_delete_PeerNode(net, ifailed_rank);
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "Removing from Topology: node[%u] ...\n", ifailed_rank));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Removing from Topology: node[%u] ...\n", 
+                          ifailed_rank));
     NetworkTopology_remove_Node(net->network_topology, ifailed_rank);
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "Removing from Streams: node[%u] ...\n" , ifailed_rank));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Removing from Streams: node[%u] ...\n" , 
+                          ifailed_rank));
   
     for (i = 0; i < net->streams->size; i++) {
-        Stream_remove_Node((Stream_t*)get_val(net->streams, net->streams->keys[i]), ifailed_rank);
+        Stream_remove_Node((Stream_t*)get_val(net->streams, 
+                                              net->streams->keys[i]), 
+                           ifailed_rank);
     }
 
     retval = true;
@@ -443,7 +450,8 @@ int Network_delete_PeerNode(Network_t* net, Rank irank)
 int Network_change_Parent(Network_t* net, Rank ichild_rank, Rank inew_parent_rank)
 {
     // update topology
-    if (! NetworkTopology_set_Parent(net->network_topology, ichild_rank, inew_parent_rank, false)) {
+    if (! NetworkTopology_set_Parent(net->network_topology, 
+                                     ichild_rank, inew_parent_rank, false)) {
         return false;
     }
 
@@ -469,7 +477,8 @@ void Network_delete_Stream(Network_t * net, unsigned int iid)
     Stream_t* ret = (Stream_t*)get_val(net->streams, iid);
 
     /* if we're deleting the iter, set to the next element */
-    if (ret == (Stream_t*)get_val(net->streams, net->streams->keys[net->stream_iter])) {
+    if (ret == (Stream_t*)get_val(net->streams, 
+                                  net->streams->keys[net->stream_iter])) {
         net->stream_iter++;
         // wrap around to the beginning of the map, if necessary
         if (net->stream_iter == net->streams->size)
@@ -485,15 +494,15 @@ int Network_send_PacketToParent(Network_t* net, Packet_t* ipacket)
     if (PeerNode_sendDirectly(net->parent, ipacket) == -1) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "upstream.send() failed\n"));
         if (Network_recover_FromFailures(net)) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "assume parent failure, try one more time\n"));
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                  "assume parent failure, try one more time\n"));
             Network_recover_FromParentFailure(net); 
             if (PeerNode_sendDirectly(net->parent, ipacket) == -1) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "upstram.send() failed, again\n"));
                 return -1;
             }
-        } else {
-            return -1;
-        }
+        } 
+        else return -1;
     }
 
     mrn_dbg_func_end();
@@ -507,9 +516,11 @@ PeerNode_t* Network_new_PeerNode(Network_t* network,
                                  int iis_parent,
                                  int iis_internal)
 {
-    PeerNode_t* node = new_PeerNode_t(network, ihostname, iport, irank, iis_parent, iis_internal);
+    PeerNode_t* node = new_PeerNode_t(network, ihostname, iport, 
+                                      irank, iis_parent, iis_internal);
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "new peer node: %s:%d (%p) \n", node->hostname, node->rank, node));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "new peer node: %s:%d (%p) \n", 
+                          node->hostname, node->rank, node));
 
     if (iis_parent) {
         network->parent = node;  
@@ -596,7 +607,8 @@ int Network_recover_FromParentFailure(Network_t* net)
     failed_rank = PeerNode_get_Rank(Network_get_ParentNode(net));
     Network_set_ParentNode(net, NULL);
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "Recovering from parent[%d]'s failure\n", failed_rank));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Recovering from parent[%d]'s failure\n", 
+                          failed_rank));
 
     NetworkTopology_print(Network_get_NetworkTopology(net), NULL);
 
@@ -689,21 +701,21 @@ SerialGraph_t* Network_readTopology(Network_t * net, int topoSocket)
 {
     char * sTopology = NULL;
     size_t sTopologyLen = 0;
-	char * currBufPtr;
-	size_t nRemaining;
-	ssize_t nread;
+    char * currBufPtr;
+    size_t nRemaining;
+    ssize_t nread;
 
-	SerialGraph_t* sg;
+    SerialGraph_t* sg;
 
-	mrn_dbg_func_begin();
+    mrn_dbg_func_begin();
     
-	// obtain topology from our parent
-	recv(topoSocket, (char*)&sTopologyLen, sizeof(sTopologyLen), 0); 
+    // obtain topology from our parent
+    recv(topoSocket, (char*)&sTopologyLen, sizeof(sTopologyLen), 0); 
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%d\n", (int)sTopologyLen));
 
     sTopology = (char*)malloc(sizeof(char)*(sTopologyLen + 1));
     assert(sTopology);
-	currBufPtr = sTopology;
+    currBufPtr = sTopology;
     nRemaining = sTopologyLen;
     while (nRemaining > 0 ) {
         nread = recv(topoSocket, currBufPtr, nRemaining, 0);
@@ -724,12 +736,12 @@ SerialGraph_t* Network_readTopology(Network_t * net, int topoSocket)
 void Network_writeTopology(Network_t * net, int topoFd, SerialGraph_t* topology) 
 {
     char * sTopology;
-	size_t sTopologyLen;
-	ssize_t nwritten;
-	size_t nRemaining;
-	const char * currBufPtr;
+    size_t sTopologyLen;
+    ssize_t nwritten;
+    size_t nRemaining;
+    const char * currBufPtr;
 	
-	mrn_dbg_func_begin();
+    mrn_dbg_func_begin();
 
     sTopology = SerialGraph_get_ByteArray(topology);
     sTopologyLen = strlen(sTopology);
@@ -758,25 +770,19 @@ void Network_waitfor_ShutDown(Network_t* net)
 {
     Stream_t* stream;
     Packet_t* p;
-	int tag = 0;
+    int tag = 0;
 	
-	p = (Packet_t*) malloc(sizeof(Packet_t));
+    p = (Packet_t*) malloc(sizeof(Packet_t));
     assert(p);
 
-    do {
+    while( ! net->_was_shutdown ) {
 
         if( Network_recv(net, &tag, p, &stream) != 1 ) {
-            fprintf(stderr, "BE: network::recv() failure\n");
-            break;
-        }
-        else if( (Stream_get_Id(stream) == 0) &&
-                 (tag == PROT_SHUTDOWN) ) {
-            net->_was_shutdown = 1;
+            mrn_dbg(1, mrn_printf(FLF, stderr, "Network_recv() failure\n"));
             break;
         }
 
-    } while(1);
+    }
 
     free(p);
-
 }
