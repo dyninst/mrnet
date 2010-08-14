@@ -706,7 +706,7 @@ XTNetwork::Instantiate( ParsedGraph* topology,
 {
     mrn_dbg_func_begin();
 
-    bool have_backends = (be_path != NULL);
+    bool have_backends = (strlen(be_path) != 0);
  
    // determine whether we will be using the ALPS tool helper at all
     int apid = -1;
