@@ -24,9 +24,12 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Copying config.h into src/"
+				CommandLine="cd&#x0D;&#x0A;copy conf\config.h src"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+				CommandLine="cp ./conf/config.h src/"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -428,7 +431,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\obj\i386-unknown-nt4.0\parser.tab.C"
+				RelativePath=".\src\parser.tab.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -596,7 +599,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\obj\i386-unknown-nt4.0\scanner.C"
+				RelativePath=".\src\scanner.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
