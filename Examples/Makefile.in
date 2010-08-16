@@ -30,7 +30,15 @@ IINCDIR = @includedir@
 ############################
 CP      = @CP@
 RM      = @RM@
-INSTALL = @INSTALL@
+
+# install actually used by subdir makes, set correct path if using our install-sh
+TMP_INSTALL = @INSTALL@
+INSTALL_PROG = $(shell echo $(INSTALL) | sed 's/ .*$$//')
+ifeq "$(INSTALL_PROG)" "../conf/install-sh"
+    INSTALL := ../$(TMP_INSTALL)
+else
+    INSTALL := $(TMP_INSTALL)
+endif
 
 #############################
 #### General Definitions ####
