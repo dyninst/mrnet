@@ -26,7 +26,9 @@
 #define YY_FLEX_MINOR_VERSION 5
 
 #include <stdio.h>
+#ifndef os_windows
 #include <unistd.h>
+#endif
 
 
 /* cfront 1.2 defines "c_plusplus" instead of "__cplusplus" */
