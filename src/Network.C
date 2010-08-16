@@ -268,7 +268,8 @@ void Network::init_FrontEnd( const char * itopology,
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
 
     if( parse_Configuration( itopology, iusing_mem_buf ) == -1 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: parse_Configuration( \"%s\" )!\n",
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "Failure: parse_Configuration( \"%s\" )!\n",
                               ( iusing_mem_buf ? "memory buffer" : itopology )));
         return;
     }
@@ -295,13 +296,11 @@ void Network::init_FrontEnd( const char * itopology,
                 << std::ends;
 
     if( ! XPlat::NetUtils::IsLocalHost( prettyHost ) ) {
-        char warnmsg[1024];
 	string lhost;
 	XPlat::NetUtils::GetLocalHostName(lhost);
-        sprintf( warnmsg, "FE host (%s) != Topology Root (%s)",
-                 lhost.c_str(), prettyHost.c_str() );
-        error( ERR_TOPOLOGY_FORMAT, rootRank, warnmsg );
-        return;
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                               "WARNING: Topology Root (%s) is not local host (%s)\n",
+                               prettyHost.c_str(), lhost.c_str()) );
     }
 
     //TLS: setup thread local storage for frontend
@@ -315,7 +314,8 @@ void Network::init_FrontEnd( const char * itopology,
     status = tsd_key.Set( local_data );
 
     if( status != 0 ) {
-        error( ERR_SYSTEM, rootRank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
+        error( ERR_SYSTEM, rootRank, 
+               "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
         return;
     }
 
@@ -324,7 +324,8 @@ void Network::init_FrontEnd( const char * itopology,
     FrontEndNode* fen = CreateFrontEndNode( this, rootHost, rootRank );
     assert( fen != NULL );
     if( fen->has_Error() ) 
-        error( ERR_SYSTEM, rootRank, "Failed to initialize via CreateFrontEndNode()\n" );
+        error( ERR_SYSTEM, rootRank, 
+               "Failed to initialize via CreateFrontEndNode()\n" );
 
     const char* mrn_commnode_path = FindCommnodePath();
     assert( mrn_commnode_path != NULL );
