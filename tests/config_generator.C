@@ -26,6 +26,16 @@ extern int P_getopt(int argc, char* argv[], const char* optstring);
 
 static void usage_exit(char* program);
 
+void init_local()
+{
+#ifdef os_windows
+	WORD version = MAKEWORD(2,2);
+	WSADATA data;
+	if (WSAStartup(version, &data) != 0)
+		fprintf(stderr, "WSAStartup failed!\n");
+#endif	
+}
+
 int main(int argc, char **argv)
 {
     std::string hosts_file, fe_host, be_hosts_file, cp_hosts_file,
@@ -146,7 +156,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "Error: --topology option must be provided\n");
         usage_exit(argv[0]);
     }
-    
+   
+	init_local();
+
     // read input hosts file(s)
     std::list< std::pair<std::string, unsigned> > hosts, cp_hosts, be_hosts;
     if( ! (have_hosts || have_be_hosts) ){
