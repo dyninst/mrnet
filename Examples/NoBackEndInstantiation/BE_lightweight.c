@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
     int32_t recv_int=0;
     int tag;   
     Stream_t* stream;
-    char* fmt_str = "%d";
+    const char* fmt_str = "%d";
     
     do {
         if( Network_recv(net, &tag, p, &stream) != 1 ) {

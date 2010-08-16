@@ -13,6 +13,8 @@
 
 using namespace MRN;
 
+const char* invalid_search = "NO SEARCH STRING PROVIDED";
+
 extern "C" {
 
 const char * HF_BE_scan_format_string = "%ac";
@@ -32,7 +34,7 @@ void HF_BE_scan( std::vector< PacketPtr >& pin,
         }
     }
     else
-        search = "NO SEARCH STRING PROVIDED";
+        search = strdup( invalid_search );
 
     //fprintf(stdout, "%s - search string is '%s'\n", __FUNCTION__, search);
     //fflush(stdout);

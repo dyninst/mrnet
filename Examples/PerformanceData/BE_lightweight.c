@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     Stream_t * stream;
     Packet_t* p = (Packet_t*)malloc(sizeof(Packet_t));
     Network_t* net;
-    int tag=0, recv_val=0, num_iters=0;
+    int i, tag=0, recv_val=0, num_iters=0;
     
     assert(p);
 
@@ -33,8 +33,7 @@ int main(int argc, char **argv)
             Packet_unpack(p, "%d %d", &recv_val, &num_iters );
 
             // Send num_iters waves of integers
-            unsigned int i;
-            for( i=0; i<num_iters; i++ ) {
+            for( i=0; i < num_iters; i++ ) {
                 if( Stream_send(stream, tag, "%d", recv_val*i ) == -1 ) {
                     fprintf(stderr, "BE: stream::send(%%d) failure\n");
                     tag = PROT_EXIT;

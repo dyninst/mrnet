@@ -1,10 +1,10 @@
 /**************************************************************************
- * Copyright 2003-2009   Michael J. Brim, Barton P. Miller                *
+ * Copyright 2003-2010   Michael J. Brim, Barton P. Miller                *
  *                Detailed MRNet usage rights in "LICENSE" file.          *
  **************************************************************************/
 
-#ifndef _FILE_UTIL_H_
-#define _FILE_UTIL_H_
+#ifndef _FILE_UTIL_LTWT_H_
+#define _FILE_UTIL_LTWT_H_
 
 /* File Handling Utility Functions */
 
@@ -17,8 +17,17 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#ifndef __FUNCTION__
+#define __FUNCTION__ "nofunction"
+#endif
 
-inline int stat_file(const char* filename, struct stat* status, int errprint)
+#ifdef os_solaris
+#define MUNMAP_CAST (char*)
+#else
+#define MUNMAP_CAST
+#endif
+
+int stat_file(const char* filename, struct stat* status, int errprint)
 {
    if( stat(filename, status) ) {
       int err = errno;
@@ -31,7 +40,7 @@ inline int stat_file(const char* filename, struct stat* status, int errprint)
    return 0;
 }
 
-inline int open_file(const char* filename, int flags, mode_t mode, int errprint)
+int open_file(const char* filename, int flags, mode_t mode, int errprint)
 {
    int fd = open(filename, flags, mode);
    if( fd == -1 ) {
@@ -45,7 +54,7 @@ inline int open_file(const char* filename, int flags, mode_t mode, int errprint)
    return fd;
 }
 
-inline char* read_file(const char* filename, size_t filelen)
+char* read_file(const char* filename, size_t filelen)
 {
    /* ifstream f; */
     FILE* f;
@@ -60,10 +69,9 @@ inline char* read_file(const char* filename, size_t filelen)
         while (valid != EOF) {
             len++;
             valid = fgetc(f);
+            if( len == 65536 ) // is this conservative?
+                break;
         }
-
-        if (len == -1) 
-            len = 65536; // is this conservative?
         f = freopen(filename, "r", f);
 
         // read entire file
@@ -85,7 +93,7 @@ inline char* read_file(const char* filename, size_t filelen)
     return contents;
 }
 
-inline void* map_file( const char* filename, struct stat* status, int errprint)
+void* map_file( const char* filename, struct stat* status, int errprint)
 {
    void* file_buf = NULL;
 
@@ -96,7 +104,7 @@ inline void* map_file( const char* filename, struct stat* status, int errprint)
    if( fd == -1 )
       return NULL;
 
-   file_buf = mmap(NULL, (unsigned)status->st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+   file_buf = mmap(NULL, (size_t)status->st_size, PROT_READ, MAP_PRIVATE, fd, (size_t)0);
    if( file_buf == MAP_FAILED ) {
       file_buf = NULL;
       int err = errno;
@@ -108,10 +116,10 @@ inline void* map_file( const char* filename, struct stat* status, int errprint)
    return file_buf;
 }
 
-inline int unmap_file( void* file_buf, size_t file_len, int errprint)
+int unmap_file( void* file_buf, size_t file_len, int errprint)
 {
    if( file_buf != NULL ) {
-      int rc = munmap(file_buf, file_len);
+      int rc = munmap( MUNMAP_CAST file_buf, file_len );
       if( rc == -1 ) {
          int err = errno;
          if( errprint )
@@ -124,4 +132,4 @@ inline int unmap_file( void* file_buf, size_t file_len, int errprint)
 }
 
 
-#endif /* _FILE_UTIL_H_ */
+#endif /* _FILE_UTIL_LTWT_H_ */

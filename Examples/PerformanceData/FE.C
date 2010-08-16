@@ -73,10 +73,10 @@ int main(int argc, char **argv)
     }
 
     // We expect "num_iters" aggregated responses from all back-ends
-    for( unsigned int i=0; i<num_iters; i++ ){
+    for( int i=0; i < num_iters; i++ ) {
         retval = stream->recv(&tag, p);
         assert( retval != 0 ); //shouldn't be 0, either error or block till data
-        if( retval == -1){
+        if( retval == -1 ){
             //recv error
             return -1;
         }
@@ -87,12 +87,12 @@ int main(int argc, char **argv)
         }
 
         if( recv_val != num_backends * i * send_val ){
-            fprintf(stderr, "Iteration %d: Success! recv_val(%d) != %d*%d*%d=%d (send_val*i*num_backends)\n",
-                    i, recv_val, send_val, i, num_backends, send_val*i*num_backends );
+            printf("Iteration %d: Failure! recv_val(%d) != %d*%d*%d=%d (send_val*i*num_backends)\n",
+                   i, recv_val, send_val, i, num_backends, send_val*i*num_backends );
         }
         else{
-            fprintf(stderr, "Iteration %d: Success! recv_val(%d) == %d*%d*%d=%d (send_val*i*num_backends)\n",
-                    i, recv_val, send_val, i, num_backends, send_val*i*num_backends );
+            printf("Iteration %d: Success! recv_val(%d) == %d*%d*%d=%d (send_val*i*num_backends)\n",
+                   i, recv_val, send_val, i, num_backends, send_val*i*num_backends );
         }
     }
 
