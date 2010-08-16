@@ -87,7 +87,8 @@ int main(int argc, char **argv)
             break;
 
         case PROT_CHECK_PCT: {
-            string bits = pct.to_string<char,char_traits<char>,allocator<char> >();
+            string bits = pct.to_string();
+            //string bits = pct.to_string<char,char_traits<char>,allocator<char> >();
             unsigned long percent = pct.to_ulong();
             fprintf( stdout, "BE %d: Sending pct (%s)\n", me, bits.c_str() );
             if( stream->send(tag, "%uld", percent) == -1 ){

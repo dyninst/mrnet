@@ -67,8 +67,6 @@ int main(int argc, char **argv)
     Stream * add_stream = net->new_Stream( comm_BC, filter_id,
                                            SFILTER_WAITFORALL );
 
-    int num_backends = comm_BC->get_EndPoints().size();
-
     // Broadcast a control message to back-ends to send us "num_iters"
     // waves of integers
     tag = PROT_START;
@@ -171,8 +169,10 @@ int main(int argc, char **argv)
     }
     unsigned long good_pct;
     p->unpack("%uld", &good_pct);
-    string bits = fr_bin_set(bits_val).to_string<char,char_traits<char>,allocator<char> >();
-    string good = fr_bin_set(good_pct).to_string<char,char_traits<char>,allocator<char> >();
+    string bits = fr_bin_set(bits_val).to_string();
+    string good = fr_bin_set(good_pct).to_string();
+    //string bits = fr_bin_set(bits_val).to_string<char,char_traits<char>,allocator<char> >();
+    //string good = fr_bin_set(good_pct).to_string<char,char_traits<char>,allocator<char> >();
     fprintf(stdout, "FE: check of PERCENTILES ");
     if( good_pct != bits_val ) fprintf(stdout, "failed, filter %s != check %s\n", 
                                        bits.c_str(), good.c_str());
