@@ -30,7 +30,7 @@ BackEndNode::BackEndNode( Network * inetwork,
     _network->set_BackEndNode( this );
     _network->set_NetworkTopology( new NetworkTopology(inetwork, _hostname, _port, _rank, true) );
     
-    NetworkTopology* nt=_network->get_NetworkTopology();
+    NetworkTopology* nt = _network->get_NetworkTopology();
 
     //establish data connection w/ parent
     if( init_newChildDataConnection( _network->get_ParentNode() ) == -1 ) {
@@ -41,34 +41,32 @@ BackEndNode::BackEndNode( Network * inetwork,
 
     //start event detection thread
     if( ! EventDetector::start( _network ) ) {
-      mrn_dbg( 1, mrn_printf(FLF, stderr, "start_EventDetector() failed\n" ));
-      error( ERR_INTERNAL, _rank, "start_EventDetector failed\n" );
-      return;
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "start_EventDetector() failed\n" ));
+        error( ERR_INTERNAL, _rank, "start_EventDetector failed\n" );
+        return;
     }
     
     if( nt != NULL ) {
     
-      if( ! nt->isInTopology(imyhostname, _port, imyrank) ) {
+      if( ! nt->in_Topology(imyhostname, _port, imyrank) ) {
           //not in topology. backend attach case
 
-          _network->new_Stream(1, NULL, 0, TFILTER_TOPO_UPDATE, 
-                               SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+          _network->new_Stream( 1, NULL, 0, TFILTER_TOPO_UPDATE, 
+                                SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
           mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend not already in the topology\n") );
 
           //new topo propagation code - create a new update packet
           Stream *s = _network->get_Stream(1); // get topol prop stream
           int type = TOPO_NEW_BE;
           char *host_arr = strdup(imyhostname.c_str());
-          uint32_t* send_iprank = (uint32_t*) malloc(sizeof(uint32_t));
-          *send_iprank = iprank;
-          uint32_t* send_myrank = (uint32_t*) malloc(sizeof(uint32_t));
-          *send_myrank = imyrank;
-          uint16_t* send_port = (uint16_t*)malloc(sizeof(uint16_t));
-          *send_port = _port;
+          uint32_t send_iprank = iprank;
+          uint32_t send_myrank = imyrank;
+          uint16_t send_port = _port;
 
           s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                   &type, 1, send_iprank, 1, send_myrank, 1, 
-                   &host_arr, 1, send_port, 1 );
+                   &type, 1, &send_iprank, 1, &send_myrank, 1, 
+                   &host_arr, 1, &send_port, 1 );
+
           free(host_arr);
       }	
       else

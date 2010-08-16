@@ -20,9 +20,9 @@ public:
                     Port ipport, 
                     Rank iprank );
 
-    virtual int proc_PortUpdate(PacketPtr ipacket ) const;
-    virtual bool ack_PortUpdate() const;
     virtual ~RSHChildNode(void);
+
+    int proc_PortUpdate(PacketPtr ipacket ) const;
 
 protected:
     virtual int proc_PacketFromParent( PacketPtr cur_packet );

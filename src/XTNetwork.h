@@ -65,7 +65,7 @@ private:
                         int argc, 
                         const char** argv );
 
-    int ConnectProcesses( ParsedGraph* graph );
+    int ConnectProcesses( ParsedGraph* graph, bool have_backends );
 
 
     // IN support

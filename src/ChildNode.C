@@ -409,7 +409,6 @@ int ChildNode::proc_TopologyReport( PacketPtr ipacket ) const
             mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
             return -1;
         }
-        
     }
     else {
         // send ack to parent
@@ -653,18 +652,18 @@ bool ChildNode::ack_DeleteSubTree( void ) const
 {
     mrn_dbg_func_begin();
 
-    PacketPtr packet( new Packet( 0, PROT_SHUTDOWN_ACK, "" ));
+    PacketPtr packet( new Packet(0, PROT_SHUTDOWN_ACK, "") );
 
-    if( !packet->has_Error( ) ) {
+    if( ! packet->has_Error() ) {
         /* note: don't request flush as send thread will exit 
                  before notifying flush completion */
-        if( _network->get_ParentNode()->send( packet ) == -1 ) {
+        if( _network->get_ParentNode()->send(packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "send failed\n" ));
             return false;
         }
     }
     else {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n" ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n") );
         return false;
     }
 
@@ -676,17 +675,17 @@ bool ChildNode::ack_TopologyReport( void ) const
 {
     mrn_dbg_func_begin();
 
-    PacketPtr packet( new Packet( 0, PROT_TOPOLOGY_ACK, "" ));
+    PacketPtr packet( new Packet(0, PROT_TOPOLOGY_ACK, "") );
 
-    if( !packet->has_Error( ) ) {
-        if( ( _network->get_ParentNode()->send( packet ) == -1 ) ||
-            ( _network->get_ParentNode()->flush(  ) == -1 ) ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n" ));
+    if( ! packet->has_Error() ) {
+        if( (_network->get_ParentNode()->send(packet) == -1) ||
+            (_network->get_ParentNode()->flush() == -1) ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n") );
             return false;
         }
     }
     else {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n" ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n") );
         return false;
     }
 
@@ -694,7 +693,13 @@ bool ChildNode::ack_TopologyReport( void ) const
     return true;
 }
 
-int ChildNode::recv_PacketsFromParent(std::list <PacketPtr> &packet_list) const {
+int ChildNode::proc_PortUpdate(PacketPtr ipacket ) const
+{
+    return -1;
+}
+
+int ChildNode::recv_PacketsFromParent(std::list <PacketPtr> &packet_list) const 
+{
     return _network->recv_PacketsFromParent(packet_list);
 }
 

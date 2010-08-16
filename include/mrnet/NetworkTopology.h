@@ -146,30 +146,27 @@ class NetworkTopology: public Error {
 
     void compute_TreeStatistics( void );
 
-    //new members added for topology propagation change
+    // routines used by topology update propagation
     bool new_Node( const std::string &, Port, Rank, bool iis_backend );
-    bool isInTopology(std::string ihostname, Port iport, Rank irank);
-    void insert_updates_buffer( update_contents_t* uc);
+    bool in_Topology( std::string ihostname, Port iport, Rank irank );
+ 
+    void insert_updates_buffer( update_contents_t* uc );
     std::vector<update_contents_t* > get_updates_buffer( void );
 
-    void update_TopoStreamPeers( std::vector<uint32_t> new_nodes );
-    void add_BackEnd( uint32_t rprank, uint32_t rcrank, char* rchost, 
-                      uint16_t rcport, bool upst );
-    void add_CP( uint32_t rprank, uint32_t rcrank, char* rchost, 
-                      uint16_t rcport, bool upst );
-
-    void change_Port( uint32_t rcrank, uint16_t rcport );
+    void update_addBackEnd( uint32_t rprank, uint32_t rcrank, char* rchost, 
+                            uint16_t rcport, bool upstream );
+    void update_addInternalNode( uint32_t rprank, uint32_t rcrank, char* rchost, 
+                                 uint16_t rcport, bool upstream );
+    void update_changeParent( uint32_t rprank, uint32_t rcrank, bool upstream);
+    void update_changePort( uint32_t rcrank, uint16_t rcport, bool upstream );
+    void update_removeNode( uint32_t rprank, uint32_t rcrank, bool upstream);
+  
     void update_Router_Table();
+    void update_TopoStreamPeers( std::vector<uint32_t> new_nodes );
 
-   //added more update functions for topology propogation change
-    void remove_update( uint32_t rprank, uint32_t rcrank,bool upst);
-    void change_parent_update( uint32_t rprank, uint32_t rcrank,bool upst);
-
-    //made public from private for topo prop change
     void serialize( Node * );
 
-  private:
-   
+  private:   
 
     Node * find_NodeHoldingLock( Rank ) const;
     bool remove_Orphan( Rank );

@@ -49,8 +49,10 @@ class ParentNode: public virtual Error,
 
     int proc_SubTreeInitDoneReport ( PacketPtr ipacket ) const;
     int proc_newSubTreeReport( PacketPtr ipacket ) const;
+
     int proc_DeleteSubTree( PacketPtr ipacket ) const;
     int proc_DeleteSubTreeAck( PacketPtr ipacket ) const;
+
     int proc_TopologyReport( PacketPtr ipacket ) const;
     int proc_TopologyReportAck( PacketPtr ipacket ) const;
 
@@ -80,6 +82,7 @@ class ParentNode: public virtual Error,
 
     void init_numChildrenExpected( SerialGraph& sg );
     unsigned int get_numChildrenExpected( void ) const  { return _num_children; }
+
     virtual int proc_PortUpdates( PacketPtr ipacket ) const;
 
  protected:
@@ -97,9 +100,7 @@ class ParentNode: public virtual Error,
 
 };
 
-//bool lt_PeerNodePtr( PeerNodePtr p1, PeerNodePtr p2 );
-//bool equal_PeerNodePtr( PeerNodePtr p1, PeerNodePtr p2 );
 
-}                               // namespace MRN
+} // namespace MRN
 
-#endif                          /* __parentnode_h */
+#endif /* __parentnode_h */

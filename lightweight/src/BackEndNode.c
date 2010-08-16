@@ -30,15 +30,15 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
 {
     BackEndNode_t* be;
     PeerNode_t* parent;
-	NetworkTopology_t * nt;
+    NetworkTopology_t * nt;
 
-	Stream_t* s;
+    Stream_t* s;
     int type;
     char * host_arr;
 
-	uint32_t * send_iprank;
-    uint32_t * send_myrank;
-    uint16_t * send_port;
+    uint32_t send_iprank;
+    uint32_t send_myrank;
+    uint16_t send_port;
 
     be = (BackEndNode_t*)malloc(sizeof(BackEndNode_t));
     assert(be != NULL);
@@ -58,9 +58,9 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
     be->network->local_rank = imyrank;
     be->network->local_back_end_node = be;
 
-    be->network->network_topology = new_NetworkTopology_t(inetwork, imyhostname, UnknownPort, imyrank, true);
-
-    nt = Network_get_NetworkTopology(be->network);
+    nt = new_NetworkTopology_t(inetwork, imyhostname, 
+                                UnknownPort, imyrank, true);
+    be->network->network_topology = nt;
 
     // establish data connection with parent
     if (ChildNode_init_newChildDataConnection(be, be->network->parent, UnknownRank) == -1) {
@@ -69,32 +69,32 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
         return NULL;
     }
 
+    // get it again, since it may have been updated
+    nt = Network_get_NetworkTopology(be->network);
     if (nt != NULL) {
-        // if backend not alraedy in the topology--this is false in backend-attach cases  
+
         if ( ! NetworkTopology_isInTopology(nt, imyhostname, UnknownPort, imyrank) ) {
+            // back-end attach case
             Network_new_Stream(be->network, 1, NULL, 0, 0, 0, 0);
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend not already in the topology\n") );
 
             // New topology propagation code - create a new update packet
-            s = Network_get_Stream(be->network, 1); // getting handle for stream id 1 which was reserved for topology propagation
-            type = TOPO_NEW_BE; // type 0 is add packet
+            s = Network_get_Stream(be->network, 1); // get topol prop stream
+            type = TOPO_NEW_BE;
             host_arr = strdup(imyhostname);
-            send_iprank = (uint32_t*)malloc(sizeof(uint32_t));
-			assert(send_iprank);
-            *send_iprank = iprank;
-            send_myrank = (uint32_t*)malloc(sizeof(uint32_t));
-			assert(send_myrank);
-            *send_myrank = imyrank;
-            send_port = (uint16_t*)malloc(sizeof(uint16_t));
-			assert(send_port);
-            *send_port = UnknownPort;
+            send_iprank = iprank;
+            send_myrank = imyrank;
+            send_port = UnknownPort;
 
             Stream_send(s, PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                        &type, 1, send_iprank,
-                        1, send_myrank,
-                        1, &host_arr,
-                        1, send_port, 1);
+                        &type, 1, 
+                        &send_iprank, 1, 
+                        &send_myrank, 1, 
+                        &host_arr, 1, 
+                        &send_port, 1);
+
             free(host_arr);
+
         } else {
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend already in the topology\n") );
         }
@@ -107,12 +107,12 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
 }
 
 
-BackEndNode_t* CreateBackEndNode ( Network_t* inetwork,
-        char* imy_hostname,
-        Rank imy_rank,
-        char* iphostname,
-        Port ipport,
-        Rank iprank) 
+BackEndNode_t* CreateBackEndNode( Network_t* inetwork,
+                                  char* imy_hostname,
+                                  Rank imy_rank,
+                                  char* iphostname,
+                                  Port ipport,
+                                  Rank iprank ) 
 {
 
     // create the new backend node
@@ -123,35 +123,35 @@ BackEndNode_t* CreateBackEndNode ( Network_t* inetwork,
 
 int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
 {
-  int goaway = 0;
-  char delete_backend;
+    int goaway = 0;
+    char delete_backend;
   
-  mrn_dbg_func_begin();
+    mrn_dbg_func_begin();
 
-  Packet_unpack(packet, "%c", &delete_backend);
-  if (delete_backend == 't') {
-      mrn_dbg(3, mrn_printf(FLF, stderr, "Back-end will exit\n"));
-      goaway = 1;
-  }
+    // NOTE: deprecated in 3.0, kill this for next release
+    Packet_unpack(packet, "%c", &delete_backend);
+    if (delete_backend == 't') {
+        mrn_dbg(3, mrn_printf(FLF, stderr, "Back-end will exit\n"));
+        goaway = 1;
+    }
 
-  // processes will be exiting -- disable failure recovery
-  Network_disable_FailureRecovery(be->network);
+    // processes will be exiting -- disable failure recovery
+    Network_disable_FailureRecovery(be->network);
 
-  // Send ack to parent
-  if (!ChildNode_ack_DeleteSubTree(be)) {
-    mrn_dbg(1, mrn_printf(FLF, stderr, "ChildNode_ack_DeleteSubTree() failed\n"));
-  }
+    // Send ack to parent
+    if (!ChildNode_ack_DeleteSubTree(be)) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "ChildNode_ack_DeleteSubTree() failed\n"));
+    }
   
-  // kill topology  
-  Network_shutdown_Network(be->network);
+    // kill topology  
+    Network_shutdown_Network(be->network);
 
-  if (goaway) {
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Back-end exiting ... \n"));
-    exit(0);
-  }
+    if (goaway) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "DEPRECATED: not calling exit()\n"));
+    }
 
-  mrn_dbg_func_end();
-  return 0;
+    mrn_dbg_func_end();
+    return 0;
 }
 
 int BackEndNode_proc_newStream(BackEndNode_t* be, Packet_t* packet)
@@ -215,41 +215,40 @@ int BackEndNode_proc_newStream(BackEndNode_t* be, Packet_t* packet)
 int BackEndNode_proc_UpstreamFilterParams(BackEndNode_t* be, 
                                           Packet_t* ipacket)
 {
-  int stream_id;
-  Stream_t* strm;
+    int stream_id;
+    Stream_t* strm;
 
-  mrn_dbg_func_begin();
+    mrn_dbg_func_begin();
 
-  stream_id = ipacket->stream_id;
-  strm = Network_get_Stream(be->network, stream_id);
-  if (strm == NULL) {
-    mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", stream_id));
-    return -1;
-  }
-  Stream_set_FilterParams(strm, true, ipacket);
-  mrn_dbg_func_end();
-  return 0;
+    stream_id = ipacket->stream_id;
+    strm = Network_get_Stream(be->network, stream_id);
+    if (strm == NULL) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", stream_id));
+        return -1;
+    }
+    Stream_set_FilterParams(strm, true, ipacket);
+    mrn_dbg_func_end();
+    return 0;
   
 }
 
 int BackEndNode_proc_DownstreamFilterParams(BackEndNode_t* be, Packet_t* ipacket)
 {
-  int stream_id;
-  Stream_t* strm;
+    int stream_id;
+    Stream_t* strm;
 
-  mrn_dbg_func_begin();
-  stream_id = ipacket->stream_id;
+    mrn_dbg_func_begin();
+    stream_id = ipacket->stream_id;
 
-  strm = Network_get_Stream(be->network, stream_id);
-  if (strm == NULL) {
-    mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", stream_id));
-    return -1;
-  }
-  Stream_set_FilterParams(strm, false, ipacket);
+    strm = Network_get_Stream(be->network, stream_id);
+    if (strm == NULL) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", stream_id));
+        return -1;
+    }
+    Stream_set_FilterParams(strm, false, ipacket);
 
-  mrn_dbg_func_end();
-  return 0;
-  
+    mrn_dbg_func_end();
+    return 0;
 }
 
 int BackEndNode_proc_deleteStream(BackEndNode_t* be, Packet_t* ipacket)
@@ -278,71 +277,70 @@ int BackEndNode_proc_deleteStream(BackEndNode_t* be, Packet_t* ipacket)
 
 int BackEndNode_proc_newFilter(BackEndNode_t* be, Packet_t* ipacket)
 {
-  int retval = 0;
-  unsigned short fid = 0;
-  char* so_file = NULL, *func = NULL;
+    int retval = 0;
+    unsigned short fid = 0;
+    char* so_file = NULL, *func = NULL;
 
-  mrn_dbg_func_begin();
+    mrn_dbg_func_begin();
 
-  if (Packet_ExtractArgList(ipacket, "%uhd %s %s", &fid, &so_file, &func) == -1) {
-    mrn_dbg(1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n"));
-    return -1;
-  }
+    if (Packet_ExtractArgList(ipacket, "%uhd %s %s", &fid, &so_file, &func) == -1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n"));
+        return -1;
+    }
 
-  mrn_dbg_func_end();
-  return fid;
+    mrn_dbg_func_end();
+    return fid;
 }
 
 int BackEndNode_proc_FailureReportFromParent(BackEndNode_t* be, Packet_t* ipacket)
 {
-  Rank failed_rank;
-  Packet_unpack(ipacket, "%uhd", &failed_rank);
-  Network_remove_Node(be->network, failed_rank, false);
+    Rank failed_rank;
+    Packet_unpack(ipacket, "%uhd", &failed_rank);
+    Network_remove_Node(be->network, failed_rank, false);
 
-  return 0;
+    return 0;
 }
 
 int BackEndNode_proc_NewParentReportFromParent(BackEndNode_t* be, Packet_t* ipacket)
 {
-  Rank child_rank, parent_rank;
+    Rank child_rank, parent_rank;
 
-  Packet_unpack(ipacket, "%ud %ud", &child_rank, &parent_rank);
+    Packet_unpack(ipacket, "%ud %ud", &child_rank, &parent_rank);
 
-  Network_change_Parent(be->network, child_rank, parent_rank);
+    Network_change_Parent(be->network, child_rank, parent_rank);
 
-  return 0;
+    return 0;
 }
 
 int BackEndNode_proc_DataFromParent(BackEndNode_t* be, Packet_t* ipacket)
 {
-  int retval = 0;
-  Stream_t* stream;
-  Packet_t* opacket;
-  vector_t * opackets = new_empty_vector_t();
-  vector_t * opackets_reverse = new_empty_vector_t();
-  int i;
+    int retval = 0;
+    Stream_t* stream;
+    Packet_t* opacket;
+    vector_t * opackets = new_empty_vector_t();
+    vector_t * opackets_reverse = new_empty_vector_t();
+    int i;
 
-  mrn_dbg_func_begin();
+    mrn_dbg_func_begin();
 
-  stream = Network_get_Stream(be->network, (unsigned int)ipacket->stream_id);
+    stream = Network_get_Stream(be->network, (unsigned int)ipacket->stream_id);
 
-  if (stream == NULL) {
-    mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", ipacket->stream_id));
-    return -1;
-  }
+    if (stream == NULL) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", ipacket->stream_id));
+        return -1;
+    }
 
-  if (Stream_push_Packet(stream, ipacket, opackets, opackets_reverse, false) == -1) {
-    return -1;
-  }
+    if (Stream_push_Packet(stream, ipacket, opackets, opackets_reverse, false) == -1) {
+        return -1;
+    }
 
-  for (i = 0; i < opackets->size; i++) {
-      opacket = opackets->vec[i];
-      mrn_dbg(5, mrn_printf(FLF, stderr, "adding Packet on stream[%d]\n", stream->id));
-      Stream_add_IncomingPacket(stream, opacket);
-  }
+    for (i = 0; i < opackets->size; i++) {
+        opacket = opackets->vec[i];
+        mrn_dbg(5, mrn_printf(FLF, stderr, "adding Packet on stream[%d]\n", stream->id));
+        Stream_add_IncomingPacket(stream, opacket);
+    }
   
-  mrn_dbg_func_end();
+    mrn_dbg_func_end();
 
-  return retval;
-
+    return retval;
 }

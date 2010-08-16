@@ -58,9 +58,8 @@ Stream::Stream( Network * inetwork,
     _incoming_packet_buffer_sync.RegisterCondition( PACKET_BUFFER_NONEMPTY );
 
     //parent nodes set up relevant downstream nodes 
-    if(ibackends != NULL)
-    {
-        if( _network->is_LocalNodeParent() ) {
+    if( _network->is_LocalNodeParent() ) {
+        if( ibackends != NULL ) {
 
             _end_points.insert( ibackends, ibackends + inum_backends );
 
@@ -77,7 +76,19 @@ Stream::Stream( Network * inetwork,
                 }
             }
         }
-    }//if backends not null 
+        else {
+            /* no endpoints: only valid for topol prop bcast streams 
+             * created during network startup in backend attach
+             */
+
+            // since bcast stream, add all children peers
+            const std::set< PeerNodePtr > children = _network->get_ChildPeers();
+            std::set< PeerNodePtr >::const_iterator citer = children.begin();
+            for( ; citer != children.end() ; citer++ )
+                _peers.insert( (*citer)->get_Rank() );
+        }
+    }
+
     mrn_dbg_func_end();
 }
 
@@ -578,9 +589,9 @@ int Stream::push_Packet( PacketPtr ipacket,
         ipackets.push_back(ipacket);
     }
 
-    // if not back-end and going upstream, sync first
+    // if going upstream, sync first
     if( igoing_upstream ){
-        if( _sync_filter->push_Packets(ipackets, opackets, opackets_reverse, topol_info ) == -1){
+        if( _sync_filter->push_Packets(ipackets, opackets, opackets_reverse, topol_info ) == -1 ){
             mrn_dbg(1, mrn_printf(FLF, stderr, "Sync.push_packets() failed\n"));
             return -1;
         }
@@ -644,7 +655,7 @@ int Stream::push_Packet( PacketPtr ipacket,
                 perfdata_t val;
                 val.d = tagg.get_latency_secs();
                 _perf_data->add_DataInstance( PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_FILT_OUT,
-                                             val );
+                                              val );
             }
             if( _perf_data->is_Enabled( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT ) ) {
                 perfdata_t val;

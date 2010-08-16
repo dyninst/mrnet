@@ -31,7 +31,7 @@ class SerialGraph {
 
     void add_Leaf( std::string, Port, Rank );
     void add_SubTreeRoot( std::string, Port, Rank );
-    void end_SubTree(  void ){ _byte_array += "]"; }
+    void end_SubTree( void );
     std::string get_ByteArray(  ){ return _byte_array; }
     void print( void ){ fprintf( stderr, "%s\n", _byte_array.c_str() ); }
 
@@ -39,9 +39,7 @@ class SerialGraph {
     Port get_RootPort( void );
     Rank get_RootRank( void );
     SerialGraph * get_MySubTree( std::string &ihostname, Port port, Rank irank );
-    void set_ToFirstChild( void ) {
-        _buf_idx = _byte_array.find('[',1);
-    }
+    void set_ToFirstChild( void );
 
     bool set_Port(std::string hostname, Port port, Rank irank); 
 

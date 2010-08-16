@@ -158,7 +158,8 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
 {
     // save the serialized graph string in a variable on the stack,
     // so that we don't build a packet with a pointer into a temporary
-    std::string sg = _parsed_graph->get_SerializedGraphString();
+    bool have_backends = (strlen(ibackend_exe) != 0);
+    std::string sg = _parsed_graph->get_SerializedGraphString( have_backends );
 
     get_NetworkTopology()->reset(sg,false);
     NetworkTopology* nt=get_NetworkTopology();

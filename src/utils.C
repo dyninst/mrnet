@@ -111,9 +111,6 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
         }
     } while( cret == -1 );
 
-
-
-
     if( cret == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n",
                                host, port,
@@ -122,8 +119,8 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
         return -1;
     }
 
-    // Close socket on exec
 #ifndef os_windows
+    // Close socket on exec
     int fdflag = fcntl(sock, F_GETFD );
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags
@@ -132,7 +129,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
     int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
     if( fret == -1 ) {
         // we failed to set the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD close-on-exec failed\n") );
     }
 #endif
 
@@ -147,7 +144,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
     if( ssoret == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to set TCP_NODELAY\n" ) );
     }
-#endif // defined(TCP_NODELAY)
+#endif
 
     mrn_dbg( 3, mrn_printf(FLF, stderr,
                 "Leaving Connect_to_host(). Returning sock: %d\n", sock ) );
@@ -194,14 +191,18 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
         fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
         if( fret == -1 ) {
             // failed to set the socket descriptor flags
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD close-on-exec failed\n") );
         }
     }
 #endif
 
-#ifndef os_windows
     // Set listening socket to non-blocking if requested
     if( nonblock ) {
+
+        mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                               "Setting listening socket to non blocking\n") );
+
+#ifndef os_windows
         fdflag = fcntl(sock, F_GETFL );
         if( fdflag == -1 ) {
             // failed to retrieve the socket status flags
@@ -212,20 +213,18 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
             if(fret == -1 ) {
                 // failed to set the socket status flags
                 mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                        "Setting listening socket to non blocking failed\n") );
+                        "failed to set listening socket to non blocking\n") );
             }
         }
-    }
 #else
-	if (nonblock) {
-		mrn_dbg(1, mrn_printf(FLF, stderr, "Setting listening socket to non blocking\n"));
-		unsigned long mode = 1; // 0 is blocking, !0 is non-blocking
-		if (ioctlsocket(sock, FIONBIO, &mode) != 0) {
-			// failed to set the socket flags
-			mrn_dbg(1, mrn_printf(FLF, stderr, "Setting listening socket to non blocking failed\n"));
-		}
-	}
+        unsigned long mode = 1; // 0 is blocking, !0 is non-blocking
+        if (ioctlsocket(sock, FIONBIO, &mode) != 0) {
+            // failed to set the socket flags
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                   "failed to set listening socket to non blocking\n") );
+        }
 #endif
+    }
 
 
 #ifndef os_windows
@@ -321,54 +320,51 @@ int getSocketConnection( int bound_socket , int& inout_errno )
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "In get_connection(sock:%d).\n",
                 bound_socket ) );
-    do{
+    do {
         connected_socket = accept( bound_socket, NULL, NULL );
         if( connected_socket == -1 ) {
-		inout_errno=XPlat::NetUtils::GetLastError();
-	    if(inout_errno != EWOULDBLOCK)
-	    {
-              mrn_dbg( 1, mrn_printf(FLF, stderr, "%s", "" ) );
-              perror( "accept()" );
+            inout_errno = XPlat::NetUtils::GetLastError();
+	    if( inout_errno != EWOULDBLOCK ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "%s", "" ) );
+                perror( "accept()" );
 	    }  
 
-            if ( inout_errno != EINTR ) {
+            if ( inout_errno != EINTR )
                 return -1;
-            }
         }
-    } while ( ( connected_socket == -1 ) && ( errno == EINTR ) );
+    } while( (connected_socket == -1) && (errno == EINTR) );
 
     if( -1 == connected_socket )
         return -1;
 
-	// Set the socket to be blocking
+    // Set the socket to be blocking
+    mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                           "Setting accepted connection socket to blocking\n") );
 #ifndef os_windows
-    // Unset non-blocking flag
-   fdflag = fcntl(connected_socket, F_GETFL );
-   if( fdflag == -1 ) {
-	   // failed to retrieve the socket status flags
-       mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFL failed\n") );
-   }
-   else {
-	   fret = fcntl( connected_socket, F_SETFL, fdflag & O_NONBLOCK );
-       if(fret == -1 ) {
-           // failed to set the socket status flags
-           mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                   "Setting socket connection to blocking failed\n") );
-       }
-   }
-
+    fdflag = fcntl(connected_socket, F_GETFL );
+    if( fdflag == -1 ) {
+        // failed to retrieve the socket status flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFL failed\n") );
+    }
+    else if( fdflag & O_NONBLOCK ) {
+        fret = fcntl( connected_socket, F_SETFL, fdflag & ~O_NONBLOCK );
+        if(fret == -1 ) {
+            // failed to set the socket status flags
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                   "Setting socket connection to blocking failed\n") );
+        }
+    }
 #else
-	mrn_dbg(1, mrn_printf(FLF, stderr, "Setting socket connection to blocking\n"));
-	unsigned long mode = 0; // 0 is blocking, !0 is non-blocking
-	if (ioctlsocket(connected_socket, FIONBIO, &mode) != 0) {
-		// failed to set the socket flags
-		mrn_dbg(1, mrn_printf(FLF, stderr, "Setting socket connection to blocking failed\n"));
-	}
-
+    unsigned long mode = 0; // 0 is blocking, !0 is non-blocking
+    if (ioctlsocket(connected_socket, FIONBIO, &mode) != 0) {
+        // failed to set the socket flags
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                               "Setting socket connection to blocking failed\n") );
+    }
 #endif
 
-    // Close socket on exec
 #ifndef os_windows
+    // Close socket on exec
     fdflag = fcntl( connected_socket, F_GETFD );
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags 
@@ -377,7 +373,7 @@ int getSocketConnection( int bound_socket , int& inout_errno )
     fret = fcntl( connected_socket, F_SETFD, fdflag | FD_CLOEXEC );
     if( fret == -1 ) {
         // we failed to set the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD failed\n") );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD close-on-exec failed\n") );
     }
 #endif
 
@@ -390,13 +386,13 @@ int getSocketConnection( int bound_socket , int& inout_errno )
                              (const char*)&optVal,
                              sizeof( optVal ) );
     if( ssoret == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to set TCP_NODELAY\n" ) );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to set TCP_NODELAY\n") );
     }
-#endif // defined(TCP_NODELAY)
+#endif
 
     mrn_dbg( 3, mrn_printf(FLF, stderr,
-                "Leaving get_connection(). Returning sock:%d\n",
-                connected_socket ) );
+                           "Leaving get_connection(). Returning sock:%d\n",
+                           connected_socket) );
     return connected_socket;
 }
 
@@ -628,5 +624,5 @@ void endianTest() {
 
 }
 
-}                               // namespace MRN
+} // namespace MRN
 

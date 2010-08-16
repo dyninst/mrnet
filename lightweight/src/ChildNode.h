@@ -11,11 +11,6 @@
 #include "mrnet_lightweight/Network.h"
 #include "vector.h"
 
-int ChildNode_proc_PortUpdate(BackEndNode_t * be,
-        Packet_t* packet);
-
-int ChildNode_ack_PortUpdate(BackEndNode_t* be);
-
 int ChildNode_init_newChildDataConnection (  BackEndNode_t* be, 
                                              PeerNode_t* iparent,
                                              Rank ifailed_rank);
@@ -43,5 +38,8 @@ int ChildNode_proc_PrintPerfData( BackEndNode_t* be,  Packet_t* ipacket);
 int ChildNode_proc_TopologyReport(BackEndNode_t* be, Packet_t* ipacket);
 
 int ChildNode_ack_TopologyReport(BackEndNode_t* be);
+
+int ChildNode_proc_PortUpdate(BackEndNode_t * be,
+                              Packet_t* packet);
 
 #endif /* __childnode_h */
