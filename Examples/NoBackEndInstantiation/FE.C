@@ -13,23 +13,22 @@
 
 using namespace MRN;
 using namespace std;
+
 int num_callbacks;
 
-void Callback_resTopo(CBClass icbcl,CBType icbt, EventCB* icl)
+void Callback_resTopo(CBClass, CBType, EventCB* /*icl*/)
 {
-        TopoEvent* te = (TopoEvent*)icl;
+    //TopoEvent* te = (TopoEvent*)icl;
+    //printf("The rank of new BE node is %d\n", te->get_Rank());
 
-        //fprintf(stdout,"ResTopo: The Rank of node in topology add BE is= %d \t \t\n\n",te->get_Rank());
-
-	num_callbacks++;
+    num_callbacks++;
 }
 
 void write_be_connections(vector< NetworkTopology::Node * >& leaves, unsigned num_be)
 {
    FILE *f;
    const char* connfile = "./attachBE_connections";
-   if ((f = fopen(connfile, (const char *)"w+")) == NULL)
-   {
+   if ( (f = fopen(connfile, (const char *)"w+")) == NULL ) {
       perror("fopen");
       exit(-1);
    }
@@ -37,8 +36,7 @@ void write_be_connections(vector< NetworkTopology::Node * >& leaves, unsigned nu
    unsigned num_leaves = leaves.size();
    unsigned be_per_leaf = num_be / num_leaves;
    unsigned curr_leaf = 0;
-   for(unsigned i=0; (i < num_be) && (curr_leaf < num_leaves); i++)
-   {
+   for(unsigned i=0; (i < num_be) && (curr_leaf < num_leaves); i++) {
       if( i && (i % be_per_leaf == 0) )
          curr_leaf++;
 
@@ -53,7 +51,6 @@ void write_be_connections(vector< NetworkTopology::Node * >& leaves, unsigned nu
               leaves[curr_leaf]->get_Port(), 
               leaves[curr_leaf]->get_Rank(),
               i);
-
    }
    fclose(f);
 }
@@ -77,13 +74,14 @@ int main(int argc, char **argv)
     net = Network::CreateNetworkFE( topology_file, NULL, NULL );
  
 
-    bool cbrett = net->register_Callback(TOPOLOGY_EVENT_CB,Callback_resTopo,TOPO_ADD_BE);
-    if(cbrett==true){
-        fprintf(stdout,"Register Callback for add backend success\n");
-
-        }
-        else
-                fprintf(stdout,"Register Callback func for add backend error\n");
+    bool cbrett = net->register_Callback( TOPOLOGY_EVENT_CB,
+                                          Callback_resTopo,
+                                          TOPO_ADD_BE );
+    if(cbrett == false) {
+        fprintf( stdout, "Failed to register callback for back-end add topology event\n");
+        delete net;
+        return -1;
+    }
 
     // Query net for topology object
     NetworkTopology * topology = net->get_NetworkTopology();
@@ -94,15 +92,14 @@ int main(int argc, char **argv)
     // Write connection information to temporary file
     write_be_connections( internal_leaves, num_backends );
 
-
     // Wait for backends to attach
-    fprintf( stdout, "Please start backends now.\n\nWaiting for %u backends to connect ...", num_backends );
+    fprintf( stdout, "Please start backends now.\n\nWaiting for %u backends to connect ...", 
+             num_backends );
     fflush(stdout);
     do {
         sleep(1);
-    } while( num_callbacks!=num_backends );
+    } while( num_callbacks != num_backends );
     fprintf( stdout, "complete!\n");
-
 
     // A simple broadcast/gather
     comm_BC = net->get_BroadcastCommunicator();
