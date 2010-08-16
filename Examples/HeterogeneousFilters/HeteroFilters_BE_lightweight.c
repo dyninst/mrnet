@@ -1,5 +1,5 @@
 /**************************************************************************
- * Copyright 2003-2009   Michael J. Brim, Barton P. Miller                *
+ * Copyright 2003-2010   Michael J. Brim, Barton P. Miller                *
  *                Detailed MRNet usage rights in "LICENSE" file.          *
  **************************************************************************/
 
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 
         case PROT_EXIT:
             if( mapped )
-                unmap_file((void*)contents, (unsigned)s.st_size, 1);
+                unmap_file((void*)contents, (size_t)s.st_size, 1);
             else
                 free(contents);
 
