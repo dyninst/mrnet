@@ -12,11 +12,13 @@
 #include <cmath>
 #include <cstring>
 
+#ifndef __FUNCTION__
+#define __FUNCTION__ "nofunction"
+#endif
+
 using namespace MRN;
 
 extern "C" {
-
-typedef 
 
 struct IP_state {
     unsigned int min;
@@ -80,10 +82,11 @@ void IntegerPercentiles( std::vector< PacketPtr >& packets_in,
         if( cur_max > state->max )
             state->max = cur_max;
     }
-    
+
+    unsigned long ulbits = aggr_bits.to_ulong();
     PacketPtr new_packet ( new Packet( packets_in[0]->get_StreamId(),
                                        PROT_WAVE, "%uld %ud %ud",
-                                       aggr_bits.to_ulong(), state->max, state->min ) );
+                                       ulbits, state->max, state->min ) );
     packets_out.push_back( new_packet );
 }
 
