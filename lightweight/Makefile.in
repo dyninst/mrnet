@@ -12,6 +12,8 @@ srcdir  = @abs_srcdir@
 libdir  = @libdir@
 includedir  = @includedir@
 
+INSTALL = @INSTALL@
+
 MRNET_OS = @MRNET_OS@
 
 VPATH   = @abs_srcdir@/src
@@ -75,9 +77,6 @@ install: $(TARGETS)
 	        chmod 755 $$dir ; \
 	    fi \
 	done
-	if [ ! -x `echo $(INSTALL) | sed 's/ .*$$//'` ] ; then \
-	    chmod +x `echo $(INSTALL) | sed 's/ .*$$//'` ; \
-	fi
 	$(INSTALL) -m 755 $(TARGET) $(libdir)/
 	if [ -f $(TARGET_SO) ] ; then \
             $(INSTALL) -m 755 $(TARGET_SO) $(libdir)/ ; \

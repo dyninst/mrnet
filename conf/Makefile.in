@@ -39,7 +39,7 @@ CP      = @CP@
 RM      = @RM@
 INSTALL = @INSTALL@
 PURIFY  = @PURIFY@
-MKDIR_P = @MKDIR_P@
+MKDIR_P = mkdir -p
 
 #####################
 # General Definitions

@@ -12,6 +12,8 @@ srcdir  = @abs_srcdir@
 libdir  = @libdir@
 includedir  = @includedir@
 
+INSTALL = @INSTALL@
+
 VPATH   = @abs_srcdir@/src
 
 TARGET    = libxplat_lightweight.a
@@ -53,9 +55,6 @@ install: $(TARGETS)
 	        chmod 755 $$dir ; \
 	    fi \
 	done
-	if [ ! -x `echo $(INSTALL) | sed 's/ .*$$//'` ] ; then \
-	    chmod +x `echo $(INSTALL) | sed 's/ .*$$//'` ; \
-	fi
 	$(INSTALL) -m 755 $(TARGET) $(libdir)/
 	if [ -f $(TARGET_SO) ] ; then \
             $(INSTALL) -m 755 $(TARGET_SO) $(libdir)/ ; \
