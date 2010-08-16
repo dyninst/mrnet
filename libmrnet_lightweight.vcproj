@@ -24,6 +24,8 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Lightweight: Copying config.h into src/"
+				CommandLine="cd&#x0D;&#x0A;copy conf\config.h src&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -332,11 +334,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\FilterIds.h"
+				RelativePath=".\lightweight\include\mrnet_lightweight\FilterIds.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\include\mrnet_lightweight\FilterIds.h"
+				RelativePath=".\lightweight\src\FilterIds.h"
 				>
 			</File>
 			<File
