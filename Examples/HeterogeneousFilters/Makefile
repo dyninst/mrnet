@@ -36,8 +36,8 @@ clean:
 
 install: $(TARGETS) $(TARGETS_SO)
 	for libso in $(TARGETS_SO) ; do \
-	    $(INSTALL) -p -m 755 $$libso $(ILIBDIR)/ ; \
+	    $(INSTALL) -m 755 $$libso $(ILIBDIR)/ ; \
 	done
 	for exe in $(TARGETS) ; do \
-	    $(INSTALL) -p -m 755 $$exe $(IBINDIR)/ ; \
+	    $(INSTALL) -m 755 $$exe $(IBINDIR)/ ; \
 	done

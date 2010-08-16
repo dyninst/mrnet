@@ -36,10 +36,10 @@ clean:
 
 install: $(TARGETS)
 	for exe in $(TARGETS) ; do \
-	    $(INSTALL) -p -m 755 $$exe $(IBINDIR)/ ; \
+	    $(INSTALL) -m 755 $$exe $(IBINDIR)/ ; \
 	done ; \
 	for exe in $(MPI_TARGETS) ; do \
 	    if [ -f $$exe ]; then \
-	       $(INSTALL) -p -m 755 $$exe $(IBINDIR)/ ; \
+	       $(INSTALL) -m 755 $$exe $(IBINDIR)/ ; \
 	    fi ; \
 	done
