@@ -10,6 +10,7 @@ ARFLAGS = @ARFLAGS@
 RANLIB  = @RANLIB@
 RM      = @RM@
 INSTALL = @INSTALL@
+MKDIR_P = @MKDIR_P@
 MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
 
 prefix  = @prefix@
@@ -100,20 +101,20 @@ $(TARGET_SO): $(OBJS)
 install: $(TARGETS)
 	for dir in $(libdir) $(includedir) $(includedir)/xplat ; do \
 	    if [ ! -d $$dir ] ; then \
-	        mkdir -p $$dir ; \
+	        $(MKDIR_P) $$dir ; \
 	        chmod 755 $$dir ; \
 	    fi \
 	done
 	if [ ! -x `echo $(INSTALL) | sed 's/ .*$$//'` ] ; then \
 	    chmod +x `echo $(INSTALL) | sed 's/ .*$$//'` ; \
 	fi
-	$(INSTALL) -p -m 755 $(TARGET) $(libdir)/
+	$(INSTALL) -m 755 $(TARGET) $(libdir)/
 	if [ -f $(TARGET_SO) ] ; then \
-            $(INSTALL) -p -m 755 $(TARGET_SO) $(libdir)/ ; \
+            $(INSTALL) -m 755 $(TARGET_SO) $(libdir)/ ; \
         fi
 	for hdr in $(srcdir)/include/xplat/*.h ; do \
 	    if [ -f $$hdr ] ; then \
-	        $(INSTALL) -p -m 644 $$hdr $(includedir)/xplat/ ; \
+	        $(INSTALL) -m 644 $$hdr $(includedir)/xplat/ ; \
 	    fi \
 	done
 

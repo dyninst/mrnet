@@ -39,6 +39,7 @@ CP      = @CP@
 RM      = @RM@
 INSTALL = @INSTALL@
 PURIFY  = @PURIFY@
+MKDIR_P = @MKDIR_P@
 
 #####################
 # General Definitions
@@ -298,7 +299,7 @@ install-local: all
 	@echo Creating install directories
 	for dir in $(IBINDIR) $(ILIBDIR) $(IINCDIR) $(IINCDIR)/mrnet ; do \
 	    if [ ! -d $$dir ] ; then \
-	        mkdir -p $$dir ; \
+	        $(MKDIR_P) $$dir ; \
 	        chmod 755 $$dir ; \
 	    fi \
 	done
@@ -306,21 +307,21 @@ install-local: all
 	    chmod +x `echo $(INSTALL) | sed 's/ .*$$//'` ; \
 	fi
 	@echo Installing binaries
-	$(INSTALL) -p -m 755 $(COMMNODE) $(BINDIR)/mrnet_topgen $(IBINDIR)/
+	$(INSTALL) -m 755 $(COMMNODE) $(BINDIR)/mrnet_topgen $(IBINDIR)/
 	@echo Installing libraries
-	$(INSTALL) -p -m 755 $(LIBMRNET) $(ILIBDIR)/
+	$(INSTALL) -m 755 $(LIBMRNET) $(ILIBDIR)/
 	if [ -f $(LIBMRNET_SO) ] ; then \
-            $(INSTALL) -p -m 755 $(LIBMRNET_SO) $(ILIBDIR)/ ; \
+            $(INSTALL) -m 755 $(LIBMRNET_SO) $(ILIBDIR)/ ; \
 	fi
 	@echo Installing headers
 	for hdr in @srcdir@/include/mrnet/*.h ; do \
-	    $(INSTALL) -p -m 644 $$hdr $(IINCDIR)/mrnet/ ; \
+	    $(INSTALL) -m 644 $$hdr $(IINCDIR)/mrnet/ ; \
 	done
 
 install-boost:
 	@echo Creating install directory
 	if [ ! -d $(IINCDIR)/boost ] ; then \
-	    mkdir -p $(IINCDIR)/boost ; \
+	    $(MKDIR_P) $(IINCDIR)/boost ; \
 	    chmod 755 $(IINCDIR)/boost ; \
         fi
 	@echo Installing headers
@@ -328,20 +329,20 @@ install-boost:
 
 install-tests: tests $(BINDIR)/mrnet_tests.sh
 	@echo Installing standard tests
-	$(INSTALL) -p -m 755 $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(BINDIR)/mrnet_tests.sh  $(IBINDIR)/
-	$(INSTALL) -p -m 755 $(LIBDIR)/test_DynamicFilters.so $(ILIBDIR)/
+	$(INSTALL) -m 755 $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(BINDIR)/mrnet_tests.sh  $(IBINDIR)/
+	$(INSTALL) -m 755 $(LIBDIR)/test_DynamicFilters.so $(ILIBDIR)/
 	if [ ! -d $(IBINDIR)/topology_files ] ; then \
-            mkdir -p $(IBINDIR)/topology_files ; \
+            $(MKDIR_P) $(IBINDIR)/topology_files ; \
 	    chmod 755 $(IBINDIR)/topology_files ; \
 	fi
 	for top in $(SRCDIR)/tests/topology_files/local-*.top ; do \
-	    $(INSTALL) -p -m 644 $$top $(IBINDIR)/topology_files/ ; \
+	    $(INSTALL) -m 644 $$top $(IBINDIR)/topology_files/ ; \
 	done
 
 install-tests-opt: tests-opt
 	@echo Installing optional tests
-	$(INSTALL) -p -m 755 $(OPT_TESTS) $(IBINDIR)/
-	$(INSTALL) -p -m 755 $(LIBDIR)/test_RecoveryFilter.so $(ILIBDIR)/
+	$(INSTALL) -m 755 $(OPT_TESTS) $(IBINDIR)/
+	$(INSTALL) -m 755 $(LIBDIR)/test_RecoveryFilter.so $(ILIBDIR)/
 
 install-examples: examples
 	$(MAKE) -C Examples install
