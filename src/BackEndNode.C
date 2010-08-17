@@ -234,7 +234,7 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 
 
     if( goaway ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "DEPRECATED: not calling exit()\n"));
+        mrn_dbg(3, mrn_printf(FLF, stderr, "DEPRECATED: not calling exit()\n"));
     }
    
     // exit recv thread from parent
