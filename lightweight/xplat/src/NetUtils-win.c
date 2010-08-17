@@ -19,8 +19,7 @@ int NetUtils_GetLocalHostName(char* this_host)
     char host[256];
     gethostname(host,256);
     host[255] = '\0';
-	this_host = host;
-    //strncpy(this_host, host, 256);
-  
+    strncpy(this_host, host, 256);
+
     return 0;
 }
