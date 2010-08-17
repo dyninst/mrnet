@@ -169,10 +169,13 @@ int main(int argc, char **argv)
     }
     unsigned long good_pct;
     p->unpack("%uld", &good_pct);
+#ifdef compiler_sun
     string bits = fr_bin_set(bits_val).to_string();
     string good = fr_bin_set(good_pct).to_string();
-    //string bits = fr_bin_set(bits_val).to_string<char,char_traits<char>,allocator<char> >();
-    //string good = fr_bin_set(good_pct).to_string<char,char_traits<char>,allocator<char> >();
+#else
+    string bits = fr_bin_set(bits_val).to_string<char,char_traits<char>,allocator<char> >();
+    string good = fr_bin_set(good_pct).to_string<char,char_traits<char>,allocator<char> >();
+#endif
     fprintf(stdout, "FE: check of PERCENTILES ");
     if( good_pct != bits_val ) fprintf(stdout, "failed, filter %s != check %s\n", 
                                        bits.c_str(), good.c_str());

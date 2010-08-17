@@ -778,7 +778,7 @@ void Network_waitfor_ShutDown(Network_t* net)
     while( ! net->_was_shutdown ) {
 
         if( Network_recv(net, &tag, p, &stream) != 1 ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Network_recv() failure\n"));
+            mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv() failure\n"));
             break;
         }
 
