@@ -48,8 +48,10 @@ typedef char* caddr_t;
 // length of socket address struct
 typedef int socklen_t;
 
-
 // IPv4 address type
 typedef uint32_t in_addr_t;
+
+// different error codes
+#define EINTR WSAEINTR
 
 #endif // XPLAT_TYPES_WIN_H

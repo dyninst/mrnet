@@ -15,6 +15,7 @@
 #include "xplat/Error.h"
 #include "xplat/NCIO.h"
 #include "xplat/NetUtils.h"
+#include "xplat/Types.h"
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
@@ -454,18 +455,11 @@ int read( int fd, void *buf, int count )
         }
         else {
             bytes_recvd += retval;
-            if( bytes_recvd < count && err == EINTR ) {
+            if( bytes_recvd < count ) {
                 continue;
             }
             else {
-                // bytes_recvd == count, or error other than EINTR occurred
-                if( bytes_recvd != count ) {
-                    std::string errstr = XPlat::Error::GetErrorString( err );
-                    mrn_dbg( 3, mrn_printf(FLF, stderr,
-                                "premature return from read(). %d of %d "
-                                " bytes. error '%s'\n", bytes_recvd, count,
-                                errstr.c_str()) );
-                }
+                mrn_dbg(5, mrn_printf(FLF, stderr, "returning %d\n", bytes_recvd));
                 return bytes_recvd;
             }
         }
