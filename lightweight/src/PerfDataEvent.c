@@ -293,7 +293,7 @@ void PerfDataMgr_collect(PerfDataMgr_t* perf_data,
         met_data = (vector_t*)(get_val(ctx_map, met));
         //data = met_data;
         if ((met_data!= NULL) && (met_data->size)) {
-            *data = *met_data;
+            copy_vector(met_data, data);
             clear(met_data);    
         }
     } else {

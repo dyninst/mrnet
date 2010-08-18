@@ -14,16 +14,19 @@
 #include <unistd.h>
 #endif
 
-struct vector_t{
+struct vector_t {
     void** vec;
     int size;
-} ;
+    int alloc_size;
+};
 
 typedef struct vector_t vector_t;
 
 vector_t* new_empty_vector_t();
 
 void clear(vector_t* vector);
+
+void copy_vector(vector_t* fromvec, vector_t* tovec);
 
 void pushBackElement(vector_t* vector, void* elem);
 

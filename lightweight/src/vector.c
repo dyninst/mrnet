@@ -16,102 +16,97 @@
 
 vector_t* new_empty_vector_t()
 {
-  void* vec[1];
-  vector_t* new_vector = (vector_t*)malloc(sizeof(vector_t));
-  assert(new_vector);
-  new_vector->vec = (void**)malloc(sizeof(vec));
-  assert(new_vector->vec);
-  new_vector->size = 0;
-
-  return new_vector;
+    vector_t* new_vector = (vector_t*)malloc(sizeof(vector_t));
+    assert(new_vector);
+    new_vector->alloc_size = 64;
+    new_vector->vec = (void**) malloc( sizeof(void*) * new_vector->alloc_size );
+    assert(new_vector->vec);
+    new_vector->size = 0;
+    
+    return new_vector;
 }
 
 void clear(vector_t* vector)
 {
     /* because elements stored are pointers, they might be in use
-     * elsewhere */
-    //int i;
-    //for ( i = 0; i < vector->size; i++) 
-    //    free(vector->vec[i]);
+     * elsewhere, so don't free */
 
-    void* vec[1];
-    vector->vec = (void**)realloc(vector->vec, sizeof(vec));
-    assert(vector->vec);
+    /* no need to shrink the allocation, just clear the contents */
+    memset( (void*)(vector->vec), 0, (vector->alloc_size * sizeof(void*)) );
     vector->size = 0;
+}
+
+void copy_vector(vector_t* fromvec, vector_t* tovec)
+{
+    /* grow tovec to number of elements in fromvec, if necessary */
+    if( fromvec->size > tovec->alloc_size ) {
+        tovec->vec = (void**) realloc( tovec->vec, sizeof(void*) * fromvec->size );
+        tovec->alloc_size = fromvec->size;
+    }
+    memcpy( tovec->vec, fromvec->vec, sizeof(void*) * fromvec->size );
+    tovec->size = fromvec->size;
 }
 
 void pushBackElement(vector_t* vector, void* elem)
 {
-	void* vec[1];
-
-    vector->vec = (void**)realloc(vector->vec, sizeof(vec)*(vector->size+1));
-    assert(vector->vec);
-
-    vector->vec[vector->size] = (void*)malloc(sizeof(elem));
-    assert(vector->vec[vector->size]);
-
-    vector->vec[vector->size] = elem;
-
+    /* grow by doubling allocation as necessary */
+    if( (vector->size + 1) == vector->alloc_size ) {
+        vector->alloc_size += vector->alloc_size;
+        vector->vec = (void**) realloc( vector->vec, sizeof(void*) * vector->alloc_size );
+        assert(vector->vec);
+    }
+    vector->vec[ vector->size ] = elem;
     vector->size++;
 }
 
 
-void* popBackElement( vector_t* vector)
+void* popBackElement(vector_t* vector)
 {
-    void* elem = vector->vec[vector->size-1];
+    void* elem = vector->vec[ vector->size - 1 ];
 
-	void* vec[1];
-
-    vector->vec = (void**)realloc(vector->vec, sizeof(vec)*(vector->size-1));
-    assert(vector->vec);
-
+    /* no need to shrink the allocation, just decrement size */
     vector->size--;
 
     return elem;
 }
 
-void* getBackElement(vector_t* vector)
+void* getBackElement(vector_t* vector )
 {
-    return vector->vec[(vector->size)-1];
+    return vector->vec[ vector->size - 1 ];
 }
 
-void delete_vector_t( vector_t* vector)
+void delete_vector_t(vector_t* vector)
 {
-    /* because elements stored are pointers, might be in use elsewhere */
-    // int i;
-    //for ( i = 0; i < vector->size; i++) 
-        //free(vector->vec[i]);
+    /* because elements stored are pointers, they might be in use 
+       elsewhere, so don't free */
     free(vector->vec);
     free(vector);
 }
 
 int findElement(vector_t* vector, void* elem)
 {
-   int i;
-  for (i = 0; i < vector->size; i++) {
-      if (vector->vec[i] == elem)
-          return i+1;
-  }
-
-  return false; 
+    int i;
+    for( i = 0; i < vector->size; i++ ) {
+        if( vector->vec[i] == elem )
+            return i+1;
+    }
+    return false; 
 }
 
 
 vector_t* eraseElement(vector_t* vector, void* elem)
 {
-    vector_t* new_vec = new_empty_vector_t();
-    
     int i;
-    for ( i = 0; i < vector->size; i++) {
-        if (vector->vec[i] != elem) {
-            pushBackElement(new_vec, vector->vec[i]);
-        } 
+    for( i = 0; i < vector->size; i++ ) {
+        if( vector->vec[i] == elem ) {
+            /* shift the elements after this one */
+            while( (i+1) < vector->size ) {
+                vector[i] = vector[i+1];
+                i++;
+            }
+            vector->size--;
+        }
     }
-
-    /* free the vector, but don't free the element because
-     * it might be referenced elsewhere */
-    delete_vector_t(vector);
-        
-    return new_vec;
+    return vector;
 }
 
