@@ -1233,18 +1233,18 @@ void tfilter_TopoUpdate_common( bool upstream,
                                 PacketPtr& opacket )
 {
     int *type_arr, *rtype_arr;
-    uint32_t *prank_arr, *crank_arr, *rprank_arr, *rcrank_arr;
+    Rank *prank_arr, *crank_arr, *rprank_arr, *rcrank_arr;
     char **chost_arr, **rchost_arr;
-    uint16_t *cport_arr, *rcport_arr;
+    Port *cport_arr, *rcport_arr;
     unsigned arr_len, rarr_len = 0;
  
     string format_string;
 
     vector< int* > itype_arr;
-    vector< uint32_t* > iprank_arr;
-    vector< uint32_t* > icrank_arr;
+    vector< Rank* > iprank_arr;
+    vector< Rank* > icrank_arr;
     vector< char** > ichost_arr;
-    vector< uint16_t* > icport_arr;
+    vector< Port* > icport_arr;
     vector< unsigned > iarray_lens;
 
     NetworkTopology* nettop = net->get_NetworkTopology();
@@ -1285,9 +1285,9 @@ void tfilter_TopoUpdate_common( bool upstream,
      */
     unsigned short strm_id = ipackets[0]->get_StreamId();
     int my_type_arr[1];
-    uint32_t my_prank_arr[1], my_crank_arr[1];
+    Rank my_prank_arr[1], my_crank_arr[1];
     char* my_chost_arr[1];
-    uint16_t my_cport_arr[1];
+    Port my_cport_arr[1];
     if( strm_id == 2 /* waitforall port update stream */ ) {
 
         // if I'm a commnode, but not a leaf, append local port update
@@ -1295,7 +1295,7 @@ void tfilter_TopoUpdate_common( bool upstream,
             NetworkTopology::Node* me = nettop->find_Node( net->get_LocalRank() );
             if( me->get_NumChildren() ) {
         
-                my_type_arr[0] = TOPO_CHANGE_PORT;
+                my_type_arr[0] = NetworkTopology::TOPO_CHANGE_PORT;
                 my_prank_arr[0] = UnknownRank;
                 my_crank_arr[0] = net->get_LocalRank();
                 my_chost_arr[0] = strdup("NULL");
@@ -1313,16 +1313,16 @@ void tfilter_TopoUpdate_common( bool upstream,
     }
 
     // Dynamic allocation for result arrays
-    int data_size = sizeof(int32_t);
-    int uhd_size = sizeof(uint16_t);
-    int ud_size = sizeof(uint32_t);
+    int type_size = sizeof(NetworkTopology::update_type);
+    int port_size = sizeof(Port);
+    int rank_size = sizeof(Rank);
     int charptr_size = sizeof(char*);
 
-    rtype_arr  = (int *) malloc( rarr_len * data_size );
-    rprank_arr = (uint32_t *) malloc( rarr_len * ud_size );
-    rcrank_arr = (uint32_t *) malloc( rarr_len * ud_size );
+    rtype_arr  = (int *) malloc( rarr_len * type_size );
+    rprank_arr = (Rank *) malloc( rarr_len * rank_size );
+    rcrank_arr = (Rank *) malloc( rarr_len * rank_size );
     rchost_arr = (char **) malloc( rarr_len * charptr_size );
-    rcport_arr = (uint16_t*) malloc( rarr_len * uhd_size );
+    rcport_arr = (Port*) malloc( rarr_len * port_size );
 
     // Aggregating input packets to one large update array
     unsigned arr_pos=0;
@@ -1333,51 +1333,51 @@ void tfilter_TopoUpdate_common( bool upstream,
 
 	memcpy( rtype_arr + arr_pos,
 		itype_arr[i],
-		(size_t)(iarr_len * data_size));
+		(size_t)(iarr_len * type_size));
 	memcpy( rprank_arr + arr_pos,
 		iprank_arr[i],
-		(size_t) (iarr_len * ud_size));
+		(size_t) (iarr_len * rank_size));
 	memcpy( rcrank_arr + arr_pos,
 		icrank_arr[i],
-		(size_t) (iarr_len * ud_size));
+		(size_t) (iarr_len * rank_size));
 	memcpy( rchost_arr + arr_pos,
 		ichost_arr[i],
 		(size_t) (iarr_len * charptr_size));
 	memcpy( rcport_arr + arr_pos,
 		icport_arr[i],
-		(size_t) (iarr_len * uhd_size));
+		(size_t) (iarr_len * port_size));
 
 	arr_pos += iarr_len;
     }
 
     // end points whose outlet nodes should be inserted in topology stream peers
-    vector<uint32_t > new_nodes;
+    vector< Rank > new_nodes;
     bool update_table = false;
 
     // Apply updates to NetworkTopology object
     for( unsigned int i=0; i < rarr_len; i++ ) {
         switch( rtype_arr[i] ) {
 
-          case TOPO_NEW_BE :
+          case NetworkTopology::TOPO_NEW_BE :
               nettop->update_addBackEnd( rprank_arr[i], rcrank_arr[i], 
                                          rchost_arr[i], rcport_arr[i], upstream );
               new_nodes.push_back( rcrank_arr[i] );
               update_table = true;
               break;
 
-          case TOPO_REMOVE_RANK : //remove
+          case NetworkTopology::TOPO_REMOVE_RANK :
               nettop->update_removeNode( rprank_arr[i], rcrank_arr[i], upstream ); 
               break;
 
-          case TOPO_CHANGE_PARENT ://change parent
+          case NetworkTopology::TOPO_CHANGE_PARENT :
               nettop->update_changeParent( rprank_arr[i], rcrank_arr[i], upstream ); 
               break;
 
-          case TOPO_CHANGE_PORT ://update port
+          case NetworkTopology::TOPO_CHANGE_PORT :
               nettop->update_changePort( rcrank_arr[i], rcport_arr[i], upstream );
               break;
 
-          case TOPO_NEW_CP :
+          case NetworkTopology::TOPO_NEW_CP :
 	      nettop->update_addInternalNode( rprank_arr[i], rcrank_arr[i],
                                               rchost_arr[i], rcport_arr[i], upstream );
               update_table = true;
@@ -1394,7 +1394,6 @@ void tfilter_TopoUpdate_common( bool upstream,
 
     if( new_nodes.size() )
         nettop->update_TopoStreamPeers( new_nodes );
-    
 
     bool gen_output = true;
     if( strm_id == 2 /* waitforall port update stream */ )

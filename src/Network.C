@@ -105,7 +105,7 @@ Network::Network( void )
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
-      _edt( new EventDetector(this) ), next_stream_id(1),
+      _edt( new EventDetector(this) ), next_stream_id(1), _evt_mgr( new EventMgr() ),
       _threaded(true), _recover_from_failures(true), 
       _terminate_backends(true), _was_shutdown(false)
 {
@@ -181,7 +181,7 @@ void Network::shutdown_Network( void )
             reset_Topology(empty);
         }
 
-        Event::clear_Events();
+        _evt_mgr->clear_Events();
 
         signal_ShutDown();        
     }
@@ -259,11 +259,6 @@ void Network::init_FrontEnd( const char * itopology,
                              bool irank_backends,
                              bool iusing_mem_buf )
 {
-
-    //add Callbacks     
-
-    add_Callbacks();
-
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
 
@@ -373,57 +368,9 @@ void Network::init_FrontEnd( const char * itopology,
         error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
 }
 
-void Network::send_BufferedTopoUpdates( std::vector<update_contents_t* > vuc )
+void Network::send_TopologyUpdates( void )
 {
-    mrn_dbg_func_begin();
-
-    int vuc_size=vuc.size();
-    std::vector< update_contents_t* >::iterator it;
-  
-    int* type = (int*) malloc( sizeof(int) * vuc_size ); 
-
-    char** host_arr = (char**) malloc( sizeof(char*) * vuc_size );  
-    for( int j=0 ; j < vuc_size; j++ )
-        host_arr[j] = (char*) malloc( sizeof(char) * 100 );
-
-    uint32_t* prank = (uint32_t*) malloc( sizeof(uint32_t) * vuc_size );
-    uint32_t* crank = (uint32_t*) malloc( sizeof(uint32_t) * vuc_size );
-    uint16_t* cport = (uint16_t*) malloc( sizeof(uint16_t) * vuc_size );
-    int i= 0;
-
-    char null_host[8];
-    sprintf( null_host, "NULL" );
-
-    if( ! vuc.empty() ) {
-
-        for( it = vuc.begin() ; it!= vuc.end() ; it++) {
-
-            if( (*it)->type == TOPO_CHANGE_PORT ) {
-                type[i] = TOPO_CHANGE_PORT;
-                prank[i] = UnknownRank;
-                host_arr[i] = null_host;
-                crank[i] = (*it)->crank;
-                cport[i] = (*it)->cport;
-                i++;
-            }
-        } 
-    
-        Stream *s = get_Stream(1); // get topol prop stream
-        int num_updates=i;
-
-        //broadcast all topology updates
-        mrn_dbg(5, mrn_printf(FLF, stderr, "sending %d updates\n", num_updates) );
-
-        if( i > 0 )
-            s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                     type, num_updates, 
-                     prank, num_updates, 
-                     crank, num_updates, 
-                     host_arr, num_updates, 
-                     cport, num_updates );   
-    }
-    
-    mrn_dbg_func_end();
+    _network_topology->send_updates_buffer();
 }
 
 
@@ -1044,21 +991,38 @@ bool Network::have_Streams( )
     return ret;
 }
 
+/* Event Management */
+void Network::clear_Events( void )
+{
+    _evt_mgr->clear_Events();
+}
+
+unsigned int Network::num_EventsPending( void )
+{
+    return _evt_mgr->get_NumEvents();
+}
+
+Event* Network::next_Event( void )
+{
+    return _evt_mgr->get_NextEvent();
+}
+
 /* Event Notification by File Descriptor */
-int Network::get_EventNotificationFd( EventType etyp )
+int Network::get_EventNotificationFd( EventClass eclass )
 {
 #if !defined(os_windows)
     EventPipe* ep;
-    map< EventType, EventPipe* >::iterator iter = _evt_pipes.find( etyp );
+    map< EventClass, EventPipe* >::iterator iter = _evt_pipes.find( eclass );
     if( iter == _evt_pipes.end() ) {
         ep = new EventPipe();
-        bool rc = Event::register_EventCallback( etyp, PipeNotifyCallbackFn, (void*)ep );
+        bool rc = _evt_mgr->register_Callback( eclass, Event::EVENT_TYPE_ALL, 
+                                               PipeNotifyCallbackFn, (void*)ep );
         if( ! rc ) {
             mrn_printf(FLF, stderr, "failed to register PipeNotifyCallbackFn");
             delete ep;
             return -1;
         }
-        _evt_pipes[etyp] = ep;
+        _evt_pipes[eclass] = ep;
     }
     else
         ep = iter->second;
@@ -1069,10 +1033,10 @@ int Network::get_EventNotificationFd( EventType etyp )
 #endif
 }
 
-void Network::clear_EventNotificationFd( EventType etyp )
+void Network::clear_EventNotificationFd( EventClass eclass )
 {
 #if !defined(os_windows)
-    map< EventType, EventPipe* >::iterator iter = _evt_pipes.find( etyp );
+    map< EventClass, EventPipe* >::iterator iter = _evt_pipes.find( eclass );
     if( iter != _evt_pipes.end() ) {
         EventPipe* ep = iter->second;
         ep->clear();
@@ -1080,13 +1044,14 @@ void Network::clear_EventNotificationFd( EventType etyp )
 #endif
 }
 
-void Network::close_EventNotificationFd( EventType etyp )
+void Network::close_EventNotificationFd( EventClass eclass )
 {
 #if !defined(os_windows)
-    map< EventType, EventPipe* >::iterator iter = _evt_pipes.find( etyp );
+    map< EventClass, EventPipe* >::iterator iter = _evt_pipes.find( eclass );
     if( iter != _evt_pipes.end() ) {
         EventPipe* ep = iter->second;
-        bool rc = Event::remove_EventCallback( etyp );
+        bool rc = _evt_mgr->remove_Callback( PipeNotifyCallbackFn, 
+                                             eclass, Event::EVENT_TYPE_ALL );
         if( ! rc ) {
             mrn_printf(FLF, stderr, "failed to remove PipeNotifyCallbackFn");
         }
@@ -1099,19 +1064,21 @@ void Network::close_EventNotificationFd( EventType etyp )
 }
 
 /* Register & Remove Callbacks */
-bool Network::register_Callback( CBClass icbcl, cb_func func, CBType icbt )
+bool Network::register_EventCallback( EventClass iclass, EventType ityp, 
+                                      evt_cb_func ifunc, void* idata )
 {
-    bool ret = Callback::registerCallback( icbcl, func, icbt );
+    bool ret = _evt_mgr->register_Callback( iclass, ityp, ifunc, idata );
     if( ret == false ) {
-        mrn_printf(FLF, stderr, "failed to register Callback for Topology event");
+        mrn_printf(FLF, stderr, "failed to register callback");
         return false;
     }
     return true;
 }
 
-bool Network::remove_Callback( CBClass icbcl, cb_func func, CBType icbt )
+bool Network::remove_EventCallback( evt_cb_func ifunc, 
+                                    EventClass iclass, EventType ityp )
 {
-    bool ret = Callback::removeCallback( icbcl, func, icbt );
+    bool ret = _evt_mgr->remove_Callback( ifunc, iclass, ityp );
     if( ret == false ) {
         mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n");
         return false;
@@ -1119,27 +1086,15 @@ bool Network::remove_Callback( CBClass icbcl, cb_func func, CBType icbt )
     return true;
 }
 
-bool Network::remove_Callback( CBClass icbcl, CBType icbt )
+bool Network::remove_EventCallbacks( EventClass iclass, EventType ityp )
 {
-    bool ret = Callback::removeCallback( icbcl, icbt );
+    bool ret = _evt_mgr->remove_Callbacks( iclass, ityp );
     if( ret == false ) {    
         mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n");
         return false;
     }
     return true;
 }
-
-void Network::add_Callbacks()
-{
-    list<CBType> topo_list;
-    topo_list.push_back( TOPO_ADD_BE );
-    topo_list.push_back( TOPO_REMOVE );
-    topo_list.push_back( TOPO_ADD_CP );
-    topo_list.push_back( TOPO_PARENT_CHANGE );
-
-    Callback::all_cb_cl_typ[ TOPOLOGY_EVENT_CB ] = topo_list;
-}
-
 
 /* Performance Data Management */
 bool Network::enable_PerformanceData( perfdata_metric_t metric, 
@@ -1311,7 +1266,11 @@ void Network::signal_NonEmptyStream( void )
     _streams_sync.Lock();
     mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling CV[STREAMS_NONEMPTY] ...\n"));
     _streams_sync.SignalCondition( STREAMS_NONEMPTY );
-    Event::new_Event( DATA_EVENT, STREAMS_NONEMPTY, _local_rank );
+
+    DataEvent::DataEventData* ded = new DataEvent::DataEventData( NULL );
+    DataEvent* de = new DataEvent( DataEvent::DATA_AVAILABLE, ded );
+    _evt_mgr->add_Event( de );
+
     _streams_sync.Unlock();
 }
 

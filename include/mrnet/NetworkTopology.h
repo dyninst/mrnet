@@ -15,9 +15,10 @@
 #include <cmath>
 
 #include "mrnet/Error.h"
-#include "mrnet/Network.h"
 #include "mrnet/Types.h"
 #include "xplat/Monitor.h"
+
+#include <boost/shared_ptr.hpp>
 
 namespace MRN
 {
@@ -27,15 +28,12 @@ typedef enum{ ALG_RANDOM=0,
               ALG_SORTED_RR
 } ALGORITHM_T;
 
-typedef enum{ TOPOL_RESET=0,
-              TOPOL_ADD_SUBGRAPH,
-              TOPOL_REMOVE_NODE,
-              TOPOL_PARENT_CHANGE
-} TopologyEvent;
-
+class Network;
 class Router;
 class SerialGraph;
 class TopologyLocalInfo;
+class PeerNode;
+typedef boost::shared_ptr< PeerNode > PeerNodePtr;
 
 class NetworkTopology: public Error {
 
@@ -96,6 +94,22 @@ class NetworkTopology: public Error {
         double _wrs_key;
     };
 
+    typedef enum {
+        TOPO_NEW_BE        = 0,
+        TOPO_REMOVE_RANK   = 1,
+	TOPO_CHANGE_PARENT = 2,
+	TOPO_CHANGE_PORT   = 3,
+	TOPO_NEW_CP        = 4 
+    } update_type; 	
+
+    typedef struct {
+        update_type type;
+        Rank par_rank;
+	Rank chld_rank;
+	char* chld_host;
+	Port chld_port;
+    } update_contents;	
+
   public:
 
     // BEGIN MRNET API
@@ -150,19 +164,19 @@ class NetworkTopology: public Error {
     bool new_Node( const std::string &, Port, Rank, bool iis_backend );
     bool in_Topology( std::string ihostname, Port iport, Rank irank );
  
-    void insert_updates_buffer( update_contents_t* uc );
-    std::vector<update_contents_t* > get_updates_buffer( void );
+    void insert_updates_buffer( update_contents* uc );
+    bool send_updates_buffer();
 
-    void update_addBackEnd( uint32_t rprank, uint32_t rcrank, char* rchost, 
-                            uint16_t rcport, bool upstream );
-    void update_addInternalNode( uint32_t rprank, uint32_t rcrank, char* rchost, 
-                                 uint16_t rcport, bool upstream );
-    void update_changeParent( uint32_t rprank, uint32_t rcrank, bool upstream);
-    void update_changePort( uint32_t rcrank, uint16_t rcport, bool upstream );
-    void update_removeNode( uint32_t rprank, uint32_t rcrank, bool upstream);
+    void update_addBackEnd( Rank par_rank, Rank chld_rank, char* chld_host, 
+                            Port chld_port, bool upstream );
+    void update_addInternalNode( Rank par_rank, Rank chld_rank, 
+                                 char* chld_host, Port chld_port, bool upstream );
+    void update_changeParent( Rank par_rank, Rank chld_rank, bool upstream);
+    void update_changePort( Rank chld_rank, Port chld_port, bool upstream );
+    void update_removeNode( Rank par_rank, Rank chld_rank, bool upstream);
   
     void update_Router_Table();
-    void update_TopoStreamPeers( std::vector<uint32_t> new_nodes );
+    void update_TopoStreamPeers( std::vector< Rank >& new_nodes );
 
     void serialize( Node * );
 
@@ -199,8 +213,7 @@ class NetworkTopology: public Error {
     std::set< Node * > _parent_nodes;
     mutable XPlat::Monitor _sync;
     SerialGraph *_serial_graph;
-    std::vector<update_contents_t* > _updates_buffer;
-
+    std::vector< update_contents* > _updates_buffer;
 
     void find_PotentialAdopters( Node * iadoptee,
                                  Node * ipotential_adopter,

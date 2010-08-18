@@ -48,8 +48,7 @@ struct NetworkTopology_t {
     struct vector_t* backend_nodes;
     struct vector_t* parent_nodes;
     struct SerialGraph_t* serial_graph;
-    struct vector_t * _updates_buffer;
-} ; 
+}; 
 
 typedef struct NetworkTopology_t NetworkTopology_t;
 
@@ -92,13 +91,15 @@ int NetworkTopology_remove_Node_2( NetworkTopology_t* net_top,  Node_t* inode);
 
 int NetworkTopology_remove_Node( NetworkTopology_t* net_top, Rank irank);
 
-int NetworkTopology_set_Parent( NetworkTopology_t* net_top, Rank ichild_rank, Rank inew_Parent_rank, int iupdate);
+int NetworkTopology_set_Parent( NetworkTopology_t* net_top, Rank ichild_rank, 
+                                Rank inew_Parent_rank, int iupdate);
 
 int NetworkTopology_remove_Orphan(NetworkTopology_t* net_top, Rank r);
 
 Node_t* NetworkTopology_find_Node( NetworkTopology_t* net_top, Rank irank);
 
-int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, struct SerialGraph_t* isg, int iupdate);
+int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, 
+                                 struct SerialGraph_t* isg, int iupdate);
 
 void NetworkTopology_remove_SubGraph(NetworkTopology_t* net_top, Node_t* inode);
 
@@ -121,25 +122,26 @@ void NetworkTopology_find_PotentialAdopters(NetworkTopology_t* net_top,
                                             struct vector_t* potential_adopters);
 
 int NetworkTopology_isInTopology(NetworkTopology_t * net_top, 
-        char * hostname, 
-        Port _port, 
-        Rank _rank);
-
-struct vector_t * NetworkTopology_get_updates_buffer(NetworkTopology_t * net_top);
-
-void NetworkTopology_insert_updates_buffer(NetworkTopology_t * net_top, update_contents_t * uc);
+                                 char * hostname, 
+                                 Port _port, 
+                                 Rank _rank);
 
 void NetworkTopology_add_BackEnd(NetworkTopology_t * net_top, 
-                                 uint32_t rprank, uint32_t rcrank, 
-                                 char * rchost, uint16_t rcport);
+                                 Rank rprank, Rank rcrank, 
+                                 char * rchost, Port rcport);
 
-void NetworkTopology_update_TopoStreamPeers(NetworkTopology_t * net_top, struct vector_t * new_nodes);
+void NetworkTopology_add_InternalNode(NetworkTopology_t * net_top, 
+                                      Rank rprank, Rank rcrank, 
+                                      char * rchost, Port rcport);
 
 void NetworkTopology_change_Port(NetworkTopology_t * net_top,
-                                 uint32_t rcrank, uint16_t rcport);
+                                 Rank rcrank, Port rcport);
 
-int NetworkTopology_new_Node(NetworkTopology_t * net_top, const char * host, Port port, Rank rank, int iis_backend);
+int NetworkTopology_new_Node(NetworkTopology_t * net_top, const char * host, 
+                             Port port, Rank rank, int iis_backend);
 
+void NetworkTopology_update_TopoStreamPeers(NetworkTopology_t * net_top, 
+                                            struct vector_t * new_nodes);
 
 /* NetworkTopology_Node */
 int NetworkTopology_Node_is_BackEnd(Node_t* node);

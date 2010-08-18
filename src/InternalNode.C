@@ -60,28 +60,33 @@ InternalNode::InternalNode( Network * inetwork,
     
         if( ! nt->in_Topology(ihostname, listeningPort, irank) ) {
             // not already in topology => internal node attach case 
-            ParentNode::_network->new_Stream( 1, NULL, 0, TFILTER_TOPO_UPDATE, 
-                                              SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+            ParentNode::_network->new_Stream( 1, NULL, 0, 
+                                              TFILTER_TOPO_UPDATE, 
+                                              SFILTER_TIMEOUT, 
+                                              TFILTER_TOPO_UPDATE_DOWNSTREAM );
             mrn_dbg( 5, mrn_printf(FLF, stderr, 
                                    "Internal node not in the topology\n") );
 
             //new topo propagation code - create a new update packet
             Stream *s = ParentNode::_network->get_Stream(1); // get topol prop stream
-            int type = TOPO_NEW_CP; 
+            int type = NetworkTopology::TOPO_NEW_CP; 
             char *host_arr = strdup( ihostname.c_str() );
 
-            uint32_t* send_iprank = (uint32_t* ) malloc( sizeof( uint32_t) );
+            Rank* send_iprank = (Rank*) malloc( sizeof(Rank) );
             *send_iprank = iprank;
 
-            uint32_t* send_myrank = (uint32_t*) malloc( sizeof( uint32_t) );
+            Rank* send_myrank = (Rank*) malloc( sizeof(Rank) );
             *send_myrank = irank; 
 
-            uint16_t* send_port = (uint16_t*)malloc( sizeof( uint16_t) );
+            Port* send_port = (Port*) malloc( sizeof(Port) );
             *send_port = listeningPort;
 
             s->send_internal( PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", 
-                              &type, 1, send_iprank, 1, send_myrank, 1, 
-                              &host_arr,1, send_port, 1 );
+                              &type, 1, 
+                              send_iprank, 1, 
+                              send_myrank, 1, 
+                              &host_arr, 1, 
+                              send_port, 1 );
             free(host_arr);
         } 
         else

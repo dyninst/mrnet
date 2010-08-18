@@ -28,7 +28,8 @@ BackEndNode::BackEndNode( Network * inetwork,
     _network->set_LocalHostName( _hostname  );
     _network->set_LocalRank( _rank );
     _network->set_BackEndNode( this );
-    _network->set_NetworkTopology( new NetworkTopology(inetwork, _hostname, _port, _rank, true) );
+    _network->set_NetworkTopology( new NetworkTopology(inetwork, _hostname, 
+                                                       _port, _rank, true) );
     
     NetworkTopology* nt = _network->get_NetworkTopology();
 
@@ -53,11 +54,12 @@ BackEndNode::BackEndNode( Network * inetwork,
 
           _network->new_Stream( 1, NULL, 0, TFILTER_TOPO_UPDATE, 
                                 SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
-          mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend not already in the topology\n") );
+          mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                                 "Backend not already in the topology\n") );
 
           //new topo propagation code - create a new update packet
           Stream *s = _network->get_Stream(1); // get topol prop stream
-          int type = TOPO_NEW_BE;
+          int type = NetworkTopology::TOPO_NEW_BE;
           char *host_arr = strdup(imyhostname.c_str());
           uint32_t send_iprank = iprank;
           uint32_t send_myrank = imyrank;

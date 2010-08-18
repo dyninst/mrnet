@@ -63,10 +63,10 @@ int main(int argc, char **argv)
     }
 
     // Clear events up until this point
-    Event::clear_Events();
+    net->clear_Events();
 
     // Request notification of data events
-    int data_fd = net->get_EventNotificationFd( DATA_EVENT );
+    int data_fd = net->get_EventNotificationFd( Event::DATA_EVENT );
     int max_fd = data_fd + 1;
 
     // We expect "num_iters" aggregated responses from all back-ends
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
                 fprintf(stderr, "found\n");
 
                 // Handle data events
-                net->clear_EventNotificationFd( DATA_EVENT );
+                net->clear_EventNotificationFd( Event::DATA_EVENT );
                 while(1) {
                     retval = add_stream->recv(&tag, p, false);
                     if( retval == -1){
@@ -134,7 +134,7 @@ int main(int argc, char **argv)
                 
             
             // Clear events up until this point
-            Event::clear_Events();
+            net->clear_Events();
         }
         else {
             fprintf(stderr, "FE: Timed out.\n");

@@ -46,11 +46,11 @@ int RSHChildNode::proc_PortUpdate( PacketPtr ipacket ) const
 
     Stream *s = _network->get_Stream(2); // waitforall port update stream
         
-    int type = TOPO_CHANGE_PORT ;  
+    int type = NetworkTopology::TOPO_CHANGE_PORT ;  
     char *host_arr = strdup("NULL");
-    uint32_t send_iprank = UnknownRank;
-    uint32_t send_myrank = _network->get_LocalRank();
-    uint16_t send_port = _network->get_LocalPort();
+    Rank send_iprank = UnknownRank;
+    Rank send_myrank = _network->get_LocalRank();
+    Port send_port = _network->get_LocalPort();
 
     if( _network->is_LocalNodeBackEnd() ) 
         s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 

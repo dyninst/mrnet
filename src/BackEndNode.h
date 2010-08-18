@@ -11,6 +11,7 @@
 #include "ChildNode.h"
 #include "Message.h"
 #include "Protocol.h"
+#include "mrnet/Stream.h"
 
 namespace MRN
 {

@@ -70,7 +70,7 @@ void tfilter_TopoUpdate(vector_t * ipackets,
 
     Packet_t * new_packet;
 
-	mrn_dbg_func_begin();
+    mrn_dbg_func_begin();
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Start of topology filter update ...\n"));
     
@@ -95,7 +95,8 @@ void tfilter_TopoUpdate(vector_t * ipackets,
                           &prank_arr, &arr_len, &crank_arr,
                           &arr_len, &chost_arr, &arr_len, 
                           &cport_arr, &arr_len) == -1) {
-            mrn_printf(FLF, stderr, "ERROR: tfilter_TopoUpdate() - unpack(%s) failure\n",
+            mrn_printf(FLF, stderr, 
+                       "ERROR: tfilter_TopoUpdate() - unpack(%s) failure\n",
                        Packet_get_FormatString(cur_packet));
         } else {
             // Putting the array pointers and its length in a vector
@@ -122,11 +123,11 @@ void tfilter_TopoUpdate(vector_t * ipackets,
     ud_size = sizeof(uint32_t);
     charptr_size = sizeof(char*);
 
-    rtype_arr = (int *)malloc(rarray_len * data_size);
-    rprank_arr = (uint32_t *)malloc(rarray_len * ud_size);
-    rcrank_arr = (uint32_t *)malloc(rarray_len * ud_size);
-    rchost_arr = (char **)malloc(rarray_len * charptr_size);
-    rcport_arr = (uint16_t *)malloc(rarray_len * uhd_size);
+    rtype_arr = (int *) malloc(rarray_len * data_size);
+    rprank_arr = (uint32_t *) malloc(rarray_len * ud_size);
+    rcrank_arr = (uint32_t *) malloc(rarray_len * ud_size);
+    rchost_arr = (char **) malloc(rarray_len * charptr_size);
+    rcport_arr = (uint16_t *) malloc(rarray_len * uhd_size);
 
     // Aggregating input packets to one large single result array for type, crank, prank
     //
@@ -142,7 +143,8 @@ void tfilter_TopoUpdate(vector_t * ipackets,
                (int *)itype_arr->vec[i],
                (size_t)((unsigned)(iarray_lens->vec[i]) * data_size));
 
-        mrn_dbg(5, mrn_printf(FLF, stderr, "copying for itype_arr: %d to rtype_arr %d\n",
+        mrn_dbg(5, mrn_printf(FLF, stderr, 
+                              "copying for itype_arr: %d to rtype_arr %d\n",
                               *(int*)(itype_arr->vec[i]), *rtype_arr));
 
         u = (unsigned) (iarray_lens->vec[i]);
@@ -172,19 +174,23 @@ void tfilter_TopoUpdate(vector_t * ipackets,
         switch(rtype_arr[i]) {
             case TOPO_NEW_BE:
                 NetworkTopology_add_BackEnd(nt, rprank_arr[i], rcrank_arr[i],
-                        rchost_arr[i], rcport_arr[i]);
+                                            rchost_arr[i], rcport_arr[i]);
                 break;
-            case TOPO_REMOVE_RANK: 
+            case TOPO_REMOVE_RANK:
+                NetworkTopology_remove_Node(nt, rcrank_arr[i]);
                 break;
             case TOPO_CHANGE_PARENT:
+                NetworkTopology_set_Parent(nt, rcrank_arr[i], rprank_arr[i], 0);
                 break;
             case TOPO_CHANGE_PORT:
                 NetworkTopology_change_Port(nt, rcrank_arr[i], rcport_arr[i]);
                 break;
             case TOPO_NEW_CP:
+                NetworkTopology_add_InternalNode(nt, rprank_arr[i], rcrank_arr[i],
+                                                 rchost_arr[i], rcport_arr[i]);
                 break;
             default:
-                // TODO: mrnet error that update packet in the topo stream contains invaild update type and exit
+                // TODO: report invalid update type and exit
                 break;
         }
     }

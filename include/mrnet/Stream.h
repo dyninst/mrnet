@@ -19,6 +19,7 @@
 namespace MRN
 {
 
+class EventPipe;
 class Filter;
 class FrontEndNode;
 class BackEndNode;

@@ -13,6 +13,7 @@
 #include "mrnet/CommunicationNode.h"
 #include "mrnet/Error.h"
 #include "mrnet/Packet.h"
+#include "mrnet/Stream.h"
 #include "xplat/Monitor.h"
 #include "xplat/Mutex.h"
 #include "Protocol.h"

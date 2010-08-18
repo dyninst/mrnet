@@ -68,9 +68,7 @@ int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
         delete port_strm;
 
         // broadcast the accumulated updates
-        NetworkTopology* nt = _network->get_NetworkTopology();
-        std::vector< update_contents_t* > vuc = nt->get_updates_buffer();
-	_network->send_BufferedTopoUpdates( vuc );
+	_network->send_TopologyUpdates();
     }
 
     mrn_dbg_func_end();

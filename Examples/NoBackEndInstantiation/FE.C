@@ -16,12 +16,11 @@ using namespace std;
 
 int num_callbacks;
 
-void Callback_resTopo(CBClass, CBType, EventCB* /*icl*/)
+void BE_Add_Callback( Event* evt, void* )
 {
-    //TopoEvent* te = (TopoEvent*)icl;
-    //printf("The rank of new BE node is %d\n", te->get_Rank());
-
-    num_callbacks++;
+    if( (evt->get_Class() == Event::TOPOLOGY_EVENT) &&
+        (evt->get_Type() == TopologyEvent::TOPOL_ADD_BE) )
+        num_callbacks++;
 }
 
 void write_be_connections(vector< NetworkTopology::Node * >& leaves, unsigned num_be)
@@ -74,9 +73,9 @@ int main(int argc, char **argv)
     net = Network::CreateNetworkFE( topology_file, NULL, NULL );
  
 
-    bool cbrett = net->register_Callback( TOPOLOGY_EVENT_CB,
-                                          Callback_resTopo,
-                                          TOPO_ADD_BE );
+    bool cbrett = net->register_EventCallback( Event::TOPOLOGY_EVENT,
+                                               TopologyEvent::TOPOL_ADD_BE,
+                                               BE_Add_Callback, NULL );
     if(cbrett == false) {
         fprintf( stdout, "Failed to register callback for back-end add topology event\n");
         delete net;

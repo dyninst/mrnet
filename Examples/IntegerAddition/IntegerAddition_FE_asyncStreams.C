@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     }
 
     // Clear events up until this point
-    Event::clear_Events();
+    net->clear_Events();
 
     // Request notification of data events
     int data_fd = add_stream->get_DataNotificationFd();
@@ -178,7 +178,7 @@ int main(int argc, char **argv)
             fflush(stderr);
                 
             // Clear events up until this point
-            Event::clear_Events();
+            net->clear_Events();
         }
         else {
             fprintf(stderr, "FE: Timed out.\n");

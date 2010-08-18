@@ -12,12 +12,10 @@ using namespace std;
 namespace MRN {
 
 // generic write-to-notify-pipe callback
-void PipeNotifyCallbackFn( CBClass icbcl,CBType icbt,EventCB* icl )
+void PipeNotifyCallbackFn( Event*, void* idata )
 {
-	Event* e = (Event*)icl;
-	EventPipe* ep = (EventPipe*)e->usr_data;
-
-	ep->signal();
+    EventPipe* ep = (EventPipe*)idata;
+    ep->signal();
 }
 
 EventPipe::EventPipe()
@@ -101,327 +99,234 @@ void EventPipe::clear(void)
 #endif
 }
 
-// static Event data
-map< EventType, pair< cb_func, void* > > Event::evt_cb_fns;
-list< Event* > Event::events;
+// static Event members
+EventClass Event::EVENT_CLASS_ALL = -1;
+EventClass Event::DATA_EVENT      = 0;
+EventClass Event::TOPOLOGY_EVENT  = 1;
+EventClass Event::ERROR_EVENT     = 2;
 
-void Event::new_Event( EventType ityp, EventId iid, Rank irank, string idesc )
+EventType Event::EVENT_TYPE_ALL = -1;
+
+EventType DataEvent::DATA_AVAILABLE = 0;
+
+EventType ErrorEvent::ERROR_INTERNAL = 0;
+EventType ErrorEvent::ERROR_SYSTEM   = 1;
+EventType ErrorEvent::ERROR_USAGE    = 2;
+
+EventType TopologyEvent::TOPOL_ADD_BE        = 0;
+EventType TopologyEvent::TOPOL_ADD_CP        = 1;
+EventType TopologyEvent::TOPOL_REMOVE_NODE   = 2;
+EventType TopologyEvent::TOPOL_CHANGE_PARENT = 3;
+
+EventMgr::EventMgr()
 {
- 
-	map< EventType, pair< cb_func, void* > >::iterator iter = evt_cb_fns.find(ityp);
-	if( iter != evt_cb_fns.end() ) {
-		Event* e = new Event(ityp, iid, irank, idesc,iter->second.second);
-		if( e != NULL )
-			events.push_back( e );
-		iter->second.first( PIPE_NOTIFY,PIPE_DEFAULT,(EventCB*)e );
-      }
-
+    reset_Callbacks();
 }
 
-bool Event::have_Event(void)
+EventMgr::~EventMgr()
 {
-    if( events.size() )
+    clear_Events();
+    _cbs.clear();
+}
+
+void EventMgr::reset_Callbacks()
+{
+    // initialize the event class/type callback maps
+    EventType min, max;
+    evt_cb_list empty_list;
+    int u;
+
+    min = DataEvent::min_Type();
+    max = DataEvent::max_Type();
+    evt_typ_cb_map& data_map = _cbs[ Event::DATA_EVENT ];
+    for( u = min; u <= max; u++ )
+        data_map[ u ] = empty_list;
+
+    min = ErrorEvent::min_Type();
+    max = ErrorEvent::max_Type();
+    evt_typ_cb_map& error_map = _cbs[ Event::ERROR_EVENT ];
+    for( u = min; u <= max; u++ )
+        error_map[ u ] = empty_list;
+
+    min = TopologyEvent::min_Type();
+    max = TopologyEvent::max_Type();
+    evt_typ_cb_map& topol_map = _cbs[ Event::TOPOLOGY_EVENT ];
+    for( u = min; u <= max; u++ )
+        topol_map[ u ] = empty_list;
+}
+
+bool EventMgr::have_Events() const
+{
+    return ! _evts.empty();
+}
+
+unsigned int EventMgr::get_NumEvents() const
+{
+    return _evts.size();
+}
+    
+bool EventMgr::add_Event( Event* ievt )
+{
+    if( ievt != NULL ) {
+        _evts.push_back( ievt );
+        execute_Callbacks( ievt );
         return true;
+    }
     return false;
 }
 
-Event* Event::get_NextEvent(void)
+Event* EventMgr::get_NextEvent()
 {
-    if( events.size() ) {
-        Event* ret = *( events.begin() );
-        events.pop_front();
+    if( _evts.size() ) {
+        Event* ret = _evts.front();
+        _evts.pop_front();
         return ret;
     }
     else
         return NULL;
 }
 
-unsigned int Event::get_NumEvents(void)
+void EventMgr::clear_Events()
 {
-    return events.size();
+    _evts.clear();
 }
 
-void Event::clear_Events(void)
+bool EventMgr::register_Callback( EventClass iclass, EventType ityp,
+                                  evt_cb_func ifunc, void* idata )
 {
-    events.clear();
+    if( ifunc == (evt_cb_func)NULL )
+        return false;
+
+    evt_cb_info cb_info = make_pair( ifunc, idata );
+
+    std::map< EventClass, evt_typ_cb_map >::iterator i = _cbs.find( iclass );
+    if( i == _cbs.end() )
+        return false;
+ 
+    evt_typ_cb_map& ins_map = i->second;
+    evt_typ_cb_map::iterator mapi;
+    if( ityp == Event::EVENT_TYPE_ALL ) {
+        mapi = ins_map.begin();
+        for( ; mapi != ins_map.end(); mapi++ ) {
+            evt_cb_list& elist = mapi->second;
+            elist.push_back( cb_info );
+        }
+    }
+    else {
+        mapi = ins_map.find(ityp);                
+        if( mapi == ins_map.end() )
+            return false;
+
+        evt_cb_list& ins_list = mapi->second;
+        ins_list.push_back( cb_info );
+    }
+    return true;
+}
+  
+bool EventMgr::remove_Callbacks( EventClass iclass, EventType ityp )
+{
+    if( iclass == Event::EVENT_CLASS_ALL ) {
+        if( ityp == Event::EVENT_TYPE_ALL ) {
+            reset_Callbacks();
+            return true;
+        }
+        else {
+            // invalid use
+            return false;
+        }
+    }
+
+    return remove_Callback( (evt_cb_func)NULL, iclass, ityp );
 }
 
-bool Event::register_EventCallback( EventType ityp, cb_func ifn, void* iuser_data )
+bool EventMgr::remove_Callback( evt_cb_func ifunc, EventClass iclass, EventType ityp )
 {
+    std::map< EventClass, evt_typ_cb_map >::iterator i;
+    i = _cbs.find( iclass );
+    if( i == _cbs.end() )
+        return false;
 
-	map< EventType, pair< cb_func, void* > >::iterator iter = evt_cb_fns.find(ityp);
-	if( iter == evt_cb_fns.end() ) {
-		evt_cb_fns[ityp] = make_pair( ifn, iuser_data );
-		return true;
-	}
-	return false;
+    evt_typ_cb_map& rm_map = i->second;
+    evt_typ_cb_map::iterator mapi;
+    if( ityp == Event::EVENT_TYPE_ALL ) {
+        //Remove for all event type
+        if( ifunc == (evt_cb_func)NULL ) {
+            //Remove all functions
+            for( mapi = rm_map.begin(); mapi != rm_map.end(); mapi++ )
+                mapi->second.clear();
+            return true;
+        }
+        else {
+            //Remove only ifunc 
+            bool rm_flag = false;
+            for( mapi = rm_map.begin(); mapi != rm_map.end(); mapi++ ) {
+                bool retval = remove_CallbackFunc( ifunc, mapi->second );
+                if( retval )
+                    rm_flag = true;
+            }
+            return rm_flag;
+        }
+    }
+    else {
+        //Remove for only ityp event type
+        mapi = rm_map.find(ityp);
+        if( mapi == rm_map.end() )
+            return false;
+         
+        if( ifunc == (evt_cb_func)NULL ) {
+            //Remove all functions
+            mapi->second.clear();
+            return true;
+        }
+        else {
+            //Remove only ifunc
+            return remove_CallbackFunc( ifunc, mapi->second );
+        }
+    }
+    // shouldn't get here
+    return false;
 }
-
-bool Event::remove_EventCallback( EventType ityp )
+ 
+bool EventMgr::remove_CallbackFunc( evt_cb_func ifunc,
+                                    evt_cb_list& ifuncs )
 {
-     map< EventType, pair< cb_func, void* > >::iterator iter = evt_cb_fns.find(ityp);
-    if( iter != evt_cb_fns.end() ) {
-        evt_cb_fns.erase( iter );
-        return true;
+    evt_cb_list::iterator rm_li = ifuncs.begin();
+    for( ; rm_li != ifuncs.end(); rm_li++ ) {
+        if( rm_li->first == ifunc ) {
+            ifuncs.erase( rm_li );
+            return true;
+        }
     }
     return false;
 }
+ 
+bool EventMgr::execute_Callbacks( Event* ievt )
+{
+    EventClass c = ievt->get_Class();
+    EventType t = ievt->get_Type();
 
-
- map< CBClass,map<CBType,list< cb_func > >  > Callback::cbs;
- list<Callback* > Callback::cbacks;
- map<CBClass ,list<CBType> > Callback::all_cb_cl_typ;
+    map< EventClass, evt_typ_cb_map >::iterator i;
+    i = _cbs.find( c );
+    if( i == _cbs.end() )
+        return false;
+    else {
+        evt_typ_cb_map& etyp_map = i->second;
+        evt_typ_cb_map::iterator mapi = etyp_map.find( t );
+        if( mapi == etyp_map.end() )
+            return false;
+        else {
+            evt_cb_list& elist = mapi->second;
+            evt_cb_list::iterator li;
+            for( li = elist.begin(); li != elist.end(); li++ ) {
+                evt_cb_func f = li->first;
+                void* f_data = li->second;
+                (*f)( ievt, f_data );
+            }
+        }
+    }
  
-bool Callback::registerCallback(CBClass icbcl, cb_func icb,CBType icbt)
-{
- 
-   std::map< CBClass,map<CBType,list<cb_func > > >::iterator i= cbs.find(icbcl);
-   if(i==cbs.end())
-   {
- 
-         std::map<CBType,list<cb_func> >ins_map;
-         list <cb_func> ins_list;
-         ins_list.push_back(icb);
- 
- 
-         if(icbt==ALL_EVENT)
-         {
-                 //Insert CB for first time for all event types 
- 
-                 map<CBClass,list<CBType> >::iterator i_all_map = all_cb_cl_typ.find(icbcl);
-                 list<CBType> &all_list = i_all_map->second;
-                 list<CBType> ::iterator i_all_list;
-                 for(i_all_list = all_list.begin(); i_all_list != all_list.end();i_all_list++)
-                 {
-                         ins_map[(*i_all_list)]= ins_list;
-                 }
- 
-                 cbs[icbcl]=ins_map;
- 
-         }
-         else
-         {
- 
-         //Inserting CB  for the first time for particular class,type
-         ins_map[icbt]=ins_list;
-         cbs[icbcl]=ins_map;
-         }
- 
-   }
-   else
-   {
-         if(icbt==ALL_EVENT)
-         {
-                 //Insert CB for all event types (not first time)
- 
-                 std::map<CBType,list<cb_func> >&ins_map = i->second;
- 
-                 map<CBClass,list<CBType> >::iterator i_all_map = all_cb_cl_typ.find(icbcl);
-                 list<CBType> &all_list = i_all_map->second;
-                 list<CBType> ::iterator i_all_list;
-                 for(i_all_list = all_list.begin(); i_all_list != all_list.end();i_all_list++)
-                 {
- 
-                         std::map<CBType,list<cb_func> >::iterator ii = ins_map.find((*i_all_list));
-                         if(ii==ins_map.end())
-                         {
-                                 //Insert  CB first time for particular type
-                                 list <cb_func> ins_list;
-                                 ins_list.push_back(icb);
-                                 ins_map[(*i_all_list)]= ins_list;
-                         }
-                         else
-                         {
- 
-                                 list <cb_func> &ins_list = ii->second;
-                                 ins_list.push_back(icb);
-                                 ins_map[(*i_all_list)]=ins_list;
-                         }
-                 }
-                 cbs[icbcl]=ins_map;
-         }
-         else
-         {
- 
-                 std::map<CBType,list<cb_func> >&ins_map = i->second;
-                 std::map<CBType,list<cb_func> >::iterator ii = ins_map.find(icbt);
- 
- 
-                 if(ii==ins_map.end())
-                 {
-                         //Inserting CB first time for particular type not class
- 
-                         list <cb_func> ins_list;
-                         ins_list.push_back(icb);
-                         ins_map[icbt]=ins_list;
-                         cbs[icbcl]=ins_map;
- 
- 
-                 }
-                 else
-                 {
-                         //Inserting CB for particular class,type( not first time)
-                         list <cb_func> &ins_list = ii->second;
-                         ins_list.push_back(icb);
-                         ins_map[icbt]=ins_list;
-                         cbs[icbcl]=ins_map;
- 
- 
-                 }
-           }
- 
- }
- 
-
- 
-  return true;
+    return true;
 }
- 
- 
- 
-bool Callback::removeCallback(CBClass icbcl,CBType icbt)
-{
- 
-         bool ret = removeCallback(icbcl,NULL,icbt);
- 
-         return ret;
- 
-}
-bool Callback::removeCallback(CBClass icbcl,cb_func icb,CBType icbt)
-{
- 
-         std::map< CBClass,map<CBType, list<cb_func> > >::iterator i= cbs.find(icbcl);
-         if(i==cbs.end())
-         {
-                 return false;
-         }
-         if(icbt==ALL_EVENT)
-         {
-                 //Remove for all event type
-                 if(icb==NULL)
-                 {
-                         //Remove all functions
-                         cbs.erase(i);
-                         return true;
-                 }
-                 else
-                 {
- 
-                 //Remove only function = icb 
-                         int rm_flag=0;
- 
-                         map<CBType,list<cb_func> > &rm_map = i->second;
-                         map<CBType,list<cb_func> >::iterator ii;
-                         for(ii = rm_map.begin(); ii!=rm_map.end();ii++)
-                         {
-                                 bool retval= removeCallback_list(icb,ii);
-                                 if(retval)
-                                         rm_flag++;
-                         }
- 
-                         if(rm_flag==0)
-                                 return false;
-                         else
-                                 return true;
-                 }
-         }
-         else
-         {
-                 //Remove for only icbt event type
- 
-                 map<CBType,list<cb_func> > &rm_map = i->second;
-                 map<CBType,list<cb_func> >::iterator ii = rm_map.find(icbt);
-                 if(ii==rm_map.end())
-                 {
-                         return false;
-                 }
- 
-                 if(icb==NULL)
-                 {
-                         //Remove all functions
- 
-                         rm_map.erase(ii);
-                         return true;
-                 }
-                 else
-                 {
-                         //Remove only function = icb
- 
-                         bool retval= removeCallback_list(icb,ii);
-                         return retval;
-                 }
- 
- 
-         }
- 
- 
- 
-}
- 
-bool Callback::removeCallback_list(cb_func icb,map<CBType,list<cb_func> >::iterator ii)
-{
- 
-                         list<cb_func> &rm_list = ii->second;
-                         list<cb_func>::iterator rm_li;
-                         for(rm_li=rm_list.begin(); rm_li != rm_list.end() ; rm_li++)
-                         {
-                                 if( (*rm_li) == icb)
-                                 {
-                                         rm_list.erase(rm_li);
-                                         return true;
-                                 }
-                         }
-                         return false;
- 
- 
-}
- 
-bool Callback::executeCB(CBClass icbcl,CBType icbt,EventCB* icl_typ )
-{
- 
-  Callback* cb = new Callback(icbcl);
-  if(cb !=NULL)
-         cbacks.push_back( cb );
- 
- 
- map< CBClass,map< CBType, list<cb_func> > >::iterator i =cbs.find(icbcl);
- 
- if(i==cbs.end())
- {
-         return false;
- }
- else
- {
-         map<CBType,list<cb_func> > &ex_map=i->second;
-         map<CBType,list<cb_func> >::iterator ii = ex_map.find(icbt);
- 
-         if(ii==i->second.end())
-         {
-                 return false;
-         }
-         else
-         {
-                 list<cb_func> &ex_list = ii->second;
-                 list<cb_func>::iterator li;
-                 for(li=ex_list.begin() ;li!=ex_list.end() ; li++)
-                 {
-                         (*li)(icbcl,icbt,icl_typ);
-                 }
-         }
- 
- 
- }
- 
- 
-return true;
- 
-}
- 
-unsigned int Callback::get_NumCB()
-{
-         return cbacks.size();
-}
-
 
 
 } // namespace MRN

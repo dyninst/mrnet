@@ -15,8 +15,8 @@
 #include "mrnet/Error.h"
 #include "mrnet/Event.h"
 #include "mrnet/FilterIds.h"
+#include "mrnet/NetworkTopology.h"
 #include "mrnet/Packet.h"
-#include "mrnet/Stream.h"
 #include "mrnet/Tree.h"
 #include "mrnet/Types.h"
 #include "xplat/Monitor.h"
@@ -32,11 +32,11 @@ class InternalNode;
 class ChildNode;
 class ParentNode;
 class Router;
-class NetworkTopology;
 class SerialGraph;
 class ParsedGraph;
 class TimeKeeper;
 class EventDetector;
+class Stream;
 
 class PeerNode;
 typedef boost::shared_ptr< PeerNode > PeerNodePtr; 
@@ -103,14 +103,20 @@ class Network: public Error {
     void print_PerformanceData( perfdata_metric_t metric, perfdata_context_t context );
 
     /* Event notification */
-    int get_EventNotificationFd( EventType etyp );
-    void clear_EventNotificationFd( EventType etyp );
-    void close_EventNotificationFd( EventType etyp );
+    void clear_Events();
+    unsigned int num_EventsPending();
+    Event* next_Event();
+
+    /* FD-based event notification */
+    int get_EventNotificationFd( EventClass etyp );
+    void clear_EventNotificationFd( EventClass etyp );
+    void close_EventNotificationFd( EventClass etyp );
     
     /* Callback-based event notification */
-    bool register_Callback( CBClass icbcl, cb_func func, CBType icbt=ALL_EVENT );
-    bool remove_Callback( CBClass icbcl, CBType icbt=ALL_EVENT );
-    bool remove_Callback( CBClass icbcl, cb_func func, CBType icbt=ALL_EVENT );
+    bool register_EventCallback( EventClass iclass, EventType ityp,
+                            evt_cb_func ifunc, void* idata );
+    bool remove_EventCallback( evt_cb_func func, EventClass iclass, EventType ityp ); 
+    bool remove_EventCallbacks( EventClass iclass, EventType ityp );
 
     /* Turn Fault Recovery ON or OFF*/
     bool set_FailureRecovery( bool enable_recovery );
@@ -295,7 +301,7 @@ protected:
     void disable_FailureRecovery( void );
     void enable_FailureRecovery( void );
     bool recover_FromFailures( void ) const ;
-    void send_BufferedTopoUpdates(std::vector< update_contents_t* > );
+    void send_TopologyUpdates( void );
 
     void collect_PerfData( void );
 
@@ -312,6 +318,7 @@ protected:
     TimeKeeper* _local_time_keeper;
     EventDetector* _edt;
     unsigned int next_stream_id;
+    EventMgr* _evt_mgr;
 
     std::set< PeerNodePtr > _children;
     std::map< unsigned int, Stream* > _streams;
@@ -324,7 +331,7 @@ protected:
     bool _was_shutdown;
 
     /* EventPipe notifications */
-    std::map< EventType, EventPipe* > _evt_pipes;
+    std::map< EventClass, EventPipe* > _evt_pipes;
 
     mutable XPlat::Monitor _parent_sync;
     mutable XPlat::Monitor _streams_sync;

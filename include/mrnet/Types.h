@@ -121,23 +121,6 @@ namespace MRN
         PERFDATA_MAX_CTX = 5
     } perfdata_context_t;
 
-    typedef enum update_type {
-        TOPO_NEW_BE = 0,
-        TOPO_REMOVE_RANK =1 ,
-	TOPO_CHANGE_PARENT =2 ,
-	TOPO_CHANGE_PORT = 3,
-	TOPO_NEW_CP =4 
-    } update_type_t; 	
-
-    typedef struct  {
-        int type;
-        uint32_t prank;
-	uint32_t crank;
-	char* chost;
-	uint16_t  cport;
-    } update_contents_t;	
-
-
 } /* namespace MRN */
 
 #endif /* !defined(Types_h) */
