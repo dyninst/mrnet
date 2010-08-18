@@ -325,14 +325,13 @@ int getSocketConnection( int bound_socket , int& inout_errno )
         if( connected_socket == -1 ) {
             inout_errno = XPlat::NetUtils::GetLastError();
 	    if( inout_errno != EWOULDBLOCK ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "%s", "" ) );
-                perror( "accept()" );
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "accept() failed with '%s'\n", 
+		                       strerror(inout_errno)) );
 	    }  
-
-            if ( inout_errno != EINTR )
+            if( inout_errno != EINTR )
                 return -1;
         }
-    } while( (connected_socket == -1) && (errno == EINTR) );
+    } while( (connected_socket == -1) && (inout_errno == EINTR) );
 
     if( -1 == connected_socket )
         return -1;
