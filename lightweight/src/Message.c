@@ -15,6 +15,7 @@
 #include "vector.h"
 
 #include "xplat_lightweight/NCIO.h"
+#include "xplat_lightweight/Types.h"
 
 #ifdef os_windows
 #include <winsock2.h>
@@ -357,7 +358,7 @@ int MRN_write(Network_t* net, int ifd, /* const */ void *ibuf, int ibuf_len)
 
 int MRN_read(Network_t* net, int fd, void *buf, int count)
 {
-    int bytes_recvd = 0, retval;
+    int bytes_recvd = 0, retval, err;
 
     while (bytes_recvd != count) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "About to call recv\n"));
@@ -365,8 +366,9 @@ int MRN_read(Network_t* net, int fd, void *buf, int count)
                       count - bytes_recvd,
                       NCBlockingRecvFlag);
         mrn_dbg(5, mrn_printf(FLF, stderr, "recv returned retval=%d\n", retval));
+        err = NetUtils_GetLastError();
         if (retval == -1) {
-            if (errno == EINTR) {
+            if (err == EINTR) {
                 continue;
             }
       
@@ -374,27 +376,21 @@ int MRN_read(Network_t* net, int fd, void *buf, int count)
                 mrn_dbg(3, mrn_printf(FLF, stderr,
                                      "premature return from read(). Got %d of %d" 
                                      " bytes. error: %s\n", 
-                                      bytes_recvd, count, strerror(errno)));
+                                      bytes_recvd, count, strerror(err)));
                 return -1;
             }
         }
-        else if ( (retval == 0) && (errno == EINTR)) {
+        else if ( (retval == 0) && (err == EINTR)) {
             // this situation has been seen to occur on Linux
             // when the remote endpoint has gone away
             return -1;
         }
         else {
             bytes_recvd += retval;
-            if (bytes_recvd < count && errno == EINTR) {
+            if (bytes_recvd < count) {
                 continue;
             }
             else {
-                // bytes_recvd is either count, or error other than "EINTR" has occurred
-                if (bytes_recvd != count) {
-                    mrn_dbg(3, mrn_printf(FLF, stderr, 
-                                          "premature return from read(). %d of %d bytes. errno: %s\n", 
-                                          bytes_recvd, count, strerror(errno)));
-                }
                 mrn_dbg(5, mrn_printf(FLF, stderr, "returning %d\n", bytes_recvd));
                 return bytes_recvd;
             }
