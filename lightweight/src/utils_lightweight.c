@@ -179,20 +179,19 @@ int mrn_printf( const char *file, int line, const char * func,
     const char* home = getenv("HOME");
     const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
     FILE *f;
-	int pid = Process_GetProcessId();
+    int pid = Process_GetProcessId();
 
-    this_host = (char*)malloc(sizeof(char)*256);
-    assert(this_host);
-
-  
     while (gettimeofday( &tv, NULL ) == -1 ) {}
 
     if ( (fp == NULL) && (rank != UnknownRank) ) {
         logfile[0] = '\0';
 
+        this_host = (char*)malloc(sizeof(char)*256);
+        assert(this_host);
         NetUtils_GetLocalHostName(this_host);
         strncpy(host, this_host, 256);
         host[255] = '\0';
+        free( this_host );
 
         // find log directory
         if (varval != NULL) {

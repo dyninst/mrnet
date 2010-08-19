@@ -448,9 +448,8 @@ int read( int fd, void *buf, int count )
                 return -1;
             }
         }
-        else if( ( retval == 0 ) && ( err == EINTR ) ) {
-            // this situation has been seen to occur on Linux
-            // when the remote endpoint has gone away
+        else if( retval == 0 ) {
+            // the remote endpoint has gone away
             return -1;
         }
         else {
@@ -459,7 +458,7 @@ int read( int fd, void *buf, int count )
                 continue;
             }
             else {
-                mrn_dbg(5, mrn_printf(FLF, stderr, "returning %d\n", bytes_recvd));
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "returning %d\n", bytes_recvd) );
                 return bytes_recvd;
             }
         }

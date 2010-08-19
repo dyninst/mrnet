@@ -69,8 +69,6 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
     mrn_dbg(3, mrn_printf(FLF, stderr, "read(%d, %p, %d) ...\n", sock_fd, buf, buf_len));
 
     if ((retval = MRN_read(net, sock_fd, buf, buf_len)) != buf_len) {
-        if (retval == -1)
-            error(ERR_SYSTEM, iinlet_rank, "MRN_read() %s", strerror(errno));
         mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_read() %d of %d bytes received\n", retval, buf_len));
         free(buf);
         return -1;
@@ -117,8 +115,6 @@ int Message_recv(Network_t* net, int sock_fd, vector_t* packets_in, Rank iinlet_
                           sock_fd, buf, buf_len, no_packets));
     readRet = MRN_read(net, sock_fd, buf, buf_len);
     if (readRet != buf_len) {
-        if (readRet == -1)
-            error(ERR_SYSTEM, iinlet_rank, "MRN_read() %s", strerror(errno));
         mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_read() %d of %d bytes received\n", readRet, buf_len));
         free(buf);
         //free(packet_sizes);
@@ -217,7 +213,7 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
     uint32_t no_packets = 1;
     uint32_t *packet_sizes = NULL;
     char* buf=NULL;
-    int buf_len;
+    int buf_len, err;
     PDR pdrs;
     enum pdr_op op = PDR_ENCODE;
     NCBuf_t* ncbuf = new_NCBuf_t();
@@ -252,24 +248,25 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
     pdrmem_create(&pdrs, buf, buf_len, op);
 
     if (!pdr_uint32(&pdrs, &no_packets)) {
-        error(ERR_PACKING, UnknownRank, "pdr_uint32() failed\n");
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint32() failed\n") );
         free(buf);
         free(ncbuf);
         free(packet_sizes);
         return -1;
     }
   
-    mrn_dbg(3, mrn_printf(FLF, stderr, "Calling write(%d, %p, %d to tell how many packets are going\n", sock_fd, buf, buf_len));
+    mrn_dbg(3, mrn_printf(FLF, stderr, 
+                          "Calling write(%d, %p, %d to tell how many packets are going\n", 
+                          sock_fd, buf, buf_len));
     if (MRN_write(net, sock_fd, buf, buf_len) != buf_len) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "write() failed\n"));
-        perror("write()");
+        mrn_dbg(1, mrn_printf(FLF, stderr, "MRN_write() failed\n"));
         free(buf);
         free(ncbuf);
         free(packet_sizes);
         return -1;
     }
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "write() succeeded\n"));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_write() succeeded\n"));
     free(buf);
 
     /* send a vector of packet_sizes */
@@ -283,7 +280,6 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
         (pdrproc_t) pdr_uint32))
         {
             mrn_dbg(1, mrn_printf(FLF, stderr, "pdr_vector() failed\n"));
-            error(ERR_PACKING, UnknownRank, "pdr_vector() failed\n");
             free(buf);
             free(ncbuf);
             free(packet_sizes);
@@ -293,8 +289,7 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
     mrn_dbg(3, mrn_printf(FLF, stderr, "Calling write(%d, %p, %d)\n", sock_fd, buf, buf_len));
     mcwret = MRN_write(net, sock_fd, buf, buf_len);
     if (mcwret != buf_len) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "write failed\n"));
-        perror("write()");
+        mrn_dbg(1, mrn_printf(FLF, stderr, "MRN_write failed\n"));
         free(buf);
         free(ncbuf);
         free(packet_sizes);
@@ -314,14 +309,12 @@ int Message_send(Network_t* net, Message_t* msg_out, int sock_fd)
 
     sret = NCSend(sock_fd, ncbuf, no_packets);
     if (sret != total_bytes) {
+        err = NetUtils_GetLastError();
         mrn_dbg(3, mrn_printf(FLF, stderr,
-                              "NCSend() returned %d of %d bytes, errno = %d, nbuffers = %d\n", sret, total_bytes, errno, no_packets));
+                              "NCSend() returned %d of %d bytes, errno = %d, nbuffers = %d\n", 
+                              sret, total_bytes, err, no_packets));
 
         mrn_dbg(5, mrn_printf(FLF, stderr, "buffer.size = %d\n", ncbuf->len));
-
-        perror("NCSend()");
-        error (ERR_SYSTEM, UnknownRank, "NCSend() returned %d of %d bytes: %s\n", 
-               sret, total_bytes, strerror(errno));
         free(ncbuf);
         return -1;
     }
@@ -360,34 +353,34 @@ int MRN_read(Network_t* net, int fd, void *buf, int count)
 {
     int bytes_recvd = 0, retval, err;
 
-    while (bytes_recvd != count) {
+    while( bytes_recvd != count ) {
+
         mrn_dbg(5, mrn_printf(FLF, stderr, "About to call recv\n"));
-        retval = recv(fd, ((char*)buf) + bytes_recvd,
-                      count - bytes_recvd,
-                      NCBlockingRecvFlag);
+        retval = recv( fd, ((char*)buf) + bytes_recvd,
+                       count - bytes_recvd,
+                       NCBlockingRecvFlag );
         mrn_dbg(5, mrn_printf(FLF, stderr, "recv returned retval=%d\n", retval));
+
         err = NetUtils_GetLastError();
-        if (retval == -1) {
-            if (err == EINTR) {
+        if( retval == -1 ) {
+            if( err == EINTR ) {
                 continue;
             }
-      
             else {
                 mrn_dbg(3, mrn_printf(FLF, stderr,
-                                     "premature return from read(). Got %d of %d" 
+                                     "premature return from recv(). Got %d of %d" 
                                      " bytes. error: %s\n", 
                                       bytes_recvd, count, strerror(err)));
                 return -1;
             }
         }
-        else if ( (retval == 0) && (err == EINTR)) {
-            // this situation has been seen to occur on Linux
-            // when the remote endpoint has gone away
+        else if( retval == 0 ) {
+            // the remote endpoint has gone away
             return -1;
         }
         else {
             bytes_recvd += retval;
-            if (bytes_recvd < count) {
+            if( bytes_recvd < count ) {
                 continue;
             }
             else {
@@ -396,7 +389,6 @@ int MRN_read(Network_t* net, int fd, void *buf, int count)
             }
         }
     }
-  
     assert(0);
     return -1;
 }
