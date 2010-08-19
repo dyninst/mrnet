@@ -1292,25 +1292,23 @@ bool NetworkTopology::send_updates_buffer()
         //broadcast all topology updates
         mrn_dbg( 5, mrn_printf(FLF, stderr, "sending %d updates\n", vuc_size) );
 
-        if( vuc_size > 0 ) {
-            s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                     type_arr, vuc_size, 
-                     prank_arr, vuc_size, 
-                     crank_arr, vuc_size, 
-                     host_arr, vuc_size, 
-                     cport_arr, vuc_size );
-            s->flush();
+        s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
+                 type_arr, vuc_size, 
+                 prank_arr, vuc_size, 
+                 crank_arr, vuc_size, 
+                 host_arr, vuc_size, 
+                 cport_arr, vuc_size );
+        s->flush();
 
-            _updates_buffer.clear();
-	    free( type_arr );
-	    free( prank_arr );
-	    free( host_arr );
-	    free( crank_arr );
-	    free( cport_arr );
+        _updates_buffer.clear();
+	free( type_arr );
+	free( prank_arr );
+	free( host_arr );
+	free( crank_arr );
+	free( cport_arr );
 
-            mrn_dbg_func_end();
-            return true;
-        }
+        mrn_dbg_func_end();
+        return true;
     }
     
     mrn_dbg_func_end();
