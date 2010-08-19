@@ -1269,13 +1269,13 @@ bool NetworkTopology::send_updates_buffer()
 
     int vuc_size = _updates_buffer.size();
   
-    int* type_arr = (int*) malloc( sizeof(int) * vuc_size ); 
-    char** host_arr = (char**) malloc( sizeof(char*) * vuc_size );  
-    Rank* prank_arr = (Rank*) malloc( sizeof(Rank) * vuc_size );
-    Rank* crank_arr = (Rank*) malloc( sizeof(Rank) * vuc_size );
-    Port* cport_arr = (Port*) malloc( sizeof(Port) * vuc_size );
-
     if( vuc_size ) {
+         
+        int* type_arr = (int*) malloc( sizeof(int) * vuc_size );
+        char** host_arr = (char**) malloc( sizeof(char*) * vuc_size );
+        Rank* prank_arr = (Rank*) malloc( sizeof(Rank) * vuc_size );
+        Rank* crank_arr = (Rank*) malloc( sizeof(Rank) * vuc_size );
+        Port* cport_arr = (Port*) malloc( sizeof(Port) * vuc_size );
 
         int i = 0;
         std::vector< NetworkTopology::update_contents* >::iterator it;
@@ -1299,8 +1299,14 @@ bool NetworkTopology::send_updates_buffer()
                      crank_arr, vuc_size, 
                      host_arr, vuc_size, 
                      cport_arr, vuc_size );
-        
+            s->flush();
+
             _updates_buffer.clear();
+	    free( type_arr );
+	    free( prank_arr );
+	    free( host_arr );
+	    free( crank_arr );
+	    free( cport_arr );
 
             mrn_dbg_func_end();
             return true;
