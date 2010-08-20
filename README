@@ -67,13 +67,10 @@ LICENSE contains the usage terms for MRNet.
   MRNet is designed to be a highly-portable system. The source code has
   been compiled using both GNU GCC and native platform compilers. We 
   have successfully tested MRNet components on the following platforms:
-   - i686-pc-linux-gnu
-   - ia64-unknown-linux-gnu
-   - x86_64-unknown-linux-gnu
-   - powerpc64-unknown-linux-gnu
-   - rs6000-ibm-aix5.2.0.0
-   - sparc-sun-solaris2.8
-   - i386-unknown-nt4.0
+   - Linux: x86, x86_64, powerpc64, ia64, CrayXT
+   - AIX 5.2, 5.3: powerpc32
+   - Solaris 8, 9: sparc32
+   - Windows: x86
 
 4. CONTACT
 
