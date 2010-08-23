@@ -869,6 +869,8 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         delete[] cmds[0];
         delete[] cmds;
         if( launchRet != NULL ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "ALPS tool helper failed to start %s - error is '%s'\n", 
+                                  cmdStr.str().c_str(), launchRet) );
             return -1;
         }
     }
