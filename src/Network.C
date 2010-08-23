@@ -1781,7 +1781,6 @@ TimeKeeper* Network::get_TimeKeeper( void )
     return _local_time_keeper;
 }
 
-
 void set_OutputLevel(int l)
 {
     if( l <= MIN_OUTPUT_LEVEL ) {
@@ -1804,9 +1803,8 @@ void set_OutputLevelFromEnvironment( void )
     }
 }
 
-SerialGraph*
-Network::readTopology( int topoSocket ){
-
+SerialGraph* Network::readTopology( int topoSocket )
+{
     mrn_dbg_func_begin(); 
 
     char* sTopology = NULL;
@@ -1820,17 +1818,13 @@ Network::readTopology( int topoSocket ){
     char* currBufPtr = sTopology;
     size_t nRemaining = sTopologyLen;
     while( nRemaining > 0 ) {
-	    ssize_t nread = ::recv( topoSocket, currBufPtr, nRemaining, 0);
+        ssize_t nread = ::recv( topoSocket, currBufPtr, nRemaining, 0);
         nRemaining -= nread;
         currBufPtr += nread;
     }
     *currBufPtr = 0;
 
-    // get my rank
-    //read( topoSocket, &myRank, sizeof(myRank) );
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s\n",
-                          sTopology));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s\n", sTopology));
 
     SerialGraph* sg = new SerialGraph( sTopology );
     delete[] sTopology;
@@ -1838,9 +1832,7 @@ Network::readTopology( int topoSocket ){
     return sg;
 }
 
-void
-Network::writeTopology( int topoFd,
-                        SerialGraph* topology) {
+void Network::writeTopology( int topoFd, SerialGraph* topology ) {
     mrn_dbg_func_begin();
 
     std::string sTopology = topology->get_ByteArray();
@@ -1850,7 +1842,7 @@ Network::writeTopology( int topoFd,
                           sTopology.c_str() ));
 
     // send serialized topology size
-	ssize_t nwritten = ::send( topoFd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
+    ssize_t nwritten = ::send( topoFd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
 
     // send the topology itself
     // NOTE this code assumes the byte array underneath the std::string
@@ -1862,13 +1854,9 @@ Network::writeTopology( int topoFd,
         nRemaining -= nwritten;
         currBufPtr += nwritten;
     }
-
-    // deliver the child rank
-    //write( topoFd, &childRank, sizeof(childRank) );
-
 }
-/* Failure Recovery - New code */
 
+/* Failure Recovery */
 bool Network::set_FailureRecovery( bool enable_recovery )
 {
     mrn_dbg_func_begin();
@@ -1879,30 +1867,25 @@ bool Network::set_FailureRecovery( bool enable_recovery )
 
 	//enable or disable Failure Recovery
 	
-	if(enable_recovery == 1)
-	{
-        	tag = PROT_ENABLE_RECOVERY;
-		enable_FailureRecovery();
+	if( enable_recovery ) {
+            tag = PROT_ENABLE_RECOVERY;
+            enable_FailureRecovery();
 	}
-	else
-	{
-        	tag = PROT_DISABLE_RECOVERY;
-		disable_FailureRecovery();
+	else {
+            tag = PROT_DISABLE_RECOVERY;
+            disable_FailureRecovery();
 	}
-	
 	
         PacketPtr packet( new Packet( 0, tag, "%d", (int)enable_recovery ));
-        
 	if( packet->has_Error() ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
             return false;
         }
 
-            if( send_PacketToChildren( packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
-                return false;
-            }
-
+        if( send_PacketToChildren( packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            return false;
+        }
     }
     else {
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
