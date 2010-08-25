@@ -343,6 +343,8 @@ AS_MKDIR_P([obj/${host}])
 AS_MKDIR_P([lib/${host}])
 AS_MKDIR_P([bin/${host}])
 AS_MKDIR_P([depends])
+AS_MKDIR_P([lightweight/obj/${host}])
+AS_MKDIR_P([lightweight/depends])
 
 # Checks for header files.
 AC_HEADER_STDC

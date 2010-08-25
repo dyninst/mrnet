@@ -17,15 +17,23 @@ MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
 BINDIR  = ./bin/${MRNET_PLATFORM}
 LIBDIR  = ./lib/${MRNET_PLATFORM}
 OBJDIR  = ./obj/${MRNET_PLATFORM}
-DEPENDDIR = ./depends
-SRCDIR  = @abs_srcdir@
-PREFIX  = @prefix@
+DEPDIR = ./depends
 
-prefix  = @prefix@
-exec_prefix=@exec_prefix@
+BASEDIR  = $(MRNET_ROOT)
+INCDIR   = $(BASEDIR)/include
+LTWTDIR  = $(BASEDIR)/lightweight
+SRCDIR   = $(BASEDIR)/src
+TSTDIR   = $(BASEDIR)/tests
+XPLATDIR = $(BASEDIR)/xplat
+
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
 IBINDIR = @bindir@
 ILIBDIR = @libdir@
 IINCDIR = @includedir@
+
+mrnet_incdir = $(INCDIR)/mrnet
+install_incdir = $(IINCDIR)/mrnet
 
 ##########################
 ### AUXILIARY PROGRAMS ###
@@ -53,9 +61,9 @@ MRNET_OS = @MRNET_OS@
 
 C_AS_CPLUSPLUS = @C_AS_CPLUSPLUS@
 
-MAKEDEPENDS = $(SRCDIR)/conf/makedepends.sh
+MAKEDEPENDS = $(BASEDIR)/conf/makedepends.sh
 
-VPATH = $(SRCDIR)/src:$(SRCDIR)/tests:$(SRCDIR)/tests/test_Recovery
+VPATH = $(SRCDIR):$(TSTDIR):$(TSTDIR)/test_Recovery
 
 LDFLAGS = @LDFLAGS@
 COMMNODE_LDFLAGS = @CN_LDFLAGS@
@@ -64,8 +72,8 @@ SOFLAGS = @SOFLAGS@
 LIBS = $(LIBXPLAT) @LIBS@ @EXTRA_LIBS@
 LIBS_LIGHTWEIGHT = $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS@
 
-INCDIR = -I$(SRCDIR)/include -I$(SRCDIR)/src -I$(SRCDIR)/xplat/include -I$(SRCDIR)/tests
-INCDIR_LIGHTWEIGHT = -I$(SRCDIR)/lightweight/include -I$(SRCDIR)/lightweight/src -I$(SRCDIR)/lightweight/xplat/include -I$(SRCDIR)/tests -I$(SRCDIR)/src
+INCLUDES = -I$(INCDIR) -I$(SRCDIR) -I$(XPLATDIR)/include -I$(TSTDIR)
+INCLUDES_LIGHTWEIGHT = -I$(LTWTDIR)/include -I$(LTWTDIR)/src -I$(LTWTDIR)/xplat/include -I$(TSTDIR) -I$(SRCDIR)
 
 ifeq ($(COMPILER_TYPE), gnu)
     ifndef SILENCE_WARNINGS
@@ -113,8 +121,8 @@ endif #Forte (Sun) compiler warnings
 
 CXX = @CXX@
 CC = @CC@
-CXXFLAGS = @CXXFLAGS@ $(INCDIR) $(WARNFLAGS)
-CCFLAGS = @CFLAGS@ $(INCDIR_LIGHTWEIGHT) $(WARNFLAGS_LIGHTWEIGHT)
+CXXFLAGS = @CXXFLAGS@ $(INCLUDES) $(WARNFLAGS)
+CCFLAGS = @CFLAGS@ $(INCLUDES_LIGHTWEIGHT) $(WARNFLAGS_LIGHTWEIGHT)
 TEST_CXXFLAGS := $(CXXFLAGS)
 TEST_CCFLAGS := $(CCFLAGS)
 
@@ -132,18 +140,18 @@ export
 #############################
 # System Specific Definitions
 #############################
-LIBMRNET    = $(LIBDIR)/libmrnet.a
-LIBMRNET_SO = $(LIBDIR)/libmrnet.so
-LIBXPLAT    = $(MRNET_ROOT)/xplat/libxplat.a
-LIBXPLAT_SO = $(MRNET_ROOT)/xplat/libxplat.so
-LIBMRNET_LIGHTWEIGHT = $(MRNET_ROOT)/lightweight/libmrnet_lightweight.a
-LIBMRNET_LIGHTWEIGHT_SO = $(MRNET_ROOT)/lightweight/libmrnet_lightweight.so
-LIBXPLAT_LIGHTWEIGHT = $(MRNET_ROOT)/lightweight/xplat/libxplat_lightweight.a
-LIBXPLAT_LIGHTWEIGHT_SO = $(MRNET_ROOT)/lightweight/xplat/libxplat_lightweight.so
 COMMNODE    = $(BINDIR)/mrnet_commnode 
 TOPGEN      = $(BINDIR)/mrnet_topgen
+LIBMRNET    = $(LIBDIR)/libmrnet.a
+LIBMRNET_SO = $(LIBDIR)/libmrnet.so
+LIBXPLAT    = $(XPLATDIR)/libxplat.a
+LIBXPLAT_SO = $(XPLATDIR)/libxplat.so
+LIBMRNET_LIGHTWEIGHT    = $(LTWTDIR)/libmrnet_lightweight.a
+LIBMRNET_LIGHTWEIGHT_SO = $(LTWTDIR)/libmrnet_lightweight.so
+LIBXPLAT_LIGHTWEIGHT    = $(LTWTDIR)/xplat/libxplat_lightweight.a
+LIBXPLAT_LIGHTWEIGHT_SO = $(LTWTDIR)/xplat/libxplat_lightweight.so
 
-TARGETS     = $(LIBMRNET) $(COMMNODE) $(TOPGEN)
+TARGETS = $(LIBMRNET) $(COMMNODE) $(TOPGEN)
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
     TARGETS += $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
@@ -183,68 +191,71 @@ OPT_TESTS = $(BINDIR)/test_Recovery_FE \
 # Object and Executable Definitions
 ###################################
 LIBMRNET_SRCS = \
-	         $(SRCDIR)/src/scanner.C \
-	         $(SRCDIR)/src/parser.tab.C \
-	         $(SRCDIR)/src/BackEndNode.C \
-	         $(SRCDIR)/src/byte_order.c \
-	         $(SRCDIR)/src/ChildNode.C \
-	         $(SRCDIR)/src/CommunicationNode.C \
-	         $(SRCDIR)/src/Communicator.C \
-	         $(SRCDIR)/src/DataElement.C \
-	         $(SRCDIR)/src/Error.C \
-	         $(SRCDIR)/src/Event.C \
-	         $(SRCDIR)/src/EventDetector.C \
-	         $(SRCDIR)/src/Filter.C \
-	         $(SRCDIR)/src/FilterDefinitions.C \
-	         $(SRCDIR)/src/FrontEndNode.C \
-	         $(SRCDIR)/src/InternalNode.C \
-	         $(SRCDIR)/src/Message.C \
-	         $(SRCDIR)/src/Network.C \
-	         $(SRCDIR)/src/NetworkTopology.C \
-	         $(SRCDIR)/src/Packet.C \
-	         $(SRCDIR)/src/ParsedGraph.C \
-	         $(SRCDIR)/src/ParentNode.C \
-	         $(SRCDIR)/src/pdr.c \
-	         $(SRCDIR)/src/pdr_mem.c \
-	         $(SRCDIR)/src/pdr_sizeof.c \
-	         $(SRCDIR)/src/PeerNode.C \
-	         $(SRCDIR)/src/PerfDataEvent.C \
-	         $(SRCDIR)/src/Router.C \
-	         $(SRCDIR)/src/SerialGraph.C \
-	         $(SRCDIR)/src/Stream.C \
-	         $(SRCDIR)/src/TimeKeeper.C \
-	         $(SRCDIR)/src/Tree.C \
-	         $(SRCDIR)/src/utils.C
+	         $(SRCDIR)/scanner.C \
+	         $(SRCDIR)/parser.tab.C \
+	         $(SRCDIR)/BackEndNode.C \
+	         $(SRCDIR)/byte_order.c \
+	         $(SRCDIR)/ChildNode.C \
+	         $(SRCDIR)/CommunicationNode.C \
+	         $(SRCDIR)/Communicator.C \
+	         $(SRCDIR)/DataElement.C \
+	         $(SRCDIR)/Error.C \
+	         $(SRCDIR)/Event.C \
+	         $(SRCDIR)/EventDetector.C \
+	         $(SRCDIR)/Filter.C \
+	         $(SRCDIR)/FilterDefinitions.C \
+	         $(SRCDIR)/FrontEndNode.C \
+	         $(SRCDIR)/InternalNode.C \
+	         $(SRCDIR)/Message.C \
+	         $(SRCDIR)/Network.C \
+	         $(SRCDIR)/NetworkTopology.C \
+	         $(SRCDIR)/Packet.C \
+	         $(SRCDIR)/ParsedGraph.C \
+	         $(SRCDIR)/ParentNode.C \
+	         $(SRCDIR)/pdr.c \
+	         $(SRCDIR)/pdr_mem.c \
+	         $(SRCDIR)/pdr_sizeof.c \
+	         $(SRCDIR)/PeerNode.C \
+	         $(SRCDIR)/PerfDataEvent.C \
+	         $(SRCDIR)/Router.C \
+	         $(SRCDIR)/SerialGraph.C \
+	         $(SRCDIR)/Stream.C \
+	         $(SRCDIR)/TimeKeeper.C \
+	         $(SRCDIR)/Tree.C \
+	         $(SRCDIR)/utils.C
+
+LIBMRNET_HEADERS = $(wildcard $(mrnet_incdir)/*.h)
+INSTALL_HEADERS = $(addprefix $(install_incdir)/, $(notdir $(LIBMRNET_HEADERS)))
 
 ifeq ($(NEED_PARADYN_FILTERS), yes)
     CXXFLAGS += -D_NEED_PARADYN_FILTERS_
-    LIBMRNET_SRCS += $(SRCDIR)/src/ParadynFilterDefinitions.C 
+    LIBMRNET_SRCS += $(SRCDIR)/ParadynFilterDefinitions.C 
 endif
 
 ifeq ($(MRNET_OS), linux)
-    LIBMRNET_SRCS += $(SRCDIR)/src/PerfDataSysEvent_linux.C
+    LIBMRNET_SRCS += $(SRCDIR)/PerfDataSysEvent_linux.C
 else
-    LIBMRNET_SRCS += $(SRCDIR)/src/PerfDataSysEvent_none.C
+    LIBMRNET_SRCS += $(SRCDIR)/PerfDataSysEvent_none.C
 endif
 
 ifeq ($(MRNET_STARTUP_METHOD),cray_xt)
 
 # build for a Cray XT (uses aprun or alps_tool_helper for parallel process launch)
-LIBMRNET_SRCS += $(SRCDIR)/src/XTNetwork.C \
-                 $(SRCDIR)/src/XTFrontEndNode.C \
-                 $(SRCDIR)/src/XTBackEndNode.C \
-                 $(SRCDIR)/src/XTInternalNode.C
+LIBMRNET_SRCS += $(SRCDIR)/XTNetwork.C \
+                 $(SRCDIR)/XTFrontEndNode.C \
+                 $(SRCDIR)/XTBackEndNode.C \
+                 $(SRCDIR)/XTInternalNode.C
 
 else
     ifeq ($(MRNET_STARTUP_METHOD),ssh)
 
 # fall back to RSH instantiation approach
-LIBMRNET_SRCS += $(SRCDIR)/src/RSHNetwork.C \
-                 $(SRCDIR)/src/RSHParentNode.C \
-                 $(SRCDIR)/src/RSHChildNode.C \
-                 $(SRCDIR)/src/RSHFrontEndNode.C \
-                 $(SRCDIR)/src/RSHBackEndNode.C \
-                 $(SRCDIR)/src/RSHInternalNode.C
+LIBMRNET_SRCS += $(SRCDIR)/RSHNetwork.C \
+                 $(SRCDIR)/RSHParentNode.C \
+                 $(SRCDIR)/RSHChildNode.C \
+                 $(SRCDIR)/RSHFrontEndNode.C \
+                 $(SRCDIR)/RSHBackEndNode.C \
+                 $(SRCDIR)/RSHInternalNode.C
 
     else
 
@@ -255,49 +266,49 @@ endif
 
 LIBMRNET_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(LIBMRNET_SRCS)))))
 
-COMMNODE_SRCS = $(SRCDIR)/src/CommunicationNodeMain.C
+COMMNODE_SRCS = $(SRCDIR)/CommunicationNodeMain.C
 COMMNODE_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(COMMNODE_SRCS)))))
 
-PDR_SRCS = $(SRCDIR)/src/pdr.c \
-	   $(SRCDIR)/src/pdr_mem.c \
-	   $(SRCDIR)/src/pdr_sizeof.c \
-	   $(SRCDIR)/src/byte_order.c
+PDR_SRCS = $(SRCDIR)/pdr.c \
+	   $(SRCDIR)/pdr_mem.c \
+	   $(SRCDIR)/pdr_sizeof.c \
+	   $(SRCDIR)/byte_order.c
 PDR_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(PDR_SRCS)))))
 
 ALL_SRCS = $(LIBMRNET_SRCS) $(COMMNODE_SRCS) $(TEST_SRCS)
-DEPS	= $(addprefix $(DEPENDDIR)/, $(patsubst %.C,%.d,$(patsubst %.c,%.d,$(notdir $(ALL_SRCS)))))
+DEPS	= $(addprefix $(DEPDIR)/, $(patsubst %.C,%.d,$(patsubst %.c,%.d,$(notdir $(ALL_SRCS)))))
 
-all: xplat-all lightweight-all xplat_lightweight-all $(TARGETS)
+all: xplat-all xplat_lightweight-all $(TARGETS) lightweight-all
 
 xplat-all:
-	cd ./xplat ; $(MAKE) all
+	cd $(XPLATDIR) ; $(MAKE) all
 	$(CP) $(LIBXPLAT) $(LIBDIR)/
 
 xplat-sharedobj:
-	cd ./xplat ; $(MAKE) sharedobj
+	cd $(XPLATDIR) ; $(MAKE) sharedobj
 	$(CP) $(LIBXPLAT_SO) $(LIBDIR)/
 
 lightweight-all:
-	cd ./lightweight ; $(MAKE) all
+	cd $(LTWTDIR) ; $(MAKE) all
 	$(CP) $(LIBMRNET_LIGHTWEIGHT) $(LIBDIR)/
 
 lightweight-sharedobj:
-	cd ./lightweight ; $(MAKE) sharedobj
+	cd $(LTWTDIR) ; $(MAKE) sharedobj
 	$(CP) $(LIBMRNET_LIGHTWEIGHT_SO) $(LIBDIR)/
 
 xplat_lightweight-all:
-	cd ./lightweight/xplat ; $(MAKE) all
+	cd $(LTWTDIR)/xplat ; $(MAKE) all
 	$(CP) $(LIBXPLAT_LIGHTWEIGHT) $(LIBDIR)/
 
 xplat_lightweight-sharedobj:
-	cd ./lightweight/xplat ; $(MAKE) sharedobj
+	cd $(LTWTDIR)/xplat ; $(MAKE) sharedobj
 	$(CP) $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBDIR)/
 
-install: install-local xplat-install lightweight-install xplat_lightweight-install
+install: install-prep install-local lightweight-install xplat-install xplat_lightweight-install
 
-install-local: all
+install-prep:
 	@echo Creating install directories
-	for dir in $(IBINDIR) $(ILIBDIR) $(IINCDIR) $(IINCDIR)/mrnet ; do \
+	for dir in $(IBINDIR) $(ILIBDIR) $(install_incdir) ; do \
 	    if [ ! -d $$dir ] ; then \
 	        $(MKDIR_P) $$dir ; \
 	        chmod 755 $$dir ; \
@@ -306,26 +317,28 @@ install-local: all
 	if [ ! -x `echo $(INSTALL) | sed 's/ .*$$//'` ] ; then \
 	    chmod +x `echo $(INSTALL) | sed 's/ .*$$//'` ; \
 	fi
-	@echo Installing binaries
+
+$(INSTALL_HEADERS): $(install_incdir)/%: $(mrnet_incdir)/%
+	@echo Installing MRNet header $(<F)
+	$(INSTALL) -m 644 $< $(@D)
+
+install-local: all $(INSTALL_HEADERS)
+	@echo Installing MRNet binaries
 	$(INSTALL) -m 755 $(COMMNODE) $(BINDIR)/mrnet_topgen $(IBINDIR)/
-	@echo Installing libraries
+	@echo Installing MRNet libraries
 	$(INSTALL) -m 755 $(LIBMRNET) $(ILIBDIR)/
 	if [ -f $(LIBMRNET_SO) ] ; then \
             $(INSTALL) -m 755 $(LIBMRNET_SO) $(ILIBDIR)/ ; \
 	fi
-	@echo Installing headers
-	for hdr in @srcdir@/include/mrnet/*.h ; do \
-	    $(INSTALL) -m 644 $$hdr $(IINCDIR)/mrnet/ ; \
-	done
 
 install-boost:
-	@echo Creating install directory
+	@echo Creating Boost install directory
 	if [ ! -d $(IINCDIR)/boost ] ; then \
 	    $(MKDIR_P) $(IINCDIR)/boost ; \
 	    chmod 755 $(IINCDIR)/boost ; \
         fi
 	@echo Installing headers
-	$(CP) -a @srcdir@/include/boost/* $(IINCDIR)/boost/
+	$(CP) -a $(INCDIR)/boost/* $(IINCDIR)/boost/
 
 install-tests: tests $(BINDIR)/mrnet_tests.sh
 	@echo Installing standard tests
@@ -335,7 +348,7 @@ install-tests: tests $(BINDIR)/mrnet_tests.sh
             $(MKDIR_P) $(IBINDIR)/topology_files ; \
 	    chmod 755 $(IBINDIR)/topology_files ; \
 	fi
-	for top in $(SRCDIR)/tests/topology_files/local-*.top ; do \
+	for top in $(TSTDIR)/topology_files/local-*.top ; do \
 	    $(INSTALL) -m 644 $$top $(IBINDIR)/topology_files/ ; \
 	done
 
@@ -348,16 +361,13 @@ install-examples: examples
 	$(MAKE) -C Examples install
 
 xplat-install:
-	@echo Installing xplat library
-	cd ./xplat ; $(MAKE) install
+	cd $(XPLATDIR) ; $(MAKE) install
 
 lightweight-install:
-	@echo Installing lightweight backend library
-	cd ./lightweight ; $(MAKE) install
+	cd $(LTWTDIR) ; $(MAKE) install
 
 xplat_lightweight-install:
-	@echo Installing xplat library for lightweight backend library
-	cd ./lightweight/xplat ; $(MAKE) install
+	cd $(LTWTDIR)/xplat ; $(MAKE) install
 
 tests: all $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(LIBDIR)/test_DynamicFilters.so
 
@@ -366,18 +376,18 @@ tests-opt: $(OPT_TESTS)
 examples: all
 	$(MAKE) -C Examples
 
-$(SRCDIR)/src/scanner.C: $(SRCDIR)/src/scanner.l $(SRCDIR)/src/parser.tab.C $(FRC)
+$(SRCDIR)/scanner.C: $(SRCDIR)/scanner.l $(SRCDIR)/parser.tab.C $(FRC)
 	@echo Building `basename $@` ...
 	if [ -f $@ ] ; then $(RM) $@ ; fi
 	$(FLEX) -Pmrn -t $< > $@ 
 
-$(SRCDIR)/src/parser.tab.C $(SRCDIR)/src/parser.tab.h: $(SRCDIR)/src/parser.y $(FRC)
+$(SRCDIR)/parser.tab.C $(SRCDIR)/parser.tab.h: $(SRCDIR)/parser.y $(FRC)
 	@echo Building `basename $@` ...
 	$(BISON) -p mrn -d $<
 	if [ -f $(OBJDIR)/parser.tab.C ] ; then $(RM) $(OBJDIR)/parser.tab.C ; fi
-	mv y.tab.c $(SRCDIR)/src/parser.tab.C
+	mv y.tab.c $(SRCDIR)/parser.tab.C
 	if [ -f $(OBJDIR)/parser.tab.h ] ; then $(RM) $(OBJDIR)/parser.tab.h ; fi 
-	mv y.tab.h $(SRCDIR)/src/parser.tab.h
+	mv y.tab.h $(SRCDIR)/parser.tab.h
 
 $(LIBMRNET): $(LIBMRNET_OBJS)
 	@echo Archiving `basename $@` ...
@@ -421,21 +431,21 @@ $(BINDIR)/mrnet_topgen: $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
            $(LIBMRNET) $(LIBS)
 
 $(STD_TESTS_FE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
-              $(SRCDIR)/tests/test_common.h \
+              $(TSTDIR)/test_common.h \
               $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
 
 $(STD_TESTS_BE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
-              $(SRCDIR)/tests/test_common.h \
+              $(TSTDIR)/test_common.h \
               $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
 
 $(STD_TESTS_FE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
-              $(SRCDIR)/tests/test_common.h \
+              $(TSTDIR)/test_common.h \
               $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
@@ -447,13 +457,13 @@ $(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o 
 	$(PURIFY) $(CC) $(TEST_CCFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 		$(LIBMRNET_LIGHTWEIGHT) $(LIBS_LIGHTWEIGHT)
 
-$(BINDIR)/mrnet_tests.sh: $(SRCDIR)/conf/mrnet_tests.sh
-	$(CP) $(SRCDIR)/conf/mrnet_tests.sh $(BINDIR)/
+$(BINDIR)/mrnet_tests.sh: $(BASEDIR)/conf/mrnet_tests.sh
+	$(CP) $(BASEDIR)/conf/mrnet_tests.sh $(BINDIR)/
 
 
-$(LIBDIR)/test_DynamicFilters.so: $(SRCDIR)/tests/test_DynamicFilters.C
+$(LIBDIR)/test_DynamicFilters.so: $(TSTDIR)/test_DynamicFilters.C
 	@echo "Building `basename $@` ..."
-	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_DynamicFilters.C
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(TSTDIR)/test_DynamicFilters.C
 
 $(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(LIBMRNET) \
                             $(OBJDIR)/%.o \
@@ -475,9 +485,9 @@ $(BINDIR)/test_Recovery_BE: $(BINDIR)/%: $(LIBMRNET) \
            $(OBJDIR)/ThroughputExperiment.o \
            $(OBJDIR)/test_Recovery.o $(LIBMRNET) $(LIBS)
 
-$(LIBDIR)/test_RecoveryFilter.so: $(SRCDIR)/tests/test_Recovery/test_RecoveryFilter.C
+$(LIBDIR)/test_RecoveryFilter.so: $(TSTDIR)/test_Recovery/test_RecoveryFilter.C
 	@echo "Building `basename $@` ..."
-	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(SRCDIR)/tests/test_Recovery/test_RecoveryFilter.C
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(TSTDIR)/test_Recovery/test_RecoveryFilter.C
 
 $(BINDIR)/pdr_test: $(PDR_OBJS) tests/xdr_test.c
 	@echo "Linking `basename $@` ..."
@@ -499,28 +509,28 @@ local-clean:
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
 	if [ -d Template.dir ] ; then $(RM) -r Template.dir ; fi
-	for file in `find $(MRNET_ROOT) -name "*.ti" -print` ; do $(RM) $$file ; done
+	for file in `find $(BASEDIR) -name "*.ti" -print` ; do $(RM) $$file ; done
 
 xplat-clean:
 	@echo Cleaning xplat library
-	cd ./xplat ; $(MAKE) clean
+	cd $(XPLATDIR) ; $(MAKE) clean
 
 lightweight-clean:
 	@echo Cleaning lightweight back-end library
-	cd ./lightweight ; $(MAKE) clean
+	cd $(LTWTDIR) ; $(MAKE) clean
 
 xplat_lightweight-clean:
 	@echo Cleaning xplat for lightweight back-end library
-	cd ./lightweight/xplat ; $(MAKE) clean
+	cd $(LTWTDIR)/xplat ; $(MAKE) clean
 
 CLEAN: local-CLEAN xplat-clean lightweight-clean xplat_lightweight-clean
 
 local-CLEAN: local-clean
 	@echo Cleaning all platforms ...
-	for dir in $(DEPENDDIR) bin lib obj ; do \
+	for dir in $(DEPDIR) bin lib obj ; do \
 	    if [ -d $$dir ] ; then $(RM) -r $$dir ; fi \
 	done
-	for file in `find $(MRNET_ROOT) -name "*~" -print` ; do $(RM) $$file ; done
+	for file in `find $(BASEDIR) -name "*~" -print` ; do $(RM) $$file ; done
 
 distclean: local-distclean xplat-distclean lightweight-distclean xplat_lightweight-distclean
 
@@ -532,15 +542,15 @@ local-distclean: local-CLEAN
 
 xplat-distclean:
 	@echo "Cleaning xplat library (distclean)"
-	cd ./xplat ; $(MAKE) distclean
+	cd $(XPLATDIR) ; $(MAKE) distclean
 
 lightweight-distclean:
 	@echo "Cleaning lightweight back-end library (distclean)"
-	cd ./lightweight ; $(MAKE) distclean
+	cd $(LTWTDIR) ; $(MAKE) distclean
 
 xplat_lightweight-distclean:
 	@echo "Cleaning xplat for lightweight back-end library (distclean)"
-	cd ./lightweight/xplat ; $(MAKE) distclean
+	cd $(LTWTDIR)/xplat ; $(MAKE) distclean
 
 
 #################################
@@ -570,12 +580,12 @@ $(OBJDIR)/%.o: %.C $(FRC)
 	@echo Compiling `basename $@` ...
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
-$(DEPENDDIR)/%.d: %.c $(FRC)
+$(DEPDIR)/%.d: %.c $(FRC)
 	@echo Building Depends File `basename $@` ...
-	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCDIR) 
+	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCLUDES) 
 
-$(DEPENDDIR)/%.d: %.C $(FRC)
+$(DEPDIR)/%.d: %.C $(FRC)
 	@echo Building Depends File `basename $@` ...
-	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCDIR) 
+	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCLUDES) 
 
 -include $(DEPS)

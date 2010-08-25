@@ -4,17 +4,15 @@
 # ****************************************************************************/
 # $Id: Makefile.in,v 1.14 2008/10/09 19:50:12 mjbrim Exp $
 
-@SET_MAKE@
+ROOTDIR  = @MRNET_ROOT@
+BASEDIR  = @abs_srcdir@
+INCDIR   = $(BASEDIR)/include
+SRCDIR   = $(BASEDIR)/src
 
-prefix  = @prefix@
-exec_prefix=@exec_prefix@
-srcdir  = @abs_srcdir@
-libdir  = @libdir@
-includedir  = @includedir@
+xplat_INCDIR = $(INCDIR)/xplat_lightweight
+install_INCDIR = $(IINCDIR)/xplat_lightweight
 
-INSTALL = @INSTALL@
-
-VPATH   = @abs_srcdir@/src
+VPATH = $(SRCDIR) 
 
 TARGET    = libxplat_lightweight.a
 TARGET_SO = libxplat_lightweight.so
@@ -24,57 +22,62 @@ ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(TARGET_SO)
 endif 
 
-SRCS    = Error-unix.c \
-          NCIO.c \
-          NCIO-unix.c \
-          NetUtils.c \
-          NetUtils-unix.c \
-          PathUtils-unix.c \
-          Process-unix.c
+XPLAT_LTWT_SRCS = Error-unix.c \
+                  NCIO.c \
+                  NCIO-unix.c \
+                  NetUtils.c \
+                  NetUtils-unix.c \
+                  PathUtils-unix.c \
+                  Process-unix.c
 
-OBJS    = $(SRCS:.c=.o)
-DEPS    = $(SRCS:.c=.d)
+XPLAT_HEADERS = $(wildcard $(xplat_INCDIR)/*.h)
+INSTALL_HEADERS = $(addprefix $(install_INCDIR)/, $(notdir $(XPLAT_HEADERS)))
+
+XPLAT_LTWT_OBJS = $(XPLAT_LTWT_SRCS:.c=.o)
+XPLAT_LTWT_DEPS = $(XPLAT_LTWT_SRCS:.c=.d)
 
 all: $(TARGETS)
 
 sharedobj: $(TARGET_SO)
 
-$(TARGET): $(OBJS)
+$(TARGET): $(XPLAT_LTWT_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
 
-$(TARGET_SO): $(OBJS)
+$(TARGET_SO): $(XPLAT_LTWT_OBJS)
 	@echo Building `basename $@` ...
 	$(CC) $(SOFLAGS) -o $@ $^
 
-install: $(TARGETS)
-	for dir in $(libdir) $(includedir) $(includedir)/xplat_lightweight ; do \
+install-prep:
+	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
 	    if [ ! -d $$dir ] ; then \
 	        $(MKDIR_P) $$dir ; \
 	        chmod 755 $$dir ; \
 	    fi \
 	done
-	$(INSTALL) -m 755 $(TARGET) $(libdir)/
+
+$(INSTALL_HEADERS): $(install_INCDIR)/%: $(xplat_INCDIR)/%
+	@echo Installing XPlat lightweight header $(<F)
+	$(INSTALL) -m 644 $< $(@D)
+
+install: $(TARGETS) install-prep $(INSTALL_HEADERS)
+	@echo Installing XPlat lightweight libraries
+	$(INSTALL) -m 755 $(TARGET) $(ILIBDIR)/
 	if [ -f $(TARGET_SO) ] ; then \
-            $(INSTALL) -m 755 $(TARGET_SO) $(libdir)/ ; \
+            $(INSTALL) -m 755 $(TARGET_SO) $(ILIBDIR)/ ; \
         fi
-	for hdr in $(srcdir)/include/xplat_lightweight/*.h ; do \
-	    if [ -f $$hdr ] ; then \
-	        $(INSTALL) -m 644 $$hdr $(includedir)/xplat_lightweight ; \
-	    fi \
-	done
 
 clean:
-	for file in $(OBJS) $(TARGETS) ; do \
+	for file in $(XPLAT_LTWT_OBJS) $(TARGETS) ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
 
 distclean: clean
-	for file in $(DEPS) config.status config.log config.h Makefile ; do \
+	for file in $(XPLAT_LTWT_DEPS) config.status config.log config.h Makefile ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
-	for file in `find $(srcdir) -name "*~" -print` ; do $(RM) $$file ; done
+	for file in `find $(BASEDIR) -name "*~" -print` ; do $(RM) $$file ; done
 
 # pattern rules
 @VERBOSEMAKE@
@@ -88,11 +91,11 @@ distclean: clean
 
 %.d: %.c
 	@echo Building depends file `basename $@` ...
-	$(MAKEDEPENDS)  $< $*.o $@ $(INCDIR_LIGHTWEIGHT)
+	$(MAKEDEPENDS)  $< $*.o $@ $(INCLUDES_LIGHTWEIGHT)
 
 %.o: %.c
 	@echo Compiling `basename $@` ...
 	$(CC) $(CCFLAGS) -o $@ -c $<
 
 # make sure file dependencies are determiend and used
--include $(DEPS)
+-include $(XPLAT_LTWT_DEPS)

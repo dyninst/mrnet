@@ -4,19 +4,17 @@
 # ****************************************************************************/
 # $Id: Makefile.in,v 1.14 2008/10/09 19:50:12 mjbrim Exp $
 
-@SET_MAKE@
+rootdir = @MRNET_ROOT@
+BASEDIR = @abs_srcdir@
+SRCDIR  = $(BASEDIR)/src
+INCDIR  = $(BASEDIR)/include
+DEPDIR  = ./depends
+OBJDIR  = ./obj/@host@
 
-prefix  = @prefix@
-exec_prefix=@exec_prefix@
-srcdir  = @abs_srcdir@
-libdir  = @libdir@
-includedir  = @includedir@
+mrnet_INCDIR = $(INCDIR)/mrnet_lightweight
+install_INCDIR = $(IINCDIR)/mrnet_lightweight
 
-INSTALL = @INSTALL@
-
-MRNET_OS = @MRNET_OS@
-
-VPATH   = @abs_srcdir@/src
+VPATH = $(SRCDIR)
 
 TARGET    = libmrnet_lightweight.a
 TARGET_SO = libmrnet_lightweight.so
@@ -26,77 +24,82 @@ ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(TARGET_SO)
 endif 
 
-SRCS    = BackEndNode.c \
-          ChildNode.c \
-          DataElement.c \
-          Error.c \
-          Filter.c \
-	  FilterDefinitions.c \
-          map.c \
-          Message.c \
-          Network.c \
-          NetworkTopology.c \
-          Packet.c \
-          PeerNode.c \
-          PerfDataEvent.c \
-          SerialGraph.c \
-          Stream.c \
-          utils_lightweight.c \
-          vector.c \
-          $(srcdir)/../src/byte_order.c \
-          $(srcdir)/../src/pdr.c \
-          $(srcdir)/../src/pdr_mem.c \
-          $(srcdir)/../src/pdr_sizeof.c
+LTWT_SRCS = BackEndNode.c \
+            ChildNode.c \
+            DataElement.c \
+            Error.c \
+            Filter.c \
+	    FilterDefinitions.c \
+            map.c \
+            Message.c \
+            Network.c \
+            NetworkTopology.c \
+            Packet.c \
+            PeerNode.c \
+            PerfDataEvent.c \
+            SerialGraph.c \
+            Stream.c \
+            utils_lightweight.c \
+            vector.c \
+            $(rootdir)/src/byte_order.c \
+            $(rootdir)/src/pdr.c \
+            $(rootdir)/src/pdr_mem.c \
+            $(rootdir)/src/pdr_sizeof.c
 
 ifeq ($(MRNET_OS), linux)
-    SRCS += PerfDataSysEvent_linux.c
+    LTWT_SRCS += PerfDataSysEvent_linux.c
 else
-    SRCS += PerfDataSysEvent_none.c
+    LTWT_SRCS += PerfDataSysEvent_none.c
 endif
 
-OBJS = $(subst $(srcdir)/../src/, , $(SRCS:.c=.o))
-DEPS = $(subst $(srcdir)/../src/, , $(SRCS:.c=.d))
+LIBMRNET_HEADERS = $(wildcard $(mrnet_INCDIR)/*.h)
+INSTALL_HEADERS = $(addprefix $(install_INCDIR)/, $(notdir $(LIBMRNET_HEADERS)))
+
+LTWT_OBJS = $(addprefix $(OBJDIR)/, $(subst $(rootdir)/src/, , $(LTWT_SRCS:.c=.o)))
+LTWT_DEPS = $(addprefix $(DEPDIR)/, $(subst $(rootdir)/src/, , $(LTWT_SRCS:.c=.d)))
 
 all: $(TARGETS)
 
 sharedobj: $(TARGET_SO)
 
-$(TARGET): $(OBJS)
+$(TARGET): $(LTWT_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
 
-$(TARGET_SO): $(OBJS)
+$(TARGET_SO): $(LTWT_OBJS)
 	@echo Building `basename $@` ...
 	$(CC) $(SOFLAGS) -o $@ $^
 
-install: $(TARGETS)
-	for dir in $(libdir) $(includedir) $(includedir)/mrnet_lightweight ; do \
+install-prep:
+	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
 	    if [ ! -d $$dir ] ; then \
 	        $(MKDIR_P) $$dir ; \
 	        chmod 755 $$dir ; \
 	    fi \
 	done
-	$(INSTALL) -m 755 $(TARGET) $(libdir)/
+
+$(INSTALL_HEADERS): $(install_INCDIR)/%: $(mrnet_INCDIR)/%
+	@echo Installing MRNet lightweight header $(<F)
+	$(INSTALL) -m 644 $< $(@D)
+
+install: all install-prep $(INSTALL_HEADERS)
+	@echo Installing MRNet lightweight libraries
+	$(INSTALL) -m 755 $(TARGET) $(ILIBDIR)/
 	if [ -f $(TARGET_SO) ] ; then \
-            $(INSTALL) -m 755 $(TARGET_SO) $(libdir)/ ; \
+            $(INSTALL) -m 755 $(TARGET_SO) $(ILIBDIR)/ ; \
         fi
-	for hdr in $(srcdir)/include/mrnet_lightweight/*.h ; do \
-	    if [ -f $$hdr ] ; then \
-	        $(INSTALL) -m 644 $$hdr $(includedir)/mrnet_lightweight/ ; \
-	    fi \
-	done
 
 clean:
-	for file in $(OBJS) $(TARGETS) ; do \
+	for file in $(LTWT_OBJS) $(TARGETS) ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
 
 distclean: clean
-	for file in $(DEPS) config.status config.log config.h Makefile ; do \
+	for file in $(LTWT_DEPS) config.status config.log config.h Makefile ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
-	for file in `find $(srcdir) -name "*~" -print` ; do $(RM) $$file ; done
+	for file in `find $(BASEDIR) -name "*~" -print` ; do $(RM) $$file ; done
 
 # pattern rules
 @VERBOSEMAKE@
@@ -108,21 +111,21 @@ distclean: clean
 # -- and then we could build in parallel
 .NOTPARALLEL:
 
-%.d: %.c
+$(DEPDIR)/%.d: %.c
 	@echo Building depends file `basename $@` ...
-	$(MAKEDEPENDS)  $< $*.o $@ $(INCDIR_LIGHTWEIGHT)
+	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCLUDES_LIGHTWEIGHT)
 
-%.o: %.c
+$(OBJDIR)/%.o: %.c
 	@echo Compiling `basename $@` ...
 	$(CC) $(CCFLAGS) -o $@ -c $<
 
-%.d: $(srcdir)/../src/%.c
+$(DEPDIR)/%.d: $(rootdir)/src/%.c
 	@echo Building depends file `basename $@` ...
-	$(MAKEDEPENDS)  $< $*.o $@ $(INCDIR_LIGHTWEIGHT)
+	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCLUDES_LIGHTWEIGHT)
 
-%.o: $(srcdir)/../src/%.c
+$(OBJDIR)/%.o: $(rootdir)/src/%.c
 	@echo Compiling `basename $@` ...
 	$(CC) $(CCFLAGS) -o $@ -c $<
 
 # make sure file dependencies are determiend and used
--include $(DEPS)
+-include $(LTWT_DEPS)

@@ -3,6 +3,7 @@
 # *                  Detailed MRNet usage rights in "LICENSE" file.          *
 # ****************************************************************************/
 # $Id: Makefile.in,v 1.14 2008/10/09 19:50:12 mjbrim Exp $
+
 @SET_MAKE@
 
 AR      = @AR@
@@ -13,21 +14,28 @@ INSTALL = @INSTALL@
 MKDIR_P = mkdir -p
 MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
 
-prefix  = @prefix@
-exec_prefix=@exec_prefix@
-srcdir  = @abs_srcdir@
-libdir  = @libdir@
-includedir  = @includedir@
+ROOTDIR = @MRNET_ROOT@
+BASEDIR = @abs_srcdir@
+INCDIR  = $(BASEDIR)/include
+SRCDIR  = $(BASEDIR)/src
 
-VPATH   = @abs_srcdir@/src
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
+ILIBDIR = @libdir@
+IINCDIR = @includedir@
+
+xplat_INCDIR = $(INCDIR)/xplat
+install_INCDIR = $(IINCDIR)/xplat
+
+VPATH = $(SRCDIR)
 
 C_AS_CPLUSPLUS = @C_AS_CPLUSPLUS@
 
-MAKEDEPENDS = $(srcdir)/../conf/makedepends.sh
+MAKEDEPENDS = $(ROOTDIR)/conf/makedepends.sh
 
 BUILD_SHARED_LIBS = @BUILDSHARED@
 
-INCFLAGS = -I$(srcdir)/include -I$(srcdir)/src -I$(srcdir)
+INCFLAGS = -I$(INCDIR) -I$(SRCDIR) -I$(BASEDIR)
 
 COMPILER_TYPE = @COMPILER_TYPE@
 CXX = @CXX@
@@ -56,30 +64,33 @@ ifeq ($(MRNET_STARTUP_METHOD),cray_xt)
     CXXFLAGS += -Darch_crayxt
 endif
 
-SRCS    = Monitor-pthread.C \
-          Mutex-pthread.C \
-          TLSKey-pthread.C \
-          Once-pthread.C \
-          SharedObject-unix.C \
-          NCIO-unix.C \
-          Process.C \
-          Process-unix.C \
-          Thread-pthread.C \
-          Tokenizer.C \
-          NetUtils.C \
-          NetUtils-unix.C \
-          PathUtils-unix.C \
-          SocketUtils-unix.C \
-          Error-unix.C
+XPLAT_SRCS = Monitor-pthread.C \
+             Mutex-pthread.C \
+             TLSKey-pthread.C \
+             Once-pthread.C \
+             SharedObject-unix.C \
+             NCIO-unix.C \
+             Process.C \
+             Process-unix.C \
+             Thread-pthread.C \
+             Tokenizer.C \
+             NetUtils.C \
+             NetUtils-unix.C \
+             PathUtils-unix.C \
+             SocketUtils-unix.C \
+             Error-unix.C
 
-OBJS    = $(SRCS:.C=.o)
-DEPS    = $(SRCS:.C=.d)
+XPLAT_HEADERS = $(wildcard $(xplat_INCDIR)/*.h)
+INSTALL_HEADERS = $(addprefix $(install_INCDIR)/, $(notdir $(XPLAT_HEADERS)))
+
+XPLAT_OBJS = $(XPLAT_SRCS:.C=.o)
+XPLAT_DEPS = $(XPLAT_SRCS:.C=.d)
 
 all: $(TARGETS)
 
 sharedobj: $(TARGET_SO)
 
-$(TARGET): $(OBJS)
+$(TARGET): $(XPLAT_OBJS)
 	@echo Archiving `basename $@` ...
 	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
@@ -89,7 +100,7 @@ $(TARGET): $(OBJS)
 	fi
 	$(RANLIB) $@
 
-$(TARGET_SO): $(OBJS)
+$(TARGET_SO): $(XPLAT_OBJS)
 	@echo Building `basename $@` ...
 	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
@@ -98,8 +109,8 @@ $(TARGET_SO): $(OBJS)
 	    $(CXX) $(SOFLAGS) -o $@ $^ ; \
 	fi
 
-install: $(TARGETS)
-	for dir in $(libdir) $(includedir) $(includedir)/xplat ; do \
+install-prep:
+	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
 	    if [ ! -d $$dir ] ; then \
 	        $(MKDIR_P) $$dir ; \
 	        chmod 755 $$dir ; \
@@ -108,27 +119,29 @@ install: $(TARGETS)
 	if [ ! -x `echo $(INSTALL) | sed 's/ .*$$//'` ] ; then \
 	    chmod +x `echo $(INSTALL) | sed 's/ .*$$//'` ; \
 	fi
-	$(INSTALL) -m 755 $(TARGET) $(libdir)/
+
+$(INSTALL_HEADERS): $(install_INCDIR)/%: $(xplat_INCDIR)/%
+	@echo Installing XPlat header $(<F)
+	$(INSTALL) -m 644 $< $(@D)
+
+install: $(TARGETS) install-prep $(INSTALL_HEADERS)
+	@echo Installing XPlat libraries
+	$(INSTALL) -m 755 $(TARGET) $(ILIBDIR)/
 	if [ -f $(TARGET_SO) ] ; then \
-            $(INSTALL) -m 755 $(TARGET_SO) $(libdir)/ ; \
+            $(INSTALL) -m 755 $(TARGET_SO) $(ILIBDIR)/ ; \
         fi
-	for hdr in $(srcdir)/include/xplat/*.h ; do \
-	    if [ -f $$hdr ] ; then \
-	        $(INSTALL) -m 644 $$hdr $(includedir)/xplat/ ; \
-	    fi \
-	done
 
 clean:
-	for file in $(OBJS) $(OBJS:.o=.ii) $(OBJS:.o=.ti) $(TARGETS) ; do \
+	for file in $(XPLAT_OBJS) $(XPLAT_OBJS:.o=.ii) $(XPLAT_OBJS:.o=.ti) $(TARGETS) ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
 	if [ -d Template.dir ] ; then $(RM) -r Template.dir ; fi
 
 distclean: clean
-	for file in $(DEPS) config.status config.log config.h Makefile ; do \
+	for file in $(XPLAT_DEPS) config.status config.log config.h Makefile ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
-	for file in `find $(srcdir) -name "*~" -print` ; do $(RM) $$file ; done
+	for file in `find $(SRCDIR) -name "*~" -print` ; do $(RM) $$file ; done
 
 # pattern rules
 @VERBOSEMAKE@
@@ -153,4 +166,4 @@ distclean: clean
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 # make sure file dependencies are determiend and used
--include $(DEPS)
+-include $(XPLAT_DEPS)
