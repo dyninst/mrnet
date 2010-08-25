@@ -1,10 +1,12 @@
-
 /****************************************************************************
  *  Copyright 2003-2010 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+#ifdef os_linux
+
 #include <cerrno>
+#include <sys/syscall.h>
 
 #include "PerfDataSysEvent.h"
 #include "PerfDataEvent.h"
@@ -12,12 +14,12 @@
 
 #include "xplat/Process.h"
 
-#ifdef os_linux
-
 #define SEC_PER_JIFFIES (.01)
 #define MSEC_PER_JIFFIES (10)
 
+#ifndef SYS_gettid
 #define SYS_gettid 224
+#endif
 
 using namespace std;
 

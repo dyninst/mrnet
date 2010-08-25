@@ -19,9 +19,12 @@
 
 #include "xplat_lightweight/Process.h"
 
-#define SYS_gettid 224
 #define SEC_PER_JIFFIES (.01)
 #define MSEC_PER_JIFFIES (10)
+
+#ifndef SYS_gettid
+#define SYS_gettid 224
+#endif
 
 int PerfDataSysMgr_get_ThreadTime(long* user, long* sys)
 {
