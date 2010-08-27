@@ -1658,6 +1658,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     Network* net = const_cast< Network* >( info.get_Network() );
 
     bool active = false;
+    bool hit_timeout = false;
     unsigned int timeout_ms = 0;
     if( config != Packet::NullPacket ) {
 	 config->unpack( "%ud", &timeout_ms );
@@ -1730,13 +1731,12 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
 	mrn_dbg( 5, mrn_printf(FLF, stderr, "inlet rank is %u \n", cur_inlet_rank) );
 
-        if(cur_inlet_rank == UnknownRank ) 
-	{
-	   if (ipackets.size() == 1 ) {
-	      opackets.push_back( ipackets[i] ) ;
-	      mrn_dbg( 3, mrn_printf (FLF, stderr, "pushing locally sourced packet \n") );
-	      return;
-	   }
+        if(cur_inlet_rank == UnknownRank ) {
+            if (ipackets.size() == 1 ) {
+                opackets.push_back( ipackets[i] ) ;
+                mrn_dbg( 3, mrn_printf (FLF, stderr, "pushing locally sourced packet \n") );
+                return;
+            }
 	}   
 
         if( net->node_Failed( cur_inlet_rank ) ) {
@@ -1810,6 +1810,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Complete wave.\n") ); 
     }
     else {
+        hit_timeout = true;
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Timeout occurred.\n") );
     }
 
@@ -1822,23 +1823,30 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
          map_iter++ ) {
 
         if( map_iter->second->empty() ) {
-            //list should only be empty if peer closed stream
+            // should only occur if the peer was closed, or we timed-out
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d]'s slot is empty\n",
                                    map_iter->first) );
             continue;
         }
 
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "Popping packet from Node[%d]\n",
-                               map_iter->first) );
-        //push head of list onto output vector
-        opackets.push_back( map_iter->second->front() );
-        map_iter->second->erase( map_iter->second->begin() );
-        
-        //if list now empty, remove slot from ready list
-        if( map_iter->second->empty() ) {
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "Removing Node[%d] from ready list\n",
+        if( hit_timeout ) {
+            // push all packets
+            opackets.insert( opackets.end(), map_iter->second->begin(), map_iter->second->end() );
+            map_iter->second->clear();
+        }
+        else {
+            //push head of list onto output vector
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "Popping packet from Node[%d]\n",
                                    map_iter->first) );
-            state->ready_peers.erase( map_iter->first );
+            opackets.push_back( map_iter->second->front() );
+            map_iter->second->erase( map_iter->second->begin() );
+        
+            //if list now empty, remove slot from ready list
+            if( map_iter->second->empty() ) {
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "Removing Node[%d] from ready list\n",
+                                       map_iter->first) );
+                state->ready_peers.erase( map_iter->first );
+            }
         }
 
     }

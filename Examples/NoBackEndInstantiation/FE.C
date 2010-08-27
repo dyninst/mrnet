@@ -36,20 +36,25 @@ void write_be_connections(vector< NetworkTopology::Node * >& leaves, unsigned nu
    unsigned be_per_leaf = num_be / num_leaves;
    unsigned curr_leaf = 0;
    for(unsigned i=0; (i < num_be) && (curr_leaf < num_leaves); i++) {
-      if( i && (i % be_per_leaf == 0) )
-         curr_leaf++;
-
-      fprintf(stdout, "BE %d will connect to %s:%d:%d\n",
-              i,
-              leaves[curr_leaf]->get_HostName().c_str(),
-              leaves[curr_leaf]->get_Port(),
-              leaves[curr_leaf]->get_Rank() );
-
-      fprintf(f, "%s %d %d %d\n", 
-              leaves[curr_leaf]->get_HostName().c_str(), 
-              leaves[curr_leaf]->get_Port(), 
-              leaves[curr_leaf]->get_Rank(),
-              i);
+       if( i && (i % be_per_leaf == 0) ) {
+           // select next parent
+           curr_leaf++;
+           if( curr_leaf == num_leaves ) {
+               // except when there is no "next"
+               curr_leaf--;
+           }
+       }
+       fprintf(stdout, "BE %d will connect to %s:%d:%d\n",
+               i,
+               leaves[curr_leaf]->get_HostName().c_str(),
+               leaves[curr_leaf]->get_Port(),
+               leaves[curr_leaf]->get_Rank() );
+           
+       fprintf(f, "%s %d %d %d\n", 
+               leaves[curr_leaf]->get_HostName().c_str(), 
+               leaves[curr_leaf]->get_Port(), 
+               leaves[curr_leaf]->get_Rank(),
+               i);
    }
    fclose(f);
 }
