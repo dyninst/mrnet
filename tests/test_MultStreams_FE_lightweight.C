@@ -28,7 +28,7 @@ int main(int argc, char **argv)
         exit(-1);
     }
     if (atoi(argv[2]) < 1) {
-        fprintf(stderr, "Argument 2, num streams, must be positive. Given %d\n", argv[2]);
+        fprintf(stderr, "Argument 2, num streams, must be positive. Given %s\n", argv[2]);
         exit(-1);
     }
 

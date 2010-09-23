@@ -59,7 +59,7 @@ int main( int argc, char* argv[] )
 
         if( tag == MB_ROUNDTRIP_LATENCY ) {
             // extract the value and send it back
-            int ival = 0;
+            ival = 0;
             Packet_unpack(pkt,  "%d", &ival );
 
             // send our value for the reduction
