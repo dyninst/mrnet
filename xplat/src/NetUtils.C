@@ -66,6 +66,8 @@ int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
     if( ihostname == "" )
         return -1;
 
+#ifndef arch_crayxt
+
     get_resolve_env();
 
     if( use_resolve ) {
@@ -81,7 +83,7 @@ int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
             return -1;
         }
 
-        char hostname[XPLAT_MAX_HOSTNAME_LEN];
+        char* hostname = (char*) calloc( XPLAT_MAX_HOSTNAME_LEN, sizeof(char) );
         if( use_canonical && (addrs->ai_canonname != NULL) ) {
             strncpy( hostname, addrs->ai_canonname, sizeof(hostname) );
             hostname[XPLAT_MAX_HOSTNAME_LEN-1] = '\0';
@@ -90,7 +92,7 @@ int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
             if( addrs->ai_family == AF_INET6 ) {
 #ifndef os_windows
                 if( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in6), 
-                                        hostname, sizeof(hostname), NULL, 0, 0) ) {
+                                        hostname, XPLAT_MAX_HOSTNAME_LEN, NULL, 0, 0) ) {
                     fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
                     return -1;
                 }
@@ -98,21 +100,23 @@ int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
             }
             else if( addrs->ai_family == AF_INET ) {
                 if( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in), 
-                                        hostname, sizeof(hostname), NULL, 0, 0) ) {
+                                        hostname, XPLAT_MAX_HOSTNAME_LEN, NULL, 0, 0) ) {
                     fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
                     return -1;
                 }
             }
-            else
-                strncpy( hostname, ihostname.c_str(), sizeof(hostname) );
         }
-        ohostname = hostname;
-
         freeaddrinfo(addrs);
-    }
-    else
-        ohostname = ihostname;
 
+        if( strlen(hostname) ) {
+            ohostname = hostname;
+            return 0;
+        }
+    }
+
+#endif
+
+    ohostname = ihostname;
     return 0;
 }
 
