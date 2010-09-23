@@ -768,7 +768,9 @@ bool Stream::has_Data( void )
 
 int Stream::get_DataNotificationFd( void )
 {
-    _evt_pipe = new EventPipe;
+    if( _evt_pipe == NULL ) {
+	_evt_pipe = new EventPipe;
+    }
     return _evt_pipe->get_ReadFd();
 }
 
