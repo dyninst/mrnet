@@ -557,15 +557,15 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
         peers = get_ChildPeers();
     }
     else {
-        std::set < Rank > peer_ranks;
-        std::set < Rank >::const_iterator iter;
+        std::set< Rank > peer_ranks;
+        std::set< Rank >::const_iterator iter;
         stream = get_Stream( ipacket->get_StreamId() );   
         if( stream == NULL ){
             mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
                                    ipacket->get_StreamId( ) ));
             return -1;
         }
-        peer_ranks = stream->get_ChildPeers();
+        stream->get_ChildPeers( peer_ranks );
 	if(peer_ranks.empty() )
 	   mrn_dbg( 5, mrn_printf(FLF, stderr, "child ranks are empty\n") );
 

@@ -89,10 +89,10 @@ class Stream {
     bool is_PeerClosed( Rank irank ) const;
     unsigned int num_ClosedPeers( void ) const ;
     bool is_Closed( void ) const;
-    const std::set< Rank > & get_ClosedPeers( void ) const ;
-    std::set< Rank > get_ChildPeers() const;
-    void add_Stream_EndPoint(Rank irank);
-    void add_Stream_Peer(Rank irank) ;
+    void get_ClosedPeers( std::set< Rank >& ) const ;
+    void get_ChildPeers( std::set< Rank >& ) const;
+    void add_Stream_EndPoint( Rank irank );
+    void add_Stream_Peer( Rank irank );
 
     PacketPtr collect_PerfData( perfdata_metric_t metric, 
                                 perfdata_context_t context, 

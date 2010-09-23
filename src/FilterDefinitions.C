@@ -1582,8 +1582,9 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
         state->ready_peers.insert( cur_inlet_rank );
     }
 
-    set< Rank > peers = stream->get_ChildPeers( );
-    set< Rank > closed_peers = stream->get_ClosedPeers( );
+    set< Rank > peers, closed_peers;
+    stream->get_ChildPeers( peers );
+    stream->get_ClosedPeers( closed_peers );
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "slots:%d ready:%d peers:%d closed:%d\n",
                            state->packets_by_rank.size(), state->ready_peers.size(),
@@ -1722,7 +1723,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         stream_id = ipackets[0]->get_StreamId();
         stream = net->get_Stream( stream_id );
         assert(stream);
-        peers = stream->get_ChildPeers( );
+        stream->get_ChildPeers( peers );
     }	
 
     //2. Place input packets
@@ -1769,7 +1770,8 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
     if( ipackets.size() > 0 ) {
 
-        set< Rank > closed_peers = stream->get_ClosedPeers( );
+        set< Rank > closed_peers;
+        stream->get_ClosedPeers( closed_peers );
         
         mrn_dbg( 5, mrn_printf(FLF, stderr, "slots:%d ready:%d peers:%d closed:%d\n",
                                state->packets_by_rank.size(), state->ready_peers.size(),

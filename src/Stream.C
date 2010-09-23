@@ -59,6 +59,9 @@ Stream::Stream( Network * inetwork,
 
     //parent nodes set up relevant downstream nodes 
     if( _network->is_LocalNodeParent() ) {
+
+        _peers_sync.Lock();
+
         if( ibackends != NULL ) {
 
             _end_points.insert( ibackends, ibackends + inum_backends );
@@ -87,6 +90,8 @@ Stream::Stream( Network * inetwork,
             for( ; citer != children.end() ; citer++ )
                 _peers.insert( (*citer)->get_Rank() );
         }
+
+        _peers_sync.Unlock();
     }
 
     mrn_dbg_func_end();
@@ -105,14 +110,18 @@ Stream::~Stream()
     _network->delete_Stream( _id );
 }
 
-void Stream::add_Stream_EndPoint(Rank irank)
+void Stream::add_Stream_EndPoint( Rank irank )
 {
-  _end_points.insert(irank);
+    _peers_sync.Lock();
+    _end_points.insert( irank );
+    _peers_sync.Unlock();
 }  
 
-void Stream::add_Stream_Peer(Rank irank) 
+void Stream::add_Stream_Peer( Rank irank ) 
 {
-  _peers.insert(irank );
+    _peers_sync.Lock();
+    _peers.insert( irank );
+    _peers_sync.Unlock();
 }
 
 
@@ -509,9 +518,11 @@ bool Stream::close_Peer( Rank irank )
     return true;
 }
 
-const std::set<Rank> & Stream::get_ClosedPeers( void ) const
+void Stream::get_ClosedPeers( std::set< Rank >& peers ) const
 {
-    return _closed_peers;
+    _peers_sync.Lock();
+    peers = _closed_peers;
+    _peers_sync.Unlock();
 }
 
 bool Stream::is_Closed( void ) const
@@ -882,7 +893,7 @@ bool Stream::remove_Node( Rank irank )
 
 bool Stream::recompute_ChildrenNodes( void )
 {
-    set < Rank >::const_iterator iter;
+    set< Rank >::const_iterator iter;
 
     _peers_sync.Lock();
     _peers.clear();
@@ -905,9 +916,11 @@ bool Stream::recompute_ChildrenNodes( void )
     return true;
 }
 
-set < Rank > Stream::get_ChildPeers() const
+void Stream::get_ChildPeers( set< Rank >& peers ) const
 {
-    return _peers;
+    _peers_sync.Lock();
+    peers = _peers;
+    _peers_sync.Unlock();
 }
 
 
