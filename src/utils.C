@@ -70,7 +70,6 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
         sock = socket( AF_INET, SOCK_STREAM, 0 );
         if( sock == -1 ) {
             err = XPlat::NetUtils::GetLastError();
-            perror( "socket()" );
             mrn_dbg( 1, mrn_printf(FLF, stderr, "socket() failed, errno=%d\n", err) );
             return -1;
         }
@@ -173,7 +172,6 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
     sock = socket( AF_INET, SOCK_STREAM, 0 );
     if( sock == -1 ) {
         err = XPlat::NetUtils::GetLastError();
-        perror( "socket()" );
         mrn_dbg( 1, mrn_printf(FLF, stderr, "socket() failed: %s\n",
                                XPlat::Error::GetErrorString( err ).c_str() ) );
         return -1;
@@ -247,12 +245,19 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
     local_addr.sin_addr.s_addr = htonl( INADDR_ANY );
 
     if( port != 0 ) {
+        // try to bind and listen using the supplied port
         local_addr.sin_port = htons( port );
-        if( bind( sock, (sockaddr*)&local_addr, sizeof( local_addr ) ) == -1 ) {
+        if( bind(sock, (sockaddr*)&local_addr, sizeof(local_addr)) == -1 ) {
             err = XPlat::NetUtils::GetLastError();
-            perror( "bind()" );
             mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to static port %d failed: %s\n",
                                    port, XPlat::Error::GetErrorString( err ).c_str() ) );
+            XPlat::SocketUtils::Close( sock );
+            return -1;
+        }
+        if( listen( sock, 64 ) == -1 ) {
+            err = XPlat::NetUtils::GetLastError();
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
+                                   XPlat::Error::GetErrorString( err ).c_str() ) );
             XPlat::SocketUtils::Close( sock );
             return -1;
         }
@@ -260,29 +265,40 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
     else {
         // let the system assign a port, start from 1st dynamic port
         port = 49152;
-        local_addr.sin_port = htons( port );
+        bool success = false;
 
-        while( bind( sock, (sockaddr*)&local_addr, sizeof( local_addr ) ) != 0/*== -1*/ ) {
-            err = XPlat::NetUtils::GetLastError();
-            if( XPlat::Error::EAddrInUse( err ) ) {
-                local_addr.sin_port = htons( ++port );
-                continue;
+        do {
+            local_addr.sin_port = htons( port );
+            if( bind(sock, (sockaddr*)&local_addr, sizeof(local_addr)) != 0/*== -1*/ ) {
+                err = XPlat::NetUtils::GetLastError();
+                if( XPlat::Error::EAddrInUse( err ) ) {
+                    ++port;
+                    continue;
+                }
+                else {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to dynamic port %d failed: %s\n",
+                                           port, XPlat::Error::GetErrorString( err ).c_str() ) );
+                    XPlat::SocketUtils::Close( sock );
+                    return -1;
+                }
             }
             else {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to dynamic port %d failed: %s\n",
-                                       port, XPlat::Error::GetErrorString( err ).c_str() ) );
-                XPlat::SocketUtils::Close( sock );
-                return -1;
+                if( listen(sock, 64) == -1 ) {
+                    err = XPlat::NetUtils::GetLastError();
+                    if( XPlat::Error::EAddrInUse( err ) ) {
+                        ++port;
+                        continue;
+                    }
+                    else {
+                        mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
+                                               XPlat::Error::GetErrorString( err ).c_str() ) );
+                        XPlat::SocketUtils::Close( sock );
+                        return -1;
+                    }
+                }
+                success = true;
             }
-        }
-    }
-
-    if( listen( sock, 64 ) == -1 ) {
-        err = XPlat::NetUtils::GetLastError();
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
-                                       XPlat::Error::GetErrorString( err ).c_str() ) );
-        XPlat::SocketUtils::Close( sock );
-        return -1;
+        } while( ! success );
     }
 
 #if defined(TCP_NODELAY)
