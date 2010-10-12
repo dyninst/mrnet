@@ -14,7 +14,7 @@
 using namespace MRN;
 using namespace std;
 
-int num_callbacks;
+int num_callbacks = 0;
 
 void BE_Add_Callback( Event* evt, void* )
 {
