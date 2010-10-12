@@ -467,15 +467,15 @@ int ParentNode::proc_TopologyReportAck( PacketPtr /* ipacket */ ) const
 
 int ParentNode::proc_Event( PacketPtr ipacket ) const
 {
-    char *edesc=NULL;
-    EventType etype;
-    Rank erank;
+    // char *edesc=NULL;
+//     EventType etype;
+//     Rank erank;
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "In parentnode.proc_Event()\n" ));
-    if( ipacket->ExtractArgList( "%d %ud %s", &etype, &erank, &edesc ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList failed\n" ));
-        return -1;
-    }
+    // if( ipacket->ExtractArgList( "%d %ud %s", &etype, &erank, &edesc ) == -1 ) {
+//         mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList failed\n" ));
+//         return -1;
+//     }
 
     //Event * event = new Event( etype, erank, edesc );
     //Event::add_Event( *event );
@@ -696,15 +696,9 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
 
     child_node->set_DataSocketFd( isock );
     
-    //new topo prop code
+    // give new child our current topology
     NetworkTopology* nt = _network->get_NetworkTopology();
-    char * topology = nt->get_TopologyStringPtr();
-    SerialGraph* init_topo = new SerialGraph( topology );
-    _network->writeTopology( isock, init_topo );
-    free( topology );
-
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before adding child subgraph\n", 
-                           nt->get_TopologyStringPtr()) );
+    _network->write_Topology( isock );
 
     SerialGraph sg( topo_ptr );
 
@@ -716,7 +710,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
         }
     }
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s after adding child subgraph\n", 
-                           nt->get_TopologyStringPtr()) );
+                           nt->get_TopologyString().c_str()) );
 
     //Create send/recv threads
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for new child\n") );
@@ -724,19 +718,40 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
 
     if( child_incarnation > 1 ) {
         //child's parent has failed
-        mrn_dbg(5, mrn_printf(FLF, stderr,
+        Rank my_rank = _network->get_LocalRank();
+        mrn_dbg(3, mrn_printf(FLF, stderr,
                               "child[%s:%u]'s old parent: %u, new parent: %u\n",
                               child_hostname_ptr, child_rank,
-                              old_parent_rank, _network->get_LocalRank() ));
+                              old_parent_rank, my_rank ));
 
-        PacketPtr packet( new Packet( 0, PROT_RECOVERY_RPT, "%ud %ud %ud",
-                                      child_rank,
-                                      old_parent_rank,
-                                      _network->get_LocalRank() ) );
+#if OLD_FAILURE_NOTIFICATION
+        PacketPtr packet( new Packet(0, PROT_RECOVERY_RPT, "%ud %ud %ud",
+                                     child_rank,
+                                     old_parent_rank,
+                                     _network->get_LocalRank()) );
 
         if( proc_RecoveryReport(packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_RecoveryReport() failed()\n") );
         }
+#else
+        // generate topology update for child reparenting
+        if( _network->is_LocalNodeInternal() ) {
+            Stream *s = _network->get_Stream(1); // get topol prop stream
+            int type = NetworkTopology::TOPO_CHANGE_PARENT; 
+            Port dummy_port = UnknownPort;
+            char* dummy_host = strdup("NULL"); // ugh, this needs to be fixed
+            s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
+                              &type, 1, 
+                              &my_rank, 1, 
+                              &child_rank, 1, 
+                              &dummy_host, 1, 
+                              &dummy_port, 1 );
+            free( dummy_host );
+        }
+        else { // FE
+            nt->update_changeParent( my_rank, child_rank, true );
+        }
+#endif
     }
 
     return 0;

@@ -52,8 +52,7 @@ class EventDetector {
     int init_NewChildFDConnection( PeerNodePtr iparent_node );
 
     int recover_FromChildFailure( Rank ifailed_rank );
-    int recover_FromParentFailure( );
-    int recover_off_FromParentFailure( );
+    int recover_FromParentFailure( int& new_parent_sock );
     
     bool add_FD( int ifd );
     bool remove_FD( int ifd );

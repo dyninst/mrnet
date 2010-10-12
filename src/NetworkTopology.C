@@ -42,17 +42,17 @@ NetworkTopology::Node::Node( const string & ihostname, Port iport, Rank irank,
     _rand_key = drand48();
 }
 
-bool NetworkTopology::Node::failed( void ) const 
+bool NetworkTopology::Node::failed(void) const 
 {
     return _failed;
 }
 
-string NetworkTopology::Node::get_HostName( void ) const
+string NetworkTopology::Node::get_HostName(void) const
 {
     return _hostname;
 }
 
-Port NetworkTopology::Node::get_Port( void ) const
+Port NetworkTopology::Node::get_Port(void) const
 {
     return _port;
 }
@@ -62,18 +62,18 @@ void NetworkTopology::Node::set_Port(Port port)
     _port = port;
 }    
 
-Rank NetworkTopology::Node::get_Rank( void ) const
+Rank NetworkTopology::Node::get_Rank(void) const
 {
     return _rank;
 }
 
 const set< NetworkTopology::Node * > &
-NetworkTopology::Node::get_Children( void ) const
+NetworkTopology::Node::get_Children(void) const
 {
     return _children;
 }
 
-unsigned int NetworkTopology::Node::get_NumChildren( void ) const
+unsigned int NetworkTopology::Node::get_NumChildren(void) const
 {
     return _children.size();
 }
@@ -97,22 +97,22 @@ void NetworkTopology::Node::add_Child( Node * c )
     _children.insert(c);
 }
 
-bool NetworkTopology::Node::is_BackEnd( void ) const
+bool NetworkTopology::Node::is_BackEnd(void) const
 {
     return _is_backend;
 }
 
-double NetworkTopology::Node::get_WRSKey( void ) const
+double NetworkTopology::Node::get_WRSKey(void) const
 {
     return _wrs_key;
 }
 
-double NetworkTopology::Node::get_RandKey( void ) const
+double NetworkTopology::Node::get_RandKey(void) const
 {
     return _rand_key;
 }
 
-double NetworkTopology::Node::get_AdoptionScore( void ) const
+double NetworkTopology::Node::get_AdoptionScore(void) const
 {
     return _adoption_score;
 }
@@ -204,7 +204,7 @@ unsigned int NetworkTopology::Node::get_Proximity( Node *iorphan )
     return node_ascendant_distance + orphan_ascendant_distance;
 }
 
-unsigned int NetworkTopology::Node::find_SubTreeHeight( void )
+unsigned int NetworkTopology::Node::find_SubTreeHeight(void)
 {
     if( _children.empty() ) {
         _subtree_height = 0;
@@ -466,7 +466,8 @@ NetworkTopology::Node* NetworkTopology::find_NodeHoldingLock(Rank irank) const
 
 bool NetworkTopology::remove_Node( NetworkTopology::Node *inode )
 {
-    // assumes we are holding the lock
+    // we better be holding the lock!!
+
     mrn_dbg_func_begin();
 
     if( _root == inode ){
@@ -485,7 +486,7 @@ bool NetworkTopology::remove_Node( NetworkTopology::Node *inode )
         _parent_nodes.erase( inode );
 
 
-    //remove me as my children's parent, and set children as orphans
+    //remove node as its children's parent, and set children as orphans
     set < Node * >::iterator iter;
     for( iter=inode->_children.begin(); iter!=inode->_children.end(); iter++ ){
         if( (*iter)->_parent == inode ) {
@@ -696,8 +697,9 @@ void NetworkTopology::print( FILE * f ) const
     _sync.Unlock();
 }
 
-char * NetworkTopology::get_TopologyStringPtr( )
+std::string NetworkTopology::get_TopologyString( )
 {
+    std::string topol;
     _sync.Lock();
 
     if( _serial_graph != NULL )
@@ -706,11 +708,11 @@ char * NetworkTopology::get_TopologyStringPtr( )
 
     serialize( _root );
 
-    char * retval = strdup( _serial_graph->get_ByteArray().c_str() );
+    topol = _serial_graph->get_ByteArray();
 
     _sync.Unlock();
 
-    return retval;
+    return topol;
 }
 
 bool NetworkTopology::in_Topology( std::string ihostname, Port iport, Rank irank )
@@ -730,8 +732,10 @@ bool NetworkTopology::in_Topology( std::string ihostname, Port iport, Rank irank
     return found;
 }
 
-char * NetworkTopology::get_LocalSubTreeStringPtr( )
+std::string NetworkTopology::get_LocalSubTreeString(void)
 {
+    std::string retval;
+
     _sync.Lock();
 
     if( _serial_graph != NULL )
@@ -743,13 +747,12 @@ char * NetworkTopology::get_LocalSubTreeStringPtr( )
     SerialGraph* my_subgraph = _serial_graph->get_MySubTree( localhost,
                                                              _network->get_LocalPort(),
                                                              _network->get_LocalRank() );
-
-    char * retval = strdup( my_subgraph->get_ByteArray().c_str() );
-    delete my_subgraph;
-    
     _sync.Unlock();
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "returning '%s'\n", retval) );
+    if( my_subgraph != NULL ) {
+        retval = my_subgraph->get_ByteArray();
+        delete my_subgraph;
+    }
 
     return retval;
 }
@@ -1093,12 +1096,12 @@ void NetworkTopology::get_Descendants( Node *inode,
     _sync.Unlock();
 }
 
-unsigned int NetworkTopology::get_TreeDepth() const
+unsigned int NetworkTopology::get_TreeDepth(void) const
 {
     return _root->find_SubTreeHeight();
 }
 
-void NetworkTopology::compute_TreeStatistics( void )
+void NetworkTopology::compute_TreeStatistics(void)
 {
     _sync.Lock();
 
@@ -1326,7 +1329,7 @@ void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank,
 {
     Stream* str_one = _network->get_Stream( 1 );
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is before add %s\n", 
-                           get_TopologyStringPtr()) );
+                           get_TopologyString().c_str()) );
     
     //create a node for the child node and add it to network topology set of nodes. 
     Node* n = find_Node( chld_rank );
@@ -1343,12 +1346,10 @@ void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank,
                                    chld_host, chld_rank) );
         }
         mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is after add %s\n", 
-                               get_TopologyStringPtr()) );
+                               get_TopologyString().c_str()) );
     }
     else
-        mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                               "node already present topology is after add %s\n", 
-                               get_TopologyStringPtr()) );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "node already present\n") );
 
     // do callback only after state has been updated
     if( upstream && _network->is_LocalNodeFrontEnd() ) {
@@ -1365,13 +1366,17 @@ void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank,
         ted = new TopologyEvent::TopolEventData( chld_rank, par_rank );
         TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_ADD_BE, ted );
         _network->_evt_mgr->add_Event( te );
-        //Callback::executeCB( TOPOLOGY_EVENT_CB, TOPO_ADD_BE, (EventCB*)te );
     }    
 }
 
 void NetworkTopology::update_removeNode( Rank par_rank, Rank chld_rank, 
-                                         bool upstream)
+                                         bool upstream )
 {
+    if( par_rank == _network->get_LocalRank() )
+        _network->remove_Node( chld_rank, true );
+    else
+        remove_Node( chld_rank, false ); 
+
     // do callback only after state has been updated
     if( upstream && _network->is_LocalNodeFrontEnd() ) {
         
@@ -1379,7 +1384,7 @@ void NetworkTopology::update_removeNode( Rank par_rank, Rank chld_rank,
         ub->type = TOPO_REMOVE_RANK;
         ub->chld_rank = chld_rank;
         ub->chld_port = UnknownPort;
-        ub->chld_host = strdup("NULL");
+        ub->chld_host = strdup("NULL"); //ugh, this should be fixed
         ub->par_rank = par_rank;
         insert_updates_buffer( ub );
         
@@ -1388,13 +1393,14 @@ void NetworkTopology::update_removeNode( Rank par_rank, Rank chld_rank,
         TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_REMOVE_NODE, 
                                                ted );
         _network->_evt_mgr->add_Event( te );
-        //Callback::executeCB( TOPOLOGY_EVENT_CB, TOPO_REMOVE, (EventCB*)te );    
     }
 }
 
 void NetworkTopology::update_changeParent( Rank par_rank, Rank chld_rank, 
                                            bool upstream )
 {
+    _network->change_Parent( chld_rank, par_rank );
+
     // do callback only after state has been updated
     if( upstream && _network->is_LocalNodeFrontEnd()) {
 
@@ -1402,7 +1408,7 @@ void NetworkTopology::update_changeParent( Rank par_rank, Rank chld_rank,
         ub->type = TOPO_CHANGE_PARENT ;
         ub->chld_rank = chld_rank;
         ub->chld_port = UnknownPort;
-        ub->chld_host = strdup("NULL");
+        ub->chld_host = strdup("NULL"); //ugh, this should be fixed
         ub->par_rank = par_rank;
         insert_updates_buffer( ub );
 
@@ -1411,7 +1417,6 @@ void NetworkTopology::update_changeParent( Rank par_rank, Rank chld_rank,
         TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_CHANGE_PARENT, 
                                                ted );
         _network->_evt_mgr->add_Event( te );
-        //Callback::executeCB( TOPOLOGY_EVENT_CB, TOPO_PARENT_CHANGE, (EventCB*)te );
     }
 }
 
@@ -1420,7 +1425,7 @@ void NetworkTopology::update_changePort( Rank chld_rank, Port chld_port,
 {
     Node* update_node = find_Node( chld_rank );
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before update\n", 
-                           get_TopologyStringPtr()) );
+                           get_TopologyString().c_str()) );
    
     //Actual port update on the local network topology's
     update_node->set_Port(chld_port );
@@ -1430,13 +1435,13 @@ void NetworkTopology::update_changePort( Rank chld_rank, Port chld_port,
         ub->type = TOPO_CHANGE_PORT;
         ub->chld_rank = chld_rank;
         ub->chld_port = chld_port;
-        ub->chld_host = strdup("NULL");
+        ub->chld_host = strdup("NULL"); //ugh, this should be fixed
         ub->par_rank = UnknownRank;
         insert_updates_buffer( ub );
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s after port update\n", 
-                           get_TopologyStringPtr()) );
+                           get_TopologyString().c_str()) );
 }
 
 void NetworkTopology::update_addInternalNode( Rank par_rank, Rank chld_rank, 
@@ -1444,7 +1449,7 @@ void NetworkTopology::update_addInternalNode( Rank par_rank, Rank chld_rank,
                                               bool upstream )
 {
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology before add: %s\n", 
-                           get_TopologyStringPtr()) );
+                           get_TopologyString().c_str()) );
 
     //create a node for the child and add it to network topology set of nodes.
     Node* n = find_Node( chld_rank );
@@ -1459,7 +1464,7 @@ void NetworkTopology::update_addInternalNode( Rank par_rank, Rank chld_rank,
                                    chld_host, chld_rank) );
         }
         mrn_dbg( 5, mrn_printf(FLF, stderr, "topology after add: %s\n", 
-                               get_TopologyStringPtr()) );
+                               get_TopologyString().c_str()) );
     } 
     else
         mrn_dbg( 5, mrn_printf(FLF, stderr, "node already present in topology\n") );
@@ -1479,21 +1484,20 @@ void NetworkTopology::update_addInternalNode( Rank par_rank, Rank chld_rank,
         ted = new TopologyEvent::TopolEventData( chld_rank, par_rank );
         TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_ADD_CP, ted );
         _network->_evt_mgr->add_Event( te );
-        //Callback::executeCB( TOPOLOGY_EVENT_CB, TOPO_ADD_CP, (EventCB*)te );
     }
 }
 
 void NetworkTopology::update_TopoStreamPeers( vector< Rank >& new_nodes )
 {
     Stream* str_one = _network->get_Stream( 1 );
-    for( unsigned int j=0; j < new_nodes.size(); j++ ) {
-        PeerNodePtr outlet = _network->get_OutletNode( new_nodes[j] );
+    for( unsigned int i=0; i < new_nodes.size(); i++ ) {
+        PeerNodePtr outlet = _network->get_OutletNode( new_nodes[i] );
         if( outlet != NULL )
-             str_one->add_Stream_Peer( outlet->get_Rank() );
+            str_one->add_Stream_Peer( outlet->get_Rank() );
         else
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "No outlet for recently added backend %d\n", 
-                                   new_nodes[j]) );
+                                   new_nodes[i]) );
     }
 }
 

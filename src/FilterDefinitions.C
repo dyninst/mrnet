@@ -1252,7 +1252,16 @@ void tfilter_TopoUpdate_common( bool upstream,
     /* Process each input packet
      *   5 parallel arrays: type, parent rank, child rank, child host, child port
      */
-    for( unsigned int i = 0; i < ipackets.size( ); i++ ) {
+    size_t npackets = ipackets.size();
+    size_t nreserve = npackets + 1; // +1 to account for possible local port update
+    itype_arr.reserve( nreserve );
+    iprank_arr.reserve( nreserve );
+    icrank_arr.reserve( nreserve );
+    ichost_arr.reserve( nreserve );
+    icport_arr.reserve( nreserve );
+    iarray_lens.reserve( nreserve );
+    
+    for( unsigned int i = 0; i < npackets; i++ ) {
      
 	PacketPtr cur_packet( ipackets[i] );
 
@@ -1279,15 +1288,21 @@ void tfilter_TopoUpdate_common( bool upstream,
 	}
     }
 
+    int type_size = sizeof(NetworkTopology::update_type);
+    int port_size = sizeof(Port);
+    int rank_size = sizeof(Rank);
+    int charptr_size = sizeof(char*);
+
     /* Special case: port updates sent on waitforall stream (id == 2)
      * - need to append my local port update to those recv'd from children
      * - if I don't have children, I sent the port update, so don't append
      */
     unsigned short strm_id = ipackets[0]->get_StreamId();
-    int my_type_arr[1];
-    Rank my_prank_arr[1], my_crank_arr[1];
-    char* my_chost_arr[1];
-    Port my_cport_arr[1];
+    int* my_type_arr = (int*) calloc(1, type_size);
+    Rank* my_prank_arr = (Rank*) calloc(1, rank_size);
+    Rank* my_crank_arr = (Rank*) calloc(1, rank_size);
+    char** my_chost_arr = (char**) calloc(1, charptr_size);;
+    Port* my_cport_arr = (Port*) calloc(1, port_size);
     if( strm_id == 2 /* waitforall port update stream */ ) {
 
         // if I'm a commnode, but not a leaf, append local port update
@@ -1313,11 +1328,6 @@ void tfilter_TopoUpdate_common( bool upstream,
     }
 
     // Dynamic allocation for result arrays
-    int type_size = sizeof(NetworkTopology::update_type);
-    int port_size = sizeof(Port);
-    int rank_size = sizeof(Rank);
-    int charptr_size = sizeof(char*);
-
     rtype_arr  = (int *) malloc( rarr_len * type_size );
     rprank_arr = (Rank *) malloc( rarr_len * rank_size );
     rcrank_arr = (Rank *) malloc( rarr_len * rank_size );
@@ -1331,22 +1341,41 @@ void tfilter_TopoUpdate_common( bool upstream,
      
 	unsigned iarr_len = iarray_lens[i];
 
-	memcpy( rtype_arr + arr_pos,
-		itype_arr[i],
-		(size_t)(iarr_len * type_size));
-	memcpy( rprank_arr + arr_pos,
-		iprank_arr[i],
-		(size_t) (iarr_len * rank_size));
-	memcpy( rcrank_arr + arr_pos,
-		icrank_arr[i],
-		(size_t) (iarr_len * rank_size));
-	memcpy( rchost_arr + arr_pos,
-		ichost_arr[i],
-		(size_t) (iarr_len * charptr_size));
-	memcpy( rcport_arr + arr_pos,
-		icport_arr[i],
-		(size_t) (iarr_len * port_size));
+        if( itype_arr[i] != NULL ) {
+            memcpy( rtype_arr + arr_pos,
+                    itype_arr[i],
+                    (size_t)(iarr_len * type_size));
+            free( itype_arr[i] );
+        }
+ 
+	if( iprank_arr[i] != NULL ) {
+            memcpy( rprank_arr + arr_pos,
+                    iprank_arr[i],
+                    (size_t) (iarr_len * rank_size));
+            free( iprank_arr[i] ); 
+        }
 
+	if( icrank_arr[i] != NULL ) {
+            memcpy( rcrank_arr + arr_pos,
+                    icrank_arr[i],
+                    (size_t) (iarr_len * rank_size));
+            free( icrank_arr[i] );
+        } 
+
+	if( ichost_arr[i] != NULL ) {
+            memcpy( rchost_arr + arr_pos,
+                    ichost_arr[i],
+                    (size_t) (iarr_len * charptr_size));
+            free( ichost_arr[i] );
+        } 
+
+	if( icport_arr[i] != NULL ) {
+            memcpy( rcport_arr + arr_pos,
+                    icport_arr[i],
+                    (size_t) (iarr_len * port_size));
+            free( icport_arr[i] );
+        } 
+	
 	arr_pos += iarr_len;
     }
 
@@ -1392,7 +1421,7 @@ void tfilter_TopoUpdate_common( bool upstream,
     if(update_table)
         nettop->update_Router_Table();
 
-    if( (new_nodes.size()) && (!(net->is_LocalNodeBackEnd())) )
+    if( new_nodes.size() && (! net->is_LocalNodeBackEnd()) )
         nettop->update_TopoStreamPeers( new_nodes );
 
     bool gen_output = true;

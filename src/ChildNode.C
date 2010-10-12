@@ -459,14 +459,14 @@ int ChildNode::send_EventsToParent( ) const
 
 void ChildNode::error( ErrorCode e, Rank, const char *fmt, ... ) const
 {
-    char buf[1024];
+    // char buf[1024];
 
-    va_list arglist;
+//     va_list arglist;
 
-    MRN_errno = e;
-    va_start( arglist, fmt );
-    vsprintf( buf, fmt, arglist );
-    va_end( arglist );
+//     MRN_errno = e;
+//     va_start( arglist, fmt );
+//     vsprintf( buf, fmt, arglist );
+//     va_end( arglist );
 
     //Event * event = Event::new_Event( t, buf );
 
@@ -502,9 +502,13 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
         is_internal_char = 'f';
     }
 
-    char * topo_ptr = _network->get_LocalSubTreeStringPtr();
+    char* topo_ptr = _network->get_LocalSubTreeStringPtr();
+    if( topo_ptr == NULL ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to get local subtree\n") );
+        return -1;
+    }
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology: (%p), \"%s\"\n", topo_ptr, topo_ptr ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology: \"%s\"\n", topo_ptr) );
     PacketPtr packet( new Packet( 0, PROT_NEW_CHILD_DATA_CONNECTION,
                                   "%s %uhd %ud %uhd %ud %c %s",
                                   _hostname.c_str(),
@@ -521,12 +525,13 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     }
     free( topo_ptr );
 
-    SerialGraph* init_topo = _network->readTopology(iparent->_data_sock_fd);
-    assert(init_topo!=NULL);
-    std::string sg_str=init_topo->get_ByteArray();
+    SerialGraph* init_topo = _network->read_Topology( iparent->_data_sock_fd );
+    assert( init_topo != NULL );
+    std::string sg_str = init_topo->get_ByteArray();
 
-    tmp_nt->reset(sg_str, false );
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s\n", tmp_nt->get_TopologyStringPtr() ));
+    tmp_nt->reset( sg_str, false );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s\n", 
+                           tmp_nt->get_TopologyString().c_str()) );
 
     //Create send/recv threads
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating comm threads for parent\n" ));
@@ -564,38 +569,7 @@ int ChildNode::send_SubTreeInitDoneReport( ) const
 
 int ChildNode::send_NewSubTreeReport( ) const
 {
-    mrn_dbg_func_begin();
-
-#if 0 // TODO: kill this function
-
-    // We use mutual exclusion here to prevent the situation where we get
-    // the serialized string topology, but get preempted before sending the
-    // packet by another thread who is also trying to send a new subtree 
-    // report. Since the last topology report wins, we would like the reports 
-    // to proceed in the order they were started.
-    _sync.Lock(); 
-
-    char * topo_ptr = _network->get_LocalSubTreeStringPtr();
-    PacketPtr packet( new Packet( 0, PROT_NEW_SUBTREE_RPT, "%s", topo_ptr));
-
-    if( !packet->has_Error( ) ) {
-        if( _network->get_ParentNode()->send( packet ) == -1 ||
-            _network->get_ParentNode()->flush(  ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n" ));
-            _sync.Unlock();
-            return -1;
-        }
-    }
-    else {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n" ));
-        _sync.Unlock();
-        return -1;
-    }
-
-    _sync.Unlock();
-#endif
-
-    mrn_dbg_func_end();
+    assert(!"DEPRECATED -- THIS SHOULD NEVER BE CALLED");
     return 0;
 }
 
@@ -710,12 +684,9 @@ bool ChildNode::has_PacketsFromParent( ) const
 
 /*Failure Recovery Code*/
 
-
-
 int ChildNode::proc_EnableFailReco( PacketPtr ipacket ) const
 {
     int stream_id;
-    
 
     mrn_dbg_func_begin();
 
@@ -734,10 +705,8 @@ int ChildNode::proc_EnableFailReco( PacketPtr ipacket ) const
         }
     }
 
-   
     //local update
-
-   _network->enable_FailureRecovery();
+    _network->enable_FailureRecovery();
     mrn_dbg_func_end();
     return 0;
 }
@@ -763,9 +732,8 @@ int ChildNode::proc_DisableFailReco( PacketPtr ipacket ) const
         }
     }
 
-
     //local update
-   _network->disable_FailureRecovery();
+    _network->disable_FailureRecovery();
     mrn_dbg_func_end();
     return 0;
 }

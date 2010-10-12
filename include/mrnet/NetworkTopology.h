@@ -118,7 +118,7 @@ class NetworkTopology: public Error {
     void print_DOTGraph( const char * filename ) const;
     void print( FILE * ) const;
     
-    unsigned int get_NumNodes() const;
+    unsigned int get_NumNodes(void) const;
     void get_TreeStatistics( unsigned int &onum_nodes,
                              unsigned int &odepth,
                              unsigned int &omin_fanout, 
@@ -126,7 +126,7 @@ class NetworkTopology: public Error {
                              double &oavg_fanout,
                              double &ostddev_fanout);
 
-    Node * get_Root() { return _root; }
+    Node * get_Root(void) { return _root; }
     Node * find_Node( Rank ) const;
     void get_Leaves( std::vector< Node * > &leaves ) const;
 
@@ -152,20 +152,20 @@ class NetworkTopology: public Error {
     //Access topology components
     bool node_Failed( Rank irank ) const ;
     PeerNodePtr get_OutletNode( Rank irank ) const;
-    char * get_TopologyStringPtr( );
-    char * get_LocalSubTreeStringPtr();
+    std::string get_TopologyString(void);
+    std::string get_LocalSubTreeString(void);
 
     Node * find_NewParent( Rank ichild_rank, unsigned int iretry=0,
                            ALGORITHM_T algorithm=ALG_WRS );
 
-    void compute_TreeStatistics( void );
+    void compute_TreeStatistics(void);
 
     // routines used by topology update propagation
     bool new_Node( const std::string &, Port, Rank, bool iis_backend );
     bool in_Topology( std::string ihostname, Port iport, Rank irank );
  
     void insert_updates_buffer( update_contents* uc );
-    bool send_updates_buffer();
+    bool send_updates_buffer(void);
 
     void update_addBackEnd( Rank par_rank, Rank chld_rank, char* chld_host, 
                             Port chld_port, bool upstream );
@@ -175,7 +175,7 @@ class NetworkTopology: public Error {
     void update_changePort( Rank chld_rank, Port chld_port, bool upstream );
     void update_removeNode( Rank par_rank, Rank chld_rank, bool upstream);
   
-    void update_Router_Table();
+    void update_Router_Table(void);
     void update_TopoStreamPeers( std::vector< Rank >& new_nodes );
 
     void serialize( Node * );
@@ -190,7 +190,7 @@ class NetworkTopology: public Error {
     void get_LeafDescendants( Node *inode, 
                               std::vector< Node * > &odescendants ) const;
 
-    unsigned int get_TreeDepth() const;
+    unsigned int get_TreeDepth(void) const;
 
     void print_DOTSubTree( NetworkTopology::Node * inode, FILE * f ) const;
 

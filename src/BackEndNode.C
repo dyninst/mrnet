@@ -57,10 +57,10 @@ BackEndNode::BackEndNode( Network * inetwork,
           mrn_dbg( 5, mrn_printf(FLF, stderr, 
                                  "Backend not already in the topology\n") );
 
-          //new topo propagation code - create a new update packet
+          //new be - send topology update packet
           Stream *s = _network->get_Stream(1); // get topol prop stream
           int type = NetworkTopology::TOPO_NEW_BE;
-          char *host_arr = strdup(imyhostname.c_str());
+          char *host_arr = strdup( imyhostname.c_str() );
           uint32_t send_iprank = iprank;
           uint32_t send_myrank = imyrank;
           uint16_t send_port = _port;

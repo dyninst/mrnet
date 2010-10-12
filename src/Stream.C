@@ -899,9 +899,9 @@ bool Stream::recompute_ChildrenNodes( void )
 
     _peers_sync.Lock();
     _peers.clear();
-    for( iter=_end_points.begin(); iter!=_end_points.end(); iter++ ){
-        Rank cur_rank=*iter;
-
+    for( iter = _end_points.begin(); iter != _end_points.end(); iter++ ) {
+  
+        Rank cur_rank = *iter;
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Resetting outlet for backend[%d] ...\n",
                                cur_rank ));
 
