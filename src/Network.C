@@ -1446,30 +1446,18 @@ bool Network::add_SubGraph( Rank iroot_rank, SerialGraph& sg, bool iupdate )
         return false;
     }
 
-    if( is_LocalNodeFrontEnd() &&
-        ( _network_topology->get_NumNodes() > topsz ) ) {
-        // new node joined network (likely a new BE)   
-
-        // TODO: safely inform rest of network about topology change
-    }
-
-    update();
-
-    return true;
-
+    return update_Streams();
 }
 
 bool Network::remove_Node( Rank ifailed_rank, bool iupdate )
 {
     mrn_dbg_func_begin();
 
-    mrn_dbg(5, mrn_printf( FLF, stderr, "Deleting PeerNode: node[%u] ...\n", ifailed_rank ));
+    mrn_dbg(5, mrn_printf( FLF, stderr, 
+                           "Failed rank is %d\n", ifailed_rank ));
     delete_PeerNode( ifailed_rank );
-
-    mrn_dbg(5, mrn_printf( FLF, stderr, "Removing from Topology: node[%u] ...\n", ifailed_rank ));
     _network_topology->remove_Node( ifailed_rank, iupdate );
 
-    mrn_dbg(5, mrn_printf( FLF, stderr, "Removing from Streams: node[%u] ...\n", ifailed_rank ));
     _streams_sync.Lock();
     map < unsigned int, Stream* >::iterator iter;
     for( iter=_streams.begin(); iter != _streams.end(); iter++ ) {
@@ -1477,27 +1465,26 @@ bool Network::remove_Node( Rank ifailed_rank, bool iupdate )
     }
     _streams_sync.Unlock();
 
-    bool retval=true;
+    bool rc = true;
     if( iupdate ) {
-        if( !update() ) {
-            retval = false;
-        }
+        if( ! update_Streams() )
+            rc = false;
     }
 
     mrn_dbg_func_end();
-    return retval;
+    return rc;
 }
 
 bool Network::change_Parent( Rank ichild_rank, Rank inew_parent_rank )
 {
     //update topology
-    if( !_network_topology->set_Parent( ichild_rank, inew_parent_rank, true ) ) {
+    if( ! _network_topology->set_Parent(ichild_rank, inew_parent_rank, true) ) {
         return false;
     }
 
-    if( !update() ) {
-        return false;
-    }
+    //update streams if I'm the new parent
+    if( inew_parent_rank == _local_rank )
+        update_Streams();
 
     return true;
 }
@@ -1555,18 +1542,25 @@ bool Network::remove_EndPoint( Rank irank )
     return true;
 }
 
-bool Network::update( void )
+bool Network::update_Streams( void )
 {
-    //update stream
+    bool rc = true;
+    map< unsigned int, Stream* >::iterator iter;
+
     mrn_dbg(3, mrn_printf( FLF, stderr, "Updating stream children ...\n"));
+
     _streams_sync.Lock();
-    map < unsigned int, Stream* >::iterator iter;
     for( iter=_streams.begin(); iter != _streams.end(); iter++ ) {
-        (*iter).second->recompute_ChildrenNodes();
+        if( ! (*iter).second->recompute_ChildrenNodes() ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                   "Update for stream %d failed\n", 
+                                   (*iter).second->get_Id()) );
+            rc = false;
+        }
     }
     _streams_sync.Unlock();
 
-    return true;
+    return rc;
 }
 
 void Network::close_PeerNodeConnections( void )
@@ -1611,12 +1605,16 @@ void Network::close_PeerNodeConnections( void )
 
 char* Network::get_TopologyStringPtr( void ) const
 {
-    return _network_topology->get_TopologyStringPtr();
+    return strdup( _network_topology->get_TopologyString().c_str() );
 }
 
 char* Network::get_LocalSubTreeStringPtr( void ) const
 {
-    return _network_topology->get_LocalSubTreeStringPtr();
+    std::string subtree( _network_topology->get_LocalSubTreeString() );
+    if( subtree.empty() )
+        return NULL;
+    else
+        return strdup( subtree.c_str() );
 }
 
 void Network::enable_FailureRecovery( void )
@@ -1664,8 +1662,8 @@ PeerNodePtr Network::new_PeerNode( string const& ihostname, Port iport,
                                    Rank irank, bool iis_parent,
                                    bool iis_internal )
 {
-    PeerNodePtr node( new PeerNode( this, ihostname, iport, irank,
-                                    iis_parent, iis_internal ) );
+    PeerNodePtr node( new PeerNode(this, ihostname, iport, irank,
+                                   iis_parent, iis_internal) );
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "new peer node: %s:%d (%p) \n",
                            node->get_HostName().c_str(), node->get_Rank(),
@@ -1692,16 +1690,18 @@ bool Network::delete_PeerNode( Rank irank )
 
     if( is_LocalNodeChild() ) {
         _parent_sync.Lock();
-        if( _parent->get_Rank() == irank ) {
-            _parent == PeerNode::NullPeerNode;
-            _parent_sync.Unlock();
-            return true;
+        if( _parent != PeerNode::NullPeerNode ) { 
+            if( _parent->get_Rank() == irank ) {
+                _parent = PeerNode::NullPeerNode;
+                _parent_sync.Unlock();
+                return true;
+            }
         }
         _parent_sync.Unlock();
     }
 
     _children_mutex.Lock();
-    for( iter=_children.begin(); iter!=_children.end(); iter++ ) {
+    for( iter = _children.begin(); iter != _children.end(); iter++ ) {
         if( (*iter)->get_Rank() == irank ) {
 	     mrn_dbg( 5, mrn_printf(FLF, stderr, "deleted into children\n") );
             _children.erase( *iter );
@@ -1803,22 +1803,23 @@ void set_OutputLevelFromEnvironment( void )
     }
 }
 
-SerialGraph* Network::readTopology( int topoSocket )
+/* Propagate topology */
+SerialGraph* Network::read_Topology( int fd )
 {
     mrn_dbg_func_begin(); 
 
     char* sTopology = NULL;
-    size_t sTopologyLen = 0;
+    uint32_t sTopologyLen = 0;
     
     // obtain topology from our parent
-    ::recv( topoSocket, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
+    ::recv( fd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%d\n", (int)sTopologyLen ));
 
     sTopology = new char[sTopologyLen + 1];
     char* currBufPtr = sTopology;
     size_t nRemaining = sTopologyLen;
     while( nRemaining > 0 ) {
-        ssize_t nread = ::recv( topoSocket, currBufPtr, nRemaining, 0);
+        ssize_t nread = ::recv( fd, currBufPtr, nRemaining, 0);
         nRemaining -= nread;
         currBufPtr += nread;
     }
@@ -1832,17 +1833,18 @@ SerialGraph* Network::readTopology( int topoSocket )
     return sg;
 }
 
-void Network::writeTopology( int topoFd, SerialGraph* topology ) {
+void Network::write_Topology( int fd )
+{
     mrn_dbg_func_begin();
 
-    std::string sTopology = topology->get_ByteArray();
-    size_t sTopologyLen = sTopology.length();
+    std::string sTopology( _network_topology->get_TopologyString() );
+    uint32_t sTopologyLen = (uint32_t) sTopology.length();
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "sending topology=%s\n",
                           sTopology.c_str() ));
 
     // send serialized topology size
-    ssize_t nwritten = ::send( topoFd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
+    ssize_t nwritten = ::send( fd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
 
     // send the topology itself
     // NOTE this code assumes the byte array underneath the std::string
@@ -1850,7 +1852,7 @@ void Network::writeTopology( int topoFd, SerialGraph* topology ) {
     size_t nRemaining = sTopologyLen;
     const char* currBufPtr = sTopology.c_str();
     while( nRemaining > 0 ) {
-        nwritten = ::send( topoFd, currBufPtr, nRemaining, 0);
+        nwritten = ::send( fd, currBufPtr, nRemaining, 0);
         nRemaining -= nwritten;
         currBufPtr += nwritten;
     }
@@ -1859,14 +1861,12 @@ void Network::writeTopology( int topoFd, SerialGraph* topology ) {
 /* Failure Recovery */
 bool Network::set_FailureRecovery( bool enable_recovery )
 {
-    mrn_dbg_func_begin();
     int tag;
 
+    mrn_dbg_func_begin();
 
     if( is_LocalNodeFrontEnd() ) {
 
-	//enable or disable Failure Recovery
-	
 	if( enable_recovery ) {
             tag = PROT_ENABLE_RECOVERY;
             enable_FailureRecovery();
@@ -1878,18 +1878,18 @@ bool Network::set_FailureRecovery( bool enable_recovery )
 	
         PacketPtr packet( new Packet( 0, tag, "%d", (int)enable_recovery ));
 	if( packet->has_Error() ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() fail\n") );
             return false;
         }
 
         if( send_PacketToChildren( packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
             return false;
         }
     }
     else {
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
-			       "set_FailureRecovery() can only be used by Network front-end\n" )); 
+			       "set_FailureRecovery() can only be used by Network front-end\n") ); 
         return false;
     }
 

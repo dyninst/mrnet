@@ -220,12 +220,9 @@ protected:
     friend class RSHParentNode;
     friend class RSHChildNode;
     
-    //NEW_TOPO propagation code
-    //The topology is propagated from parent to child when child connects to parent not when child first
-    //gets the topology
-    SerialGraph* readTopology( int topoFd);
-    void writeTopology( int topoFd,
-                        SerialGraph* topology );
+    // send/recv topology on socket fd
+    SerialGraph* read_Topology( int fd );
+    void write_Topology( int fd );
 
     // some conditions we waitfor/signal
     enum {
@@ -286,7 +283,7 @@ protected:
     CommunicationNode* get_FailureManager( void ) const ;
     bool is_LocalNodeThreaded( void ) const ;
     int send_FilterStatesToParent( void );
-    bool update( void );
+    bool update_Streams( void );
     bool add_SubGraph( Rank iroot_rank, SerialGraph& sg, bool iupdate  );
     bool remove_Node( Rank ifailed_rank, bool iupdate=true );
     bool change_Parent( Rank ichild_rank, Rank inew_parent_rank );

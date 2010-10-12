@@ -700,7 +700,7 @@ void Network_set_OutputLevelFromEnvironment(void)
 SerialGraph_t* Network_readTopology(Network_t * net, int topoSocket) 
 {
     char * sTopology = NULL;
-    size_t sTopologyLen = 0;
+    uint32_t sTopologyLen = 0;
     char * currBufPtr;
     size_t nRemaining;
     ssize_t nread;
@@ -736,7 +736,7 @@ SerialGraph_t* Network_readTopology(Network_t * net, int topoSocket)
 void Network_writeTopology(Network_t * net, int topoFd, SerialGraph_t* topology) 
 {
     char * sTopology;
-    size_t sTopologyLen;
+    uint32_t sTopologyLen;
     ssize_t nwritten;
     size_t nRemaining;
     const char * currBufPtr;
