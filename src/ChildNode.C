@@ -25,7 +25,6 @@ ChildNode::ChildNode( Network * inetwork,
 {
     PeerNodePtr parent =
         _network->new_PeerNode( iphostname, ipport, iprank, true, true );
-    _network->set_ParentNode( parent );
 }
 
 int ChildNode::proc_PacketsFromParent( std::list< PacketPtr > & packets )
@@ -353,7 +352,8 @@ int ChildNode::proc_CollectPerfData( PacketPtr ipacket ) const
                                    aggr_strm_id ));
             return -1;
         }
-        aggr_strm->send_aux( pkt->get_Tag(), pkt->get_FormatString(), pkt );
+        bool upstream = true;
+        aggr_strm->send_aux( pkt->get_Tag(), pkt->get_FormatString(), pkt, upstream );
     }
 
     mrn_dbg_func_end();
@@ -424,59 +424,19 @@ int ChildNode::proc_TopologyReport( PacketPtr ipacket ) const
 
 int ChildNode::send_EventsToParent( ) const
 {
-    return -1;
-
-    /*
-    int status=0;
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Entering send_Event() ... \n" ));
-
-    while ( Event::have_RemoteEvent() ){
-        Event * cur_event = Event::get_NextRemoteEvent();
-
-        Packet packet( 0, PROT_EVENT, "%d %s %s %uhd",
-                       cur_event->get_Type(),
-                       cur_event->get_Description().c_str(),
-                       cur_event->get_HostName().c_str(),
-                       cur_event->get_Port() );
-
-        if( !packet.has_Error(  ) ) {
-            if( get_ParentNode()->send( packet ) == -1 ||
-                get_ParentNode()->flush(  ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n" ));
-                status = -1;
-            }
-        }
-        else {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n" ));
-            status = -1;
-        }
-    }
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "send_Event() succeeded\n" ));
-    return status;
+    /* NOTE: we need a sensible method for reporting events to the FE,
+             e.g., an event reporting stream. until we have this,
+             there's nothing to do here -- Oct 2010
     */
+    return -1;
 }
 
-void ChildNode::error( ErrorCode e, Rank, const char *fmt, ... ) const
+void ChildNode::error( ErrorCode, Rank, const char *, ... ) const
 {
-    // char buf[1024];
-
-//     va_list arglist;
-
-//     MRN_errno = e;
-//     va_start( arglist, fmt );
-//     vsprintf( buf, fmt, arglist );
-//     va_end( arglist );
-
-    //Event * event = Event::new_Event( t, buf );
-
-    //First add event to queue
-    //Event::add_Event( *event );
-
-    //Then invoke send_Events() to send upstream
-    //send_Events();
-
-    //delete event;
+    /* NOTE: we need a sensible method for reporting errors to the FE,
+             e.g., an error reporting stream. until we have this,
+             there's nothing to do here -- Oct 2010
+    */
 }
 
 int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
@@ -488,7 +448,7 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
 
     // Establish data detection connection w/ new Parent
     if( iparent->connect_DataSocket() == -1 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "connect_DataSocket() failed\n"));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect_DataSocket() failed\n") );
         return -1;
     }
 
@@ -518,9 +478,9 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
                                   ifailed_rank,
                                   is_internal_char,
                                   topo_ptr ) );
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Send initialization info ...\n" ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Send initialization info ...\n") );
     if( iparent->sendDirectly( packet ) ==  -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush() failed\n" ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush() failed\n") );
         return -1;
     }
     free( topo_ptr );
@@ -534,10 +494,9 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
                            tmp_nt->get_TopologyString().c_str()) );
 
     //Create send/recv threads
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Creating comm threads for parent\n" ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for parent\n") );
     iparent->start_CommunicationThreads();
 
-    _network->set_ParentNode( iparent );
     mrn_dbg_func_end();
 
     return 0;
@@ -552,14 +511,14 @@ int ChildNode::send_SubTreeInitDoneReport( ) const
     PacketPtr packet( new Packet( 0, PROT_SUBTREE_INITDONE_RPT,"") );
 
     if( !packet->has_Error( ) ) {
-        if( _network->get_ParentNode()->send( packet ) == -1 ||
-            _network->get_ParentNode()->flush(  ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n" ));
+        _network->get_ParentNode()->send( packet );
+        if( _network->get_ParentNode()->flush() == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n") );
             return -1;
         }
     }
     else {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n" ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n") );
         return -1;
     }
 
@@ -579,14 +538,14 @@ int ChildNode::request_SubTreeInfo( void ) const
     PacketPtr packet( new Packet( 0, PROT_SUBTREE_INFO_REQ, "%ud", _rank ) );
 
     if( !packet->has_Error( ) ) {
-        if( _network->get_ParentNode()->send( packet ) == -1 ||
-            _network->get_ParentNode()->flush(  ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n" ));
+        _network->get_ParentNode()->send( packet );
+        if( _network->get_ParentNode()->flush() == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n") );
             return -1;
         }
     }
     else {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n" ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n") );
         return -1;
     }
 
@@ -611,9 +570,8 @@ int ChildNode::proc_RecoveryReport( PacketPtr ipacket ) const
 
     //Internal nodes must report parent failure to children
     if( _network->is_LocalNodeInternal() ) {
-        if( _network->send_PacketToChildren( ipacket )
-            == -1 ){
-            mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n"));
+        if( _network->send_PacketToChildren( ipacket ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
             return -1;
         }
     }
@@ -631,10 +589,7 @@ bool ChildNode::ack_DeleteSubTree( void ) const
     if( ! packet->has_Error() ) {
         /* note: don't request flush as send thread will exit 
                  before notifying flush completion */
-        if( _network->get_ParentNode()->send(packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send failed\n" ));
-            return false;
-        }
+        _network->get_ParentNode()->send( packet );
     }
     else {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n") );
@@ -652,8 +607,8 @@ bool ChildNode::ack_TopologyReport( void ) const
     PacketPtr packet( new Packet(0, PROT_TOPOLOGY_ACK, "") );
 
     if( ! packet->has_Error() ) {
-        if( (_network->get_ParentNode()->send(packet) == -1) ||
-            (_network->get_ParentNode()->flush() == -1) ) {
+        _network->get_ParentNode()->send( packet );
+        if( _network->get_ParentNode()->flush() == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "send/flush failed\n") );
             return false;
         }
@@ -667,8 +622,9 @@ bool ChildNode::ack_TopologyReport( void ) const
     return true;
 }
 
-int ChildNode::proc_PortUpdate(PacketPtr ipacket ) const
+int ChildNode::proc_PortUpdate( PacketPtr ) const
 {
+    // virtual method implementation, this shouldn't be called
     return -1;
 }
 
@@ -682,7 +638,7 @@ bool ChildNode::has_PacketsFromParent( ) const
     return _network->has_PacketsFromParent();
 }
 
-/*Failure Recovery Code*/
+/* Failure Recovery Code */
 
 int ChildNode::proc_EnableFailReco( PacketPtr ipacket ) const
 {
@@ -705,7 +661,7 @@ int ChildNode::proc_EnableFailReco( PacketPtr ipacket ) const
         }
     }
 
-    //local update
+    // local update
     _network->enable_FailureRecovery();
     mrn_dbg_func_end();
     return 0;
@@ -732,7 +688,7 @@ int ChildNode::proc_DisableFailReco( PacketPtr ipacket ) const
         }
     }
 
-    //local update
+    // local update
     _network->disable_FailureRecovery();
     mrn_dbg_func_end();
     return 0;

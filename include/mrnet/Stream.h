@@ -46,21 +46,20 @@ class Stream {
     // BEGIN MRNET API
 
     int send( int itag, const char *iformat_str, ... );
-    int send_internal( int itag, const char *iformat_str, ... );
     int send( const char *idata_fmt, va_list idata, int itag );
     int send( int itag, const void **idata, const char *iformat_str );
     int send( PacketPtr& ipacket );
-    int flush( ) const;
+    int flush(void) const;
     int recv( int *otag, PacketPtr &opacket, bool iblocking = true );
 
-    const std::set< Rank > & get_EndPoints( void ) const ;
-    unsigned int get_Id( void ) const ;
-    unsigned int size( void ) const ;
-    bool has_Data( void );
+    const std::set< Rank > & get_EndPoints(void) const;
+    unsigned int get_Id(void) const;
+    unsigned int size(void) const;
+    bool has_Data(void);
 
-    int  get_DataNotificationFd( void );
-    void clear_DataNotificationFd( void );
-    void close_DataNotificationFd( void );
+    int  get_DataNotificationFd(void);
+    void clear_DataNotificationFd(void);
+    void close_DataNotificationFd(void);
 
     int set_FilterParameters( FilterType ftype, const char *format_str, ... ) const;
     int set_FilterParameters( const char *params_fmt, va_list params, FilterType ftype ) const;
@@ -76,7 +75,8 @@ class Stream {
     void print_PerformanceData( perfdata_metric_t metric, 
                                 perfdata_context_t context );
 
-    bool is_ShutDown(void);
+    bool is_Closed(void) const;
+    bool is_ShutDown(void) const;
      
     // END MRNET API
 
@@ -85,11 +85,12 @@ class Stream {
 
     ~Stream();
 
+    int send_internal( int itag, const char *iformat_str, ... );
 
-    bool is_PeerClosed( Rank irank ) const;
-    unsigned int num_ClosedPeers( void ) const ;
-    bool is_Closed( void ) const;
-    void get_ClosedPeers( std::set< Rank >& ) const ;
+    //bool is_PeerClosed( Rank irank ) const;
+    //unsigned int num_ClosedPeers(void) const;
+    void close(void);
+    //void get_ClosedPeers( std::set< Rank >& ) const;
     void get_ChildPeers( std::set< Rank >& ) const;
     void add_Stream_EndPoint( Rank irank );
     void add_Stream_Peer( Rank irank );
@@ -99,16 +100,18 @@ class Stream {
                                 int aggr_strm_id );
 
  private:
-    
-    int send_aux( int tag, const char *format_str, PacketPtr &packet );
-    int send_aux_internal( int tag, const char *format_str, PacketPtr &packet );
-    void add_IncomingPacket( PacketPtr );
-    PacketPtr get_IncomingPacket( void );
-    int push_Packet( PacketPtr, std::vector<PacketPtr> &, std::vector<PacketPtr> &, 
-                     bool going_upstream );
+    static bool find_FilterAssignment( const std::string& assignments, 
+                                       Rank me, int& filter_id );
 
-    int send_FilterStateToParent( void ) const;
-    PacketPtr get_FilterState( ) const;
+    int send_aux( int itag, const char *ifmt, PacketPtr &ipacket, 
+                  bool upstream, bool internal=false );
+    void add_IncomingPacket( PacketPtr );
+    PacketPtr get_IncomingPacket(void);
+    int push_Packet( PacketPtr, std::vector<PacketPtr> &, std::vector<PacketPtr> &, 
+                     bool upstream );
+
+    int send_FilterStateToParent(void) const;
+    PacketPtr get_FilterState(void) const;
 
     void set_FilterParams( FilterType, PacketPtr& ) const;
 
@@ -116,13 +119,11 @@ class Stream {
     bool disable_PerfData( perfdata_metric_t metric, perfdata_context_t context );
     void print_PerfData( perfdata_metric_t metric, perfdata_context_t context );
 
-    bool remove_Node( Rank irank );
-    bool recompute_ChildrenNodes( void );
+    void remove_Node( Rank irank );
+    void recompute_ChildrenNodes(void);
     bool close_Peer( Rank irank );
-    void signal_BlockedReceivers( void ) const;
-    int block_ForIncomingPacket( void ) const;
-
-    static bool find_FilterAssignment(const std::string& assignments, Rank me, int& filter_id);
+    void signal_BlockedReceivers(void) const;
+    int block_ForIncomingPacket(void) const;
 
     //Static Data Members
     Network * _network;
@@ -133,23 +134,20 @@ class Stream {
     Filter * _us_filter;
     int _ds_filter_id;
     Filter * _ds_filter;
-    std::set< Rank > _end_points;  //end-points of stream
+    std::set< Rank > _end_points;
 
     //Dynamic Data Members
     EventPipe * _evt_pipe;
     PerfDataMgr * _perf_data;
-    bool _us_closed;
-    bool _ds_closed;
+    bool _was_closed;
     bool _was_shutdown;
-    std::set< Rank > _peers; //peers in stream
-    std::set< Rank > _closed_peers;
+    std::set< Rank > _peers; // child peers in stream
     mutable XPlat::Mutex _peers_sync;
 
     std::list< PacketPtr > _incoming_packet_buffer;
     mutable XPlat::Monitor _incoming_packet_buffer_sync;
     mutable XPlat::Monitor _shutdown_sync;
     enum {PACKET_BUFFER_NONEMPTY};
-
 };
 
 

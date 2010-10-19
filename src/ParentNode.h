@@ -93,6 +93,7 @@ class ParentNode: public virtual Error,
     mutable XPlat::Monitor subtreereport_sync;
     mutable XPlat::Monitor initdonereport_sync;
     mutable unsigned int _num_children, _num_children_reported;
+    mutable bool _shutdown_started;
 
     virtual int proc_PacketFromChildren( PacketPtr ipacket );
 

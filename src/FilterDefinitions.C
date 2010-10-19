@@ -1540,32 +1540,31 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
 
     //1. Setup/Recover Filter State
     if( *local_storage == NULL ) {
-        //Allocate packet buffer map as appropriate
+        // allocate packet buffer map as appropriate
         mrn_dbg( 5, mrn_printf(FLF, stderr, "No previous storage, allocating ...\n"));
         state = new wfa_state;
         *local_storage = state;
     }
     else{
-        //Get packet buffer map from filter state
+        // get packet buffer map from filter state
         state = ( wfa_state * ) *local_storage;
 
-        //Check for failed nodes && closed Peers
+        // check for failed nodes && closed Peers
         map_iter = state->packets_by_rank.begin();
         while ( map_iter != state->packets_by_rank.end() ) {
 
             Rank rank = (*map_iter).first;
-            if( net->node_Failed( rank ) ) {
+            if( net->node_Failed(rank) ) {
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
                                        rank ));
-
                 del_iter = map_iter;
                 map_iter++;
 
-                //clear packet vector
+                // clear packet vector
                 (*del_iter).second->clear();
 
-                //erase map slot
+                // erase map slot
                 state->packets_by_rank.erase( del_iter );
                 state->ready_peers.erase( rank );
             }
@@ -1581,7 +1580,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
 
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
 
-        //special case for back-end synchronization; packets have unknown inlet
+        // special case for back-end synchronization; packets have unknown inlet
         if( cur_inlet_rank == UnknownRank ) {
             if( ipackets.size() == 1 ) {
                 opackets.push_back( ipackets[i] );
@@ -1589,15 +1588,15 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
             }
         }
 
-        if( net->node_Failed( cur_inlet_rank ) ) {
-            //Drop packets from failed node
+        if( net->node_Failed(cur_inlet_rank) ) {
+            // drop packets from failed node
             continue;
         }
 
-        //Insert packet into map
+        // insert packet into map
         map_iter = state->packets_by_rank.find( cur_inlet_rank );
 
-        //Allocate new slot if necessary
+        // allocate new slot if necessary
         if( map_iter == state->packets_by_rank.end() ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "Allocating new map slot for node[%d] ...\n",
@@ -1611,34 +1610,21 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
         state->ready_peers.insert( cur_inlet_rank );
     }
 
-    set< Rank > peers, closed_peers;
+    set< Rank > peers;
     stream->get_ChildPeers( peers );
-    stream->get_ClosedPeers( closed_peers );
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "slots:%d ready:%d peers:%d closed:%d\n",
-                           state->packets_by_rank.size(), state->ready_peers.size(),
-                           peers.size(), closed_peers.size() ) );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "slots:%d ready:%d peers:%d\n",
+                           state->packets_by_rank.size(), 
+                           state->ready_peers.size(),
+                           peers.size()) );
 
-    if( closed_peers.empty() && state->ready_peers.size() < peers.size() ) {
-        //no closed peers and not all peers ready, so sync condition not met
+    // check for a complete wave
+    if( state->ready_peers.size() < peers.size() ) {
+        // not all peers ready, so sync condition not met
         return;
     }
 
-    set< Rank > unready_peers;
-    set_difference( peers.begin(), peers.end(),
-                    state->ready_peers.begin(), state->ready_peers.end(),
-                    inserter( unready_peers, unready_peers.begin() ) );
-    if( unready_peers != closed_peers ) {
-        //some peers not ready and haven't been closed, sync condition not met
-        return;
-    }
-
-    //check for a complete wave
-    if( (state->ready_peers.size() + closed_peers.size()) < peers.size() ) {
-        return;
-    }
-
-    //if we get here, SYNC CONDITION MET!
+    // if we get here, SYNC CONDITION MET!
     mrn_dbg( 5, mrn_printf(FLF, stderr, "All child nodes ready!" ));
 
     //3. All nodes ready! Place output packets
@@ -1647,7 +1633,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
          map_iter++ ) {
 
         if( map_iter->second->empty() ) {
-            //list should only be empty if peer closed stream
+            // list should only be empty if peer closed stream
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d]'s slot is empty\n",
                                    map_iter->first ) );
             continue;
@@ -1655,11 +1641,11 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
 
         mrn_dbg( 5, mrn_printf(FLF, stderr, "Popping packet from Node[%d]\n",
                                map_iter->first ) );
-        //push head of list onto output vector
+        // push head of list onto output vector
         opackets.push_back( map_iter->second->front() );
         map_iter->second->erase( map_iter->second->begin() );
         
-        //if list now empty, remove slot from ready list
+        // if list now empty, remove slot from ready list
         if( map_iter->second->empty() ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Removing Node[%d] from ready list\n",
                                    map_iter->first ) );
@@ -1799,12 +1785,10 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
     if( ipackets.size() > 0 ) {
 
-        set< Rank > closed_peers;
-        stream->get_ClosedPeers( closed_peers );
-        
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "slots:%d ready:%d peers:%d closed:%d\n",
-                               state->packets_by_rank.size(), state->ready_peers.size(),
-                               peers.size(), closed_peers.size()) );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "slots:%d ready:%d peers:%d\n",
+                               state->packets_by_rank.size(), 
+                               state->ready_peers.size(),
+                               peers.size()) );
        
         if( ! active ) {
 	    // set timeout
@@ -1817,25 +1801,10 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 	    }
         }
 
-        if( closed_peers.empty() && state->ready_peers.size() < peers.size() ) {
-            //no closed peers and not all peers ready, so sync condition not met
-	    mrn_dbg( 5, mrn_printf(FLF, stderr, "no closed peers and not all peers ready\n") );
-            return;
-        }
-
-        set< Rank > unready_peers;
-        set_difference( peers.begin(), peers.end(),
-                        state->ready_peers.begin(), state->ready_peers.end(),
-                        inserter( unready_peers, unready_peers.begin() ) );
-        if( unready_peers != closed_peers ) {
-            //some peers not ready and haven't been closed, sync condition not met
-	    mrn_dbg( 5, mrn_printf(FLF, stderr, "some closed peers and not all peers ready\n") );
-            return;
-        }
-
-        //check for a complete wave
-        if( (state->ready_peers.size() + closed_peers.size()) < peers.size() ) {
-	    mrn_dbg( 5, mrn_printf(FLF, stderr, "not all peers ready\n" ) );
+        // check for a complete wave
+        if( state->ready_peers.size() < peers.size() ) {
+            // not all peers ready, so sync condition not met
+	    mrn_dbg( 5, mrn_printf(FLF, stderr, "not all peers ready\n") );
             return;
         }
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Complete wave.\n") ); 

@@ -34,14 +34,14 @@ ParentNode::ParentNode( Network* inetwork,
     : CommunicationNode( myhost, listeningPort, myrank ),
       _network(inetwork),
       _num_children( 0 ),
-      _num_children_reported( 0 ), 
+      _num_children_reported( 0 ),
+      _shutdown_started( false ),
       listening_sock_fd( listeningSocket )
 {
     mrn_dbg( 5, mrn_printf(FLF, stderr, "ParentNode(local[%u]:\"%s:%u\")\n",
-                           _rank, _hostname.c_str(), _port ));
+                           _rank, _hostname.c_str(), _port) );
 
-    if( listeningSocket == -1 )
-    {
+    if( listeningSocket == -1 ) {
         listening_sock_fd = 0; // force system to create socket and assign port
         _port = UnknownPort;
 
@@ -49,7 +49,7 @@ ParentNode::ParentNode( Network* inetwork,
 
         if( bindPort( &listening_sock_fd, &_port, true /*non-blocking*/ ) == -1 ) {
             error( ERR_SYSTEM, _rank, "bindPort(%d): %s\n", _port, strerror(errno) );
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "bind_to_port() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "bind_to_port() failed\n") );
             return;
         }
     }
@@ -124,26 +124,26 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
         }
         break;
     case PROT_EVENT:
-        if( proc_Event( cur_packet ) == -1 ){
+        if( proc_Event( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_Event() failed\n" ));
             retval = -1;
         }
         break;
     case PROT_FAILURE_RPT:
-        if( proc_FailureReport( cur_packet ) == -1 ){
+        if( proc_FailureReport( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_FailureReport() failed\n" ));
             retval = -1;
         }
         break;
     case PROT_RECOVERY_RPT:
-        if( proc_RecoveryReport( cur_packet ) == -1 ){
+        if( proc_RecoveryReport( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_RecoveryReport() failed\n" ));
             retval = -1;
         }
         break;
     case PROT_NEW_PARENT_RPT:
-        if( proc_NewParentReportFromParent( cur_packet ) == -1 ){
+        if( proc_NewParentReportFromParent( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_NewParentReport() failed\n" ));
             retval = -1;
@@ -243,41 +243,50 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     mrn_dbg_func_begin();
 
     subtreereport_sync.Lock( );
+
+    if( _shutdown_started ) {
+        // already started by another thread
+        subtreereport_sync.Unlock( );
+        mrn_dbg_func_end();
+        return 0;
+    }
     
     _num_children_reported = _num_children = 0;
     const std::set < PeerNodePtr > peers = _network->get_ChildPeers();
     std::set < PeerNodePtr >::const_iterator iter;
-    for( iter=peers.begin(); iter!=peers.end(); iter++ ) {
+    for( iter = peers.begin(); iter != peers.end(); iter++ ) {
         if( (*iter)->is_child() ) {
             _num_children++;
         }
     }
+    
+    _shutdown_started = true;
 
     subtreereport_sync.Unlock( );
 
-    //processes will be exiting -- disable failure recovery
+    // processes will be exiting -- disable failure recovery
     _network->disable_FailureRecovery();
 
-    //Send ack to parent, if any
+    // send ack to parent, if any
     if( _network->is_LocalNodeChild() ) {
         if( ! _network->get_LocalChildNode()->ack_DeleteSubTree() ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
         }
     }
 
-    //send delete_subtree message to all children
+    // send to all children
     /* note: don't request flush as send threads will exit 
        before notifying flush completion */
-    if( _network->send_PacketToChildren( ipacket ) == -1 ) {
+    if( _network->send_PacketToChildren(ipacket) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
     }
 
-    //wait for acks -- so children don't initiate failure recovery when we exit
+    // wait for acks -- so children don't initiate failure recovery when we exit
     if( ! waitfor_DeleteSubTreeAcks() ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_DeleteSubTreeAcks() failed\n" ));
     }
 
-    //if internal, signal network termination
+    // if internal, signal network termination
     if( _network->is_LocalNodeInternal() ) {
         _network->signal_ShutDown();
 
@@ -396,7 +405,7 @@ int ParentNode::proc_newSubTreeReport( PacketPtr ipacket ) const
     ipacket->unpack( "%s", &topo_ptr ); 
 
     SerialGraph sg( topo_ptr );
-    if( !_network->add_SubGraph( _network->get_LocalRank(), sg, true ) ){
+    if( !_network->add_SubGraph( _network->get_LocalRank(), sg, true ) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
         return -1;
     }
@@ -465,23 +474,13 @@ int ParentNode::proc_TopologyReportAck( PacketPtr /* ipacket */ ) const
     return 0;
 }
 
-int ParentNode::proc_Event( PacketPtr ipacket ) const
+int ParentNode::proc_Event( PacketPtr ) const
 {
-    // char *edesc=NULL;
-//     EventType etype;
-//     Rank erank;
+    /* NOTE: we need a sensible method for reporting errors to the FE,
+             e.g., an error reporting stream. until we have this,
+             there's nothing to do here -- Oct 2010
+    */
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "In parentnode.proc_Event()\n" ));
-    // if( ipacket->ExtractArgList( "%d %ud %s", &etype, &erank, &edesc ) == -1 ) {
-//         mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList failed\n" ));
-//         return -1;
-//     }
-
-    //Event * event = new Event( etype, erank, edesc );
-    //Event::add_Event( *event );
-    //delete event;
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Leaving parentnode.proc_Event()\n" ));
     return 0;
 }
 
@@ -558,7 +557,7 @@ int ParentNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
-    if( strm == NULL ){
+    if( strm == NULL ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
                                stream_id ));
         return -1;
@@ -596,7 +595,7 @@ int ParentNode::proc_deleteStream( PacketPtr ipacket ) const
     //delete only @ internal node, front-end stream destructor invokes this function
     if( _network->is_LocalNodeInternal() ) {
         Stream * strm = _network->get_Stream( stream_id );
-        if( strm == NULL ){
+        if( strm == NULL ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
                                    stream_id ));
             return -1;
@@ -765,18 +764,18 @@ int ParentNode::proc_FailureReport( PacketPtr ipacket ) const
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "node[%u] has failed\n", failed_rank) );
 
-    //update local topology
+    // update local topology
     ParentNode::_network->remove_Node( failed_rank );
 
-    //propagate to children except on incident channel
-    if( _network->send_PacketToChildren( ipacket, false ) == -1 ){
+    // propagate to children except on incident channel
+    if( _network->send_PacketToChildren( ipacket, false ) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                                "send_PacketToChildren() failed()\n") );
         return -1;
     }
 
     if( _network->is_LocalNodeChild() ) {
-        //propagate to parent
+        // propagate to parent
         if( ( _network->send_PacketToParent( ipacket ) == -1 ) ||
             ( _network->flush_PacketsToChildren( ) == -1 ) ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send/flush() failed()\n") );
@@ -797,20 +796,20 @@ int ParentNode::proc_RecoveryReport( PacketPtr ipacket ) const
                      &failed_parent_rank,
                      &new_parent_rank );
 
-    //remove node, but don't update datastructs since following procedure will
+    // remove node, but don't update datastructs since following procedure will
     _network->remove_Node( failed_parent_rank, false );
     _network->change_Parent( child_rank, new_parent_rank );
 
-    //send packet to all children except the one on which the packet arrived
+    // send packet to all children except the one on which the packet arrived
     if( _network->send_PacketToChildren(ipacket, false) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n"));
         return -1;
     }
 
-    //Internal nodes must report parent failure to parent
+    // internal nodes must report parent failure to parent
     if( _network->is_LocalNodeInternal() ) {
-        if( ( _network->get_ParentNode()->send( ipacket ) == -1 ) ||
-            ( _network->get_ParentNode()->flush( ) == -1 ) ) {
+        _network->get_ParentNode()->send( ipacket );
+        if( _network->get_ParentNode()->flush() == -1 ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "send()/flush() failed\n"));
             return -1;
         }
@@ -822,32 +821,36 @@ int ParentNode::proc_RecoveryReport( PacketPtr ipacket ) const
 
 int ParentNode::proc_closeStream( PacketPtr ipacket ) const
 {
-    int stream_id;
-    ipacket->unpack( "%d", &stream_id );
+    mrn_dbg_func_begin();
 
-    Stream * stream = _network->get_Stream( stream_id );
-    if( stream == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                               stream_id ));
-        return -1;
-    }
+    assert(!"DEPRECATED -- THIS SHOULD NEVER BE CALLED");
 
-    stream->close_Peer( ipacket->get_InletNodeRank() );
+    // int stream_id;
+//     ipacket->unpack( "%d", &stream_id );
 
-    if( stream->is_Closed() ) {
-        if( _network->is_LocalNodeChild() ) {
-            //Internal Nodes should propagate "close"
-            if( _network->send_PacketToParent( ipacket ) == -1 ) {
-                mrn_dbg(1, mrn_printf(FLF, stderr, "send() failed\n"));
-                return -1;
-            }
-        }
-        else {
-            //Front-end node should awaken any folks blocked on recv()
-            assert( _network->is_LocalNodeFrontEnd() );
-            stream->signal_BlockedReceivers();
-        }
-    }
+//     Stream * stream = _network->get_Stream( stream_id );
+//     if( stream == NULL ) {
+//         mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+//                                stream_id ));
+//         return -1;
+//     }
+
+//     stream->close_Peer( ipacket->get_InletNodeRank() );
+
+//     if( stream->is_Closed() ) {
+//         if( _network->is_LocalNodeChild() ) {
+//             // internal nodes should propagate "close"
+//             if( _network->send_PacketToParent( ipacket ) == -1 ) {
+//                 mrn_dbg(1, mrn_printf(FLF, stderr, "send() failed\n"));
+//                 return -1;
+//             }
+//         }
+//         else {
+//             // FE should wake any folks blocked on recv()
+//             assert( _network->is_LocalNodeFrontEnd() );
+//             stream->signal_BlockedReceivers();
+//         }
+//     }
     
     return 0;
 }
