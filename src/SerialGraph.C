@@ -179,28 +179,28 @@ SerialGraph * SerialGraph::get_NextChild()
     size_t begin, end, cur;
     const char * buf = _byte_array.c_str();
 
-    if( _buf_idx == std::string::npos ||
-        _byte_array.find('[',_buf_idx) == std::string::npos ){
+    if( (_buf_idx == std::string::npos) ||
+        (_byte_array.find('[',_buf_idx) == std::string::npos) ) {
         return NULL;
     }
 
-    cur=begin=_buf_idx;
-    end=1;
+    cur = begin = _buf_idx;
+    end = 1;
     int num_leftbrackets=1, num_rightbrackets=0;
-    while(num_leftbrackets != num_rightbrackets){
+    while( num_leftbrackets != num_rightbrackets ) {
         cur++, end++;
-        if( buf[cur] == '[')
+        if( buf[cur] == '[' )
             num_leftbrackets++;
-        else if( buf[cur] == ']')
+        else if( buf[cur] == ']' )
             num_rightbrackets++;
     }
 
     _buf_idx = cur + 1;
 
-    retval = new SerialGraph( _byte_array.substr(begin, end));
+    retval = new SerialGraph( _byte_array.substr(begin, end) );
     
     mrn_dbg( 5, mrn_printf(FLF, stderr, "returned sg byte array :\"%s\"\n",
-                           retval->_byte_array.c_str() )); 
+                           retval->_byte_array.c_str()) ); 
     return retval;
 }
 

@@ -234,7 +234,6 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     // kill threads, topology, and events
     _network->shutdown_Network();
 
-
     if( goaway ) {
         mrn_dbg(3, mrn_printf(FLF, stderr, "DEPRECATED: not calling exit()\n"));
     }

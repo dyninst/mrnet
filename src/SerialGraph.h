@@ -16,7 +16,7 @@ namespace MRN
 class SerialGraph {
  private:
     std::string _byte_array;
-    unsigned int _buf_idx;
+    size_t _buf_idx;
     unsigned int _num_nodes;
     unsigned int _num_backends;
 

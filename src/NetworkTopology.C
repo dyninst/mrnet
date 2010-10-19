@@ -441,7 +441,7 @@ bool NetworkTopology::add_SubGraph( Node * inode, SerialGraph & isg, bool iupdat
     return true;
 }
 
-NetworkTopology::Node * NetworkTopology::find_Node(Rank irank) const
+NetworkTopology::Node * NetworkTopology::find_Node( Rank irank ) const
 {
     NetworkTopology::Node* ret = NULL;
     _sync.Lock();
@@ -451,7 +451,7 @@ NetworkTopology::Node * NetworkTopology::find_Node(Rank irank) const
 }
 
 
-NetworkTopology::Node* NetworkTopology::find_NodeHoldingLock(Rank irank) const
+NetworkTopology::Node* NetworkTopology::find_NodeHoldingLock( Rank irank ) const
 {
     // assumes we are holding the lock
     map< Rank, NetworkTopology::Node* >::const_iterator iter =
@@ -1173,8 +1173,7 @@ PeerNodePtr NetworkTopology::get_OutletNode( Rank irank ) const
 bool NetworkTopology::node_Failed( Rank irank ) const 
 {
     Node * node = find_Node( irank );
-
-    if( !node)
+    if( node == NULL  )
         return true;
 
     return node->failed();
@@ -1369,27 +1368,27 @@ void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank,
     }    
 }
 
-void NetworkTopology::update_removeNode( Rank par_rank, Rank chld_rank, 
+void NetworkTopology::update_removeNode( Rank par_rank, Rank failed_chld_rank, 
                                          bool upstream )
 {
     if( par_rank == _network->get_LocalRank() )
-        _network->remove_Node( chld_rank, true );
+        _network->remove_Node( failed_chld_rank, true );
     else
-        remove_Node( chld_rank, false ); 
+        remove_Node( failed_chld_rank, false ); 
 
     // do callback only after state has been updated
     if( upstream && _network->is_LocalNodeFrontEnd() ) {
         
         update_contents* ub = (update_contents*) malloc( sizeof(update_contents) );
         ub->type = TOPO_REMOVE_RANK;
-        ub->chld_rank = chld_rank;
+        ub->chld_rank = failed_chld_rank;
         ub->chld_port = UnknownPort;
         ub->chld_host = strdup("NULL"); //ugh, this should be fixed
         ub->par_rank = par_rank;
         insert_updates_buffer( ub );
         
         TopologyEvent::TopolEventData* ted;
-        ted = new TopologyEvent::TopolEventData( chld_rank, par_rank );
+        ted = new TopologyEvent::TopolEventData( failed_chld_rank, par_rank );
         TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_REMOVE_NODE, 
                                                ted );
         _network->_evt_mgr->add_Event( te );

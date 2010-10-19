@@ -350,7 +350,8 @@ int Message::send( int sock_fd )
 void Message::add_Packet( const PacketPtr packet )
 {
     _packet_sync.Lock();
-    _packets.push_back( packet );
+    if( packet != Packet::NullPacket )
+        _packets.push_back( packet );
     _packet_sync.SignalCondition(MRN_QUEUE_NONEMPTY);
     _packet_sync.Unlock();
 }
@@ -373,12 +374,6 @@ void Message::waitfor_MessagesToSend( void )
     }
 
     _packet_sync.Unlock();
-}
-
-int Message::size_Bytes( void )
-{
-    assert( 0 );
-    return 0;
 }
 
 /*********************************************************

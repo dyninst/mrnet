@@ -602,11 +602,11 @@ Timer::Timer( void ) {
         return;
     }
     if( fgets(line, line_len, cmd_out_fp ) == NULL ) {
-        perror( "fgets()");
+        perror("fgets()");
         return;
     }
     if( sscanf( line, "offset=%lf,", &offset ) == 0 ) {
-        perror( "sscanf()");
+        perror("sscanf()");
         offset=0;
         return;
     }

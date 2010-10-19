@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     PacketPtr p;
 
     if( argc != 4 ){
-        fprintf(stderr, "Usage: %s <topology file> <backend_exe> <so_file>\n", argv[0]);
+        fprintf( stderr, "Usage: %s <topology file> <backend_exe> <so_file>\n", argv[0] );
         exit(-1);
     }
     const char * topology_file = argv[1];
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
     // specified cmd line args
     Network * net = Network::CreateNetworkFE( topology_file, backend_exe, &dummy_argv );
     if( net->has_Error() ) {
-        net->perror("Network creation failed");
+        net->perror( "Network creation failed" );
         return -1;
     }
 
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
                                                TopologyEvent::TOPOL_REMOVE_NODE,
                                                Failure_Callback, NULL );
     if(cbrett == false) {
-        fprintf( stdout, "Failed to register callback for node failure topology event\n");
+        fprintf( stdout, "Failed to register callback for node failure topology event\n" );
         delete net;
         return -1;
     }
@@ -67,15 +67,15 @@ int main(int argc, char **argv)
                                           TopologyEvent::TOPOL_CHANGE_PARENT,
                                           ParentFailure_Callback, NULL );
     if(cbrett == false) {
-        fprintf( stdout, "Failed to register callback for parent change topology event\n");
+        fprintf( stdout, "Failed to register callback for parent change topology event\n" );
         delete net;
         return -1;
     }
 
     NetworkTopology* nettop = net->get_NetworkTopology();
     if( nettop->get_Root()->find_SubTreeHeight() < 2 ) {
-        fprintf(stderr, "Please use a topology with depth >= 2.\n"
-                        "There needs to be at least one mrnet_commnode process to kill.\n");
+        fprintf( stderr, "Please use a topology with depth >= 2.\n"
+                 "There needs to be at least one mrnet_commnode process to kill.\n" );
         delete net;
         return -1;
     }
@@ -83,13 +83,13 @@ int main(int argc, char **argv)
     // Make sure path to "so_file" is in LD_LIBRARY_PATH
     int filter_id = net->load_FilterFunc( so_file, "IntegerPercentiles" );
     if( filter_id == -1 ){
-        fprintf( stderr, "Network::load_FilterFunc() failure\n");
+        fprintf( stderr, "Network::load_FilterFunc() failure\n" );
         delete net;
         return -1;
     }
     int chk_filter_id = net->load_FilterFunc( so_file, "BitsetOr" );
     if( chk_filter_id == -1 ){
-        fprintf( stderr, "Network::load_FilterFunc() failure\n");
+        fprintf( stderr, "Network::load_FilterFunc() failure\n" );
         delete net;
         return -1;
     }
@@ -106,30 +106,31 @@ int main(int argc, char **argv)
     tag = PROT_START;
     unsigned int num_iters = 20;
     if( add_stream->send( tag, "%ud", num_iters ) == -1 ){
-        fprintf( stderr, "stream::send() failure\n");
+        fprintf( stderr, "stream::send() failure\n" );
         return -1;
     }
     if( add_stream->flush( ) == -1 ){
-        fprintf( stderr, "stream::flush() failure\n");
+        fprintf( stderr, "stream::flush() failure\n" );
         return -1;
     }
 
     // We expect "num_iters" aggregated responses from all back-ends
-    for( unsigned int i=0; i < num_iters; i++ ){
+    for( unsigned int i=0; i < num_iters; i++ ) {
 
-        retval = add_stream->recv(&tag, p);
+        retval = add_stream->recv( &tag, p );
         assert( retval != 0 ); //shouldn't be 0, either error or block till data
         if( retval == -1){
             //recv error
-            fprintf( stderr, "stream::recv() failure\n");
+            fprintf( stderr, "stream::recv() failure\n" );
             return -1;
         }
         assert( tag == PROT_WAVE );
-        if( p->unpack( "%uld %ud %ud", &bits_val, &max_val, &min_val ) == -1 ){
-            fprintf( stderr, "stream::unpack() failure\n");
+        if( p->unpack( "%uld %ud %ud", &bits_val, &max_val, &min_val ) == -1 ) {
+            fprintf( stderr, "stream::unpack() failure\n" );
             return -1;
         }
-        fprintf(stdout, "FE: min %u max %u bits %lu\n", min_val, max_val, bits_val);
+        fprintf( stdout, "FE: min %u max %u bits %lu\n", 
+                 min_val, max_val, bits_val );
         fflush(stdout);
     }
     delete add_stream;
@@ -138,24 +139,26 @@ int main(int argc, char **argv)
     Stream * min_stream = net->new_Stream( comm_BC, TFILTER_MIN,
                                            SFILTER_WAITFORALL );
     if(min_stream->send(PROT_CHECK_MIN, "") == -1){
-        fprintf( stderr, "stream::send(exit) failure\n");
+        fprintf( stderr, "stream::send(exit) failure\n" );
         return -1;
     }
     if(min_stream->flush() == -1){
-        fprintf( stderr, "stream::flush() failure\n");
+        fprintf( stderr, "stream::flush() failure\n" );
         return -1;
     }
     retval = min_stream->recv(&tag, p);
     if( retval == -1){
          //recv error
-         fprintf( stderr, "stream::recv() failure\n");
+         fprintf( stderr, "stream::recv() failure\n" );
          return -1;
     }
     unsigned int good_min;
     p->unpack("%ud", &good_min);
-    fprintf(stdout, "FE: check of MIN ");
-    if( good_min != min_val ) fprintf(stdout, "failed, filter %u != check %u\n", min_val, good_min);
-    else fprintf(stdout, "successful %u\n", min_val);
+    fprintf( stdout, "FE: check of MIN ");
+    if( good_min != min_val ) 
+        fprintf( stdout, "failed, filter %u != check %u\n", 
+                 min_val, good_min );
+    else fprintf( stdout, "successful %u\n", min_val);
     fflush(stdout);
     delete min_stream;
 
@@ -163,24 +166,26 @@ int main(int argc, char **argv)
     Stream * max_stream = net->new_Stream( comm_BC, TFILTER_MAX,
                                            SFILTER_WAITFORALL );
     if(max_stream->send(PROT_CHECK_MAX, "") == -1){
-        fprintf( stderr, "stream::send(exit) failure\n");
+        fprintf( stderr, "stream::send(exit) failure\n" );
         return -1;
     }
     if(max_stream->flush() == -1){
-        fprintf( stderr, "stream::flush() failure\n");
+        fprintf( stderr, "stream::flush() failure\n" );
         return -1;
     }
     retval = max_stream->recv(&tag, p);
     if( retval == -1){
          //recv error
-         fprintf( stderr, "stream::recv() failure\n");
+         fprintf( stderr, "stream::recv() failure\n" );
          return -1;
     }
     unsigned int good_max;
     p->unpack("%ud", &good_max);
-    fprintf(stdout, "FE: check of MAX ");
-    if( good_max != max_val ) fprintf(stdout, "failed, filter %u != check %u\n", max_val, good_max);
-    else fprintf(stdout, "successful %u\n", max_val);
+    fprintf( stdout, "FE: check of MAX ");
+    if( good_max != max_val ) 
+        fprintf( stdout, "failed, filter %u != check %u\n", 
+                 max_val, good_max );
+    else fprintf( stdout, "successful %u\n", max_val );
     fflush(stdout);
     delete max_stream;
 
@@ -188,17 +193,17 @@ int main(int argc, char **argv)
     Stream * pct_stream = net->new_Stream( comm_BC, chk_filter_id,
                                            SFILTER_WAITFORALL );
     if(pct_stream->send(PROT_CHECK_PCT, "") == -1){
-        fprintf( stderr, "stream::send(exit) failure\n");
+        fprintf( stderr, "stream::send(exit) failure\n" );
         return -1;
     }
     if(pct_stream->flush() == -1){
-        fprintf( stderr, "stream::flush() failure\n");
+        fprintf( stderr, "stream::flush() failure\n" );
         return -1;
     }
     retval = pct_stream->recv(&tag, p);
     if( retval == -1){
          //recv error
-         fprintf( stderr, "stream::recv() failure\n");
+         fprintf( stderr, "stream::recv() failure\n" );
          return -1;
     }
     unsigned long good_pct;
@@ -210,15 +215,15 @@ int main(int argc, char **argv)
     string bits = fr_bin_set(bits_val).to_string<char,char_traits<char>,allocator<char> >();
     string good = fr_bin_set(good_pct).to_string<char,char_traits<char>,allocator<char> >();
 #endif
-    fprintf(stdout, "FE: check of PERCENTILES ");
-    if( good_pct != bits_val ) fprintf(stdout, "failed, filter %s != check %s\n", 
-                                       bits.c_str(), good.c_str());
-    else fprintf(stdout, "successful %s\n", bits.c_str());
+    fprintf( stdout, "FE: check of PERCENTILES ");
+    if( good_pct != bits_val ) fprintf( stdout, "failed, filter %s != check %s\n", 
+                                        bits.c_str(), good.c_str() );
+    else fprintf( stdout, "successful %s\n", bits.c_str() );
     fflush(stdout);
     delete pct_stream;
 
-    fprintf(stdout, "FE: saw %d failures, %d parent changes\n",
-            num_failure_callbacks, num_change_callbacks);
+    fprintf( stdout, "FE: saw %d failures, %d parent changes\n",
+             num_failure_callbacks, num_change_callbacks );
 
     // Tell back-ends to exit
     Stream * ctl_stream = net->new_Stream( comm_BC, TFILTER_MAX,
