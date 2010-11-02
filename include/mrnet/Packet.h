@@ -42,6 +42,8 @@ class Packet: public Error {
     const DataElement * operator[] ( unsigned int i ) const;
 
     int get_Tag( void ) const;
+    void set_Tag( int itag ) { tag = itag; }
+
     unsigned short get_StreamId( void ) const;
     const char *get_FormatString( void ) const;
     Rank get_InletNodeRank( void ) const;
