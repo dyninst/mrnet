@@ -115,7 +115,7 @@ class Network: public Error {
     
     /* Callback-based event notification */
     bool register_EventCallback( EventClass iclass, EventType ityp,
-                            evt_cb_func ifunc, void* idata );
+                                 evt_cb_func ifunc, void* idata );
     bool remove_EventCallback( evt_cb_func func, EventClass iclass, EventType ityp ); 
     bool remove_EventCallbacks( EventClass iclass, EventType ityp );
 

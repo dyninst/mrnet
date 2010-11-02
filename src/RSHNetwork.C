@@ -27,8 +27,6 @@ Network::CreateNetworkFE( const char * itopology,
                           bool irank_backends,
                           bool iusing_mem_buf )
 {
-    endianTest();
-
     Network* net = new RSHNetwork;
     net->init_FrontEnd( itopology,
                         ibackend_exe,
@@ -43,7 +41,6 @@ Network::CreateNetworkFE( const char * itopology,
 Network*
 Network::CreateNetworkBE( int argc, char* argv[] )
 {
-    endianTest();
     // Get parent/local info from end of BE args
    
     if( argc >= 6 ) {

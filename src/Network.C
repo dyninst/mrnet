@@ -566,7 +566,7 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
 
     mrn_dbg_func_begin();
 
-    std::set < PeerNodePtr > peers;
+    std::set< PeerNodePtr > peers;
 
     if( ipacket->get_StreamId( ) == 0 ) {   //stream id 0 => control stream
         peers = get_ChildPeers();
@@ -631,7 +631,7 @@ int Network::flush_PacketsToChildren(void) const
     
     mrn_dbg_func_begin();
     
-    const std::set < PeerNodePtr > peers = get_ChildPeers();
+    const std::set< PeerNodePtr > peers = get_ChildPeers();
 
     std::set < PeerNodePtr >::const_iterator iter;
     for( iter=peers.begin(); iter!=peers.end(); iter++ ) {

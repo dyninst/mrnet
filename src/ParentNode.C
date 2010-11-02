@@ -87,7 +87,7 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
 {
     int retval = 0;
 
-    switch ( cur_packet->get_Tag(  ) ) {
+    switch ( cur_packet->get_Tag() ) {
     case PROT_CLOSE_STREAM:
         if( proc_closeStream( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
@@ -251,16 +251,10 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
         return 0;
     }
     
-    _num_children_reported = _num_children = 0;
-    const std::set < PeerNodePtr > peers = _network->get_ChildPeers();
-    std::set < PeerNodePtr >::const_iterator iter;
-    for( iter = peers.begin(); iter != peers.end(); iter++ ) {
-        if( (*iter)->is_child() ) {
-            _num_children++;
-        }
-    }
-    
     _shutdown_started = true;
+
+    _num_children_reported = _num_children = 0;
+    _num_children = _network->_children.size();
 
     subtreereport_sync.Unlock( );
 
@@ -370,11 +364,9 @@ int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ipacket ) const
     initdonereport_sync.Lock( );
 
     if( _num_children_reported == _num_children ) {
-        
-	initdonereport_sync.Unlock( );
-        if( _network->is_LocalNodeChild() ) {
-            _network->get_LocalChildNode()->send_SubTreeInitDoneReport();
-        }
+        // already saw reports from known children, must be a newborn
+        _num_children++;
+        _num_children_reported++;
     }
     else {
         _num_children_reported++;
@@ -388,8 +380,9 @@ int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ipacket ) const
                                ));
 
         }
-        initdonereport_sync.Unlock( );
     }
+
+    initdonereport_sync.Unlock( );
 
     mrn_dbg_func_end();
     return 0;
@@ -398,42 +391,7 @@ int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ipacket ) const
 
 int ParentNode::proc_newSubTreeReport( PacketPtr ipacket ) const
 {
-    mrn_dbg_func_begin();
-
-    char * topo_ptr=NULL;
-
-    ipacket->unpack( "%s", &topo_ptr ); 
-
-    SerialGraph sg( topo_ptr );
-    if( !_network->add_SubGraph( _network->get_LocalRank(), sg, true ) ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
-        return -1;
-    }
-
-    subtreereport_sync.Lock( );
-
-    if( _num_children_reported == _num_children ) {
-        // already saw reports from known children, must be a newborn
-        if( sg.is_RootBackEnd() ) {
-            _num_children++;
-            _num_children_reported++;
-        }
-        subtreereport_sync.Unlock( );
-        if( _network->is_LocalNodeChild() ) {
-            _network->get_LocalChildNode()->send_NewSubTreeReport();
-        }
-    }
-    else {
-        _num_children_reported++;
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "%d of %d descendants reported\n",
-                               _num_children_reported, _num_children ));
-        if( _num_children_reported == _num_children ) {
-            subtreereport_sync.SignalCondition( ALLNODESREPORTED );
-        }
-        subtreereport_sync.Unlock( );
-    }
-
-    mrn_dbg_func_end();
+    assert(!"DEPRECATED -- THIS SHOULD NEVER BE CALLED");
     return 0;
 }
 
