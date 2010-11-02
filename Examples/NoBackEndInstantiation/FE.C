@@ -66,12 +66,16 @@ int main(int argc, char **argv)
     Stream * stream;
     int32_t send_val=57, recv_val=0;
 
-    if( argc != 3 ) {
-        fprintf( stderr, "Usage: %s <topology_file> <num_backends>\n", argv[0] );
+    if( (argc < 3) || (argc > 4) ) {
+        fprintf( stderr, "Usage: %s topology_file num_backends [num_threads_per_be]\n", argv[0] );
         exit(-1);
     }
     char* topology_file = argv[1];
     unsigned int num_backends = atoi( argv[2] );
+
+    unsigned int num_be_thrds = 1;
+    if( argc == 4 )
+        num_be_thrds = atoi( argv[3] );
     
     // If backend_exe (2nd arg) and backend_args (3rd arg) are both NULL,
     // then all nodes specified in the topology are internal tree nodes.
@@ -97,12 +101,13 @@ int main(int argc, char **argv)
     write_be_connections( internal_leaves, num_backends );
 
     // Wait for backends to attach
+    unsigned int waitfor_count = num_backends * num_be_thrds;
     fprintf( stdout, "Please start backends now.\n\nWaiting for %u backends to connect ...", 
-             num_backends );
+             waitfor_count );
     fflush(stdout);
     do {
         sleep(1);
-    } while( num_callbacks != num_backends );
+    } while( num_callbacks != waitfor_count );
     fprintf( stdout, "complete!\n");
 
     // A simple broadcast/gather
@@ -116,8 +121,8 @@ int main(int argc, char **argv)
         return -1;
     }
   
-    fprintf( stdout, "waiting for response from %d back-ends\n", num_backends );
-    for( unsigned int i = 0; i < num_backends; i++ ){
+    fprintf( stdout, "waiting for response from %d back-ends\n", waitfor_count );
+    for( unsigned int i = 0; i < waitfor_count; i++ ){
         int tag;
         PacketPtr p;
   

@@ -9,108 +9,13 @@
 #include <fstream>
 
 #include "mrnet/MRNet.h"
+#include "xplat/Thread.h"
 #include "header.h"
 
 using namespace MRN;
 using namespace std;
 
-int getParentInfo(const char* file, int rank, 
-                  char* phost, char* pport, char* prank);
-
-int main( int argc, char *argv[] ) {
-
-    // Command line args are: connections_file  
-
-    int wSize, wRank;
-    if( argc != 2 ) {
-        fprintf(stderr, "Incorrect usage, must pass connections file %d\n",argc);
-        return -1;
-    }
-    const char* connfile = argv[1];
-
-    MPI_Init(&argc,&argv);
-
-    /* determine my place in the world */
-    wSize = wRank = -1;
-    MPI_Comm_size( MPI_COMM_WORLD, &wSize );
-    MPI_Comm_rank( MPI_COMM_WORLD, &wRank );
-
-    char parHostname[64], myHostname[64], parPort[10], parRank[10], myRank[10];
-    Rank mRank = 10000 + wRank;
-    sprintf(myRank, "%d", mRank);
-
-    if( getParentInfo(connfile, wRank, parHostname, parPort, parRank) != 0 ) {
-        fprintf(stderr, "Failed to parse connections file\n");
-        return -1;
-    }
-
-    while( gethostname(myHostname, 64) == -1 ) {}
-    myHostname[63] = '\0';
-
-    int BE_argc = 6;
-    char* BE_argv[6];
-    BE_argv[0] = argv[0];
-    BE_argv[1] = parHostname;
-    BE_argv[2] = parPort;
-    BE_argv[3] = parRank;
-    BE_argv[4] = myHostname;
-    BE_argv[5] = myRank;
-				
-    int32_t recv_int=0;
-    int tag;   
-    PacketPtr p;
-    Stream* stream;
-    Network * net = NULL;
-
-    fprintf( stdout, "Backend %s[%s] connecting to %s:%s[%s]\n",
-             myHostname, myRank, parHostname, parPort, parRank );
-
-    net = Network::CreateNetworkBE( BE_argc, BE_argv );
-
-    do {
-        if( net->recv(&tag, p, &stream) != 1 ) {
-            printf("receive failure\n");
-            return -1;
-        }
-
-        switch( tag ) {
-        case PROT_INT:
-            if( p->unpack( "%d", &recv_int) == -1 ) {
-                printf("stream::unpack(%%d) failure\n");
-                return -1;
-            }
-
-            fprintf(stdout, "BE: received int = %d\n", recv_int);
-
-            if( (stream->send(PROT_INT, "%d", recv_int) == -1) ||
-                (stream->flush() == -1 ) ) {
-                printf("stream::send(%%d) failure\n");
-                return -1;
-            }
-            break;
-            
-        case PROT_EXIT:            
-            break;
-
-        default:
-            fprintf(stdout, "BE: Unknown Protocol %d\n", tag);
-            tag = PROT_EXIT;
-            break;
-        }
-
-        fflush(stdout);
-        fflush(stderr);
-
-    } while ( tag != PROT_EXIT );
-
-    MPI_Finalize();
-
-    // FE delete of the network will cause us to exit, wait for it
-    net->waitfor_ShutDown();
-    delete net;
-
-    return 0;
-}
+char* connfile = NULL;
 
 int getParentInfo(const char* file, int rank, char* phost, char* pport, char* prank)
 {
@@ -143,3 +48,149 @@ int getParentInfo(const char* file, int rank, char* phost, char* pport, char* pr
     // my rank not found :(
     return 1;
 }
+
+typedef struct {
+    int mpi_rank;
+    int mrnet_rank;
+    int argc;
+    char** argv;
+} info_t;
+
+void* BackendThreadMain( void* arg )
+{
+    info_t* rinfo = (info_t*)arg;
+
+    char parHostname[64], parPort[10], parRank[10], myRank[10];
+    Rank mRank = rinfo->mrnet_rank;
+    sprintf(myRank, "%d", mRank);
+
+    if( getParentInfo(connfile, rinfo->mpi_rank, parHostname, parPort, parRank) != 0 ) {
+        fprintf(stderr, "Failed to parse connections file\n");
+        return NULL;
+    }
+
+    int32_t recv_int=0;
+    int tag;   
+    PacketPtr p;
+    Stream* stream;
+    Network * net = NULL;
+
+    assert( rinfo->argc == 6 );
+
+    fprintf( stdout, "BE[%d] on %s connecting to %s:%s[%s]\n",
+             mRank, rinfo->argv[4], parHostname, parPort, parRank );
+
+    rinfo->argv[1] = parHostname;
+    rinfo->argv[2] = parPort;
+    rinfo->argv[3] = parRank;
+    rinfo->argv[5] = myRank;
+				
+    net = Network::CreateNetworkBE( rinfo->argc, rinfo->argv );
+
+    do {
+        if( net->recv(&tag, p, &stream) != 1 ) {
+            printf("receive failure\n");
+            return NULL;
+        }
+
+        switch( tag ) {
+        case PROT_INT:
+            if( p->unpack( "%d", &recv_int) == -1 ) {
+                printf("stream::unpack(%%d) failure\n");
+                return NULL;
+            }
+
+            fprintf(stdout, "BE[%d]: received int = %d\n", mRank, recv_int);
+
+            if( (stream->send(PROT_INT, "%d", recv_int) == -1) ||
+                (stream->flush() == -1 ) ) {
+                printf("stream::send(%%d) failure\n");
+                return NULL;
+            }
+            break;
+            
+        case PROT_EXIT:            
+            break;
+
+        default:
+            fprintf(stdout, "BE[%d]: Unknown Protocol %d\n", mRank, tag);
+            tag = PROT_EXIT;
+            break;
+        }
+
+        fflush(stdout);
+        fflush(stderr);
+
+    } while ( tag != PROT_EXIT );    
+
+    // FE delete of the network will cause us to exit, wait for it
+    net->waitfor_ShutDown();
+    delete net;
+
+    free( arg );
+
+    return NULL;
+}
+
+int main( int argc, char *argv[] ) {
+
+    // Command line args are: connections_file [num_threads] 
+    int nthreads = 1;
+    int wSize, wRank;
+    if( (argc < 2) || (argc > 3) ) {
+        fprintf(stderr, "ERROR: usage: %s connections_file [#threads]\n", argv[0]);
+        return -1;
+    }
+    
+    connfile = argv[1];
+
+    if( argc == 3 )
+        nthreads = atoi( argv[2] ); 
+
+    MPI_Init(&argc,&argv);
+
+    /* determine my place in the world */
+    wSize = wRank = -1;
+    MPI_Comm_size( MPI_COMM_WORLD, &wSize );
+    MPI_Comm_rank( MPI_COMM_WORLD, &wRank );
+
+
+    /* Start MRNet threads */
+    char myHostname[64];
+    while( gethostname(myHostname, 64) == -1 ) {}
+    myHostname[63] = '\0';
+
+    int BE_argc = 6;
+    char* BE_argv[BE_argc];
+    BE_argv[0] = argv[0];
+    BE_argv[4] = myHostname;
+
+    std::vector< XPlat::Thread::Id > tids;
+    for( int i=0; i < nthreads; i++ ) {
+        info_t* rinfo = (info_t*) calloc(1, sizeof(info_t));
+        rinfo->mpi_rank = wRank;
+        rinfo->mrnet_rank = (10000*(i+1)) + wRank;
+        rinfo->argc = BE_argc;
+        rinfo->argv = BE_argv;
+
+        XPlat::Thread::Id tid;
+        XPlat::Thread::Create( BackendThreadMain, (void*)rinfo, &tid );
+        tids.push_back( tid );
+    }
+
+    /* this is where MPI+work would normally be done */
+    sleep(20);
+
+    MPI_Finalize();
+
+
+    /* Cleanup MRNet threads */
+    for( int i=0; i < nthreads; i++ ) {
+        XPlat::Thread::Id tid = tids[i];
+        void* retval = NULL;
+        XPlat::Thread::Join( tid, &retval );
+    }
+
+    return 0;
+}
+
