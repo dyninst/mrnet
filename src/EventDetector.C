@@ -722,8 +722,8 @@ int EventDetector::recover_FromParentFailure( int& new_parent_sock )
     NetworkTopology::Node * new_parent_node = _network->get_NetworkTopology()->
         find_NewParent( my_rank );
     if( ! new_parent_node ) {
-        mrn_dbg(1, mrn_printf( FLF, stderr, "Can't find new parent! Exiting ...\n" ));
-        exit(-1);
+        mrn_dbg(1, mrn_printf( FLF, stderr, "Can't find new parent! NOT recovering ...\n" ));
+        return -1;
     }
 
     mrn_dbg(3, mrn_printf( FLF, stderr, "RECOVERY: NEW PARENT: %s:%d:%d\n",

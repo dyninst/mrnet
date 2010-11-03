@@ -878,7 +878,7 @@ NetworkTopology::Node * NetworkTopology::find_NewParent( Rank ichild_rank,
     if( potential_adopters.empty() ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "No Adopters left :(\n"));
         _sync.Unlock();
-        exit(-1);
+        return NULL;
     }
 
     if( ialgorithm == ALG_RANDOM ) {
@@ -914,7 +914,6 @@ NetworkTopology::Node * NetworkTopology::find_NewParent( Rank ichild_rank,
                 break;
             }
         }
-
         adopter = potential_adopters[ my_idx % potential_adopters.size() ];
     }
 

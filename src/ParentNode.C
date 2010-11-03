@@ -284,7 +284,7 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     if( _network->is_LocalNodeInternal() ) {
         _network->signal_ShutDown();
 
-        // exit recv thread from parent
+        // exit recv/EDT thread
         mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));
         XPlat::Thread::Exit(NULL);
     }

@@ -220,7 +220,7 @@ void Network::waitfor_ShutDown(void) const
 
     _shutdown_sync.Lock();
     
-    if( ! _was_shutdown )
+    while( ! _was_shutdown )
         _shutdown_sync.WaitOnCondition( NETWORK_TERMINATION );
 
     _shutdown_sync.Unlock();
@@ -232,9 +232,22 @@ void Network::signal_ShutDown(void)
 {
     mrn_dbg_func_begin();
 
+    // make sure _was_shutdown has been set to true
+    _shutdown_sync.Lock();
+    if( ! _was_shutdown )
+        _was_shutdown = true;
+    _shutdown_sync.Unlock();
+
+    // notify any blocking recv() calls
+    _streams_sync.Lock();
+    _streams_sync.SignalCondition( STREAMS_NONEMPTY );
+    _streams_sync.Unlock();
+
     _shutdown_sync.Lock();
     _shutdown_sync.SignalCondition( NETWORK_TERMINATION );
     _shutdown_sync.Unlock();
+
+    mrn_dbg_func_end();
 }
 
 const char* Network::FindCommnodePath(void)
@@ -654,6 +667,9 @@ int Network::flush_PacketsToChildren(void) const
 int Network::recv( bool iblocking )
 {
     mrn_dbg_func_begin();
+
+    if( is_ShutDown() )
+        return -1;
 
     if( is_LocalNodeFrontEnd() ) { 
         if( iblocking ){
@@ -1242,7 +1258,6 @@ int Network::waitfor_NonEmptyStream(void)
 {
     mrn_dbg_func_begin();
 
-
     Stream* cur_strm = NULL;
     map < unsigned int, Stream * >::const_iterator iter;
     _streams_sync.Lock();
@@ -1268,9 +1283,12 @@ int Network::waitfor_NonEmptyStream(void)
         }
         mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting on CV[STREAMS_NONEMPTY] ...\n"));
         _streams_sync.WaitOnCondition( STREAMS_NONEMPTY );
+
+        if( is_ShutDown() )
+            break;
     }
-    // should never get here, just in case
     _streams_sync.Unlock();
+    return -1;
 }
 
 void Network::signal_NonEmptyStream(void)
