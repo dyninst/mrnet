@@ -179,7 +179,7 @@ int main( int argc, char *argv[] ) {
     }
 
     /* this is where MPI+work would normally be done */
-    sleep(20);
+    sleep(10);
 
     MPI_Finalize();
 
