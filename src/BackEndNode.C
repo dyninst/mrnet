@@ -238,7 +238,7 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
         mrn_dbg(3, mrn_printf(FLF, stderr, "DEPRECATED: not calling exit()\n"));
     }
    
-    // exit recv thread from parent
+    // exit recv/EDT thread
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
     XPlat::Thread::Exit(NULL);
 

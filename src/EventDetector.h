@@ -39,6 +39,12 @@ class EventDetector {
           _num_pollfds(0), _max_pollfds(0), _max_fd(-1)
     { }
 
+    ~EventDetector(void)
+    {
+        _thread_id = 0;
+        _network = NULL;
+    }
+
     static bool start( Network* inetwork );
     bool stop( void );
 

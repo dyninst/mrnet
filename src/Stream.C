@@ -87,6 +87,10 @@ Stream::Stream( Network * inetwork,
 
 Stream::~Stream()
 {
+    _shutdown_sync.Lock();
+    _was_shutdown = true;
+    _shutdown_sync.Unlock();
+
     if( _network->is_LocalNodeFrontEnd() ) {
         PacketPtr packet( new Packet( 0, PROT_DEL_STREAM, "%d", _id ) );
         if( _network->get_LocalFrontEndNode()->proc_deleteStream( packet ) == -1 ) {

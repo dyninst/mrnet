@@ -141,8 +141,8 @@ void Network::shutdown_Network(void)
     if( ! is_ShutDown() ) {
 
         _shutdown_sync.Lock();
+
         _was_shutdown = true;
-        _shutdown_sync.Unlock();
 
         // kill streams
         close_Streams();
@@ -173,22 +173,27 @@ void Network::shutdown_Network(void)
                 if( ! get_LocalChildNode()->ack_DeleteSubTree() ) {
                     mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
                 }
+                XPlat::Thread::Join( _parent->send_thread_id, (void**)NULL );
 
                 // cancel recv thread, if that's not this thread
                 if( _parent->recv_thread_id != my_id ) {
+
+                    mrn_dbg( 5, mrn_printf(FLF, stderr, "about to cancel parent recv thread\n") );
+
                     // turn off debug output to prevent mrn_printf deadlock
                     MRN::set_OutputLevel( -1 );
-                    XPlat::Thread::Cancel( _parent->recv_thread_id );
-                }
 
-                // let send/recv threads exit
-                sleep(1);
+                    XPlat::Thread::Cancel( _parent->recv_thread_id );
+                    XPlat::Thread::Join( _parent->recv_thread_id, (void**)NULL );
+                }
             }
         }
 
+        _shutdown_sync.Unlock();
+
         // tell EDT to go away, if that's not this thread
         if( _edt != NULL ) {
-            if( _edt->_thread_id != my_id)
+            if( _edt->_thread_id != my_id )
                 _edt->stop();
             delete _edt;
             _edt = NULL;
@@ -224,8 +229,6 @@ void Network::waitfor_ShutDown(void) const
         _shutdown_sync.WaitOnCondition( NETWORK_TERMINATION );
 
     _shutdown_sync.Unlock();
-
-    mrn_dbg_func_end();
 }
 
 void Network::signal_ShutDown(void)
