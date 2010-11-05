@@ -870,7 +870,11 @@ NetworkTopology::Node * NetworkTopology::find_NewParent( Rank ichild_rank,
     }
 
     Node * orphan = find_Node( ichild_rank );
-    assert( orphan );
+    if( orphan == NULL ) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Node for orphan is missing??\n"));
+        _sync.Unlock();
+        return NULL;
+    }
 
     //compute list of potential adopters
     potential_adopters.clear();

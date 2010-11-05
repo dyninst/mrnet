@@ -219,25 +219,12 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
 
-    // NOTE: deprecated in 3.0, kill this for next release
-    bool goaway = false;
-    char delete_backend;
-    ipacket->unpack( "%c", &delete_backend );
-    if( delete_backend == 't' ) {
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend will exit\n" ));
-        goaway = true;
-    }
-
     // processes will be exiting -- disable failure recovery
     _network->disable_FailureRecovery();
 
     // kill threads, topology, and events
     _network->shutdown_Network();
 
-    if( goaway ) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "DEPRECATED: not calling exit()\n"));
-    }
-   
     // exit recv/EDT thread
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
     XPlat::Thread::Exit(NULL);

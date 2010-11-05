@@ -32,32 +32,33 @@ bool EventDetector::stop( )
     if( 0 == _thread_id )
         return true;
 
-    if( _network->is_LocalNodeParent() ) {
-        // send KILL_SELF message to EDT on listening port
-        int edt_port, sock_fd=0;
-        string edt_host;
-        Message msg;
-        PacketPtr packet( new Packet( 0, PROT_KILL_SELF, "" ) );
+    if( _network->_edt != NULL ) {
 
-        edt_host = _network->get_LocalHostName();
-        edt_port = _network->get_LocalPort();
-        mrn_dbg(3, mrn_printf( FLF, stderr, "Telling EDT(%s:%d) to go away\n",
-                               edt_host.c_str(), edt_port )); 
-        if( connectHost( &sock_fd, edt_host.c_str(), edt_port ) == -1 ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost(%s:%d) failed\n",
-                                  edt_host.c_str(), edt_port ));
-            return false;
+        if( _network->is_LocalNodeParent() ) {
+            // send KILL_SELF message to EDT on listening port
+            int edt_port, sock_fd=0;
+            string edt_host;
+            Message msg;
+            PacketPtr packet( new Packet( 0, PROT_KILL_SELF, "" ) );
+
+            edt_host = _network->get_LocalHostName();
+            edt_port = _network->get_LocalPort();
+            mrn_dbg(3, mrn_printf( FLF, stderr, "Telling EDT(%s:%d) to go away\n",
+                                   edt_host.c_str(), edt_port )); 
+            if( connectHost( &sock_fd, edt_host.c_str(), edt_port ) == -1 ) {
+                mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost(%s:%d) failed\n",
+                                      edt_host.c_str(), edt_port ));
+                return false;
+            }
+            msg.add_Packet( packet );
+            if( msg.send( sock_fd ) == -1 ) {
+                mrn_dbg(1, mrn_printf(FLF, stderr, "Message.sendDirectly() failed\n" ));
+                return false;
+            }
+            XPlat::SocketUtils::Close( sock_fd );    
         }
-        msg.add_Packet( packet );
-        if( msg.send( sock_fd ) == -1 ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Message.sendDirectly() failed\n" ));
-            return false;
-        }
-        XPlat::SocketUtils::Close( sock_fd );    
-    }
-    else {
-        // backends don't have a listening port, so cancel EDT
-        if( _network->_edt != NULL ) {
+        else {
+            // backends don't have a listening port, so cancel EDT
 
             mrn_dbg( 5, mrn_printf(FLF, stderr, "about to cancel EDT\n") );
 
@@ -67,11 +68,11 @@ bool EventDetector::stop( )
             if( XPlat::Thread::Cancel( _thread_id ) != 0 )
                 return false;
         }
-    }
 
-    // wait for EDT to exit
-    if( XPlat::Thread::Join( _thread_id, (void**)NULL ) != 0 )
-        return false;
+        // wait for EDT to exit
+        if( XPlat::Thread::Join( _thread_id, (void**)NULL ) != 0 )
+            return false;
+    }
 
     mrn_dbg_func_end();
     return true;
@@ -387,8 +388,10 @@ void * EventDetector::main( void* iarg )
         int timeout = -1; /* block */
         TimeKeeper* tk = NULL;
 
-        if( edt->_network == NULL ) /* Network going away */
-            break;
+        if( net->is_ShuttingDown() ) {
+            mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
+            XPlat::Thread::Exit(NULL);
+        }
 
         tk = net->get_TimeKeeper();
 	if( tk != NULL ) {
@@ -497,6 +500,7 @@ void * EventDetector::main( void* iarg )
                             mrn_dbg( 5, mrn_printf(FLF, stderr, "New child connected.\n"));
                             break;
 
+#if 0 //deprecated
                         case PROT_NEW_SUBTREE_RPT:
                             // NOTE: needed since back-ends are now threaded, and we can't
                             //       guarantee a packet containing this protocol message
@@ -510,7 +514,7 @@ void * EventDetector::main( void* iarg )
                                 mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTreeReport() failed\n" ));
                             }
                             break;
-                    
+#endif  
                         case PROT_SUBTREE_INITDONE_RPT:
                             // NOTE: needed since back-ends are now threaded, and we can't
                             //       guarantee a packet containing this protocol message
@@ -542,7 +546,7 @@ void * EventDetector::main( void* iarg )
                 mrn_dbg( 3, mrn_printf(FLF, stderr, "Parent failure detected ...\n"));
 
                 // remove old parent socket from watched lists
-                edt->remove_FD(parent_sock);
+                edt->remove_FD( parent_sock );
                 watch_list.remove( parent_sock );
 
                 parent_sock = -1;
@@ -556,7 +560,7 @@ void * EventDetector::main( void* iarg )
                 else {
                     // couldn't recover or recovery turned off, let's shutdown subtree
 
-                    if( ! net->is_ShutDown() ) {
+                    if( ! net->is_ShuttingDown() ) {
                         net->_edt = NULL; // prevents trying to stop myself
 
                         char delete_backends = 'f';
@@ -575,7 +579,8 @@ void * EventDetector::main( void* iarg )
                             // NOTE: thread will exit in above routine
                         }
                     }
-                    continue;
+                    mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
+                    XPlat::Thread::Exit(NULL);
                 }
             }
                     
@@ -611,7 +616,7 @@ void * EventDetector::main( void* iarg )
                 }
                     
                 // remove from watched lists
-                edt->remove_FD(cur_sock);
+                edt->remove_FD( cur_sock );
                 list< int >::iterator tmp_iter = iter++;
                 watch_list.erase( tmp_iter );
 
@@ -672,9 +677,13 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
 {
     mrn_dbg_func_begin();
 
-    assert( _network->is_LocalNodeParent() );
+    if( _network->is_ShuttingDown() ) {
+        mrn_dbg(3, mrn_printf(FLF, stderr, "NOT recovering from child's failure\n") );
+        return 0;
+    }
 
     Rank my_rank = _network->get_LocalRank();
+
     // generate topology update for failed child
     if( _network->is_LocalNodeInternal() ) {
         Stream *s = _network->get_Stream(1); // get topol prop stream
@@ -694,6 +703,7 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
         nt->update_removeNode( my_rank, ifailed_rank, true );
     }
 
+    mrn_dbg_func_end();
     return 0;
 }
 
@@ -704,7 +714,7 @@ int EventDetector::recover_FromParentFailure( int& new_parent_sock )
 
     mrn_dbg_func_begin();
    
-    if( ! _network->recover_FromFailures() ) {
+    if( _network->is_ShuttingDown() || ! _network->recover_FromFailures() ) {
         mrn_dbg(3, mrn_printf(FLF, stderr, "NOT recovering from parent's failure\n") );
         return 0;
     }
@@ -718,14 +728,14 @@ int EventDetector::recover_FromParentFailure( int& new_parent_sock )
     mrn_dbg(3, mrn_printf(FLF, stderr, "Recovering from parent[%d]'s failure\n",
                           par_rank));
 	
-    _network->get_NetworkTopology()->print(stderr);
+    //_network->get_NetworkTopology()->print(stderr);
  
     //Step 1: Compute new parent
     overall_timer.start();
     new_parent_timer.start();
-    NetworkTopology::Node * new_parent_node = _network->get_NetworkTopology()->
-        find_NewParent( my_rank );
-    if( ! new_parent_node ) {
+    NetworkTopology::Node * new_parent_node = 
+        _network->get_NetworkTopology()->find_NewParent( my_rank );
+    if( new_parent_node == NULL ) {
         mrn_dbg(1, mrn_printf( FLF, stderr, "Can't find new parent! NOT recovering ...\n" ));
         return -1;
     }

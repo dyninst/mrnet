@@ -122,9 +122,6 @@ class Network: public Error {
     /* Turn Fault Recovery ON or OFF*/
     bool set_FailureRecovery( bool enable_recovery );
 
-    /* NOTE: DEPRECATED in 3.0 */
-    void set_TerminateBackEndsOnShutdown( bool terminate ); 
-
     // END MRNET API
 
     virtual ~Network( );
@@ -311,6 +308,9 @@ protected:
 
     void collect_PerfData(void);
 
+    bool is_ShuttingDown(void) const;
+    void set_ShuttingDown(void);
+
     //Data Members
     std::string _local_hostname;
     Port _local_port;
@@ -333,8 +333,7 @@ protected:
 
     bool _threaded;
     bool _recover_from_failures;
-    bool _terminate_backends;
-    bool _was_shutdown;
+    bool _was_shutdown, _shutting_down;
 
     /* EventPipe notifications */
     std::map< EventClass, EventPipe* > _evt_pipes;

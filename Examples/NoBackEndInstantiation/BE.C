@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 
     } while ( tag != PROT_EXIT );
 
-    // FE delete of the net will cause us to exit, wait for it
+    // wait for FE to delete the net
     net->waitfor_ShutDown();
     delete net;
 

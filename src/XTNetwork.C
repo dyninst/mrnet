@@ -794,8 +794,7 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         sizestr << aprunHosts.size();
         args.push_back( sizestr.str() );
 
-        // specify number of processes per node - we want one (SMP mode)
-        // TODO is this assumption correct?
+        // specify number of processes per node - we want one
         args.push_back( "-N" );
         args.push_back( "1" );
 
@@ -842,7 +841,6 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         assert( apid != -1 );
         assert( athFirstNodeNid != -1 );
 
-        // TODO not sure whether the commands buf needs to be NULL terminated
         std::ostringstream cmdStr;
         cmdStr << mrn_commnode_path
                 << ' ';

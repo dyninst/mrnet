@@ -107,7 +107,7 @@ Network::Network(void)
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
       _edt( new EventDetector(this) ), next_stream_id(1), _evt_mgr( new EventMgr() ),
       _threaded(true), _recover_from_failures(true), 
-      _terminate_backends(true), _was_shutdown(false)
+      _was_shutdown(false), _shutting_down(false)
 {
     init_local();
 
@@ -138,35 +138,33 @@ void Network::close_Streams(void)
 
 void Network::shutdown_Network(void)
 {
-    if( ! is_ShutDown() ) {
+    _shutdown_sync.Lock();
+    bool started = _shutting_down || _was_shutdown;
+    _shutdown_sync.Unlock();
 
-        _shutdown_sync.Lock();
+    if( ! started ) {
 
-        _was_shutdown = true;
-
-        // kill streams
-        close_Streams();
-    
         XPlat::Thread::Id my_id = 0;
         tsd_t *tsd = ( tsd_t * )tsd_key.Get();
         if( tsd != NULL )
             my_id = tsd->thread_id;
 
+        // kill streams
+        close_Streams();
+    
+        // do shutdown protocol
         if( is_LocalNodeFrontEnd() ) {
 
             if( ( _network_topology != NULL ) && 
                 ( _network_topology->get_NumNodes() > 0 ) ) {
 
-                char delete_backends = 'f';
-                if( _terminate_backends )
-                    delete_backends = 't';
-            
-                PacketPtr packet( new Packet(0, PROT_SHUTDOWN, 
-                                             "%c", delete_backends) );
+                PacketPtr packet( new Packet(0, PROT_SHUTDOWN, "") );
                 get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
             }
         }
         else if( is_LocalNodeBackEnd() ) {
+
+            set_ShuttingDown();
 
             if( _parent != PeerNode::NullPeerNode ) {
                 // send shutdown notice to parent, which will cause send thread to exit
@@ -188,8 +186,6 @@ void Network::shutdown_Network(void)
                 }
             }
         }
-
-        _shutdown_sync.Unlock();
 
         // tell EDT to go away, if that's not this thread
         if( _edt != NULL ) {
@@ -217,6 +213,22 @@ bool Network::is_ShutDown(void) const
     rc = _was_shutdown;
     _shutdown_sync.Unlock();
     return rc;
+}
+
+bool Network::is_ShuttingDown(void) const
+{
+    bool rc;
+    _shutdown_sync.Lock();
+    rc = _shutting_down;
+    _shutdown_sync.Unlock();
+    return rc;
+}
+
+void Network::set_ShuttingDown(void)
+{
+    _shutdown_sync.Lock();
+    _shutting_down = true;
+    _shutdown_sync.Unlock();
 }
 
 void Network::waitfor_ShutDown(void) const
@@ -259,15 +271,6 @@ const char* Network::FindCommnodePath(void)
     if( path == NULL )
         path = COMMNODE_EXE;
     return path;
-}
-
-// deprecated: back-ends should call exit() after waitfor_ShutDown()
-//             if termination is desired
-void Network::set_TerminateBackEndsOnShutdown( bool terminate )
-{
-    mrn_printf(FLF, stderr, 
-               "Network::set_TerminateBackEndsOnShutdown() is deprecated.\n");
-    _terminate_backends = terminate;
 }
 
 void Network::update_BcastCommunicator(void)
@@ -671,7 +674,7 @@ int Network::recv( bool iblocking )
 {
     mrn_dbg_func_begin();
 
-    if( is_ShutDown() )
+    if( is_ShutDown() || is_ShuttingDown() )
         return -1;
 
     if( is_LocalNodeFrontEnd() ) { 

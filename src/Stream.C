@@ -239,8 +239,10 @@ int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket,
     mrn_dbg(3, mrn_printf(FLF, stderr,
                           "stream_id: %d, tag:%d, fmt=\"%s\"\n", _id, itag, ifmt));
 
-    if( is_Closed() || is_ShutDown() )
+    if( is_Closed() || is_ShutDown() ) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "send on closed stream\n"));
         return -1;
+    }
     
     vector<PacketPtr> opackets, opackets_reverse;
 

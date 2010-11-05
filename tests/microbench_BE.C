@@ -48,7 +48,7 @@ int main( int argc, char* argv[] )
         int rret = net->recv( &tag, pkt, &stream );
         if( rret == -1 ) {
             std::cerr << "BE: Stream::recv() failed" << std::endl;
-            return -1;
+            break;
         }
 
         if( tag == MB_ROUNDTRIP_LATENCY ) {
@@ -60,7 +60,7 @@ int main( int argc, char* argv[] )
             if( (stream->send( tag, "%d", ival ) == -1) ||
                 (stream->flush() == -1) ) {
                 std::cerr << "BE: roundtrip exp reduction failed" << std::endl;
-                return -1;
+                break;
             }
         }
         else {
@@ -80,31 +80,32 @@ int main( int argc, char* argv[] )
     //
 
     // determine the number of reductions required
-    assert( tag == MB_RED_THROUGHPUT );
-    assert( stream != NULL );
-    int nReductions = 0;
-    int ival;
-    pkt->unpack( "%d %d", &nReductions, &ival );
+    if( tag == MB_RED_THROUGHPUT ) {
+        int nReductions = 0;
+        int ival;
+        pkt->unpack( "%d %d", &nReductions, &ival );
 
-    // do the reductions
-    for( int i = 0; i < nReductions; i++ ) {
-
-        // send a value for the reduction
-        if( (stream->send( MB_RED_THROUGHPUT, "%d", ival ) == -1 ) ||
-            (stream->flush() == -1) ) {
-            std::cerr << "BE: reduction throughput exp reduction failed" 
-                    << std::endl;
-            return -1;
+        // do the reductions
+        for( int i = 0; i < nReductions; i++ ) {
+            
+            // send a value for the reduction
+            if( (stream->send( MB_RED_THROUGHPUT, "%d", ival ) == -1 ) ||
+                (stream->flush() == -1) ) {
+                std::cerr << "BE: reduction throughput exp reduction failed" 
+                          << std::endl;
+                break;
+            }
         }
     }
+
     // cleanup
     // receive a go-away message
     tag = 0;
     int rret = net->recv( &tag, pkt, &stream );
-    if( (rret != -1) && (tag != MB_EXIT) ) {
-        std::cerr << "BE: received unexpected go-away tag " << tag << std::endl;
+    if( rret == -1) {
+        std::cerr << "BE: failed to receive go-away tag" << std::endl;
     }
-    if( tag != MB_EXIT ) {
+    else if( tag != MB_EXIT ) {
         std::cerr << "BE: received unexpected go-away tag " << tag << std::endl;
     }
 

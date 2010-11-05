@@ -35,7 +35,6 @@ ParentNode::ParentNode( Network* inetwork,
       _network(inetwork),
       _num_children( 0 ),
       _num_children_reported( 0 ),
-      _shutdown_started( false ),
       listening_sock_fd( listeningSocket )
 {
     mrn_dbg( 5, mrn_printf(FLF, stderr, "ParentNode(local[%u]:\"%s:%u\")\n",
@@ -242,16 +241,9 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
 
-    subtreereport_sync.Lock( );
+    _network->set_ShuttingDown();
 
-    if( _shutdown_started ) {
-        // already started by another thread
-        subtreereport_sync.Unlock( );
-        mrn_dbg_func_end();
-        return 0;
-    }
-    
-    _shutdown_started = true;
+    subtreereport_sync.Lock( );
 
     _num_children_reported = _num_children = 0;
     _num_children = _network->_children.size();
