@@ -111,9 +111,10 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
     } while( cret == -1 );
 
     if( cret == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n",
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%d failed with '%s' after %d tries\n",
                                host, port,
-			       XPlat::Error::GetErrorString( err ).c_str() ) );
+			       XPlat::Error::GetErrorString(err).c_str(),
+                               nConnectTries) );
         XPlat::SocketUtils::Close( sock );
         return -1;
     }
