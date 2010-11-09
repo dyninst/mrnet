@@ -360,7 +360,8 @@ void Network::init_FrontEnd( const char * itopology,
     local_data->thread_name = strdup( nameStream.str().c_str() );
     local_data->process_rank = _local_rank;
     local_data->node_type = FE_NODE;
-
+    local_data->network = this;
+    
     status = tsd_key.Set( local_data );
 
     if( status != 0 ) {
@@ -455,6 +456,7 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
     local_data->thread_name = strdup( nameStream.str().c_str() );
     local_data->process_rank = _local_rank;
     local_data->node_type = BE_NODE;
+    local_data->network = this;
     if( ( status = tsd_key.Set( local_data ) ) != 0 ) {
         //TODO: add event to notify upstream
         error( ERR_SYSTEM, imyrank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
@@ -498,7 +500,8 @@ void Network::init_InternalNode( const char* iphostname,
     local_data->thread_id = XPlat::Thread::GetId();
     local_data->thread_name = strdup( nameStream.str().c_str() );
     local_data->process_rank = _local_rank;
-    local_data->node_type = CP_NODE;    
+    local_data->node_type = CP_NODE;
+    local_data->network = this;    
     if( ( status = tsd_key.Set( local_data ) ) != 0 )
     {
         //TODO: add event to notify upstream

@@ -497,13 +497,15 @@ int mrn_printf( const char *file, int line, const char * func,
     const char* thread_name = NULL;
     int rank = UnknownRank;
     node_type_t node_type = UNKNOWN_NODE;
+    Network* net = NULL;
     
-    tsd_t *tsd = ( tsd_t * )tsd_key.Get();
+    tsd_t *tsd = (tsd_t*) tsd_key.Get();
     if( tsd != NULL ) {
         tid = tsd->thread_id;
         thread_name = tsd->thread_name;
         rank = tsd->process_rank;
         node_type = tsd->node_type;
+        net = tsd->network;
     }
 
     // try to open log file

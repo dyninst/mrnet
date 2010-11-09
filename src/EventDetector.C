@@ -336,6 +336,7 @@ void * EventDetector::main( void* iarg )
     local_data->thread_name = strdup( namestr.str().c_str() );
     local_data->process_rank = myrank;
     local_data->node_type = UNKNOWN_NODE;
+    local_data->network = net;
 
     int status;
     if( (status = tsd_key.Set( local_data )) != 0){

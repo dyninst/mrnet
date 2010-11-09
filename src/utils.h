@@ -92,12 +92,15 @@ typedef enum {
      CP_NODE
 } node_type_t;
 
+class Network;
+
 class tsd_t {
  public:
     XPlat::Thread::Id thread_id;
     const char *thread_name;
     Rank process_rank;
     node_type_t node_type;
+    Network* network;
 };
 
 #if defined(DEBUG_MRNET)

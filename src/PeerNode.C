@@ -215,6 +215,7 @@ void * PeerNode::recv_thread_main( void* iargs )
     local_data->thread_name = strdup( namestr.str().c_str() );
     local_data->process_rank = rank;
     local_data->node_type = UNKNOWN_NODE;
+    local_data->network = net;
     if( (status = tsd_key.Set(local_data)) != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
                    strerror(status) ));
@@ -297,6 +298,7 @@ void * PeerNode::send_thread_main( void* iargs )
     local_data->thread_name = strdup( namestr.str().c_str() );
     local_data->process_rank = rank;
     local_data->node_type = UNKNOWN_NODE;
+    local_data->network = net;
     if( (status = tsd_key.Set(local_data)) != 0 ) {
         mrn_dbg( 1, mrn_printf(0,0,0, stderr, "XPlat::TLSKey::Set(): %s\n",
                               strerror(status))); 
