@@ -106,6 +106,7 @@ main( int argc, char* argv[] )
         (stream->flush() == -1) ) {
         std::cerr << "FE: failed to broadcast termination message" << std::endl;
     }
+    delete stream;
 
     // delete the net
     std::cout << "FE: deleting net" << std::endl;
