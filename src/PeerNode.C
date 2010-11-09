@@ -234,7 +234,7 @@ void * PeerNode::recv_thread_main( void* iargs )
         if( (rret == -1) || ((rret == 0) && (packet_list.size() == 0)) ) {
             if( rret == -1 ) {
                 mrn_dbg( 3, mrn_printf(FLF, stderr, 
-                           "PeerNode.recv() failed! Thread Exiting\n") );
+                           "PeerNode.recv() failed!\n") );
             }
             peer_node->mark_Failed();
             break;
@@ -250,6 +250,14 @@ void * PeerNode::recv_thread_main( void* iargs )
         }
     }
 
+    if( net->is_ShuttingDown() ) {
+        // handle case where child goes away before sending shutdown ack
+        if( peer_node->is_child() ) {
+            net->get_LocalParentNode()->proc_DeleteSubTreeAck( Packet::NullPacket );
+        }
+    }
+
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "I'm going away now!\n") );
     XPlat::Thread::Exit(NULL);
 
     // this is redundant, but the compiler doesn't know that
