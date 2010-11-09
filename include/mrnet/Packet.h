@@ -57,7 +57,6 @@ class Packet: public Error {
 
     ~Packet();
 
-    int ExtractVaList( const char *fmt, va_list arg_list ) const;
     int ExtractArgList( const char *fmt, ... ) const;
 
  private:
@@ -69,6 +68,8 @@ class Packet: public Error {
 
     unsigned int get_NumDataElements( void ) const;
     const DataElement * get_DataElement( unsigned int i ) const;
+
+    int ExtractVaList( const char *fmt, va_list arg_list ) const;
 
     void ArgList2DataElementArray( va_list arg_list );
     void DataElementArray2ArgList( va_list arg_list ) const;
