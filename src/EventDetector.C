@@ -34,6 +34,8 @@ bool EventDetector::stop( )
 
     if( _network->_edt != NULL ) {
 
+	_network->_edt = NULL;
+
         if( _network->is_LocalNodeParent() ) {
             // send KILL_SELF message to EDT on listening port
             int edt_port, sock_fd=0;
@@ -389,6 +391,7 @@ void * EventDetector::main( void* iarg )
         TimeKeeper* tk = NULL;
 
         if( net->is_ShuttingDown() ) {
+	    net->_edt = NULL;
             mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
             XPlat::Thread::Exit(NULL);
         }
@@ -456,6 +459,8 @@ void * EventDetector::main( void* iarg )
 
                         case PROT_KILL_SELF:
                             mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_KILL_SELF\n") );
+
+			    net->_edt = NULL;
 
                             //close event sockets explicitly
                             mrn_dbg( 5, mrn_printf(FLF, stderr,

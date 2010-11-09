@@ -32,6 +32,7 @@ class Packet;
 class PeerNode: public CommunicationNode, public Error {
     friend class ChildNode;
     friend class Network;
+    friend class ParentNode;
  public:
 
     static PeerNodePtr NullPeerNode;

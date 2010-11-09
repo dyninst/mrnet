@@ -176,7 +176,8 @@ void Network::shutdown_Network(void)
                 // cancel recv thread, if that's not this thread
                 if( _parent->recv_thread_id != my_id ) {
 
-                    mrn_dbg( 5, mrn_printf(FLF, stderr, "about to cancel parent recv thread\n") );
+                    mrn_dbg( 5, mrn_printf(FLF, stderr, 
+		                           "about to cancel parent recv thread\n") );
 
                     // turn off debug output to prevent mrn_printf deadlock
                     MRN::set_OutputLevel( -1 );
@@ -203,6 +204,22 @@ void Network::shutdown_Network(void)
         _evt_mgr->clear_Events();
 
         signal_ShutDown();        
+    }
+    else if( is_LocalNodeInternal() ) {
+
+        // tell EDT to go away
+        if( _edt != NULL ) {
+            _edt->stop();
+            delete _edt;
+            _edt = NULL;
+        }
+
+        // wait for parent recv thread to finish
+        if( _parent != PeerNode::NullPeerNode ) {
+            mrn_dbg( 5, mrn_printf(FLF, stderr, 
+	                           "waiting for parent recv thread to finish\n") );
+            XPlat::Thread::Join( _parent->recv_thread_id, (void**)NULL );
+	}
     }
 }
 
@@ -1287,11 +1304,13 @@ int Network::waitfor_NonEmptyStream(void)
                 return -1;
             }
         }
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting on CV[STREAMS_NONEMPTY] ...\n"));
-        _streams_sync.WaitOnCondition( STREAMS_NONEMPTY );
 
         if( is_ShutDown() )
             break;
+
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting on CV[STREAMS_NONEMPTY] ...\n"));
+        _streams_sync.WaitOnCondition( STREAMS_NONEMPTY );
+
     }
     _streams_sync.Unlock();
     return -1;

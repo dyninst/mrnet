@@ -142,17 +142,17 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
     /* recv packet buffers */
     XPlat::NCBuf* ncbufs = new XPlat::NCBuf[no_packets];
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Reading %d packets of size: [",
-                no_packets ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Reading %d packets\n",
+                           no_packets) );
 
     int total_bytes = 0;
     for( i = 0; i < no_packets; i++ ) {
         ncbufs[i].buf = (char*) malloc( packet_sizes[i] );
         ncbufs[i].len = packet_sizes[i];
         total_bytes += packet_sizes[i];
-        mrn_dbg( 3, mrn_printf(0,0,0, stderr, "%d, ", packet_sizes[i] ));
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "packet %u has size %d\n", 
+                               i, packet_sizes[i]) );
     }
-    mrn_dbg( 3, mrn_printf(0,0,0, stderr, "]\n" ));
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling NCRecv\n" ));
     retval = XPlat::NCRecv( sock_fd, ncbufs, no_packets );
@@ -230,7 +230,7 @@ int Message::send( int sock_fd )
     assert( packet_sizes );
 
     std::list < PacketPtr >::iterator iter = _packets.begin( );
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Writing %d packets of size: [ ",
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "Writing %d packets\n",
                            no_packets ));
     for( i = 0; iter != _packets.end( ); iter++, i++ ) {
 
@@ -246,9 +246,8 @@ int Message::send( int sock_fd )
         ncbufs[i].len = psz;
         packet_sizes[i] = psz;
         total_bytes += psz;
-        mrn_dbg( 3, mrn_printf(0,0,0, stderr, "%u, ", psz ));
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "packet %u has size %u\n", i, psz) );
     }
-    mrn_dbg( 3, mrn_printf(0,0,0, stderr, "]\n" ));
 
     /* put how many packets are going */
     buf_len = pdr_sizeof( ( pdrproc_t )( pdr_uint32 ), &no_packets );
@@ -266,6 +265,7 @@ int Message::send( int sock_fd )
         return -1;
     }
 
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "calling MRN::write() for number of packets\n" ));
     if( MRN::write( sock_fd, buf, buf_len ) != buf_len ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "MRN::write() failed\n" ));
         free( buf );
@@ -274,7 +274,6 @@ int Message::send( int sock_fd )
         _packet_sync.Unlock();
         return -1;
     }
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN::write() succeeded\n" ));
     free( buf );
     MRN_bytes_send.Add( buf_len );
 
@@ -296,8 +295,9 @@ int Message::send( int sock_fd )
         return -1;
     }
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling MRN::write(%d, %p, %d)\n", 
-                           sock_fd, buf, buf_len ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                           "calling MRN::write() for packet-size vec of len %d\n", 
+                           buf_len) );
     int mcwret = MRN::write( sock_fd, buf, buf_len );
     if( mcwret != buf_len ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "MRN::write() failed\n" ));
@@ -313,8 +313,8 @@ int Message::send( int sock_fd )
 
 
     // send the packets
-    mrn_dbg( 3, mrn_printf(FLF, stderr,
-                "Calling XPlat::NCSend(%d buffers, %d total bytes)\n",
+    mrn_dbg( 5, mrn_printf(FLF, stderr,
+                "calling XPlat::NCSend(%d buffers, %d total bytes)\n",
                 no_packets, total_bytes ));
 
     int sret = XPlat::NCSend( sock_fd, ncbufs, no_packets );
@@ -336,6 +336,7 @@ int Message::send( int sock_fd )
     _packet_sync.Unlock( );
 
     delete[] ncbufs;
+
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Message::send() succeeded\n") );
 
     if( go_away ) {

@@ -253,13 +253,6 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     // processes will be exiting -- disable failure recovery
     _network->disable_FailureRecovery();
 
-    // send ack to parent, if any
-    if( _network->is_LocalNodeChild() ) {
-        if( ! _network->get_LocalChildNode()->ack_DeleteSubTree() ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
-        }
-    }
-
     // send to all children
     /* note: don't request flush as send threads will exit 
        before notifying flush completion */
@@ -270,6 +263,22 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     // wait for acks -- so children don't initiate failure recovery when we exit
     if( ! waitfor_DeleteSubTreeAcks() ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_DeleteSubTreeAcks() failed\n" ));
+    }
+
+    // send ack to parent, if any
+    if( _network->is_LocalNodeChild() ) {
+        if( ! _network->get_LocalChildNode()->ack_DeleteSubTree() ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
+        }
+        else {
+            // wait for send thread to finish
+            PeerNodePtr parent = _network->get_ParentNode();
+            if( parent != NULL ) {
+                mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                                       "waiting for parent send thread to finish\n") );
+                XPlat::Thread::Join( parent->send_thread_id, (void**)NULL );
+            }
+        }
     }
 
     // if internal, signal network termination
