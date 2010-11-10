@@ -98,7 +98,7 @@ RSHNetwork::CreateInternalNode( Network* inetwork,
     if( bRet == -1 )
     {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "Failure: unable to instantiate network\n" ));
-        error( ERR_INTERNAL, UnknownRank, "" );
+        return NULL;
     }
     assert( listeningPort != UnknownPort );
 

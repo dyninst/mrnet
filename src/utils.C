@@ -154,29 +154,22 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
 
 int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
 {
-    int err;
-    int sock = *sock_in;
-    Port port;
+    int err, sock;
+    Port port = *port_in;
 
-    if( *port_in == UnknownPort ){
+    if( port == UnknownPort )
         port = 0;
-    }
-    else{
-        port = *port_in;
-    }
-
-    struct sockaddr_in local_addr;
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "In bindPort(sock:%d, port:%d)\n",
-                sock, port ) );
 
     sock = socket( AF_INET, SOCK_STREAM, 0 );
     if( sock == -1 ) {
         err = XPlat::NetUtils::GetLastError();
         mrn_dbg( 1, mrn_printf(FLF, stderr, "socket() failed: %s\n",
-                               XPlat::Error::GetErrorString( err ).c_str() ) );
+                               XPlat::Error::GetErrorString(err).c_str() ) );
         return -1;
     }
+
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "In bindPort(sock:%d, port:%d)\n",
+                           sock, port) );
 
     // Close socket on exec
 #ifndef os_windows
@@ -225,82 +218,59 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
 #endif
     }
 
+    if( port != 0 ) {
 
 #ifndef os_windows
-    // set the socket so that it does not hold onto its port after
-    // the process exits (needed because on at least some platforms we
-    // use well-known ports when connecting sockets)
-    int soVal = 1;
-    int soRet = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, 
-                            (const char*)&soVal, sizeof(soVal) );
-
-    if( soRet < 0 ) {
-        err = XPlat::NetUtils::GetLastError();
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "setsockopt() failed: %s\n",
-                               XPlat::Error::GetErrorString( err ).c_str() ) );
-    }
+        // set the socket so that it does not hold onto its port after
+        // the process exits (needed because on at least some platforms we
+        // use well-known ports when connecting sockets)
+        int soVal = 1;
+        int soRet = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, 
+                                (const char*)&soVal, sizeof(soVal) );
+        
+        if( soRet < 0 ) {
+            err = XPlat::NetUtils::GetLastError();
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "setsockopt() failed: %s\n",
+                                   XPlat::Error::GetErrorString(err).c_str() ) );
+        }
 #endif
 
-    memset( &local_addr, 0, sizeof( local_addr ) );
-    local_addr.sin_family = AF_INET;
-    local_addr.sin_addr.s_addr = htonl( INADDR_ANY );
+        struct sockaddr_in local_addr;
+        memset( &local_addr, 0, sizeof( local_addr ) );
+        local_addr.sin_family = AF_INET;
+        local_addr.sin_addr.s_addr = htonl( INADDR_ANY );
 
-    if( port != 0 ) {
         // try to bind and listen using the supplied port
         local_addr.sin_port = htons( port );
         if( bind(sock, (sockaddr*)&local_addr, sizeof(local_addr)) == -1 ) {
             err = XPlat::NetUtils::GetLastError();
             mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to static port %d failed: %s\n",
-                                   port, XPlat::Error::GetErrorString( err ).c_str() ) );
-            XPlat::SocketUtils::Close( sock );
-            return -1;
-        }
-        if( listen( sock, 64 ) == -1 ) {
-            err = XPlat::NetUtils::GetLastError();
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
-                                   XPlat::Error::GetErrorString( err ).c_str() ) );
+                                   port, XPlat::Error::GetErrorString(err).c_str() ) );
             XPlat::SocketUtils::Close( sock );
             return -1;
         }
     }
-    else {
-        // let the system assign a port, start from 1st dynamic port
-        port = 49152;
-        bool success = false;
+    // else, the system will assign a port for us in listen
 
-        do {
-            local_addr.sin_port = htons( port );
-            if( bind(sock, (sockaddr*)&local_addr, sizeof(local_addr)) != 0/*== -1*/ ) {
-                err = XPlat::NetUtils::GetLastError();
-                if( XPlat::Error::EAddrInUse( err ) ) {
-                    ++port;
-                    continue;
-                }
-                else {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to dynamic port %d failed: %s\n",
-                                           port, XPlat::Error::GetErrorString( err ).c_str() ) );
-                    XPlat::SocketUtils::Close( sock );
-                    return -1;
-                }
-            }
-            else {
-                if( listen(sock, 64) == -1 ) {
-                    err = XPlat::NetUtils::GetLastError();
-                    if( XPlat::Error::EAddrInUse( err ) ) {
-                        ++port;
-                        continue;
-                    }
-                    else {
-                        mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
-                                               XPlat::Error::GetErrorString( err ).c_str() ) );
-                        XPlat::SocketUtils::Close( sock );
-                        return -1;
-                    }
-                }
-                success = true;
-            }
-        } while( ! success );
+    if( listen(sock, 128) == -1 ) {
+        err = XPlat::NetUtils::GetLastError();
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
+                               XPlat::Error::GetErrorString(err).c_str() ) );
+        XPlat::SocketUtils::Close( sock );
+        return -1;
     }
+
+    // we have a listening socket
+    *sock_in = sock;
+
+    // determine which port we were actually assigned to
+    if( getPortFromSocket( sock, port_in ) != 0 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr,
+            "failed to obtain port from socket\n" ) );
+        XPlat::SocketUtils::Close( sock );
+        return -1;
+    }
+    
 
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
@@ -315,15 +285,6 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
     }
 #endif // defined(TCP_NODELAY)
 
-    // determine which port we were actually assigned to
-    if( getPortFromSocket( sock, port_in ) != 0 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
-            "failed to obtain port from socket\n" ) );
-        XPlat::SocketUtils::Close( sock );
-        return -1;
-    }
-    
-    *sock_in = sock;
     mrn_dbg( 3, mrn_printf(FLF, stderr,
                            "Leaving bindPort(). Returning sock:%d, port:%d\n",
                            sock, *port_in ) );
@@ -417,7 +378,6 @@ int getPortFromSocket( int sock, Port *port )
 {
     struct sockaddr_in local_addr;
     socklen_t sockaddr_len = sizeof( local_addr );
-
 
     if( getsockname( sock, (sockaddr*) & local_addr, &sockaddr_len ) == -1 ) {
         perror( "getsockname" );
