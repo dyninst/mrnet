@@ -57,8 +57,8 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 #endif
 
 
-int connectHost ( int *sock_in, /*const*/ char* hostname, 
-                  Port port, int num_retry)
+int connectHost( int *sock_in, char* hostname, 
+                 Port port, int num_retry )
 {
     int err, sock = *sock_in;
     struct sockaddr_in server_addr;
