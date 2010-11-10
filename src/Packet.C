@@ -269,34 +269,16 @@ const DataElement * Packet::get_DataElement( unsigned int i ) const
 
 int Packet::ExtractVaList( const char * /*fmt*/, va_list arg_list ) const
 {
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "ExtractVaList(%p)\n", this) );
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "In ExtractVaList(%p)\n", this ));
+    // TODO: proper fmt string comparison
+    // TODO: add exception block here to catch user errors
 
-    //TODO: proper fmt string comparison
-
-    //TODO: add exception block here to catch user errors
     data_sync.Lock();
-
     DataElementArray2ArgList( arg_list );
-
     data_sync.Unlock();
 
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "ExtractVaList(%p) succeeded\n", this ));
-
-    return 0;
-}
-
-int Packet::ExtractArgList( const char *ifmt_str, ... ) const
-{
-    va_list arg_list;
-
-    mrn_dbg(2, mrn_printf(FLF, stderr, "fmt:\"%s\"\n", ifmt_str));
-
-    va_start( arg_list, ifmt_str );
-    DataElementArray2ArgList( arg_list );
-    va_end( arg_list );
-
+    mrn_dbg_func_end();
     return 0;
 }
 

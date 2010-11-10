@@ -898,16 +898,14 @@ Stream* Network::new_Stream( Communicator *icomm,
     }
     mrn_dbg(5, mrn_printf(0,0,0, stderr, "]\n"));
     
-
-    PacketPtr packet( new Packet( 0, PROT_NEW_STREAM, "%d %ad %d %d %d",
-                                  next_stream_id, backends, endpoints.size(),
-                                  ius_filter_id, isync_filter_id, ids_filter_id ) );
+    PacketPtr packet( new Packet(0, PROT_NEW_STREAM, "%d %ad %d %d %d",
+                                 next_stream_id, backends, endpoints.size(),
+                                 ius_filter_id, isync_filter_id, ids_filter_id) );
     next_stream_id++;
 
     Stream * stream = get_LocalFrontEndNode()->proc_newStream(packet);
-    if( stream == NULL ){
+    if( stream == NULL )
         mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
-    }
 
     delete [] backends;
     return stream;
@@ -944,8 +942,7 @@ Stream* Network::new_Stream( Communicator* icomm,
                              std::string ds_filters )
 {
     if( NULL == icomm ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, 
-                              "cannot create stream from NULL communicator\n") );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "NULL communicator\n") );
         return NULL;
     }
 
@@ -954,26 +951,27 @@ Stream* Network::new_Stream( Communicator* icomm,
     unsigned num_pts = endpoints.size();
     if( num_pts == 0 ) {
         if( icomm != _bcast_communicator ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, 
-                       "cannot create stream from communicator containing zero end-points\n") );
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                   "communicator contains zero end-points\n") );
             return NULL;
         }
     }
 
     Rank * backends = new Rank[ num_pts ];
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "backends[ " ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "backends[ ") );
     set <CommunicationNode*>:: const_iterator iter;
-    unsigned  int i;
-    for( i=0,iter=endpoints.begin(); iter!=endpoints.end(); i++,iter++) {
-        mrn_dbg(5, mrn_printf( 0,0,0, stderr, "%d, ", (*iter)->get_Rank() ));
+    unsigned int i;
+    for( i=0, iter=endpoints.begin(); iter != endpoints.end(); i++, iter++ ) {
+        mrn_dbg( 5, mrn_printf(0,0,0, stderr, "%d, ", (*iter)->get_Rank()) );
         backends[i] = (*iter)->get_Rank();
     }
-    mrn_dbg(5, mrn_printf(0,0,0, stderr, "]\n"));
+    mrn_dbg( 5, mrn_printf(0,0,0, stderr, "]\n") );
 
-    PacketPtr packet( new Packet( 0, PROT_NEW_HETERO_STREAM, "%d %ad %s %s %s",
-                                  next_stream_id, backends, num_pts,
-                                  us_filters.c_str(), sync_filters.c_str(), ds_filters.c_str() ) );
+    PacketPtr packet( new Packet(0, PROT_NEW_HETERO_STREAM, "%d %ad %s %s %s",
+                                 next_stream_id, backends, num_pts,
+                                 us_filters.c_str(), sync_filters.c_str(), 
+                                 ds_filters.c_str()) );
     next_stream_id++;
 
     Stream * stream = get_LocalFrontEndNode()->proc_newStream(packet);

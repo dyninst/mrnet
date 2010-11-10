@@ -437,9 +437,7 @@ int ParentNode::proc_Event( PacketPtr ) const
 {
     /* NOTE: we need a sensible method for reporting errors to the FE,
              e.g., an error reporting stream. until we have this,
-             there's nothing to do here -- Oct 2010
-    */
-
+             there's nothing to do here -- Oct 2010 */
     return 0;
 }
 
@@ -457,49 +455,63 @@ Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
 
     if( tag == PROT_NEW_HETERO_STREAM ) {
 
-        char* us_filters;
-        char* sync_filters;
-        char* ds_filters;
+        char *us_filters = NULL;
+        char *sync_filters = NULL;
+        char *ds_filters = NULL;
         Rank me = _network->get_LocalRank();
 
-        if( ipacket->ExtractArgList( "%d %ad %s %s %s", 
-                                     &stream_id, &backends, &num_backends, 
-                                     &us_filters, &sync_filters, &ds_filters ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+        if( ipacket->unpack("%d %ad %s %s %s", 
+                            &stream_id, &backends, &num_backends, 
+                            &us_filters, &sync_filters, &ds_filters) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "unpack() failed\n") );
             return NULL;
         }
         
         if( ! Stream::find_FilterAssignment(std::string(us_filters), me, us_filter_id) ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(upstream) failed, using default\n" ));
+            mrn_dbg( 3, mrn_printf(FLF, stderr, 
+                                   "Stream::find_FilterAssignment(upstream) failed\n") );
             us_filter_id = TFILTER_NULL;
         }
         if( ! Stream::find_FilterAssignment(std::string(ds_filters), me, ds_filter_id) ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(downstream) failed, using default\n" ));
+            mrn_dbg( 3, mrn_printf(FLF, stderr, 
+                                   "Stream::find_FilterAssignment(downstream) failed\n") );
             ds_filter_id = TFILTER_NULL;
         }
         if( ! Stream::find_FilterAssignment(std::string(sync_filters), me, sync_id) ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream::find_FilterAssignment(sync) failed, using default\n" ));
+            mrn_dbg( 3, mrn_printf(FLF, stderr, 
+                                   "Stream::find_FilterAssignment(sync) failed\n") );
             sync_id = SFILTER_WAITFORALL;
         }
         
+        if( us_filters != NULL )
+            free( us_filters );
 
-    } else if( tag == PROT_NEW_STREAM ) {
+        if( sync_filters != NULL )
+            free( sync_filters );
 
-        if( ipacket->ExtractArgList( "%d %ad %d %d %d", 
-                                     &stream_id, &backends, &num_backends, 
-                                     &us_filter_id, &sync_id, &ds_filter_id ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+        if( ds_filters != NULL )
+            free( ds_filters );
+    } 
+    else if( tag == PROT_NEW_STREAM ) {
+
+        if( ipacket->unpack("%d %ad %d %d %d", 
+                            &stream_id, &backends, &num_backends, 
+                            &us_filter_id, &sync_id, &ds_filter_id) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "unpack() failed\n") );
             return NULL;
         }
-
     }
-    //register new stream w/ network
+
+    // register new stream w/ network
     stream = _network->new_Stream( stream_id, backends, num_backends, 
                                    us_filter_id, sync_id, ds_filter_id );
 
-    //send packet to children nodes
+    if( backends != NULL )
+        free( backends );
+
+    // send packet to children nodes
     if( _network->send_PacketToChildren(ipacket) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
         return NULL;
     }
 
@@ -522,7 +534,7 @@ int ParentNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
         return -1;
     }
 
-    //send packet to child nodes
+    // send packet to child nodes
     if( _network->send_PacketToChildren( ipacket ) == -1 ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
         return -1;
@@ -537,21 +549,16 @@ int ParentNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
 
 int ParentNode::proc_deleteStream( PacketPtr ipacket ) const
 {
-    int stream_id;
-
     mrn_dbg_func_begin();
 
-    if( ipacket->ExtractArgList( "%d", &stream_id ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
-        return -1;
-    }
+    int stream_id = (*ipacket)[0]->get_int32_t();
 
     if( _network->send_PacketToChildren( ipacket ) == -1 ) {
         mrn_dbg(2, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n"));
         return -1;
     }
 
-    //delete only @ internal node, front-end stream destructor invokes this function
+    // delete only @ internal node, front-end ~Stream calls this function
     if( _network->is_LocalNodeInternal() ) {
         Stream * strm = _network->get_Stream( stream_id );
         if( strm == NULL ) {
@@ -574,15 +581,14 @@ int ParentNode::proc_newFilter( PacketPtr ipacket ) const
 
     mrn_dbg_func_begin();
 
-    if( ipacket->ExtractArgList( "%uhd %s %s", &fid, &so_file, &func ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
-        return -1;
-    }
+    fid = (*ipacket)[0]->get_uint16_t();
+    so_file = (*ipacket)[1]->get_string();
+    func = (*ipacket)[2]->get_string();
 
     rc = Filter::load_FilterFunc( fid, so_file, func );
     if( rc != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "Filter::load_FilterFunc() failed.\n" ));
+                               "Filter::load_FilterFunc() failed.\n") );
         rc = -1;
     }
 

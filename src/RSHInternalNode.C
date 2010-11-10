@@ -26,18 +26,14 @@ RSHInternalNode::RSHInternalNode( Network * inetwork,
     RSHChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank )
 {
     //request subtree information    
-    if( request_SubTreeInfo() == -1 ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "request_SubTreeInfo() failed\n" ));
-        ParentNode::error( ERR_INTERNAL, ParentNode::_rank, "request_SubTreeInfofailed\n" );
-        ChildNode::error( ERR_INTERNAL, ParentNode::_rank, "request_SubTreeInfofailed\n" );
+    if( request_SubTreeInfo() == -1 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "request_SubTreeInfo() failed\n") );
     }
 }
-
 
 RSHInternalNode::~RSHInternalNode( void )
 {
 }
-
 
 int
 RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
@@ -47,23 +43,22 @@ RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
     switch( cur_packet->get_Tag() )
     {
     case PROT_NEW_SUBTREE:
-        mrn_dbg(3, mrn_printf(FLF, stderr, "Processing PROT_NEW_SUBTREE\n"));
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Processing PROT_NEW_SUBTREE\n") );
 
         if( proc_newSubTree( cur_packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTree() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTree() failed\n") );
             retval = -1;
         }
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ...\n") );
         if( ! waitfor_SubTreeInitDoneReports() ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_SubTreeReports() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_SubTreeReports() failed\n") );
             retval = -1;
         }
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Subtrees reported\n" ));
 
         //must send reports upwards
-        if( send_SubTreeInitDoneReport( ) == -1 ) {
+        if( send_SubTreeInitDoneReport() == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                        "send_newSubTreeReport() failed\n" ));
+                                   "send_SubTreeInitDoneReport() failed\n") );
             retval = -1;
         }
         break;
@@ -71,8 +66,7 @@ RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
     case PROT_PORT_UPDATE:
         retval = RSHChildNode::proc_PortUpdate(cur_packet);
         if( retval == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_PortUpdate() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_PortUpdate() failed\n") );
         }
         break;
 
