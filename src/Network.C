@@ -124,6 +124,13 @@ Network::~Network(void)
         delete parsed_graph;
         parsed_graph = NULL;
     }
+
+    tsd_t* tsd = (tsd_t*)tsd_key.Get();
+    if( tsd != NULL ) {
+        tsd_key.Set( NULL );
+        free( const_cast<char*>( tsd->thread_name ) );
+        delete tsd;
+    }
 }
 
 void Network::close_Streams(void)
@@ -361,13 +368,9 @@ void Network::init_FrontEnd( const char * itopology,
     local_data->process_rank = _local_rank;
     local_data->node_type = FE_NODE;
     local_data->network = this;
-    
-    status = tsd_key.Set( local_data );
-
-    if( status != 0 ) {
-        error( ERR_SYSTEM, rootRank, 
-               "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
-        return;
+    if( ( status = tsd_key.Set(local_data) ) != 0 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
+                               strerror(status)) );
     }
 
     _bcast_communicator = new Communicator( this );
@@ -457,11 +460,9 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
     local_data->process_rank = _local_rank;
     local_data->node_type = BE_NODE;
     local_data->network = this;
-    if( ( status = tsd_key.Set( local_data ) ) != 0 ) {
-        //TODO: add event to notify upstream
-        error( ERR_SYSTEM, imyrank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
+    if( ( status = tsd_key.Set(local_data) ) != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
-                    strerror( status ) ));
+                               strerror(status)) );
     }
 
     BackEndNode* ben = CreateBackEndNode( this, myhostname, imyrank,
@@ -502,19 +503,15 @@ void Network::init_InternalNode( const char* iphostname,
     local_data->process_rank = _local_rank;
     local_data->node_type = CP_NODE;
     local_data->network = this;    
-    if( ( status = tsd_key.Set( local_data ) ) != 0 )
-    {
-        //TODO: add event to notify upstream
-        error(ERR_SYSTEM, imyrank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
+    if( ( status = tsd_key.Set(local_data) ) != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
-                    strerror( status ) ));
+                               strerror(status)) );
     }
 
     InternalNode* in = CreateInternalNode( this, myhostname, imyrank,
                                            iphostname, ipport, iprank,
                                            idataSocket, idataPort );
-    assert( in != NULL );
-    if( in->has_Error() )
+    if( (in == NULL) || in->has_Error() )
         error( ERR_SYSTEM, imyrank, "Failed to initialize using CreateInternalNode()\n" );
 }
 

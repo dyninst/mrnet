@@ -61,12 +61,6 @@ int main(int argc, char **argv)
     delete net;
     net = NULL;
 
-    tsd_t* tsd = (tsd_t*)tsd_key.Get();
-    if( tsd != NULL ) {
-        free( const_cast<char*>( tsd->thread_name ) );
-        delete tsd;
-    }
-
     return ret;
 }
 
