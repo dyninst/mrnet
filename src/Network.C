@@ -227,6 +227,10 @@ void Network::shutdown_Network(void)
 	                           "waiting for parent recv thread to finish\n") );
             XPlat::Thread::Join( _parent->recv_thread_id, (void**)NULL );
 	}
+
+	// this is nasty, but we need to ensure that CPs don't exit too quickly
+	// on Cray XTs so ALPS won't kill other CPs that haven't completed shutdown
+	sleep( 10 );
     }
 }
 

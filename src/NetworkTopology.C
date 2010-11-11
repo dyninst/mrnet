@@ -1272,6 +1272,12 @@ bool NetworkTopology::send_updates_buffer()
 {
     mrn_dbg_func_begin();
 
+    if( _network->is_ShuttingDown() ) {
+        _updates_buffer.clear();
+        mrn_dbg_func_end();
+        return true;
+    }
+
     int vuc_size = _updates_buffer.size();
   
     if( vuc_size ) {
@@ -1329,6 +1335,9 @@ void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank,
                                          char* chld_host, Port chld_port, 
                                          bool upstream )
 {
+    if( _network->is_ShuttingDown() )
+        return;
+
     Stream* str_one = _network->get_Stream( 1 );
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is before add %s\n", 
                            get_TopologyString().c_str()) );
@@ -1374,6 +1383,9 @@ void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank,
 void NetworkTopology::update_removeNode( Rank par_rank, Rank failed_chld_rank, 
                                          bool upstream )
 {
+    if( _network->is_ShuttingDown() )
+        return;
+
     if( par_rank == _network->get_LocalRank() )
         _network->remove_Node( failed_chld_rank, true );
     else
@@ -1401,6 +1413,9 @@ void NetworkTopology::update_removeNode( Rank par_rank, Rank failed_chld_rank,
 void NetworkTopology::update_changeParent( Rank par_rank, Rank chld_rank, 
                                            bool upstream )
 {
+    if( _network->is_ShuttingDown() )
+        return;
+
     _network->change_Parent( chld_rank, par_rank );
 
     // do callback only after state has been updated
@@ -1425,6 +1440,9 @@ void NetworkTopology::update_changeParent( Rank par_rank, Rank chld_rank,
 void NetworkTopology::update_changePort( Rank chld_rank, Port chld_port, 
                                          bool upstream )
 {
+    if( _network->is_ShuttingDown() )
+        return;
+
     Node* update_node = find_Node( chld_rank );
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before update\n", 
                            get_TopologyString().c_str()) );
@@ -1450,6 +1468,9 @@ void NetworkTopology::update_addInternalNode( Rank par_rank, Rank chld_rank,
                                               char* chld_host, Port chld_port, 
                                               bool upstream )
 {
+    if( _network->is_ShuttingDown() )
+        return;
+
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology before add: %s\n", 
                            get_TopologyString().c_str()) );
 

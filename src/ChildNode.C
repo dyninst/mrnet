@@ -33,7 +33,6 @@ int ChildNode::proc_PacketsFromParent( std::list< PacketPtr > & packets )
 
     mrn_dbg_func_begin();
 
-
     std::list < PacketPtr >::iterator iter = packets.begin();
     for( ; iter != packets.end(); iter++ ) {
         mrn_dbg( 5, mrn_printf(FLF, stderr, "tag is %d\n", (*iter)->get_Tag() ));

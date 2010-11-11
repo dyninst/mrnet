@@ -1232,6 +1232,9 @@ void tfilter_TopoUpdate_common( bool upstream,
                                 const std::vector < PacketPtr >& ipackets,
                                 PacketPtr& opacket )
 {
+    if( net->is_ShutDown() )
+        return;
+
     int *type_arr, *rtype_arr;
     Rank *prank_arr, *crank_arr, *rprank_arr, *rcrank_arr;
     char **chost_arr, **rchost_arr;
