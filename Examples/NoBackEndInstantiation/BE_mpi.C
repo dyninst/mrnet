@@ -89,8 +89,8 @@ void* BackendThreadMain( void* arg )
 
     do {
         if( net->recv(&tag, p, &stream) != 1 ) {
-            printf("receive failure\n");
-            return NULL;
+            printf("net->recv() failure\n");
+            tag = PROT_EXIT;
         }
 
         switch( tag ) {
