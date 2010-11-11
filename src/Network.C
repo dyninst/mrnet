@@ -54,9 +54,9 @@ const Rank UnknownRank = (Rank)-1;
 
 const char *empty_str="";
 
-void set_OutputLevelFromEnvironment( const std::map< std::string, std::string >* iattrs );
+void set_OutputLevelFromEnvironment( std::map< env_key, std::string >& envMap  );
 
-void init_local( void )
+void init_local(void)
 {
 #if !defined(os_windows)
     // Make sure any data sockets we create have descriptors != {1,2}
@@ -90,7 +90,7 @@ void init_local( void )
 #endif
 }
 
-void cleanup_local( void )
+void cleanup_local(void)
 {
 #if defined(os_windows)
     // cleanup Winsock
@@ -108,12 +108,12 @@ Network::Network( const std::map< std::string, std::string >* iattrs )
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
       _edt( new EventDetector(this) ), next_stream_id(1), _evt_mgr( new EventMgr() ),
       _threaded(true), _recover_from_failures(true), 
-      _terminate_backends(true), _was_shutdown(false)
+      _was_shutdown(false), _shutting_down(false)
 {
     init_local();
     
     set_EnvMap( iattrs );
-    set_OutputLevelFromEnvironment( iattrs );
+    set_OutputLevelFromEnvironment( envMap );
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
 }
 
@@ -124,14 +124,13 @@ Network::Network( void )
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
       _edt( new EventDetector(this) ), next_stream_id(1), _evt_mgr( new EventMgr() ),
       _threaded(true), _recover_from_failures(true),
-      _terminate_backends(true), _was_shutdown(false)
+      _was_shutdown(false), _shutting_down( false )
 {   
     init_local();
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
 }
 
-
-Network::~Network( void )
+Network::~Network(void)
 {
     shutdown_Network( );
     cleanup_local( );
@@ -139,60 +138,87 @@ Network::~Network( void )
         delete parsed_graph;
         parsed_graph = NULL;
     }
-    _edt->_network = NULL;
 
     if( MRN_DEBUG_LOG_DIRECTORY != NULL )
         free( MRN_DEBUG_LOG_DIRECTORY );
+
+    tsd_t* tsd = (tsd_t*)tsd_key.Get();
+    if( tsd != NULL ) {
+        tsd_key.Set( NULL );
+        free( const_cast<char*>( tsd->thread_name ) );
+        delete tsd;
+    }
 }
 
-void Network::shutdown_Network( void )
+void Network::close_Streams(void)
 {
-    if( ! is_ShutDown() ) {
+    map< unsigned int, Stream* >::iterator iter;
+    _streams_sync.Lock();
+    for( iter=_streams.begin(); iter != _streams.end(); iter++ ) {
+        (*iter).second->close();
+    }
+    _streams_sync.Unlock();
+}
 
-        _shutdown_sync.Lock();
-        _was_shutdown = true;
-        _shutdown_sync.Unlock();
+void Network::shutdown_Network(void)
+{
+    _shutdown_sync.Lock();
+    bool started = _shutting_down || _was_shutdown;
+    _shutdown_sync.Unlock();
 
-        // kill topology propagation stream
-        delete_Stream( 1 );
+    if( ! started ) {
+
+        XPlat::Thread::Id my_id = 0;
+        tsd_t *tsd = ( tsd_t * )tsd_key.Get();
+        if( tsd != NULL )
+            my_id = tsd->thread_id;
+
+        // kill streams
+        close_Streams();
     
+        // do shutdown protocol
         if( is_LocalNodeFrontEnd() ) {
 
             if( ( _network_topology != NULL ) && 
                 ( _network_topology->get_NumNodes() > 0 ) ) {
 
-                char delete_backends = 'f';
-                if( _terminate_backends )
-                    delete_backends = 't';
-            
-                PacketPtr packet( new Packet(0, PROT_SHUTDOWN, 
-                                             "%c", delete_backends) );
+                PacketPtr packet( new Packet(0, PROT_SHUTDOWN, "") );
                 get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
             }
         }
         else if( is_LocalNodeBackEnd() ) {
 
-            // send shutdown notice to parent, which will cause send thread to exit
-            if( ! get_LocalChildNode()->ack_DeleteSubTree() ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
-            }
+            set_ShuttingDown();
 
-            // cancel recv thread, if that's not this thread
-            XPlat::Thread::Id my_id = 0;
-            tsd_t *tsd = ( tsd_t * )tsd_key.Get();
-            if( tsd != NULL )
-                my_id = tsd->thread_id;
-            if( _parent->recv_thread_id != my_id ) {
-                // turn off debug output to prevent mrn_printf deadlock
-                MRN::set_OutputLevel( -1 );
-                XPlat::Thread::Cancel( _parent->recv_thread_id );
-            }
+            if( _parent != PeerNode::NullPeerNode ) {
+                // send shutdown notice to parent, which will cause send thread to exit
+                if( ! get_LocalChildNode()->ack_DeleteSubTree() ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
+                }
+                XPlat::Thread::Join( _parent->send_thread_id, (void**)NULL );
 
-            // let send/recv threads exit
-            sleep(1);
+                // cancel recv thread, if that's not this thread
+                if( _parent->recv_thread_id != my_id ) {
+
+                    mrn_dbg( 5, mrn_printf(FLF, stderr, 
+		                           "about to cancel parent recv thread\n") );
+
+                    // turn off debug output to prevent mrn_printf deadlock
+                    MRN::set_OutputLevel( -1 );
+
+                    XPlat::Thread::Cancel( _parent->recv_thread_id );
+                    XPlat::Thread::Join( _parent->recv_thread_id, (void**)NULL );
+                }
+            }
         }
 
-        _edt->stop();
+        // tell EDT to go away, if that's not this thread
+        if( _edt != NULL ) {
+            if( _edt->_thread_id != my_id )
+                _edt->stop();
+            delete _edt;
+            _edt = NULL;
+        }
         
         if( _network_topology != NULL ) {
             string empty("");
@@ -203,9 +229,29 @@ void Network::shutdown_Network( void )
 
         signal_ShutDown();        
     }
+    else if( is_LocalNodeInternal() ) {
+
+        // tell EDT to go away
+        if( _edt != NULL ) {
+            _edt->stop();
+            delete _edt;
+            _edt = NULL;
+        }
+
+        // wait for parent recv thread to finish
+        if( _parent != PeerNode::NullPeerNode ) {
+            mrn_dbg( 5, mrn_printf(FLF, stderr, 
+	                           "waiting for parent recv thread to finish\n") );
+            XPlat::Thread::Join( _parent->recv_thread_id, (void**)NULL );
+	}
+
+	// this is nasty, but we need to ensure that CPs don't exit too quickly
+	// on Cray XTs so ALPS won't kill other CPs that haven't completed shutdown
+	sleep( 10 );
+    }
 }
 
-bool Network::is_ShutDown( void ) const
+bool Network::is_ShutDown(void) const
 {
     bool rc;
     _shutdown_sync.Lock();
@@ -214,35 +260,54 @@ bool Network::is_ShutDown( void ) const
     return rc;
 }
 
-void Network::waitfor_ShutDown( void ) const
+bool Network::is_ShuttingDown(void) const
+{
+    bool rc;
+    _shutdown_sync.Lock();
+    rc = _shutting_down;
+    _shutdown_sync.Unlock();
+    return rc;
+}
+
+void Network::set_ShuttingDown(void)
+{
+    _shutdown_sync.Lock();
+    _shutting_down = true;
+    _shutdown_sync.Unlock();
+}
+
+void Network::waitfor_ShutDown(void) const
 {
     mrn_dbg_func_begin();
 
     _shutdown_sync.Lock();
-    _shutdown_sync.WaitOnCondition( NETWORK_TERMINATION );
-    _shutdown_sync.Unlock();
+    
+    while( ! _was_shutdown )
+        _shutdown_sync.WaitOnCondition( NETWORK_TERMINATION );
 
-    mrn_dbg_func_end();
+    _shutdown_sync.Unlock();
 }
 
-void Network::signal_ShutDown( void )
+void Network::signal_ShutDown(void)
 {
     mrn_dbg_func_begin();
+
+    // make sure _was_shutdown has been set to true
+    _shutdown_sync.Lock();
+    if( ! _was_shutdown )
+        _was_shutdown = true;
+    _shutdown_sync.Unlock();
+
+    // notify any blocking recv() calls
+    _streams_sync.Lock();
+    _streams_sync.SignalCondition( STREAMS_NONEMPTY );
+    _streams_sync.Unlock();
 
     _shutdown_sync.Lock();
     _shutdown_sync.SignalCondition( NETWORK_TERMINATION );
     _shutdown_sync.Unlock();
 
     mrn_dbg_func_end();
-}
-
-// deprecated: back-ends should call exit() after waitfor_ShutDown()
-//             if termination is desired
-void Network::set_TerminateBackEndsOnShutdown( bool terminate )
-{
-    mrn_printf(FLF, stderr, 
-               "Network::set_TerminateBackEndsOnShutdown() is deprecated.\n");
-    _terminate_backends = terminate;
 }
 
 const std::map< env_key, std::string >&  Network::get_EnvMap()
@@ -304,7 +369,7 @@ void Network::print_EnvMap()
     }
 }
 
-void Network::update_BcastCommunicator( void )
+void Network::update_BcastCommunicator(void)
 {
     //add end-points to broadcast communicator
     _endpoints_mutex.Lock();
@@ -374,13 +439,10 @@ void Network::init_FrontEnd( const char * itopology,
     local_data->thread_name = strdup( nameStream.str().c_str() );
     local_data->process_rank = _local_rank;
     local_data->node_type = FE_NODE;
-
-    status = tsd_key.Set( local_data );
-
-    if( status != 0 ) {
-        error( ERR_SYSTEM, rootRank, 
-               "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
-        return;
+    local_data->network = this;
+    if( ( status = tsd_key.Set(local_data) ) != 0 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
+                               strerror(status)) );
     }
 
     _bcast_communicator = new Communicator( this );
@@ -446,7 +508,7 @@ void Network::init_FrontEnd( const char * itopology,
 
 }
 
-void Network::send_TopologyUpdates( void )
+void Network::send_TopologyUpdates(void)
 {
     _network_topology->send_updates_buffer();
 }
@@ -478,11 +540,10 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
     local_data->thread_name = strdup( nameStream.str().c_str() );
     local_data->process_rank = _local_rank;
     local_data->node_type = BE_NODE;
-    if( ( status = tsd_key.Set( local_data ) ) != 0 ) {
-        //TODO: add event to notify upstream
-        error( ERR_SYSTEM, imyrank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
+    local_data->network = this;
+    if( ( status = tsd_key.Set(local_data) ) != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
-                    strerror( status ) ));
+                               strerror(status)) );
     }
 
     BackEndNode* ben = CreateBackEndNode( this, myhostname, imyrank,
@@ -521,20 +582,17 @@ void Network::init_InternalNode( const char* iphostname,
     local_data->thread_id = XPlat::Thread::GetId();
     local_data->thread_name = strdup( nameStream.str().c_str() );
     local_data->process_rank = _local_rank;
-    local_data->node_type = CP_NODE;    
-    if( ( status = tsd_key.Set( local_data ) ) != 0 )
-    {
-        //TODO: add event to notify upstream
-        error(ERR_SYSTEM, imyrank, "XPlat::TLSKey::Set(): %s\n", strerror( status ) );
+    local_data->node_type = CP_NODE;
+    local_data->network = this;    
+    if( ( status = tsd_key.Set(local_data) ) != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
-                    strerror( status ) ));
+                               strerror(status)) );
     }
 
     InternalNode* in = CreateInternalNode( this, myhostname, imyrank,
                                            iphostname, ipport, iprank,
                                            idataSocket, idataPort );
-    assert( in != NULL );
-    if( in->has_Error() )
+    if( (in == NULL) || in->has_Error() )
         error( ERR_SYSTEM, imyrank, "Failed to initialize using CreateInternalNode()\n" );
 }
 
@@ -593,16 +651,12 @@ int Network::send_PacketToParent( PacketPtr ipacket )
 {
     mrn_dbg_func_begin();
 
-    if( get_ParentNode()->send( ipacket ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "upstream.send() failed()\n" ));
-        return -1;
-    }
+    get_ParentNode()->send( ipacket );
 
-    mrn_dbg_func_end();
     return 0;
 }
 
-int Network::flush_PacketsToParent( void )
+int Network::flush_PacketsToParent(void)
 {
     assert( is_LocalNodeChild() );
     return _parent->flush();
@@ -629,7 +683,7 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
 
     mrn_dbg_func_begin();
 
-    std::set < PeerNodePtr > peers;
+    std::set< PeerNodePtr > peers;
 
     if( ipacket->get_StreamId( ) == 0 ) {   //stream id 0 => control stream
         peers = get_ChildPeers();
@@ -680,13 +734,7 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
         if( iinternal_only && !cur_node->is_internal( ) )
             continue;
 
-        mrn_dbg( 3, mrn_printf( FLF, stderr, "Calling peer[%d].send() ...\n",
-                                cur_node->get_Rank() ));
-        if( cur_node->send( ipacket ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "peer.send() failed\n" ));
-            retval = -1;
-        }
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "peer.send() succeeded\n" ));
+        cur_node->send( ipacket );
     }
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren %s",
@@ -694,13 +742,13 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
     return retval;
 }
 
-int Network::flush_PacketsToChildren( void ) const
+int Network::flush_PacketsToChildren(void) const
 {
     int retval = 0;
     
     mrn_dbg_func_begin();
     
-    const std::set < PeerNodePtr > peers = get_ChildPeers();
+    const std::set< PeerNodePtr > peers = get_ChildPeers();
 
     std::set < PeerNodePtr >::const_iterator iter;
     for( iter=peers.begin(); iter!=peers.end(); iter++ ) {
@@ -708,7 +756,7 @@ int Network::flush_PacketsToChildren( void ) const
 
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling child[%d].flush() ...\n",
                                cur_node->get_Rank() ));
-        if( cur_node->flush( ) == -1 ) {
+        if( cur_node->flush() == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "child.flush() failed\n" ));
             retval = -1;
         }
@@ -724,10 +772,12 @@ int Network::recv( bool iblocking )
 {
     mrn_dbg_func_begin();
 
+    if( is_ShutDown() || is_ShuttingDown() )
+        return -1;
+
     if( is_LocalNodeFrontEnd() ) { 
         if( iblocking ){
-            waitfor_NonEmptyStream();
-            return 1;
+            return waitfor_NonEmptyStream();
         }
         return 0;
     }
@@ -737,13 +787,13 @@ int Network::recv( bool iblocking )
                               (iblocking? "blocking" : "non-blocking") ));
 
         //if not blocking and no data present, return immediately
-        if( !iblocking && !this->has_PacketsFromParent() ){
+        if( ! iblocking && ! this->has_PacketsFromParent() ){
             return 0;
         }
 
         //check if we already have data
         if( is_LocalNodeThreaded() )
-            waitfor_NonEmptyStream();
+            return waitfor_NonEmptyStream();
         else {
             mrn_dbg(3, mrn_printf(FLF, stderr, "Calling recv_packets()\n"));
             if( recv_PacketsFromParent( packet_list ) == -1){
@@ -751,8 +801,9 @@ int Network::recv( bool iblocking )
                 return -1;
             }
 
-            if(packet_list.size() == 0){
+            if( packet_list.size() == 0 ) {
                 mrn_dbg(3, mrn_printf(FLF, stderr, "No packets read!\n"));
+                return 0;
             }
             else {
                 mrn_dbg(3, mrn_printf(FLF, stderr,
@@ -761,13 +812,10 @@ int Network::recv( bool iblocking )
                     mrn_dbg(1, mrn_printf(FLF, stderr, "proc_packets() failed\n"));
                     return -1;
                 }
+                mrn_dbg(5, mrn_printf(FLF, stderr, "Found/processed packets! Returning\n"));
+                return 1;
             }
         }
-        
-        //if we get here, we have found data to return
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Found/processed packets! Returning\n"));
-        
-        return 1;
     }
 
     return -1; //shouldn't get here
@@ -775,13 +823,13 @@ int Network::recv( bool iblocking )
 
 int Network::recv( int *otag, PacketPtr  &opacket, Stream ** ostream, bool iblocking)
 {
-    mrn_dbg(2, mrn_printf(FLF, stderr, "blocking: \"%s\"\n",
-               ( iblocking ? "yes" : "no") ));
-
+    mrn_dbg(3, mrn_printf(FLF, stderr, "blocking: \"%s\"\n",
+                          (iblocking ? "yes" : "no")) );
+    
     bool checked_network = false;   // have we checked sockets for input?
     PacketPtr cur_packet( Packet::NullPacket );
 
-    if( !have_Streams() && is_LocalNodeFrontEnd() ){
+    if( ! have_Streams() && is_LocalNodeFrontEnd() ){
         //No streams exist -- bad for FE
         mrn_dbg(1, mrn_printf(FLF, stderr, "%s recv in FE when no streams "
                               "exist\n", (iblocking? "Blocking" : "Non-blocking") ));
@@ -797,7 +845,7 @@ get_packet_from_stream_label:
         map <unsigned int, Stream *>::iterator start_iter;
 
         start_iter = _stream_iter;
-        do{
+        do {
             Stream* cur_stream = _stream_iter->second;
 
             mrn_dbg( 5, mrn_printf(FLF, stderr,
@@ -817,7 +865,7 @@ get_packet_from_stream_label:
                 _stream_iter = _streams.begin();
             }
             _streams_sync.Unlock();
-        } while( (start_iter != _stream_iter) && !packet_found );
+        } while( (start_iter != _stream_iter) && ! packet_found );
     }
 
     if( cur_packet != Packet::NullPacket ) {
@@ -829,17 +877,15 @@ get_packet_from_stream_label:
                    cur_packet->get_Tag(), cur_packet->get_FormatString() ));
         return 1;
     }
-    else if( iblocking || !checked_network ) {
+    else if( iblocking || ! checked_network ) {
 
         // No packets are already in the stream
         // check whether there is data waiting to be read on our sockets
         int retval = recv( iblocking );
         checked_network = true;
 
-        if( retval == -1 ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "Network::recv() failed.\n" ));
+        if( retval == -1 )
             return -1;
-        }
         else if ( retval == 1 ){
             // go back if we found a packet
             mrn_dbg( 3, mrn_printf(FLF, stderr, "Network::recv() found a packet!\n" ));
@@ -930,16 +976,14 @@ Stream* Network::new_Stream( Communicator *icomm,
     }
     mrn_dbg(5, mrn_printf(0,0,0, stderr, "]\n"));
     
-
-    PacketPtr packet( new Packet( 0, PROT_NEW_STREAM, "%d %ad %d %d %d",
-                                  next_stream_id, backends, endpoints.size(),
-                                  ius_filter_id, isync_filter_id, ids_filter_id ) );
+    PacketPtr packet( new Packet(0, PROT_NEW_STREAM, "%d %ad %d %d %d",
+                                 next_stream_id, backends, endpoints.size(),
+                                 ius_filter_id, isync_filter_id, ids_filter_id) );
     next_stream_id++;
 
     Stream * stream = get_LocalFrontEndNode()->proc_newStream(packet);
-    if( stream == NULL ){
+    if( stream == NULL )
         mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
-    }
 
     delete [] backends;
     return stream;
@@ -976,8 +1020,7 @@ Stream* Network::new_Stream( Communicator* icomm,
                              std::string ds_filters )
 {
     if( NULL == icomm ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, 
-                              "cannot create stream from NULL communicator\n") );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "NULL communicator\n") );
         return NULL;
     }
 
@@ -986,26 +1029,27 @@ Stream* Network::new_Stream( Communicator* icomm,
     unsigned num_pts = endpoints.size();
     if( num_pts == 0 ) {
         if( icomm != _bcast_communicator ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, 
-                       "cannot create stream from communicator containing zero end-points\n") );
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                   "communicator contains zero end-points\n") );
             return NULL;
         }
     }
 
     Rank * backends = new Rank[ num_pts ];
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "backends[ " ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "backends[ ") );
     set <CommunicationNode*>:: const_iterator iter;
-    unsigned  int i;
-    for( i=0,iter=endpoints.begin(); iter!=endpoints.end(); i++,iter++) {
-        mrn_dbg(5, mrn_printf( 0,0,0, stderr, "%d, ", (*iter)->get_Rank() ));
+    unsigned int i;
+    for( i=0, iter=endpoints.begin(); iter != endpoints.end(); i++, iter++ ) {
+        mrn_dbg( 5, mrn_printf(0,0,0, stderr, "%d, ", (*iter)->get_Rank()) );
         backends[i] = (*iter)->get_Rank();
     }
-    mrn_dbg(5, mrn_printf(0,0,0, stderr, "]\n"));
+    mrn_dbg( 5, mrn_printf(0,0,0, stderr, "]\n") );
 
-    PacketPtr packet( new Packet( 0, PROT_NEW_HETERO_STREAM, "%d %ad %s %s %s",
-                                  next_stream_id, backends, num_pts,
-                                  us_filters.c_str(), sync_filters.c_str(), ds_filters.c_str() ) );
+    PacketPtr packet( new Packet(0, PROT_NEW_HETERO_STREAM, "%d %ad %s %s %s",
+                                 next_stream_id, backends, num_pts,
+                                 us_filters.c_str(), sync_filters.c_str(), 
+                                 ds_filters.c_str()) );
     next_stream_id++;
 
     Stream * stream = get_LocalFrontEndNode()->proc_newStream(packet);
@@ -1044,16 +1088,14 @@ void Network::delete_Stream( unsigned int iid )
     _streams_sync.Lock();
 
     iter = _streams.find( iid );
-    if(  iter != _streams.end() ){
-
-        //if we are about to delete start_iter, set it to next elem. (w/wrap)
-        if( iter == _stream_iter ){
+    if( iter != _streams.end() ) {
+        //if we are about to delete _stream_iter, set it to next elem. (w/wrap)
+        if( iter == _stream_iter ) {
             _stream_iter++;
             if( _stream_iter == Network::_streams.end() ){
                 _stream_iter = Network::_streams.begin();
             }
         }
-
         _streams.erase( iter );
     }
 
@@ -1070,17 +1112,17 @@ bool Network::have_Streams( )
 }
 
 /* Event Management */
-void Network::clear_Events( void )
+void Network::clear_Events(void)
 {
     _evt_mgr->clear_Events();
 }
 
-unsigned int Network::num_EventsPending( void )
+unsigned int Network::num_EventsPending(void)
 {
     return _evt_mgr->get_NumEvents();
 }
 
-Event* Network::next_Event( void )
+Event* Network::next_Event(void)
 {
     return _evt_mgr->get_NextEvent();
 }
@@ -1313,32 +1355,46 @@ int Network::load_FilterFunc( const char* so_file, const char* func_name )
     return rc;
 }
 
-void Network::waitfor_NonEmptyStream( void )
+int Network::waitfor_NonEmptyStream(void)
 {
     mrn_dbg_func_begin();
 
+    Stream* cur_strm = NULL;
     map < unsigned int, Stream * >::const_iterator iter;
     _streams_sync.Lock();
-    while( true ){ 
-        for( iter=_streams.begin(); iter != _streams.end(); iter++ ){
+    while( true ) { 
+        for( iter = _streams.begin(); iter != _streams.end(); iter++ ){
+            cur_strm = iter->second;
             mrn_dbg(5, mrn_printf(FLF, stderr, "Checking stream[%d] (%p) for data\n",
-                                  (*iter).second->get_Id(), (*iter).second ));
-            if( (*iter).second->has_Data() ){
-                mrn_dbg(5, mrn_printf(FLF, stderr, "Data found on stream[%d]\n",
-                                      (*iter).second->get_Id() ));
+                                  cur_strm->get_Id(), cur_strm ));
+            if( cur_strm->has_Data() ) {
+                mrn_dbg(5, mrn_printf(FLF, stderr, "Data on stream[%d]\n",
+                                      cur_strm->get_Id() ));
                 _streams_sync.Unlock();
                 mrn_dbg_func_end();
-                return;
+                return 1;
+            }
+            if( cur_strm->is_Closed() ) {
+                mrn_dbg(5, mrn_printf(FLF, stderr, "Error on stream[%d]\n",
+                                      cur_strm->get_Id() ));
+                _streams_sync.Unlock();
+                mrn_dbg_func_end();
+                return -1;
             }
         }
+
+        if( is_ShutDown() )
+            break;
+
         mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting on CV[STREAMS_NONEMPTY] ...\n"));
         _streams_sync.WaitOnCondition( STREAMS_NONEMPTY );
+
     }
-    // should never get here, just in case
     _streams_sync.Unlock();
+    return -1;
 }
 
-void Network::signal_NonEmptyStream( void )
+void Network::signal_NonEmptyStream(void)
 {
     _streams_sync.Lock();
     mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling CV[STREAMS_NONEMPTY] ...\n"));
@@ -1396,27 +1452,27 @@ void Network::set_FailureManager( CommunicationNode* icomm )
     _failure_manager = icomm;
 }
 
-NetworkTopology* Network::get_NetworkTopology( void ) const
+NetworkTopology* Network::get_NetworkTopology(void) const
 {
     return _network_topology;
 }
 
-FrontEndNode* Network::get_LocalFrontEndNode( void ) const
+FrontEndNode* Network::get_LocalFrontEndNode(void) const
 {
     return _local_front_end_node;
 }
 
-InternalNode* Network::get_LocalInternalNode( void ) const
+InternalNode* Network::get_LocalInternalNode(void) const
 {
     return _local_internal_node;
 }
 
-BackEndNode* Network::get_LocalBackEndNode( void ) const
+BackEndNode* Network::get_LocalBackEndNode(void) const
 {
     return _local_back_end_node;
 }
 
-ChildNode* Network::get_LocalChildNode( void ) const
+ChildNode* Network::get_LocalChildNode(void) const
 {
     if( is_LocalNodeInternal() )
         return dynamic_cast< ChildNode* >(_local_internal_node);
@@ -1424,7 +1480,7 @@ ChildNode* Network::get_LocalChildNode( void ) const
         return dynamic_cast< ChildNode* >(_local_back_end_node) ;
 }
 
-ParentNode* Network::get_LocalParentNode( void ) const
+ParentNode* Network::get_LocalParentNode(void) const
 {
     if( is_LocalNodeInternal() )
         return dynamic_cast< ParentNode* >(_local_internal_node);
@@ -1432,63 +1488,63 @@ ParentNode* Network::get_LocalParentNode( void ) const
         return dynamic_cast< ParentNode* >(_local_front_end_node); 
 }
 
-string Network::get_LocalHostName( void ) const
+string Network::get_LocalHostName(void) const
 {
     return _local_hostname;
 }
 
-Port Network::get_LocalPort( void ) const
+Port Network::get_LocalPort(void) const
 {
     return _local_port;
 }
 
-Rank Network::get_LocalRank( void ) const
+Rank Network::get_LocalRank(void) const
 {
     return _local_rank;
 }
 
-int Network::get_ListeningSocket( void ) const
+int Network::get_ListeningSocket(void) const
 {
     assert( is_LocalNodeParent() );
     return get_LocalParentNode()->get_ListeningSocket();
 }
 
-CommunicationNode* Network::get_FailureManager( void ) const
+CommunicationNode* Network::get_FailureManager(void) const
 {
     return _failure_manager;
 }
 
-bool Network::is_LocalNodeFrontEnd( void ) const
+bool Network::is_LocalNodeFrontEnd(void) const
 {
     return ( _local_front_end_node != NULL );
 }
 
-bool Network::is_LocalNodeBackEnd( void ) const
+bool Network::is_LocalNodeBackEnd(void) const
 {
     return ( _local_back_end_node != NULL );
 }
 
-bool Network::is_LocalNodeInternal( void ) const
+bool Network::is_LocalNodeInternal(void) const
 {
     return ( _local_internal_node != NULL );
 }
 
-bool Network::is_LocalNodeParent( void ) const
+bool Network::is_LocalNodeParent(void) const
 {
     return ( is_LocalNodeFrontEnd() || is_LocalNodeInternal() );
 }
 
-bool Network::is_LocalNodeChild( void ) const
+bool Network::is_LocalNodeChild(void) const
 {
     return ( is_LocalNodeBackEnd() || is_LocalNodeInternal() );
 }
 
-bool Network::is_LocalNodeThreaded( void ) const
+bool Network::is_LocalNodeThreaded(void) const
 {
     return _threaded;
 }
 
-int Network::send_FilterStatesToParent( void )
+int Network::send_FilterStatesToParent(void)
 {
     mrn_dbg_func_begin();
     map< unsigned int, Stream* >::iterator iter; 
@@ -1496,7 +1552,7 @@ int Network::send_FilterStatesToParent( void )
     _streams_sync.Lock();
 
     for( iter = _streams.begin(); iter != _streams.end(); iter++ ) {
-        (*iter).second->send_FilterStateToParent( );
+        (*iter).second->send_FilterStateToParent();
     }
 
     _streams_sync.Unlock();
@@ -1506,7 +1562,7 @@ int Network::send_FilterStatesToParent( void )
 
 bool Network::reset_Topology( string& itopology )
 {
-    if( !_network_topology->reset( itopology ) ){
+    if( ! _network_topology->reset(itopology) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "Topology->reset() failed\n" ));
         return false;
     }
@@ -1518,35 +1574,23 @@ bool Network::add_SubGraph( Rank iroot_rank, SerialGraph& sg, bool iupdate )
 {
     unsigned topsz = _network_topology->get_NumNodes();
 
-    if( !_network_topology->add_SubGraph( iroot_rank, sg, iupdate ) ){
+    if( ! _network_topology->add_SubGraph(iroot_rank, sg, iupdate) ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
         return false;
     }
 
-    if( is_LocalNodeFrontEnd() &&
-        ( _network_topology->get_NumNodes() > topsz ) ) {
-        // new node joined network (likely a new BE)   
-
-        // TODO: safely inform rest of network about topology change
-    }
-
-    update();
-
-    return true;
-
+    return update_Streams();
 }
 
 bool Network::remove_Node( Rank ifailed_rank, bool iupdate )
 {
     mrn_dbg_func_begin();
 
-    mrn_dbg(5, mrn_printf( FLF, stderr, "Deleting PeerNode: node[%u] ...\n", ifailed_rank ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                           "Failed rank is %d\n", ifailed_rank) );
     delete_PeerNode( ifailed_rank );
-
-    mrn_dbg(5, mrn_printf( FLF, stderr, "Removing from Topology: node[%u] ...\n", ifailed_rank ));
     _network_topology->remove_Node( ifailed_rank, iupdate );
 
-    mrn_dbg(5, mrn_printf( FLF, stderr, "Removing from Streams: node[%u] ...\n", ifailed_rank ));
     _streams_sync.Lock();
     map < unsigned int, Stream* >::iterator iter;
     for( iter=_streams.begin(); iter != _streams.end(); iter++ ) {
@@ -1554,27 +1598,26 @@ bool Network::remove_Node( Rank ifailed_rank, bool iupdate )
     }
     _streams_sync.Unlock();
 
-    bool retval=true;
+    bool rc = true;
     if( iupdate ) {
-        if( !update() ) {
-            retval = false;
-        }
+        if( ! update_Streams() )
+            rc = false;
     }
 
     mrn_dbg_func_end();
-    return retval;
+    return rc;
 }
 
 bool Network::change_Parent( Rank ichild_rank, Rank inew_parent_rank )
 {
-    //update topology
-    if( !_network_topology->set_Parent( ichild_rank, inew_parent_rank, true ) ) {
+    // update topology
+    if( ! _network_topology->set_Parent(ichild_rank, inew_parent_rank, true) ) {
         return false;
     }
 
-    if( !update() ) {
-        return false;
-    }
+    // update streams if I'm the new parent
+    if( inew_parent_rank == _local_rank )
+        update_Streams();
 
     return true;
 }
@@ -1592,9 +1635,9 @@ bool Network::insert_EndPoint( string& ihostname, Port iport, Rank irank )
     if( iter != _end_points.end() ) {
         if( (iter->second->get_HostName() != ihostname) ||
             (iter->second->get_Port() != iport) ) {
-            mrn_dbg( 5, mrn_printf( FLF, stderr, "Replacing Node[%d] [%s:%d] with [%s:%d]\n",
-                                    iter->second->get_HostName().c_str(), iter->second->get_Port(),
-                                    ihostname.c_str(), iport ) );
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "Replacing Node[%d] [%s:%d] with [%s:%d]\n",
+                                   iter->second->get_HostName().c_str(), iter->second->get_Port(),
+                                   ihostname.c_str(), iport) );
             cn = iter->second;
             _end_points.erase( iter );
             if( is_LocalNodeFrontEnd() )
@@ -1612,7 +1655,7 @@ bool Network::insert_EndPoint( string& ihostname, Port iport, Rank irank )
         _end_points[ irank ] = cn;
     }
 
-    if( is_LocalNodeFrontEnd() && ( cn != NULL ) )
+    if( is_LocalNodeFrontEnd() && (cn != NULL) )
         _bcast_communicator->add_EndPoint( cn );
         
     _endpoints_mutex.Unlock();
@@ -1632,12 +1675,13 @@ bool Network::remove_EndPoint( Rank irank )
     return true;
 }
 
-bool Network::update( void )
+bool Network::update_Streams(void)
 {
-    //update stream
-    mrn_dbg(3, mrn_printf( FLF, stderr, "Updating stream children ...\n"));
+    map< unsigned int, Stream* >::iterator iter;
+
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "Updating stream children ...\n") );
+
     _streams_sync.Lock();
-    map < unsigned int, Stream* >::iterator iter;
     for( iter=_streams.begin(); iter != _streams.end(); iter++ ) {
         (*iter).second->recompute_ChildrenNodes();
     }
@@ -1646,7 +1690,7 @@ bool Network::update( void )
     return true;
 }
 
-void Network::close_PeerNodeConnections( void )
+void Network::close_PeerNodeConnections(void)
 {
     mrn_dbg_func_begin();
 
@@ -1656,17 +1700,17 @@ void Network::close_PeerNodeConnections( void )
         _children_mutex.Lock();
         for( iter=_children.begin(); iter!=_children.end(); iter++ ) {
             PeerNodePtr cur_node = *iter;
-            mrn_dbg(5, mrn_printf(FLF, stderr,
-                                  "Closing data(%d) and event(%d) sockets to %s:%d\n",
-                                  cur_node->_data_sock_fd,
-                                  cur_node->_event_sock_fd,
-                                  cur_node->get_HostName().c_str(),
-                                  cur_node->get_Rank() ));
+            mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                   "Closing data(%d) and event(%d) sockets to %s:%d\n",
+                                   cur_node->_data_sock_fd,
+                                   cur_node->_event_sock_fd,
+                                   cur_node->get_HostName().c_str(),
+                                   cur_node->get_Rank()) );
             if( XPlat::SocketUtils::Close( cur_node->_data_sock_fd ) == -1 ) {
-                perror("close(data_fd)");
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "error on close(data_fd)\n") );
             }
-            if( XPlat::SocketUtils::Close( cur_node->_event_sock_fd ) == -1 ){
-                perror("close(event_fd)");
+            if( XPlat::SocketUtils::Close( cur_node->_event_sock_fd ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "error on close(event_fd)\n") );
             }
         }
         _children_mutex.Unlock();
@@ -1675,10 +1719,10 @@ void Network::close_PeerNodeConnections( void )
     if( is_LocalNodeChild() ) {
         _parent_sync.Lock();
         if( XPlat::SocketUtils::Close( _parent->_data_sock_fd ) == -1 ) {
-            perror("close(data_fd)");
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "error on close(data_fd)\n") );
         }
         if( XPlat::SocketUtils::Close( _parent->_event_sock_fd ) == -1 ){
-            perror("close(event_fd)");
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "error on close(event_fd)\n") );
         }
         _parent_sync.Unlock();
     }
@@ -1686,32 +1730,36 @@ void Network::close_PeerNodeConnections( void )
     mrn_dbg_func_end();
 }
 
-char* Network::get_TopologyStringPtr( void ) const
+char* Network::get_TopologyStringPtr(void) const
 {
-    return _network_topology->get_TopologyStringPtr();
+    return strdup( _network_topology->get_TopologyString().c_str() );
 }
 
-char* Network::get_LocalSubTreeStringPtr( void ) const
+char* Network::get_LocalSubTreeStringPtr(void) const
 {
-    return _network_topology->get_LocalSubTreeStringPtr();
+    std::string subtree( _network_topology->get_LocalSubTreeString() );
+    if( subtree.empty() )
+        return NULL;
+    else
+        return strdup( subtree.c_str() );
 }
 
-void Network::enable_FailureRecovery( void )
+void Network::enable_FailureRecovery(void)
 {
     _recover_from_failures = true;
 }
 
-void Network::disable_FailureRecovery( void )
+void Network::disable_FailureRecovery(void)
 {
     _recover_from_failures = false;
 }
 
-bool Network::recover_FromFailures( void ) const
+bool Network::recover_FromFailures(void) const
 {
     return _recover_from_failures;
 }
 
-PeerNodePtr Network::get_ParentNode( void ) const
+PeerNodePtr Network::get_ParentNode(void) const
 {
     _parent_sync.Lock();
 
@@ -1741,17 +1789,15 @@ PeerNodePtr Network::new_PeerNode( string const& ihostname, Port iport,
                                    Rank irank, bool iis_parent,
                                    bool iis_internal )
 {
-    PeerNodePtr node( new PeerNode( this, ihostname, iport, irank,
-                                    iis_parent, iis_internal ) );
+    PeerNodePtr node( new PeerNode(this, ihostname, iport, irank,
+                                   iis_parent, iis_internal) );
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "new peer node: %s:%d (%p) \n",
                            node->get_HostName().c_str(), node->get_Rank(),
                            node.get() )); 
 
     if( iis_parent ) {
-        _parent_sync.Lock();
-        _parent = node;
-        _parent_sync.Unlock();
+        set_ParentNode( node );
     }
     else {
         _children_mutex.Lock();
@@ -1769,16 +1815,18 @@ bool Network::delete_PeerNode( Rank irank )
 
     if( is_LocalNodeChild() ) {
         _parent_sync.Lock();
-        if( _parent->get_Rank() == irank ) {
-            _parent == PeerNode::NullPeerNode;
-            _parent_sync.Unlock();
-            return true;
+        if( _parent != PeerNode::NullPeerNode ) { 
+            if( _parent->get_Rank() == irank ) {
+                _parent = PeerNode::NullPeerNode;
+                _parent_sync.Unlock();
+                return true;
+            }
         }
         _parent_sync.Unlock();
     }
 
     _children_mutex.Lock();
-    for( iter=_children.begin(); iter!=_children.end(); iter++ ) {
+    for( iter = _children.begin(); iter != _children.end(); iter++ ) {
         if( (*iter)->get_Rank() == irank ) {
 	     mrn_dbg( 5, mrn_printf(FLF, stderr, "deleted into children\n") );
             _children.erase( *iter );
@@ -1793,7 +1841,7 @@ bool Network::delete_PeerNode( Rank irank )
 
 PeerNodePtr Network::get_PeerNode( Rank irank )
 {
-    PeerNodePtr peer=PeerNode::NullPeerNode;
+    PeerNodePtr peer = PeerNode::NullPeerNode;
 
     set< PeerNodePtr >::const_iterator iter;
 
@@ -1808,9 +1856,10 @@ PeerNodePtr Network::get_PeerNode( Rank irank )
     if( peer == PeerNode::NullPeerNode ) {
         _children_mutex.Lock();
 	if(_children.empty())
-	   mrn_dbg ( 5, mrn_printf ( FLF, stderr, "children is empty \n"));
-        for( iter=_children.begin(); iter!=_children.end(); iter++ ) {
-	    mrn_dbg ( 5, mrn_printf ( FLF, stderr, "rank is %d, irank is %d \n", (*iter)->get_Rank(), irank ) ); 
+	   mrn_dbg( 5, mrn_printf(FLF, stderr, "children is empty\n") );
+        for( iter = _children.begin(); iter != _children.end(); iter++ ) {
+	    mrn_dbg( 5, mrn_printf(FLF, stderr, "rank is %d, irank is %d\n", 
+                                   (*iter)->get_Rank(), irank) ); 
             if( (*iter)->get_Rank() == irank ) {
                 peer = *iter;
                 break;
@@ -1822,7 +1871,7 @@ PeerNodePtr Network::get_PeerNode( Rank irank )
     return peer;
 }
 
-const set< PeerNodePtr > Network::get_ChildPeers( void ) const
+const set< PeerNodePtr > Network::get_ChildPeers(void) const
 {
     _children_mutex.Lock();
     const set< PeerNodePtr > children = _children;
@@ -1836,7 +1885,7 @@ PeerNodePtr Network::get_OutletNode( Rank irank ) const
     return _network_topology->get_OutletNode( irank );
 }
 
-bool Network::has_PacketsFromParent( void )
+bool Network::has_PacketsFromParent(void)
 {
     assert( is_LocalNodeChild() );
     return _parent->has_data();
@@ -1853,7 +1902,7 @@ bool Network::node_Failed( Rank irank  )
     return _network_topology->node_Failed( irank );
 }
 
-TimeKeeper* Network::get_TimeKeeper( void ) 
+TimeKeeper* Network::get_TimeKeeper(void) 
 { 
     return _local_time_keeper;
 }
@@ -1871,43 +1920,40 @@ void set_OutputLevel(int l)
     }
 }
 
-void set_OutputLevelFromEnvironment( const std::map< std::string, std::string>* iattrs) 
+void set_OutputLevelFromEnvironment( std::map< env_key, std::string>& env) 
 {
     char* output_level = NULL;
-    if( iattrs !=NULL)
-    {
-        std::map< std::string , std::string > env = *iattrs;
-        if( env.find("MRNET_OUTPUT_LEVEL") != env.end() ){
-            output_level = strdup( env["MRNET_OUTPUT_LEVEL"].c_str() );
-        }
-        
-        if( output_level != NULL ) {
-            int l = atoi( output_level );
-	    free( output_level );
-            set_OutputLevel( l );
-        }
+    if( env.find(MRNET_OUTPUT_LEVEL) != env.end() ){
+        output_level = strdup( env[MRNET_OUTPUT_LEVEL].c_str() );
+    }
+       
+    if( output_level != NULL ) {
+        int l = atoi( output_level );
+        free( output_level );
+        set_OutputLevel( l );
+    }
     
-        if( env.find("MRNET_DEBUG_LOG_DIRECTORY") != env.end() )
-            MRN_DEBUG_LOG_DIRECTORY = strdup( env["MRNET_DEBUG_LOG_DIRECTORY"].c_str() );
-    }	    
+    if( env.find(MRNET_DEBUG_LOG_DIRECTORY) != env.end() )
+        MRN_DEBUG_LOG_DIRECTORY = strdup( env[MRNET_DEBUG_LOG_DIRECTORY].c_str() );
 }
 
-SerialGraph* Network::readTopology( int topoSocket )
+/* Propagate topology */
+SerialGraph* Network::read_Topology( int fd )
 {
     mrn_dbg_func_begin(); 
 
     char* sTopology = NULL;
-    size_t sTopologyLen = 0;
+    uint32_t sTopologyLen = 0;
     
     // obtain topology from our parent
-    ::recv( topoSocket, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
+    ::recv( fd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%d\n", (int)sTopologyLen ));
 
     sTopology = new char[sTopologyLen + 1];
     char* currBufPtr = sTopology;
     size_t nRemaining = sTopologyLen;
     while( nRemaining > 0 ) {
-        ssize_t nread = ::recv( topoSocket, currBufPtr, nRemaining, 0);
+        ssize_t nread = ::recv( fd, currBufPtr, nRemaining, 0);
         nRemaining -= nread;
         currBufPtr += nread;
     }
@@ -1921,17 +1967,18 @@ SerialGraph* Network::readTopology( int topoSocket )
     return sg;
 }
 
-void Network::writeTopology( int topoFd, SerialGraph* topology ) {
+void Network::write_Topology( int fd )
+{
     mrn_dbg_func_begin();
 
-    std::string sTopology = topology->get_ByteArray();
-    size_t sTopologyLen = sTopology.length();
+    std::string sTopology( _network_topology->get_TopologyString() );
+    uint32_t sTopologyLen = (uint32_t) sTopology.length();
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "sending topology=%s\n",
                           sTopology.c_str() ));
 
     // send serialized topology size
-    ssize_t nwritten = ::send( topoFd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
+    ssize_t nwritten = ::send( fd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
 
     // send the topology itself
     // NOTE this code assumes the byte array underneath the std::string
@@ -1939,7 +1986,7 @@ void Network::writeTopology( int topoFd, SerialGraph* topology ) {
     size_t nRemaining = sTopologyLen;
     const char* currBufPtr = sTopology.c_str();
     while( nRemaining > 0 ) {
-        nwritten = ::send( topoFd, currBufPtr, nRemaining, 0);
+        nwritten = ::send( fd, currBufPtr, nRemaining, 0);
         nRemaining -= nwritten;
         currBufPtr += nwritten;
     }
@@ -1948,14 +1995,12 @@ void Network::writeTopology( int topoFd, SerialGraph* topology ) {
 /* Failure Recovery */
 bool Network::set_FailureRecovery( bool enable_recovery )
 {
-    mrn_dbg_func_begin();
     int tag;
 
-   
+    mrn_dbg_func_begin();
+
     if( is_LocalNodeFrontEnd() ) {
 
-	//enable or disable Failure Recovery
-	
 	if( enable_recovery ) {
             tag = PROT_ENABLE_RECOVERY;
             enable_FailureRecovery();
@@ -1965,20 +2010,20 @@ bool Network::set_FailureRecovery( bool enable_recovery )
             disable_FailureRecovery();
 	}
 	
-        PacketPtr packet( new Packet( 0, tag, "%d", (int)enable_recovery ));
+        PacketPtr packet( new Packet(0, tag, "%d", (int)enable_recovery) );
 	if( packet->has_Error() ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() fail\n") );
             return false;
         }
 
         if( send_PacketToChildren( packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
             return false;
         }
     }
     else {
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
-			       "set_FailureRecovery() can only be used by Network front-end\n" )); 
+			       "set_FailureRecovery() can only be used by Network front-end\n") ); 
         return false;
     }
 

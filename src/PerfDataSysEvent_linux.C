@@ -45,15 +45,15 @@ int PerfDataSysMgr::get_ThreadTime(long &user, long &sys)
         return -1;
     }
 
-    sprintf(procFilename, "/proc/%d/task/%d/stat",pid,tid) ;
+    sprintf( procFilename, "/proc/%d/task/%d/stat", pid, tid );
 	
-    mrn_dbg( 5, mrn_printf(FLF, stderr, " ThreadID  %d proc  filename n%s ",  tid, procFilename ));
-
     FILE *fd;
     int num_read ;
     fd = fopen(procFilename, "r");
     if ( fd == NULL) {
-        ::perror ("fopen()");
+        ::perror("fopen()");
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "failed to open %s\n", 
+                               procFilename) );
         return -1;
     }
     num_read = fread(buffer,1, 1023, fd);
@@ -85,22 +85,23 @@ int PerfDataSysMgr::get_MemUsage(double &vsize, double &psize)
     char procFilename[256] ;
     pid_t pid = XPlat::Process::GetProcessId();
 
-    sprintf(procFilename, "/proc/%d/statm",pid) ;
+    sprintf( procFilename, "/proc/%d/statm", pid );
 	
-    if ( ! syspage ) {
+    if( ! syspage ) {
         syspage = sysconf(_SC_PAGESIZE);
         pageKB = (double)syspage/1024;
     }
 
     fd = fopen(procFilename, "r");
-    if ( fd == NULL) {
-        :: perror ("fopen()");
+    if( fd == NULL) {
+        ::perror("fopen()");
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "failed to open %s\n", 
+                               procFilename) );
         return -1;
     }
 
     /* The very first line should be memory usage */
-    if((fscanf(fd, "%ld %ld",
-               &vpages, &ppages)) != 2) {
+    if( fscanf(fd, "%ld %ld", &vpages, &ppages) != 2 ) {
         mrn_dbg  (1,  mrn_printf (FLF, stderr, "parse /proc/stat failed\n"));
         fflush( stdout );
         fclose(fd);
@@ -109,7 +110,9 @@ int PerfDataSysMgr::get_MemUsage(double &vsize, double &psize)
         fclose(fd);
         vsize = vpages * pageKB;
         psize = ppages * pageKB;
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "file=%s \n vpages=%ld ppages=%ld pagesize=%lf \n vsize=%lf psize=%lf\n", procFilename, vpages, ppages, pageKB, vsize, psize));
+        mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                               "file=%s : vpages=%ld ppages=%ld pagesize=%lf vsize=%lf psize=%lf\n", 
+                               procFilename, vpages, ppages, pageKB, vsize, psize));
     }
 
     return 0;

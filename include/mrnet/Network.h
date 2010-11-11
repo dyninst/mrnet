@@ -54,27 +54,28 @@ class Network: public Error {
                                      bool irank_backends=true,
                                      bool iusing_mem_buf=false );
     static Network* CreateNetworkBE( int argc, char* argv[] );
+    static Network* CreateNetworkIN( int argc, char* argv[] );
 
-    NetworkTopology* get_NetworkTopology( void ) const;
+    NetworkTopology* get_NetworkTopology(void) const;
     
-    bool is_ShutDown( void ) const;
-    void waitfor_ShutDown( void ) const;
+    bool is_ShutDown(void) const;
+    void waitfor_ShutDown(void) const;
 
     void print_error( const char * );
 
     /* Local node information */
-    std::string get_LocalHostName( void ) const ;
-    Port get_LocalPort( void ) const ;
-    Rank get_LocalRank( void ) const ;
-    bool is_LocalNodeChild( void ) const ;
-    bool is_LocalNodeParent( void ) const ;
-    bool is_LocalNodeInternal( void ) const ;
-    bool is_LocalNodeFrontEnd( void ) const ;
-    bool is_LocalNodeBackEnd( void ) const ;
+    std::string get_LocalHostName(void) const;
+    Port get_LocalPort(void) const;
+    Rank get_LocalRank(void) const;
+    bool is_LocalNodeChild(void) const;
+    bool is_LocalNodeParent(void) const;
+    bool is_LocalNodeInternal(void) const;
+    bool is_LocalNodeFrontEnd(void) const;
+    bool is_LocalNodeBackEnd(void) const;
 
     /* Communicators */
-    Communicator* get_BroadcastCommunicator( void ) const;
-    Communicator* new_Communicator( void );
+    Communicator* get_BroadcastCommunicator(void) const;
+    Communicator* new_Communicator(void);
     Communicator* new_Communicator( Communicator& );
     Communicator* new_Communicator( const std::set< Rank > & );
     Communicator* new_Communicator( std::set< CommunicationNode* > & );
@@ -114,25 +115,18 @@ class Network: public Error {
     
     /* Callback-based event notification */
     bool register_EventCallback( EventClass iclass, EventType ityp,
-                            evt_cb_func ifunc, void* idata );
+                                 evt_cb_func ifunc, void* idata );
     bool remove_EventCallback( evt_cb_func func, EventClass iclass, EventType ityp ); 
     bool remove_EventCallbacks( EventClass iclass, EventType ityp );
 
     /* Turn Fault Recovery ON or OFF*/
     bool set_FailureRecovery( bool enable_recovery );
 
-    /* NOTE: DEPRECATED in 3.0 */
-    void set_TerminateBackEndsOnShutdown( bool terminate ); 
-
     // END MRNET API
 
     virtual ~Network( );
 
-    /* internal node stuff */
-    static Network* CreateNetworkIN( int argc, char* argv[] );    // create obj for internal node
-    InternalNode* get_LocalInternalNode( void ) const;
-
-    TimeKeeper* get_TimeKeeper( void );
+    TimeKeeper* get_TimeKeeper(void);
 
     const std::set< PeerNodePtr > get_ChildPeers() const;
     PeerNodePtr get_PeerNode( Rank );
@@ -142,6 +136,8 @@ class Network: public Error {
     void add_Callbacks();
 
 protected:
+    static const char* FindCommnodePath(void);
+    
     // constructor
     Network( void );
     Network( const std::map< std::string, std::string >* );
@@ -162,7 +158,7 @@ protected:
     virtual FrontEndNode* CreateFrontEndNode( Network* inetwork,
                                               std::string ihostname,
                                               Rank irank ) = 0;
-    FrontEndNode* get_LocalFrontEndNode( void ) const ;
+    FrontEndNode* get_LocalFrontEndNode(void) const;
     virtual void Instantiate( ParsedGraph* parsed_graph,
                               const char* mrn_commnode_path,
                               const char* ibackend_exe,
@@ -197,13 +193,15 @@ protected:
                                               Rank iprank,
                                               int idataSocket = -1,
                                               Port idataPort = UnknownPort ) = 0;
-
+    InternalNode* get_LocalInternalNode(void) const;
 
     void set_LocalHostName( std::string const& );
-    
-    void shutdown_Network( void );
+
+    void shutdown_Network(void);
+
     bool reset_Topology(std::string& itopology);
     void update_TopoStream();
+
     PeerNodePtr _parent;
     
     std::map <env_key, std::string > envMap;
@@ -225,12 +223,9 @@ protected:
     friend class RSHParentNode;
     friend class RSHChildNode;
     
-    //NEW_TOPO propagation code
-    //The topology is propagated from parent to child when child connects to parent not when child first
-    //gets the topology
-    SerialGraph* readTopology( int topoFd);
-    void writeTopology( int topoFd,
-                        SerialGraph* topology );
+    // send/recv topology on socket fd
+    SerialGraph* read_Topology( int fd );
+    void write_Topology( int fd );
 
     // some conditions we waitfor/signal
     enum {
@@ -239,10 +234,9 @@ protected:
         NETWORK_TERMINATION
     };
 
-    void update_BcastCommunicator( void );
+    void update_BcastCommunicator(void);
 
     int parse_Configuration( const char* itopology, bool iusing_mem_buf );
-
 
     Stream * new_Stream( int iid,
                          Rank* ibackends,
@@ -251,65 +245,78 @@ protected:
                          int isync_filter_id,
                          int ids_filter_id);
     void delete_Stream( unsigned int );
-    bool have_Streams( void );
-    void waitfor_NonEmptyStream( void );
-    void signal_NonEmptyStream( void );
+    bool have_Streams(void);
+    bool update_Streams(void);
+    void close_Streams(void);
+    int waitfor_NonEmptyStream(void);
+    void signal_NonEmptyStream(void);
 
     int send_PacketsToParent( std::vector< PacketPtr >& );
     int send_PacketToParent( PacketPtr );
     int send_PacketsToChildren( std::vector< PacketPtr >& );
     int send_PacketToChildren( PacketPtr, bool internal_only = false );
-    int recv( bool iblocking=true );
-    int recv_PacketsFromParent( std::list< PacketPtr >& ) const ;
-    bool has_PacketsFromParent( void );
-    int flush_PacketsToParent( void );
-    int flush_PacketsToChildren( void ) const;
+    int flush_PacketsToParent(void);
+    int flush_PacketsToChildren(void) const;
 
-    CommunicationNode * new_EndPoint( std::string& hostname, Port port, Rank rank );
+    int recv( bool iblocking=true );
+    int recv_PacketsFromParent( std::list< PacketPtr >& ) const;
+    bool has_PacketsFromParent(void);
 
     void set_LocalPort( Port );
     void set_LocalRank( Rank );
 
-    PeerNodePtr get_ParentNode( void ) const;
+    void set_NetworkTopology( NetworkTopology* );
+    void set_Router( Router* );
+
+    void cancel_IOThreads(void);
+    void signal_ShutDown(void);
+
+    char* get_LocalSubTreeStringPtr(void) const;
+    char* get_TopologyStringPtr(void) const;
+
+    PeerNodePtr get_ParentNode(void) const;
     void set_ParentNode( PeerNodePtr ip );
+
+    BackEndNode* get_LocalBackEndNode(void) const;
+    ChildNode* get_LocalChildNode(void) const;
+    ParentNode* get_LocalParentNode(void) const;
     void set_BackEndNode( BackEndNode* );
     void set_FrontEndNode( FrontEndNode* );
     void set_InternalNode( InternalNode* );
-    void set_NetworkTopology( NetworkTopology* );
-    void set_Router( Router* );
+
+    int get_ListeningSocket(void) const;
+
+    CommunicationNode* get_FailureManager(void) const;
     void set_FailureManager( CommunicationNode* );
 
-    void cancel_IOThreads( void );
-    void signal_ShutDown( void );
+    bool is_LocalNodeThreaded(void) const;
 
-    char* get_LocalSubTreeStringPtr( void ) const ;
-    char* get_TopologyStringPtr( void ) const ;
-    BackEndNode* get_LocalBackEndNode( void ) const ;
-    ChildNode* get_LocalChildNode( void ) const ;
-    ParentNode* get_LocalParentNode( void ) const ;
-    int get_ListeningSocket( void ) const ;
-    CommunicationNode* get_FailureManager( void ) const ;
-    bool is_LocalNodeThreaded( void ) const ;
-    int send_FilterStatesToParent( void );
-    bool update( void );
+    int send_FilterStatesToParent(void);
+    void send_TopologyUpdates(void);
+
     bool add_SubGraph( Rank iroot_rank, SerialGraph& sg, bool iupdate  );
     bool remove_Node( Rank ifailed_rank, bool iupdate=true );
     bool change_Parent( Rank ichild_rank, Rank inew_parent_rank );
+
+    CommunicationNode * new_EndPoint( std::string& hostname, Port port, Rank rank );
     bool insert_EndPoint( std::string& hostname, Port port, Rank rank );
     bool remove_EndPoint( Rank irank );
 
-    bool delete_PeerNode( Rank );
     PeerNodePtr new_PeerNode( std::string const& ihostname, Port iport,
                               Rank irank, bool iis_upstream,
                               bool iis_internal );
-    void close_PeerNodeConnections( void );
-    void disable_FailureRecovery( void );
-    void enable_FailureRecovery( void );
-    bool recover_FromFailures( void ) const ;
-    void send_TopologyUpdates( void );
+    bool delete_PeerNode( Rank );
+    void close_PeerNodeConnections(void);
 
-    void collect_PerfData( void );
+    void disable_FailureRecovery(void);
+    void enable_FailureRecovery(void);
+    bool recover_FromFailures(void) const;
+
+    void collect_PerfData(void);
+
     const std::map< env_key, std::string >&  get_EnvMap();
+    bool is_ShuttingDown(void) const;
+    void set_ShuttingDown(void);
 
     //Data Members
     std::string _local_hostname;
@@ -333,8 +340,7 @@ protected:
 
     bool _threaded;
     bool _recover_from_failures;
-    bool _terminate_backends;
-    bool _was_shutdown;
+    bool _was_shutdown, _shutting_down;
 
     /* EventPipe notifications */
     std::map< EventClass, EventPipe* > _evt_pipes;

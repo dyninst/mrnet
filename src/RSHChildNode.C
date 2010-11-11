@@ -47,21 +47,26 @@ int RSHChildNode::proc_PortUpdate( PacketPtr ipacket ) const
     Stream *s = _network->get_Stream(2); // waitforall port update stream
         
     int type = NetworkTopology::TOPO_CHANGE_PORT ;  
-    char *host_arr = strdup("NULL");
+    char *host_arr = strdup("NULL"); // ugh, this needs to be fixed
     Rank send_iprank = UnknownRank;
     Rank send_myrank = _network->get_LocalRank();
     Port send_port = _network->get_LocalPort();
 
     if( _network->is_LocalNodeBackEnd() ) 
         s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                 &type, 1, &send_iprank, 1, 
-                 &send_myrank, 1, &host_arr, 1, &send_port, 1 );
+                 &type, 1, 
+                 &send_iprank, 1, 
+                 &send_myrank, 1, 
+                 &host_arr, 1, 
+                 &send_port, 1 );
     else
         s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                          &type, 1, &send_iprank, 1, 
-                          &send_myrank, 1, &host_arr, 1, &send_port, 1 );
+                          &type, 1, 
+                          &send_iprank, 1, 
+                          &send_myrank, 1, 
+                          &host_arr, 1, 
+                          &send_port, 1 );
     s->flush();
-        
     free(host_arr);
 
     mrn_dbg_func_end();
@@ -71,6 +76,7 @@ int RSHChildNode::proc_PortUpdate( PacketPtr ipacket ) const
 int RSHChildNode::proc_PacketFromParent( PacketPtr cur_packet )
 {
   int retval = 0;
+  
 
   switch ( cur_packet->get_Tag() ) {
     case PROT_PORT_UPDATE:

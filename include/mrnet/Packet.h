@@ -42,6 +42,8 @@ class Packet: public Error {
     const DataElement * operator[] ( unsigned int i ) const;
 
     int get_Tag( void ) const;
+    void set_Tag( int itag ) { tag = itag; }
+
     unsigned short get_StreamId( void ) const;
     const char *get_FormatString( void ) const;
     Rank get_InletNodeRank( void ) const;
@@ -55,9 +57,6 @@ class Packet: public Error {
 
     ~Packet();
 
-    int ExtractVaList( const char *fmt, va_list arg_list ) const;
-    int ExtractArgList( const char *fmt, ... ) const;
-
  private:
     Packet( bool, unsigned short istream_id, int itag, const char *ifmt, va_list iargs );
     Packet( unsigned int ibuf_len, char *ibuf, Rank iinlet_rank );
@@ -68,10 +67,12 @@ class Packet: public Error {
     unsigned int get_NumDataElements( void ) const;
     const DataElement * get_DataElement( unsigned int i ) const;
 
+    int ExtractVaList( const char *fmt, va_list arg_list ) const;
     void ArgList2DataElementArray( va_list arg_list );
     void DataElementArray2ArgList( va_list arg_list ) const;
     void ArgVec2DataElementArray( const void **data );
     void DataElementArray2ArgVec( void **data ) const;
+
     static bool_t pdr_packet( struct PDR *, Packet * );
 
     //Data Members

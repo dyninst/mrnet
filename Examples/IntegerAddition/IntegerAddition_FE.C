@@ -8,6 +8,14 @@
 
 using namespace MRN;
 
+bool saw_failure = false;
+void Failure_Callback( Event* evt, void* )
+{
+    if( (evt->get_Class() == Event::TOPOLOGY_EVENT) &&
+        (evt->get_Type() == TopologyEvent::TOPOL_REMOVE_NODE) )
+        saw_failure = true;
+}
+
 int main(int argc, char **argv)
 {
     int send_val=32, recv_val=0;
@@ -41,11 +49,25 @@ int main(int argc, char **argv)
             net->perror("Network creation failed");
             exit(-1);
         }
+
+        if( ! net->set_FailureRecovery(false) ) {
+            fprintf( stdout, "Failed to disable failure recovery\n" );
+            delete net;
+            return -1;
+        }
+        bool cbrett = net->register_EventCallback( Event::TOPOLOGY_EVENT,
+                                                   TopologyEvent::TOPOL_REMOVE_NODE,
+                                                   Failure_Callback, NULL );
+        if( cbrett == false ) {
+            fprintf( stdout, "Failed to register callback for node failure topology event\n" );
+            delete net;
+            return -1;
+        }
         
         // Make sure path to "so_file" is in LD_LIBRARY_PATH
         int filter_id = net->load_FilterFunc( so_file, "IntegerAdd" );
         if( filter_id == -1 ){
-            fprintf( stderr, "Network::load_FilterFunc() failure\n");
+            fprintf( stderr, "Network::load_FilterFunc() failure\n" );
             delete net;
             return -1;
         }
@@ -64,57 +86,72 @@ int main(int argc, char **argv)
         tag = PROT_SUM;
         unsigned int num_iters=5;
         if( add_stream->send( tag, "%d %d", send_val, num_iters ) == -1 ){
-            fprintf( stderr, "stream::send() failure\n");
+            fprintf( stderr, "stream::send() failure\n" );
             return -1;
         }
         if( add_stream->flush( ) == -1 ){
-            fprintf( stderr, "stream::flush() failure\n");
+            fprintf( stderr, "stream::flush() failure\n" );
             return -1;
         }
 
         // We expect "num_iters" aggregated responses from all back-ends
-        for( unsigned int i=0; i<num_iters; i++ ){
+        for( unsigned int i=0; i < num_iters; i++ ){
+
+            if( saw_failure ) break;
 
             retval = add_stream->recv(&tag, p);
-            assert( retval != 0 ); //shouldn't be 0, either error or block till data
-            if( retval == -1){
+            if( retval == 0 ) {
+                //shouldn't be 0, either error or block for data, unless a failure occured
+                if( saw_failure ) break;
+                fprintf( stderr, "stream::recv() returned zero\n" );
+                return -1;
+            }
+            if( retval == -1 ) {
                 //recv error
-                fprintf( stderr, "stream::recv() failure\n");
+                if( saw_failure ) break;
+                fprintf( stderr, "stream::recv() unexpected failure\n" );
                 return -1;
             }
 
             if( p->unpack( "%d", &recv_val ) == -1 ){
-                fprintf( stderr, "stream::unpack() failure\n");
+                fprintf( stderr, "stream::unpack() failure\n" );
                 return -1;
             }
 
             int expected_val = num_backends * i * send_val;
             if( recv_val != expected_val ){
-                fprintf(stderr, "Iteration %d: Failure! recv_val(%d) != %d*%d*%d=%d (send_val*i*num_backends)\n",
+                fprintf(stderr, "FE: Iteration %d: Failure! recv_val(%d) != %d*%d*%d=%d (send_val*i*num_backends)\n",
                         i, recv_val, send_val, i, num_backends, expected_val );
             }
             else{
-                fprintf(stdout, "Iteration %d: Success! recv_val(%d) == %d*%d*%d=%d (send_val*i*num_backends)\n",
+                fprintf(stdout, "FE: Iteration %d: Success! recv_val(%d) == %d*%d*%d=%d (send_val*i*num_backends)\n",
                         i, recv_val, send_val, i, num_backends, expected_val );
             }
         }
+
+        if( saw_failure ) {
+            fprintf( stderr, "FE: a network process has failed, killing network\n" );
+            delete net;
+            return -1;
+        }
+
         delete add_stream;
 
         // Tell back-ends to exit
         Stream * ctl_stream = net->new_Stream( comm_BC, TFILTER_MAX,
                                                SFILTER_WAITFORALL );
         if(ctl_stream->send(PROT_EXIT, "") == -1){
-            fprintf( stderr, "stream::send(exit) failure\n");
+            fprintf( stderr, "stream::send(exit) failure\n" );
             return -1;
         }
         if(ctl_stream->flush() == -1){
-            fprintf( stderr, "stream::flush() failure\n");
+            fprintf( stderr, "stream::flush() failure\n" );
             return -1;
         }
         retval = ctl_stream->recv(&tag, p);
         if( retval == -1){
             //recv error
-            fprintf( stderr, "stream::recv() failure\n");
+            fprintf( stderr, "stream::recv() failure\n" );
             return -1;
         }
         delete ctl_stream;

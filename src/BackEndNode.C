@@ -57,10 +57,10 @@ BackEndNode::BackEndNode( Network * inetwork,
           mrn_dbg( 5, mrn_printf(FLF, stderr, 
                                  "Backend not already in the topology\n") );
 
-          //new topo propagation code - create a new update packet
+          //new be - send topology update packet
           Stream *s = _network->get_Stream(1); // get topol prop stream
           int type = NetworkTopology::TOPO_NEW_BE;
-          char *host_arr = strdup(imyhostname.c_str());
+          char *host_arr = strdup( imyhostname.c_str() );
           uint32_t send_iprank = iprank;
           uint32_t send_myrank = imyrank;
           uint16_t send_port = _port;
@@ -124,45 +124,58 @@ int BackEndNode::proc_newStream( PacketPtr ipacket ) const
 
     if( tag == PROT_NEW_HETERO_STREAM ) {
 
-        char* us_filters;
-        char* sync_filters;
-        char* ds_filters;
+        char *us_filters = NULL;
+        char *sync_filters = NULL;
+        char *ds_filters = NULL;
         Rank me = _network->get_LocalRank();
 
-        if( ipacket->ExtractArgList( "%d %ad %s %s %s", 
-                                     &stream_id, &backends, &num_backends, 
-                                     &us_filters, &sync_filters, &ds_filters ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+        if( ipacket->unpack("%d %ad %s %s %s", 
+                            &stream_id, &backends, &num_backends, 
+                            &us_filters, &sync_filters, &ds_filters) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "unpack() failed\n") );
             return -1;
         }
         
         if( ! Stream::find_FilterAssignment(std::string(us_filters), me, us_filter_id) ) {
             mrn_dbg( 3, mrn_printf(FLF, stderr, 
-                                   "Stream::find_FilterAssignment(upstream) failed, using default\n" ));
+                                   "Stream::find_FilterAssignment(upstream) failed\n") );
             us_filter_id = TFILTER_NULL;
         }
         if( ! Stream::find_FilterAssignment(std::string(ds_filters), me, ds_filter_id) ) {
             mrn_dbg( 3, mrn_printf(FLF, stderr, 
-                                   "Stream::find_FilterAssignment(downstream) failed, using default\n" ));
+                                   "Stream::find_FilterAssignment(downstream) failed\n") );
             ds_filter_id = TFILTER_NULL;
         }
         if( ! Stream::find_FilterAssignment(std::string(sync_filters), me, sync_id) ) {
             mrn_dbg( 3, mrn_printf(FLF, stderr, 
-                                   "Stream::find_FilterAssignment(sync) failed, using default\n" ));
+                                   "Stream::find_FilterAssignment(sync) failed\n") );
             sync_id = SFILTER_WAITFORALL;
         }
 
-    } else if( tag == PROT_NEW_STREAM ) {
+        if( us_filters != NULL )
+            free( us_filters );
 
-        if( ipacket->ExtractArgList( "%d %ad %d %d %d", 
-                                     &stream_id, &backends, &num_backends, 
-                                     &us_filter_id, &sync_id, &ds_filter_id ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+        if( sync_filters != NULL )
+            free( sync_filters );
+
+        if( ds_filters != NULL )
+            free( ds_filters );
+    } 
+    else if( tag == PROT_NEW_STREAM ) {
+
+        if( ipacket->unpack("%d %ad %d %d %d", 
+                            &stream_id, &backends, &num_backends, 
+                            &us_filter_id, &sync_id, &ds_filter_id) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "unpack() failed\n" ));
             return -1;
         }
     }
+
     _network->new_Stream( stream_id, backends, num_backends, 
                           us_filter_id, sync_id, ds_filter_id );
+
+    if( backends != NULL )
+        free( backends );
 
     mrn_dbg_func_end();
     return 0;
@@ -188,29 +201,24 @@ int BackEndNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
     return 0;
 }
 
-int BackEndNode::proc_deleteStream(PacketPtr ipacket) const
+int BackEndNode::proc_deleteStream( PacketPtr ipacket ) const
 {
     int stream_id;
     Stream * strm;
 
     mrn_dbg_func_begin();
 
-    if (ipacket->ExtractArgList("%d", &stream_id) == -1) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
-        return -1;
-    } 
-
-    strm = _network->get_Stream(stream_id);
-    if (strm == NULL) {
+    stream_id = (*ipacket)[0]->get_int32_t();
+    strm = _network->get_Stream( stream_id );
+    if( strm == NULL ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", 
-                    stream_id));
+                              stream_id));
         return -1;
     } 
 
     strm->_was_shutdown = true;
 
     mrn_dbg_func_end();
-
     return 0;
 }
 
@@ -219,27 +227,13 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
 
-    // NOTE: deprecated in 3.0, kill this for next release
-    bool goaway = false;
-    char delete_backend;
-    ipacket->unpack( "%c", &delete_backend );
-    if( delete_backend == 't' ) {
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend will exit\n" ));
-        goaway = true;
-    }
-
     // processes will be exiting -- disable failure recovery
     _network->disable_FailureRecovery();
 
     // kill threads, topology, and events
     _network->shutdown_Network();
 
-
-    if( goaway ) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "DEPRECATED: not calling exit()\n"));
-    }
-   
-    // exit recv thread from parent
+    // exit recv/EDT thread
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
     XPlat::Thread::Exit(NULL);
 
@@ -276,15 +270,14 @@ int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
 
     mrn_dbg_func_begin();
 
-    if( ipacket->ExtractArgList( "%uhd %s %s", &fid, &so_file, &func ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
-        return -1;
-    }
+    fid = (*ipacket)[0]->get_uint16_t();
+    so_file = (*ipacket)[1]->get_string();
+    func = (*ipacket)[2]->get_string();
 
     retval = Filter::load_FilterFunc( fid, so_file, func );
     if( retval == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
-                    "Filter::load_FilterFunc() failed.\n" ));
+                               "Filter::load_FilterFunc() failed.\n" ));
     }
 
     mrn_dbg_func_end();

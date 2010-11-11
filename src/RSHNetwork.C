@@ -43,7 +43,6 @@ Network::CreateNetworkFE( const char * itopology,
 Network*
 Network::CreateNetworkBE( int argc, char* argv[] )
 {
-    endianTest();
     // Get parent/local info from end of BE args
    
     if( argc >= 6 ) {
@@ -101,7 +100,7 @@ RSHNetwork::CreateInternalNode( Network* inetwork,
     if( bRet == -1 )
     {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "Failure: unable to instantiate network\n" ));
-        error( ERR_INTERNAL, UnknownRank, "" );
+        return NULL;
     }
     assert( listeningPort != UnknownPort );
 
@@ -114,7 +113,6 @@ RSHNetwork::CreateInternalNode( Network* inetwork,
                                 listeningSocket,
                                 listeningPort );
 }
-
 
 //----------------------------------------------------------------------------
 // RSHNetwork methods
@@ -156,32 +154,27 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
                          unsigned int backend_argc,
                          const std::map< std::string, std::string >* /* iattrs */ )
 {
-    // save the serialized graph string in a variable on the stack,
-    // so that we don't build a packet with a pointer into a temporary
-    bool have_backends = (strlen(ibackend_exe) != 0);
+    bool have_backends = ( strlen(ibackend_exe) != 0 );
     std::string sg = _parsed_graph->get_SerializedGraphString( have_backends );
 
-    get_NetworkTopology()->reset(sg,false);
-    NetworkTopology* nt=get_NetworkTopology();
-    
-    if( nt != NULL )
-    {
-       NetworkTopology::Node* localnode = nt->find_Node( get_LocalRank() );
-       localnode->set_Port(get_LocalPort() );
+    NetworkTopology* nt = get_NetworkTopology();
+    if( nt != NULL ) {
+        nt->reset( sg, false );
+        NetworkTopology::Node* localnode = nt->find_Node( get_LocalRank() );
+        localnode->set_Port( get_LocalPort() );
     }   
-    
-    PacketPtr packet( new Packet( 0, PROT_NEW_SUBTREE, "%s%s%s%as", sg.c_str( ),
-                                  mrn_commnode_path, ibackend_exe, ibackend_args,
-                                  backend_argc ) );
-    
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Instantiating network ... \n" ));
 
+    PacketPtr packet( new Packet(0, PROT_NEW_SUBTREE, "%s %s %s %as", sg.c_str( ),
+                                 mrn_commnode_path, ibackend_exe, ibackend_args,
+                                 backend_argc) );
+    
     RSHFrontEndNode* fe = dynamic_cast<RSHFrontEndNode*>( get_LocalFrontEndNode() );
     assert( fe != NULL );
-   
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Instantiating network ... \n") );
+
     if( fe->proc_newSubTree( packet ) == -1 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: FrontEndNode::proc_newSubTree()!\n" ));
-        error( ERR_INTERNAL, UnknownRank, "");
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTree() failed!\n") );
     }
 }
 

@@ -67,26 +67,16 @@ InternalNode::InternalNode( Network * inetwork,
             mrn_dbg( 5, mrn_printf(FLF, stderr, 
                                    "Internal node not in the topology\n") );
 
-            //new topo propagation code - create a new update packet
+            // send topology update for new CP
             Stream *s = ParentNode::_network->get_Stream(1); // get topol prop stream
             int type = NetworkTopology::TOPO_NEW_CP; 
             char *host_arr = strdup( ihostname.c_str() );
-
-            Rank* send_iprank = (Rank*) malloc( sizeof(Rank) );
-            *send_iprank = iprank;
-
-            Rank* send_myrank = (Rank*) malloc( sizeof(Rank) );
-            *send_myrank = irank; 
-
-            Port* send_port = (Port*) malloc( sizeof(Port) );
-            *send_port = listeningPort;
-
             s->send_internal( PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", 
                               &type, 1, 
-                              send_iprank, 1, 
-                              send_myrank, 1, 
+                              &iprank, 1, 
+                              &irank, 1, 
                               &host_arr, 1, 
-                              send_port, 1 );
+                              &listeningPort, 1 );
             free(host_arr);
         } 
         else

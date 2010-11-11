@@ -39,6 +39,12 @@ class EventDetector {
           _num_pollfds(0), _max_pollfds(0), _max_fd(-1)
     { }
 
+    ~EventDetector(void)
+    {
+        _thread_id = 0;
+        _network = NULL;
+    }
+
     static bool start( Network* inetwork );
     bool stop( void );
 
@@ -52,8 +58,7 @@ class EventDetector {
     int init_NewChildFDConnection( PeerNodePtr iparent_node );
 
     int recover_FromChildFailure( Rank ifailed_rank );
-    int recover_FromParentFailure( );
-    int recover_off_FromParentFailure( );
+    int recover_FromParentFailure( int& new_parent_sock );
     
     bool add_FD( int ifd );
     bool remove_FD( int ifd );

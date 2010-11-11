@@ -11,16 +11,15 @@ namespace MRN
 
 DataElement::DataElement( ) : type(UNKNOWN_T), array_len(0), destroy_data(false)
 { 
-    val.uld=0;
+    val.uld = 0;
 }
 
 DataElement::~DataElement()
 {
-    if( destroy_data == false ){
+    if( destroy_data == false )
         return;
-    }
 
-    switch(type){
+    switch( type ) {
     case CHAR_ARRAY_T:
     case UCHAR_ARRAY_T:
     case STRING_T:
@@ -32,14 +31,13 @@ DataElement::~DataElement()
     case UINT64_ARRAY_T:
     case FLOAT_ARRAY_T:
     case DOUBLE_ARRAY_T:
-        if( val.p != NULL ){
+        if( val.p != NULL )
             free( val.p );
-        }
         break;
     case STRING_ARRAY_T:
-        if( val.p != NULL ){
+        if( val.p != NULL ) {
             char** arr = ( char** ) val.p;
-            for(unsigned i=0; i < array_len; i++) {
+            for( unsigned i=0; i < array_len; i++ ) {
                if( arr[i] != NULL )
                   free( arr[i] );
             }
@@ -170,8 +168,8 @@ void DataElement::set_string( const char *p )
 
 const void * DataElement::get_array( DataType *t, uint32_t *len ) const
 { 
-    *t=type; 
-    *len=array_len; 
+    *t = type; 
+    *len = array_len; 
     return val.p;
 }
 void DataElement::set_array( const void *p, DataType t, uint32_t len )
@@ -183,52 +181,71 @@ void DataElement::set_array( const void *p, DataType t, uint32_t len )
 
 DataType Fmt2Type(const char * cur_fmt)
 {
-    if( !strcmp(cur_fmt, "c") )
-        return CHAR_T;
-    else if( !strcmp(cur_fmt, "uc") )
-        return UCHAR_T;
-    else if( !strcmp(cur_fmt, "ac") )
-        return CHAR_ARRAY_T;
-    else if( !strcmp(cur_fmt, "auc") )
-        return UCHAR_ARRAY_T;
-    else if( !strcmp(cur_fmt, "hd") )
-        return INT16_T;
-    else if( !strcmp(cur_fmt, "uhd") )
-        return UINT16_T;
-    else if( !strcmp(cur_fmt, "d") )
-        return INT32_T;
-    else if( !strcmp(cur_fmt, "ud") )
-        return UINT32_T;
-    else if( !strcmp(cur_fmt, "ahd") )
-        return INT16_ARRAY_T;
-    else if( !strcmp(cur_fmt, "ld") )
-        return INT64_T;
-    else if( !strcmp(cur_fmt, "uld") )
-        return UINT64_T;
-    else if( !strcmp(cur_fmt, "auhd") )
-        return UINT16_ARRAY_T;
-    else if( !strcmp(cur_fmt, "ad") )
-        return INT32_ARRAY_T;
-    else if( !strcmp(cur_fmt, "aud") )
-        return UINT32_ARRAY_T;
-    else if( !strcmp(cur_fmt, "ald") )
-        return INT64_ARRAY_T;
-    else if( !strcmp(cur_fmt, "auld") )
-        return UINT64_ARRAY_T;
-    else if( !strcmp(cur_fmt, "f") )
-        return FLOAT_T;
-    else if( !strcmp(cur_fmt, "af") )
-        return FLOAT_ARRAY_T;
-    else if( !strcmp(cur_fmt, "lf") )
-        return DOUBLE_T;
-    else if( !strcmp(cur_fmt, "alf") )
-        return DOUBLE_ARRAY_T;
-    else if( !strcmp(cur_fmt, "s") )
-        return STRING_T;
-    else if( !strcmp(cur_fmt, "as") )
-        return STRING_ARRAY_T;
-    else
-        return UNKNOWN_T;
+    switch( cur_fmt[0] ) {
+    case 'a':
+        if( ! strcmp(cur_fmt, "ac") )
+            return CHAR_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "auc") )
+            return UCHAR_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "ad") )
+            return INT32_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "aud") )
+            return UINT32_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "ahd") )
+            return INT16_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "auhd") )
+            return UINT16_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "ald") )
+            return INT64_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "auld") )
+            return UINT64_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "af") )
+            return FLOAT_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "alf") )
+            return DOUBLE_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "as") )
+            return STRING_ARRAY_T;
+        break;
+    case 'c':
+        if( ! strcmp(cur_fmt, "c") )
+            return CHAR_T;
+        break;
+    case 'd':
+        if( ! strcmp(cur_fmt, "d") )
+            return INT32_T;
+        break;
+    case 'f':
+        if( ! strcmp(cur_fmt, "f") )
+            return FLOAT_T;
+        break;
+    case 'h':
+        if( ! strcmp(cur_fmt, "hd") )
+            return INT16_T;
+        break;
+    case 'l':
+        if( ! strcmp(cur_fmt, "ld") )
+            return INT64_T;
+        else if( ! strcmp(cur_fmt, "lf") )
+            return DOUBLE_T;
+        break;
+    case 's':
+        if( ! strcmp(cur_fmt, "s") )
+            return STRING_T;
+        break;
+    case 'u':
+        if( ! strcmp(cur_fmt, "uc") )
+            return UCHAR_T;
+        else if( ! strcmp(cur_fmt, "uhd") )
+            return UINT16_T;
+        else if( ! strcmp(cur_fmt, "ud") )
+            return UINT32_T;
+        else if( ! strcmp(cur_fmt, "uld") )
+            return UINT64_T;
+        break;
+    default:
+        break;
+    }
+    return UNKNOWN_T;
 }
 
 } /* namespace MRN */

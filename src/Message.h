@@ -27,7 +27,6 @@ class Message: public Error{
    int recv( int isock_fd, std::list < PacketPtr >&opackets, Rank iinlet_rank );
    void add_Packet( const PacketPtr );
    int size_Packets( void );
-   int size_Bytes( void );
    void waitfor_MessagesToSend( void );
 
  private:

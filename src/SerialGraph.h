@@ -16,7 +16,7 @@ namespace MRN
 class SerialGraph {
  private:
     std::string _byte_array;
-    unsigned int _buf_idx;
+    size_t _buf_idx;
     unsigned int _num_nodes;
     unsigned int _num_backends;
 
@@ -31,20 +31,20 @@ class SerialGraph {
 
     void add_Leaf( std::string, Port, Rank );
     void add_SubTreeRoot( std::string, Port, Rank );
-    void end_SubTree( void );
-    std::string get_ByteArray(  ){ return _byte_array; }
-    void print( void ){ fprintf( stderr, "%s\n", _byte_array.c_str() ); }
+    void end_SubTree(void);
+    std::string get_ByteArray(void) { return _byte_array; }
+    void print(void) { fprintf( stderr, "%s\n", _byte_array.c_str() ); }
 
-    std::string get_RootHostName( void );
-    Port get_RootPort( void );
-    Rank get_RootRank( void );
+    std::string get_RootHostName(void);
+    Port get_RootPort(void);
+    Rank get_RootRank(void);
     SerialGraph * get_MySubTree( std::string &ihostname, Port port, Rank irank );
-    void set_ToFirstChild( void );
+    void set_ToFirstChild(void);
 
     bool set_Port(std::string hostname, Port port, Rank irank); 
 
     SerialGraph *get_NextChild(  );
-    bool is_RootBackEnd( void ) const;
+    bool is_RootBackEnd(void) const;
 };
 
 } /* namespace MRN */

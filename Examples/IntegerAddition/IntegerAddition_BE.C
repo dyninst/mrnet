@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 
     do {
         if( net->recv(&tag, p, &stream) != 1 ) {
-            fprintf(stderr, "BE: stream::recv() failure\n");
+            fprintf( stderr, "BE: stream::recv() failure\n" );
             break;
         }
          
@@ -30,14 +30,14 @@ int main(int argc, char **argv)
 
             // Send num_iters waves of integers
             for( int i=0; i<num_iters; i++ ) {
-                fprintf( stdout, "BE: Sending wave %u ...\n", i);
-                if( stream->send(tag, "%d", recv_val*i) == -1 ){
-                    fprintf(stderr, "BE: stream::send(%%d) failure\n");
+                fprintf( stdout, "BE: Sending wave %u ...\n", i );
+                if( stream->send(tag, "%d", recv_val*i) == -1 ) {
+                    fprintf( stderr, "BE: stream::send(%%d) failure\n" );
                     tag = PROT_EXIT;
                     break;
                 }
-                if( stream->flush( ) == -1 ){
-                    fprintf(stderr, "BE: stream::flush() failure\n");
+                if( stream->flush() == -1 ) {
+                    fprintf( stderr, "BE: stream::flush() failure\n" );
                     tag = PROT_EXIT;
                     break;
                 }
@@ -48,16 +48,16 @@ int main(int argc, char **argv)
 
         case PROT_EXIT:
 	    if( stream->send(tag, "%d", 0) == -1 ) {
-                fprintf(stderr, "BE: stream::send(%%s) failure\n");
+                fprintf( stderr, "BE: stream::send(%%s) failure\n" );
                 break;
             }
             if( stream->flush( ) == -1 ) {
-                fprintf(stderr, "BE: stream::flush() failure\n");
+                fprintf( stderr, "BE: stream::flush() failure\n" );
             }
             break;
 
         default:
-            fprintf(stderr, "BE: Unknown Protocol: %d\n", tag);
+            fprintf( stderr, "BE: Unknown Protocol: %d\n", tag );
             tag = PROT_EXIT;
             break;
         }
@@ -66,8 +66,10 @@ int main(int argc, char **argv)
 
     } while ( tag != PROT_EXIT );
 
-    while( ! stream->is_ShutDown() )
-        sleep(1);
+    if( ! stream->is_Closed() ) {
+        while( ! stream->is_ShutDown() )
+            sleep(1);
+    }
 
     delete stream;
 
