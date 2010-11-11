@@ -167,7 +167,7 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
     struct sockaddr_in local_addr;
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "In bindPort(sock:%d, port:%d)\n",
-                sock, port ) );
+              sock, port ) );
 
     sock = socket( AF_INET, SOCK_STREAM, 0 );
     if( sock == -1 ) {
@@ -453,23 +453,18 @@ FILE* mrn_printf_setup( int rank, node_type_t type )
         break;
     };
 
-    const char* home = getenv("HOME");
-
     XPlat::NetUtils::GetLocalHostName(this_host);
     strncpy( host, this_host.c_str(), 256 );
     host[255] = '\0';
 
     // find log directory
-    const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
+    extern char* MRN_DEBUG_LOG_DIRECTORY;
+    const char* varval = MRN_DEBUG_LOG_DIRECTORY;
     if( varval != NULL ) {
         if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
             snprintf( logdir, sizeof(logdir), "%s", varval );
     }
-    else if( home != NULL ) {
-        snprintf( logdir, sizeof(logdir), "%s/mrnet-log", home );
-        if( ! ((stat(logdir, &s) == 0) && (S_IFDIR & s.st_mode)) )
-            snprintf( logdir, sizeof(logdir), "/tmp" );
-    }
+    
     // set file name format
     int pid = XPlat::Process::GetProcessId();
     snprintf( logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
@@ -483,11 +478,14 @@ int mrn_printf( const char *file, int line, const char * func,
                 FILE * ifp, const char *format, ... )
 {
     static FILE * fp = NULL;
-    int retval;
+    int retval = 1;
     va_list arglist;
 
     struct timeval tv;
     while( gettimeofday( &tv, NULL ) == -1 ) {}
+    
+    extern char* MRN_DEBUG_LOG_DIRECTORY;
+    static bool retry = 1;
 
     mrn_printf_mutex.Lock();
 
@@ -496,7 +494,7 @@ int mrn_printf( const char *file, int line, const char * func,
     const char* thread_name = NULL;
     int rank = UnknownRank;
     node_type_t node_type = UNKNOWN_NODE;
-    
+   
     tsd_t *tsd = ( tsd_t * )tsd_key.Get();
     if( tsd != NULL ) {
         tid = tsd->thread_id;
@@ -505,13 +503,21 @@ int mrn_printf( const char *file, int line, const char * func,
         node_type = tsd->node_type;
     }
 
-    // try to open log file
-    if( (fp == NULL) && (rank != UnknownRank) )
-        fp = mrn_printf_setup( rank, node_type );
+    if( (MRN_DEBUG_LOG_DIRECTORY != NULL) && (retry) ) { 
+
+       // try to open log file
+       if( (fp == NULL) && (rank != UnknownRank) )
+          fp = mrn_printf_setup( rank, node_type );
+   
+    }
 
     FILE *f = fp;
-    if( f == NULL ) 
+    if( f == NULL )
+    {
         f = ifp;
+        if( MRN_DEBUG_LOG_DIRECTORY != NULL )
+            retry = 0;
+    }
 
     // print timestamp and thread info
     fprintf( f, "%ld.%ld: %s(0x%lx): ", 
@@ -532,6 +538,7 @@ int mrn_printf( const char *file, int line, const char * func,
     fflush( f );
     
     mrn_printf_mutex.Unlock();
+     
     return retval;
 }
 
@@ -637,6 +644,35 @@ void endianTest() {
         mrn_dbg(5, mrn_printf(FLF, stderr, "test returns little endian\n"));
     }
 
+}
+
+int get_EnvType( std::string s)
+{
+     int ret = -1;
+     if( !s.empty() )
+     {
+         if( strcmp("MRNET_OUTPUT_LEVEL", s.c_str()) == 0 )
+             ret = MRNET_OUTPUT_LEVEL;
+         else if( strcmp("MRNET_DEBUG_LOG_DIRECTORY", s.c_str() ) == 0 )
+             ret = MRNET_DEBUG_LOG_DIRECTORY;
+         else if( strcmp("MRN_COMM_PATH", s.c_str() ) == 0 )
+             ret = MRN_COMM_PATH;
+         else if( strcmp("FAILURE_RECOVERY", s.c_str() ) == 0 )
+             ret = FAILURE_RECOVERY;
+     }
+     return ret;
+}
+
+void set_Env( std::map< env_key , std::string>& envMap, 
+               const std::map<std::string, std::string> * iattrs ) {
+	      
+     std::map<std::string, std::string>::const_iterator it;
+     if( iattrs != NULL)
+     {
+         for( it= iattrs->begin(); it != iattrs->end(); it++ ) {
+            envMap.insert( std::pair< env_key, std::string >( (env_key)(get_EnvType( it->first )), it->second ) );
+         }
+     }
 }
 
 } // namespace MRN

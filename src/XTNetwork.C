@@ -116,6 +116,12 @@ Network::CreateNetworkIN( int argc, char** argv )
 //----------------------------------------------------------------------------
 // XTNetwork methods
 
+XTNetwork::XTNetwork( const std::map<std::string,std::string>* iattrs ) 
+:Network( iattrs )
+{
+    set_LocalHostName( GetNodename() );
+}
+
 // FE and BE constructor
 XTNetwork::XTNetwork( void )
 {

@@ -240,6 +240,13 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
             retval = -1;
         }
         break;
+    case PROT_ENV_SETTINGS:
+        if( proc_SetTopoEnv( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_SetTopoEnv() failed\n" ));
+            retval = -1;
+        }
+        break;
     default:
         //Any Unrecognized tag is assumed to be data
         if( proc_DataFromParent( cur_packet ) == -1 ) {
@@ -252,6 +259,57 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
 
     return retval;
 }
+
+int ChildNode::proc_SetTopoEnv( PacketPtr ipacket ) const
+{
+    mrn_dbg_func_begin();
+    
+    char* sg_byte_array = NULL;
+    int* key = NULL;
+    char** env_value = NULL ;
+    int env_count;
+    MRN::NetworkTopology* nt = _network->get_NetworkTopology();    
+
+    if( ipacket->ExtractArgList( "%s%ad%as", &sg_byte_array, &key,
+                             &env_count, &env_value, &env_count ) == -1 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "ExtractArgList() failed\n" ));
+        return -1;
+    }
+    
+    //Set Env variables
+    std::map< env_key, std::string> envMap;
+    while( env_count > 0 )
+    {
+       if( key[ env_count -1 ] != FAILURE_RECOVERY ) {
+           envMap.insert( std::pair< env_key , std::string>( (env_key)key[env_count-1], env_value[env_count-1] ));
+       }	   
+       else {
+           if( atoi( env_value[ env_count -1 ] ))
+	   {
+               _network->enable_FailureRecovery();
+	   }    
+	   else
+	   {
+	       _network->disable_FailureRecovery();
+	   }    
+       }	       
+       env_count --;
+    }
+
+    _network->set_EnvMap( &envMap );
+
+    free( key );
+    for( int i=0; i < env_count ; i++ )
+        free( env_value[ i ] );
+    free(env_value);	
+
+    //Set Topology 
+    std::string sg_str(sg_byte_array);
+    nt->reset(sg_str, false );
+
+    mrn_dbg_func_end();
+    return 0;
+} 
 
 int ChildNode::proc_EnablePerfData( PacketPtr ipacket ) const
 {
@@ -483,8 +541,6 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
                                             Rank ifailed_rank /* = UnknownRank */ )
 {
     mrn_dbg_func_begin();
-    NetworkTopology* tmp_nt=_network->get_NetworkTopology();
-
 
     // Establish data detection connection w/ new Parent
     if( iparent->connect_DataSocket() == -1 ) {
@@ -521,12 +577,19 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     }
     free( topo_ptr );
 
-    SerialGraph* init_topo = _network->readTopology(iparent->_data_sock_fd);
-    assert(init_topo!=NULL);
-    std::string sg_str=init_topo->get_ByteArray();
-
-    tmp_nt->reset(sg_str, false );
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s\n", tmp_nt->get_TopologyStringPtr() ));
+    std::list< PacketPtr > packet_list;
+    
+    int rret = iparent->recv( packet_list );
+    if( (rret == -1) || ((rret == 0) && (packet_list.size() == 0)) ) {
+        if( rret == -1 ) {
+              mrn_dbg(3, mrn_printf(FLF, stderr,
+                     "recv() topo and env failed! \n"));
+              return -1;
+        }
+    }
+    
+    if( proc_PacketsFromParent( packet_list ) == -1 )
+        mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromParent() failed\n"));
 
     //Create send/recv threads
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating comm threads for parent\n" ));
@@ -710,13 +773,9 @@ bool ChildNode::has_PacketsFromParent( ) const
 
 /*Failure Recovery Code*/
 
-
-
 int ChildNode::proc_EnableFailReco( PacketPtr ipacket ) const
 {
     int stream_id;
-    
-
     mrn_dbg_func_begin();
 
     stream_id = ipacket->get_StreamId();

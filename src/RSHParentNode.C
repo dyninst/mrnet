@@ -4,7 +4,6 @@
  ****************************************************************************/
 
 #include <iostream>
-
 #include "utils.h"
 #include "ChildNode.h"
 #include "RSHParentNode.h"
@@ -12,7 +11,6 @@
 #include "xplat/Process.h"
 #include "xplat/Error.h"
 #include "mrnet/MRNet.h"
-
 
 namespace MRN
 {
@@ -86,7 +84,7 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
     char *commnode_path=NULL;
     char **backend_argv;
     unsigned int backend_argc;
-
+  
     mrn_dbg_func_begin();
 
     if( ipacket->ExtractArgList( "%s%s%s%as", &byte_array, &commnode_path,
@@ -176,8 +174,24 @@ RSHParentNode::launch_InternalNode( std::string ihostname, Rank irank,
     mrn_dbg(3, mrn_printf(FLF, stderr, "Launching %s:%d ...\n",
                           ihostname.c_str(), irank ));
 
+    const std::map< env_key, std::string >& tmp_EnvMap(_network->get_EnvMap() );
+    std::map< env_key, std::string >::const_iterator eit;
+
     // set up arguments for the new process
     std::vector <std::string> args;
+   
+    eit = tmp_EnvMap.find( XPLAT_RSH ); 
+    if( eit != tmp_EnvMap.end() )
+        XPlat::Process::set_rsh( eit->second );
+    
+    eit = tmp_EnvMap.find(XPLAT_RSH_ARGS);
+    if( eit != tmp_EnvMap.end() )
+        XPlat::Process::set_rshargs( eit->second );
+
+    eit = tmp_EnvMap.find( XPLAT_REMCMD );
+    if( eit != tmp_EnvMap.end() )
+        XPlat::Process::set_remcmd( eit->second ); 
+
     args.push_back(icommnode_exe);
     args.push_back(_hostname);
     args.push_back(parent_port_str);
@@ -219,7 +233,6 @@ RSHParentNode::launch_Application( std::string ihostname, Rank irank, std::strin
                                     std::vector <std::string> &ibackend_args)
     const
 {
-
     mrn_dbg(3, mrn_printf(FLF, stderr, "Launching application on %s:%d (\"%s\")\n",
                           ihostname.c_str(), irank, ibackend_exe.c_str()));
   
@@ -231,9 +244,13 @@ RSHParentNode::launch_Application( std::string ihostname, Rank irank, std::strin
     snprintf(rank_str, sizeof(rank_str), "%d", irank );
 
     // set up arguments for new process: copy to get the cmd in front
+    
+    const std::map< env_key , std::string >& tmp_EnvMap =  _network->get_EnvMap();
+    std::map< env_key , std::string>::const_iterator eit;
 
-    std::vector<std::string> new_args;
-
+    // set up arguments for the new process
+    std::vector <std::string> new_args;
+    
     new_args.push_back( ibackend_exe );
     for(unsigned int i=0; i<ibackend_args.size(); i++){
         new_args.push_back(ibackend_args[i]);
@@ -255,6 +272,20 @@ RSHParentNode::launch_Application( std::string ihostname, Rank irank, std::strin
     }
     std::cout << std::endl;
 #else
+
+    eit = tmp_EnvMap.find(XPLAT_RSH);
+    if( eit != tmp_EnvMap.end() )
+        XPlat::Process::set_rsh( eit->second );
+
+    eit = tmp_EnvMap.find(XPLAT_RSH_ARGS);
+    if( eit != tmp_EnvMap.end() )
+        XPlat::Process::set_rshargs( eit->second );
+
+    eit = tmp_EnvMap.find(XPLAT_REMCMD);   
+    if( tmp_EnvMap.find(XPLAT_REMCMD) != tmp_EnvMap.end() )
+        XPlat::Process::set_remcmd( eit->second ); 
+
+
     if( XPlat::Process::Create( ihostname, ibackend_exe, new_args ) != 0 ){
         mrn_dbg(1, mrn_printf(FLF, stderr, "XPlat::Process::Create() failed\n"));
         int err = XPlat::Process::GetLastError();

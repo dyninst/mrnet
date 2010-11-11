@@ -138,12 +138,13 @@ class Network: public Error {
     PeerNodePtr get_PeerNode( Rank );
     bool node_Failed( Rank );
     PeerNodePtr get_OutletNode( Rank ) const ;
-
+    
     void add_Callbacks();
 
 protected:
     // constructor
     Network( void );
+    Network( const std::map< std::string, std::string >* );
 
     // Initializers for separate Network roles
     // With the current design where a single Network class can be
@@ -199,12 +200,16 @@ protected:
 
 
     void set_LocalHostName( std::string const& );
-    static const char* FindCommnodePath( void );
     
     void shutdown_Network( void );
     bool reset_Topology(std::string& itopology);
     void update_TopoStream();
     PeerNodePtr _parent;
+    
+    std::map <env_key, std::string > envMap;
+    void set_EnvMap( const std::map<std::string, std::string> * iattrs );
+    void set_EnvMap( std::map< env_key ,std::string >* emap );
+    void print_EnvMap();
 
  private:
     friend class Stream;
@@ -304,6 +309,7 @@ protected:
     void send_TopologyUpdates( void );
 
     void collect_PerfData( void );
+    const std::map< env_key, std::string >&  get_EnvMap();
 
     //Data Members
     std::string _local_hostname;

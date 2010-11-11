@@ -23,6 +23,8 @@ int ChildNode_proc_PacketsFromParent(BackEndNode_t* be, vector_t* packets);
 
 int ChildNode_proc_PacketFromParent( BackEndNode_t* be,  Packet_t* packet);
 
+int ChildNode_proc_SetTopoEnv( BackEndNode_t* be, Packet_t* packet ); 
+
 int ChildNode_ack_DeleteSubTree( BackEndNode_t* be);
 
 int ChildNode_proc_RecoveryReport( BackEndNode_t* be,  Packet_t* ipacket);

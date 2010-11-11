@@ -7,6 +7,10 @@
 #include <cassert>
 #include "xplat/Process.h"
 
+std::string XPlat::Process::XPLAT_RSH;
+std::string XPlat::Process::XPLAT_RSH_ARGS;
+std::string XPlat::Process::XPLAT_REMCMD;
+
 namespace XPlat
 {
 
@@ -17,38 +21,36 @@ Process::CreateRemote( const std::string& host,
 {
     assert( host.length() > 0 );
     assert( !NetUtils::IsLocalHost( host ) );
-
+    
     // determine the remote shell program to use
+    
     std::string rshCmd = "ssh";
-    const char* varval = getenv( "XPLAT_RSH" );
-    if( varval != NULL )
-    {
-        rshCmd = varval;
-    }
+    std::string varval;
 
+    if( !(XPLAT_RSH.empty() ))
+    {
+       rshCmd = XPLAT_RSH;
+    }   
+    
     std::vector<std::string> rshArgs;
     rshArgs.push_back( rshCmd );
-    varval = getenv( "XPLAT_RSH_ARGS" );
-    if( varval != NULL )
+
+    if( !(XPLAT_RSH_ARGS.empty() ))
     {
-        rshArgs.push_back( std::string(varval) );
+        rshArgs.push_back( XPLAT_RSH_ARGS );
     }
+
 #ifndef os_windows
-    rshArgs.push_back( std::string("-n") ); /* redirect stdin to /dev/null */
+    rshArgs.push_back( std::string("-n") ); // redirect stdin to /dev/null //
 #endif
     rshArgs.push_back( host );
-
-
+    
     // determine whether the remote command must be run by some other
     // remote utility command (e.g., so that it has AFS tokens)
-    varval = getenv( "XPLAT_REMCMD" );
-    if( varval != NULL )
+
+    if( !(XPLAT_REMCMD.empty() ))
     {
-        std::string remCmd = varval;
-        if( remCmd.length() > 0 )
-            {
-                rshArgs.push_back( remCmd );
-            }
+        rshArgs.push_back( XPLAT_REMCMD );
     }
 
     // add the user-supplied args
@@ -58,7 +60,7 @@ Process::CreateRemote( const std::string& host,
     {
         rshArgs.push_back( *aiter );
     }
-
+    
     // execute the local command that will create the remote process
     return CreateLocal( rshCmd, rshArgs );
 }

@@ -164,6 +164,11 @@ class Timer{
 bool isBigEndian();
 void endianTest();
 
+void set_Env( std::map< env_key , std::string>& envMap, 
+               const std::map<std::string, std::string>*  iattrs );
+
+int get_EnvType( std::string s);
+
 }// namespace MRN
 
 

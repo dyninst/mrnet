@@ -110,5 +110,16 @@ typedef uint32_t Rank;
         uint16_t cport;
     } update_contents_t;
 
+    typedef enum mrnet_Env {
+        MRNET_OUTPUT_LEVEL = 0,
+	MRNET_DEBUG_LOG_DIRECTORY =1,
+	MRN_COMM_PATH = 2,
+	FAILURE_RECOVERY = 3,
+	XPLAT_RSH = 4,
+	XPLAT_RSH_ARGS = 5,
+	XPLAT_REMCMD = 6
+    }env_key;
+
+
 
 #endif /* __types_h */

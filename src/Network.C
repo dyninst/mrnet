@@ -44,16 +44,17 @@ int mrnparse( );
 extern const char* mrnBufPtr;
 extern unsigned int mrnBufRemaining;
 
-const int MIN_OUTPUT_LEVEL=0;
-const int MAX_OUTPUT_LEVEL=5;
-int CUR_OUTPUT_LEVEL=1;
+const int MIN_OUTPUT_LEVEL = 0;
+const int MAX_OUTPUT_LEVEL = 5;
+int CUR_OUTPUT_LEVEL = 1;
+char* MRN_DEBUG_LOG_DIRECTORY = NULL;
 
 const Port UnknownPort = (Port)-1;
 const Rank UnknownRank = (Rank)-1;
 
 const char *empty_str="";
 
-void set_OutputLevelFromEnvironment( void );
+void set_OutputLevelFromEnvironment( const std::map< std::string, std::string >* iattrs );
 
 void init_local( void )
 {
@@ -100,7 +101,7 @@ void cleanup_local( void )
 /*===========================================================*/
 /*             Network DEFINITIONS        */
 /*===========================================================*/
-Network::Network( void )
+Network::Network( const std::map< std::string, std::string >* iattrs )
     : _local_port(UnknownPort), _local_rank(UnknownRank),_network_topology(NULL), 
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
@@ -110,11 +111,25 @@ Network::Network( void )
       _terminate_backends(true), _was_shutdown(false)
 {
     init_local();
-
-    set_OutputLevelFromEnvironment();
-
+    
+    set_EnvMap( iattrs );
+    set_OutputLevelFromEnvironment( iattrs );
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
 }
+
+Network::Network( void )
+    : _local_port(UnknownPort), _local_rank(UnknownRank),_network_topology(NULL),
+      _failure_manager(NULL), _bcast_communicator(NULL),
+      _local_front_end_node(NULL), _local_back_end_node(NULL),
+      _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
+      _edt( new EventDetector(this) ), next_stream_id(1), _evt_mgr( new EventMgr() ),
+      _threaded(true), _recover_from_failures(true),
+      _terminate_backends(true), _was_shutdown(false)
+{   
+    init_local();
+    _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
+}
+
 
 Network::~Network( void )
 {
@@ -125,6 +140,9 @@ Network::~Network( void )
         parsed_graph = NULL;
     }
     _edt->_network = NULL;
+
+    if( MRN_DEBUG_LOG_DIRECTORY != NULL )
+        free( MRN_DEBUG_LOG_DIRECTORY );
 }
 
 void Network::shutdown_Network( void )
@@ -218,14 +236,6 @@ void Network::signal_ShutDown( void )
     mrn_dbg_func_end();
 }
 
-const char* Network::FindCommnodePath( void )
-{
-    const char* path = getenv( "MRN_COMM_PATH" );
-    if( path == NULL )
-        path = COMMNODE_EXE;
-    return path;
-}
-
 // deprecated: back-ends should call exit() after waitfor_ShutDown()
 //             if termination is desired
 void Network::set_TerminateBackEndsOnShutdown( bool terminate )
@@ -233,6 +243,65 @@ void Network::set_TerminateBackEndsOnShutdown( bool terminate )
     mrn_printf(FLF, stderr, 
                "Network::set_TerminateBackEndsOnShutdown() is deprecated.\n");
     _terminate_backends = terminate;
+}
+
+const std::map< env_key, std::string >&  Network::get_EnvMap()
+{
+    return envMap;
+}
+
+//only FE calls this set_EnvMap
+void Network::set_EnvMap( const std::map<std::string, std::string> * iattrs )
+{
+    set_Env( envMap, iattrs );
+    if( envMap.find( MRNET_OUTPUT_LEVEL) != envMap.end() )
+    {
+        CUR_OUTPUT_LEVEL = atoi( envMap[MRNET_OUTPUT_LEVEL].c_str() );
+    }
+    if( envMap.find( MRNET_DEBUG_LOG_DIRECTORY ) != envMap.end() )
+    {
+        MRN_DEBUG_LOG_DIRECTORY = strdup( envMap[MRNET_DEBUG_LOG_DIRECTORY].c_str() );
+    }
+    else
+    {
+        const char* home = getenv("HOME");
+	char logdir[256];
+	snprintf(logdir, sizeof(logdir), "%s/mrnet-log", home);
+        envMap.insert( std::pair< env_key, std::string>( MRNET_DEBUG_LOG_DIRECTORY, std::string(logdir) ));
+    }
+        
+    if( envMap.find( MRN_COMM_PATH ) == envMap.end() )
+        envMap.insert( std::pair< env_key, std::string>(MRN_COMM_PATH, COMMNODE_EXE ));
+}
+
+//Childnodes call this set_EnvMap after getting env settings from their parent
+void Network::set_EnvMap( std::map< env_key, std::string >* emap) 
+{
+    envMap = *emap;
+    if( envMap.find( MRNET_OUTPUT_LEVEL) != envMap.end() )
+    {
+        CUR_OUTPUT_LEVEL = atoi( envMap[MRNET_OUTPUT_LEVEL].c_str() );
+    }
+
+    if( envMap.find( MRNET_DEBUG_LOG_DIRECTORY ) != envMap.end() )
+    {
+        MRN_DEBUG_LOG_DIRECTORY = strdup( envMap[MRNET_DEBUG_LOG_DIRECTORY].c_str() );
+    }
+
+    if( envMap.find( MRN_COMM_PATH ) == envMap.end() )
+        envMap.insert( std::pair< env_key, std::string>(MRN_COMM_PATH, COMMNODE_EXE ));
+
+}    
+
+void Network::print_EnvMap()
+{
+    std::map< env_key , std::string >::iterator it;
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Inside print env \n" ));
+    for(it = envMap.begin(); it!= envMap.end(); it++ )
+    {
+        mrn_dbg( 5, mrn_printf( FLF, stderr , "First: %d Second: %s\n", 
+	                      (it->first) , (it->second).c_str() ));
+    }
 }
 
 void Network::update_BcastCommunicator( void )
@@ -322,19 +391,27 @@ void Network::init_FrontEnd( const char * itopology,
         error( ERR_SYSTEM, rootRank, 
                "Failed to initialize via CreateFrontEndNode()\n" );
 
-    const char* mrn_commnode_path = FindCommnodePath();
-    assert( mrn_commnode_path != NULL );
+    std::string path;
+    if( envMap.find( MRN_COMM_PATH ) != envMap.end() ) {
+        path = envMap[ MRN_COMM_PATH];
+    }
+    
+    if( path.empty() )
+        assert( 0 );
+    
+    const char* mrn_commnode_path = path.c_str();
     
     if( ibackend_exe == NULL ) {
         ibackend_exe = empty_str;
     }
+
     unsigned int backend_argc=0;
     if( ibackend_args != NULL ){
         for(unsigned int i=0; ibackend_args[i] != NULL; i++){
             backend_argc++;
         }
     }
-
+   
     // spawn and connect processes that constitute our network
     this->Instantiate( parsed_graph, 
                        mrn_commnode_path, 
@@ -346,7 +423,7 @@ void Network::init_FrontEnd( const char * itopology,
     parsed_graph = NULL;
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
-    
+
     if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() )
             error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
    
@@ -366,6 +443,7 @@ void Network::init_FrontEnd( const char * itopology,
     PacketPtr packet( new Packet( 0, PROT_PORT_UPDATE, "" ) );
     if( -1 == get_LocalFrontEndNode()->proc_PortUpdates( packet ) )
         error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
+
 }
 
 void Network::send_TopologyUpdates( void )
@@ -1212,7 +1290,6 @@ int Network::load_FilterFunc( const char* so_file, const char* func_name )
     static unsigned short next_filter_id=100; 
     unsigned short cur_filter_id=next_filter_id;
     next_filter_id++;
-
     mrn_dbg_func_begin();
 
     int rc = Filter::load_FilterFunc( cur_filter_id, so_file, func_name );
@@ -1794,13 +1871,25 @@ void set_OutputLevel(int l)
     }
 }
 
-void set_OutputLevelFromEnvironment( void )
+void set_OutputLevelFromEnvironment( const std::map< std::string, std::string>* iattrs) 
 {
-    char* output_level = getenv( "MRNET_OUTPUT_LEVEL" );
-    if( output_level != NULL ) {
-        int l = atoi( output_level );
-        set_OutputLevel( l );
-    }
+    char* output_level = NULL;
+    if( iattrs !=NULL)
+    {
+        std::map< std::string , std::string > env = *iattrs;
+        if( env.find("MRNET_OUTPUT_LEVEL") != env.end() ){
+            output_level = strdup( env["MRNET_OUTPUT_LEVEL"].c_str() );
+        }
+        
+        if( output_level != NULL ) {
+            int l = atoi( output_level );
+	    free( output_level );
+            set_OutputLevel( l );
+        }
+    
+        if( env.find("MRNET_DEBUG_LOG_DIRECTORY") != env.end() )
+            MRN_DEBUG_LOG_DIRECTORY = strdup( env["MRNET_DEBUG_LOG_DIRECTORY"].c_str() );
+    }	    
 }
 
 SerialGraph* Network::readTopology( int topoSocket )
@@ -1862,7 +1951,7 @@ bool Network::set_FailureRecovery( bool enable_recovery )
     mrn_dbg_func_begin();
     int tag;
 
-
+   
     if( is_LocalNodeFrontEnd() ) {
 
 	//enable or disable Failure Recovery

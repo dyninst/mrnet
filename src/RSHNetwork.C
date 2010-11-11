@@ -29,7 +29,7 @@ Network::CreateNetworkFE( const char * itopology,
 {
     endianTest();
 
-    Network* net = new RSHNetwork;
+    Network* net = new RSHNetwork( iattrs );
     net->init_FrontEnd( itopology,
                         ibackend_exe,
                         ibackend_argv,
@@ -118,13 +118,15 @@ RSHNetwork::CreateInternalNode( Network* inetwork,
 
 //----------------------------------------------------------------------------
 // RSHNetwork methods
+//only FE calls this constructor
 
-RSHNetwork::RSHNetwork( void )
+RSHNetwork::RSHNetwork( const std::map< std::string, std::string >* iattrs )
+: Network( iattrs )
 {
-    // nothing else to do
+    set_EnvMap( iattrs );
 }
 
-
+//BE and IN constructor
 RSHNetwork::RSHNetwork( const char* phostname, Port pport, Rank prank,
                         const char* myhostname, Rank myrank, bool isInternal )
 {
@@ -145,8 +147,6 @@ RSHNetwork::RSHNetwork( const char* phostname, Port pport, Rank prank,
                                myrank );
     }
 }
-
-
 
 void
 RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
@@ -169,7 +169,7 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
        NetworkTopology::Node* localnode = nt->find_Node( get_LocalRank() );
        localnode->set_Port(get_LocalPort() );
     }   
-
+    
     PacketPtr packet( new Packet( 0, PROT_NEW_SUBTREE, "%s%s%s%as", sg.c_str( ),
                                   mrn_commnode_path, ibackend_exe, ibackend_args,
                                   backend_argc ) );
@@ -178,7 +178,7 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
 
     RSHFrontEndNode* fe = dynamic_cast<RSHFrontEndNode*>( get_LocalFrontEndNode() );
     assert( fe != NULL );
-
+   
     if( fe->proc_newSubTree( packet ) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: FrontEndNode::proc_newSubTree()!\n" ));
         error( ERR_INTERNAL, UnknownRank, "");

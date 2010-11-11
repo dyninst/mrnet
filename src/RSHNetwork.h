@@ -41,7 +41,7 @@ class RSHNetwork : public Network
 
  public:
     // ctor for Network in FE role
-    RSHNetwork( void );
+    RSHNetwork( const std::map< std::string, std::string>* iattrs );
 
     // ctor for Network in BE/IN role
     RSHNetwork( const char* phostname, Port pport, Rank prank,

@@ -698,13 +698,52 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
     
     //new topo prop code
     NetworkTopology* nt = _network->get_NetworkTopology();
-    char * topology = nt->get_TopologyStringPtr();
-    SerialGraph* init_topo = new SerialGraph( topology );
-    _network->writeTopology( isock, init_topo );
-    free( topology );
+    SerialGraph* init_topo = new SerialGraph( nt->get_TopologyStringPtr() );
+    std::string topo_str = init_topo->get_ByteArray();
 
+    const std::map< env_key, std::string>& envMap = _network->get_EnvMap();
+    
+    int* key = (int*) malloc( sizeof(char*) * ( envMap.size() + 1) );
+    char** env_value = (char**)malloc( sizeof(char*) * ( envMap.size() + 1) ); 
+    unsigned int index = 0;
+
+    std::map< env_key, std::string>::const_iterator env_it;
+    for( env_it = envMap.begin(); env_it != envMap.end(); env_it++ ) {
+        key[index] = env_it->first;
+        env_value[index] = strdup( (env_it->second ).c_str() );
+        index++;
+    }
+
+    key[ index ] = FAILURE_RECOVERY;
+    if( _network->_recover_from_failures )
+        env_value[ index ] =  strdup( "1" );
+    else 
+        env_value[ index ] = strdup ( "0" );
+  
+    index++;
+
+    PacketPtr pkt( new Packet( 0, PROT_ENV_SETTINGS, "%s%ad%as", topo_str.c_str( ),
+                                                         key, index, env_value, index ));
+    
+    mrn_dbg(5, mrn_printf(FLF, stderr, "New child node[%s:%u:%u] (incarnation:%u) on socket %d\n",
+                              child_hostname_ptr, child_rank, child_port,
+			      child_incarnation, isock ));
+    
+    child_node->sendDirectly( pkt );  
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before adding child subgraph\n", 
                            nt->get_TopologyStringPtr()) );
+    
+    
+    index = 0 ;
+    for( env_it = envMap.begin(); env_it != envMap.end(); env_it++ )
+    {
+      free(env_value[index] );
+      index++;
+    }
+    
+    free( env_value[ index ] );
+    free( key );
+    free( env_value );
 
     SerialGraph sg( topo_ptr );
 

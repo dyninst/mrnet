@@ -18,8 +18,8 @@ CommunicationNode::CommunicationNode(std::string const& ih, Port ip, Rank irank)
 {
     XPlat::NetUtils::GetNetworkName(ih, _hostname );
     mrn_dbg( 5, mrn_printf(FLF, stderr,
-                           "node[%u]:\"%s:%hu\"\n",
-                           _rank, _hostname.c_str(), _port ));
+                       "node[%u]:\"%s:%hu\"\n",
+                       _rank, _hostname.c_str(), _port ));
 }
 
 std::string CommunicationNode::get_HostName( ) const

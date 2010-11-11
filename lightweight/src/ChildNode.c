@@ -72,12 +72,20 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
     } 
 
     free(topo_ptr);
+     
+    vector_t* packets = new_empty_vector_t();
+    int ret = PeerNode_recv( be->network->parent, packets );
+    if( (ret == -1) || ((ret ==0 ) && (packets->size == 0)) ) {
+        if( ret == -1 ) {
+	    mrn_dbg( 3, mrn_printf(FLF, stderr,
+	             "recv() topo and env failed! \n"));
+            return -1;
+        }
+    }
 
-    init_topo = Network_readTopology(be->network, iparent->data_sock_fd);
-    assert(init_topo);
-    sg_str = SerialGraph_get_ByteArray(init_topo);
+    if( ChildNode_proc_PacketsFromParent( be, packets ) == -1 )
+        mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromParent() failed\n"));
 
-    NetworkTopology_reset(tmp_nt, sg_str);
     mrn_dbg(5, mrn_printf(FLF, stderr, "topology is %s\n",
                 NetworkTopology_get_TopologyStringPtr(tmp_nt)));
 
@@ -137,7 +145,6 @@ int ChildNode_send_NewSubTreeReport(BackEndNode_t* be)
     mrn_dbg_func_end();
     return 0;
 }
-
 int ChildNode_proc_PacketsFromParent(BackEndNode_t* be, vector_t* packets)
 {
     int retval = 0;
@@ -277,6 +284,13 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
             retval = -1;
         }
         break;
+    case PROT_ENV_SETTINGS:
+        if( ChildNode_proc_SetTopoEnv( be, packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_SetTopoEnv() failed\n" ));
+            retval = -1;
+        }
+        break;
     default:
         //Any Unrecognized tag is assumed to be data
         if( BackEndNode_proc_DataFromParent( be, packet ) == -1 ) {
@@ -290,6 +304,60 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
     return retval;
 }
 
+int ChildNode_proc_SetTopoEnv( BackEndNode_t* be, Packet_t* ipacket ) 
+{
+    mrn_dbg_func_begin();
+   
+    char* sg_byte_array = NULL;
+    int* key = NULL;
+    char** env_value = NULL ;
+    int env_count;
+    NetworkTopology_t* nt = Network_get_NetworkTopology( be->network );
+
+    if( Packet_unpack( ipacket, "%s%ad%as", &sg_byte_array, &key,
+                       &env_count, &env_value, &env_count ) == -1 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "unpack env packet failed\n" ));
+        return -1;
+    }
+
+    //Set Env variables
+    while( env_count > 0 ) {
+
+       switch ( key [ env_count -1 ] ) 
+       {
+           case MRNET_OUTPUT_LEVEL :
+               Network_set_OutputLevel( atoi( env_value[ env_count -1 ] ));        
+	       break;
+	   
+	   case MRNET_DEBUG_LOG_DIRECTORY :
+	       Network_set_DebugLogDir( env_value[ env_count -1 ] );
+	       break;
+
+	   case FAILURE_RECOVERY :
+	       if(( strcmp( env_value[ env_count -1 ] , "0" )) == 0)
+	           Network_disable_FailureRecovery( be->network );
+	       break;	   
+
+	   default : 
+	       break;
+       }
+
+       env_count --;
+    }
+      
+    //Set Topology
+    NetworkTopology_reset(nt, sg_byte_array );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s\n", NetworkTopology_get_TopologyStringPtr( nt ) ));
+    
+    int i;
+    for( i=0 ;i < env_count ; i++ )
+       free( env_value[i] );
+
+    free( env_value );
+    free( key );
+    mrn_dbg_func_end();
+    return 0;
+}
 
 int ChildNode_ack_DeleteSubTree(BackEndNode_t* be)
 {

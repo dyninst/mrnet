@@ -155,6 +155,7 @@ protected:
 public:
     // ctor for Network in FE role
     XTNetwork( void );
+    XTNetwork( const std::map<std::string,std::string>* );
 
     // ctor for Network in BE/IN role
     XTNetwork( bool,

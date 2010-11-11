@@ -71,6 +71,7 @@ namespace MRN
     extern const int MIN_OUTPUT_LEVEL;
     extern const int MAX_OUTPUT_LEVEL;
     extern int CUR_OUTPUT_LEVEL; 
+    extern char* MRN_DEBUG_LOG_DIRECTORY;
     void set_OutputLevel(int l=1);
 
     /* pretty names for MRNet port and rank types. */
@@ -120,7 +121,17 @@ namespace MRN
 	PERFDATA_CTX_NONE = 4,
         PERFDATA_MAX_CTX = 5
     } perfdata_context_t;
-
+    
+    typedef enum mrnet_Env {
+        MRNET_OUTPUT_LEVEL = 0,
+	MRNET_DEBUG_LOG_DIRECTORY =1,
+	MRN_COMM_PATH = 2, 
+	FAILURE_RECOVERY = 3,
+	XPLAT_RSH = 4, 
+	XPLAT_RSH_ARGS = 5,
+	XPLAT_REMCMD = 6
+    } env_key;	
+    
 } /* namespace MRN */
 
 #endif /* !defined(Types_h) */
