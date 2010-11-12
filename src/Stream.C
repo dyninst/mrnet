@@ -45,8 +45,7 @@ Stream::Stream( Network * inetwork,
     _ds_filter( new Filter( ids_filter_id ) ),
     _evt_pipe(NULL),
     _perf_data( new PerfDataMgr() ),
-    _was_closed(false),
-    _was_shutdown(false)
+    _was_closed(false)
 {
 
     set< PeerNodePtr > node_set;
@@ -87,9 +86,7 @@ Stream::Stream( Network * inetwork,
 
 Stream::~Stream()
 {
-    _shutdown_sync.Lock();
-    _was_shutdown = true;
-    _shutdown_sync.Unlock();
+    close();
 
     if( _network->is_LocalNodeFrontEnd() ) {
         PacketPtr packet( new Packet( 0, PROT_DEL_STREAM, "%d", _id ) );
@@ -243,10 +240,6 @@ int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket,
         mrn_dbg(5, mrn_printf(FLF, stderr, "send on closed stream\n"));
         return 0;
     }
-    if( is_ShutDown() ) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "send on shutdown stream\n"));
-        return -1;
-    }
     
     vector<PacketPtr> opackets, opackets_reverse;
 
@@ -308,7 +301,7 @@ int Stream::flush() const
     int retval = 0;
     mrn_dbg_func_begin();
 
-    if( is_Closed() || is_ShutDown() )
+    if( is_Closed() )
         return -1;
     
     if( _network->is_LocalNodeFrontEnd() ){
@@ -356,9 +349,6 @@ int Stream::recv( int *otag, PacketPtr & opacket, bool iblocking )
     if( is_Closed() )
         return 0;
 
-    if( is_ShutDown() )
-        return -1;
-    
     // at this point, no packets already available for this stream
     if( ! iblocking ) {
         return 0;
@@ -376,7 +366,7 @@ int Stream::recv( int *otag, PacketPtr & opacket, bool iblocking )
     else {
         // not threaded, keep receiving on network till stream has packet
         while( _incoming_packet_buffer.empty() ) {
-            if( _network->recv( iblocking ) == -1 ){
+            if( _network->recv( iblocking ) == -1 ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "FrontEnd::recv() failed\n" ));
                 return -1;
             }
@@ -456,6 +446,7 @@ void Stream::close(void)
     _incoming_packet_buffer_sync.Lock();
     _was_closed = true;
     _incoming_packet_buffer_sync.Unlock();
+
     signal_BlockedReceivers();
 }
                         
@@ -1252,13 +1243,6 @@ bool Stream::find_FilterAssignment(const std::string& assignments,
     return false;
 }
 
-bool Stream::is_ShutDown() const
-{
-    bool rc;
-    _shutdown_sync.Lock();
-    rc = _was_shutdown;
-    _shutdown_sync.Unlock();
-    return rc;
-}
+
 
 } // namespace MRN

@@ -337,9 +337,21 @@ int Network_recv_PacketsFromParent(Network_t* net, /*Packet_t* opacket*/ vector_
 
 void Network_shutdown_Network(Network_t* net)
 {
+    int i;
+    Stream_t * cur_stream;
+
     mrn_dbg_func_begin();
-    Network_reset_Topology(net, "");
+
     net->_was_shutdown = 1;
+
+    Network_reset_Topology(net, "");
+
+    // close streams
+    for (i = 0; i < net->streams->size; i++) {
+        cur_stream = (Stream_t*)get_val(net->streams, net->streams->keys[i]);
+        cur_stream->_was_closed = 1;
+    }
+
     mrn_dbg_func_end();
 }
 
@@ -354,18 +366,14 @@ int Network_reset_Topology(Network_t* net, char* itopology)
 
 int Network_add_SubGraph(Network_t * net, Rank iroot_rank, SerialGraph_t * sg, int iupdate)
 {
-    
-	unsigned topsz = NetworkTopology_get_NumNodes(net->network_topology);
+    unsigned topsz = NetworkTopology_get_NumNodes(net->network_topology);
 	
-	Node_t * node = NetworkTopology_find_Node(net->network_topology, iroot_rank);
+    Node_t * node = NetworkTopology_find_Node(net->network_topology, iroot_rank);
+    if (!node)
+        return false;
 
-	if (!node)
-		return false;
-
-    if (NetworkTopology_add_SubGraph(net->network_topology,
-                node,
-                sg,
-                iupdate)) {
+    if (NetworkTopology_add_SubGraph(net->network_topology, node,
+                                     sg, iupdate)) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
         return false;
     }

@@ -66,10 +66,8 @@ int main(int argc, char **argv)
 
     } while ( tag != PROT_EXIT );
 
-    if( ! stream->is_Closed() ) {
-        while( ! stream->is_ShutDown() )
-            sleep(1);
-    }
+    while( ! stream->is_Closed() )
+        sleep(1);
 
     delete stream;
 

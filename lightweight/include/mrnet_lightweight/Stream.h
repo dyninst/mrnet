@@ -16,20 +16,20 @@ struct PerfDataMgr_t;
 struct Filter_t;
 struct vector_t;
 
-struct Stream_t{
-  Network_t* network;
-  unsigned short id;
-  int sync_filter_id;
-  struct Filter_t* sync_filter;
-  int us_filter_id;
-  struct Filter_t* us_filter;
-  int ds_filter_id;
-  struct Filter_t *ds_filter;
-  struct vector_t * incoming_packet_buffer;
-  struct vector_t* peers; // peers in stream
-  struct PerfDataMgr_t* perf_data;
-  char _was_shutdown;
-} ;
+struct Stream_t {
+    Network_t* network;
+    unsigned short id;
+    int sync_filter_id;
+    struct Filter_t* sync_filter;
+    int us_filter_id;
+    struct Filter_t* us_filter;
+    int ds_filter_id;
+    struct Filter_t *ds_filter;
+    struct vector_t * incoming_packet_buffer;
+    struct vector_t* peers; // peers in stream
+    struct PerfDataMgr_t* perf_data;
+    char _was_closed;
+};
 
 typedef struct Stream_t Stream_t;
 
@@ -87,6 +87,8 @@ void Stream_print_PerfData(Stream_t* stream,
                             perfdata_context_t context);
 int Stream_remove_Node(Stream_t* stream, Rank irank);
 
+char Stream_is_Closed(Stream_t* stream);
+//DEPRECATED -- renamed is_ShutDown to is_Closed
 char Stream_is_ShutDown(Stream_t* stream);
 
 #endif /* __stream_h */

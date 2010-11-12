@@ -216,7 +216,7 @@ int BackEndNode::proc_deleteStream( PacketPtr ipacket ) const
         return -1;
     } 
 
-    strm->_was_shutdown = true;
+    strm->close();
 
     mrn_dbg_func_end();
     return 0;

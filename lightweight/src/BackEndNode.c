@@ -123,17 +123,7 @@ BackEndNode_t* CreateBackEndNode( Network_t* inetwork,
 
 int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
 {
-    int goaway = 0;
-    char delete_backend;
-  
     mrn_dbg_func_begin();
-
-    // NOTE: deprecated in 3.0, kill this for next release
-    Packet_unpack(packet, "%c", &delete_backend);
-    if (delete_backend == 't') {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "Back-end will exit\n"));
-        goaway = 1;
-    }
 
     // processes will be exiting -- disable failure recovery
     Network_disable_FailureRecovery(be->network);
@@ -145,10 +135,6 @@ int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
   
     // kill topology  
     Network_shutdown_Network(be->network);
-
-    if (goaway) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "DEPRECATED: not calling exit()\n"));
-    }
 
     mrn_dbg_func_end();
     return 0;
@@ -269,7 +255,7 @@ int BackEndNode_proc_deleteStream(BackEndNode_t* be, Packet_t* ipacket)
         return -1;
     }
 
-    strm->_was_shutdown = 1;
+    strm->_was_closed = 1;
 
     mrn_dbg_func_end();
     return 0;
