@@ -30,6 +30,9 @@
 #include "xplat/NetUtils.h"
 #include "xplat/SocketUtils.h"
 #include "xplat/Thread.h"
+#include "xplat/Process.h"
+#include "xplat/Error.h"
+
 using namespace XPlat;
 
 extern FILE *mrnin;
@@ -54,7 +57,8 @@ const Rank UnknownRank = (Rank)-1;
 
 const char *empty_str="";
 
-void set_OutputLevelFromEnvironment( std::map< env_key, std::string >& envMap  );
+void init_XplatSettings( std::map< env_key, std::string >& envMap );
+int get_NetSettingName( std::string s );
 
 void init_local(void)
 {
@@ -101,7 +105,7 @@ void cleanup_local(void)
 /*===========================================================*/
 /*             Network DEFINITIONS        */
 /*===========================================================*/
-Network::Network( const std::map< std::string, std::string >* iattrs )
+Network::Network( void )
     : _local_port(UnknownPort), _local_rank(UnknownRank),_network_topology(NULL), 
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
@@ -110,22 +114,6 @@ Network::Network( const std::map< std::string, std::string >* iattrs )
       _threaded(true), _recover_from_failures(true), 
       _was_shutdown(false), _shutting_down(false)
 {
-    init_local();
-    
-    set_EnvMap( iattrs );
-    set_OutputLevelFromEnvironment( envMap );
-    _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
-}
-
-Network::Network( void )
-    : _local_port(UnknownPort), _local_rank(UnknownRank),_network_topology(NULL),
-      _failure_manager(NULL), _bcast_communicator(NULL),
-      _local_front_end_node(NULL), _local_back_end_node(NULL),
-      _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
-      _edt( new EventDetector(this) ), next_stream_id(1), _evt_mgr( new EventMgr() ),
-      _threaded(true), _recover_from_failures(true),
-      _was_shutdown(false), _shutting_down( false )
-{   
     init_local();
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
 }
@@ -310,63 +298,68 @@ void Network::signal_ShutDown(void)
     mrn_dbg_func_end();
 }
 
-const std::map< env_key, std::string >&  Network::get_EnvMap()
+std::map< env_key, std::string >&  Network::get_EnvMap()
 {
     return envMap;
 }
 
-//only FE calls this set_EnvMap
-void Network::set_EnvMap( const std::map<std::string, std::string> * iattrs )
+void Network::convert_SettingsMap( const std::map<std::string, std::string> * iattrs )
 {
-    set_Env( envMap, iattrs );
-    if( envMap.find( MRNET_OUTPUT_LEVEL) != envMap.end() )
+    std::map<std::string, std::string>::const_iterator it;
+    if( iattrs != NULL )
     {
-        CUR_OUTPUT_LEVEL = atoi( envMap[MRNET_OUTPUT_LEVEL].c_str() );
+       for( it= iattrs->begin(); it != iattrs->end(); it++ ) {
+          envMap[ (env_key)(get_NetSettingName( it->first )) ] =  it->second ;
+       }
     }
-    if( envMap.find( MRNET_DEBUG_LOG_DIRECTORY ) != envMap.end() )
-    {
-        MRN_DEBUG_LOG_DIRECTORY = strdup( envMap[MRNET_DEBUG_LOG_DIRECTORY].c_str() );
-    }
-    else
-    {
-        const char* home = getenv("HOME");
-	char logdir[256];
-	snprintf(logdir, sizeof(logdir), "%s/mrnet-log", home);
-        envMap.insert( std::pair< env_key, std::string>( MRNET_DEBUG_LOG_DIRECTORY, std::string(logdir) ));
-    }
-        
-    if( envMap.find( MRN_COMM_PATH ) == envMap.end() )
-        envMap.insert( std::pair< env_key, std::string>(MRN_COMM_PATH, COMMNODE_EXE ));
 }
 
-//Childnodes call this set_EnvMap after getting env settings from their parent
-void Network::set_EnvMap( std::map< env_key, std::string >* emap) 
+void Network::init_FENetSettings( const std::map<std::string, std::string> * iattrs )
 {
-    envMap = *emap;
-    if( envMap.find( MRNET_OUTPUT_LEVEL) != envMap.end() )
-    {
+    convert_SettingsMap( iattrs );
+    init_NetSettings();
+}
+
+void Network::init_NetSettings( void )
+{
+    if( envMap.find( MRNET_OUTPUT_LEVEL) != envMap.end() ) {
         CUR_OUTPUT_LEVEL = atoi( envMap[MRNET_OUTPUT_LEVEL].c_str() );
     }
 
-    if( envMap.find( MRNET_DEBUG_LOG_DIRECTORY ) != envMap.end() )
-    {
-        MRN_DEBUG_LOG_DIRECTORY = strdup( envMap[MRNET_DEBUG_LOG_DIRECTORY].c_str() );
+    if( envMap.find( MRNET_DEBUG_LOG_DIRECTORY ) == envMap.end() ) {
+
+        // Child Nodes should never enter this part of code as settings distribution packet 
+        // will always carry MRNET_DEBUG_LOG_DIRECTORY
+	assert( is_LocalNodeFrontEnd() );
+
+        const char* home = getenv("HOME");
+        char logdir[256];
+        snprintf(logdir, sizeof(logdir), "%s/mrnet-log", home);
+        envMap[MRNET_DEBUG_LOG_DIRECTORY] =  std::string(logdir) ;
+    }
+    MRN_DEBUG_LOG_DIRECTORY = strdup( envMap[MRNET_DEBUG_LOG_DIRECTORY].c_str() );
+    
+    if( envMap.find( MRNET_COMM_PATH ) == envMap.end() ) {
+        envMap[MRNET_COMM_PATH] = COMMNODE_EXE ;
     }
 
-    if( envMap.find( MRN_COMM_PATH ) == envMap.end() )
-        envMap.insert( std::pair< env_key, std::string>(MRN_COMM_PATH, COMMNODE_EXE ));
+    init_XplatSettings( envMap );
+}
 
-}    
-
-void Network::print_EnvMap()
+void init_XplatSettings( std::map< env_key, std::string >& envMap )
 {
-    std::map< env_key , std::string >::iterator it;
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Inside print env \n" ));
-    for(it = envMap.begin(); it!= envMap.end(); it++ )
-    {
-        mrn_dbg( 5, mrn_printf( FLF, stderr , "First: %d Second: %s\n", 
-	                      (it->first) , (it->second).c_str() ));
-    }
+    std::map< env_key, std::string >::iterator eit;
+    eit = envMap.find( XPLAT_RSH );
+    if( eit != envMap.end() )
+        XPlat::Process::set_rsh( eit->second );
+   
+    eit = envMap.find( XPLAT_RSH_ARGS );
+    if( eit != envMap.end() )
+        XPlat::Process::set_rshargs( eit->second );
+
+    eit = envMap.find( XPLAT_REMCMD );
+    if( eit != envMap.end() )
+        XPlat::Process::set_remcmd( eit->second );
 }
 
 void Network::update_BcastCommunicator(void)
@@ -453,9 +446,11 @@ void Network::init_FrontEnd( const char * itopology,
         error( ERR_SYSTEM, rootRank, 
                "Failed to initialize via CreateFrontEndNode()\n" );
 
+    init_FENetSettings( iattrs );
+
     std::string path;
-    if( envMap.find( MRN_COMM_PATH ) != envMap.end() ) {
-        path = envMap[ MRN_COMM_PATH];
+    if( envMap.find( MRNET_COMM_PATH ) != envMap.end() ) {
+        path = envMap[ MRNET_COMM_PATH];
     }
     
     if( path.empty() )
@@ -1572,8 +1567,6 @@ bool Network::reset_Topology( string& itopology )
 
 bool Network::add_SubGraph( Rank iroot_rank, SerialGraph& sg, bool iupdate ) 
 {
-    unsigned topsz = _network_topology->get_NumNodes();
-
     if( ! _network_topology->add_SubGraph(iroot_rank, sg, iupdate) ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
         return false;
@@ -1935,6 +1928,29 @@ void set_OutputLevelFromEnvironment( std::map< env_key, std::string>& env)
     
     if( env.find(MRNET_DEBUG_LOG_DIRECTORY) != env.end() )
         MRN_DEBUG_LOG_DIRECTORY = strdup( env[MRNET_DEBUG_LOG_DIRECTORY].c_str() );
+}
+
+int get_NetSettingName( std::string s )
+{
+     int ret = -1;
+     if( !s.empty() )
+     {
+         if( strcmp("MRNET_OUTPUT_LEVEL", s.c_str()) == 0 )
+             ret = MRNET_OUTPUT_LEVEL;
+         else if( strcmp("MRNET_DEBUG_LOG_DIRECTORY", s.c_str() ) == 0 )
+             ret = MRNET_DEBUG_LOG_DIRECTORY;
+         else if( strcmp("MRNET_COMM_PATH", s.c_str() ) == 0 )
+             ret = MRNET_COMM_PATH;
+         else if( strcmp("FAILURE_RECOVERY", s.c_str() ) == 0 )
+             ret = FAILURE_RECOVERY;
+         else if( strcmp("XPLAT_RSH", s.c_str() ) == 0 )
+             ret = XPLAT_RSH;
+         else if( strcmp("XPLAT_RSH_ARGS" , s.c_str() ) == 0 )
+             ret = XPLAT_RSH_ARGS;
+         else if( strcmp("XPLAT_REMCMD" , s.c_str() ) == 0 )
+             ret = XPLAT_REMCMD;
+     }
+     return ret;
 }
 
 /* Propagate topology */

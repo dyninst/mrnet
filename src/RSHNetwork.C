@@ -29,7 +29,7 @@ Network::CreateNetworkFE( const char * itopology,
 {
     endianTest();
 
-    Network* net = new RSHNetwork( iattrs );
+    Network* net = new RSHNetwork;
     net->init_FrontEnd( itopology,
                         ibackend_exe,
                         ibackend_argv,
@@ -118,10 +118,9 @@ RSHNetwork::CreateInternalNode( Network* inetwork,
 // RSHNetwork methods
 //only FE calls this constructor
 
-RSHNetwork::RSHNetwork( const std::map< std::string, std::string >* iattrs )
-: Network( iattrs )
+RSHNetwork::RSHNetwork( void )
 {
-    set_EnvMap( iattrs );
+    //nothing to do here
 }
 
 //BE and IN constructor

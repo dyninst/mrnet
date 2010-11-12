@@ -68,8 +68,6 @@ Network_t* new_Network_t()
     net->next_stream_id = 1;
     init_local();
 
-    //Network_set_OutputLevelFromEnvironment();
-
     return net;
 }
 

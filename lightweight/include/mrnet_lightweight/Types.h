@@ -113,7 +113,7 @@ typedef uint32_t Rank;
     typedef enum mrnet_Env {
         MRNET_OUTPUT_LEVEL = 0,
 	MRNET_DEBUG_LOG_DIRECTORY =1,
-	MRN_COMM_PATH = 2,
+	MRNET_COMM_PATH = 2,
 	FAILURE_RECOVERY = 3,
 	XPLAT_RSH = 4,
 	XPLAT_RSH_ARGS = 5,

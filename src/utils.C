@@ -609,34 +609,5 @@ void endianTest() {
 
 }
 
-int get_EnvType( std::string s)
-{
-     int ret = -1;
-     if( !s.empty() )
-     {
-         if( strcmp("MRNET_OUTPUT_LEVEL", s.c_str()) == 0 )
-             ret = MRNET_OUTPUT_LEVEL;
-         else if( strcmp("MRNET_DEBUG_LOG_DIRECTORY", s.c_str() ) == 0 )
-             ret = MRNET_DEBUG_LOG_DIRECTORY;
-         else if( strcmp("MRN_COMM_PATH", s.c_str() ) == 0 )
-             ret = MRN_COMM_PATH;
-         else if( strcmp("FAILURE_RECOVERY", s.c_str() ) == 0 )
-             ret = FAILURE_RECOVERY;
-     }
-     return ret;
-}
-
-void set_Env( std::map< env_key , std::string>& envMap, 
-               const std::map<std::string, std::string> * iattrs ) {
-	      
-     std::map<std::string, std::string>::const_iterator it;
-     if( iattrs != NULL)
-     {
-         for( it= iattrs->begin(); it != iattrs->end(); it++ ) {
-            envMap.insert( std::pair< env_key, std::string >( (env_key)(get_EnvType( it->first )), it->second ) );
-         }
-     }
-}
-
 } // namespace MRN
 

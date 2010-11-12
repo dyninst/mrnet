@@ -140,7 +140,6 @@ protected:
     
     // constructor
     Network( void );
-    Network( const std::map< std::string, std::string >* );
 
     // Initializers for separate Network roles
     // With the current design where a single Network class can be
@@ -204,10 +203,6 @@ protected:
 
     PeerNodePtr _parent;
     
-    std::map <env_key, std::string > envMap;
-    void set_EnvMap( const std::map<std::string, std::string> * iattrs );
-    void set_EnvMap( std::map< env_key ,std::string >* emap );
-    void print_EnvMap();
 
  private:
     friend class Stream;
@@ -314,7 +309,12 @@ protected:
 
     void collect_PerfData(void);
 
-    const std::map< env_key, std::string >&  get_EnvMap();
+    std::map <env_key, std::string > envMap;
+    std::map< env_key, std::string >&  get_EnvMap();
+    void init_FENetSettings( const std::map<std::string, std::string> * iattrs );
+    void init_NetSettings( void );
+    void convert_SettingsMap( const std::map<std::string, std::string> * iattrs );
+
     bool is_ShuttingDown(void) const;
     void set_ShuttingDown(void);
 

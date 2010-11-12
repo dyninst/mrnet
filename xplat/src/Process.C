@@ -60,7 +60,7 @@ Process::CreateRemote( const std::string& host,
     {
         rshArgs.push_back( *aiter );
     }
-    
+
     // execute the local command that will create the remote process
     return CreateLocal( rshCmd, rshArgs );
 }

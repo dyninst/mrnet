@@ -275,11 +275,11 @@ int ChildNode::proc_SetTopoEnv( PacketPtr ipacket ) const
     }
     
     //Set Env variables
-    std::map< env_key, std::string> envMap;
+    std::map< env_key, std::string>& envMap = _network->get_EnvMap();
     while( env_count > 0 )
     {
        if( key[ env_count -1 ] != FAILURE_RECOVERY ) {
-           envMap.insert( std::pair< env_key , std::string>( (env_key)key[env_count-1], env_value[env_count-1] ));
+           envMap[ (env_key)key[env_count-1] ] =  env_value[env_count-1] ;
        }	   
        else {
            if( atoi( env_value[ env_count -1 ] ))
@@ -293,8 +293,8 @@ int ChildNode::proc_SetTopoEnv( PacketPtr ipacket ) const
        }	       
        env_count --;
     }
-
-    _network->set_EnvMap( &envMap );
+    
+    _network->init_NetSettings();
 
     free( key );
     for( int i=0; i < env_count ; i++ )
