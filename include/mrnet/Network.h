@@ -201,6 +201,7 @@ protected:
     bool reset_Topology(std::string& itopology);
     void update_TopoStream();
 
+    std::map< env_key, std::string >&  get_EnvMap();
     PeerNodePtr _parent;
     
 
@@ -310,7 +311,6 @@ protected:
     void collect_PerfData(void);
 
     std::map <env_key, std::string > envMap;
-    std::map< env_key, std::string >&  get_EnvMap();
     void init_FENetSettings( const std::map<std::string, std::string> * iattrs );
     void init_NetSettings( void );
     void convert_SettingsMap( const std::map<std::string, std::string> * iattrs );

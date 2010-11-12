@@ -287,7 +287,8 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
 
     FindPositionInTopology( topology, myHost, myRank, my_tpos );
     assert( my_tpos != NULL );
-  
+    
+    std::map< env_key, std::string >& envMap = get_EnvMap();
     std::string path;
     if( envMap.find( MRNET_COMM_PATH ) != envMap.end() ) {
         path = envMap[ MRNET_COMM_PATH];
