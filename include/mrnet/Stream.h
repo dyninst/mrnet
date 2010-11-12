@@ -144,7 +144,6 @@ class Stream {
 
     std::list< PacketPtr > _incoming_packet_buffer;
     mutable XPlat::Monitor _incoming_packet_buffer_sync;
-    mutable XPlat::Monitor _shutdown_sync;
     enum {PACKET_BUFFER_NONEMPTY};
 };
 
