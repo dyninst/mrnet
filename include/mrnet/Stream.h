@@ -76,7 +76,6 @@ class Stream {
                                 perfdata_context_t context );
 
     bool is_Closed(void) const;
-    bool is_ShutDown(void) const;
      
     // END MRNET API
 
@@ -87,10 +86,7 @@ class Stream {
 
     int send_internal( int itag, const char *iformat_str, ... );
 
-    //bool is_PeerClosed( Rank irank ) const;
-    //unsigned int num_ClosedPeers(void) const;
     void close(void);
-    //void get_ClosedPeers( std::set< Rank >& ) const;
     void get_ChildPeers( std::set< Rank >& ) const;
     void add_Stream_EndPoint( Rank irank );
     void add_Stream_Peer( Rank irank );
@@ -98,6 +94,9 @@ class Stream {
     PacketPtr collect_PerfData( perfdata_metric_t metric, 
                                 perfdata_context_t context, 
                                 int aggr_strm_id );
+
+    //DEPRECATED -- renamed is_ShutDown to is_Closed
+    bool is_ShutDown(void) const { return is_Closed(); }
 
  private:
     static bool find_FilterAssignment( const std::string& assignments, 
@@ -140,13 +139,11 @@ class Stream {
     EventPipe * _evt_pipe;
     PerfDataMgr * _perf_data;
     bool _was_closed;
-    bool _was_shutdown;
     std::set< Rank > _peers; // child peers in stream
     mutable XPlat::Mutex _peers_sync;
 
     std::list< PacketPtr > _incoming_packet_buffer;
     mutable XPlat::Monitor _incoming_packet_buffer_sync;
-    mutable XPlat::Monitor _shutdown_sync;
     enum {PACKET_BUFFER_NONEMPTY};
 };
 

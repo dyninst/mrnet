@@ -816,7 +816,7 @@ int Network::recv( bool iblocking )
     return -1; //shouldn't get here
 }
 
-int Network::recv( int *otag, PacketPtr  &opacket, Stream ** ostream, bool iblocking)
+int Network::recv( int *otag, PacketPtr &opacket, Stream **ostream, bool iblocking )
 {
     mrn_dbg(3, mrn_printf(FLF, stderr, "blocking: \"%s\"\n",
                           (iblocking ? "yes" : "no")) );
@@ -872,7 +872,8 @@ get_packet_from_stream_label:
                    cur_packet->get_Tag(), cur_packet->get_FormatString() ));
         return 1;
     }
-    else if( iblocking || ! checked_network ) {
+
+    if( iblocking || ! checked_network ) {
 
         // No packets are already in the stream
         // check whether there is data waiting to be read on our sockets
@@ -888,7 +889,6 @@ get_packet_from_stream_label:
         }
     }
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Network::recv() No packets found.\n" ));
-
     return 0;
 }
 
@@ -1355,10 +1355,12 @@ int Network::waitfor_NonEmptyStream(void)
     mrn_dbg_func_begin();
 
     Stream* cur_strm = NULL;
-    map < unsigned int, Stream * >::const_iterator iter;
+    map< unsigned int, Stream * >::const_iterator iter;
     _streams_sync.Lock();
     while( true ) { 
-        for( iter = _streams.begin(); iter != _streams.end(); iter++ ){
+
+        // first, check for data available 
+        for( iter = _streams.begin(); iter != _streams.end(); iter++ ) {
             cur_strm = iter->second;
             mrn_dbg(5, mrn_printf(FLF, stderr, "Checking stream[%d] (%p) for data\n",
                                   cur_strm->get_Id(), cur_strm ));
@@ -1369,17 +1371,22 @@ int Network::waitfor_NonEmptyStream(void)
                 mrn_dbg_func_end();
                 return 1;
             }
+        }
+
+        // if no data, have we shutdown?
+        if( is_ShutDown() )
+            break;
+
+        // not shutdown, any streams now closed?
+        for( iter = _streams.begin(); iter != _streams.end(); iter++ ) {
             if( cur_strm->is_Closed() ) {
                 mrn_dbg(5, mrn_printf(FLF, stderr, "Error on stream[%d]\n",
                                       cur_strm->get_Id() ));
                 _streams_sync.Unlock();
                 mrn_dbg_func_end();
-                return -1;
+                return 0;
             }
         }
-
-        if( is_ShutDown() )
-            break;
 
         mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting on CV[STREAMS_NONEMPTY] ...\n"));
         _streams_sync.WaitOnCondition( STREAMS_NONEMPTY );

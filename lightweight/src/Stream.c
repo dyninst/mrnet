@@ -27,12 +27,12 @@
 #include "Filter.h"
 
 Stream_t* new_Stream_t(Network_t* net,
-                      int iid, 
-                      Rank *ibackends,
-                      unsigned int inum_backends,
-                      int ius_filter_id,
-                      int isync_filter_id,
-                      int ids_filter_id)
+                       int iid, 
+                       Rank *ibackends,
+                       unsigned int inum_backends,
+                       int ius_filter_id,
+                       int isync_filter_id,
+                       int ids_filter_id)
 {
     Stream_t* new_stream = (Stream_t*)malloc(sizeof(Stream_t));
     assert(new_stream);
@@ -47,10 +47,12 @@ Stream_t* new_Stream_t(Network_t* net,
     new_stream->perf_data = new_PerfDataMgr_t();
     new_stream->incoming_packet_buffer = new_empty_vector_t();
     new_stream->peers = new_empty_vector_t();
-    new_stream->_was_shutdown = 0;
+    new_stream->_was_closed = 0;
 
     mrn_dbg(3, mrn_printf(FLF, stderr,
-                          "id:%d, us_filter:%d, sync_id:%d, ds_filter:%d\n", new_stream->id, new_stream->us_filter_id, new_stream->sync_filter_id, new_stream->ds_filter_id));
+                          "id:%d, us_filter:%d, sync_id:%d, ds_filter:%d\n", 
+                          new_stream->id, new_stream->us_filter_id, 
+                          new_stream->sync_filter_id, new_stream->ds_filter_id));
 
     mrn_dbg_func_end();
 
@@ -70,7 +72,8 @@ void delete_Stream_t(Stream_t * stream)
     free(stream);
 }
 
-unsigned int Stream_get_Id(Stream_t* stream) {
+unsigned int Stream_get_Id(Stream_t* stream)
+{
     return stream->id;
 }
 
@@ -136,10 +139,10 @@ Packet_t* Stream_get_IncomingPacket(Stream_t* stream)
 }
 
 int Stream_push_Packet(Stream_t* stream,
-                      Packet_t* ipacket,
-                      vector_t *  opackets,
-                      vector_t * opackets_reverse,
-                      int igoing_upstream)
+                       Packet_t* ipacket,
+                       vector_t *  opackets,
+                       vector_t * opackets_reverse,
+                       int igoing_upstream)
 {
 
     NetworkTopology_t* topol = stream->network->network_topology;
@@ -540,8 +543,8 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
 }
 
 void Stream_print_PerfData(Stream_t* stream,
-                            perfdata_metric_t metric,
-                            perfdata_context_t context)
+                           perfdata_metric_t metric,
+                           perfdata_context_t context)
 {
     mrn_dbg_func_begin();
 
@@ -573,7 +576,13 @@ int Stream_remove_Node(Stream_t* stream, Rank irank)
     return 1;
 }
 
-char Stream_is_ShutDown(Stream_t* stream)
+char Stream_is_Closed(Stream_t* stream)
 {
-    return stream->_was_shutdown;
+    return stream->_was_closed;
+}
+
+//DEPRECATED -- renamed is_ShutDown to is_Closed
+char Stream_is_Shutdown(Stream_t* stream)
+{
+    return Stream_is_Closed(stream);
 }

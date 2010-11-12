@@ -45,8 +45,7 @@ Stream::Stream( Network * inetwork,
     _ds_filter( new Filter( ids_filter_id ) ),
     _evt_pipe(NULL),
     _perf_data( new PerfDataMgr() ),
-    _was_closed(false),
-    _was_shutdown(false)
+    _was_closed(false)
 {
 
     set< PeerNodePtr > node_set;
@@ -87,9 +86,7 @@ Stream::Stream( Network * inetwork,
 
 Stream::~Stream()
 {
-    _shutdown_sync.Lock();
-    _was_shutdown = true;
-    _shutdown_sync.Unlock();
+    close();
 
     if( _network->is_LocalNodeFrontEnd() ) {
         PacketPtr packet( new Packet( 0, PROT_DEL_STREAM, "%d", _id ) );
@@ -239,9 +236,9 @@ int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket,
     mrn_dbg(3, mrn_printf(FLF, stderr,
                           "stream_id: %d, tag:%d, fmt=\"%s\"\n", _id, itag, ifmt));
 
-    if( is_Closed() || is_ShutDown() ) {
+    if( is_Closed() ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "send on closed stream\n"));
-        return -1;
+        return 0;
     }
     
     vector<PacketPtr> opackets, opackets_reverse;
@@ -304,7 +301,7 @@ int Stream::flush() const
     int retval = 0;
     mrn_dbg_func_begin();
 
-    if( is_Closed() || is_ShutDown() )
+    if( is_Closed() )
         return -1;
     
     if( _network->is_LocalNodeFrontEnd() ){
@@ -335,7 +332,7 @@ int Stream::flush() const
     return retval;
 }
 
-int Stream::recv(int *otag, PacketPtr & opacket, bool iblocking)
+int Stream::recv( int *otag, PacketPtr & opacket, bool iblocking )
 {
     mrn_dbg_func_begin();
 
@@ -349,9 +346,9 @@ int Stream::recv(int *otag, PacketPtr & opacket, bool iblocking)
         return 1;
     }
 
-    if( is_Closed() || is_ShutDown() )
-        return -1;
-    
+    if( is_Closed() )
+        return 0;
+
     // at this point, no packets already available for this stream
     if( ! iblocking ) {
         return 0;
@@ -369,7 +366,7 @@ int Stream::recv(int *otag, PacketPtr & opacket, bool iblocking)
     else {
         // not threaded, keep receiving on network till stream has packet
         while( _incoming_packet_buffer.empty() ) {
-            if( _network->recv( iblocking ) == -1 ){
+            if( _network->recv( iblocking ) == -1 ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "FrontEnd::recv() failed\n" ));
                 return -1;
             }
@@ -424,68 +421,14 @@ int Stream::block_ForIncomingPacket(void) const
     return 0;
 }
 
-bool Stream::close_Peer( Rank irank )
+bool Stream::close_Peer( Rank )
 {
     mrn_dbg_func_begin();
 
     assert(!"DEPRECATED -- THIS SHOULD NEVER BE CALLED");
 
-//     _peers_sync.Lock();
-//     _closed_peers.insert( irank );
-//     _peers_sync.Unlock();
-
-//     // invoke sync filter to see if packets will now go thru
-//     vector<PacketPtr> opackets, opackets_reverse;
-//     bool upstream;
-
-//     if( _network->is_LocalNodeChild() &&
-//         (_network->get_ParentNode()->get_Rank() == irank) ) {
-//         upstream = true;
-//     }
-//     else{ 
-//         upstream = false;
-//     }
-
-//     if( push_Packet(Packet::NullPacket, opackets, opackets_reverse, upstream) == -1 ) {
-//         mrn_dbg( 1, mrn_printf(FLF, stderr, "push_Packet() failed\n" ));
-//         return false;
-//     }
-
-//     if( !opackets.empty() ) {
-//         if( _network->is_LocalNodeInternal() ) {
-//             // internal nodes must send packets up/down as appropriate
-//             if( upstream ) {
-//                 if( _network->send_PacketsToParent(opackets) == -1 ) {
-//                     mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
-//                     return false;
-//                 }
-//             }
-//             else{
-//                 if( _network->send_PacketsToChildren(opackets) == -1 ) {
-//                     mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
-//                     return false;
-//                 }
-//             }
-//         }
-//         else {
-//             // root/leaf nodes simply add packets to streams for application to get
-//             for( unsigned int i = 0; i < opackets.size( ); i++ ) {
-//                 mrn_dbg( 3, mrn_printf(FLF, stderr, "Put packet in stream %d\n", _id) );
-//                 add_IncomingPacket( opackets[i] );
-//             }
-//         }
-//     }
-
-//     mrn_dbg_func_end();
     return true;
 }
-
-// void Stream::get_ClosedPeers( std::set< Rank >& peers ) const
-// {
-//     _peers_sync.Lock();
-//     peers = _closed_peers;
-//     _peers_sync.Unlock();
-// }
 
 bool Stream::is_Closed(void) const
 {
@@ -503,33 +446,10 @@ void Stream::close(void)
     _incoming_packet_buffer_sync.Lock();
     _was_closed = true;
     _incoming_packet_buffer_sync.Unlock();
+
     signal_BlockedReceivers();
 }
                         
-
-// bool Stream::is_PeerClosed( Rank irank ) const
-// {
-//     bool retval = false;
-
-//     _peers_sync.Lock();
-//     if( _closed_peers.find( irank ) != _closed_peers.end() ) {
-//         retval = true;
-//     }
-//     _peers_sync.Unlock();
-
-//     return retval;
-// }
-
-// unsigned int Stream::num_ClosedPeers(void) const 
-// {
-//     unsigned int retval;
-
-//     _peers_sync.Lock();
-//     retval = _closed_peers.size();
-//     _peers_sync.Unlock();
-
-//     return retval;
-// }
 
 int Stream::push_Packet( PacketPtr ipacket,
                          vector<PacketPtr>& opackets,
@@ -1323,13 +1243,6 @@ bool Stream::find_FilterAssignment(const std::string& assignments,
     return false;
 }
 
-bool Stream::is_ShutDown() const
-{
-    bool rc;
-    _shutdown_sync.Lock();
-    rc = _was_shutdown;
-    _shutdown_sync.Unlock();
-    return rc;
-}
+
 
 } // namespace MRN

@@ -72,7 +72,10 @@ int main(int argc, char **argv)
     } while ( tag != PROT_EXIT );
 
     if( p != NULL )
-        free(p);    
+        free(p);
+
+    while( ! Stream_is_Closed(stream) )
+        sleep(1);
 
     // wait for final teardown packet from FE; this will cause
     // us to exit

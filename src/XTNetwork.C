@@ -850,8 +850,7 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         assert( athFirstNodeNid != -1 );
 
         std::ostringstream cmdStr;
-        cmdStr << mrn_commnode_path
-                << ' ';
+        cmdStr << mrn_commnode_path << ' ' << be_path << ' ';
         for( int i = 0; i < argc; i++ ) {
             cmdStr << argv[i] << ' ';
         }
