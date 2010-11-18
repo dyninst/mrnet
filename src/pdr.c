@@ -42,7 +42,7 @@ void pdr_free(pdrproc_t proc, char *objp)
     (*proc)(&x, objp);
 }
 
-bool_t pdr_void(PDR *prds,  char *cp )
+bool_t pdr_void(PDR *pdrs,  char *cp)
 {
     return (TRUE);
 }
@@ -250,7 +250,7 @@ bool_t pdr_bytes(PDR *pdrs, char **cpp, uint32_t *sizep, uint32_t maxsize)
             return TRUE;
         }
         if (sp == NULL) {
-            *cpp = sp = (char *)malloc(nodesize);
+            *cpp = sp = (char*) malloc((size_t)nodesize);
         }
         if (sp == NULL) {
             return FALSE;
@@ -279,7 +279,7 @@ bool_t pdr_bytes(PDR *pdrs, char **cpp, uint32_t *sizep, uint32_t maxsize)
 bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
 {
     char *sp = *cpp;  /* sp is the actual string pointer */
-    uint32_t nodesize=0;
+    uint32_t nodesize = 0;
 
     /* mrn_dbg_func_begin(); */
 
@@ -300,7 +300,7 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
     case PDR_DECODE:
         break;
     }
-		
+	
     if (!pdr_uint32(pdrs, &nodesize)) {
         return FALSE;
     }
@@ -317,7 +317,7 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
         mrn_dbg(5, mrn_printf(0,0,0, stderr, "String size+1: %u\n", nodesize ));
         if (sp == NULL) {
             mrn_dbg(5, mrn_printf(FLF, stderr, "Allocating memory ...\n" ));
-            *cpp = sp = (char *)malloc(nodesize);
+            *cpp = sp = (char*) malloc((size_t)nodesize);
         }
         if (sp == NULL) {
             mrn_dbg(5, mrn_printf(FLF, stderr, "Malloc failed\n" ));
@@ -351,7 +351,7 @@ bool_t pdr_wrapstring(PDR *pdrs, char **cpp)
  * size is the sizeof the referneced structure.
  * proc is the routine to handle the referenced structure.
  */
-bool_t pdr_reference(PDR *pdrs, char * *pp, uint32_t size, pdrproc_t proc)
+bool_t pdr_reference(PDR *pdrs, char **pp, uint32_t size, pdrproc_t proc)
 {
     char * loc = *pp;
     bool_t stat;
@@ -362,11 +362,10 @@ bool_t pdr_reference(PDR *pdrs, char * *pp, uint32_t size, pdrproc_t proc)
             return (TRUE);
 
         case PDR_DECODE:
-            *pp = loc = (char *) malloc(size);
+            *pp = loc = (char *) calloc((size_t)size, sizeof(char));
             if (loc == NULL) {
                 return (FALSE);
             }
-            memset(loc, 0, (int)size);
             break;
 
         case PDR_ENCODE:
@@ -430,7 +429,7 @@ bool_t pdr_array(PDR *pdrs, void **addrp, uint32_t *sizep, uint32_t maxsize,
     char * target = (char*) *addrp;
     uint32_t c;  /* the actual element count */
     bool_t stat = TRUE;
-    uint32_t nodesize;
+    size_t nodesize;
  
     /* like strings, arrays are really counted arrays */
     if (! pdr_uint32(pdrs, sizep)) {
@@ -446,17 +445,16 @@ bool_t pdr_array(PDR *pdrs, void **addrp, uint32_t *sizep, uint32_t maxsize,
      * if we are deserializing, we may need to allocate an array.
      * We also save time by checking for a null array if we are freeing.
      */
-    if (target == NULL){
+    if (target == NULL) {
         switch (pdrs->p_op) {
         case PDR_DECODE:
             if (c == 0)
-            return (TRUE);
-            *addrp = malloc(nodesize);
+                return (TRUE);
+            *addrp = calloc(nodesize, sizeof(char));
             target = (char*) *addrp;
             if (target == NULL) {
-              return (FALSE);
+                return (FALSE);
             }
-            memset(target, 0, nodesize);
             break;
         case PDR_FREE:
             return (TRUE);
@@ -465,22 +463,22 @@ bool_t pdr_array(PDR *pdrs, void **addrp, uint32_t *sizep, uint32_t maxsize,
         }
     }
         
-   /*
-    * now we pdr each element of array
-    */
-     for (i = 0; (i < c) && stat; i++) {
-         stat = (*elproc)(pdrs, target);
-         target += elsize;
-     }
+    /*
+     * now we pdr each element of array
+     */
+    for (i = 0; (i < c) && stat; i++) {
+        stat = (*elproc)(pdrs, target);
+        target += elsize;
+    }
 
-     /*
-       * the array may need freeing
-       */
-     if (pdrs->p_op == PDR_FREE) {
-         free(*addrp);
-         *addrp = NULL;
-     }
-     return (stat);
+    /*
+     * the array may need freeing
+     */
+    if (pdrs->p_op == PDR_FREE) {
+        free(*addrp);
+        *addrp = NULL;
+    }
+    return (stat);
 }
 
  /*
