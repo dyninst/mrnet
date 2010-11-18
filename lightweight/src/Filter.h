@@ -11,11 +11,11 @@
 #include "vector.h"
 
 struct Filter_t {
-  unsigned short id;
-  void* filter_state;
-   Packet_t* params;
-  char* fmt_str;
-} ;
+    unsigned short id;
+    void* filter_state;
+    Packet_t* params;
+    char* fmt_str;
+};
 
 typedef struct Filter_t Filter_t;
 
@@ -23,13 +23,13 @@ Filter_t* new_Filter_t(unsigned short iid);
 
 void delete_Filter_t(Filter_t* filter);
 
-int Filter_push_Packets( Filter_t* filter, 
-                         vector_t* ipackets, 
-                         vector_t* opackets,
-                         vector_t* opackets_reverse,
-                         TopologyLocalInfo_t * topol_info,
-                         int igoing_upstream);
+int Filter_push_Packets(Filter_t* filter, 
+                        vector_t* ipackets, 
+                        vector_t* opackets,
+                        vector_t* opackets_reverse,
+                        TopologyLocalInfo_t * topol_info,
+                        int igoing_upstream);
 
-void Filter_set_FilterParams( Filter_t* filter,  Packet_t* iparams);
+void Filter_set_FilterParams(Filter_t* filter, Packet_t* iparams);
 
 #endif /* __filter_h */
