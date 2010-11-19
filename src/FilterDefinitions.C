@@ -1614,7 +1614,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
     }
 
     set< Rank > peers;
-    stream->get_ChildPeers( peers );
+    stream->get_ChildRanks( peers );
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "slots:%d ready:%d peers:%d\n",
                            state->packets_by_rank.size(), 
@@ -1741,7 +1741,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         stream_id = ipackets[0]->get_StreamId();
         stream = net->get_Stream( stream_id );
         assert(stream);
-        stream->get_ChildPeers( peers );
+        stream->get_ChildRanks( peers );
     }	
 
     //2. Place input packets

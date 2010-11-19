@@ -87,7 +87,8 @@ class Stream {
     int send_internal( int itag, const char *iformat_str, ... );
 
     void close(void);
-    void get_ChildPeers( std::set< Rank >& ) const;
+    void get_ChildRanks( std::set< Rank >& ) const;
+    void get_ChildPeers( std::set< PeerNodePtr >& ) const;
     void add_Stream_EndPoint( Rank irank );
     void add_Stream_Peer( Rank irank );
 
@@ -104,6 +105,9 @@ class Stream {
 
     int send_aux( int itag, const char *ifmt, PacketPtr &ipacket, 
                   bool upstream, bool internal=false );
+
+    void send_to_children( PacketPtr &ipacket );
+
     void add_IncomingPacket( PacketPtr );
     PacketPtr get_IncomingPacket(void);
     int push_Packet( PacketPtr, std::vector<PacketPtr> &, std::vector<PacketPtr> &, 
@@ -139,7 +143,7 @@ class Stream {
     EventPipe * _evt_pipe;
     PerfDataMgr * _perf_data;
     bool _was_closed;
-    std::set< Rank > _peers; // child peers in stream
+    std::set< PeerNodePtr > _peers; // child peers in stream
     mutable XPlat::Mutex _peers_sync;
 
     std::list< PacketPtr > _incoming_packet_buffer;

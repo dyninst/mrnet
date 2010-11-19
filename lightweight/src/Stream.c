@@ -34,23 +34,34 @@ Stream_t* new_Stream_t(Network_t* net,
                        int isync_filter_id,
                        int ids_filter_id)
 {
+    unsigned short us_filt;
+    unsigned short ds_filt;
+    unsigned short sync_filt;
     Stream_t* new_stream = (Stream_t*)malloc(sizeof(Stream_t));
     assert(new_stream);
+
+    us_filt = (unsigned short) ius_filter_id;
+    ds_filt = (unsigned short) ids_filter_id;
+    sync_filt = (unsigned short) isync_filter_id;
+
     new_stream->network = net;
-    new_stream->id = iid;
-    new_stream->sync_filter_id = isync_filter_id;
-    new_stream->sync_filter = new_Filter_t(isync_filter_id); 
-    new_stream->us_filter_id = ius_filter_id;
-    new_stream->us_filter = new_Filter_t(ius_filter_id); 
-    new_stream->ds_filter_id = ids_filter_id;
-    new_stream->ds_filter = new_Filter_t(ids_filter_id);
+    new_stream->id = (unsigned short) iid;
+
+    new_stream->sync_filter_id = sync_filt;
+    new_stream->sync_filter = new_Filter_t(sync_filt); 
+    new_stream->us_filter_id = us_filt;
+    new_stream->us_filter = new_Filter_t(us_filt); 
+    new_stream->ds_filter_id = ds_filt;
+    new_stream->ds_filter = new_Filter_t(ds_filt);
+
     new_stream->perf_data = new_PerfDataMgr_t();
+
     new_stream->incoming_packet_buffer = new_empty_vector_t();
     new_stream->peers = new_empty_vector_t();
     new_stream->_was_closed = 0;
 
     mrn_dbg(3, mrn_printf(FLF, stderr,
-                          "id:%d, us_filter:%d, sync_id:%d, ds_filter:%d\n", 
+                          "id:%hu, us_filter:%hu, sync_id:%hu, ds_filter:%hu\n", 
                           new_stream->id, new_stream->us_filter_id, 
                           new_stream->sync_filter_id, new_stream->ds_filter_id));
 
@@ -316,7 +327,8 @@ int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ... )
 
     va_start(arg_list, iformat_str);
 
-    packet = new_Packet_t(true, stream->id, itag, (char*)iformat_str, arg_list);
+    packet = new_Packet_t(stream->network->local_rank, 
+                          stream->id, itag, (char*)iformat_str, arg_list);
     if (packet == NULL) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));
         return -1;

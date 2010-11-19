@@ -7,6 +7,7 @@
 #define __packet_h 1
 
 #include <cstdarg>
+#include <set>
 #include <vector>
 
 #include "boost/shared_ptr.hpp"
@@ -28,6 +29,7 @@ class Packet: public Error {
     friend class BackEndNode;
     friend class Stream;
     friend class Message;
+    friend class Network;
 
  public:
 
@@ -41,15 +43,17 @@ class Packet: public Error {
     int unpack( const char *ifmt, ... );
     const DataElement * operator[] ( unsigned int i ) const;
 
-    int get_Tag( void ) const;
+    int get_Tag(void) const;
     void set_Tag( int itag ) { tag = itag; }
 
-    unsigned short get_StreamId( void ) const;
-    const char *get_FormatString( void ) const;
-    Rank get_InletNodeRank( void ) const;
+    unsigned short get_StreamId(void) const;
+    const char *get_FormatString(void) const;
+    Rank get_InletNodeRank(void) const;
 
-    bool operator==(const Packet &)const;
-    bool operator!=(const Packet &)const;
+    bool set_Destinations( const std::vector< Rank >& );
+
+    bool operator==( const Packet & ) const;
+    bool operator!=( const Packet & ) const;
 
     void set_DestroyData( bool b );
 
@@ -58,13 +62,18 @@ class Packet: public Error {
     ~Packet();
 
  private:
-    Packet( bool, unsigned short istream_id, int itag, const char *ifmt, va_list iargs );
+
+    Packet( Rank isrc, unsigned short istream_id, int itag, const char *ifmt, va_list iargs );
     Packet( unsigned int ibuf_len, char *ibuf, Rank iinlet_rank );
 
-    const char *get_Buffer( void ) const;
-    unsigned int get_BufferLen( void ) const;
+    void construct_pdr(void);
 
-    unsigned int get_NumDataElements( void ) const;
+    const char *get_Buffer(void) const;
+    unsigned int get_BufferLen(void) const;
+
+    bool get_Destinations( unsigned& num_dest, Rank** dests );
+
+    unsigned int get_NumDataElements(void) const;
     const DataElement * get_DataElement( unsigned int i ) const;
 
     int ExtractVaList( const char *fmt, va_list arg_list ) const;
@@ -82,9 +91,13 @@ class Packet: public Error {
     char *fmt_str;          /* Null Terminated String */
     char *buf;              /* The entire packed buffer (header+payload)! */
     unsigned int buf_len;
+
     Rank inlet_rank;
+    Rank *dest_arr;
+    unsigned int dest_arr_len;
     bool destroy_data;
-    std::vector < const DataElement * >data_elements;
+
+    std::vector< const DataElement * > data_elements;
     mutable XPlat::Mutex data_sync;
 
     /************************************************************************

@@ -64,18 +64,12 @@ Stream::Stream( Network * inetwork,
             recompute_ChildrenNodes();
         }
         else {
-            /* no endpoints: only valid for topol prop bcast streams 
-             * created during network startup in backend attach
+            /* No endpoints: only valid for topol prop bcast streams 
+             * created during network startup in backend attach.
+             * Since bcast stream, add all children peers.
              */
             _peers_sync.Lock();
-
-            // since bcast stream, add all children peers
-
-            const std::set< PeerNodePtr > children = _network->get_ChildPeers();
-            std::set< PeerNodePtr >::const_iterator citer = children.begin();
-            for( ; citer != children.end() ; citer++ )
-                _peers.insert( (*citer)->get_Rank() );
-
+            _network->get_ChildPeers( _peers );
             _peers_sync.Unlock();        
         }
     }
@@ -107,9 +101,12 @@ void Stream::add_Stream_EndPoint( Rank irank )
 
 void Stream::add_Stream_Peer( Rank irank ) 
 {
-    _peers_sync.Lock();
-    _peers.insert( irank );
-    _peers_sync.Unlock();
+    PeerNodePtr outlet = _network->get_OutletNode( irank );
+    if( outlet != NULL ) {
+        _peers_sync.Lock();
+        _peers.insert( outlet );
+        _peers_sync.Unlock();
+    }
 }
 
 
@@ -120,7 +117,8 @@ int Stream::send( int itag, const char *iformat_str, ... )
     va_list arg_list;
     va_start(arg_list, iformat_str);
 
-    PacketPtr packet( new Packet(true, _id, itag, iformat_str, arg_list) );
+    PacketPtr packet( new Packet(_network->get_LocalRank(), 
+                                 _id, itag, iformat_str, arg_list) );
     va_end(arg_list);
 
     if( packet->has_Error() ){
@@ -138,7 +136,8 @@ int Stream::send( const char *idata_fmt, va_list idata, int itag )
 {
     mrn_dbg_func_begin();
 
-    PacketPtr packet( new Packet(true, _id, itag, idata_fmt, idata) );
+    PacketPtr packet( new Packet(_network->get_LocalRank(),
+                                 _id, itag, idata_fmt, idata) );
     if( packet->has_Error() ){
         mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
         return -1;
@@ -213,7 +212,8 @@ int Stream::send_internal( int itag, const char *iformat_str, ... )
     va_list arg_list;
     va_start(arg_list, iformat_str);
 
-    PacketPtr packet( new Packet(true, _id, itag, iformat_str, arg_list) );
+    PacketPtr packet( new Packet(_network->get_LocalRank(), 
+                                 _id, itag, iformat_str, arg_list) );
     va_end(arg_list);
 
     if( packet->has_Error() ){
@@ -241,7 +241,7 @@ int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket,
         return 0;
     }
     
-    vector<PacketPtr> opackets, opackets_reverse;
+    vector< PacketPtr > opackets, opackets_reverse;
 
     // filter packet
     if( push_Packet( ipacket, opackets, opackets_reverse, upstream ) == -1){
@@ -296,6 +296,26 @@ int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket,
     return 0;
 }
 
+void Stream::send_to_children( PacketPtr &ipacket )
+{
+    _peers_sync.Lock();
+
+    std::set< PeerNodePtr >::const_iterator iter = _peers.begin(),
+                                            iend = _peers.end();
+    for( ; iter != iend; iter++ ) {
+
+        PeerNodePtr cur_node = *iter;
+
+        //Never send packet back to inlet
+        if( cur_node->get_Rank() == ipacket->get_InletNodeRank() )
+            continue;
+                
+        cur_node->send( ipacket );
+    }
+    
+    _peers_sync.Unlock();
+}
+
 int Stream::flush() const
 {
     int retval = 0;
@@ -304,27 +324,25 @@ int Stream::flush() const
     if( is_Closed() )
         return -1;
     
-    if( _network->is_LocalNodeFrontEnd() ){
-        set < Rank >::const_iterator iter;
+    if( _network->is_LocalNodeFrontEnd() ) {
 
         _peers_sync.Lock();
-        for( iter=_peers.begin(); iter!=_peers.end(); iter++ ){
+
+        set< PeerNodePtr >::const_iterator iter = _peers.begin(),
+                                           iend = _peers.end();
+        for( ; iter != iend; iter++ ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                   "Calling children_nodes[%d].flush() ...\n",
-                                   (*iter) ));
-            PeerNodePtr cur_peer = _network->get_PeerNode( *iter );
-            if( cur_peer != PeerNode::NullPeerNode ) {
-                if( cur_peer->flush( ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "flush() failed\n" ));
-                    retval = -1;
-                }
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "flush() succeeded\n" ));
+                                   "child[%d].flush()\n",
+                                   (*iter)->get_Rank()) );
+            if( (*iter)->flush() == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "flush() failed\n") );
+                retval = -1;
             }
         }
         _peers_sync.Unlock();
     }
     else if( _network->is_LocalNodeBackEnd() ){
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "calling backend flush()\n" ));
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "backend flush()\n") );
         retval = _network->get_ParentNode()->flush();
     }
 
@@ -452,14 +470,14 @@ void Stream::close(void)
                         
 
 int Stream::push_Packet( PacketPtr ipacket,
-                         vector<PacketPtr>& opackets,
-                         vector<PacketPtr>& opackets_reverse,
+                         vector< PacketPtr >& opackets,
+                         vector< PacketPtr >& opackets_reverse,
                          bool igoing_upstream )
 {
-    vector<PacketPtr> ipackets;
+    vector< PacketPtr > ipackets;
     NetworkTopology* topol = _network->get_NetworkTopology();
     TopologyLocalInfo topol_info( topol,
-                                  topol->find_Node( _network->get_LocalRank() ) );
+                                  topol->find_Node(_network->get_LocalRank()) );
 
     mrn_dbg_func_begin();
 
@@ -672,7 +690,8 @@ int Stream::set_FilterParameters( const char *iparams_fmt, va_list iparams,
     
     if( _network->is_LocalNodeFrontEnd() ) {
 
-        PacketPtr packet( new Packet(true, _id, tag, iparams_fmt, iparams) );
+        PacketPtr packet( new Packet(_network->get_LocalRank(), 
+                                     _id, tag, iparams_fmt, iparams) );
         if( packet->has_Error() ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
             return -1;
@@ -750,7 +769,17 @@ int Stream::send_FilterStateToParent(void) const
 void Stream::remove_Node( Rank irank )
 {
     _peers_sync.Lock();
-    _peers.erase( irank );
+
+    set< PeerNodePtr >::const_iterator iter = _peers.begin(),
+                                       iend = _peers.end();
+    for( ; iter != iend; iter++ ) {
+        Rank cur_rank = (*iter)->get_Rank();
+        if( cur_rank == irank ) {
+            _peers.erase( iter );
+            break;
+        }
+    }
+
     _peers_sync.Unlock();
 }
 
@@ -765,15 +794,29 @@ void Stream::recompute_ChildrenNodes(void)
         PeerNodePtr outlet = _network->get_OutletNode( cur_rank );
         if( outlet != NULL ) {
             mrn_dbg( 3, mrn_printf(FLF, stderr,
-                                   "Adding outlet[%d] for node[%d] to stream[%d].\n",
+                                   "Adding outlet[%d] for endpoint[%d] to stream[%d].\n",
                                    outlet->get_Rank(), cur_rank, _id) );
-            _peers.insert( outlet->get_Rank() );
+            _peers.insert( outlet );
         }
     }
     _peers_sync.Unlock();
 }
 
-void Stream::get_ChildPeers( set< Rank >& peers ) const
+void Stream::get_ChildRanks( set< Rank >& peers ) const
+{
+    _peers_sync.Lock();
+
+    set< PeerNodePtr >::const_iterator iter = _peers.begin(),
+                                       iend = _peers.end();
+    for( ; iter != iend; iter++ ) {
+        Rank cur_rank = (*iter)->get_Rank();
+        peers.insert( cur_rank );
+    }
+
+    _peers_sync.Unlock();
+}
+
+void Stream::get_ChildPeers( set< PeerNodePtr >& peers ) const
 {
     _peers_sync.Lock();
     peers = _peers;

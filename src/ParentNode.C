@@ -245,8 +245,8 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 
     subtreereport_sync.Lock( );
 
-    _num_children_reported = _num_children = 0;
-    _num_children = _network->_children.size();
+    _num_children_reported = 0;
+    _num_children = _network->get_NumChildren();
 
     subtreereport_sync.Unlock( );
 
@@ -322,14 +322,8 @@ int ParentNode::proc_TopologyReport( PacketPtr ipacket ) const
 
     subtreereport_sync.Lock( );
 
-    _num_children_reported = _num_children = 0;
-    const std::set < PeerNodePtr > peers = _network->get_ChildPeers();
-    std::set < PeerNodePtr >::const_iterator iter;
-    for( iter=peers.begin(); iter!=peers.end(); iter++ ) {
-        if( (*iter)->is_child() ) {
-            _num_children++;
-        }
-    }
+    _num_children_reported = 0;
+    _num_children = _network->get_NumChildren();
 
     subtreereport_sync.Unlock( );
 

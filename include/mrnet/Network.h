@@ -128,7 +128,6 @@ class Network: public Error {
 
     TimeKeeper* get_TimeKeeper(void);
 
-    const std::set< PeerNodePtr > get_ChildPeers() const;
     PeerNodePtr get_PeerNode( Rank );
     bool node_Failed( Rank );
     PeerNodePtr get_OutletNode( Rank ) const;
@@ -251,6 +250,9 @@ protected:
     int send_PacketToChildren( PacketPtr, bool internal_only = false );
     int flush_PacketsToParent(void);
     int flush_PacketsToChildren(void) const;
+
+    void get_ChildPeers( std::set< PeerNodePtr >& ) const;
+    unsigned int get_NumChildren(void) const;
 
     int recv( bool iblocking=true );
     int recv_PacketsFromParent( std::list< PacketPtr >& ) const;

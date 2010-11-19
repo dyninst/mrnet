@@ -18,126 +18,101 @@ namespace MRN
 
 PacketPtr Packet::NullPacket;
 
-Packet::Packet( bool, // to disambiguate function prototype from public constructor 
-                unsigned short _stream_id, int _tag, const char *fmt,
-                va_list arg_list )
-    : stream_id( _stream_id ), tag( _tag ),
-      fmt_str( strdup(fmt) ), buf(NULL), inlet_rank(UnknownRank),
-      destroy_data( false )
+void Packet::construct_pdr(void)
 {
-    PDR pdrs;
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "stream_id:%d, tag:%d, fmt:\"%s\"\n",
-                           stream_id, tag, fmt_str ));
-
-    src_rank = UnknownRank;
-
-    //TODO: add exception block to catch user arg errors
-    ArgList2DataElementArray( arg_list ); 
-
-    buf_len = pdr_sizeof( ( pdrproc_t ) ( Packet::pdr_packet ), this );
+    buf_len = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet), this );
     assert( buf_len );
-    buf = ( char * )malloc( buf_len );
-    assert( buf );
 
-    pdrmem_create( &pdrs, buf, buf_len, PDR_ENCODE );
-
-    if( !Packet::pdr_packet( &pdrs, this ) ) {
-        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
+    buf = (char*) malloc( buf_len );
+    if( buf == NULL ) { 
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "malloc() failed\n") );
         return;
     }
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr,
-                "Packet(%p) constructor succeeded: src:%u, stream_id:%d "
-                "tag:%d, fmt:%s\n", this, src_rank, stream_id, tag, fmt_str ));
-    return;
+    PDR pdrs;
+    pdrmem_create( &pdrs, buf, buf_len, PDR_ENCODE );
+
+    if( ! Packet::pdr_packet(&pdrs, this) ) {
+        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet() failed\n") );
+        return;
+    }
+    
+    mrn_dbg( 5, mrn_printf(FLF, stderr,
+                           "Packet(%p) success: stream:%d tag:%d fmt:'%s'\n", 
+                           this, stream_id, tag, fmt_str) );
 }
 
-Packet::Packet( unsigned short istream_id, int itag, const char *ifmt_str, ... )
-    : stream_id( istream_id ), tag( itag ),
-      fmt_str( strdup(ifmt_str) ), buf(NULL), inlet_rank(UnknownRank),
-      destroy_data( false )
+Packet::Packet( Rank isrc, unsigned short istream_id, int itag, 
+                const char *ifmt, va_list arg_list )
+    : stream_id(istream_id), tag(itag), src_rank(isrc),
+      fmt_str( strdup(ifmt) ), buf(NULL), buf_len(0),
+      inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
+      destroy_data(false)
 {
-    va_list arg_list;
-    mrn_dbg(2, mrn_printf(FLF, stderr, "stream_id: %d, tag: %d, fmt:\"%s\"\n",
-                          istream_id, itag, ifmt_str));
-    src_rank=UnknownRank;
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "stream:%d tag:%d fmt:'%s'\n",
+                           stream_id, tag, fmt_str) );
 
+    ArgList2DataElementArray( arg_list );
+
+    construct_pdr();
+}
+
+Packet::Packet( unsigned short istream_id, int itag, 
+                const char *ifmt_str, ... )
+    : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
+      fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0),
+      inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
+      destroy_data(false)
+{
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "stream:%d tag:%d fmt:'%s'\n",
+                           stream_id, tag, fmt_str) );
+
+    va_list arg_list;
     va_start( arg_list, ifmt_str );
     ArgList2DataElementArray( arg_list ); 
     va_end( arg_list );
 
-    buf_len = pdr_sizeof( ( pdrproc_t ) ( Packet::pdr_packet ), this );
-    assert( buf_len );
-    buf = ( char * )malloc( buf_len );
-    assert( buf );
-
-    PDR pdrs;
-    pdrmem_create( &pdrs, buf, buf_len, PDR_ENCODE );
-
-    if( !Packet::pdr_packet( &pdrs, this ) ) {
-        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
-        return;
-    }
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr,
-                "Packet(%p) constructor succeeded: stream_id:%d "
-                "tag:%d, fmt:%s\n", this, stream_id, tag, fmt_str ));
-    return;
+    construct_pdr();
 }
 
 Packet::Packet( unsigned short istream_id, int itag, 
 		const void **idata, const char *ifmt_str ) 
-    : stream_id( istream_id ), tag( itag ),
-      fmt_str( strdup(ifmt_str) ), buf(NULL), inlet_rank(UnknownRank),
-      destroy_data( false )
+    : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
+      fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0), 
+      inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
+      destroy_data(false)
 {
-    mrn_dbg(2, mrn_printf(FLF, stderr, "stream_id: %d, tag: %d, fmt:\"%s\"\n",
-                          istream_id, itag, ifmt_str));
-    src_rank=UnknownRank;
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "stream:%d tag:%d fmt:'%s'\n",
+                           stream_id, tag, fmt_str) );
 
     ArgVec2DataElementArray( idata ); 
 
-    buf_len = pdr_sizeof( ( pdrproc_t ) ( Packet::pdr_packet ), this );
-    assert( buf_len );
-    buf = ( char * )malloc( buf_len );
-    assert( buf );
-
-    PDR pdrs;
-    pdrmem_create( &pdrs, buf, buf_len, PDR_ENCODE );
-
-    if( !Packet::pdr_packet( &pdrs, this ) ) {
-        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
-        return;
-    }
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr,
-                "Packet(%p) constructor succeeded: stream_id:%d "
-                "tag:%d, fmt:%s\n", this, stream_id, tag, fmt_str ));
-    return;
+    construct_pdr();
 }
     
 
 Packet::Packet( unsigned int ibuf_len, char * ibuf, Rank iinlet_rank )
-    : stream_id( 0 ), fmt_str( NULL ), buf( ibuf ),
-      buf_len( ibuf_len ), inlet_rank( iinlet_rank ), destroy_data( true )
+    : stream_id(0), tag(0), src_rank(UnknownRank), fmt_str(NULL),
+      buf(ibuf), buf_len(ibuf_len), inlet_rank(iinlet_rank), 
+      dest_arr(NULL), dest_arr_len(0), destroy_data(true)
 {
-    PDR pdrs;
     mrn_dbg_func_begin();
 
-    if( buf_len == 0 ){  //NullPacket has buf==NULL and buf_len==0
+    if( buf_len == 0 ) // NullPacket has buf==NULL and buf_len==0
         return;
-    }
 
+    PDR pdrs;
     pdrmem_create( &pdrs, buf, buf_len, PDR_DECODE );
 
-    if( !Packet::pdr_packet( &pdrs, this ) ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet() failed\n" ));
+    if( ! Packet::pdr_packet(&pdrs, this) ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet() failed\n") );
         error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
     }
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr,
-                           "Packet(%p): src:%u, stream_id:%d tag:%d, fmt:%s\n",
-                           this, src_rank, stream_id, tag, fmt_str ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr,
+                           "Packet(%p): stream_id:%d tag:%d, fmt:%s\n",
+                           this, stream_id, tag, fmt_str) );
 }
 
 Packet::~Packet()
@@ -152,11 +127,13 @@ Packet::~Packet()
         buf = NULL;
     }
 
-    for( unsigned int i=0; i < data_elements.size(); i++ ){
-        if( destroy_data ){
-            (const_cast< DataElement * >( data_elements[i] ))->set_DestroyData( true );
+    DataElement* de = NULL;
+    for( unsigned int i=0; i < data_elements.size(); i++ ) {
+        de = const_cast< DataElement* >( data_elements[i] );
+        if( destroy_data ) {
+            de->set_DestroyData( true );
         }
-        delete data_elements[i];
+        delete de;
     }
     data_sync.Unlock();
 }
@@ -267,6 +244,41 @@ const DataElement * Packet::get_DataElement( unsigned int i ) const
     return ret;
 }
 
+bool Packet::set_Destinations( const std::vector< Rank >& bes )
+{
+    bool rc = true;
+
+    data_sync.Lock();
+
+    if( dest_arr != NULL )
+        free( dest_arr );
+    
+    dest_arr_len = bes.size(); 
+    dest_arr = (Rank*) calloc( dest_arr_len, sizeof(Rank) );
+    if( dest_arr == NULL )
+        rc = false;
+    else {
+        std::vector< Rank >::const_iterator viter = bes.begin(),
+                                             vend = bes.end();
+        for( unsigned u=0; viter != vend; viter++, u++ )
+            dest_arr[u] = *viter;
+    }
+
+    data_sync.Unlock();
+
+    return rc;
+}
+
+bool Packet::get_Destinations( unsigned& num_dest, Rank** dests )
+{
+    if( dest_arr_len ) {
+        num_dest = dest_arr_len;
+        *dests = dest_arr;
+        return true;
+    }
+    return false;
+}
+
 int Packet::ExtractVaList( const char * /*fmt*/, va_list arg_list ) const
 {
     mrn_dbg( 3, mrn_printf(FLF, stderr, "ExtractVaList(%p)\n", this) );
@@ -282,20 +294,26 @@ int Packet::ExtractVaList( const char * /*fmt*/, va_list arg_list ) const
     return 0;
 }
 
+static const char* op2str( PDR* pdrs )
+{
+    switch( pdrs->p_op ) {
+    case PDR_ENCODE:
+        return "ENCODING";
+    case PDR_DECODE:
+        return "DECODING";
+    case PDR_FREE:
+        return "FREEING";
+    }
+    return NULL;
+} 
+
 bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
 {
     unsigned int i;
     bool_t retval = 0;
     DataElement * cur_elem=NULL;
 
-    std::string op_str;
-    if( pdrs->p_op == PDR_ENCODE )
-        op_str="ENCODING";
-    else if( pdrs->p_op == PDR_DECODE )
-        op_str="DECODING";
-    else
-        op_str="FREEING";
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op_str.c_str() ));
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
 
     /* Process Packet Header into/out of the pdr mem (see Packet.h for header layout) */
 
@@ -316,8 +334,14 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_wrapstring() failed\n" ));
         return FALSE;
     }
+    if( pdr_array( pdrs, (void**) &( pkt->dest_arr ), &( pkt->dest_arr_len ), 
+                   INT32_MAX, sizeof(uint32_t), 
+                   (pdrproc_t) pdr_uint32 ) == FALSE ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_array() failed\n" ));
+        return FALSE;
+    }
 
-    if( !pkt->get_FormatString(  ) ) {
+    if( ! pkt->get_FormatString() ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr,
                     "No data in message. just header info\n" ));
         return TRUE;
