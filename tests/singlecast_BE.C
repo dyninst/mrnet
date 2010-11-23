@@ -12,8 +12,10 @@ using namespace MRN;
 
 int main( int argc, char* argv[] )
 {
-    Stream *stream, *grp_stream, *be_stream;
-    int tag;
+    Stream *stream = NULL;
+    Stream *grp_stream = NULL;
+    Stream *be_stream = NULL;
+    int tag, ival = -1;
     PacketPtr pkt;
 
     // join the MRNet net
@@ -34,27 +36,28 @@ int main( int argc, char* argv[] )
             grp_stream = stream;
         }
         else if( tag == SC_SINGLE ) {
-
             be_stream = stream;
-
-            // extract the value and send it back
-            int ival = 0;
             pkt->unpack( "%d", &ival );
-
-            // send our value for the reduction
-            std::cout << "BE: sending val" << std::endl;
-            if( (grp_stream->send(SC_GROUP, "%d", ival) == -1) ||
-                (grp_stream->flush() == -1) ) {
-                cerr << "BE: val send failed" << endl;
-                break;
-            }
-
-            done = true;
+            std::cout << "BE: sending val on BE stream" << std::endl;
+            if( (be_stream->send(tag, "%d", ival) == -1) ||
+                (be_stream->flush() == -1) ) {
+                cerr << "BE: val send single failed" << endl;
+            }   
         }
         else {
             cerr << "BE: unexpected tag " << tag << endl;
             done = true;
         }
+        
+        if( grp_stream && (ival != -1) )
+            done = true;
+    }
+
+    // send our value for the reduction
+    std::cout << "BE: sending val on group stream" << std::endl;
+    if( (grp_stream->send(SC_GROUP, "%d", ival) == -1) ||
+        (grp_stream->flush() == -1) ) {
+        cerr << "BE: val send group failed" << endl;
     }
 
     // cleanup

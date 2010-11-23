@@ -164,7 +164,7 @@ Network_t* Network_init_BackEnd(/*const*/ char* iphostname, Port ipport,
     
     pretty_host = (char*) malloc(sizeof(char)*256);
     assert(pretty_host);
-    myhostname = (char*) malloc (sizeof(char)*256);
+    myhostname = (char*) malloc(sizeof(char)*256);
     assert(myhostname);
     NetUtils_FindNetworkName( imyhostname, myhostname );
     NetUtils_GetHostName( myhostname, pretty_host );

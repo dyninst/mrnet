@@ -44,23 +44,29 @@ int FrontEndNode::proc_DataFromChildren( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
 
-    Stream *stream = _network->get_Stream( ipacket->get_StreamId() );
+    std::vector < PacketPtr > packets, reverse_packets;
+
+    unsigned int strm_id = ipacket->get_StreamId();
+    Stream *stream = _network->get_Stream( strm_id );
     if( stream == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                               ipacket->get_StreamId() ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", strm_id) );
         return -1;
     }
 
-    std::vector < PacketPtr > packets, reverse_packets;
-
-    stream->push_Packet( ipacket, packets, reverse_packets, true );
-
-    mrn_dbg( 3, mrn_printf
-             (FLF, stderr, "push_packet => %u packets, %u reverse_packets\n", 
-              packets.size(), reverse_packets.size() ));
+    if( strm_id < CTL_STRM_ID ) {
+        // fast-path for BE specific stream ids
+        // TODO: check id less than max BE rank
+        packets.push_back( ipacket );
+    }
+    else {
+         stream->push_Packet( ipacket, packets, reverse_packets, true );
+         mrn_dbg( 3, mrn_printf
+                  (FLF, stderr, "push_packet => %u packets, %u reverse_packets\n", 
+                   packets.size(), reverse_packets.size() ));
+    }
 
     if( ! packets.empty() ) {
-        for( unsigned int i = 0; i < packets.size( ); i++ ) {
+        for( unsigned int i = 0; i < packets.size(); i++ ) {
             PacketPtr cur_packet( packets[i] );
 
             mrn_dbg( 3, mrn_printf(FLF, stderr, "Put packet in stream %d\n",

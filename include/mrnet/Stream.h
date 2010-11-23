@@ -112,9 +112,7 @@ class Stream {
     static bool find_FilterAssignment( const std::string& assignments, 
                                        Rank me, int& filter_id );
 
-    int send_aux( int itag, const char *ifmt, PacketPtr &ipacket, 
-                  bool upstream, bool internal=false );
-
+    int send_aux( PacketPtr &ipacket, bool upstream, bool internal=false );
     void send_to_children( PacketPtr &ipacket );
 
     void add_IncomingPacket( PacketPtr );

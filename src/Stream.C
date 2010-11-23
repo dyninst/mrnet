@@ -119,7 +119,6 @@ void Stream::add_Stream_Peer( Rank irank )
     }
 }
 
-
 int Stream::send( int itag, const char *iformat_str, ... )
 {
     mrn_dbg_func_begin();
@@ -163,8 +162,9 @@ int Stream::send( int itag, const void **idata, const char *iformat_str )
 {
     mrn_dbg_func_begin();
 
-    PacketPtr packet( new Packet(_id, itag, idata, iformat_str) );
-    if( packet->has_Error() ){
+    PacketPtr packet( new Packet(_network->get_LocalRank(),
+                                 _id, itag, idata, iformat_str) );
+    if( packet->has_Error() ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
         return -1;
     }
@@ -181,7 +181,7 @@ int Stream::send( PacketPtr& ipacket )
 
     int status;
 
-    if( ipacket->has_Error() ){
+    if( ipacket->has_Error() ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "input packet has error\n"));
         return -1;
     }
@@ -210,8 +210,7 @@ int Stream::send( PacketPtr& ipacket )
     if( _network->is_LocalNodeFrontEnd() )
         upstream = false;
 
-    status = send_aux( ipacket->get_Tag(), ipacket->get_FormatString(), 
-                       ipacket, upstream );
+    status = send_aux( ipacket, upstream );
 
     mrn_dbg_func_end();
     return status;
@@ -229,25 +228,23 @@ int Stream::send_internal( int itag, const char *iformat_str, ... )
                                  _id, itag, iformat_str, arg_list) );
     va_end(arg_list);
 
-    if( packet->has_Error() ){
+    if( packet->has_Error() ) {
        mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
        return -1;
     }
 
     // internal sends always upstream
     bool upstream = true;
-    status = send_aux( itag, iformat_str, packet, upstream, true );
+    status = send_aux( packet, upstream, true );
 
     mrn_dbg_func_end();
     return status;
 }
 
-int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket, 
-                      bool upstream, bool internal /* =false */ )
+int Stream::send_aux( PacketPtr &ipacket, bool upstream, 
+                      bool internal /* =false */ )
 {
     mrn_dbg_func_begin();
-    mrn_dbg(3, mrn_printf(FLF, stderr,
-                          "stream:%u, tag:%d, fmt=\"%s\"\n", _id, itag, ifmt));
 
     if( is_Closed() ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "send on closed stream\n"));
@@ -256,22 +253,30 @@ int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket,
     
     vector< PacketPtr > opackets, opackets_reverse;
 
-    // filter packet
-    if( push_Packet( ipacket, opackets, opackets_reverse, upstream ) == -1){
-        mrn_dbg(1, mrn_printf(FLF, stderr, "push_Packet() failed\n"));
-        return -1;
+    unsigned int strm_id = ipacket->get_StreamId();
+    if( strm_id < CTL_STRM_ID ) {
+        // fast-path for BE specific stream ids
+        // TODO: check id less than max BE rank
+        opackets.push_back( ipacket );
+    }
+    else {
+        // filter packet
+        if( push_Packet(ipacket, opackets, opackets_reverse, upstream) == -1 ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "push_Packet() failed\n"));
+            return -1;
+        }
     }
 
     // send filtered result packets
     if( ! opackets.empty() ) {
         if( upstream ) {
-            if( _network->send_PacketsToParent( opackets ) == -1 ) {
+            if( _network->send_PacketsToParent(opackets) == -1 ) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToParent() failed\n"));
                 return -1;
             }
         }
         else {            
-            if( _network->send_PacketsToChildren( opackets ) == -1 ) {
+            if( _network->send_PacketsToChildren(opackets) == -1 ) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToChildren() failed\n"));
                 return -1;
             }
@@ -281,7 +286,7 @@ int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket,
     if( ! opackets_reverse.empty() ) {
         if( ! internal ) {
             // FE or BE, return to sender
-            for( unsigned int i = 0; i < opackets_reverse.size( ); i++ ) {
+            for( unsigned int i = 0; i < opackets_reverse.size(); i++ ) {
                 PacketPtr cur_packet( opackets_reverse[i] );
 
                 mrn_dbg( 3, mrn_printf(FLF, stderr, "Put packet in stream %u\n",
@@ -291,13 +296,13 @@ int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket,
         }
         else {
             if( upstream ) {
-                if( _network->send_PacketsToParent( opackets ) == -1 ) {
+                if( _network->send_PacketsToParent(opackets) == -1 ) {
                     mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToParent() failed\n"));
                     return -1;
                 }
             }
             else {
-                if( _network->send_PacketsToChildren( opackets_reverse ) == -1 ) {
+                if( _network->send_PacketsToChildren(opackets_reverse) == -1 ) {
                     mrn_dbg(1, mrn_printf(FLF, stderr, "send_PacketsToChildren() failed\n"));
                     return -1;
                 }
@@ -499,7 +504,8 @@ int Stream::push_Packet( PacketPtr ipacket,
     }
 
     // if going upstream, sync first
-    if( igoing_upstream ){
+    if( igoing_upstream ) {
+
         if( _sync_filter->push_Packets(ipackets, opackets, opackets_reverse, topol_info ) == -1 ){
             mrn_dbg(1, mrn_printf(FLF, stderr, "SyncFilt.push_packets() failed\n"));
             return -1;
@@ -509,7 +515,6 @@ int Stream::push_Packet( PacketPtr ipacket,
             ipackets = opackets;
             opackets.clear();
         }
-        
     }
 
     if( ipackets.size() > 0 ) {

@@ -1022,19 +1022,46 @@ Stream* Network::new_Stream( Communicator* icomm,
 
 Stream* Network::get_Stream( unsigned int iid ) const
 {
-    Stream* ret;
+    Stream* ret = NULL;
     map< unsigned int, Stream* >::const_iterator iter; 
 
-    _streams_sync.Lock();
+    if( iid > CTL_STRM_ID ) { // user-created stream
+        _streams_sync.Lock();
 
-    iter = _streams.find( iid );
-    if(  iter != _streams.end() ){
-        ret = iter->second;
+        iter = _streams.find( iid );
+        if( iter != _streams.end() )
+            ret = iter->second;
+
+        _streams_sync.Unlock();
     }
-    else{
-        ret = NULL;
+    else if( iid < CTL_STRM_ID ) { // BE specific streams
+
+        if( is_LocalNodeFrontEnd() ) {
+            // generate BE stream instance as needed for valid BE rank
+            Rank r = iid;
+            NetworkTopology::Node* be = _network_topology->find_Node( r );
+            if( be != NULL ) {
+                Network* me = const_cast< Network* >( this );
+                ret = me->new_Stream( r, &r, 1, 
+                                      TFILTER_NULL, 
+                                      SFILTER_DONTWAIT, 
+                                      TFILTER_NULL );
+            }
+        }
+        else if( is_LocalNodeBackEnd() ) {
+            // BE stream instance was created at Network initialization
+            if( iid == get_LocalRank() ) {
+
+                _streams_sync.Lock();
+
+                iter = _streams.find( iid );
+                if( iter != _streams.end() )
+                    ret = iter->second;
+
+                _streams_sync.Unlock();
+            }            
+        }
     }
-    _streams_sync.Unlock();
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "network(%p): stream[%d] = %p\n", this, iid, ret ));
     return ret;

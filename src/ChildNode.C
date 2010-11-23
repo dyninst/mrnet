@@ -353,7 +353,7 @@ int ChildNode::proc_CollectPerfData( PacketPtr ipacket ) const
             return -1;
         }
         bool upstream = true;
-        aggr_strm->send_aux( pkt->get_Tag(), pkt->get_FormatString(), pkt, upstream );
+        aggr_strm->send_aux( pkt, upstream );
     }
 
     mrn_dbg_func_end();

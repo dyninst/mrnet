@@ -53,19 +53,40 @@ int main( int argc, char* argv[] )
         cerr << "FE: failed to broadcast stream init message" << endl;
     }
 
+    PacketPtr pkt;
+    int rret, tag = 0;
+    int send_val = 1;
+
     set< CommunicationNode* >::const_iterator iter = bes.begin();
     for( ; iter != bes.end() ; iter++ ) {
         Rank be_rank = (*iter)->get_Rank();
-        if( (-1 == net->send( be_rank, SC_SINGLE, "%d", 1 )) ||
+        if( (-1 == net->send( be_rank, SC_SINGLE, "%d", send_val )) ||
             (-1 == net->flush()) ) {
             std::cerr << "FE: recv() failed" << std::endl;
             return -1;
         }
+        
+        Stream *be_strm = NULL;
+        rret = net->recv( &tag, pkt, &be_strm );
+        if( rret == -1 ) {
+            std::cerr << "FE: recv() failed" << std::endl;
+            return -1;
+        }
+        if( tag == SC_SINGLE ) {
+            int val;
+            pkt->unpack( "%d", &val );
+            if( val != send_val ) {
+                std::cerr << "FE: expected BE to send value " << send_val 
+                      << ", got " << val << std::endl;
+            }
+        }
+        else {
+            std::cerr << "FE: unexpected tag " << tag 
+                      << " received instead of SC_SINGLE\n";
+        }
     }
 
-    PacketPtr pkt;
-    int tag = 0;
-    int rret = stream->recv( &tag, pkt );
+    rret = stream->recv( &tag, pkt );
     if( rret == -1 ) {
         std::cerr << "FE: recv() failed" << std::endl;
         return -1;

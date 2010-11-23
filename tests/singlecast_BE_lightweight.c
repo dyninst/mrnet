@@ -11,7 +11,9 @@
 
 int main( int argc, char* argv[] )
 {
-    Stream_t *stream, *grp_stream, *be_stream;
+    Stream_t *stream = NULL;
+    Stream_t *grp_stream = NULL;
+    Stream_t *be_stream = NULL;
     int tag;
     Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
     int bCont;
@@ -19,7 +21,7 @@ int main( int argc, char* argv[] )
     int done;
     int rret;
     int nReductions = 0;
-    int ival;
+    int ival = -1;
     int i;
 
     assert(pkt);
@@ -28,7 +30,7 @@ int main( int argc, char* argv[] )
     net = Network_CreateNetworkBE( argc, argv );
 
     // participate in the broadcast/reduction roundtrip latency experiment
-    done = false;
+    done = 0;
     while( !done ) {
         // receive the broadcast message
         tag = 0;
@@ -42,29 +44,29 @@ int main( int argc, char* argv[] )
             grp_stream = stream;
         }
         else if( tag == SC_SINGLE ) {
-
             be_stream = stream;
-
-            // extract the value and send it back
-            ival = 0;
             Packet_unpack(pkt,  "%d", &ival );
-
-            // send our value for the reduction
-            fprintf(stdout, "BE: sending val\n");
-            if( (Stream_send(grp_stream,  tag, "%d", ival ) == -1) ||
-                (Stream_flush(grp_stream) == -1) ) {
-                fprintf(stderr, "BE: val send failed\n");
-                return -1;
+            fprintf(stdout, "BE: sending val on BE stream\n");
+            if( (Stream_send(be_stream,  tag, "%d", ival ) == -1) ||
+                (Stream_flush(be_stream) == -1) ) {
+                fprintf(stderr, "BE: val send single failed\n");
             }
-            
-            done = true;
         }
         else {
-            done = true;
+            done = 1;
             fprintf(stderr, "BE: unexpected tag %d\n", tag);
         }
+
+        if( grp_stream && (ival != -1) )
+            done = 1;
     }
 
+    // send our value for the reduction
+    fprintf(stdout, "BE: sending val on group stream\n");
+    if( (Stream_send(grp_stream,  SC_GROUP, "%d", ival ) == -1) ||
+        (Stream_flush(grp_stream) == -1) ) {
+        fprintf(stderr, "BE: val send group failed\n");
+    }
 
     // cleanup
     // receive a go-away message

@@ -60,7 +60,7 @@ Stream_t* new_Stream_t(Network_t* net,
     new_stream->_was_closed = 0;
 
     mrn_dbg(3, mrn_printf(FLF, stderr,
-                          "id:%ud, us_filter:%ud, sync_id:%ud, ds_filter:%ud\n", 
+                          "id:%u, us_filter:%u, sync_id:%u, ds_filter:%u\n", 
                           new_stream->id, new_stream->us_filter_id, 
                           new_stream->sync_filter_id, new_stream->ds_filter_id));
 
