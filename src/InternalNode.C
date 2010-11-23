@@ -60,7 +60,7 @@ InternalNode::InternalNode( Network * inetwork,
     
         if( ! nt->in_Topology(ihostname, listeningPort, irank) ) {
             // not already in topology => internal node attach case 
-            ParentNode::_network->new_Stream( 1, NULL, 0, 
+            ParentNode::_network->new_Stream( TOPOL_STRM_ID, NULL, 0, 
                                               TFILTER_TOPO_UPDATE, 
                                               SFILTER_TIMEOUT, 
                                               TFILTER_TOPO_UPDATE_DOWNSTREAM );
@@ -68,7 +68,7 @@ InternalNode::InternalNode( Network * inetwork,
                                    "Internal node not in the topology\n") );
 
             // send topology update for new CP
-            Stream *s = ParentNode::_network->get_Stream(1); // get topol prop stream
+            Stream *s = ParentNode::_network->get_Stream(TOPOL_STRM_ID); // get topol prop stream
             int type = NetworkTopology::TOPO_NEW_CP; 
             char *host_arr = strdup( ihostname.c_str() );
             s->send_internal( PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", 
@@ -94,18 +94,27 @@ InternalNode::~InternalNode( void )
 int InternalNode::proc_DataFromParent( PacketPtr ipacket ) const
 {
     int retval = 0;
+    std::vector< PacketPtr > packets, reverse_packets;
 
     mrn_dbg_func_begin();
 
-    Stream *stream = ParentNode::_network->get_Stream( ipacket->get_StreamId( ) );
-    if( stream == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                               ipacket->get_StreamId( ) ));
-        return -1;
+    unsigned int strm_id = ipacket->get_StreamId();
+    if( strm_id < CTL_STRM_ID ) {
+        // fast-path for BE specific stream ids
+        // TODO: check id less than max BE rank
+        packets.push_back( ipacket );
     }
+    else {
 
-    std::vector< PacketPtr > packets, reverse_packets;
-    stream->push_Packet( ipacket, packets, reverse_packets, false );
+        Stream *stream = ParentNode::_network->get_Stream( strm_id );
+        if( stream == NULL ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                                   ipacket->get_StreamId( ) ));
+            return -1;
+        }
+
+        stream->push_Packet( ipacket, packets, reverse_packets, false );
+    }
 
     if( ! packets.empty() ) {
         // deliver all packets to all child nodes

@@ -159,6 +159,7 @@ endif
 
 STD_TESTS_FE = $(BINDIR)/test_basic_FE \
                $(BINDIR)/microbench_FE \
+               $(BINDIR)/singlecast_FE \
                $(BINDIR)/test_arrays_FE \
                $(BINDIR)/test_NativeFilters_FE \
                $(BINDIR)/test_DynamicFilters_FE \
@@ -166,6 +167,7 @@ STD_TESTS_FE = $(BINDIR)/test_basic_FE \
 
 STD_TESTS_BE = $(BINDIR)/test_basic_BE  \
                $(BINDIR)/microbench_BE \
+               $(BINDIR)/singlecast_BE \
                $(BINDIR)/test_arrays_BE \
                $(BINDIR)/test_NativeFilters_BE \
                $(BINDIR)/test_DynamicFilters_BE \
@@ -177,6 +179,7 @@ STD_TESTS_FE_LIGHTWEIGHT = $(BINDIR)/test_basic_FE_lightweight \
 
 STD_TESTS_BE_LIGHTWEIGHT = $(BINDIR)/test_basic_BE_lightweight \
                            $(BINDIR)/microbench_BE_lightweight \
+                           $(BINDIR)/singlecast_BE_lightweight \
                            $(BINDIR)/test_arrays_BE_lightweight \
                            $(BINDIR)/test_NativeFilters_BE_lightweight \
                            $(BINDIR)/test_DynamicFilters_BE_lightweight \
@@ -560,7 +563,7 @@ xplat_lightweight-distclean:
 .SUFFIXES:
 .SUFFIXES: .c .C .o .d
 
-$(OBJDIR)/microbench_BE_lightweight.o: microbench_BE_lightweight.c $(FRC)
+$(OBJDIR)/%_BE_lightweight.o: %_BE_lightweight.c $(FRC)
 	@echo Compiling `basename $@` ...
 	$(CC) $(TEST_CCFLAGS) -o $@ -c $<
 

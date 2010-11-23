@@ -105,7 +105,8 @@ Network::Network(void)
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
-      _edt( new EventDetector(this) ), next_stream_id(1), _evt_mgr( new EventMgr() ),
+      _edt( new EventDetector(this) ), 
+      _next_stream_id(USER_STRM_BASE_ID), _evt_mgr( new EventMgr() ),
       _threaded(true), _recover_from_failures(true), 
       _was_shutdown(false), _shutting_down(false)
 {
@@ -165,7 +166,7 @@ void Network::shutdown_Network(void)
             if( ( _network_topology != NULL ) && 
                 ( _network_topology->get_NumNodes() > 0 ) ) {
 
-                PacketPtr packet( new Packet(0, PROT_SHUTDOWN, "") );
+                PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, "") );
                 get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
             }
         }
@@ -413,20 +414,19 @@ void Network::init_FrontEnd( const char * itopology,
     if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() )
             error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
    
-
     mrn_dbg(5, mrn_printf(FLF, stderr, "Updating bcast communicator ... \n" ));
-    update_BcastCommunicator( );
+    update_BcastCommunicator();
 
     // create topology propagation stream
     Stream* s = new_Stream( _bcast_communicator, TFILTER_TOPO_UPDATE, 
                             SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
-    assert(s->get_Id() == 1);
+    assert( s->get_Id() == TOPOL_STRM_ID );
     s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
 
     /* collect port updates and broadcast them
      * - this is a no-op on XT
      */
-    PacketPtr packet( new Packet( 0, PROT_PORT_UPDATE, "" ) );
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_PORT_UPDATE, "") );
     if( -1 == get_LocalFrontEndNode()->proc_PortUpdates( packet ) )
         error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
 }
@@ -474,6 +474,9 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
     assert( ben != NULL );
     if( ben->has_Error() ) 
         error( ERR_SYSTEM, imyrank, "Failed to initialize via CreateBackEndNode()\n" );
+
+    // create the BE-specific stream
+    new_Stream(imyrank, &imyrank, 1, TFILTER_NULL, SFILTER_DONTWAIT, TFILTER_NULL);   
 }
 
 void Network::init_InternalNode( const char* iphostname,
@@ -576,9 +579,9 @@ int Network::send_PacketToParent( PacketPtr ipacket )
     return 0;
 }
 
-int Network::flush_PacketsToParent(void)
+int Network::flush_PacketsToParent(void) const
 {
-    return _parent->flush();
+    return get_ParentNode()->flush();
 }
 
 int Network::send_PacketsToChildren( std::vector< PacketPtr > &ipackets  )
@@ -598,7 +601,9 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
 {
     mrn_dbg_func_begin();
 
-    if( ipacket->get_StreamId() == 0 ) { // stream id 0 => control stream
+    unsigned int strm_id = ipacket->get_StreamId();
+
+    if( strm_id == CTL_STRM_ID ) { // control stream message
 
         _children_mutex.Lock();
 
@@ -627,6 +632,12 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
 
         _children_mutex.Unlock();
     }
+    else if( strm_id < CTL_STRM_ID ) {
+        // BE stream (stream id is rank)
+        PeerNodePtr cur_peer = get_OutletNode( (Rank)strm_id );
+        if( cur_peer != PeerNode::NullPeerNode )
+            cur_peer->send( ipacket );
+    }
     else {
 
         // two cases: all stream peers, or subset according to BE destinations
@@ -646,7 +657,7 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
         }
         else {
             // all peers in stream
-            Stream* stream = get_Stream( ipacket->get_StreamId() );   
+            Stream* stream = get_Stream( strm_id );   
             if( stream == NULL ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
                                        ipacket->get_StreamId( ) ));
@@ -819,6 +830,53 @@ get_packet_from_stream_label:
     return 0;
 }
 
+int Network::send( Rank ibe, int itag, const char *iformat_str, ... )
+{
+    va_list arg_list;
+    va_start(arg_list, iformat_str);
+    PacketPtr new_packet( new Packet(get_LocalRank(), ibe, 
+                                     itag, iformat_str, arg_list) );
+    va_end(arg_list);
+
+    return send( ibe, new_packet );
+}
+
+int Network::send( Rank ibe, const char *idata_fmt, va_list idata, int itag )
+{
+    PacketPtr new_packet( new Packet(idata_fmt, idata, ibe, itag) );
+    return send( ibe, new_packet );
+}
+
+int Network::send( Rank ibe, int itag, 
+                   const void **idata, const char *iformat_str )
+{
+    PacketPtr new_packet( new Packet(ibe, itag, idata, iformat_str) );
+    return send( ibe, new_packet );
+}
+
+int Network::send( Rank ibe, PacketPtr& ipacket )
+{
+    if( ! is_LocalNodeFrontEnd() )
+        return -1;
+
+    vector< Rank > be_list;
+    be_list.push_back( ibe );
+    ipacket->set_Destinations( be_list );
+    ipacket->set_SourceRank( get_LocalRank() );
+
+    return send_PacketToChildren( ipacket );
+}
+
+int Network::flush(void) const
+{
+    if( is_LocalNodeFrontEnd() )
+        return flush_PacketsToChildren();
+    else if( is_LocalNodeBackEnd() )
+        return flush_PacketsToParent();
+
+    return -1;
+}
+
 CommunicationNode* Network::get_EndPoint( Rank irank ) const
 {
     map< Rank, CommunicationNode * >::const_iterator iter =
@@ -877,8 +935,8 @@ Stream* Network::new_Stream( Communicator *icomm,
     }
 
     //get array of back-ends from communicator
-    const set <CommunicationNode*>& endpoints = icomm->get_EndPoints();
-    unsigned num_pts = endpoints.size();
+    Rank* backends = icomm->get_Ranks();
+    unsigned num_pts = icomm->size();
     if( num_pts == 0 ) {
         if( icomm != _bcast_communicator ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
@@ -887,23 +945,12 @@ Stream* Network::new_Stream( Communicator *icomm,
         }
     }
 
-    Rank * backends = new Rank[ endpoints.size() ];
-        
-    mrn_dbg(5, mrn_printf(FLF, stderr, "backends[ " ));
-    set <CommunicationNode*>:: const_iterator iter;
-    unsigned  int i;
-    for( i=0,iter=endpoints.begin(); iter!=endpoints.end(); i++,iter++) {
-        mrn_dbg(5, mrn_printf( 0,0,0, stderr, "%d, ", (*iter)->get_Rank() ));
-        backends[i] = (*iter)->get_Rank();
-    }
-    mrn_dbg(5, mrn_printf(0,0,0, stderr, "]\n"));
-    
-    PacketPtr packet( new Packet(0, PROT_NEW_STREAM, "%d %ad %d %d %d",
-                                 next_stream_id, backends, endpoints.size(),
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_STREAM, "%ud %ad %d %d %d",
+                                 _next_stream_id, backends, num_pts,
                                  ius_filter_id, isync_filter_id, ids_filter_id) );
-    next_stream_id++;
+    _next_stream_id++;
 
-    Stream * stream = get_LocalFrontEndNode()->proc_newStream(packet);
+    Stream* stream = get_LocalFrontEndNode()->proc_newStream(packet);
     if( stream == NULL )
         mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
 
@@ -911,7 +958,7 @@ Stream* Network::new_Stream( Communicator *icomm,
     return stream;
 }
 
-Stream* Network::new_Stream( int iid,
+Stream* Network::new_Stream( unsigned int iid,
                              Rank* ibackends,
                              unsigned int inum_backends,
                              int ius_filter_id,
@@ -919,20 +966,21 @@ Stream* Network::new_Stream( int iid,
                              int ids_filter_id )
 {
     mrn_dbg_func_begin();
-    Stream * stream = new Stream( this, iid, ibackends, inum_backends,
-                                  ius_filter_id, isync_filter_id, ids_filter_id );
+
+    Stream* stream = new Stream( this, iid, ibackends, inum_backends,
+                                 ius_filter_id, isync_filter_id, ids_filter_id );
 
     _streams_sync.Lock();
 
     _streams[iid] = stream;
 
-    if( _streams.size() == 1 ){
+    if( _streams.size() == 1 )
         _stream_iter = _streams.begin();
-    }
 
     _streams_sync.Unlock();
 
     mrn_dbg_func_end();
+
     return stream;
 }
 
@@ -947,8 +995,8 @@ Stream* Network::new_Stream( Communicator* icomm,
     }
 
     //get array of back-ends from communicator
-    const set <CommunicationNode*>& endpoints = icomm->get_EndPoints();
-    unsigned num_pts = endpoints.size();
+    Rank* backends = icomm->get_Ranks();
+    unsigned num_pts = icomm->size();
     if( num_pts == 0 ) {
         if( icomm != _bcast_communicator ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, 
@@ -957,24 +1005,13 @@ Stream* Network::new_Stream( Communicator* icomm,
         }
     }
 
-    Rank * backends = new Rank[ num_pts ];
-
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "backends[ ") );
-    set <CommunicationNode*>:: const_iterator iter;
-    unsigned int i;
-    for( i=0, iter=endpoints.begin(); iter != endpoints.end(); i++, iter++ ) {
-        mrn_dbg( 5, mrn_printf(0,0,0, stderr, "%d, ", (*iter)->get_Rank()) );
-        backends[i] = (*iter)->get_Rank();
-    }
-    mrn_dbg( 5, mrn_printf(0,0,0, stderr, "]\n") );
-
-    PacketPtr packet( new Packet(0, PROT_NEW_HETERO_STREAM, "%d %ad %s %s %s",
-                                 next_stream_id, backends, num_pts,
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_HETERO_STREAM, "%ud %ad %s %s %s",
+                                 _next_stream_id, backends, num_pts,
                                  us_filters.c_str(), sync_filters.c_str(), 
                                  ds_filters.c_str()) );
-    next_stream_id++;
+    _next_stream_id++;
 
-    Stream * stream = get_LocalFrontEndNode()->proc_newStream(packet);
+    Stream* stream = get_LocalFrontEndNode()->proc_newStream(packet);
     if( stream == NULL ){
         mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
     }
@@ -1264,8 +1301,8 @@ int Network::load_FilterFunc( const char* so_file, const char* func_name )
         mrn_dbg( 3, mrn_printf(FLF, stderr, 
                                "load_FilterFunc(%hu, %s, %s) successful, sending PROT_NEW_FILTER\n",
                                cur_filter_id, so_file, func_name) );
-        PacketPtr packet( new Packet( 0, PROT_NEW_FILTER, "%uhd %s %s",
-                                      cur_filter_id, so_file, func_name ) );
+        PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_FILTER, "%uhd %s %s",
+                                     cur_filter_id, so_file, func_name) );
         send_PacketToChildren( packet );
         rc = cur_filter_id;
     }
@@ -1823,13 +1860,13 @@ PeerNodePtr Network::get_OutletNode( Rank irank ) const
 bool Network::has_PacketsFromParent(void)
 {
     assert( is_LocalNodeChild() );
-    return _parent->has_data();
+    return get_ParentNode()->has_data();
 }
 
 int Network::recv_PacketsFromParent( std::list <PacketPtr> & opackets ) const
 {
     assert( is_LocalNodeChild() );
-    return _parent->recv( opackets );
+    return get_ParentNode()->recv( opackets );
 }
 
 bool Network::node_Failed( Rank irank  )
@@ -1937,7 +1974,7 @@ bool Network::set_FailureRecovery( bool enable_recovery )
             disable_FailureRecovery();
 	}
 	
-        PacketPtr packet( new Packet(0, tag, "%d", (int)enable_recovery) );
+        PacketPtr packet( new Packet(CTL_STRM_ID, tag, "%d", (int)enable_recovery) );
 	if( packet->has_Error() ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() fail\n") );
             return false;

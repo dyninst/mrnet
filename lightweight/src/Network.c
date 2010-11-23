@@ -64,7 +64,6 @@ Network_t* new_Network_t()
     net->stream_iter = 0;
     net->recover_from_failures = true;
     net->_was_shutdown = 0;
-    net->next_stream_id = 1;
 
     init_local();
 
@@ -113,7 +112,6 @@ struct NetworkTopology_t* Network_get_NetworkTopology(Network_t* net) {
     return net->network_topology;
 }
 
-// called from the BE instantiation .C file
 Network_t*
 Network_CreateNetworkBE ( int argc, char* argv[] )
 { 
@@ -184,6 +182,9 @@ Network_t* Network_init_BackEnd(/*const*/ char* iphostname, Port ipport,
     net->local_back_end_node = be;
 
     free(pretty_host);
+
+    // create the BE-specific stream
+    Network_new_Stream(net, imyrank, NULL, 0, 0, 0, 0);
 
     return net;
 
@@ -339,12 +340,12 @@ void Network_shutdown_Network(Network_t* net)
 {
     int i;
     Stream_t * cur_stream;
-
+    
     mrn_dbg_func_begin();
 
     net->_was_shutdown = 1;
 
-    Network_reset_Topology(net, "");
+    Network_reset_Topology(net, NULL);
 
     // close streams
     for (i = 0; i < net->streams->size; i++) {
@@ -357,7 +358,12 @@ void Network_shutdown_Network(Network_t* net)
 
 int Network_reset_Topology(Network_t* net, char* itopology)
 {
-    if (!NetworkTopology_reset(net->network_topology, itopology)){
+    SerialGraph_t* sg = NULL;
+ 
+    mrn_dbg_func_begin();
+
+    sg = new_SerialGraph_t( itopology );
+    if( ! NetworkTopology_reset(net->network_topology, sg) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Topology->reset() failed\n"));
         return false;
     }
@@ -377,12 +383,11 @@ int Network_add_SubGraph(Network_t * net, Rank iroot_rank, SerialGraph_t * sg, i
         mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
         return false;
     }
-
     return true;
 }
 
 Stream_t* Network_new_Stream(Network_t* net,
-                             int iid,
+                             unsigned int iid,
                              Rank* ibackends,
                              unsigned int inum_backends,
                              int ius_filter_id,
@@ -393,14 +398,12 @@ Stream_t* Network_new_Stream(Network_t* net,
     
     mrn_dbg_func_begin();
 
-    stream = new_Stream_t(net,iid, ibackends, inum_backends,
-                          ius_filter_id, isync_filter_id,
-                          ids_filter_id);
+    stream = new_Stream_t(net, iid, ibackends, inum_backends,
+                          ius_filter_id, isync_filter_id, ids_filter_id);
     insert(net->streams, iid, stream);
 
     mrn_dbg_func_end();
     return stream;
-
 }
 
 int Network_remove_Node(Network_t* net, Rank ifailed_rank, int iupdate)
@@ -705,15 +708,13 @@ void Network_set_OutputLevelFromEnvironment(void)
     }
 }
 
-SerialGraph_t* Network_readTopology(Network_t * net, int topoSocket) 
+char* Network_readTopology(Network_t * net, int topoSocket) 
 {
-    char * sTopology = NULL;
+    char* currBufPtr;
+    char* sTopology = NULL;
     uint32_t sTopologyLen = 0;
-    char * currBufPtr;
     size_t nRemaining;
     ssize_t nread;
-
-    SerialGraph_t* sg;
 
     mrn_dbg_func_begin();
     
@@ -730,15 +731,11 @@ SerialGraph_t* Network_readTopology(Network_t * net, int topoSocket)
         nRemaining -= nread;
         currBufPtr += nread;
     }
-    *currBufPtr = 0;
+    *currBufPtr = '\0';
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s\n", sTopology));
 
-    sg = new_SerialGraph_t(sTopology);
-
-    free(sTopology);
-
-    return sg;
+    return sTopology;
 }
 
 void Network_writeTopology(Network_t * net, int topoFd, SerialGraph_t* topology) 

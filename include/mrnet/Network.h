@@ -94,6 +94,12 @@ class Network: public Error {
     Stream* get_Stream( unsigned int iid ) const;
     int recv( int* otag, PacketPtr& opacket, Stream** ostream, bool iblocking=true );
 
+    int send( Rank ibe, int itag, const char *iformat_str, ... );
+    int send( Rank ibe, const char *idata_fmt, va_list idata, int itag );
+    int send( Rank ibe, int itag, const void **idata, const char *iformat_str );
+    int send( Rank ibe, PacketPtr& ipacket );
+    int flush(void) const;
+
     /* Performance data collection */
     bool enable_PerformanceData( perfdata_metric_t metric, perfdata_context_t context );
     bool disable_PerformanceData( perfdata_metric_t metric, perfdata_context_t context );
@@ -215,10 +221,6 @@ protected:
     friend class EventDetector;
     friend class RSHParentNode;
     friend class RSHChildNode;
-    
-    // send/recv topology on socket fd
-    SerialGraph* read_Topology( int fd );
-    void write_Topology( int fd );
 
     // some conditions we waitfor/signal
     enum {
@@ -229,9 +231,13 @@ protected:
 
     void update_BcastCommunicator(void);
 
+    // send/recv topology on socket fd
+    SerialGraph* read_Topology( int fd );
+    void write_Topology( int fd );
+
     int parse_Configuration( const char* itopology, bool iusing_mem_buf );
 
-    Stream * new_Stream( int iid,
+    Stream * new_Stream( unsigned int iid,
                          Rank* ibackends,
                          unsigned int inum_backends,
                          int ius_filter_id,
@@ -248,7 +254,7 @@ protected:
     int send_PacketToParent( PacketPtr );
     int send_PacketsToChildren( std::vector< PacketPtr >& );
     int send_PacketToChildren( PacketPtr, bool internal_only = false );
-    int flush_PacketsToParent(void);
+    int flush_PacketsToParent(void) const;
     int flush_PacketsToChildren(void) const;
 
     void get_ChildPeers( std::set< PeerNodePtr >& ) const;
@@ -325,7 +331,7 @@ protected:
     InternalNode* _local_internal_node;
     TimeKeeper* _local_time_keeper;
     EventDetector* _edt;
-    unsigned int next_stream_id;
+    unsigned int _next_stream_id; // only used be FE
     EventMgr* _evt_mgr;
 
     std::set< PeerNodePtr > _children;
@@ -346,8 +352,6 @@ protected:
     mutable XPlat::Mutex _endpoints_mutex;
     mutable XPlat::Monitor _shutdown_sync;
 };
-
-extern Network* _global_network;
 
 } /* MRN namespace */
 
