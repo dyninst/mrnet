@@ -19,18 +19,22 @@ SerialGraph_t* new_SerialGraph_t(char* ibyte_array)
     
     mrn_dbg_func_begin();
    
-    serial_graph = (SerialGraph_t*)malloc(sizeof(SerialGraph_t));
+    serial_graph = (SerialGraph_t*) malloc(sizeof(SerialGraph_t));
     assert(serial_graph != NULL);
 
-    if (ibyte_array) {
+    if( ibyte_array ) {
         serial_graph->byte_array = strdup(ibyte_array);
-        
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Creating new serial graph with byte_array=%s\n", serial_graph->byte_array));
+        serial_graph->arr_len = strlen(ibyte_array) + 1;        
+        mrn_dbg(5, mrn_printf(FLF, stderr, 
+                              "Creating new serial graph with byte_array='%s'\n", 
+                              serial_graph->byte_array));
     } else {
-        serial_graph->byte_array = (char*)malloc(sizeof(char)*2);
+        serial_graph->arr_len = 1024; /* pre-allocation */
+        serial_graph->byte_array = (char*)malloc((size_t)serial_graph->arr_len);
         assert(serial_graph->byte_array);
-        strcpy(serial_graph->byte_array, "");
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Creating new serial graph with byte_array=NULL\n"));
+        serial_graph->byte_array[0] = '\0';
+        mrn_dbg(5, mrn_printf(FLF, stderr, 
+                              "Creating new serial graph with empty byte_array\n"));
     }
 
     mrn_dbg_func_end();
@@ -43,181 +47,157 @@ void free_SerialGraph_t(SerialGraph_t* sg)
     free(sg);
 }
 
-char * SerialGraph_get_ByteArray(SerialGraph_t* sg)
+char* SerialGraph_get_ByteArray(SerialGraph_t* sg)
 {
     return sg->byte_array;
 }
 
-SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* _serial_graph, char*  ihostname, Port iport, Rank irank) 
+SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* _serial_graph, char* ihostname, 
+                                         Port iport, Rank irank) 
 { 
-    char* hoststr;
-    int size;
-    char* byte_array = _serial_graph->byte_array;
     size_t cur, end;
-    char* port;
-    char* rank;
     int num_leftbrackets=1, num_rightbrackets=0;
-    char* new_byte_array;
+    char *hoststr, *byte_array, *new_byte_array;
     SerialGraph_t* retval;
 
     mrn_dbg_func_begin();
 
-    port = (char*)malloc(sizeof(char)*20);
-    assert(port != NULL);
-    sprintf(port, "%d", iport);
-    rank = (char*)malloc(sizeof(char)*20);
-    assert(port != NULL);
-    sprintf(rank, "%d", irank);
-
-    size = 5;
-    size += strlen(ihostname);
-    size += strlen(port);
-    size += strlen(rank);
-
-    hoststr = (char*)malloc(sizeof(char)*size);
+    hoststr = (char*)malloc((size_t)256);
     assert(hoststr);
+    sprintf(hoststr, "[%s:%hu:%u:", ihostname, iport, irank);
 
-    strcpy(hoststr, ""); 
-    strcat(hoststr, "["); //[
-    strcat(hoststr, ihostname); //[ihostname
-    strcat(hoststr, ":"); // [ihostname:
-    strcat(hoststr, port); //[ihostname:iport
-    strcat(hoststr, ":"); //[ihostname:iport:
-    strcat(hoststr, rank); //[ihostname:iport:irank
-    strcat(hoststr, ":"); //[ihostname:iport:irank:
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "SubTreeRoot:\"%s\" byte_array=\"%s\"\n", hoststr, byte_array)); 
+    mrn_dbg(5, mrn_printf(FLF, stderr, "looking for SubTreeRoot:'%s'\n", hoststr));
+ 
+    byte_array = _serial_graph->byte_array;
     byte_array = strstr(byte_array, hoststr);
-
     if (byte_array == NULL) {
         mrn_dbg(1, mrn_printf(FLF, stderr,
-              "No SubTreeRoot:\"%s\" found in byte_array:\"%s\"\n",
-                hoststr, _serial_graph->byte_array));
-    free(hoststr);
-    free(port);
-    free(rank);
-    mrn_dbg_func_end();
-    return NULL;
-  }
+                              "No SubTreeRoot:\"%s\" found in byte_array:\"%s\"\n",
+                              hoststr, _serial_graph->byte_array));
+        free(hoststr);
+
+        mrn_dbg_func_end();
+        return NULL;
+    }
 
     //now find matching ']'
     cur = 0;
     end = 1;
-    while (num_leftbrackets != num_rightbrackets) {
-      cur++,end++;
-      if(byte_array[cur] == '[')
-        num_leftbrackets++;
-      else if (byte_array[cur] == ']')
-        num_rightbrackets++;
+    while( num_leftbrackets != num_rightbrackets ) {
+        cur++;
+        end++;
+        if(byte_array[cur] == '[')
+            num_leftbrackets++;
+        else if (byte_array[cur] == ']')
+            num_rightbrackets++;
     }
 
-
-    new_byte_array = (char*)malloc(sizeof(char)*(end+1));
-    assert(new_byte_array);
+    new_byte_array = (char*)malloc((size_t)end+1);
+    if( new_byte_array == NULL ) {
+        mrn_printf(FLF, stderr, "malloc(%zu) failed\n", end+1);
+        exit(0);
+    }    
     strncpy(new_byte_array, byte_array, end);
     new_byte_array[end]='\0';
+ 
     retval = new_SerialGraph_t(new_byte_array);
 
     // free malloc'd stuff
     free(hoststr);
-    free(port);
-    free(rank);
     free(new_byte_array);
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "returned sg byte array :\"%s\"\n", retval->byte_array));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "returned sg byte array '%s'\n", 
+                          retval->byte_array));
 
     mrn_dbg_func_end();
     return retval;
 }
 
-void SerialGraph_add_Leaf(SerialGraph_t* serial_graph, char* ihostname, Port iport, Rank irank)
+void SerialGraph_add_Leaf(SerialGraph_t* serial_graph, char* ihostname, 
+                          Port iport, Rank irank)
 {
     char* hoststr;
-    char* port;
-    char* rank;
+    unsigned len;
     
     mrn_dbg_func_begin();
-    hoststr = (char*)malloc(sizeof(char)*256);
+
+    hoststr = (char*)malloc((size_t)256);
     assert(hoststr);
+    len = sprintf(hoststr, "[%s:%hu:%u:0]", ihostname, iport, irank);
 
-    port = (char*)malloc(sizeof(char)*20);
-    assert(port);
-    sprintf(port, "%d", iport);
-    rank = (char*)malloc(sizeof(char)*20);
-    assert(rank);
-    sprintf(rank, "%d", irank);
+    mrn_dbg(5, mrn_printf(FLF, stderr, "adding sub tree leaf:%s\n", hoststr));
 
-    strcpy(hoststr, ""); 
-    strcat(hoststr, "["); //[
-    strcat(hoststr, ihostname); //[ihostname
-    strcat(hoststr, ":"); // [ihostname:
-    strcat(hoststr, port); //[ihostname:iport
-    strcat(hoststr, ":"); //[ihostname:iport:
-    strcat(hoststr, rank); //[ihostname:iport:irank
-    strcat(hoststr, ":0]"); //[ihostname:iport:irank:0]
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "byte_array: %s\n", serial_graph->byte_array));
-    mrn_dbg(5, mrn_printf(FLF, stderr, "adding leaf: %s\n", hoststr));
-    
-    serial_graph->byte_array = (char*)realloc(serial_graph->byte_array, sizeof(char)*(strlen(serial_graph->byte_array) + strlen(hoststr) + 1));
+    len += strlen(serial_graph->byte_array) + 1;
+    if( len > serial_graph->arr_len ) {
+        len <<= 1;
+        serial_graph->byte_array = (char*)realloc(serial_graph->byte_array, (size_t)len);
+        if( serial_graph->byte_array == NULL ) {
+            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", len);
+            exit(0);
+        }
+        serial_graph->arr_len = len;
+    }
     strcat(serial_graph->byte_array, hoststr);
-    
-    mrn_dbg(5, mrn_printf(FLF, stderr, "byte_array: %s\n", serial_graph->byte_array));
+    free(hoststr);
 
     serial_graph->num_nodes++;
     serial_graph->num_backends++;
 
-    free(hoststr);
-    free(port);
-    free(rank);
     mrn_dbg_func_end();
 }
 
-void SerialGraph_add_SubTreeRoot(SerialGraph_t* serial_graph, char* ihostname, Port iport, Rank irank)
+void SerialGraph_add_SubTreeRoot(SerialGraph_t* serial_graph, char* ihostname, 
+                                 Port iport, Rank irank)
 {
-  char* hoststr;
-  char* port;
-  char* rank;
+    char* hoststr;
+    unsigned len;
 
-  mrn_dbg_func_begin();
-  hoststr = (char*)malloc(sizeof(char)*256);
-  assert(hoststr);
+    mrn_dbg_func_begin();
 
-  port = (char*)malloc(sizeof(char)*20);
-  assert(port);
-  sprintf(port, "%d", iport);
-  rank = (char*)malloc(sizeof(char)*20);
-  assert(rank);
-  sprintf(rank, "%d", irank);
- 
-  strcpy(hoststr, ""); 
-  strcat(hoststr, "["); //[
-  strcat(hoststr, ihostname); //[ihostname
-  strcat(hoststr, ":"); // [ihostname:
-  strcat(hoststr, port); //[ihostname:iport
-  strcat(hoststr, ":"); //[ihostname:iport:
-  strcat(hoststr, rank); //[ihostname:iport:irank
-  strcat(hoststr, ":1"); //[ihostname:iport:irank:0]
+    hoststr = (char*)malloc((size_t)256);
+    assert(hoststr);
+    len = sprintf(hoststr, "[%s:%hu:%u:1", ihostname, iport, irank);
+    
+    mrn_dbg(5, mrn_printf(FLF, stderr, "adding sub tree root:%s\n", hoststr));
 
-  mrn_dbg(5, mrn_printf(FLF, stderr, "adding sub tree root:%s\n", hoststr));
+    len += strlen(serial_graph->byte_array) + 1;
+    if( len > serial_graph->arr_len ) {
+        len <<= 1;
+        serial_graph->byte_array = (char*)realloc(serial_graph->byte_array, (size_t)len);
+        if( serial_graph->byte_array == NULL ) {
+            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", len);
+            exit(0);
+        }
+        serial_graph->arr_len = len;
+    }
+    strcat(serial_graph->byte_array, hoststr);
+    free(hoststr);
 
-  serial_graph->byte_array = (char*)realloc(serial_graph->byte_array, sizeof(char)*(strlen(serial_graph->byte_array) + strlen(hoststr) + 1));
-  strcat(serial_graph->byte_array, hoststr);
-  serial_graph->num_nodes++;
+    serial_graph->num_nodes++;
 
-  free(hoststr);
-  free(port);
-  free(rank);
-  mrn_dbg_func_end();
-
+    mrn_dbg_func_end();
 }
 
 void SerialGraph_end_SubTree(SerialGraph_t* serial_graph)
 {
-  mrn_dbg_func_begin();
-  serial_graph->byte_array = (char*)realloc(serial_graph->byte_array, sizeof(char)*(strlen(serial_graph->byte_array)+2));
-  strcat(serial_graph->byte_array, "]");
-  mrn_dbg_func_end();
+    unsigned len;
+
+    mrn_dbg_func_begin();
+
+    len += strlen(serial_graph->byte_array) + 1;
+    if( len > serial_graph->arr_len ) {
+        len <<= 1;
+        serial_graph->byte_array = (char*)realloc(serial_graph->byte_array, (size_t)len);
+        if( serial_graph->byte_array == NULL ) {
+            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", len);
+            exit(0);
+        }
+        serial_graph->arr_len = len;
+    }
+
+    strcat(serial_graph->byte_array, "]");
+
+    mrn_dbg_func_end();
 }
 
 void SerialGraph_set_ToFirstChild(SerialGraph_t* serial_graph) 
@@ -230,62 +210,57 @@ void SerialGraph_set_ToFirstChild(SerialGraph_t* serial_graph)
     buf++;
     delim = "[";
     val = (unsigned int)strcspn(buf, delim);
-    serial_graph->buf_idx = val + 1; // offset was 1
-    mrn_dbg(5, mrn_printf(FLF, stderr, "set_ToFirstChild: byte_array=%s, buf_idx=%d\n", serial_graph->byte_array, serial_graph->buf_idx));
+    serial_graph->buf_idx = val + 1;
+    mrn_dbg(5, mrn_printf(FLF, stderr, "set_ToFirstChild: buf_idx=%d\n", 
+                          serial_graph->buf_idx));
 }
 
 char* SerialGraph_get_RootHostName(SerialGraph_t* serial_graph) 
 {
-    char* buf;
-    char* delim;
-    int len;
-    char* retval;
+    char *buf, *retval;
+    const char* delim;
+    size_t len;
     
-    buf = serial_graph->byte_array;
-    buf++; // want to start searching at index 1
+    // start searching at index 1
+    buf = serial_graph->byte_array + 1; 
 
+    // find location of ":"
     delim = ":";
     len = strcspn(buf, delim);
-    retval = (char*)malloc(sizeof(char)*len+1);
+    
+    // get host
+    retval = (char*) malloc(len+1);
     assert(retval);
     strncpy(retval, buf, len);
-    retval[len]='\0';
+    retval[len] = '\0';
     
     return retval;    
 }
 
 Port SerialGraph_get_RootPort(SerialGraph_t* serial_graph)
 {
-    char* buf;
-    char* delim;
-    int loc;
-    int i;
-    char* port_string;
+    char *buf, *port_string;
+    const char* delim;
+    size_t loc, len;
     Port retval;
     
-    buf = (char*)malloc(sizeof(char)*(strlen(serial_graph->byte_array)+1));
-    assert(buf);
-    strncpy(buf, serial_graph->byte_array, strlen(serial_graph->byte_array)+1);
-    buf++;
-    buf++; // want to start looking at index 2
- 
-
+    // start searching at index 1
+    buf = serial_graph->byte_array + 1;
+    
     // find location of ":"
     delim = ":";
     loc = strcspn(buf, delim);
-    for (i = 0; i <= loc; i++)
-        buf++;
-    
-    
+    buf += loc + 1;
+
     // find location of next ":"
     loc = strcspn(buf, delim);
-    port_string = (char*)malloc(sizeof(char)*loc+1);
+
+    // get port
+    port_string = (char*) malloc(loc+1);
     assert(port_string);
     strncpy(port_string, buf, loc);
-    port_string[loc] = '\n';
-
-    retval = atoi(port_string);
-
+    port_string[loc] = '\0';
+    retval = (Port) atoi(port_string);
     free(port_string);
         
     return retval;
@@ -293,95 +268,75 @@ Port SerialGraph_get_RootPort(SerialGraph_t* serial_graph)
 
 Rank SerialGraph_get_RootRank(SerialGraph_t* serial_graph)
 {
-    Rank retval = UnknownRank;
-    size_t begin=0, end=1;
-    char* buf;
-    char* delim;
-    char* tok;
+    char *buf, *rank_string;
+    const char* delim;
+    size_t loc, len;
+    Rank retval;
+    
+    // start searching at index 1 
+    buf = serial_graph->byte_array + 1;
 
-    mrn_dbg_func_begin();
-
-    buf = (char*)malloc(sizeof(char)*(strlen(serial_graph->byte_array)+1));
-    assert(buf);
-    strncpy(buf, serial_graph->byte_array, strlen(serial_graph->byte_array)+1);
-
+    // find location of 2nd ":"
     delim = ":";
-    tok = (char*)malloc(sizeof(char)*256);
-    assert(tok);
-    tok = strtok(buf, delim);
-    if (tok) {
-        tok = strtok(NULL,delim);
-        delim = " ";
-        if (tok) {
-            tok = strtok(NULL, delim);
+    loc = strcspn(buf, delim);
+    buf += loc + 1;
+    loc = strcspn(buf, delim);
+    buf += loc + 1;
 
-            retval = atoi(tok);
-        }
-    }
-   
-    free(buf);
+    // find location of next ":"
+    loc = strcspn(buf, delim);
 
-    mrn_dbg_func_end();
-
+    // get rank
+    rank_string = (char*) malloc(loc+1);
+    assert(rank_string);
+    strncpy(rank_string, buf, loc);
+    rank_string[loc] = '\0';
+    retval = (Port) atoi(rank_string);
+    free(rank_string);
+        
     return retval;
 }
 
 SerialGraph_t* SerialGraph_get_NextChild(SerialGraph_t* serial_graph)
 {
-    
-    size_t begin, end, cur;
-    const char* buf = serial_graph->byte_array;
-    int i;
-    char* buf2;
-    char delim;
+    size_t end, cur;
     int num_leftbrackets=1, num_rightbrackets=0;
-    char* buf3;
+    char *buf, *buf2, *buf3;
     SerialGraph_t* retval;
+
+    cur = serial_graph->buf_idx;
+    buf = serial_graph->byte_array;
+    buf2 = buf + cur;
 
     mrn_dbg_func_begin();
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "byte_array = %s\n", buf));
-
-    buf2 = serial_graph->byte_array;
-    if (serial_graph->buf_idx != -1) {
-        for (i = 0; i < serial_graph->buf_idx; i++)
-            buf2++;
-    }
-    
-    mrn_dbg(5, mrn_printf(FLF, stderr, "buf2 = %s\n", buf2));
-
-    delim = '[';
-    if (serial_graph->buf_idx == -1 ||
-        strchr(buf2, delim) == NULL) {
+    if( serial_graph->buf_idx == (unsigned int)-1 )
+        return NULL;
+    else if( NULL == strchr(buf2, '[') ) {
         return NULL;
     }
 
-    cur = serial_graph->buf_idx;
-    begin = serial_graph->buf_idx;
     end = 1;
-    while (num_leftbrackets != num_rightbrackets) {
-        cur++, end++;
-        if (buf[cur] == '[')
+    while( num_leftbrackets != num_rightbrackets ) {
+        cur++;
+        end++;
+        if( buf[cur] == '[' )
             num_leftbrackets++;
-        else if (buf[cur] == ']')
+        else if( buf[cur] == ']' )
             num_rightbrackets++;
     }
-    serial_graph->buf_idx = cur+1;
+    serial_graph->buf_idx = cur + 1;
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "begin=%d, end=%d\n", begin, end));
-
-    // get substr from begin to end
-    for (i = 0; i < begin; i++)
-       buf++;
-    buf3 = (char*)malloc(sizeof(char)*end+1);
+    // get substr from start pos to end
+    buf3 = (char*) malloc(end+1);
     assert(buf3 != NULL);
-    strncpy(buf3, buf, end);
+    strncpy(buf3, buf2, end);
     buf3[end] = '\0';
 
     retval = new_SerialGraph_t(buf3);
-    mrn_dbg(5, mrn_printf(FLF, stderr, "returned sg byte array :\"%s\"\n", retval->byte_array));
-
     free(buf3);
+    mrn_dbg(5, mrn_printf(FLF, stderr, "returned sg byte array '%s'\n", 
+                          retval->byte_array));
 
     mrn_dbg_func_end();
 
@@ -391,103 +346,70 @@ SerialGraph_t* SerialGraph_get_NextChild(SerialGraph_t* serial_graph)
 int SerialGraph_is_RootBackEnd(SerialGraph_t* serial_graph) 
 {
     //format is "host:port:rank:[0|1]: where 0 means back-end and 1 means internal node
+    char typ;
     unsigned int idx, num_colons;
-    for (idx = 0, num_colons=0; num_colons<3; idx++) {
+    for( idx=0, num_colons=0; num_colons < 3; idx++ ) {
         if (serial_graph->byte_array[idx] == ':') {
             num_colons++;
         }
     }
-    if (serial_graph->byte_array[idx] == '0') {
+
+    typ = serial_graph->byte_array[idx];
+    if( typ == '0' ) {
         return 1;
     }
-    else {
+    else if ( typ == '1' ) {
         return 0;
+    }
+    else {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "unexpected character '%c' in node type field\n", typ));
+        assert(false);
     }
 }
 
 int SerialGraph_set_Port(SerialGraph_t* serial_graph, char * hostname, Port port, Rank irank)
 {
-    char * hoststr = (char*)malloc(sizeof(char)*256);
-    char * port_str = (char*)malloc(sizeof(char)*20);
-    char * begin_str = (char*)malloc(sizeof(char)*20);
-    char * rank = (char*)malloc(sizeof(char)*20);
-    char * unknown_port = (char*)malloc(sizeof(char)*20);
-    char * new_byte_array;
-    char * delim = ":";
-    int i;
-    int begin, port_pos;
-    assert(hoststr);
-    assert(port_str);
-    assert(begin_str);
-    assert(rank);
-    assert(unknown_port);
+    size_t begin_len;
+    char *old_byte_array, *new_byte_array, *begin_str;
 
-    sprintf(rank, "%d", irank);
-    sprintf(unknown_port, UnknownPort);
-
-    strcpy(hoststr, "");
-    strcat(hoststr, "["); // [
-    strcat(hoststr, hostname); // [hostname
-    strcat(hoststr, ":"); // [hostname:
-    strcat(hoststr, unknown_port); // [hostname:UnknownPort
-    strcat(hoststr, ":"); // [hostname:UnknownPort:
-    strcat(hoststr, rank); // [hostname:UnknownPort:rank
-    strcat(hoststr, ":"); // [hostname:UnknownPort:rank:
-
-    sprintf(port_str, "%d", port);
+    char* old_hoststr = (char*) malloc((size_t)256);
+    char* new_hoststr = (char*) malloc((size_t)256);
+    assert(old_hoststr);
+    assert(new_hoststr);
+    sprintf(old_hoststr, "[%s:%hu:%u:", hostname, UnknownPort, irank);
+    sprintf(new_hoststr, "[%s:%hu:%u:", hostname, port, irank);
     
-    new_byte_array = (char*)malloc(sizeof(char)*(strlen(serial_graph->byte_array)+strlen(port_str)+1));
+    old_byte_array = serial_graph->byte_array;
+    new_byte_array = (char*)malloc( strlen(old_byte_array) + 10 );
     assert(new_byte_array);
 
-    // find the hoststr in the byte_array
-    begin = strcspn(serial_graph->byte_array, hoststr);
-    
-    // copy the first part of the byte_array into the new byte array
-    strncpy(new_byte_array, serial_graph->byte_array, begin);
-    
-    begin_str = strstr(serial_graph->byte_array, hoststr);
-
-    if (!begin_str) {
+    // find the old hoststr in the old byte array
+    begin_str = strstr(old_byte_array, old_hoststr);
+    if( ! begin_str ) {
         mrn_dbg(1, mrn_printf(FLF, stderr,
-                    "Host: \"%s\" whose port is to have changed is not found in the byte_array:"
-                    "\"%s\"\n",
-                    hoststr, serial_graph->byte_array));
+                              "'%s' not found in the byte_array\n", old_hoststr));
         return false;
     }
+    begin_len = begin_str - old_byte_array;
     
-    // add the new port string to the new byte array
-    strcat(new_byte_array, port_str);
+    // copy the beginning portion
+    strncpy(new_byte_array, old_byte_array, begin_len);
+
+    // add the updated hoststr
+    strcat(new_byte_array, new_hoststr);
     
-    // concat on the remainder of the byte array
-
-    // find the position of the port portion of the hoststr
-    port_pos = strcspn(begin_str, delim);
-    for (i = 0; i < port_pos; i++) {
-        begin_str++;
-    }
-
-    port_pos = strcspn(begin_str, delim);
-    for (i = 0; i < port_pos; i++) {
-        begin_str++;
-    }
-
+    // concat on the remainder of the old byte array
+    begin_str += strlen(old_hoststr);
     strcat(new_byte_array, begin_str);
 
-    free(serial_graph->byte_array);
-
+    // swap the byte arrays
+    free(old_byte_array);
     serial_graph->byte_array = new_byte_array;
 
     // free things that were malloc'd
-    free(hoststr);
-    free(port_str);
-    free(begin_str);
-    free(rank);
-    free(unknown_port);
+    free(old_hoststr);
+    free(new_hoststr);
 
     return true;
-
-
-
-    
-
 }

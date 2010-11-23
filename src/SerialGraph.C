@@ -40,14 +40,13 @@ bool SerialGraph::is_RootBackEnd( void ) const
     //format is "host:port:rank:[0|1]: where 0 means back-end and 1 means internal node
     unsigned int idx,num_colons;
     for( idx=0,num_colons=0; num_colons<3; idx++ ){
-        if(_byte_array[idx] == ':'){
+        if( _byte_array[idx] == ':' )
             num_colons++;
-        }
     }
     if( _byte_array[idx] == '0' ) {
         return true;
     }
-    else{
+    else {
         return false;
     }
 }
@@ -74,7 +73,7 @@ Port SerialGraph::get_RootPort()
     begin = _byte_array.find(':', 2);
     assert( begin != std::string::npos );
     begin++;
-    end = _byte_array.find(' ', begin);
+    end = _byte_array.find(':', begin);
     std::string port_string = _byte_array.substr(begin, end-begin);
     retval = atoi(port_string.c_str());
 
@@ -93,7 +92,7 @@ Rank SerialGraph::get_RootRank()
     begin = _byte_array.find(':', begin);
     assert(begin != std::string::npos );
     begin++;
-    end = _byte_array.find(' ', begin);
+    end = _byte_array.find(':', begin);
 
     std::string rankstring = _byte_array.substr(begin, end-begin);
 
@@ -102,20 +101,21 @@ Rank SerialGraph::get_RootRank()
     return retval;
 }
 
-SerialGraph * SerialGraph::get_MySubTree( std::string &ihostname, Port iport, Rank irank )
+SerialGraph* SerialGraph::get_MySubTree( std::string &ihostname, 
+                                         Port iport, Rank irank )
 {
     std::ostringstream hoststr;
     size_t begin, cur, end;
 
     hoststr << "[" << ihostname << ":" << iport << ":" << irank << ":" ; 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "SubTreeRoot:\"%s\" byte_array:\"%s\"\n",
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "SubTreeRoot:'%s' byte_array:'%s'\n",
                            hoststr.str().c_str(), _byte_array.c_str() ));
 
     begin = _byte_array.find( hoststr.str() );
     if( begin == std::string::npos ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "No SubTreeRoot:\"%s\" found in byte_array:\"%s\"\n",
-                               hoststr.str().c_str(), _byte_array.c_str() ));
+                               "SubTreeRoot:'%s' not found\n",
+                               hoststr.str().c_str()) );
         return NULL;
     }
 
@@ -123,15 +123,16 @@ SerialGraph * SerialGraph::get_MySubTree( std::string &ihostname, Port iport, Ra
     cur=begin;
     end=1;
     int num_leftbrackets=1, num_rightbrackets=0;
-    while(num_leftbrackets != num_rightbrackets){
-        cur++,end++;
+    while( num_leftbrackets != num_rightbrackets ) {
+        cur++;
+        end++;
         if( _byte_array[cur] == '[')
             num_leftbrackets++;
         else if( _byte_array[cur] == ']')
             num_rightbrackets++;
     }
 
-    SerialGraph * retval = new SerialGraph( _byte_array.substr(begin, end));
+    SerialGraph * retval = new SerialGraph( _byte_array.substr(begin, end) );
     
     mrn_dbg( 5, mrn_printf(FLF, stderr, "returned sg byte array :\"%s\"\n",
                            retval->_byte_array.c_str() )); 
@@ -144,8 +145,7 @@ void SerialGraph::set_ToFirstChild( void )
 }
 
 bool SerialGraph::set_Port(std::string hostname, Port port, Rank irank)
-{
-    
+{  
     std::ostringstream hoststr, port_str;
     size_t begin,port_pos; 
      
@@ -169,9 +169,7 @@ bool SerialGraph::set_Port(std::string hostname, Port port, Rank irank)
     _byte_array.replace( begin + port_pos+1, 5, port_str.str() );
 
     return true;
-
 }
-
 
 SerialGraph * SerialGraph::get_NextChild()
 {
@@ -188,7 +186,8 @@ SerialGraph * SerialGraph::get_NextChild()
     end = 1;
     int num_leftbrackets=1, num_rightbrackets=0;
     while( num_leftbrackets != num_rightbrackets ) {
-        cur++, end++;
+        cur++;
+        end++;
         if( buf[cur] == '[' )
             num_leftbrackets++;
         else if( buf[cur] == ']' )
