@@ -164,7 +164,7 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
                           "ChildNode_proc_PacketFromParent, packet->tag = %d\n", 
                           packet->tag));
 
-    switch (packet->tag) {
+    switch( packet->tag ) {
     case PROT_SHUTDOWN:
         if (BackEndNode_proc_DeleteSubTree(be, packet) == -1) {
             mrn_dbg(1, mrn_printf(FLF, stderr,"BackEndNode_proc_deleteSubTree() failed\n"));
@@ -267,6 +267,13 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
         if (ChildNode_proc_PortUpdate(be, packet) == -1 ) {
             mrn_dbg(1, mrn_printf(FLF, stderr,
                                   "proc_PortUpdate() failed\n"));
+            retval = -1;
+        }
+        break;
+    case PROT_TOPO_UPDATE:
+        if (ChildNode_proc_TopologyUpdates(be, packet) == -1 ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr,
+                                  "proc_TopologyUpdates() failed\n"));
             retval = -1;
         }
         break;
@@ -511,6 +518,13 @@ int ChildNode_proc_PortUpdate(BackEndNode_t * be,
     free(host_arr);
 
     mrn_dbg_func_end();
+    return 0;
+}
+
+int ChildNode_proc_TopologyUpdates(BackEndNode_t * be,
+                                   Packet_t* ipacket)
+{
+    // TODO: implmentation requires NetworkTopology_update_XXX methods
     return 0;
 }
 
