@@ -66,8 +66,11 @@ class PeerNode: public CommunicationNode, public Error {
     void set_DataSocketFd( int isock ) { _data_sock_fd = isock; }
     int get_DataSocketFd(void) const { return _data_sock_fd; }
     int get_EventSocketFd(void) const { return _event_sock_fd; }
-    int start_CommunicationThreads(void);
 
+    int start_CommunicationThreads(void);    
+    void waitfor_CommunicationThreads(void) const;
+    void signal_CommThreadStarted(void) const;
+    
     int waitfor_FlushCompletion(void) const;
     void signal_FlushComplete(void) const;
     void mark_Failed(void);
@@ -83,6 +86,7 @@ class PeerNode: public CommunicationNode, public Error {
     int _event_sock_fd;
     bool _is_internal_node;
     bool _is_parent;
+    bool _recv_thread_started, _send_thread_started;
     XPlat::Thread::Id recv_thread_id, send_thread_id;
 
     //Dynamic data members
@@ -90,7 +94,7 @@ class PeerNode: public CommunicationNode, public Error {
     mutable Message _msg_in;
     bool _available;
     mutable XPlat::Monitor _sync;
-    enum{ MRN_FLUSH_COMPLETE };
+    enum{ MRN_FLUSH_COMPLETE, MRN_THREAD_STARTED };
 };
 
 } // namespace MRN

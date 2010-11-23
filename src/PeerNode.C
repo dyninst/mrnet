@@ -35,10 +35,13 @@ PeerNodePtr PeerNode::NullPeerNode;
 PeerNode::PeerNode( Network * inetwork, std::string const& ihostname, Port iport,
                     Rank irank, bool iis_parent, bool iis_internal )
     : CommunicationNode(ihostname, iport, irank ), _network(inetwork),
-     _data_sock_fd(0), _event_sock_fd(0),
-     _is_internal_node(iis_internal), _is_parent(iis_parent), _available(true)
+      _data_sock_fd(0), _event_sock_fd(0),
+      _is_internal_node(iis_internal), _is_parent(iis_parent), 
+      _recv_thread_started(false), _send_thread_started(false), 
+      _available(true)
 {
     _sync.RegisterCondition( MRN_FLUSH_COMPLETE );
+    _sync.RegisterCondition( MRN_THREAD_STARTED );
 }
 
 int PeerNode::connect_DataSocket(void)
@@ -84,25 +87,45 @@ int PeerNode::start_CommunicationThreads(void)
     args->net = _network;
     args->r = _rank;
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Creating recv_thread ...\n") );
-    retval = XPlat::Thread::Create( recv_thread_main, (void*)args, &recv_thread_id  );
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "id: 0x%x\n", recv_thread_id) );
-    if(retval != 0){
-        error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s\n",
-               strerror(errno) );
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "recv_thread creation failed...\n") );
-    }
-
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Creating send_thread ...\n") );
     retval = XPlat::Thread::Create( send_thread_main, (void*)args, &send_thread_id );
     mrn_dbg( 3, mrn_printf(FLF, stderr, "id: 0x%x\n", send_thread_id) );
-    if(retval != 0){
+    if( retval != 0 ) {
         error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s\n",
                strerror(errno) );
         mrn_dbg( 1, mrn_printf(FLF, stderr, "send_thread creation failed...\n") );
+        return retval;
     }
 
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "Creating recv_thread ...\n") );
+    retval = XPlat::Thread::Create( recv_thread_main, (void*)args, &recv_thread_id  );
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "id: 0x%x\n", recv_thread_id) );
+    if( retval != 0 ) {
+        error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s\n",
+               strerror(errno) );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "recv_thread creation failed...\n") );
+        return retval;
+    }
+
+    waitfor_CommunicationThreads();
+
     return retval;
+}
+
+void PeerNode::waitfor_CommunicationThreads(void) const
+{
+    _sync.Lock();
+    while( ! (_recv_thread_started && _send_thread_started) ) {
+        _sync.WaitOnCondition( MRN_THREAD_STARTED );
+    }
+    _sync.Unlock();
+}
+
+void PeerNode::signal_CommThreadStarted(void) const
+{
+    _sync.Lock();
+    _sync.SignalCondition( MRN_THREAD_STARTED );
+    _sync.Unlock();
 }
 
 void PeerNode::send( const PacketPtr ipacket ) const
@@ -224,6 +247,12 @@ void * PeerNode::recv_thread_main( void* iargs )
 
     mrn_dbg_func_begin();
 
+    peer_node->_sync.Lock();
+    peer_node->_recv_thread_started = true;
+    peer_node->_sync.Unlock();
+
+    peer_node->signal_CommThreadStarted();
+
     while(true) {
 
         if( peer_node->has_Failed() )
@@ -307,6 +336,12 @@ void * PeerNode::send_thread_main( void* iargs )
 
     mrn_dbg_func_begin();
 
+    peer_node->_sync.Lock();
+    peer_node->_send_thread_started = true;
+    peer_node->_sync.Unlock();
+
+    peer_node->signal_CommThreadStarted();
+
     while(true) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Blocking for packets to send ...\n") );
         peer_node->_msg_out.waitfor_MessagesToSend( );
@@ -343,7 +378,7 @@ int PeerNode::waitfor_FlushCompletion(void) const
     while( _msg_out.size_Packets() > 0 && _available ) {
         _sync.WaitOnCondition( MRN_FLUSH_COMPLETE );
     }
-    if( !_available ) {
+    if( ! _available ) {
         retval = -1;
     }
 
