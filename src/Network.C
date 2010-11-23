@@ -629,15 +629,14 @@ void Network::print_error( const char *s )
     perror( s );
 }
 
-int Network::send_PacketsToParent( std::vector <PacketPtr> &ipackets )
+int Network::send_PacketsToParent( std::vector< PacketPtr > &ipackets )
 {
     assert( is_LocalNodeChild() );
 
-    vector< PacketPtr >::const_iterator iter;
-
-    for( iter = ipackets.begin(); iter!= ipackets.end(); iter++ ) {
+    vector< PacketPtr >::const_iterator iter = ipackets.begin(),
+                                        iend = ipackets.end();
+    for( ; iter != iend; iter++ )
         send_PacketToParent( *iter );
-    }
 
     return 0;
 }
@@ -645,27 +644,23 @@ int Network::send_PacketsToParent( std::vector <PacketPtr> &ipackets )
 int Network::send_PacketToParent( PacketPtr ipacket )
 {
     mrn_dbg_func_begin();
-
     get_ParentNode()->send( ipacket );
-
     return 0;
 }
 
 int Network::flush_PacketsToParent(void)
 {
-    assert( is_LocalNodeChild() );
     return _parent->flush();
 }
 
-int Network::send_PacketsToChildren( std::vector <PacketPtr> &ipackets  )
+int Network::send_PacketsToChildren( std::vector< PacketPtr > &ipackets  )
 {
     assert( is_LocalNodeParent() );
 
-    vector< PacketPtr >::const_iterator iter;
-
-    for( iter = ipackets.begin(); iter!= ipackets.end(); iter++ ) {
+    vector< PacketPtr >::const_iterator iter = ipackets.begin(),
+                                        iend = ipackets.end();
+    for( ; iter != iend; iter++ )
         send_PacketToChildren( *iter );
-    }
 
     return 0;
 }
@@ -673,68 +668,68 @@ int Network::send_PacketsToChildren( std::vector <PacketPtr> &ipackets  )
 int Network::send_PacketToChildren( PacketPtr ipacket,
                                     bool iinternal_only /* =false */ )
 {
-    int retval = 0;
-    Stream *stream;
-
     mrn_dbg_func_begin();
 
-    std::set< PeerNodePtr > peers;
+    if( ipacket->get_StreamId() == 0 ) { // stream id 0 => control stream
 
-    if( ipacket->get_StreamId( ) == 0 ) {   //stream id 0 => control stream
-        peers = get_ChildPeers();
+        _children_mutex.Lock();
+
+        PeerNodePtr cur_node;
+        std::set< PeerNodePtr >::const_iterator iter = _children.begin(),
+                                                iend = _children.end();
+        for( ; iter != iend; iter++ ) {
+            cur_node = *iter;
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "node \"%s:%d:%d\": %s, %s\n",
+                                   cur_node->get_HostName().c_str(),
+                                   cur_node->get_Rank(),
+                                   cur_node->get_Port(),
+                                   (cur_node->is_parent() ? "parent" : "child"),
+                                   (cur_node->is_internal() ? "internal" : "end-point")) );
+        
+            //Never send packet back to inlet
+            if( cur_node->get_Rank() == ipacket->get_InletNodeRank() )
+                continue;
+            
+            //if internal_only, don't send to non-internal nodes
+            if( iinternal_only && !cur_node->is_internal( ) )
+                continue;
+            
+            cur_node->send( ipacket );
+        }
+
+        _children_mutex.Unlock();
     }
     else {
-        std::set< Rank > peer_ranks;
-        std::set< Rank >::const_iterator iter;
-        stream = get_Stream( ipacket->get_StreamId() );   
-        if( stream == NULL ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                                   ipacket->get_StreamId( ) ));
-            return -1;
-        }
-        stream->get_ChildPeers( peer_ranks );
-	if(peer_ranks.empty() )
-	   mrn_dbg( 5, mrn_printf(FLF, stderr, "child ranks are empty\n") );
 
-        for( iter= peer_ranks.begin(); iter!=peer_ranks.end(); iter++) {
-            PeerNodePtr cur_peer = get_OutletNode( *iter );
-            if( cur_peer != PeerNode::NullPeerNode ) {
-                peers.insert( cur_peer );
+        // two cases: all stream peers, or subset according to BE destinations
+        unsigned ndests;
+        Rank* dests = NULL;
+        if( ipacket->get_Destinations(ndests, &dests) ) {
+            // packet has explicit BE destination list
+            PeerNodePtr cur_peer;
+            for( unsigned u=0; u < ndests; u++ ) {
+                cur_peer = get_OutletNode( dests[u] );
+                if( cur_peer != PeerNode::NullPeerNode )
+                    cur_peer->send( ipacket );
+                else
+                    mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                                           "peer outlet is null\n") );
             }
-	    else
-	       mrn_dbg( 5, mrn_printf(FLF, stderr, "outlet node returns null peer\n") );
-
+        }
+        else {
+            // all peers in stream
+            Stream* stream = get_Stream( ipacket->get_StreamId() );   
+            if( stream == NULL ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+                                       ipacket->get_StreamId( ) ));
+                return -1;
+            }
+            stream->send_to_children( ipacket );
         }
     }
-    
-    std::set < PeerNodePtr >::const_iterator iter;
-    if(peers.empty() )
-       mrn_dbg(5,mrn_printf( FLF, stderr, " peers is empty\n") );
 
-
-    for( iter=peers.begin(); iter!=peers.end(); iter++ ) {
-        PeerNodePtr cur_node = *iter;
-        mrn_dbg(3, mrn_printf( FLF, stderr, "node \"%s:%d:%d\": %s, %s\n",
-                               cur_node->get_HostName().c_str(),
-                               cur_node->get_Rank(),
-                               cur_node->get_Port(),
-                               ( cur_node->is_parent() ? "parent" : "child" ),
-                               ( cur_node->is_internal() ? "internal" : "end-point" ) ));
-
-        //Never send packet back to src
-        if( cur_node->get_Rank() == ipacket->get_InletNodeRank() )
-            continue;
-
-        //if internal_only, don't send to non-internal nodes
-        if( iinternal_only && !cur_node->is_internal( ) )
-            continue;
-
-        cur_node->send( ipacket );
-    }
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren %s",
-                           retval == 0 ? "succeeded\n" : "failed\n" ));
-    return retval;
+    mrn_dbg_func_end();
+    return 0;
 }
 
 int Network::flush_PacketsToChildren(void) const
@@ -743,23 +738,27 @@ int Network::flush_PacketsToChildren(void) const
     
     mrn_dbg_func_begin();
     
-    const std::set< PeerNodePtr > peers = get_ChildPeers();
+    _children_mutex.Lock();
 
-    std::set < PeerNodePtr >::const_iterator iter;
-    for( iter=peers.begin(); iter!=peers.end(); iter++ ) {
+    std::set< PeerNodePtr >::const_iterator iter = _children.begin(),
+                                            iend = _children.end();
+    for( ; iter != iend; iter++ ) {
+  
         PeerNodePtr cur_node = *iter;
 
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling child[%d].flush() ...\n",
-                               cur_node->get_Rank() ));
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling child[%d].flush() ...\n",
+                               cur_node->get_Rank()) );
+
         if( cur_node->flush() == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "child.flush() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "child.flush() failed\n") );
             retval = -1;
         }
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "child.flush() succeeded\n" ));
     }
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "flush_PacketsToChildren %s",
-                retval == 0 ? "succeeded\n" : "failed\n" ));
+    _children_mutex.Unlock();
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "flush_PacketsToChildren %s",
+                retval == 0 ? "succeeded\n" : "failed\n") );
     return retval;
 }
 
@@ -1871,13 +1870,20 @@ PeerNodePtr Network::get_PeerNode( Rank irank )
     return peer;
 }
 
-const set< PeerNodePtr > Network::get_ChildPeers(void) const
+void Network::get_ChildPeers( set< PeerNodePtr >& peers ) const
 {
     _children_mutex.Lock();
-    const set< PeerNodePtr > children = _children;
+    peers = _children;
     _children_mutex.Unlock();
+}
 
-    return children;
+
+unsigned int Network::get_NumChildren(void) const
+{
+    _children_mutex.Lock();
+    unsigned int size = (unsigned int) _children.size();
+    _children_mutex.Unlock();
+    return size;
 }
 
 PeerNodePtr Network::get_OutletNode( Rank irank ) const

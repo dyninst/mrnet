@@ -27,13 +27,15 @@ typedef struct {
   struct vector_t* data_elements;
 } Packet_t;
 
-Packet_t* new_Packet_t(int, unsigned short _stream_id,
-                        int _tag, char* fmt,
-                        va_list arg_list);
 
-Packet_t* new_Packet_t_2 (unsigned short istream_id, int tag, char* ifmt_str, ... );
+Packet_t* new_Packet_t(int isrc, unsigned short istream_id, int itag, 
+                       char* fmt, va_list arg_list);
 
-Packet_t* new_Packet_t_3 (unsigned int buf_len, char* buf, Rank inlet_rank);
+Packet_t* new_Packet_t_2(unsigned short istream_id, int itag, char* fmt, ...);
+
+Packet_t* new_Packet_t_3(unsigned int buf_len, char* buf, Rank inlet_rank);
+
+Packet_t* Packet_construct(Packet_t* packet);
 
 void Packet_set_DestroyData(Packet_t * packet, int dd);
 
@@ -49,12 +51,12 @@ Packet_t* Packet_pushBackElement(Packet_t* packet, DataElement_t* cur_elem);
 
 bool_t Packet_pdr_packet(struct PDR *pdrs,  Packet_t* pkt);
 
-int Packet_unpack( Packet_t* packet, const char *ifmt_str, ... );
+int Packet_unpack(Packet_t* packet, const char *ifmt_str, ...);
 
-int Packet_ExtractVaList( Packet_t* packet, char* fmt, va_list arg_list);
+int Packet_ExtractVaList(Packet_t* packet, char* fmt, va_list arg_list);
 
-void Packet_DataElementArray2ArgList( Packet_t* packet, va_list arg_list);
+void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list);
 
-int Packet_ExtractArgList( Packet_t* packet, char* ifmt_str, ... );
+int Packet_ExtractArgList(Packet_t* packet, char* ifmt_str, ...);
 
 #endif /* __packet_h */
