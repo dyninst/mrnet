@@ -28,13 +28,23 @@ using namespace std;
 namespace MRN
 {
 
-Stream::Stream( Network * inetwork,
-                int iid,
-                Rank *ibackends,
-                unsigned int inum_backends,
-                int ius_filter_id,
-                int isync_filter_id,
-                int ids_filter_id )
+#define INTERNAL_STREAM_BASE_ID (1 << 30)
+
+// a purely logical stream id
+const unsigned int CTL_STRM_ID = INTERNAL_STREAM_BASE_ID;
+
+// base stream id for all "real" stream objects
+const unsigned int USER_STRM_BASE_ID = CTL_STRM_ID + 1;
+
+// some internally created streams
+const unsigned int TOPOL_STRM_ID = USER_STRM_BASE_ID;
+const unsigned int PORT_STRM_ID  = USER_STRM_BASE_ID + 1;
+
+Stream::Stream( Network * inetwork, unsigned int iid,
+                Rank *ibackends, unsigned int inum_backends,
+                unsigned int ius_filter_id,
+                unsigned int isync_filter_id,
+                unsigned int ids_filter_id )
   : _network( inetwork ),
     _id( iid ),
     _sync_filter_id( isync_filter_id ),
@@ -50,7 +60,7 @@ Stream::Stream( Network * inetwork,
 
     set< PeerNodePtr > node_set;
     mrn_dbg( 3, mrn_printf(FLF, stderr,
-                           "id:%d, us_filter:%d, sync_id:%d, ds_filter:%d\n",
+                           "id:%u, us_filter:%u, sync_id:%u, ds_filter:%u\n",
                            _id, _us_filter_id , _sync_filter_id, _ds_filter_id));
 
     _incoming_packet_buffer_sync.RegisterCondition( PACKET_BUFFER_NONEMPTY );
@@ -83,9 +93,9 @@ Stream::~Stream()
     close();
 
     if( _network->is_LocalNodeFrontEnd() ) {
-        PacketPtr packet( new Packet( 0, PROT_DEL_STREAM, "%d", _id ) );
+        PacketPtr packet( new Packet(CTL_STRM_ID, PROT_DEL_STREAM, "%ud", _id) );
         if( _network->get_LocalFrontEndNode()->proc_deleteStream( packet ) == -1 ) {
-            mrn_dbg(2, mrn_printf(FLF, stderr, "proc_deleteStream() failed\n"));
+            mrn_dbg(1, mrn_printf(FLF, stderr, "proc_deleteStream() failed\n"));
         }
     }
 
@@ -175,7 +185,10 @@ int Stream::send( PacketPtr& ipacket )
         mrn_dbg(1, mrn_printf(FLF, stderr, "input packet has error\n"));
         return -1;
     }
-    ipacket->stream_id = _id; // doesn't hurt if already set correctly
+
+    // make sure some things are set correctly, doesn't hurt if already set
+    ipacket->set_SourceRank( _network->get_LocalRank() );
+    ipacket->stream_id = _id;
 
     // performance data update for STREAM_SEND
     if( _perf_data->is_Enabled( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_SEND ) ) {
@@ -234,7 +247,7 @@ int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket,
 {
     mrn_dbg_func_begin();
     mrn_dbg(3, mrn_printf(FLF, stderr,
-                          "stream_id: %d, tag:%d, fmt=\"%s\"\n", _id, itag, ifmt));
+                          "stream:%u, tag:%d, fmt=\"%s\"\n", _id, itag, ifmt));
 
     if( is_Closed() ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "send on closed stream\n"));
@@ -271,8 +284,8 @@ int Stream::send_aux( int itag, const char *ifmt, PacketPtr &ipacket,
             for( unsigned int i = 0; i < opackets_reverse.size( ); i++ ) {
                 PacketPtr cur_packet( opackets_reverse[i] );
 
-                mrn_dbg( 3, mrn_printf(FLF, stderr, "Put packet in stream %d\n",
-                                       cur_packet->get_StreamId(  ) ));
+                mrn_dbg( 3, mrn_printf(FLF, stderr, "Put packet in stream %u\n",
+                                       cur_packet->get_StreamId()) );
                 add_IncomingPacket( cur_packet );
             }
         }
@@ -376,7 +389,7 @@ int Stream::recv( int *otag, PacketPtr & opacket, bool iblocking )
     if( _network->is_LocalNodeThreaded() ) {
         if( block_ForIncomingPacket() == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "Stream[%u] block_ForIncomingPacket() failed.\n",
+                                   "stream[%u] block_ForIncomingPacket() failed.\n",
                                    _id ));
             return -1;
         }
@@ -408,7 +421,7 @@ int Stream::recv( int *otag, PacketPtr & opacket, bool iblocking )
 void Stream::signal_BlockedReceivers(void) const
 {
     mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                           "Stream[%d]: signaling \"got packet\"\n", _id) );
+                           "stream[%u]: signaling \"got packet\"\n", _id) );
 
     // signal non-empty buffer condition
     _incoming_packet_buffer_sync.Lock();
@@ -423,19 +436,19 @@ int Stream::block_ForIncomingPacket(void) const
     // wait for non-empty buffer condition
     _incoming_packet_buffer_sync.Lock();
     while( _incoming_packet_buffer.empty() && ! is_Closed() ) {
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "Stream[%u](%p) blocking for a packet ...\n",
-                               _id, this) );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "stream[%u] blocking for a packet\n",
+                               _id) );
         _incoming_packet_buffer_sync.WaitOnCondition( PACKET_BUFFER_NONEMPTY );
     }
     _incoming_packet_buffer_sync.Unlock();
 
     if( is_Closed() ) {
         _incoming_packet_buffer_sync.Unlock();
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Stream[%u] is closed.\n", _id) );
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "stream[%u] is closed.\n", _id) );
         return -1;
     }
     else
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "Stream[%u] has packet.\n", _id) );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "stream[%u] has packet.\n", _id) );
     return 0;
 }
 
@@ -488,7 +501,7 @@ int Stream::push_Packet( PacketPtr ipacket,
     // if going upstream, sync first
     if( igoing_upstream ){
         if( _sync_filter->push_Packets(ipackets, opackets, opackets_reverse, topol_info ) == -1 ){
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Sync.push_packets() failed\n"));
+            mrn_dbg(1, mrn_printf(FLF, stderr, "SyncFilt.push_packets() failed\n"));
             return -1;
         }
         // NOTE: ipackets is cleared by Filter::push_Packets()
@@ -528,7 +541,7 @@ int Stream::push_Packet( PacketPtr ipacket,
 
         // run transformation filter
         if( trans_filter->push_Packets(ipackets, opackets, opackets_reverse, topol_info ) == -1 ){
-            mrn_dbg(1, mrn_printf(FLF, stderr, "aggr.push_packets() failed\n"));
+            mrn_dbg(1, mrn_printf(FLF, stderr, "TransFilt.push_packets() failed\n"));
             return -1;
         }
 
@@ -794,7 +807,7 @@ void Stream::recompute_ChildrenNodes(void)
         PeerNodePtr outlet = _network->get_OutletNode( cur_rank );
         if( outlet != NULL ) {
             mrn_dbg( 3, mrn_printf(FLF, stderr,
-                                   "Adding outlet[%d] for endpoint[%d] to stream[%d].\n",
+                                   "Adding outlet[%d] for endpoint[%d] to stream[%u].\n",
                                    outlet->get_Rank(), cur_rank, _id) );
             _peers.insert( outlet );
         }
@@ -1023,7 +1036,7 @@ bool Stream::collect_PerformanceData( rank_perfdata_map& results,
     // create stream to aggregate performance data
     Communicator* comm = new Communicator( _network, _end_points );
     Stream* aggr_strm = _network->new_Stream( comm, TFILTER_PERFDATA );
-    aggr_strm->set_FilterParameters( FILTER_UPSTREAM_TRANS, "%d %d %d %d", 
+    aggr_strm->set_FilterParameters( FILTER_UPSTREAM_TRANS, "%d %d %ud %ud", 
                                      (int)metric, (int)context, 
                                      aggr_filter_id, _id );
     int aggr_strm_id = aggr_strm->get_Id();
@@ -1032,7 +1045,7 @@ bool Stream::collect_PerformanceData( rank_perfdata_map& results,
 
         // send collect request
         int tag = PROT_COLLECT_PERFDATA;
-        PacketPtr packet( new Packet( _id, tag, "%d %d %d", 
+        PacketPtr packet( new Packet( _id, tag, "%d %d %ud", 
                                       (int)metric, (int)context, aggr_strm_id ) );
         if( packet->has_Error() ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));

@@ -253,22 +253,22 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
 
 int ChildNode::proc_EnablePerfData( PacketPtr ipacket ) const
 {
-    int stream_id;
+    unsigned int stream_id;
 
     mrn_dbg_func_begin();
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
     if( strm == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                               stream_id ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n",
+                               stream_id) );
         return -1;
     }
 
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
         if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
             return -1;
         }
     }
@@ -284,22 +284,22 @@ int ChildNode::proc_EnablePerfData( PacketPtr ipacket ) const
 
 int ChildNode::proc_DisablePerfData( PacketPtr ipacket ) const
 {
-    int stream_id;
+    unsigned int stream_id;
 
     mrn_dbg_func_begin();
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
     if( strm == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                               stream_id ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n",
+                               stream_id) );
         return -1;
     }
 
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
         if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
             return -1;
         }
     }
@@ -315,14 +315,14 @@ int ChildNode::proc_DisablePerfData( PacketPtr ipacket ) const
 
 int ChildNode::proc_CollectPerfData( PacketPtr ipacket ) const
 {
-    int stream_id;
+    unsigned int stream_id;
 
     mrn_dbg_func_begin();
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
     if( strm == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n",
                                stream_id ));
         return -1;
     }
@@ -330,13 +330,14 @@ int ChildNode::proc_CollectPerfData( PacketPtr ipacket ) const
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
         if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
             return -1;
         }
     }
     else if( _network->is_LocalNodeBackEnd() ) { 
-        int metric, context, aggr_strm_id;
-        ipacket->unpack( "%d %d %d", &metric, &context, &aggr_strm_id );
+        int metric, context;
+        unsigned int aggr_strm_id;
+        ipacket->unpack( "%d %d %ud", &metric, &context, &aggr_strm_id );
     
 
         // collect
@@ -347,8 +348,8 @@ int ChildNode::proc_CollectPerfData( PacketPtr ipacket ) const
         // send
         Stream* aggr_strm = _network->get_Stream( aggr_strm_id );
         if( aggr_strm == NULL ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "aggr stream %d lookup failed\n",
-                                   aggr_strm_id ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "aggr stream %u lookup failed\n",
+                                   aggr_strm_id) );
             return -1;
         }
         bool upstream = true;
@@ -361,22 +362,22 @@ int ChildNode::proc_CollectPerfData( PacketPtr ipacket ) const
 
 int ChildNode::proc_PrintPerfData( PacketPtr ipacket ) const
 {
-    int stream_id;
+    unsigned int stream_id;
 
     mrn_dbg_func_begin();
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
     if( strm == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                               stream_id ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n",
+                               stream_id) );
         return -1;
     }
 
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
         if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
             return -1;
         }
     }
@@ -468,7 +469,7 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology: \"%s\"\n", topo_ptr) );
-    PacketPtr packet( new Packet( 0, PROT_NEW_CHILD_DATA_CONNECTION,
+    PacketPtr packet( new Packet( CTL_STRM_ID, PROT_NEW_CHILD_DATA_CONNECTION,
                                   "%s %uhd %ud %uhd %ud %c %s",
                                   _hostname.c_str(),
                                   _port,
@@ -507,7 +508,7 @@ int ChildNode::send_SubTreeInitDoneReport( ) const
     
     _network->get_NetworkTopology()->update_Router_Table();
 
-    PacketPtr packet( new Packet( 0, PROT_SUBTREE_INITDONE_RPT,"") );
+    PacketPtr packet( new Packet( CTL_STRM_ID, PROT_SUBTREE_INITDONE_RPT,"") );
 
     if( !packet->has_Error( ) ) {
         _network->get_ParentNode()->send( packet );
@@ -534,7 +535,7 @@ int ChildNode::send_NewSubTreeReport( ) const
 int ChildNode::request_SubTreeInfo( void ) const 
 {
     mrn_dbg_func_begin();
-    PacketPtr packet( new Packet( 0, PROT_SUBTREE_INFO_REQ, "%ud", _rank ) );
+    PacketPtr packet( new Packet( CTL_STRM_ID, PROT_SUBTREE_INFO_REQ, "%ud", _rank ) );
 
     if( !packet->has_Error( ) ) {
         _network->get_ParentNode()->send( packet );
@@ -583,7 +584,7 @@ bool ChildNode::ack_DeleteSubTree( void ) const
 {
     mrn_dbg_func_begin();
 
-    PacketPtr packet( new Packet(0, PROT_SHUTDOWN_ACK, "") );
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN_ACK, "") );
 
     if( ! packet->has_Error() ) {
         /* note: don't request flush as send thread will exit 
@@ -603,7 +604,7 @@ bool ChildNode::ack_TopologyReport( void ) const
 {
     mrn_dbg_func_begin();
 
-    PacketPtr packet( new Packet(0, PROT_TOPOLOGY_ACK, "") );
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_TOPOLOGY_ACK, "") );
 
     if( ! packet->has_Error() ) {
         _network->get_ParentNode()->send( packet );
@@ -641,16 +642,7 @@ bool ChildNode::has_PacketsFromParent( ) const
 
 int ChildNode::proc_EnableFailReco( PacketPtr ipacket ) const
 {
-    int stream_id;
-
     mrn_dbg_func_begin();
-
-    stream_id = ipacket->get_StreamId();
-    if( stream_id != 0 ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "The current stream is not control stream and its stream_id = %d",
-                               stream_id ));
-        return -1;
-    }
 
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
@@ -662,22 +654,14 @@ int ChildNode::proc_EnableFailReco( PacketPtr ipacket ) const
 
     // local update
     _network->enable_FailureRecovery();
+
     mrn_dbg_func_end();
     return 0;
 }
 
 int ChildNode::proc_DisableFailReco( PacketPtr ipacket ) const
 {
-    int stream_id;
-
     mrn_dbg_func_begin();
-
-    stream_id = ipacket->get_StreamId();
-    if( stream_id != 0 ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "The current stream is not control stream and its stream_id = %d \n",
-                               stream_id ));
-        return -1;
-    }
 
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
@@ -689,6 +673,7 @@ int ChildNode::proc_DisableFailReco( PacketPtr ipacket ) const
 
     // local update
     _network->disable_FailureRecovery();
+
     mrn_dbg_func_end();
     return 0;
 }

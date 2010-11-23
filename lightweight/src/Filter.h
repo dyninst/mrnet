@@ -11,15 +11,15 @@
 #include "vector.h"
 
 struct Filter_t {
-    unsigned short id;
     void* filter_state;
     Packet_t* params;
     char* fmt_str;
+    unsigned int id;
 };
 
 typedef struct Filter_t Filter_t;
 
-Filter_t* new_Filter_t(unsigned short iid);
+Filter_t* new_Filter_t(unsigned int iid);
 
 void delete_Filter_t(Filter_t* filter);
 

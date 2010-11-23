@@ -50,11 +50,12 @@ int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
                                    "failed to create port update stream\n") );
             return -1;
         }
+        assert( port_strm->get_Id() == PORT_STRM_ID );
     }
 
     // request port updates from children
-    if( ( _network->send_PacketToChildren( ipacket ) == -1 ) ||
-        ( _network->flush_PacketsToChildren( ) == -1 ) ) {
+    if( ( _network->send_PacketToChildren(ipacket) == -1 ) ||
+        ( _network->flush_PacketsToChildren() == -1 ) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
                                "send/flush_PacketToChildren() failed\n") );
         return -1;
@@ -66,7 +67,7 @@ int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
             // block until updates received, then kill the stream
             int tag;
             PacketPtr p;
-            port_strm->recv(&tag, p);
+            port_strm->recv( &tag, p );
             delete port_strm;
 
             // broadcast the accumulated updates
@@ -103,7 +104,7 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
                  _network->get_LocalRank() );
     std::string new_topo = sg.get_ByteArray();
 
-    PacketPtr packet( new Packet(0, PROT_NEW_SUBTREE, "%s %s %s %as", new_topo.c_str(),
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_SUBTREE, "%s %s %s %as", new_topo.c_str(),
                                  commnode_path, backend_exe, backend_argv, backend_argc) );  
 
     _initial_subtree_packet = packet;

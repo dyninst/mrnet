@@ -22,13 +22,11 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
                                           PeerNode_t* iparent, 
                                           Rank ifailed_rank) 
 {
-    char* topo_ptr;
-    char* fmt_str;
+    char *topo_ptr, *init_topo;
     Packet_t* packet;
-    NetworkTopology_t * tmp_nt;
-
-    SerialGraph_t * init_topo;
-    char * sg_str;
+    NetworkTopology_t* tmp_nt;
+    SerialGraph_t* sg;
+    const char* fmt_str = "%s %uhd %ud %uhd %ud %c %s";
 
     mrn_dbg_func_begin();
 
@@ -40,47 +38,42 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
                           iparent->port, ifailed_rank));
 
     // establish data detection connect with new parent
-    if (PeerNode_connect_DataSocket(iparent) == -1 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "PeerNode_connect_data_socket() failed\n"));
+    if( PeerNode_connect_DataSocket(iparent) == -1 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "PeerNode_connect_data_socket() failed\n"));
         return -1;
     }
 
     be->incarnation++;
 
     topo_ptr = Network_get_LocalSubTreeStringPtr(be->network);
+    mrn_dbg(5, mrn_printf(FLF, stderr, "topology: (%p), \"%s\"\n", 
+                          topo_ptr, topo_ptr));
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "topology: (%p), \"%s\"\n", topo_ptr, topo_ptr));
-
-    fmt_str = "%s %uhd %ud %uhd %ud %c %s"; 
-
-    packet = new_Packet_t_2 (0, 
-                             PROT_NEW_CHILD_DATA_CONNECTION, 
-                             fmt_str, 
-                             be->myhostname,
-                             be->myport,
-                             be->myrank, 
-                             be->incarnation, 
-                             ifailed_rank, 
-                             'f', 
-                             topo_ptr);
+    packet = new_Packet_t_2(0, 
+                            PROT_NEW_CHILD_DATA_CONNECTION, 
+                            fmt_str, 
+                            be->myhostname,
+                            be->myport,
+                            be->myrank, 
+                            be->incarnation, 
+                            ifailed_rank, 
+                            'f', 
+                            topo_ptr);
   
     mrn_dbg(5, mrn_printf(FLF, stderr, "Send initialization info...\n" ));
-
-    if ( PeerNode_sendDirectly(be->network->parent, packet) == -1) {
+    if( PeerNode_sendDirectly(be->network->parent, packet) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "send/flush() failed\n"));
         return -1;
     } 
-
     free(topo_ptr);
 
     init_topo = Network_readTopology(be->network, iparent->data_sock_fd);
     assert(init_topo);
-    sg_str = SerialGraph_get_ByteArray(init_topo);
 
-    NetworkTopology_reset(tmp_nt, sg_str);
-    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is %s\n",
-                NetworkTopology_get_TopologyStringPtr(tmp_nt)));
+    sg = new_SerialGraph_t(init_topo);
 
+    NetworkTopology_reset(tmp_nt, sg);
 
     mrn_dbg_func_end();
 
@@ -337,7 +330,7 @@ int ChildNode_proc_RecoveryReport(BackEndNode_t* be, Packet_t* ipacket)
 
  int ChildNode_proc_EnablePerfData(BackEndNode_t* be, Packet_t* ipacket)
  {
-     int stream_id;
+     unsigned int stream_id;
      Stream_t* strm;
      int metric, context;
 
@@ -346,7 +339,7 @@ int ChildNode_proc_RecoveryReport(BackEndNode_t* be, Packet_t* ipacket)
      stream_id = ipacket->stream_id;
      strm = Network_get_Stream(be->network, stream_id);
      if (strm == NULL) {
-         mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", stream_id));
+         mrn_dbg(1, mrn_printf(FLF, stderr, "stream %u lookup failed\n", stream_id));
          return -1;
      } 
 
@@ -360,7 +353,7 @@ int ChildNode_proc_RecoveryReport(BackEndNode_t* be, Packet_t* ipacket)
 
 int ChildNode_proc_DisablePerfData(BackEndNode_t* be, Packet_t* ipacket)
 {
-    int stream_id;
+    unsigned int stream_id;
     Stream_t* strm;
     int metric, context;
 
@@ -369,7 +362,7 @@ int ChildNode_proc_DisablePerfData(BackEndNode_t* be, Packet_t* ipacket)
     stream_id = ipacket->stream_id;
     strm = Network_get_Stream(be->network, stream_id);
     if (strm == NULL) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", stream_id));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "stream %u lookup failed\n", stream_id));
         return -1;
     }
 
@@ -383,9 +376,9 @@ int ChildNode_proc_DisablePerfData(BackEndNode_t* be, Packet_t* ipacket)
 
 int ChildNode_proc_CollectPerfData(BackEndNode_t* be, Packet_t* ipacket)
 {
-    int stream_id;
+    unsigned int stream_id, aggr_strm_id;
     Stream_t* strm;
-    int metric, context, aggr_strm_id;
+    int metric, context;
     Packet_t* pkt;
     Stream_t* aggr_strm;
 
@@ -394,19 +387,22 @@ int ChildNode_proc_CollectPerfData(BackEndNode_t* be, Packet_t* ipacket)
     stream_id = ipacket->stream_id;
     strm = Network_get_Stream(be->network, stream_id);
     if (strm == NULL) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", stream_id));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "stream %u lookup failed\n", stream_id));
         return -1;
     }
 
-    Packet_unpack(ipacket, "%d %d %d", &metric, &context, &aggr_strm_id);
+    Packet_unpack(ipacket, "%d %d %ud", &metric, &context, &aggr_strm_id);
 
     // collect
-    pkt = Stream_collect_PerfData(strm, (perfdata_metric_t)metric, (perfdata_context_t)context, aggr_strm_id);
+    pkt = Stream_collect_PerfData(strm, 
+                                  (perfdata_metric_t)metric, 
+                                  (perfdata_context_t)context, 
+                                  aggr_strm_id);
 
     // send
     aggr_strm = Network_get_Stream(be->network, aggr_strm_id);
     if (aggr_strm == NULL) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "aggr stream %d lookup failed\n", aggr_strm_id));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "aggr stream %u lookup failed\n", aggr_strm_id));
         return -1;
     }
 
@@ -418,7 +414,7 @@ int ChildNode_proc_CollectPerfData(BackEndNode_t* be, Packet_t* ipacket)
 
 int ChildNode_proc_PrintPerfData(BackEndNode_t* be, Packet_t* ipacket)
 {
-    int stream_id;
+    unsigned int stream_id;
     Stream_t* strm;
     int metric, context;
 
@@ -427,7 +423,7 @@ int ChildNode_proc_PrintPerfData(BackEndNode_t* be, Packet_t* ipacket)
     stream_id = ipacket->stream_id;
     strm = Network_get_Stream(be->network, stream_id);
     if (strm == NULL) { 
-        mrn_dbg (1, mrn_printf(FLF,stderr, "stream %d lookup failed\n", stream_id));
+        mrn_dbg (1, mrn_printf(FLF,stderr, "stream %u lookup failed\n", stream_id));
         return -1;
     }
 
@@ -441,29 +437,25 @@ int ChildNode_proc_PrintPerfData(BackEndNode_t* be, Packet_t* ipacket)
 
 int ChildNode_proc_TopologyReport(BackEndNode_t* be, Packet_t* ipacket)
 {
-    char* topology_ptr;
-    char* topology;
+    char* topology = NULL;
    
     mrn_dbg_func_begin();
 
-    Packet_unpack(ipacket, "%s", &topology_ptr);
-    topology = topology_ptr;
+    Packet_unpack(ipacket, "%s", &topology);
 
-    if (!Network_reset_Topology(be->network, topology)) {
+    if( ! Network_reset_Topology(be->network, topology) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Topology->reset() failed\n"));
         return -1;
     }
     
     // send ack to parent
-    if (!ChildNode_ack_TopologyReport(be)) {
+    if( ! ChildNode_ack_TopologyReport(be) ) {
         mrn_dbg(1, mrn_printf(FLF,stderr, "ack_TopologyReport() failed\n"));
         return -1;
     }
 
     mrn_dbg_func_end();
-
     return 0;
-
 }
 
 int ChildNode_ack_TopologyReport(BackEndNode_t* be)
@@ -502,7 +494,7 @@ int ChildNode_proc_PortUpdate(BackEndNode_t * be,
     mrn_dbg_func_begin();
     
     // send update for my port
-    s = Network_get_Stream(be->network, 2); // get port update stream
+    s = Network_get_Stream(be->network, PORT_STRM_ID); // get port update stream
     type = TOPO_CHANGE_PORT;
     host_arr = strdup("NULL");
     send_iprank = UnknownRank;

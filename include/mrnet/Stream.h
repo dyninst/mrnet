@@ -31,6 +31,12 @@ typedef enum {
     FILTER_UPSTREAM_SYNC
 } FilterType; 
 
+#define INVALID_STREAM_ID ((unsigned int)-1)
+extern const unsigned int CTL_STRM_ID;
+extern const unsigned int TOPOL_STRM_ID;
+extern const unsigned int PORT_STRM_ID;
+extern const unsigned int USER_STRM_BASE_ID;
+    
 class Stream {
 
     friend class Network;
@@ -79,8 +85,11 @@ class Stream {
      
     // END MRNET API
 
-    Stream( Network * inetwork, int iid, Rank *ibackends, unsigned int inum_backends,
-            int ius_filter_id, int isync_filter_id, int ids_filter_id );
+    Stream( Network *inetwork, unsigned int iid, 
+            Rank *ibackends, unsigned int inum_backends,
+            unsigned int ius_filter_id, 
+            unsigned int isync_filter_id, 
+            unsigned int ids_filter_id );
 
     ~Stream();
 
@@ -131,11 +140,11 @@ class Stream {
     //Static Data Members
     Network * _network;
     unsigned int _id;
-    int _sync_filter_id;
+    unsigned int _sync_filter_id;
     Filter * _sync_filter;
-    int _us_filter_id;
+    unsigned int _us_filter_id;
     Filter * _us_filter;
-    int _ds_filter_id;
+    unsigned int _ds_filter_id;
     Filter * _ds_filter;
     std::set< Rank > _end_points;
 

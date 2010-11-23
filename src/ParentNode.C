@@ -160,7 +160,7 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
     return retval;
 }
 
-int ParentNode::proc_PortUpdates( PacketPtr ipacket ) const
+int ParentNode::proc_PortUpdates( PacketPtr ) const
 {
     return 1;
 }
@@ -352,7 +352,7 @@ int ParentNode::proc_TopologyReport( PacketPtr ipacket ) const
     return 0;
 }
 
-int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ipacket ) const
+int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ) const
 {
     mrn_dbg_func_begin();
 
@@ -384,13 +384,13 @@ int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ipacket ) const
 }
 
 
-int ParentNode::proc_newSubTreeReport( PacketPtr ipacket ) const
+int ParentNode::proc_newSubTreeReport( PacketPtr ) const
 {
     assert(!"DEPRECATED -- THIS SHOULD NEVER BE CALLED");
     return 0;
 }
 
-int ParentNode::proc_DeleteSubTreeAck( PacketPtr /* ipacket */ ) const
+int ParentNode::proc_DeleteSubTreeAck( PacketPtr ) const
 {
     mrn_dbg_func_begin();
 
@@ -410,7 +410,7 @@ int ParentNode::proc_DeleteSubTreeAck( PacketPtr /* ipacket */ ) const
     return 0;
 }
 
-int ParentNode::proc_TopologyReportAck( PacketPtr /* ipacket */ ) const
+int ParentNode::proc_TopologyReportAck( PacketPtr ) const
 {
     mrn_dbg_func_begin();
 
@@ -437,11 +437,11 @@ int ParentNode::proc_Event( PacketPtr ) const
 
 Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
 {
-    unsigned int num_backends;
-    Rank* backends;
-    int stream_id, tag;
-    int ds_filter_id, us_filter_id, sync_id;
     Stream* stream;
+    Rank* backends = NULL;
+    unsigned int num_backends;
+    unsigned int stream_id;
+    int tag, ds_filter_id, us_filter_id, sync_id;
 
     mrn_dbg_func_begin();
 
@@ -454,7 +454,7 @@ Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
         char *ds_filters = NULL;
         Rank me = _network->get_LocalRank();
 
-        if( ipacket->unpack("%d %ad %s %s %s", 
+        if( ipacket->unpack("%ud %ad %s %s %s", 
                             &stream_id, &backends, &num_backends, 
                             &us_filters, &sync_filters, &ds_filters) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "unpack() failed\n") );
@@ -488,7 +488,7 @@ Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
     } 
     else if( tag == PROT_NEW_STREAM ) {
 
-        if( ipacket->unpack("%d %ad %d %d %d", 
+        if( ipacket->unpack("%ud %ad %d %d %d", 
                             &stream_id, &backends, &num_backends, 
                             &us_filter_id, &sync_id, &ds_filter_id) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "unpack() failed\n") );
@@ -516,15 +516,15 @@ Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
 
 int ParentNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
 {
-    int stream_id;
+    unsigned int stream_id;
 
     mrn_dbg_func_begin();
 
     stream_id = ipacket->get_StreamId();
     Stream* strm = _network->get_Stream( stream_id );
     if( strm == NULL ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                               stream_id ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n",
+                               stream_id) );
         return -1;
     }
 
@@ -545,7 +545,7 @@ int ParentNode::proc_deleteStream( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
 
-    int stream_id = (*ipacket)[0]->get_int32_t();
+    unsigned int stream_id = (*ipacket)[0]->get_uint32_t();
 
     if( _network->send_PacketToChildren( ipacket ) == -1 ) {
         mrn_dbg(2, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n"));
@@ -556,8 +556,8 @@ int ParentNode::proc_deleteStream( PacketPtr ipacket ) const
     if( _network->is_LocalNodeInternal() ) {
         Stream * strm = _network->get_Stream( stream_id );
         if( strm == NULL ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                                   stream_id ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n",
+                                   stream_id) );
             return -1;
         }
         delete strm;
@@ -640,7 +640,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "New child node[%s:%u:%u] (incarnation:%u) on socket %d\n",
                           child_hostname_ptr, child_rank, child_port,
-                          child_incarnation, isock ));
+                          child_incarnation, isock) );
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "is_internal?: '%c'\n", is_internal_char ));
     bool is_internal = ( is_internal_char == 't' ? true : false );
@@ -683,7 +683,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                               old_parent_rank, my_rank ));
 
 #if OLD_FAILURE_NOTIFICATION
-        PacketPtr packet( new Packet(0, PROT_RECOVERY_RPT, "%ud %ud %ud",
+        PacketPtr packet( new Packet(CTL_STRM_ID, PROT_RECOVERY_RPT, "%ud %ud %ud",
                                      child_rank,
                                      old_parent_rank,
                                      _network->get_LocalRank()) );
@@ -694,7 +694,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
 #else
         // generate topology update for child reparenting
         if( _network->is_LocalNodeInternal() ) {
-            Stream *s = _network->get_Stream(1); // get topol prop stream
+            Stream *s = _network->get_Stream(TOPOL_STRM_ID); // get topol prop stream
             int type = NetworkTopology::TOPO_CHANGE_PARENT; 
             Port dummy_port = UnknownPort;
             char* dummy_host = strdup("NULL"); // ugh, this needs to be fixed
@@ -778,39 +778,12 @@ int ParentNode::proc_RecoveryReport( PacketPtr ipacket ) const
     return 0;
 }
 
-int ParentNode::proc_closeStream( PacketPtr ipacket ) const
+int ParentNode::proc_closeStream( PacketPtr ) const
 {
     mrn_dbg_func_begin();
 
     assert(!"DEPRECATED -- THIS SHOULD NEVER BE CALLED");
 
-    // int stream_id;
-//     ipacket->unpack( "%d", &stream_id );
-
-//     Stream * stream = _network->get_Stream( stream_id );
-//     if( stream == NULL ) {
-//         mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-//                                stream_id ));
-//         return -1;
-//     }
-
-//     stream->close_Peer( ipacket->get_InletNodeRank() );
-
-//     if( stream->is_Closed() ) {
-//         if( _network->is_LocalNodeChild() ) {
-//             // internal nodes should propagate "close"
-//             if( _network->send_PacketToParent( ipacket ) == -1 ) {
-//                 mrn_dbg(1, mrn_printf(FLF, stderr, "send() failed\n"));
-//                 return -1;
-//             }
-//         }
-//         else {
-//             // FE should wake any folks blocked on recv()
-//             assert( _network->is_LocalNodeFrontEnd() );
-//             stream->signal_BlockedReceivers();
-//         }
-//     }
-    
     return 0;
 }
 

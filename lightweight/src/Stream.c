@@ -26,33 +26,32 @@
 #include "vector.h"
 #include "Filter.h"
 
+#define INTERNAL_STREAM_BASE_ID (1 << 30)
+const unsigned int CTL_STRM_ID = INTERNAL_STREAM_BASE_ID;
+const unsigned int USER_STRM_BASE_ID = INTERNAL_STREAM_BASE_ID + 1;
+const unsigned int TOPOL_STRM_ID = INTERNAL_STREAM_BASE_ID + 1;
+const unsigned int PORT_STRM_ID  = INTERNAL_STREAM_BASE_ID + 2;
+
 Stream_t* new_Stream_t(Network_t* net,
-                       int iid, 
+                       unsigned int iid, 
                        Rank *ibackends,
                        unsigned int inum_backends,
-                       int ius_filter_id,
-                       int isync_filter_id,
-                       int ids_filter_id)
+                       unsigned int ius_filter_id,
+                       unsigned int isync_filter_id,
+                       unsigned int ids_filter_id)
 {
-    unsigned short us_filt;
-    unsigned short ds_filt;
-    unsigned short sync_filt;
     Stream_t* new_stream = (Stream_t*)malloc(sizeof(Stream_t));
     assert(new_stream);
 
-    us_filt = (unsigned short) ius_filter_id;
-    ds_filt = (unsigned short) ids_filter_id;
-    sync_filt = (unsigned short) isync_filter_id;
-
     new_stream->network = net;
-    new_stream->id = (unsigned short) iid;
+    new_stream->id = iid;
 
-    new_stream->sync_filter_id = sync_filt;
-    new_stream->sync_filter = new_Filter_t(sync_filt); 
-    new_stream->us_filter_id = us_filt;
-    new_stream->us_filter = new_Filter_t(us_filt); 
-    new_stream->ds_filter_id = ds_filt;
-    new_stream->ds_filter = new_Filter_t(ds_filt);
+    new_stream->sync_filter_id = isync_filter_id;
+    new_stream->sync_filter = new_Filter_t(isync_filter_id); 
+    new_stream->us_filter_id = ius_filter_id;
+    new_stream->us_filter = new_Filter_t(ius_filter_id); 
+    new_stream->ds_filter_id = ids_filter_id;
+    new_stream->ds_filter = new_Filter_t(ids_filter_id);
 
     new_stream->perf_data = new_PerfDataMgr_t();
 
@@ -61,7 +60,7 @@ Stream_t* new_Stream_t(Network_t* net,
     new_stream->_was_closed = 0;
 
     mrn_dbg(3, mrn_printf(FLF, stderr,
-                          "id:%hu, us_filter:%hu, sync_id:%hu, ds_filter:%hu\n", 
+                          "id:%ud, us_filter:%ud, sync_id:%ud, ds_filter:%ud\n", 
                           new_stream->id, new_stream->us_filter_id, 
                           new_stream->sync_filter_id, new_stream->ds_filter_id));
 
@@ -228,7 +227,6 @@ int Stream_push_Packet(Stream_t* stream,
         if( PerfDataMgr_is_Enabled(stream->perf_data,  
                                    PERFDATA_MET_NUM_PKTS, 
                                    PERFDATA_CTX_FILT_OUT ) ) {
-            perfdata_t val;
             //val.u = opacket.size() + opacket_reverse.size();
             val.u = 2;
             PerfDataMgr_add_DataInstance(stream->perf_data, 
@@ -258,7 +256,6 @@ int Stream_push_Packet(Stream_t* stream,
         if( PerfDataMgr_is_Enabled(stream->perf_data,  
                                    PERFDATA_MET_CPU_SYS_PCT, 
                                    PERFDATA_CTX_FILT_OUT ) ) {
-            perfdata_t val;
             diff = (sys_after  - sys_before) ;   
             val.d = ( diff / Timer_get_latency_msecs(tagg) ) * 100.0;
             PerfDataMgr_add_DataInstance(stream->perf_data, 
@@ -328,7 +325,7 @@ int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ... )
     va_start(arg_list, iformat_str);
 
     packet = new_Packet_t(stream->network->local_rank, 
-                          stream->id, itag, (char*)iformat_str, arg_list);
+                          stream->id, itag, iformat_str, arg_list);
     if (packet == NULL) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));
         return -1;
@@ -337,14 +334,14 @@ int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ... )
 
     va_end(arg_list);
 
-    status = Stream_send_aux(stream, itag, (char*)iformat_str, packet);
+    status = Stream_send_aux(stream, itag, iformat_str, packet);
 
     mrn_dbg_func_end();
 
     return status;
 }
 
-int Stream_send_aux(Stream_t* stream, int itag, char* ifmt, Packet_t* ipacket)
+int Stream_send_aux(Stream_t* stream, int itag, const char* ifmt, Packet_t* ipacket)
 {
     Timer_t tagg = new_Timer_t();
     Timer_t tsend = new_Timer_t();
@@ -454,14 +451,14 @@ int Stream_disable_PerfData(Stream_t* stream,
 Packet_t* Stream_collect_PerfData(Stream_t* stream, 
                                   perfdata_metric_t metric,
                                   perfdata_context_t context,
-                                  int aggr_strm_id)
+                                  unsigned int aggr_strm_id)
 {
     vector_t* data = new_empty_vector_t();
     int iter = 0;
     Rank my_rank;
     unsigned num_elems;
     void* data_arr;
-    char* fmt;
+    const char* fmt;
     uint64_t* u64_arr;
     unsigned u;
     int64_t* i64_arr;

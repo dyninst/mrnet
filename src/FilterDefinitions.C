@@ -1296,23 +1296,25 @@ void tfilter_TopoUpdate_common( bool upstream,
     int rank_size = sizeof(Rank);
     int charptr_size = sizeof(char*);
 
-    /* Special case: port updates sent on waitforall stream (id == 2)
-     * - need to append my local port update to those recv'd from children
-     * - if I don't have children, I sent the port update, so don't append
-     */
-    unsigned short strm_id = ipackets[0]->get_StreamId();
-    int* my_type_arr = (int*) calloc(1, type_size);
-    Rank* my_prank_arr = (Rank*) calloc(1, rank_size);
-    Rank* my_crank_arr = (Rank*) calloc(1, rank_size);
-    char** my_chost_arr = (char**) calloc(1, charptr_size);;
-    Port* my_cport_arr = (Port*) calloc(1, port_size);
-    if( strm_id == 2 /* waitforall port update stream */ ) {
+    unsigned int strm_id = ipackets[0]->get_StreamId();
+    if( strm_id == PORT_STRM_ID ) {
 
-        // if I'm a commnode, but not a leaf, append local port update
         if( net->is_LocalNodeInternal() ) {
+
+            /* Special case: port updates sent on waitforall stream
+             * - need to append my local port update to those recv'd from children
+             * - if I don't have children, I sent the port update, so don't append
+             */
+
             NetworkTopology::Node* me = nettop->find_Node( net->get_LocalRank() );
             if( me->get_NumChildren() ) {
         
+                int* my_type_arr = (int*) calloc(1, type_size);
+                Rank* my_prank_arr = (Rank*) calloc(1, rank_size);
+                Rank* my_crank_arr = (Rank*) calloc(1, rank_size);
+                char** my_chost_arr = (char**) calloc(1, charptr_size);;
+                Port* my_cport_arr = (Port*) calloc(1, port_size);
+
                 my_type_arr[0] = NetworkTopology::TOPO_CHANGE_PORT;
                 my_prank_arr[0] = UnknownRank;
                 my_crank_arr[0] = net->get_LocalRank();
@@ -1428,18 +1430,21 @@ void tfilter_TopoUpdate_common( bool upstream,
         nettop->update_TopoStreamPeers( new_nodes );
 
     bool gen_output = true;
-    if( strm_id == 2 /* waitforall port update stream */ )
-        gen_output = true;
-    else if( upstream  ) {
-        if( net->is_LocalNodeFrontEnd() ) 
-            gen_output = false;
-    }
-    else {
-        if( net->is_LocalNodeBackEnd() )
-            gen_output = false;
+    if( strm_id != PORT_STRM_ID ) {
+        if( upstream ) {
+            if( net->is_LocalNodeFrontEnd() ) {
+                gen_output = false;
+            }
+        }
+        else {
+            if( net->is_LocalNodeBackEnd() ) {
+                gen_output = false;
+            }
+        }
     }
 
     if( gen_output ) {
+
         // Create output packet
         opacket = PacketPtr( new Packet(ipackets[0]->get_StreamId(),
                                         ipackets[0]->get_Tag(),
@@ -1777,10 +1782,10 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         mrn_dbg( 5, mrn_printf(FLF, stderr, "Placing packet[%d] from node[%d]\n",
                                i, cur_inlet_rank) );
         state->packets_by_rank[ cur_inlet_rank ]->push_back( ipackets[i] );
-	if( stream_id == 1 ) {
+	if( stream_id == TOPOL_STRM_ID ) {
             if( peers.find(cur_inlet_rank) == peers.end() ) {
                 stream->add_Stream_Peer( cur_inlet_rank );
-                peers.insert( cur_inlet_rank);
+                peers.insert( cur_inlet_rank );
             }
 	}   
         state->ready_peers.insert( cur_inlet_rank );

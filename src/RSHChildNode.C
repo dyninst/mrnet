@@ -44,7 +44,7 @@ int RSHChildNode::proc_PortUpdate( PacketPtr ipacket ) const
     }
     // else, i'm a back-end or a leaf commnode, so send a port update packet
 
-    Stream *s = _network->get_Stream(2); // waitforall port update stream
+    Stream *s = _network->get_Stream(PORT_STRM_ID);
         
     int type = NetworkTopology::TOPO_CHANGE_PORT ;  
     char *host_arr = strdup("NULL"); // ugh, this needs to be fixed

@@ -101,10 +101,10 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
     /* recv an vector of packet_sizes */
     //buf_len's value is hardcode, breaking pdr encapsulation barrier :(
     buf_len = (sizeof(uint32_t) * no_packets) + 1;  // 1 byte pdr overhead
-    buf = ( char * ) malloc( buf_len );
+    buf = (char*) malloc( buf_len );
     assert( buf );
 
-    packet_sizes = ( uint32_t * ) malloc( sizeof( uint32_t ) * no_packets );
+    packet_sizes = (uint32_t*) malloc( sizeof( uint32_t ) * no_packets );
     if( packet_sizes == NULL ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                     "recv: packet_size malloc is NULL for %d packets\n",
@@ -130,8 +130,8 @@ int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling pdrmem_create\n" ));
     pdrmem_create( &pdrs, buf, buf_len, op );
-    if( !pdr_vector ( &pdrs, ( char * )( packet_sizes ), no_packets,
-                      sizeof( uint32_t ), ( pdrproc_t ) pdr_uint32 ) ) {
+    if( ! pdr_vector( &pdrs, (char*)( packet_sizes ), no_packets,
+                      sizeof(uint32_t ), (pdrproc_t) pdr_uint32 ) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_vector() failed\n" ));
         free( buf );
         free( packet_sizes );
@@ -224,15 +224,15 @@ int Message::send( int sock_fd )
     }
 
     /* Process packets in list to prepare for send() */
-    no_packets = _packets.size( );
+    no_packets = _packets.size();
     XPlat::NCBuf* ncbufs = new XPlat::NCBuf[no_packets];
-    packet_sizes = ( uint32_t * ) malloc( sizeof( uint32_t ) * no_packets );
+    packet_sizes = (uint32_t*) malloc( sizeof(uint32_t) * no_packets );
     assert( packet_sizes );
 
-    std::list < PacketPtr >::iterator iter = _packets.begin( );
+    std::list< PacketPtr >::iterator iter = _packets.begin();
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Writing %d packets\n",
                            no_packets ));
-    for( i = 0; iter != _packets.end( ); iter++, i++ ) {
+    for( i = 0; iter != _packets.end(); iter++, i++ ) {
 
         PacketPtr curPacket( *iter );
 
@@ -242,7 +242,7 @@ int Message::send( int sock_fd )
             go_away = true;
 
         uint32_t psz = curPacket->get_BufferLen();
-        ncbufs[i].buf = const_cast< char * >( curPacket->get_Buffer( ) );
+        ncbufs[i].buf = const_cast< char* >( curPacket->get_Buffer() );
         ncbufs[i].len = psz;
         packet_sizes[i] = psz;
         total_bytes += psz;
@@ -250,9 +250,9 @@ int Message::send( int sock_fd )
     }
 
     /* put how many packets are going */
-    buf_len = pdr_sizeof( ( pdrproc_t )( pdr_uint32 ), &no_packets );
+    buf_len = pdr_sizeof( (pdrproc_t)( pdr_uint32 ), &no_packets );
     assert( buf_len );
-    buf = ( char * )malloc( buf_len );
+    buf = (char*) malloc( buf_len );
     assert( buf );
     pdrmem_create( &pdrs, buf, buf_len, op );
 
@@ -280,13 +280,12 @@ int Message::send( int sock_fd )
 
     /* send a vector of packet_sizes */
     buf_len = (no_packets * sizeof( uint32_t )) + 1;  //1 extra bytes overhead
-    buf = ( char * )malloc( buf_len );
+    buf = (char*) malloc( buf_len );
     assert( buf );
     pdrmem_create( &pdrs, buf, buf_len, op );
 
-    if( !pdr_vector
-        ( &pdrs, ( char * )( packet_sizes ), no_packets, sizeof( uint32_t ),
-          ( pdrproc_t ) pdr_uint32 ) ) {
+    if( ! pdr_vector( &pdrs, (char*)( packet_sizes ), no_packets, 
+                      sizeof(uint32_t), (pdrproc_t) pdr_uint32 ) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_vector() failed\n" ));
         free( buf );
         delete[] ncbufs;

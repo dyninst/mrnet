@@ -406,14 +406,6 @@ bool NetworkTopology::add_SubGraph( Node * inode, SerialGraph & isg, bool iupdat
                          isg.get_RootRank(), isg.is_RootBackEnd() );
         _nodes[ isg.get_RootRank() ] = node;
     }
-    else{
-        //Found! Remove old subgraph
-        /* MJB NOTE: removed following call to remove_SubGraph() as it 
-                     adds a lot of overhead but does not seem to be
-                     necessary for proper operation
-           remove_SubGraph( node );
-        */
-    }
 
     if( node->is_BackEnd() ) {
         string name = node->get_HostName();
@@ -1298,7 +1290,7 @@ bool NetworkTopology::send_updates_buffer()
             cport_arr[i] = (*it)->chld_port;
         } 
     
-        Stream *s = _network->get_Stream(1); // get topol prop stream
+        Stream *s = _network->get_Stream(TOPOL_STRM_ID); // get topol prop stream
 
         //broadcast all topology updates
         mrn_dbg( 5, mrn_printf(FLF, stderr, "sending %d updates\n", vuc_size) );

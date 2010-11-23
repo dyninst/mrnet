@@ -10,14 +10,14 @@
 #include <math.h>
 #include <time.h>
 
-#include "mrnet_lightweight/NetworkTopology.h"
-#include "mrnet_lightweight/Stream.h"
-#include "mrnet_lightweight/Types.h"
 #include "utils_lightweight.h"
 #include "map.h"
 #include "vector.h"
 #include "SerialGraph.h"
 
+#include "mrnet_lightweight/NetworkTopology.h"
+#include "mrnet_lightweight/Stream.h"
+#include "mrnet_lightweight/Types.h"
 #include "xplat_lightweight/NetUtils.h"
 
 Node_t* new_Node_t(char* ihostname, 
@@ -69,7 +69,7 @@ NetworkTopology_t* new_NetworkTopology_t(Network_t* inetwork,
 
   mrn_dbg(5, mrn_printf(FLF,stderr, "About to insert node into net_top->nodes, with rank=%d\n", irank));
   net_top->nodes = new_map_t();
-  insert(net_top->nodes, irank ,net_top->root);
+  insert(net_top->nodes, (int)irank, net_top->root);
 
   return net_top;
 }
@@ -123,10 +123,11 @@ int NetworkTopology_isInTopology(NetworkTopology_t* net_top,
 
 char * NetworkTopology_get_TopologyStringPtr(NetworkTopology_t * net_top)
 {
-	char * retval;
+    char * retval;
 
-    if (net_top->serial_graph != NULL)
+    if( net_top->serial_graph != NULL )
         free_SerialGraph_t(net_top->serial_graph);
+
     net_top->serial_graph = new_SerialGraph_t(NULL);
 
     NetworkTopology_serialize(net_top, net_top->root);
@@ -138,32 +139,32 @@ char * NetworkTopology_get_TopologyStringPtr(NetworkTopology_t * net_top)
 
 char* NetworkTopology_get_LocalSubTreeStringPtr(NetworkTopology_t* net_top)
 { 
-  char* localhost;
-  SerialGraph_t* my_subgraph;
-  char* retval;
+    char* localhost;
+    SerialGraph_t* my_subgraph;
+    char* retval;
     
-  mrn_dbg_func_begin();
+    mrn_dbg_func_begin();
 
-  if (net_top->serial_graph != NULL)
-    free_SerialGraph_t(net_top->serial_graph);
-  net_top->serial_graph = new_SerialGraph_t(NULL);
+    if( net_top->serial_graph != NULL )
+        free_SerialGraph_t(net_top->serial_graph);
+    net_top->serial_graph = new_SerialGraph_t(NULL);
+    
+    NetworkTopology_serialize (net_top, net_top->root);
+
+    localhost = Network_get_LocalHostName(net_top->net);
+    my_subgraph =  SerialGraph_get_MySubTree(net_top->serial_graph,
+                                             localhost,
+                                             Network_get_LocalPort(net_top->net),
+                                             Network_get_LocalRank(net_top->net));
   
-  NetworkTopology_serialize (net_top, net_top->root);
+    retval = strdup(my_subgraph->byte_array);
+    free_SerialGraph_t( my_subgraph );
 
-  localhost = Network_get_LocalHostName(net_top->net);
-  my_subgraph = 
-    SerialGraph_get_MySubTree(net_top->serial_graph,
-                              localhost,
-                              Network_get_LocalPort(net_top->net),
-                              Network_get_LocalRank(net_top->net));
-  
-  retval = strdup(my_subgraph->byte_array);
+    mrn_dbg(5, mrn_printf(FLF, stderr, "returning '%s'\n", retval));
+    
+    mrn_dbg_func_end();
 
-  mrn_dbg(5, mrn_printf(FLF, stderr, "returning '%s'\n", retval));
-
-  mrn_dbg_func_end();
-
-  return retval;
+    return retval;
 }
 
 void NetworkTopology_serialize(NetworkTopology_t* net_top, Node_t* inode)
@@ -181,6 +182,7 @@ void NetworkTopology_serialize(NetworkTopology_t* net_top, Node_t* inode)
     }
 
     for (iter = 0; iter < inode->children->size; iter++) {
+        assert( inode->children->vec[iter] != inode );
         NetworkTopology_serialize(net_top, (Node_t*)(inode->children->vec[iter]));
     }
 
@@ -189,107 +191,99 @@ void NetworkTopology_serialize(NetworkTopology_t* net_top, Node_t* inode)
 
 }
 
-int NetworkTopology_reset(NetworkTopology_t* net_top, char* itopology_str)
+int NetworkTopology_reset(NetworkTopology_t* net_top, SerialGraph_t* isg)
 {
-  SerialGraph_t* cur_sg;
-    
-  mrn_dbg(5, mrn_printf(FLF, stderr, "Reseting topology to \"%s\"\n", itopology_str));
+    SerialGraph_t* cur_sg;
+    char *host, *sg_str;
+    Rank rank;
+    Port port;
 
-  if (net_top->serial_graph != NULL) {
-    //free(net_top->serial_graph);
-    free_SerialGraph_t(net_top->serial_graph);
-  }
-  net_top->serial_graph = new_SerialGraph_t(itopology_str);
-  net_top->root = NULL;
+    sg_str = SerialGraph_get_ByteArray(isg);
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Reseting topology to '%s'\n", sg_str)); 
+                     
+    if( net_top->serial_graph != NULL )
+        free_SerialGraph_t(net_top->serial_graph);
 
-  clear_map_t(&(net_top->nodes));
+    net_top->serial_graph = isg;
+    net_top->root = NULL;
 
-  clear(net_top->orphans);
-  clear(net_top->backend_nodes);
+    clear_map_t(&(net_top->nodes));
+    clear(net_top->orphans);
+    clear(net_top->backend_nodes);
 
-  if (!strcmp(itopology_str, "")) {
-    return true;
-  }
+    if( ! strcmp(sg_str, "") )
+        return true;
 
-  SerialGraph_set_ToFirstChild(net_top->serial_graph); 
+    SerialGraph_set_ToFirstChild(net_top->serial_graph); 
  
-  mrn_dbg(5, mrn_printf(FLF, stderr, "Root: %s:%d:%d\n",
-                        SerialGraph_get_RootHostName(net_top->serial_graph),
-                        SerialGraph_get_RootRank(net_top->serial_graph),
-                        SerialGraph_get_RootPort(net_top->serial_graph)));
-  net_top->root = 
-      new_Node_t(SerialGraph_get_RootHostName(net_top->serial_graph),
-                 SerialGraph_get_RootPort(net_top->serial_graph),
-                 SerialGraph_get_RootRank(net_top->serial_graph),
-                 SerialGraph_is_RootBackEnd(net_top->serial_graph));
-;
-  insert(net_top->nodes, net_top->root->rank, net_top->root);
+    host = SerialGraph_get_RootHostName(isg);
+    port = SerialGraph_get_RootPort(isg);
+    rank = SerialGraph_get_RootRank(isg);
 
-  cur_sg = (SerialGraph_t*)malloc(sizeof(SerialGraph_t));
-  assert(cur_sg);
-  for (cur_sg = SerialGraph_get_NextChild(net_top->serial_graph);
-        cur_sg;
-        cur_sg = SerialGraph_get_NextChild(net_top->serial_graph)) {
-      mrn_dbg(5, mrn_printf(FLF, stderr, "adding subgraph\n"));
-      if (!NetworkTopology_add_SubGraph(net_top, net_top->root, cur_sg, false)) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "add_SubTreeRoot() failed\n"));
-        return false;
-    }
-  }
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Root: %s:%hu:%u\n",
+                          host, port, rank));
+           
+    net_top->root = new_Node_t(host, port, rank, 
+                               SerialGraph_is_RootBackEnd(isg));
 
-  free(cur_sg);
+    insert(net_top->nodes, (int)net_top->root->rank, net_top->root);
     
-  return true;
+    cur_sg = SerialGraph_get_NextChild(isg);
+    for( ; cur_sg; cur_sg = SerialGraph_get_NextChild(isg) ) {
 
+        if( ! NetworkTopology_add_SubGraph(net_top, net_top->root, 
+                                           cur_sg, false) ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, 
                                  SerialGraph_t* isg, int iupdate) 
 {
-    Node_t* node;
-    Node_t* new_node;
+    Node_t *node, *new_node;
     char* name;
-    Rank r;
     SerialGraph_t* cur_sg;
+    Rank r;
     
     mrn_dbg_func_begin();
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Node[%d] adding subgraph \"%s\"\n",
-                        inode->rank, isg->byte_array));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Node[%d] adding subgraph '%s'\n",
+                          inode->rank, isg->byte_array));
 
-    if (!findElement(net_top->parent_nodes, inode))
+    if( ! findElement(net_top->parent_nodes, inode) )
         pushBackElement(net_top->parent_nodes, inode);
 
     // search of root of subgraph
-    node = (Node_t*)malloc(sizeof(Node_t));
+    node = (Node_t*) malloc(sizeof(Node_t));
     assert(node);
     node = NetworkTopology_find_Node(net_top, SerialGraph_get_RootRank(isg));
     if (node == NULL) {
         // Not found! allocate
         mrn_dbg(5, mrn_printf(FLF, stderr, "node==NULL, about to allocate\n"));
         node = new_Node_t(SerialGraph_get_RootHostName(isg),
-                            SerialGraph_get_RootPort(isg),
-                            SerialGraph_get_RootRank(isg),
-                            SerialGraph_is_RootBackEnd(isg));
+                          SerialGraph_get_RootPort(isg),
+                          SerialGraph_get_RootRank(isg),
+                          SerialGraph_is_RootBackEnd(isg));
         new_node = (Node_t*)malloc(sizeof(Node_t));
         assert(new_node);
         *new_node = *node;
-        insert(net_top->nodes, node->rank, new_node);
-    } else {
-        // Found! Remove old subgraph
-        mrn_dbg(5, mrn_printf(FLF, stderr, "node!=null, calling remove_SubGraph\n"));
-        NetworkTopology_remove_SubGraph(net_top, node);
+        insert(net_top->nodes, (int)node->rank, new_node);
     }
 
-    if (NetworkTopology_Node_is_BackEnd(node)) {
+    if( NetworkTopology_Node_is_BackEnd(node) ) {
         name = node->hostname;
         r = node->rank;
-        if (!findElement(net_top->backend_nodes, node)) {
-            mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as backend\n", r));
+        if( ! findElement(net_top->backend_nodes, node) ) {
+            mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%u] as backend\n", r));
             pushBackElement(net_top->backend_nodes, node);
         }
     }
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as child of node[%d]\n", node->rank, inode->rank));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%u] as child of node[%u]\n", 
+                          node->rank, inode->rank));
     // add root of new subgraph as child of input node
     NetworkTopology_set_Parent(net_top, node->rank, inode->rank, iupdate);
 
@@ -419,8 +413,9 @@ void NetworkTopology_remove_SubGraph(NetworkTopology_t* net_top, Node_t* inode)
     
     mrn_dbg_func_begin();
 
-    for (iter = 0; iter < inode->children->size; iter++) {
+    for( iter = 0; iter < inode->children->size; iter++ ) {
         Node_t* cur_node = (Node_t*)inode->children->vec[iter];
+        assert( cur_node != inode );
         NetworkTopology_remove_SubGraph(net_top, cur_node);
         NetworkTopology_remove_Node_2(net_top, cur_node);
     }
@@ -913,7 +908,7 @@ int NetworkTopology_new_Node(NetworkTopology_t* net_top, const char * host,
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating back node[%d] %s:%d\n",
                 rank, host_name, port));
     node = new_Node_t(host,port,rank,iis_backend);
-    insert(net_top->nodes, rank, node);
+    insert(net_top->nodes, (int)rank, node);
    
     if (iis_backend) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as backend\n", rank));

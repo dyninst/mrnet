@@ -6,6 +6,16 @@
 #if !defined(__types_h)
 #define __types_h 1
 
+#if !defined (__STDC_LIMIT_MACROS)
+#  define __STDC_LIMIT_MACROS
+#endif
+#if !defined (__STDC_CONSTANT_MACROS)
+#  define __STDC_CONSTANT_MACROS
+#endif
+#if !defined (__STDC_FORMAT_MACROS)
+#  define __STDC_FORMAT_MACROS
+#endif
+
 #include <sys/types.h>
 
 #if defined (os_linux)

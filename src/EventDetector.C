@@ -41,7 +41,7 @@ bool EventDetector::stop( )
             int edt_port, sock_fd=0;
             string edt_host;
             Message msg;
-            PacketPtr packet( new Packet( 0, PROT_KILL_SELF, "" ) );
+            PacketPtr packet( new Packet(CTL_STRM_ID, PROT_KILL_SELF, "") );
 
             edt_host = _network->get_LocalHostName();
             edt_port = _network->get_LocalPort();
@@ -570,7 +570,7 @@ void * EventDetector::main( void* iarg )
                         net->_edt = NULL; // prevents trying to stop myself
 
                         char delete_backends = 'f';
-                        PacketPtr packet( new Packet(0, PROT_SHUTDOWN, 
+                        PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, 
                                                      "%c", delete_backends) );
                         if( net->is_LocalNodeInternal() ) {
                             p = net->get_LocalParentNode();
@@ -646,7 +646,7 @@ int EventDetector::init_NewChildFDConnection( PeerNodePtr iparent_node )
                                iparent_node->get_Port() ) );
     }
 
-    PacketPtr packet( new Packet( 0, PROT_NEW_CHILD_FD_CONNECTION, "%s %uhd %ud",
+    PacketPtr packet( new Packet( CTL_STRM_ID, PROT_NEW_CHILD_FD_CONNECTION, "%s %uhd %ud",
                                   lhostname.c_str(), lport, lrank ) );
     Message msg;
     msg.add_Packet( packet );
@@ -692,7 +692,7 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
 
     // generate topology update for failed child
     if( _network->is_LocalNodeInternal() ) {
-        Stream *s = _network->get_Stream(1); // get topol prop stream
+        Stream *s = _network->get_Stream(TOPOL_STRM_ID); // get topol prop stream
         int type = NetworkTopology::TOPO_REMOVE_RANK; 
         Port dummy_port = UnknownPort;
         char* dummy_host = strdup("NULL"); // ugh, this needs to be fixed
@@ -804,7 +804,7 @@ int EventDetector::recover_FromParentFailure( int& new_parent_sock )
     mrn_dbg(3, mrn_printf( FLF, stderr, "Report failure to children ...\n"));
     if( _network->is_LocalNodeInternal() ) {
         //format is my_rank, failed_parent_rank, new_parent_rank
-        PacketPtr packet( new Packet( 0, PROT_RECOVERY_RPT, "%ud %ud %ud",
+        PacketPtr packet( new Packet( CTL_STRM_ID, PROT_RECOVERY_RPT, "%ud %ud %ud",
                                       my_rank,
                                       par_rank,
                                       new_parent_rank ) );
@@ -833,7 +833,7 @@ int EventDetector::recover_FromParentFailure( int& new_parent_sock )
 
 #ifdef HAVE_FAILURE_MGR
     //Notify Failure Manager that recovery is complete
-    PacketPtr packet( new Packet( 0, PROT_RECOVERY_RPT,
+    PacketPtr packet( new Packet( CTL_STRM_ID, PROT_RECOVERY_RPT,
                                   "%ud %ud %lf %lf %lf %lf %lf %lf",
                                   my_rank,
                                   par_rank,

@@ -37,18 +37,20 @@ class Packet: public Error {
 
     static PacketPtr NullPacket;
 
-    Packet( unsigned short _stream_id, int _tag, const char *fmt, ... );
-    Packet( unsigned short _stream_id, int _tag, const void **data, const char *fmt);
+    Packet( unsigned int istream_id, int itag, const char *ifmt, ... );
+    Packet( const char *ifmt, va_list idata, unsigned int istream_id, int itag );
+    Packet( unsigned int istream_id, int itag, const void **idata, const char *ifmt );
 
     int unpack( const char *ifmt, ... );
-    const DataElement * operator[] ( unsigned int i ) const;
+    const DataElement* operator[]( unsigned int i ) const;
 
     int get_Tag(void) const;
     void set_Tag( int itag ) { tag = itag; }
 
-    unsigned short get_StreamId(void) const;
+    unsigned int get_StreamId(void) const;
     const char *get_FormatString(void) const;
     Rank get_InletNodeRank(void) const;
+    Rank get_SourceRank(void) const;
 
     bool set_Destinations( const std::vector< Rank >& );
 
@@ -63,15 +65,19 @@ class Packet: public Error {
 
  private:
 
-    Packet( Rank isrc, unsigned short istream_id, int itag, const char *ifmt, va_list iargs );
+    Packet( Rank isrc, unsigned int istream_id, int itag, 
+            const char *ifmt, va_list idata );
     Packet( unsigned int ibuf_len, char *ibuf, Rank iinlet_rank );
 
-    void construct_pdr(void);
+    void encode_pdr(void);
+    void decode_pdr(void) const;
 
     const char *get_Buffer(void) const;
     unsigned int get_BufferLen(void) const;
 
     bool get_Destinations( unsigned& num_dest, Rank** dests );
+
+    void set_SourceRank( Rank r ) { src_rank = r; }
 
     unsigned int get_NumDataElements(void) const;
     const DataElement * get_DataElement( unsigned int i ) const;
@@ -85,7 +91,7 @@ class Packet: public Error {
     static bool_t pdr_packet( struct PDR *, Packet * );
 
     //Data Members
-    uint16_t stream_id;
+    uint32_t stream_id;
     int32_t tag;            /* Application/Protocol Level ID */
     Rank src_rank;          /* Null Terminated String */
     char *fmt_str;          /* Null Terminated String */
@@ -99,13 +105,6 @@ class Packet: public Error {
 
     std::vector< const DataElement * > data_elements;
     mutable XPlat::Mutex data_sync;
-
-    /************************************************************************
-       Packet Buffer Format:
-        ___________________________________________
-       | streamid | tag | src_rank | fmtstr | data |
-        -------------------------------------------
-     ************************************************************************/
 };
 
 

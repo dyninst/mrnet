@@ -18,7 +18,7 @@ namespace MRN
 
 PacketPtr Packet::NullPacket;
 
-void Packet::construct_pdr(void)
+void Packet::encode_pdr(void)
 {
     buf_len = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet), this );
     assert( buf_len );
@@ -37,82 +37,85 @@ void Packet::construct_pdr(void)
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet() failed\n") );
         return;
     }
-    
-    mrn_dbg( 5, mrn_printf(FLF, stderr,
-                           "Packet(%p) success: stream:%d tag:%d fmt:'%s'\n", 
-                           this, stream_id, tag, fmt_str) );
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
+                           stream_id, tag, fmt_str) );
 }
 
-Packet::Packet( Rank isrc, unsigned short istream_id, int itag, 
+void Packet::decode_pdr(void) const
+{
+    if( buf_len == 0 ) // NullPacket has buf==NULL and buf_len==0
+        return;
+
+    Packet* me = const_cast< Packet* >(this);
+    PDR pdrs;
+    pdrmem_create( &pdrs, buf, buf_len, PDR_DECODE );
+
+    if( ! Packet::pdr_packet(&pdrs, me) ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet() failed\n") );
+        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
+    }
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
+                           stream_id, tag, fmt_str) );
+}
+
+Packet::Packet( Rank isrc, unsigned int istream_id, int itag, 
                 const char *ifmt, va_list arg_list )
     : stream_id(istream_id), tag(itag), src_rank(isrc),
       fmt_str( strdup(ifmt) ), buf(NULL), buf_len(0),
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(false)
 {
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "stream:%d tag:%d fmt:'%s'\n",
-                           stream_id, tag, fmt_str) );
-
     ArgList2DataElementArray( arg_list );
-
-    construct_pdr();
+    encode_pdr();
 }
 
-Packet::Packet( unsigned short istream_id, int itag, 
+Packet::Packet( unsigned int istream_id, int itag, 
                 const char *ifmt_str, ... )
     : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
       fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0),
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(false)
 {
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "stream:%d tag:%d fmt:'%s'\n",
-                           stream_id, tag, fmt_str) );
-
     va_list arg_list;
     va_start( arg_list, ifmt_str );
     ArgList2DataElementArray( arg_list ); 
     va_end( arg_list );
-
-    construct_pdr();
+    encode_pdr();
 }
 
-Packet::Packet( unsigned short istream_id, int itag, 
+Packet::Packet( const char *ifmt, va_list idata, 
+                unsigned int istream_id, int itag )
+    : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
+      fmt_str( strdup(ifmt) ), buf(NULL), buf_len(0),
+      inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
+      destroy_data(false)
+{
+    ArgList2DataElementArray( idata );
+    encode_pdr();
+}
+
+Packet::Packet( unsigned int istream_id, int itag, 
 		const void **idata, const char *ifmt_str ) 
     : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
       fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0), 
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(false)
 {
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "stream:%d tag:%d fmt:'%s'\n",
-                           stream_id, tag, fmt_str) );
-
     ArgVec2DataElementArray( idata ); 
-
-    construct_pdr();
+    encode_pdr();
 }
     
 
 Packet::Packet( unsigned int ibuf_len, char * ibuf, Rank iinlet_rank )
-    : stream_id(0), tag(0), src_rank(UnknownRank), fmt_str(NULL),
-      buf(ibuf), buf_len(ibuf_len), inlet_rank(iinlet_rank), 
+    : stream_id((unsigned int)-1), tag(-1), src_rank(UnknownRank), 
+      fmt_str(NULL), buf(ibuf), buf_len(ibuf_len), inlet_rank(iinlet_rank), 
       dest_arr(NULL), dest_arr_len(0), destroy_data(true)
 {
-    mrn_dbg_func_begin();
-
-    if( buf_len == 0 ) // NullPacket has buf==NULL and buf_len==0
-        return;
-
-    PDR pdrs;
-    pdrmem_create( &pdrs, buf, buf_len, PDR_DECODE );
-
-    if( ! Packet::pdr_packet(&pdrs, this) ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet() failed\n") );
-        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
-    }
-
-    mrn_dbg( 5, mrn_printf(FLF, stderr,
-                           "Packet(%p): stream_id:%d tag:%d, fmt:%s\n",
-                           this, stream_id, tag, fmt_str) );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Packet(%p): buf_len=%u\n",
+                           this, buf_len) );
+    decode_pdr();
 }
 
 Packet::~Packet()
@@ -149,15 +152,21 @@ int Packet::unpack( char const *ifmt_str, ... )
     return ret;
 }
 
-const DataElement * Packet::operator[] ( unsigned int i ) const
+const DataElement * Packet::operator[]( unsigned int i ) const
 {
+    const DataElement * ret = NULL;
+    size_t num_elems = 0;
+
     data_sync.Lock();
-    const DataElement * ret = data_elements[i];
+    num_elems = data_elements.size();
+    if( i < num_elems )
+        ret = data_elements[i];
     data_sync.Unlock();
+
     return ret;
 }
 
-bool Packet::operator==(const Packet& p) const
+bool Packet::operator==( const Packet& p ) const
 {
     data_sync.Lock();
     bool ret = ( this == &p );
@@ -180,7 +189,7 @@ void Packet::set_DestroyData( bool b )
     data_sync.Unlock();
 }
 
-int Packet::get_Tag( void ) const
+int Packet::get_Tag(void) const
 {
     data_sync.Lock();
     int ret = tag;
@@ -188,15 +197,15 @@ int Packet::get_Tag( void ) const
     return ret;
 }
 
-unsigned short Packet::get_StreamId(  ) const
+unsigned int Packet::get_StreamId(void) const
 {
     data_sync.Lock();
-    unsigned short ret = stream_id;
+    unsigned int ret = stream_id;
     data_sync.Unlock();
     return ret;
 }
 
-const char *Packet::get_FormatString(  ) const
+const char *Packet::get_FormatString(void) const
 {
     data_sync.Lock();
     const char * ret = fmt_str;
@@ -204,7 +213,7 @@ const char *Packet::get_FormatString(  ) const
     return ret;
 }
 
-const char *Packet::get_Buffer(  ) const
+const char *Packet::get_Buffer(void) const
 {
     data_sync.Lock();
     const char * ret = buf;
@@ -212,7 +221,7 @@ const char *Packet::get_Buffer(  ) const
     return ret;
 }
 
-unsigned int Packet::get_BufferLen(  ) const
+unsigned int Packet::get_BufferLen(void) const
 {
     data_sync.Lock();
     unsigned int ret = buf_len;
@@ -220,7 +229,7 @@ unsigned int Packet::get_BufferLen(  ) const
     return ret;
 }
 
-Rank Packet::get_InletNodeRank(  ) const
+Rank Packet::get_InletNodeRank(void) const
 {
     data_sync.Lock();
     Rank ret = inlet_rank;
@@ -228,10 +237,18 @@ Rank Packet::get_InletNodeRank(  ) const
     return ret;
 }
 
-unsigned int Packet::get_NumDataElements(  ) const
+Rank Packet::get_SourceRank(void) const
 {
     data_sync.Lock();
-    unsigned int ret = data_elements.size(  );
+    Rank ret = src_rank;
+    data_sync.Unlock();
+    return ret;
+}
+
+unsigned int Packet::get_NumDataElements(void) const
+{
+    data_sync.Lock();
+    unsigned int ret = data_elements.size();
     data_sync.Unlock();
     return ret;
 }
@@ -315,13 +332,14 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
 
-    /* Process Packet Header into/out of the pdr mem (see Packet.h for header layout) */
+    pkt->data_sync.Lock();
 
-    if( pdr_uint16( pdrs, &( pkt->stream_id ) ) == FALSE ) {
+    /* Process Packet Header into/out of the pdr mem */
+
+    if( pdr_uint32( pdrs, &( pkt->stream_id ) ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint16() failed\n" ));
         return FALSE;
     }
-
     if( pdr_int32( pdrs, &( pkt->tag ) ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_int32() failed\n" ));
         return FALSE;
@@ -374,7 +392,7 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
         case CHAR_T:
         case UCHAR_T:
             retval =
-                pdr_uchar( pdrs, ( uchar_t * ) ( &( cur_elem->val.c ) ) );
+                pdr_uchar( pdrs, (uchar_t*)( &( cur_elem->val.c ) ) );
             break;
 
         case CHAR_ARRAY_T:
@@ -385,13 +403,13 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
                            &( cur_elem->array_len ), INT32_MAX,
-                           sizeof( uchar_t ), ( pdrproc_t ) pdr_uchar );
+                           sizeof(uchar_t), (pdrproc_t) pdr_uchar );
             break;
 
         case INT16_T:
         case UINT16_T:
             retval =
-                pdr_uint16( pdrs, ( uint16_t * ) ( &( cur_elem->val.hd ) ) );
+                pdr_uint16( pdrs, (uint16_t*)( &( cur_elem->val.hd ) ) );
             break;
         case INT16_ARRAY_T:
         case UINT16_ARRAY_T:
@@ -401,13 +419,13 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
                            &( cur_elem->array_len ), INT32_MAX,
-                           sizeof( uint16_t ), ( pdrproc_t ) pdr_uint16 );
+                           sizeof(uint16_t), (pdrproc_t) pdr_uint16 );
             break;
 
         case INT32_T:
         case UINT32_T:
             retval =
-                pdr_uint32( pdrs, ( uint32_t * ) ( &( cur_elem->val.d ) ) );
+                pdr_uint32( pdrs, (uint32_t*)( &( cur_elem->val.d ) ) );
             break;
         case INT32_ARRAY_T:
         case UINT32_ARRAY_T:
@@ -417,13 +435,13 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
                            &( cur_elem->array_len ), INT32_MAX,
-                           sizeof( uint32_t ), ( pdrproc_t ) pdr_uint32 );
+                           sizeof(uint32_t), (pdrproc_t) pdr_uint32 );
             break;
 
         case INT64_T:
         case UINT64_T:
             retval =
-                pdr_uint64( pdrs, ( uint64_t * ) ( &( cur_elem->val.ld ) ) );
+                pdr_uint64( pdrs, (uint64_t*)( &( cur_elem->val.ld ) ) );
             break;
         case INT64_ARRAY_T:
         case UINT64_ARRAY_T:
@@ -432,15 +450,15 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
             }
             retval = pdr_array( pdrs, &cur_elem->val.p,
                                 &( cur_elem->array_len ), INT32_MAX,
-                                sizeof( uint64_t ), ( pdrproc_t ) pdr_uint64 );
+                                sizeof(uint64_t), (pdrproc_t) pdr_uint64 );
             break;
 
         case FLOAT_T:
-            retval = pdr_float( pdrs, ( float * )( &( cur_elem->val.f ) ) );
+            retval = pdr_float( pdrs, (float*)( &( cur_elem->val.f ) ) );
             break;
         case DOUBLE_T:
             retval =
-                pdr_double( pdrs, ( double * )( &( cur_elem->val.lf ) ) );
+                pdr_double( pdrs, (double*)( &( cur_elem->val.lf ) ) );
             break;
         case FLOAT_ARRAY_T:
             if( pdrs->p_op == PDR_DECODE ) {
@@ -449,7 +467,7 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
                            &( cur_elem->array_len ), INT32_MAX,
-                           sizeof( float ), ( pdrproc_t ) pdr_float );
+                           sizeof(float), (pdrproc_t) pdr_float );
             break;
         case DOUBLE_ARRAY_T:
             if( pdrs->p_op == PDR_DECODE ) {
@@ -458,16 +476,16 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
                            &( cur_elem->array_len ), INT32_MAX,
-                           sizeof( double ), ( pdrproc_t ) pdr_double );
+                           sizeof(double), (pdrproc_t) pdr_double );
             break;
         case STRING_ARRAY_T:
             if( pdrs->p_op == PDR_DECODE ) {
                 cur_elem->val.p = NULL;
             }
             retval = pdr_array( pdrs, &cur_elem->val.p,
-                            &(cur_elem->array_len), INT32_MAX,
-                            sizeof(char*),
-                            (pdrproc_t)pdr_wrapstring );
+                                &(cur_elem->array_len), INT32_MAX,
+                                sizeof(char*),
+                                (pdrproc_t) pdr_wrapstring );
             break;
         case STRING_T:
             {
@@ -477,15 +495,16 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
                 void **vp = &(cur_elem->val.p);
                 char **cp = (char**)vp;
                 retval = pdr_wrapstring( pdrs, cp );             
-                mrn_dbg( 3, mrn_printf(FLF, stderr,
-                                       "string (%p): \"%s\"\n", cur_elem->val.p, cur_elem->val.p));
+                mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                       "string (%p): '%s'\n", 
+                                       cur_elem->val.p, cur_elem->val.p) );
                 break;
             }
         }
         if( !retval ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                        "pdr_xxx() failed for elem[%d] of type %d\n", i,
-                        cur_elem->type ));
+                        "pdr_xxx() failed for elem[%d] of type %d\n", 
+                                   i, cur_elem->type) );
             return retval;
         }
         if( pdrs->p_op == PDR_DECODE ) {
@@ -495,6 +514,8 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
         curPos = tok.GetNextToken( curLen, delim );
         i++;
     }
+
+    pkt->data_sync.Unlock();
 
     mrn_dbg_func_end();
     return TRUE;

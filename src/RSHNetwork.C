@@ -95,9 +95,9 @@ RSHNetwork::CreateInternalNode( Network* inetwork,
     // in their initialization code, and it doesn't hurt us
     // to bind it early
     int bRet = bindPort( &listeningSocket, &listeningPort, true /*non-blocking*/ );
-    if( bRet == -1 )
-    {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "Failure: unable to instantiate network\n" ));
+    if( bRet == -1 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                               "Failure: unable to instantiate network\n") );
         return NULL;
     }
     assert( listeningPort != UnknownPort );
@@ -159,9 +159,9 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
         localnode->set_Port( get_LocalPort() );
     }   
 
-    PacketPtr packet( new Packet(0, PROT_NEW_SUBTREE, "%s %s %s %as", sg.c_str( ),
-                                 mrn_commnode_path, ibackend_exe, ibackend_args,
-                                 backend_argc) );
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_SUBTREE, "%s %s %s %as", 
+                                 sg.c_str(), mrn_commnode_path, 
+                                 ibackend_exe, ibackend_args, backend_argc) );
     
     RSHFrontEndNode* fe = dynamic_cast<RSHFrontEndNode*>( get_LocalFrontEndNode() );
     assert( fe != NULL );

@@ -58,7 +58,7 @@ BackEndNode::BackEndNode( Network * inetwork,
                                  "Backend not already in the topology\n") );
 
           //new be - send topology update packet
-          Stream *s = _network->get_Stream(1); // get topol prop stream
+          Stream *s = _network->get_Stream(TOPOL_STRM_ID); // get topol prop stream
           int type = NetworkTopology::TOPO_NEW_BE;
           char *host_arr = strdup( imyhostname.c_str() );
           uint32_t send_iprank = iprank;
@@ -113,10 +113,9 @@ int BackEndNode::proc_DataFromParent(PacketPtr ipacket) const
 
 int BackEndNode::proc_newStream( PacketPtr ipacket ) const
 {
-    unsigned int num_backends;
+    unsigned int num_backends, stream_id;
     Rank *backends;
-    int stream_id, tag;
-    int ds_filter_id, us_filter_id, sync_id;
+    int tag, ds_filter_id, us_filter_id, sync_id;
 
     mrn_dbg_func_begin();
 
@@ -129,7 +128,7 @@ int BackEndNode::proc_newStream( PacketPtr ipacket ) const
         char *ds_filters = NULL;
         Rank me = _network->get_LocalRank();
 
-        if( ipacket->unpack("%d %ad %s %s %s", 
+        if( ipacket->unpack("%ud %ad %s %s %s", 
                             &stream_id, &backends, &num_backends, 
                             &us_filters, &sync_filters, &ds_filters) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "unpack() failed\n") );
@@ -163,7 +162,7 @@ int BackEndNode::proc_newStream( PacketPtr ipacket ) const
     } 
     else if( tag == PROT_NEW_STREAM ) {
 
-        if( ipacket->unpack("%d %ad %d %d %d", 
+        if( ipacket->unpack("%ud %ad %d %d %d", 
                             &stream_id, &backends, &num_backends, 
                             &us_filter_id, &sync_id, &ds_filter_id) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "unpack() failed\n" ));
@@ -183,15 +182,16 @@ int BackEndNode::proc_newStream( PacketPtr ipacket ) const
 
 int BackEndNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
 {
-    int stream_id;
+    unsigned int stream_id;
+    Stream* strm;
 
     mrn_dbg_func_begin();
 
     stream_id = ipacket->get_StreamId();
-    Stream* strm = _network->get_Stream( stream_id );
+    strm = _network->get_Stream( stream_id );
     if( strm == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                               stream_id ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %ud lookup failed\n",
+                               stream_id) );
         return -1;
     }
 
@@ -203,16 +203,16 @@ int BackEndNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
 
 int BackEndNode::proc_deleteStream( PacketPtr ipacket ) const
 {
-    int stream_id;
-    Stream * strm;
+    unsigned int stream_id;
+    Stream* strm;
 
     mrn_dbg_func_begin();
 
-    stream_id = (*ipacket)[0]->get_int32_t();
+    stream_id = (*ipacket)[0]->get_uint32_t();
     strm = _network->get_Stream( stream_id );
     if( strm == NULL ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", 
-                              stream_id));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %ud lookup failed\n", 
+                               stream_id) );
         return -1;
     } 
 

@@ -7,8 +7,8 @@
 #if !defined(__network_h)
 #define __network_h 1
 
-#include "mrnet_lightweight/Packet.h"
 #include "mrnet_lightweight/Types.h"
+#include "mrnet_lightweight/Packet.h"
 
 static const Port UnknownPort = (Port)-1;
 static const Rank UnknownRank = (Rank)-1;
@@ -33,7 +33,6 @@ typedef struct {
     int stream_iter;
     int recover_from_failures;
     char _was_shutdown;
-    unsigned int next_stream_id;
 } Network_t;
 
 Network_t* new_Network_t();
@@ -72,7 +71,7 @@ void Network_shutdown_Network( Network_t* net );
 int Network_reset_Topology( Network_t* net, char* itopology );
 
 struct Stream_t* Network_new_Stream( Network_t* net,
-                                     int iid,
+                                     unsigned int iid,
                                      Rank* ibackends,
                                      unsigned int inum_backends,
                                      int ius_filter_id,
@@ -120,7 +119,7 @@ void Network_waitfor_ShutDown( Network_t* net );
 
 int Network_add_SubGraph(Network_t * net, Rank iroot_rank, struct SerialGraph_t * sg, int iupdate);
 
-struct SerialGraph_t * Network_readTopology(Network_t * net, int topoSocket);
+char* Network_readTopology(Network_t * net, int topoSocket);
 
 void Network_writeTopology(Network_t * net, int topoFd, struct SerialGraph_t * topology);
 

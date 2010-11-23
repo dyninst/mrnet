@@ -27,9 +27,12 @@ class Communicator {
 
     // BEGIN MRNET API
 
-    bool add_EndPoint(Rank irank);
-    bool add_EndPoint(CommunicationNode *);
-    const std::set<CommunicationNode *>& get_EndPoints() const;
+    bool add_EndPoint( Rank irank );
+    bool add_EndPoint( CommunicationNode* );
+
+    const std::set< CommunicationNode* >& get_EndPoints() const;
+
+    unsigned size(void) const;
 
     // END MRNET API
 
@@ -40,10 +43,12 @@ class Communicator {
 
     Communicator( Network * );
     Communicator( Network *, Communicator &);
-    Communicator( Network *, const std::set<CommunicationNode *>& );
-    Communicator( Network *, const std::set<Rank>& );
+    Communicator( Network *, const std::set< CommunicationNode* >& );
+    Communicator( Network *, const std::set< Rank >& );
 
-    bool remove_EndPoint(Rank irank);
+    Rank* get_Ranks(void) const;
+
+    bool remove_EndPoint( Rank irank );
 };
 
 

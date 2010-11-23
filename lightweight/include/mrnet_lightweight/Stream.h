@@ -11,6 +11,12 @@
 #include "mrnet_lightweight/Packet.h"
 #include "mrnet_lightweight/Types.h"
 
+#define INVALID_STREAM_ID ((unsigned int)-1)
+extern const unsigned int CTL_STRM_ID;
+extern const unsigned int TOPOL_STRM_ID;
+extern const unsigned int PORT_STRM_ID;
+extern const unsigned int USER_STRM_BASE_ID;
+
 struct vector_t;
 struct PerfDataMgr_t;
 struct Filter_t;
@@ -24,22 +30,22 @@ struct Stream_t {
     struct vector_t* peers; // peers in stream
     struct PerfDataMgr_t* perf_data;
     Network_t* network;
-    unsigned short id;
-    unsigned short sync_filter_id;
-    unsigned short us_filter_id;
-    unsigned short ds_filter_id;
+    unsigned int id;
+    unsigned int sync_filter_id;
+    unsigned int us_filter_id;
+    unsigned int ds_filter_id;
     char _was_closed;
 };
 
 typedef struct Stream_t Stream_t;
 
 Stream_t* new_Stream_t(Network_t* net,
-                       int iid, 
+                       unsigned int iid, 
                        Rank *ibackends,
                        unsigned int inum_backends,
-                       int ius_filter_id,
-                       int isync_filter_id,
-                       int ids_filter_id);
+                       unsigned int ius_filter_id,
+                       unsigned int isync_filter_id,
+                       unsigned int ids_filter_id);
 
 void delete_Stream_t(Stream_t * stream);
 
@@ -63,7 +69,7 @@ void Stream_add_IncomingPacket(Stream_t* stream, Packet_t* packet);
 
 int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ... );
 
-int Stream_send_aux(Stream_t* stream, int itag, char* ifmt, Packet_t* ipacket);
+int Stream_send_aux(Stream_t* stream, int itag, const char* ifmt, Packet_t* ipacket);
 
 int Stream_flush(Stream_t* stream);
 
@@ -80,7 +86,7 @@ int Stream_disable_PerfData(Stream_t* stream,
 Packet_t* Stream_collect_PerfData(Stream_t* stream, 
                                   perfdata_metric_t metric,
                                   perfdata_context_t context,
-                                  int aggr_strm_id);
+                                  unsigned int aggr_strm_id);
 
 void Stream_print_PerfData(Stream_t* stream,
                            perfdata_metric_t metric,

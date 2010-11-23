@@ -15,13 +15,13 @@ Communicator::Communicator( Network * inetwork )
 }
 
 Communicator::Communicator( Network * inetwork,
-                            const std::set<CommunicationNode*>& iback_ends )
+                            const std::set< CommunicationNode* >& iback_ends )
     : _network(inetwork), _back_ends( iback_ends )
 {
 }
 
 Communicator::Communicator( Network * inetwork,
-                            const std::set<Rank>& iranks )
+                            const std::set< Rank >& iranks )
     : _network(inetwork)
 {
     _mutex.Lock();
@@ -35,19 +35,19 @@ Communicator::Communicator( Network * inetwork,
     _mutex.Unlock();
 }
 
-Communicator::Communicator( Network * inetwork, Communicator &icomm)
+Communicator::Communicator( Network * inetwork, Communicator &icomm )
     : _network(inetwork)
 {
     _back_ends = icomm.get_EndPoints();
 }
 
-bool Communicator::add_EndPoint(Rank irank)
+bool Communicator::add_EndPoint( Rank irank )
 {
     CommunicationNode * new_endpoint = _network->get_EndPoint(irank);
     return add_EndPoint( new_endpoint );
 }
 
-bool Communicator::add_EndPoint(CommunicationNode * iendpoint)
+bool Communicator::add_EndPoint( CommunicationNode * iendpoint )
 {
     if( iendpoint == NULL )
         return false;
@@ -58,7 +58,7 @@ bool Communicator::add_EndPoint(CommunicationNode * iendpoint)
     return true;
 }
 
-bool Communicator::remove_EndPoint(Rank irank)
+bool Communicator::remove_EndPoint( Rank irank )
 {
     CommunicationNode *cn = _network->get_EndPoint(irank);
     if( cn == NULL )
@@ -70,9 +70,30 @@ bool Communicator::remove_EndPoint(Rank irank)
     return true;
 }
 
-const std::set< CommunicationNode * >& Communicator::get_EndPoints() const
+const std::set< CommunicationNode* >& Communicator::get_EndPoints() const
 {
     return _back_ends;
+}
+
+unsigned Communicator::size(void) const
+{
+    return (unsigned) _back_ends.size();
+}
+
+Rank* Communicator::get_Ranks(void) const
+{
+    Rank* ranks = NULL;
+    unsigned nranks = size();
+    if( nranks > 0 ) {
+
+        ranks = new Rank[ _back_ends.size() ];
+        assert( ranks );
+        std::set< CommunicationNode* >::const_iterator iter = _back_ends.begin();
+        for( unsigned i = 0; iter != _back_ends.end(); i++, iter++ ) {
+            ranks[i] = (*iter)->get_Rank();
+        }
+    }
+    return ranks;
 }
 
 } // namespace MRN

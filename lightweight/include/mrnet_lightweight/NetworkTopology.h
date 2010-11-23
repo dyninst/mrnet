@@ -83,20 +83,20 @@ char* NetworkTopology_get_TopologyStringPtr(NetworkTopology_t * net_top);
 
 char* NetworkTopology_get_LocalSubTreeStringPtr( NetworkTopology_t* net_top); 
 
-void NetworkTopology_serialize( NetworkTopology_t* net_top, Node_t* inode);
+void NetworkTopology_serialize(NetworkTopology_t* net_top, Node_t* inode);
 
-int NetworkTopology_reset( NetworkTopology_t* net_top, char* itopology_str);
+int NetworkTopology_reset(NetworkTopology_t* net_top, struct SerialGraph_t* isg);
 
-int NetworkTopology_remove_Node_2( NetworkTopology_t* net_top,  Node_t* inode);
+int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top,  Node_t* inode);
 
-int NetworkTopology_remove_Node( NetworkTopology_t* net_top, Rank irank);
+int NetworkTopology_remove_Node(NetworkTopology_t* net_top, Rank irank);
 
-int NetworkTopology_set_Parent( NetworkTopology_t* net_top, Rank ichild_rank, 
-                                Rank inew_Parent_rank, int iupdate);
+int NetworkTopology_set_Parent(NetworkTopology_t* net_top, Rank ichild_rank, 
+                               Rank inew_Parent_rank, int iupdate);
 
 int NetworkTopology_remove_Orphan(NetworkTopology_t* net_top, Rank r);
 
-Node_t* NetworkTopology_find_Node( NetworkTopology_t* net_top, Rank irank);
+Node_t* NetworkTopology_find_Node(NetworkTopology_t* net_top, Rank irank);
 
 int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, 
                                  struct SerialGraph_t* isg, int iupdate);
@@ -106,9 +106,9 @@ void NetworkTopology_remove_SubGraph(NetworkTopology_t* net_top, Node_t* inode);
 void NetworkTopology_print(NetworkTopology_t* net_top, FILE * f);
 
 Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top,
-                                        Rank ichild_rank,
-                                        unsigned int inum_attempts,
-                                        ALGORITHM_T ialgorithm);
+                                       Rank ichild_rank,
+                                       unsigned int inum_attempts,
+                                       ALGORITHM_T ialgorithm);
 
 void NetworkTopology_compute_AdoptionScores(NetworkTopology_t* net_top,
                                             struct vector_t* iadopters,

@@ -16,7 +16,7 @@
  * nodes, so these functions are in place only as placeholders
  * if we choose to implement the functionality at a later time. */
 
-Filter_t* new_Filter_t(unsigned short iid)
+Filter_t* new_Filter_t(unsigned int iid)
 {
     return NULL;
 }

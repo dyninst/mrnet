@@ -36,7 +36,7 @@ Packet_t* Packet_construct(Packet_t* packet)
     packet->buf_len = pdr_sizeof((pdrproc_t)(Packet_pdr_packet), packet);
     assert(packet->buf_len);
 
-    packet->buf = (char*)malloc(packet->buf_len);
+    packet->buf = (char*) malloc((size_t)packet->buf_len);
     if( packet->buf == NULL ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() failed\n"));
         return NULL;
@@ -56,8 +56,8 @@ Packet_t* Packet_construct(Packet_t* packet)
     return packet;
 }
 
-Packet_t* new_Packet_t(int isrc, unsigned short istream_id, int itag, 
-                       char* fmt, va_list arg_list)
+Packet_t* new_Packet_t(Rank isrc, unsigned int istream_id, int itag, 
+                       const char* fmt, va_list arg_list)
 {
     Packet_t* packet = (Packet_t*) malloc(sizeof(Packet_t));
     if( packet == NULL ) {
@@ -80,8 +80,8 @@ Packet_t* new_Packet_t(int isrc, unsigned short istream_id, int itag,
     return Packet_construct(packet);
 
 }
-Packet_t* new_Packet_t_2(unsigned short istream_id, int itag, 
-                         char* ifmt_str, ... )
+Packet_t* new_Packet_t_2(unsigned int istream_id, int itag, 
+                         const char* ifmt_str, ... )
 {
     Packet_t* packet = NULL;
 
@@ -156,15 +156,13 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
 {
     DataElement_t* cur_elem = new_DataElement_t();
     char* fmt;
-    char* delim = " \t\n%";
+    const char* delim = " \t\n%";
     char* tok;
     
     mrn_dbg_func_begin();
 
-    fmt = (char*)malloc(sizeof(char)*(strlen(packet->fmt_str)+1));
+    fmt = strdup(packet->fmt_str);
     assert(fmt);
-    if (packet->fmt_str != NULL)
-        strncpy(fmt, packet->fmt_str, strlen(packet->fmt_str)+1);
 
     tok = strtok(fmt, delim);
 
@@ -272,9 +270,9 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
     DataElement_t * cur_elem;
     void **vp;
     char **cp;
-    char* fmt;
+    char* fmt = NULL;
     char* tok;
-    char* delim = " \t\n%";
+    const char* delim = " \t\n%";
     void *vtmp = NULL;
     unsigned int vlen = 0;    
     unsigned int i;
@@ -285,11 +283,10 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
     /* Process Packet Header into/out of the pdr mem (see Packet.h for header layout) */
   
 
-    if( pdr_uint16( pdrs, &( pkt->stream_id ) ) == false ) {
+    if( pdr_uint32( pdrs, &( pkt->stream_id ) ) == false ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint16() failed\n" ));
         return false;
     }
-
     if( pdr_int32( pdrs, &( pkt->tag ) ) == false ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_int32() failed\n" ));
         return false;
@@ -302,7 +299,8 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_wrapstring() failed\n" ));
         return false;
     }
-    if( pdr_array( pdrs, &vtmp, &vlen, INT32_MAX, sizeof(uint32_t), 
+    if( pdr_array( pdrs, &vtmp, &vlen, INT32_MAX, 
+                   (uint32_t) sizeof(uint32_t), 
                    (pdrproc_t) pdr_uint32 ) == false ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_array() failed\n" ));
         return false;
@@ -314,16 +312,12 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
         return true;
     }
 
-    if (pkt->fmt_str) {
-        fmt = (char*)malloc(sizeof(char)*(strlen(pkt->fmt_str)+1));
-        assert(fmt);
-        strncpy(fmt, pkt->fmt_str, strlen(pkt->fmt_str)+1);
-    } else {
-        fmt = "";
-    }
+    fmt = strdup(pkt->fmt_str);
+    assert(fmt);
 
     i = 0;
     tok = strtok(fmt, delim);
+
     while( tok != NULL ) {
 
         if( pdrs->p_op == PDR_ENCODE ) {
@@ -351,7 +345,7 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
                            &( cur_elem->array_len ), INT32_MAX,
-                           sizeof( uchar_t ), ( pdrproc_t ) pdr_uchar );
+                           (uint32_t) sizeof( uchar_t ), ( pdrproc_t ) pdr_uchar );
             break;
 
         case INT16_T:
@@ -367,7 +361,7 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
                            &( cur_elem->array_len ), INT32_MAX,
-                           sizeof( uint16_t ), ( pdrproc_t ) pdr_uint16 );
+                           (uint32_t) sizeof( uint16_t ), ( pdrproc_t ) pdr_uint16 );
             break;
 
         case INT32_T:
@@ -383,7 +377,7 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
                            &( cur_elem->array_len ), INT32_MAX,
-                           sizeof( uint32_t ), ( pdrproc_t ) pdr_uint32 );
+                           (uint32_t) sizeof( uint32_t ), ( pdrproc_t ) pdr_uint32 );
             break;
 
         case INT64_T:
@@ -398,7 +392,7 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
             }
             retval = pdr_array( pdrs, &cur_elem->val.p,
                                 &( cur_elem->array_len ), INT32_MAX,
-                                sizeof( uint64_t ), ( pdrproc_t ) pdr_uint64 );
+                                (uint32_t) sizeof( uint64_t ), ( pdrproc_t ) pdr_uint64 );
             break;
 
         case FLOAT_T:
@@ -415,7 +409,7 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
                            &( cur_elem->array_len ), INT32_MAX,
-                           sizeof( float ), ( pdrproc_t ) pdr_float );
+                           (uint32_t) sizeof( float ), ( pdrproc_t ) pdr_float );
             break;
         case DOUBLE_ARRAY_T:
             if( pdrs->p_op == PDR_DECODE ) {
@@ -424,7 +418,7 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
                            &( cur_elem->array_len ), INT32_MAX,
-                           sizeof( double ), ( pdrproc_t ) pdr_double );
+                           (uint32_t) sizeof( double ), ( pdrproc_t ) pdr_double );
             break;
         case STRING_ARRAY_T:
             if( pdrs->p_op == PDR_DECODE ) {
@@ -432,7 +426,7 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
             }
             retval = pdr_array( pdrs, &cur_elem->val.p,
                                 &(cur_elem->array_len), INT32_MAX,
-                                sizeof(char*),
+                                (uint32_t) sizeof(char*),
                                 (pdrproc_t)pdr_wrapstring );
             break;
         case STRING_T:
@@ -478,26 +472,28 @@ int Packet_unpack(Packet_t* packet, const char *ifmt_str, ... )
     return ret;
 }
 
-int Packet_ExtractVaList(Packet_t* packet, char* fmt, va_list arg_list)
+int Packet_ExtractVaList(Packet_t* packet, const char* fmt, va_list arg_list)
 {
     mrn_dbg(3, mrn_printf(FLF, stderr, "In ExtractvalList(%p)\n", packet));
 
+    // make sure passed fmt same as pkt
+    if( strcmp(fmt, packet->fmt_str) )
+        return -1;
+
     Packet_DataElementArray2ArgList(packet, arg_list);
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "Packet_ExtractVaList(%p) succeeded\n", packet));
-  
     return 0;
 }
 
 void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
 {
     int i = 0;
-    int array_len = 0;
+    size_t array_len = 0;
     DataElement_t* cur_elem;
     void *tmp_ptr;
     void *tmp_array;
-    char* fmt;
-    char* delim = " \t\n%";
+    char* fmt = NULL;
+    const char* delim = " \t\n%";
     char* tok;
    
     // variables for data types
@@ -517,10 +513,8 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
 
     mrn_dbg_func_begin();
 
-    fmt = (char*)malloc(sizeof(char)*(strlen(packet->fmt_str)+1));
+    fmt = strdup(packet->fmt_str);
     assert(fmt != NULL);
-    if (packet->fmt_str != NULL)
-        strncpy(fmt, packet->fmt_str, strlen(packet->fmt_str)+1);
 
     tok = strtok(fmt, delim);
     while( tok != NULL ) {
@@ -737,17 +731,3 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
     mrn_dbg_func_end();
     return;
 }
-
-int Packet_ExtractArgList(Packet_t* packet, char* ifmt_str, ... )
-{
-    va_list arg_list;
-
-    mrn_dbg(2, mrn_printf(FLF, stderr, "fmt:\"%s\"\n", ifmt_str));
-
-    va_start(arg_list, ifmt_str);
-    Packet_DataElementArray2ArgList(packet, arg_list);
-    va_end(arg_list);
-  
-    return 0;
-}
-
