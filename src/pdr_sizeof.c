@@ -135,7 +135,7 @@ static int32_t * _makeinline (PDR *pdrs, int32_t len)
         /* Free the earlier space and allocate new area */
         if (pdrs->cur)
             free (pdrs->cur);
-        if ((pdrs->cur = (char *) malloc (len)) == NULL) {
+        if ((pdrs->cur = (char*) malloc((size_t)len)) == NULL) {
             pdrs->base = 0;
             return NULL;
         }

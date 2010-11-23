@@ -41,6 +41,10 @@ void copy_vector(vector_t* fromvec, vector_t* tovec)
     /* grow tovec to number of elements in fromvec, if necessary */
     if( fromvec->size > tovec->alloc_size ) {
         tovec->vec = (void**) realloc( tovec->vec, sizeof(void*) * fromvec->size );
+        if( tovec->vec == NULL ) {
+            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", sizeof(void*) * fromvec->size);
+            exit(0);
+        }
         tovec->alloc_size = fromvec->size;
     }
     memcpy( tovec->vec, fromvec->vec, sizeof(void*) * fromvec->size );
@@ -53,7 +57,10 @@ void pushBackElement(vector_t* vector, void* elem)
     if( (vector->size + 1) == vector->alloc_size ) {
         vector->alloc_size += vector->alloc_size;
         vector->vec = (void**) realloc( vector->vec, sizeof(void*) * vector->alloc_size );
-        assert(vector->vec);
+        if( vector->vec == NULL ) {
+            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", sizeof(void*) * vector->alloc_size);
+            exit(0);
+        }
     }
     vector->vec[ vector->size ] = elem;
     vector->size++;

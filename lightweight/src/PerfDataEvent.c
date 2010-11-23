@@ -19,6 +19,27 @@
 #include "utils_lightweight.h"
 #include "vector.h"
 
+
+perfdata_metinfo_t perfdata_metric_info[PERFDATA_MAX_MET] = 
+{
+    { "NumBytes", "bytes", "number of bytes", PERFDATA_TYPE_UINT },
+    { "NumPackets", "packets", "number of packets", PERFDATA_TYPE_UINT },
+    { "ElapsedTime", "seconds", "elapsed time", PERFDATA_TYPE_FLOAT },
+    { "CPU-Sys", "%cpu", "system cpu utilization", PERFDATA_TYPE_FLOAT },
+    { "CPU-User", "%cpu", "user cpu utilization", PERFDATA_TYPE_FLOAT },
+    { "VirtMem", "kilobytes", "virtual memory size", PERFDATA_TYPE_FLOAT },
+    { "PhysMem", "kilobytes", "resident memory size", PERFDATA_TYPE_FLOAT }
+};
+
+const char* perfdata_context_names[PERFDATA_MAX_CTX] = 
+{
+    "Send",
+    "Recv",
+    "FilterIn",
+    "FilterOut",
+    "NoContext"
+};
+
 #define PERFDATA_MET_FLAG(x) ((char)(1 << x))
 
 PerfDataMgr_t* new_PerfDataMgr_t()
@@ -36,19 +57,19 @@ PerfDataMgr_t* new_PerfDataMgr_t()
     return newperf;
 }
 
-char * PerfDataMgr_get_MetricName(PerfDataMgr_t* perf_data,
-                                  perfdata_metric_t met)
+const char* PerfDataMgr_get_MetricName(PerfDataMgr_t* perf_data,
+                                       perfdata_metric_t met)
 {
     return perfdata_metric_info[(unsigned)met].name;
 }
 
-char * PerfDataMgr_get_MetricUnits(PerfDataMgr_t* perf_data,
+const char* PerfDataMgr_get_MetricUnits(PerfDataMgr_t* perf_data,
                                    perfdata_metric_t met)
 {
     return perfdata_metric_info[(unsigned)met].units;
 }
 
-char * PerfDataMgr_get_MetricDescription(PerfDataMgr_t* perf_data,
+const char* PerfDataMgr_get_MetricDescription(PerfDataMgr_t* perf_data,
                                          perfdata_metric_t met)
 {
     return perfdata_metric_info[(unsigned)met].description;
@@ -107,13 +128,13 @@ void PerfDataMgr_add_DataInstance(PerfDataMgr_t* perf_data,
     vector_t* met_data;
 
     mrn_dbg_func_begin();
-    newdata = (perfdata_t*)malloc(sizeof(perfdata_t));
+    newdata = (perfdata_t*) malloc(sizeof(perfdata_t));
     assert(newdata != NULL);
     *newdata = data;
 
     ctx_map = (mrn_map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
     if (ctx_map->size > 0) {
-        met_data = (vector_t*)(get_val(ctx_map,met));
+        met_data = (vector_t*)(get_val(ctx_map,(int)met));
         if ((met_data!=NULL) && (met_data->size)) {
             pushBackElement(met_data, newdata);
         } else {
@@ -124,7 +145,7 @@ void PerfDataMgr_add_DataInstance(PerfDataMgr_t* perf_data,
     else {
         met_data = new_empty_vector_t();
         pushBackElement(met_data, newdata);
-        insert(ctx_map, met, met_data);
+        insert(ctx_map, (int)met, met_data);
     }
 
     mrn_dbg_func_end();
@@ -142,7 +163,7 @@ perfdata_t PerfDataMgr_get_DataValue(PerfDataMgr_t* perf_data,
 
     ctx_map = (mrn_map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
     if(ctx_map->size > 0) {
-        met_data = (vector_t*)(get_val(ctx_map, met));
+        met_data = (vector_t*)(get_val(ctx_map, (int)met));
         if( (met_data!=NULL) && (met_data->size)) {
             mrn_dbg_func_end();
             return *(perfdata_t*)met_data->vec[0];
@@ -178,7 +199,7 @@ void PerfDataMgr_set_DataValue(PerfDataMgr_t* perf_data,
         mrn_dbg(5, mrn_printf(FLF, stderr, "ctx_map->root _is_ NULL\n"));
     }
     if (ctx_map->size > 0) {
-        met_data = (vector_t*)(get_val(ctx_map, met));
+        met_data = (vector_t*)(get_val(ctx_map, (int)met));
         if ((met_data!=NULL) && (met_data->size)) {
             clear(met_data);
         }
@@ -190,7 +211,7 @@ void PerfDataMgr_set_DataValue(PerfDataMgr_t* perf_data,
     else {
         met_data = new_empty_vector_t();
         pushBackElement(met_data, newdata);
-        insert(ctx_map, met, met_data);
+        insert(ctx_map, (int)met, met_data);
     }
     mrn_dbg_func_end();
 }
@@ -242,7 +263,6 @@ void PerfDataMgr_print(PerfDataMgr_t* perf_data,
 
     mi = perfdata_metric_info + (unsigned)met;
 
-#ifndef os_linux
     size = 36; // "PERFDATA @ T=" + "%d" + "%06dsec: "
     size += strlen(mi->name);
     size += strlen(perfdata_context_names[(unsigned)ctx]);
@@ -252,12 +272,6 @@ void PerfDataMgr_print(PerfDataMgr_t* perf_data,
     sprintf( report, "PERFDATA @ T=%d.%06dsec: %s %s -",
              (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, 
               perfdata_context_names[(unsigned)ctx] );
-#else
-    if (!asprintf(&report, "PERFDATA @ T=%d.%.06dsec: %s %s -",
-            (int)tv.tv_sec-MRN_RELEASE_DATE_SECS, (int)tv.tv_usec, mi->name, perfdata_context_names[(unsigned)ctx])) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "asprintf to report data failed\n"));
-    }
-#endif
 
     for (k = 0; k < data->size; k++) {
         if (mi->type == PERFDATA_TYPE_UINT) {
@@ -290,7 +304,7 @@ void PerfDataMgr_collect(PerfDataMgr_t* perf_data,
     ctx_map = (mrn_map_t*)(perf_data->the_data->vec[(unsigned)ctx]);
     if (ctx_map->size > 0) {
         //vector_t* met_data = ctx_map[met];
-        met_data = (vector_t*)(get_val(ctx_map, met));
+        met_data = (vector_t*)(get_val(ctx_map, (int)met));
         //data = met_data;
         if ((met_data!= NULL) && (met_data->size)) {
             copy_vector(met_data, data);
@@ -298,7 +312,7 @@ void PerfDataMgr_collect(PerfDataMgr_t* perf_data,
         }
     } else {
         met_data = new_empty_vector_t();
-        insert(ctx_map, met, met_data);
+        insert(ctx_map, (int)met, met_data);
     }
 
     mrn_dbg_func_end();

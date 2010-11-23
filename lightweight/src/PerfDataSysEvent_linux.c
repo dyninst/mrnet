@@ -61,7 +61,7 @@ int PerfDataSysMgr_get_ThreadTime(long* user, long* sys)
     return -1;
   }
 
-  num_read = fread(buffer,1,1024, fd);
+  num_read = fread(buffer, (size_t)1, (size_t)1024, fd);
   fclose(fd);
   buffer[num_read]='\0';
 

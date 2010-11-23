@@ -357,7 +357,7 @@ bool_t pdrmem_getbytes(PDR *pdrs, char * addr,  uint32_t len)
                               pdrs->space ));
         return (FALSE);
     }
-    memcpy(addr, pdrs->cur, len);
+    memcpy(addr, pdrs->cur, (size_t)len);
     pdrs->cur += len;
     return (TRUE);
 }
@@ -367,7 +367,7 @@ bool_t pdrmem_putbytes(PDR *pdrs, char * addr,  uint32_t len)
     if ((pdrs->space -= len) < 0) {
         return (FALSE);
     }
-    memcpy(pdrs->cur, addr, len);
+    memcpy(pdrs->cur, addr, (size_t)len);
     pdrs->cur += len;
     return (TRUE);
 }

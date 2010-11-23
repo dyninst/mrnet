@@ -40,27 +40,27 @@ void hton_bytes(char * out, char * in, uint32_t elsize);
 void byte_swap(char * out, char * in, uint32_t nelems, uint32_t elemsize);
 /* These functions always swap byte order*/
 #define swap_int16(out, in) \
-        byte_swap((char *) out, (char *)in, 1, sizeof(uint16_t) );
+    byte_swap((char *) out, (char *)in, 1, (uint32_t) sizeof(uint16_t) );
 #define swap_int32(out, in) \
-        byte_swap((char *) out, (char *)in, 1, sizeof(uint32_t) );
+    byte_swap((char *) out, (char *)in, 1, (uint32_t) sizeof(uint32_t) );
 #define swap_int64(out, in) \
-        byte_swap((char *) out, (char *)in, 1, sizeof(uint64_t) );
+    byte_swap((char *) out, (char *)in, 1, (uint32_t) sizeof(uint64_t) );
 #define swap_float(out, in) \
-        byte_swap((char *) out, (char *)in, 1, sizeof(float) );
+    byte_swap((char *) out, (char *)in, 1, (uint32_t) sizeof(float) );
 #define swap_double(out, in) \
-        byte_swap((char *) out, (char *)in, 1, sizeof(double) );
+    byte_swap((char *) out, (char *)in, 1, (uint32_t) sizeof(double) );
 
 void byte_swap_inplace(char * inout, uint32_t nelems, uint32_t elemsize);
 #define swap_inplace_int16(in) \
-        byte_swap_inplace((char *)in, 1, sizeof(uint16_t) );
+        byte_swap_inplace((char *)in, 1, (uint32_t) sizeof(uint16_t) );
 #define swap_inplace_int32(in) \
-        byte_swap_inplace((char *)in, 1, sizeof(uint32_t) );
+        byte_swap_inplace((char *)in, 1, (uint32_t) sizeof(uint32_t) );
 #define swap_inplace_int64(in) \
-        byte_swap_inplace((char *)in, 1, sizeof(uint64_t) );
+        byte_swap_inplace((char *)in, 1, (uint32_t) sizeof(uint64_t) );
 #define swap_inplace_float(in) \
-        byte_swap_inplace((char *)in, 1, sizeof(float) );
+        byte_swap_inplace((char *)in, 1, (uint32_t) sizeof(float) );
 #define swap_inplace_double(in) \
-        byte_swap_inplace((char *)in, 1, sizeof(double) );
+        byte_swap_inplace((char *)in, 1, (uint32_t) sizeof(double) );
 
 
 #if defined(__cplusplus)

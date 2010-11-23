@@ -14,13 +14,14 @@
 #include <assert.h>
 
 #include "config.h"
+#include "utils_lightweight.h"
 
 #include "mrnet_lightweight/Network.h"
-#include "utils_lightweight.h"
 
 #include "xplat_lightweight/NetUtils.h"
 #include "xplat_lightweight/Error.h"
 #include "xplat_lightweight/PathUtils.h"
+#include "xplat_lightweight/Process.h"
 
 #if !defined(os_windows)
 #include <sys/time.h>
@@ -64,11 +65,11 @@ int connectHost( int *sock_in, char* hostname,
     struct sockaddr_in server_addr;
     struct hostent *server_hostent = NULL;
     const char* host = hostname;
-    unsigned int nConnectTries = 0;
+    int nConnectTries = 0;
     int cret = -1;
     int optVal;
     int ssoret;
-	int fdflag, fret;
+    int fdflag, fret;
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "In connectHost(%s:%d) sock:%d..\n",
                           host, port, sock));
@@ -90,14 +91,14 @@ int connectHost( int *sock_in, char* hostname,
         return -1;
     } 
 
-    memset( &server_addr, 0, sizeof( server_addr ));
+    memset( &server_addr, 0, sizeof(server_addr) );
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons (port);
-    memcpy (&server_addr.sin_addr, server_hostent->h_addr_list[0],
-            sizeof (struct in_addr ));
+    server_addr.sin_port = htons(port);
+    memcpy( &server_addr.sin_addr, server_hostent->h_addr_list[0],
+            sizeof(struct in_addr) );
 
     do {
-        cret = connect (sock, (struct sockaddr *) & server_addr, sizeof (server_addr));
+        cret = connect(sock, (struct sockaddr *) &server_addr, (socklen_t) sizeof(server_addr));
         if (cret == -1 ) {
             err = NetUtils_GetLastError(); 
             mrn_dbg(5, mrn_printf(FLF, stderr, "connectHost: connect() failed, err=%d\n", err));
@@ -114,7 +115,7 @@ int connectHost( int *sock_in, char* hostname,
                 break;
 
             // delay before trying again
-            sleep (nConnectTries);
+            sleep((unsigned)nConnectTries);
         }
     } while ( cret == -1 );
 
@@ -147,7 +148,7 @@ int connectHost( int *sock_in, char* hostname,
                         IPPROTO_TCP,
                         TCP_NODELAY,
                         (const char*)&optVal,
-                        sizeof( optVal));
+                        (socklen_t) sizeof(optVal));
     if (ssoret == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "failed to set TCP_NODELAY\n"));
     }
@@ -164,15 +165,13 @@ int mrn_printf( const char *file, int line, const char * func,
                 FILE * ifp, const char *format, ... )
 {
     static FILE * fp = NULL;
-    char *node_type = "BE";
+    const char *node_type = "BE";
     int retval;
     va_list arglist;
+    struct stat s;
 
     struct timeval tv;
-    int rank = getrank();
-    FILE * tmp_fp = NULL;
-    char* this_host;
-    struct stat s;
+    Rank rank = getrank();
     char host[256];
     char logdir[256];
     char logfile[512];
@@ -186,12 +185,8 @@ int mrn_printf( const char *file, int line, const char * func,
     if ( (fp == NULL) && (rank != UnknownRank) ) {
         logfile[0] = '\0';
 
-        this_host = (char*)malloc(sizeof(char)*256);
-        assert(this_host);
-        NetUtils_GetLocalHostName(this_host);
-        strncpy(host, this_host, 256);
+        NetUtils_GetLocalHostName(host);
         host[255] = '\0';
-        free( this_host );
 
         // find log directory
         if (varval != NULL) {
@@ -204,7 +199,7 @@ int mrn_printf( const char *file, int line, const char * func,
                 snprintf( logdir, sizeof(logdir), "/tmp" );
         }
         // set file name format
-        snprintf(logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
+        snprintf(logfile, sizeof(logfile), "%s/%s_%s_%u.%d",
                  logdir, node_type, host, rank, pid);
         fp = fopen(logfile, "w");
     }

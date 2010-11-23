@@ -16,13 +16,12 @@
 
 mrn_map_t* new_map_t()
 {
-    int keys[1];
     mrn_map_t* new_map = (mrn_map_t*)malloc(sizeof(mrn_map_t));
     assert(new_map);
 
     new_map->root = NULL;
     new_map->size = 0;
-    new_map->keys = (int*)malloc(sizeof(keys));
+    new_map->keys = (int*) malloc( sizeof(int) * 32 );
     assert(new_map->keys);
 
     return new_map;
@@ -104,13 +103,14 @@ void insert(mrn_map_t* map, int key, void* val)
         // update map size
         map->size++;
         // insert key into key array
-        map->keys = (int*)realloc(map->keys, sizeof(keys)*(map->size));
-        assert(map->keys);
+        map->keys = (int*)realloc(map->keys, sizeof(keys) * map->size);
+        if( map->keys == NULL ) {
+            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", sizeof(keys) * map->size);
+            exit(0);
+        }
         map->keys[map->size-1] = key;
     }
-
     //print(map);
-
 }
 
 void* get_val_recursive(map_node_t* root, int key)

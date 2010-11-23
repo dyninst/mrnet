@@ -42,6 +42,6 @@ typedef struct {
 } ErrorDef;
 
 
-void error( ErrorCode, Rank _rank,  char*, ... );
+void error( ErrorCode, Rank _rank, const char*, ... );
 
 #endif /* __error_h */
