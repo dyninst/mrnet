@@ -60,16 +60,7 @@ void Packet::decode_pdr(void) const
                            stream_id, tag, fmt_str) );
 }
 
-Packet::Packet( Rank isrc, unsigned int istream_id, int itag, 
-                const char *ifmt, va_list arg_list )
-    : stream_id(istream_id), tag(itag), src_rank(isrc),
-      fmt_str( strdup(ifmt) ), buf(NULL), buf_len(0),
-      inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
-      destroy_data(false)
-{
-    ArgList2DataElementArray( arg_list );
-    encode_pdr();
-}
+/* API constructors */
 
 Packet::Packet( unsigned int istream_id, int itag, 
                 const char *ifmt_str, ... )
@@ -85,10 +76,10 @@ Packet::Packet( unsigned int istream_id, int itag,
     encode_pdr();
 }
 
-Packet::Packet( const char *ifmt, va_list idata, 
+Packet::Packet( const char *ifmt_str, va_list idata, 
                 unsigned int istream_id, int itag )
     : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
-      fmt_str( strdup(ifmt) ), buf(NULL), buf_len(0),
+      fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0),
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(false)
 {
@@ -106,9 +97,32 @@ Packet::Packet( unsigned int istream_id, int itag,
     ArgVec2DataElementArray( idata ); 
     encode_pdr();
 }
-    
 
-Packet::Packet( unsigned int ibuf_len, char * ibuf, Rank iinlet_rank )
+/* Internal constructors */
+
+Packet::Packet( Rank isrc, unsigned int istream_id, int itag, 
+                const char *ifmt_str, va_list arg_list )
+    : stream_id(istream_id), tag(itag), src_rank(isrc),
+      fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0),
+      inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
+      destroy_data(false)
+{
+    ArgList2DataElementArray( arg_list );
+    encode_pdr();
+}
+
+Packet::Packet( Rank isrc, unsigned int istream_id, int itag, 
+                const void **idata, const char *ifmt_str )
+    : stream_id(istream_id), tag(itag), src_rank(isrc),
+      fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0), 
+      inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
+      destroy_data(false)
+{
+    ArgVec2DataElementArray( idata ); 
+    encode_pdr();
+}
+
+Packet::Packet( unsigned int ibuf_len, char *ibuf, Rank iinlet_rank )
     : stream_id((unsigned int)-1), tag(-1), src_rank(UnknownRank), 
       fmt_str(NULL), buf(ibuf), buf_len(ibuf_len), inlet_rank(iinlet_rank), 
       dest_arr(NULL), dest_arr_len(0), destroy_data(true)

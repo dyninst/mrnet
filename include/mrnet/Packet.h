@@ -67,6 +67,8 @@ class Packet: public Error {
 
     Packet( Rank isrc, unsigned int istream_id, int itag, 
             const char *ifmt, va_list idata );
+    Packet( Rank isrc, unsigned int istream_id, int itag, 
+            const void **idata, const char *ifmt );
     Packet( unsigned int ibuf_len, char *ibuf, Rank iinlet_rank );
 
     void encode_pdr(void);
