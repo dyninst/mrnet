@@ -297,18 +297,18 @@ int isBigEndian() {
 
 }
 
-void endianTest() {
-#if defined(WORDS_BIGENDIAN)
-    mrn_dbg(5, mrn_printf(FLF, stderr, "config says BIG_ENDIAN\n"));
-#else
-    mrn_dbg(5, mrn_printf(FLF, stderr, "config says LITTLE_ENDIAN\n"));
-#endif
+/* void endianTest() { */
+/* #if defined(WORDS_BIGENDIAN) */
+/*     mrn_dbg(5, mrn_printf(FLF, stderr, "config says BIG_ENDIAN\n")); */
+/* #else */
+/*     mrn_dbg(5, mrn_printf(FLF, stderr, "config says LITTLE_ENDIAN\n")); */
+/* #endif */
 
-    if (isBigEndian()) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "test returns big endian\n"));
-    } else {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "test returns little endian\n"));
-    }
+/*     if (isBigEndian()) { */
+/*         mrn_dbg(5, mrn_printf(FLF, stderr, "test returns big endian\n")); */
+/*     } else { */
+/*         mrn_dbg(5, mrn_printf(FLF, stderr, "test returns little endian\n")); */
+/*     } */
 
-}
+/* } */
 

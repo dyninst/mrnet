@@ -108,7 +108,7 @@ void setrank(Rank ir);
 
 int isBigEndian();
 
-void endianTest();
+/* void endianTest(); */
 
 #endif /* __utils_h */
 
