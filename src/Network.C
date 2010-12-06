@@ -117,7 +117,6 @@ Network::Network(void)
 {
     init_local();
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
-    //fprintf(stderr, "MJB DEBUG: in Network() - this is %p\n", this);
 }
 
 Network::~Network(void)

@@ -247,7 +247,6 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
         }
         break;
     case PROT_PORT_UPDATE:
-	fprintf(stderr, "MJB DEBUG: in ChildNode::proc_PacketFromParent PROT_PORT_UPDATE\n");
 	if( proc_PortUpdate(cur_packet) == -1 ) {
 	     mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_PortUpdate() failed\n"));
 	     retval = -1;
