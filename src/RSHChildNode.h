@@ -12,20 +12,15 @@ namespace MRN
 
 class RSHChildNode : public virtual ChildNode
 {
-public:
+ public:
     RSHChildNode( Network* inetwork,
-                    std::string const& ihostname,
-                    Rank irank,
-                    std::string const& iphostname, 
-                    Port ipport, 
-                    Rank iprank );
+                  std::string const& ihostname,
+                  Rank irank,
+                  std::string const& iphostname, 
+                  Port ipport, 
+                  Rank iprank );
 
     virtual ~RSHChildNode(void);
-
-    int proc_PortUpdate(PacketPtr ipacket ) const;
-
-protected:
-    virtual int proc_PacketFromParent( PacketPtr cur_packet );
 };
 
 } // namespace MRN

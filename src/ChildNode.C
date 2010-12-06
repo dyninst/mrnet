@@ -50,19 +50,20 @@ int ChildNode::proc_PacketsFromParent( std::list< PacketPtr > & packets )
 int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
 {
     int retval = 0;
+    int tag = cur_packet->get_Tag();
 
-    switch ( cur_packet->get_Tag() ) {
+    switch ( tag ) {
 
     case PROT_SHUTDOWN:
         if( _network->is_LocalNodeParent() ) {
             if( _network->get_LocalParentNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n") );
                 retval = -1;
             }
         }
         else{
             if( _network->get_LocalBackEndNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n") );
                 retval = -1;
             }
         }
@@ -72,13 +73,13 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
     case PROT_NEW_STREAM:
         if( _network->is_LocalNodeInternal() ){
             if( _network->get_LocalInternalNode()->proc_newStream( cur_packet ) == NULL ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n") );
                 retval = -1;
             }
         }
         else{
             if( _network->get_LocalBackEndNode()->proc_newStream( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n") );
                 retval = -1;
             }
         }
@@ -89,14 +90,14 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
         if( _network->is_LocalNodeInternal() ){
 	     if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
 								       cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
                 retval = -1;
             }
         }
         else{
 	     if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
 								      cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
                 retval = -1;
             }
         }
@@ -107,14 +108,14 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
         if( _network->is_LocalNodeInternal() ){
 	     if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
 								       cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
                 retval = -1;
             }
         }
         else{
 	     if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
 								      cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
                 retval = -1;
             }
         }
@@ -125,14 +126,14 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
         if( _network->is_LocalNodeInternal() ){
 	    if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
 								      cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
                 retval = -1;
             }
         }
         else{
 	    if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
 								     cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
                 retval = -1;
             }
         }
@@ -141,7 +142,7 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
     case PROT_DEL_STREAM:
         if( _network->is_LocalNodeInternal() ) {
             if( _network->get_LocalInternalNode()->proc_deleteStream( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_delStream() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_delStream() failed\n") );
                 retval = -1;
             }
         } else if (_network->is_LocalNodeBackEnd()) {
@@ -155,13 +156,13 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
     case PROT_NEW_FILTER:
         if( _network->is_LocalNodeInternal() ){
             if( _network->get_LocalInternalNode()->proc_newFilter( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n") );
                 retval = -1;
             }
         }
         else {
             if( _network->get_LocalBackEndNode()->proc_newFilter( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n" ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n") );
                 retval = -1;
             }
         }
@@ -170,56 +171,56 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
     case PROT_FAILURE_RPT:
         if( proc_FailureReportFromParent( cur_packet ) == -1 ){
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_FailureReport() failed\n" ));
+                                   "proc_FailureReport() failed\n") );
             retval = -1;
         }
         break;
     case PROT_NEW_PARENT_RPT:
         if( proc_NewParentReportFromParent( cur_packet ) == -1 ){
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_NewParentReport() failed\n" ));
+                                   "proc_NewParentReport() failed\n") );
             retval = -1;
         }
         break;
     case PROT_TOPOLOGY_RPT:
         if( proc_TopologyReport( cur_packet ) == -1 ){
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_TopologyReport() failed\n" ));
+                                   "proc_TopologyReport() failed\n") );
             retval = -1;
         }
         break;
     case PROT_RECOVERY_RPT:
         if( proc_RecoveryReport( cur_packet ) == -1 ){
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_RecoveryReport() failed\n" ));
+                                   "proc_RecoveryReport() failed\n") );
             retval = -1;
         }
         break;
     case PROT_ENABLE_PERFDATA:
         if( proc_EnablePerfData( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_CollectPerfData() failed\n" ));
+                                   "proc_CollectPerfData() failed\n") );
             retval = -1;
         }
         break;
     case PROT_DISABLE_PERFDATA:
         if( proc_DisablePerfData( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_CollectPerfData() failed\n" ));
+                                   "proc_CollectPerfData() failed\n") );
             retval = -1;
         }
         break;
     case PROT_COLLECT_PERFDATA:
         if( proc_CollectPerfData( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_CollectPerfData() failed\n" ));
+                                   "proc_CollectPerfData() failed\n") );
             retval = -1;
         }
         break;
     case PROT_PRINT_PERFDATA:
         if( proc_PrintPerfData( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_PrintPerfData() failed\n" ));
+                                   "proc_PrintPerfData() failed\n") );
             retval = -1;
         }
         break;
@@ -227,22 +228,35 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
     case PROT_ENABLE_RECOVERY:
         if( proc_EnableFailReco( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_EnableFailReco() failed\n" ));
+                                   "proc_EnableFailReco() failed\n") );
             retval = -1;
         }
         break;
     case PROT_DISABLE_RECOVERY:
         if( proc_DisableFailReco( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_DisableFailReco() failed\n" ));
+                                   "proc_DisableFailReco() failed\n") );
             retval = -1;
         }
         break;
+    case PROT_NET_SETTINGS:
+        if( proc_SetTopoEnv( cur_packet ) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "proc_SetTopoEnv() failed\n") );
+            retval = -1;
+        }
+        break;
+    case PROT_PORT_UPDATE:
+	fprintf(stderr, "MJB DEBUG: in ChildNode::proc_PacketFromParent PROT_PORT_UPDATE\n");
+	if( proc_PortUpdate(cur_packet) == -1 ) {
+	     mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_PortUpdate() failed\n"));
+	     retval = -1;
+	}
+	break;
     default:
         //Any Unrecognized tag is assumed to be data
         if( proc_DataFromParent( cur_packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_Data() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_Data() failed\n"));
             retval = -1;
         }
         break;
@@ -250,6 +264,51 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
 
     return retval;
 }
+
+int ChildNode::proc_SetTopoEnv( PacketPtr ipacket ) const
+{
+    mrn_dbg_func_begin();
+    
+    char* sg_byte_array = NULL;
+    int* keys = NULL;
+    char** vals = NULL;
+    int i, count;
+    NetworkTopology* nt = _network->get_NetworkTopology();    
+
+    if( ipacket->unpack( "%s %ad %as", &sg_byte_array, 
+                         &keys, &count, 
+                         &vals, &count ) == -1 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "unpack() failed\n") );
+        return -1;
+    }
+    
+    // init topology 
+    std::string sg_str(sg_byte_array);
+    nt->reset( sg_str, false );
+
+    // init other network settings
+    std::map< env_key, std::string >& settingsMap = _network->get_SettingsMap();
+    for( i=0; i < count; i++ ) {
+       if( keys[i] == FAILURE_RECOVERY ) {
+           if( atoi(vals[i]) )
+               _network->enable_FailureRecovery(); 
+	   else
+	       _network->disable_FailureRecovery();
+       }	   
+       else
+           settingsMap[ (env_key)keys[i] ] =  vals[i];
+
+       free( vals[i] );
+    }
+    
+    free(vals);	
+    free( keys );
+
+    _network->init_NetSettings();
+
+    mrn_dbg_func_end();
+    return 0;
+} 
 
 int ChildNode::proc_EnablePerfData( PacketPtr ipacket ) const
 {
@@ -268,7 +327,7 @@ int ChildNode::proc_EnablePerfData( PacketPtr ipacket ) const
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
         if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
             return -1;
         }
     }
@@ -299,7 +358,7 @@ int ChildNode::proc_DisablePerfData( PacketPtr ipacket ) const
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
         if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
             return -1;
         }
     }
@@ -323,14 +382,14 @@ int ChildNode::proc_CollectPerfData( PacketPtr ipacket ) const
     Stream* strm = _network->get_Stream( stream_id );
     if( strm == NULL ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n",
-                               stream_id ));
+                               stream_id) );
         return -1;
     }
 
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
         if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
             return -1;
         }
     }
@@ -377,7 +436,7 @@ int ChildNode::proc_PrintPerfData( PacketPtr ipacket ) const
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
         if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
             return -1;
         }
     }
@@ -400,20 +459,20 @@ int ChildNode::proc_TopologyReport( PacketPtr ipacket ) const
     std::string topology = topology_ptr;
 
     if( !_network->reset_Topology( topology ) ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "Topology->reset() failed\n" ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "Topology->reset() failed\n") );
         return -1;
     }
 
     if( _network->is_LocalNodeParent() ) {
         if( _network->get_LocalParentNode()->proc_TopologyReport( ipacket ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
             return -1;
         }
     }
     else {
         // send ack to parent
         if( ! ack_TopologyReport() ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_TopologyReport() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_TopologyReport() failed\n") );
             return -1;
         }
     }
@@ -443,8 +502,6 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
                                             Rank ifailed_rank /* = UnknownRank */ )
 {
     mrn_dbg_func_begin();
-    NetworkTopology* tmp_nt=_network->get_NetworkTopology();
-
 
     // Establish data detection connection w/ new Parent
     if( iparent->connect_DataSocket() == -1 ) {
@@ -485,13 +542,18 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     }
     free( topo_ptr );
 
-    SerialGraph* init_topo = _network->read_Topology( iparent->_data_sock_fd );
-    assert( init_topo != NULL );
-    std::string sg_str = init_topo->get_ByteArray();
-
-    tmp_nt->reset( sg_str, false );
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s\n", 
-                           tmp_nt->get_TopologyString().c_str()) );
+    std::list< PacketPtr > packet_list;
+    
+    int rret = iparent->recv( packet_list );
+    if( (rret == -1) || ((rret == 0) && (packet_list.size() == 0)) ) {
+        if( rret == -1 ) {
+             mrn_dbg(3, mrn_printf(FLF, stderr, "recv() topo and env failed!\n"));
+             return -1;
+        }
+    }
+    
+    if( proc_PacketsFromParent( packet_list ) == -1 )
+        mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromParent() failed\n"));
 
     //Create send/recv threads
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for parent\n") );
@@ -622,10 +684,53 @@ bool ChildNode::ack_TopologyReport( void ) const
     return true;
 }
 
-int ChildNode::proc_PortUpdate( PacketPtr ) const
+int ChildNode::proc_PortUpdate( PacketPtr ipacket ) const
 {
-    // virtual method implementation, this shouldn't be called
-    return -1;
+    mrn_dbg_func_begin();
+
+    if( _network->is_LocalNodeParent() ) {
+        ParentNode* parent = _network->get_LocalParentNode();
+        if( parent->get_numChildrenExpected() ) {
+            // I have children, forward request
+            if( parent->proc_PortUpdates( ipacket ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+                return -1;
+            }
+            // success, I'm done
+            mrn_dbg_func_end();
+            return 0;
+        }
+        // else, leaf commnode, so fall through
+    }
+    // else, i'm a back-end or a leaf commnode, so send a port update packet
+
+    Stream *s = _network->get_Stream(PORT_STRM_ID);
+
+    int type = NetworkTopology::TOPO_CHANGE_PORT ;
+    char *host_arr = strdup("NULL"); // ugh, this needs to be fixed
+    Rank send_iprank = UnknownRank;
+    Rank send_myrank = _network->get_LocalRank();
+    Port send_port = _network->get_LocalPort();
+
+    if( _network->is_LocalNodeBackEnd() )
+        s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
+                 &type, 1,
+                 &send_iprank, 1,
+                 &send_myrank, 1,
+                 &host_arr, 1,
+                 &send_port, 1 );
+    else
+        s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
+                          &type, 1,
+                          &send_iprank, 1,
+                          &send_myrank, 1,
+                          &host_arr, 1,
+                          &send_port, 1 );
+    s->flush();
+    free(host_arr);
+
+    mrn_dbg_func_end();
+    return 0;
 }
 
 int ChildNode::recv_PacketsFromParent(std::list <PacketPtr> &packet_list) const 
@@ -638,7 +743,7 @@ bool ChildNode::has_PacketsFromParent( ) const
     return _network->has_PacketsFromParent();
 }
 
-/* Failure Recovery Code */
+/*Failure Recovery Code*/
 
 int ChildNode::proc_EnableFailReco( PacketPtr ipacket ) const
 {
@@ -647,7 +752,7 @@ int ChildNode::proc_EnableFailReco( PacketPtr ipacket ) const
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
         if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
             return -1;
         }
     }
@@ -666,7 +771,7 @@ int ChildNode::proc_DisableFailReco( PacketPtr ipacket ) const
     if( _network->is_LocalNodeParent() ) {
         // forward packet to children nodes
         if( _network->send_PacketToChildren( ipacket ) == -1 ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
             return -1;
         }
     }

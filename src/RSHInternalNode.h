@@ -17,7 +17,7 @@ class RSHInternalNode : public InternalNode,
                         public RSHChildNode
 {
 protected:
-    virtual int proc_PacketFromParent( PacketPtr cur_packet );
+    int proc_PacketFromParent( PacketPtr cur_packet );
 
 public:
     RSHInternalNode( Network* inetwork,

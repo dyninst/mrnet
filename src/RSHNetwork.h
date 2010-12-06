@@ -41,13 +41,13 @@ class RSHNetwork : public Network
 
  public:
     // ctor for Network in FE role
-    RSHNetwork( void );
+    RSHNetwork(void);
 
     // ctor for Network in BE/IN role
     RSHNetwork( const char* phostname, Port pport, Rank prank,
                 const char* myhostname, Rank myrank, bool isInternal );
 
-    virtual ~RSHNetwork( void ) { }
+    virtual ~RSHNetwork(void) {}
 };
 
 } // namespace MRN

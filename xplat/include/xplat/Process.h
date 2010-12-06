@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include "xplat/NetUtils.h"
+#include <map>
 
 namespace XPlat
 {
@@ -23,6 +24,10 @@ private:
     static int CreateRemote( const std::string& host,
                              const std::string& cmd,
                              const std::vector<std::string>& args );
+    
+    static std::string XPLAT_RSH;
+    static std::string XPLAT_RSH_ARGS;
+    static std::string XPLAT_REMCMD;
 
 public:
     static int GetProcessId( void );
@@ -44,6 +49,21 @@ public:
             ret = CreateRemote( host, cmd, args );
         }
         return ret;
+    }
+    
+    static void set_rsh( std::string rsh )
+    {
+        XPLAT_RSH = rsh;
+    }
+
+    static void set_rshargs( std::string rshargs )
+    {
+        XPLAT_RSH_ARGS =rshargs;
+    }
+
+    static void set_remcmd( std::string remcmd ) 
+    {
+        XPLAT_REMCMD = remcmd;
     }
 
     static int GetLastError( void );

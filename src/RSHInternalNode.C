@@ -63,15 +63,8 @@ RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
         }
         break;
 
-    case PROT_PORT_UPDATE:
-        retval = RSHChildNode::proc_PortUpdate(cur_packet);
-        if( retval == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_PortUpdate() failed\n") );
-        }
-        break;
-
     default:
-        retval = InternalNode::proc_PacketFromParent( cur_packet );
+        retval = ChildNode::proc_PacketFromParent( cur_packet );
     }
     return retval;
 }

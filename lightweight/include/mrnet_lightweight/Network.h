@@ -35,6 +35,7 @@ typedef struct {
     char _was_shutdown;
 } Network_t;
 
+
 Network_t* new_Network_t();
 
 void delete_Network_t( Network_t * net);
@@ -109,7 +110,9 @@ int Network_recover_FromParentFailure( Network_t* net );
 
 char* Network_get_LocalSubTreeStringPtr( Network_t* net );
 
-void Network_set_OutputLeveL( int l );
+void Network_set_OutputLevel( int l );
+
+void Network_set_DebugLogDir( char* value );
 
 void Network_set_OutputLevelFromEnvironment(void);
 

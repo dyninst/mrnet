@@ -27,6 +27,8 @@ Network::CreateNetworkFE( const char * itopology,
                           bool irank_backends,
                           bool iusing_mem_buf )
 {
+    endianTest();
+
     Network* net = new RSHNetwork;
     net->init_FrontEnd( itopology,
                         ibackend_exe,
@@ -114,12 +116,15 @@ RSHNetwork::CreateInternalNode( Network* inetwork,
 
 //----------------------------------------------------------------------------
 // RSHNetwork methods
+//only FE calls this constructor
 
-RSHNetwork::RSHNetwork( void )
+RSHNetwork::RSHNetwork(void)
+    : Network()
 {
-    // nothing else to do
+    //nothing to do here
 }
 
+//BE and IN constructor
 RSHNetwork::RSHNetwork( const char* phostname, Port pport, Rank prank,
                         const char* myhostname, Rank myrank, bool isInternal )
 {

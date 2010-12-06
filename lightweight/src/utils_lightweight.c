@@ -160,6 +160,7 @@ int connectHost( int *sock_in, char* hostname,
     return 0;
 }
 
+extern char* MRN_DEBUG_LOG_DIRECTORY;
 
 int mrn_printf( const char *file, int line, const char * func,
                 FILE * ifp, const char *format, ... )
@@ -175,35 +176,39 @@ int mrn_printf( const char *file, int line, const char * func,
     char host[256];
     char logdir[256];
     char logfile[512];
-    const char* home = getenv("HOME");
-    const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
+    
+    const char* varval = MRN_DEBUG_LOG_DIRECTORY;
+
     FILE *f;
+    static int retry = true;
     int pid = Process_GetProcessId();
 
     while (gettimeofday( &tv, NULL ) == -1 ) {}
+    
+    if( (MRN_DEBUG_LOG_DIRECTORY != NULL) && (retry) ) {
 
-    if ( (fp == NULL) && (rank != UnknownRank) ) {
-        logfile[0] = '\0';
+        if ( (fp == NULL) && (rank != UnknownRank) ) {
+            logfile[0] = '\0';
 
-        NetUtils_GetLocalHostName(host);
-        host[255] = '\0';
+            NetUtils_GetLocalHostName(host);
+            host[255] = '\0';
 
-        // find log directory
-        if (varval != NULL) {
-            if ( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
-                snprintf( logdir, sizeof(logdir), "%s", varval);
+            // find log directory
+            if (varval != NULL) {
+                if ( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) ) {
+                    snprintf( logdir, sizeof(logdir), "%s", varval);
+	            
+		    // set file name format
+                    snprintf(logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
+                             logdir, node_type, host, rank, pid);
+                    fp = fopen(logfile, "w");
+		} 
+		else
+		    retry = false; 
+            }		    
         }
-        else if (home != NULL) {
-            snprintf( logdir, sizeof(logdir), "%s/mrnet-log", home );
-            if(! ((stat(logdir, &s) == 0) && (S_IFDIR & s.st_mode)))
-                snprintf( logdir, sizeof(logdir), "/tmp" );
-        }
-        // set file name format
-        snprintf(logfile, sizeof(logfile), "%s/%s_%s_%u.%d",
-                 logdir, node_type, host, rank, pid);
-        fp = fopen(logfile, "w");
     }
-  
+
     f = fp;
     if (f == NULL)
         f = ifp;
@@ -222,7 +227,7 @@ int mrn_printf( const char *file, int line, const char * func,
     retval = vfprintf(f, format, arglist);
     va_end(arglist);
     fflush(f);
-
+   
     return retval;
 }
 

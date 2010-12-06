@@ -4,7 +4,6 @@
  ****************************************************************************/
 
 #include <iostream>
-
 #include "utils.h"
 #include "ChildNode.h"
 #include "RSHParentNode.h"
@@ -12,7 +11,6 @@
 #include "xplat/Process.h"
 #include "xplat/Error.h"
 #include "mrnet/MRNet.h"
-
 
 namespace MRN
 {
@@ -87,6 +85,7 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
     const char *commnode_path = NULL;
     const char **backend_argv;
     unsigned int backend_argc;
+  
     DataType dt;
 
     mrn_dbg_func_begin();
@@ -177,6 +176,7 @@ RSHParentNode::launch_InternalNode( std::string ihostname, Rank irank,
 
     // set up arguments for the new process
     std::vector <std::string> args;
+
     args.push_back(icommnode_exe);
     args.push_back(_hostname);
     args.push_back(parent_port_str);
@@ -224,7 +224,8 @@ RSHParentNode::launch_Application( std::string ihostname, Rank irank,
     snprintf( rank_str, sizeof(rank_str), "%d", irank );
 
     // set up arguments for new process: copy to get the cmd in front
-
+    
+    // set up arguments for the new process
     std::vector< std::string > new_args;
 
     new_args.push_back( ibackend_exe );

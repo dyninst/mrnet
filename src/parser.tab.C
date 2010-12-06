@@ -1374,7 +1374,7 @@ yyreduce:
 #line 60 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
     {
     if(potential_root.size() != 1){
-        fprintf(stderr, "graph is not connected, found %d potential roots\n",
+        fprintf(stderr, "graph is not connected, found %zd potential roots\n",
                 potential_root.size());
         YYABORT;
     }

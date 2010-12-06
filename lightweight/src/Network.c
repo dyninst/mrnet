@@ -25,6 +25,7 @@
 const int MIN_OUTPUT_LEVEL=0;
 const int MAX_OUTPUT_LEVEL=5;
 int CUR_OUTPUT_LEVEL=1;
+char* MRN_DEBUG_LOG_DIRECTORY = NULL;
 
 void init_local(void)
 {
@@ -67,8 +68,6 @@ Network_t* new_Network_t()
 
     init_local();
 
-    Network_set_OutputLevelFromEnvironment();
-
     return net;
 }
 
@@ -88,6 +87,9 @@ void delete_Network_t(Network_t * net)
 
     delete_map_t(net->streams);
     free(net);
+
+    if( MRN_DEBUG_LOG_DIRECTORY != NULL )
+        free( MRN_DEBUG_LOG_DIRECTORY );      
 }
 
 char* Network_get_LocalHostName(Network_t* net) {
@@ -685,6 +687,11 @@ int Network_recover_FromParentFailure(Network_t* net)
 char* Network_get_LocalSubTreeStringPtr(Network_t* net)
 {
     return NetworkTopology_get_LocalSubTreeStringPtr(net->network_topology);
+}
+
+void Network_set_DebugLogDir( char* value )
+{
+    MRN_DEBUG_LOG_DIRECTORY =  strdup( value );
 }
 
 void Network_set_OutputLevel(int l) 

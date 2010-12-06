@@ -48,7 +48,8 @@ enum ProtocolTags {
 /* 33 */     PROT_ENABLE_RECOVERY,
 /* 34 */     PROT_DISABLE_RECOVERY,
 /* 35 */     PROT_TOPO_UPDATE,
-/* 36 */     PROT_SUBTREE_INITDONE_RPT
+/* 36 */     PROT_SUBTREE_INITDONE_RPT,
+/* 37 */     PROT_NET_SETTINGS
 };
 
 #ifdef __cplusplus

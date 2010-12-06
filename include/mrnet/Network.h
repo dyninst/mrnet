@@ -136,15 +136,15 @@ class Network: public Error {
 
     PeerNodePtr get_PeerNode( Rank );
     bool node_Failed( Rank );
-    PeerNodePtr get_OutletNode( Rank ) const;
-
+    PeerNodePtr get_OutletNode( Rank ) const ;
+    
     void add_Callbacks();
 
 protected:
     static const char* FindCommnodePath(void);
     
     // constructor
-    Network(void);
+    Network( void );
 
     // Initializers for separate Network roles
     // With the current design where a single Network class can be
@@ -206,8 +206,9 @@ protected:
     bool reset_Topology(std::string& itopology);
     void update_TopoStream();
 
+    std::map< env_key, std::string >& get_SettingsMap();
     PeerNodePtr _parent;
-
+    
  private:
     friend class Stream;
     friend class FrontEndNode;
@@ -316,6 +317,10 @@ protected:
 
     void collect_PerfData(void);
 
+    void init_FENetSettings( const std::map<std::string, std::string> * iattrs );
+    void init_NetSettings( void );
+    void convert_SettingsMap( const std::map<std::string, std::string> * iattrs );
+
     bool is_ShuttingDown(void) const;
     void set_ShuttingDown(void);
 
@@ -333,6 +338,7 @@ protected:
     EventDetector* _edt;
     unsigned int _next_stream_id; // only used be FE
     EventMgr* _evt_mgr;
+    std::map< env_key, std::string > _network_settings;
 
     std::set< PeerNodePtr > _children;
     std::map< unsigned int, Stream* > _streams;

@@ -689,7 +689,7 @@ void NetworkTopology::print( FILE * f ) const
     _sync.Unlock();
 }
 
-std::string NetworkTopology::get_TopologyString( )
+std::string NetworkTopology::get_TopologyString(void)
 {
     std::string topol;
     _sync.Lock();

@@ -410,27 +410,21 @@ FILE* mrn_printf_setup( int rank, node_type_t type )
         sprintf( node_type, "CP" );
         break;
     default:
-        sprintf( node_type, "xx" );
-        break;
+        return NULL;
     };
-
-    const char* home = getenv("HOME");
 
     XPlat::NetUtils::GetLocalHostName(this_host);
     strncpy( host, this_host.c_str(), 256 );
     host[255] = '\0';
 
     // find log directory
-    const char* varval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
+    extern char* MRN_DEBUG_LOG_DIRECTORY;
+    const char* varval = MRN_DEBUG_LOG_DIRECTORY;
     if( varval != NULL ) {
         if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
             snprintf( logdir, sizeof(logdir), "%s", varval );
     }
-    else if( home != NULL ) {
-        snprintf( logdir, sizeof(logdir), "%s/mrnet-log", home );
-        if( ! ((stat(logdir, &s) == 0) && (S_IFDIR & s.st_mode)) )
-            snprintf( logdir, sizeof(logdir), "/tmp" );
-    }
+    
     // set file name format
     int pid = XPlat::Process::GetProcessId();
     snprintf( logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
@@ -443,13 +437,16 @@ FILE* mrn_printf_setup( int rank, node_type_t type )
 int mrn_printf( const char *file, int line, const char * func,
                 FILE * ifp, const char *format, ... )
 {
+    extern char* MRN_DEBUG_LOG_DIRECTORY;
+    static bool retry = true;
     static FILE * fp = NULL;
-    int retval;
+
+    int retval = 1;
     va_list arglist;
 
     struct timeval tv;
     while( gettimeofday( &tv, NULL ) == -1 ) {}
-
+    
     mrn_printf_mutex.Lock();
 
     // get thread info
@@ -468,18 +465,26 @@ int mrn_printf( const char *file, int line, const char * func,
         net = tsd->network;
     }
 
-    // try to open log file
-    if( (fp == NULL) && (rank != UnknownRank) )
-        fp = mrn_printf_setup( rank, node_type );
+    if( (MRN_DEBUG_LOG_DIRECTORY != NULL) && retry ) { 
+       // try to open log file
+       if( (fp == NULL) && 
+           (rank != UnknownRank) &&
+           (node_type != UNKNOWN_NODE) )
+          fp = mrn_printf_setup( rank, node_type );
+   
+    }
 
     FILE *f = fp;
-    if( f == NULL ) 
+    if( f == NULL ) {
         f = ifp;
+        if( MRN_DEBUG_LOG_DIRECTORY != NULL )
+            retry = false;
+    }
 
     // print timestamp and thread info
     fprintf( f, "%ld.%ld: %s(0x%lx): ", 
              tv.tv_sec-MRN_RELEASE_DATE_SECS, tv.tv_usec,
-             ( thread_name != NULL ) ? thread_name : "<unknown thread>",
+             ( thread_name != NULL ) ? thread_name : "UNKNOWN_THREAD",
              tid );
 
     if( file ) {
@@ -495,6 +500,7 @@ int mrn_printf( const char *file, int line, const char * func,
     fflush( f );
     
     mrn_printf_mutex.Unlock();
+     
     return retval;
 }
 

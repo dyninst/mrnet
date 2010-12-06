@@ -40,12 +40,15 @@ class ChildNode: public virtual Error,
 
     bool ack_DeleteSubTree( void ) const ;
 
-    virtual int proc_PortUpdate(PacketPtr ipacket ) const;
+    int proc_PortUpdate(PacketPtr ipacket ) const;
 
     int proc_EnablePerfData( PacketPtr ipacket ) const;
     int proc_DisablePerfData( PacketPtr ipacket ) const;
     int proc_CollectPerfData( PacketPtr ipacket ) const;
     int proc_PrintPerfData( PacketPtr ipacket ) const;
+    
+    //Env and Topo distribution
+    int proc_SetTopoEnv( PacketPtr ipacket ) const;
 
     /*Failure Recovery */
 

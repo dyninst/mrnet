@@ -30,6 +30,9 @@
 #include "xplat/NetUtils.h"
 #include "xplat/SocketUtils.h"
 #include "xplat/Thread.h"
+#include "xplat/Process.h"
+#include "xplat/Error.h"
+
 using namespace XPlat;
 
 extern FILE *mrnin;
@@ -44,16 +47,18 @@ int mrnparse( );
 extern const char* mrnBufPtr;
 extern unsigned int mrnBufRemaining;
 
-const int MIN_OUTPUT_LEVEL=0;
-const int MAX_OUTPUT_LEVEL=5;
-int CUR_OUTPUT_LEVEL=1;
+const int MIN_OUTPUT_LEVEL = 0;
+const int MAX_OUTPUT_LEVEL = 5;
+int CUR_OUTPUT_LEVEL = 1;
+char* MRN_DEBUG_LOG_DIRECTORY = NULL;
 
 const Port UnknownPort = (Port)-1;
 const Rank UnknownRank = (Rank)-1;
 
 const char *empty_str="";
 
-void set_OutputLevelFromEnvironment(void);
+void init_XplatSettings( std::map< env_key, std::string >& envMap );
+int get_NetSettingName( std::string s );
 
 void init_local(void)
 {
@@ -111,10 +116,8 @@ Network::Network(void)
       _was_shutdown(false), _shutting_down(false)
 {
     init_local();
-
-    set_OutputLevelFromEnvironment();
-
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
+    //fprintf(stderr, "MJB DEBUG: in Network() - this is %p\n", this);
 }
 
 Network::~Network(void)
@@ -125,6 +128,9 @@ Network::~Network(void)
         delete parsed_graph;
         parsed_graph = NULL;
     }
+
+    if( MRN_DEBUG_LOG_DIRECTORY != NULL )
+        free( MRN_DEBUG_LOG_DIRECTORY );
 
     tsd_t* tsd = (tsd_t*)tsd_key.Get();
     if( tsd != NULL ) {
@@ -294,12 +300,68 @@ void Network::signal_ShutDown(void)
     mrn_dbg_func_end();
 }
 
-const char* Network::FindCommnodePath(void)
+std::map< env_key, std::string >&  Network::get_SettingsMap()
 {
-    const char* path = getenv( "MRN_COMM_PATH" );
-    if( path == NULL )
-        path = COMMNODE_EXE;
-    return path;
+    return _network_settings;
+}
+
+void Network::convert_SettingsMap( const std::map< std::string, std::string > * iattrs )
+{
+    std::map<std::string, std::string>::const_iterator it;
+    if( iattrs != NULL )
+    {
+       for( it = iattrs->begin(); it != iattrs->end(); it++ ) {
+           env_key key = (env_key) get_NetSettingName( it->first );
+          _network_settings[ key ] = it->second;
+       }
+    }
+}
+
+void Network::init_FENetSettings( const std::map< std::string, std::string > * iattrs )
+{
+    convert_SettingsMap( iattrs );
+    init_NetSettings();
+}
+
+void Network::init_NetSettings( void )
+{
+    if( _network_settings.find(MRNET_OUTPUT_LEVEL) != _network_settings.end() ) {
+        CUR_OUTPUT_LEVEL = atoi( _network_settings[MRNET_OUTPUT_LEVEL].c_str() );
+    }
+
+    if( _network_settings.find( MRNET_DEBUG_LOG_DIRECTORY ) == _network_settings.end() ) {
+        // Child Nodes should never enter this part of code as settings distribution packet 
+        // will always carry MRNET_DEBUG_LOG_DIRECTORY
+	assert( is_LocalNodeFrontEnd() );
+
+        const char* home = getenv("HOME");
+        char logdir[256];
+        snprintf(logdir, sizeof(logdir), "%s/mrnet-log", home);
+        _network_settings[ MRNET_DEBUG_LOG_DIRECTORY ] = std::string(logdir) ;
+    }
+    MRN_DEBUG_LOG_DIRECTORY = strdup( _network_settings[MRNET_DEBUG_LOG_DIRECTORY].c_str() );
+    
+    if( _network_settings.find(MRNET_COMM_PATH) == _network_settings.end() ) {
+        _network_settings[ MRNET_COMM_PATH ] = COMMNODE_EXE ;
+    }
+
+    init_XplatSettings( _network_settings );
+}
+
+void init_XplatSettings( std::map< env_key, std::string >& envMap )
+{
+    std::map< env_key, std::string >::iterator eit;
+    eit = envMap.find( XPLAT_RSH );
+    if( eit != envMap.end() )
+        XPlat::Process::set_rsh( eit->second );
+   
+    eit = envMap.find( XPLAT_RSH_ARGS );
+    if( eit != envMap.end() )
+        XPlat::Process::set_rshargs( eit->second );
+
+    eit = envMap.find( XPLAT_REMCMD );
+    if( eit != envMap.end() )
+        XPlat::Process::set_remcmd( eit->second );
 }
 
 void Network::update_BcastCommunicator(void)
@@ -386,19 +448,27 @@ void Network::init_FrontEnd( const char * itopology,
         error( ERR_SYSTEM, rootRank, 
                "Failed to initialize via CreateFrontEndNode()\n" );
 
-    const char* mrn_commnode_path = FindCommnodePath();
-    assert( mrn_commnode_path != NULL );
+    init_FENetSettings( iattrs );
+
+    std::string path;
+    if( _network_settings.find(MRNET_COMM_PATH) != _network_settings.end() ) {
+        path = _network_settings[ MRNET_COMM_PATH ];
+    }
+    if( path.empty() )
+        assert( 0 );
+    const char* mrn_commnode_path = path.c_str();
     
     if( ibackend_exe == NULL ) {
         ibackend_exe = empty_str;
     }
+
     unsigned int backend_argc=0;
     if( ibackend_args != NULL ){
         for(unsigned int i=0; ibackend_args[i] != NULL; i++){
             backend_argc++;
         }
     }
-
+   
     // spawn and connect processes that constitute our network
     this->Instantiate( parsed_graph, 
                        mrn_commnode_path, 
@@ -410,7 +480,7 @@ void Network::init_FrontEnd( const char * itopology,
     parsed_graph = NULL;
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
-    
+
     if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() )
             error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
    
@@ -429,6 +499,7 @@ void Network::init_FrontEnd( const char * itopology,
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_PORT_UPDATE, "") );
     if( -1 == get_LocalFrontEndNode()->proc_PortUpdates( packet ) )
         error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
+
 }
 
 void Network::send_TopologyUpdates(void)
@@ -1318,7 +1389,6 @@ int Network::load_FilterFunc( const char* so_file, const char* func_name )
     static unsigned short next_filter_id=100; 
     unsigned short cur_filter_id=next_filter_id;
     next_filter_id++;
-
     mrn_dbg_func_begin();
 
     int rc = Filter::load_FilterFunc( cur_filter_id, so_file, func_name );
@@ -1469,9 +1539,9 @@ BackEndNode* Network::get_LocalBackEndNode(void) const
 ChildNode* Network::get_LocalChildNode(void) const
 {
     if( is_LocalNodeInternal() )
-        return dynamic_cast< ChildNode* >(_local_internal_node);
+        return (ChildNode*)(_local_internal_node);
     else
-        return dynamic_cast< ChildNode* >(_local_back_end_node) ;
+        return (ChildNode*)(_local_back_end_node) ;
 }
 
 ParentNode* Network::get_LocalParentNode(void) const
@@ -1919,13 +1989,44 @@ void set_OutputLevel(int l)
     }
 }
 
-void set_OutputLevelFromEnvironment(void)
+void set_OutputLevelFromEnvironment( std::map< env_key, std::string>& env) 
 {
-    char* output_level = getenv( "MRNET_OUTPUT_LEVEL" );
+    char* output_level = NULL;
+    if( env.find(MRNET_OUTPUT_LEVEL) != env.end() ){
+        output_level = strdup( env[MRNET_OUTPUT_LEVEL].c_str() );
+    }
+       
     if( output_level != NULL ) {
         int l = atoi( output_level );
+        free( output_level );
         set_OutputLevel( l );
     }
+    
+    if( env.find(MRNET_DEBUG_LOG_DIRECTORY) != env.end() )
+        MRN_DEBUG_LOG_DIRECTORY = strdup( env[MRNET_DEBUG_LOG_DIRECTORY].c_str() );
+}
+
+int get_NetSettingName( std::string s )
+{
+     int ret = -1;
+     if( !s.empty() )
+     {
+         if( strcmp("MRNET_OUTPUT_LEVEL", s.c_str()) == 0 )
+             ret = MRNET_OUTPUT_LEVEL;
+         else if( strcmp("MRNET_DEBUG_LOG_DIRECTORY", s.c_str() ) == 0 )
+             ret = MRNET_DEBUG_LOG_DIRECTORY;
+         else if( strcmp("MRNET_COMM_PATH", s.c_str() ) == 0 )
+             ret = MRNET_COMM_PATH;
+         else if( strcmp("FAILURE_RECOVERY", s.c_str() ) == 0 )
+             ret = FAILURE_RECOVERY;
+         else if( strcmp("XPLAT_RSH", s.c_str() ) == 0 )
+             ret = XPLAT_RSH;
+         else if( strcmp("XPLAT_RSH_ARGS" , s.c_str() ) == 0 )
+             ret = XPLAT_RSH_ARGS;
+         else if( strcmp("XPLAT_REMCMD" , s.c_str() ) == 0 )
+             ret = XPLAT_REMCMD;
+     }
+     return ret;
 }
 
 /* Propagate topology */

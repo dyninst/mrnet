@@ -78,13 +78,15 @@ Process::CreateLocal( const std::string& cmd,
         close( epipe[0] );
         
         // build argument array
+        
         char** argv = new char*[args.size() + 1];
-        for( unsigned int i = 0; i < args.size(); i++ )
-        {
-            argv[i] = new char[args[i].length() + 1];
-            strcpy( argv[i], args[i].c_str() );
-        }
-        argv[args.size()] = NULL;
+	for( unsigned int i = 0; i < ( args.size() ); i++ )
+	{
+	    argv[i] = new char[args[i].length() + 1];
+	    strcpy( argv[i], args[i].c_str() );
+	}
+	argv[args.size()] = NULL;
+        
 
         // exec the command
         int eret = execvp( cmd.c_str(), argv );

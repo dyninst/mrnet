@@ -379,17 +379,17 @@ tests-opt: $(OPT_TESTS)
 examples: all
 	$(MAKE) -C Examples
 
-$(SRCDIR)/scanner.C: $(SRCDIR)/scanner.l $(SRCDIR)/parser.tab.C $(FRC)
+$(SRCDIR)/scanner.C: $(SRCDIR)/scanner.l $(SRCDIR)/parser.tab.C
 	@echo Building `basename $@` ...
 	if [ -f $@ ] ; then $(RM) $@ ; fi
 	$(FLEX) -Pmrn -t $< > $@ 
 
-$(SRCDIR)/parser.tab.C $(SRCDIR)/parser.tab.h: $(SRCDIR)/parser.y $(FRC)
+$(SRCDIR)/parser.tab.C $(SRCDIR)/parser.tab.h: $(SRCDIR)/parser.y
 	@echo Building `basename $@` ...
 	$(BISON) -p mrn -d $<
-	if [ -f $(OBJDIR)/parser.tab.C ] ; then $(RM) $(OBJDIR)/parser.tab.C ; fi
+	if [ -f $(SRCDIR)/parser.tab.C ] ; then $(RM) $(SRCDIR)/parser.tab.C ; fi
 	mv y.tab.c $(SRCDIR)/parser.tab.C
-	if [ -f $(OBJDIR)/parser.tab.h ] ; then $(RM) $(OBJDIR)/parser.tab.h ; fi 
+	if [ -f $(SRCDIR)/parser.tab.h ] ; then $(RM) $(SRCDIR)/parser.tab.h ; fi 
 	mv y.tab.h $(SRCDIR)/parser.tab.h
 
 $(LIBMRNET): $(LIBMRNET_OBJS)

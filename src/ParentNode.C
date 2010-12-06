@@ -638,7 +638,8 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                      &is_internal_char,
                      &topo_ptr ); 
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "New child node[%s:%u:%u] (incarnation:%u) on socket %d\n",
+    mrn_dbg(5, mrn_printf(FLF, stderr, 
+                          "New child node[%s:%u:%u] (incarnation:%u) on socket %d\n",
                           child_hostname_ptr, child_rank, child_port,
                           child_incarnation, isock) );
 
@@ -654,21 +655,60 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
 
     child_node->set_DataSocketFd( isock );
     
-    // give new child our current topology
+    mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                           "New child node[%s:%u:%u] (incarnation:%u) on socket %d\n",
+                           child_hostname_ptr, child_rank, child_port,
+                           child_incarnation, isock) );
+    
+    // if connecting child not in topology, add its subtree
     NetworkTopology* nt = _network->get_NetworkTopology();
-    _network->write_Topology( isock );
-
     SerialGraph sg( topo_ptr );
-
-    //if connecting child not in topology
     if( NULL == nt->find_Node(sg.get_RootRank()) ) {
         if( ! _network->add_SubGraph(_network->get_LocalRank(), sg, false) ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n") );
     	    return -1;
         }
+        mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                               "topology is %s after adding child subgraph\n", 
+                               nt->get_TopologyString().c_str()) );
     }
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s after adding child subgraph\n", 
+    std::string topo_str = nt->get_TopologyString();
+
+
+    // propagate initial network settings
+    const std::map< env_key, std::string >& envMap = _network->get_SettingsMap();
+
+    int* keys = (int*) calloc( envMap.size() + 1, sizeof(char*));
+    char** vals = (char**) calloc( envMap.size() + 1, sizeof(char*)); 
+   
+    unsigned int count = 0;
+    std::map< env_key, std::string>::const_iterator env_it;
+    for( env_it = envMap.begin(); env_it != envMap.end(); env_it++ ) {
+        keys[count] = env_it->first;
+        vals[count] = strdup( (env_it->second ).c_str() );
+        count++;
+    }
+
+    keys[ count ] = FAILURE_RECOVERY;
+    if( _network->_recover_from_failures )
+        vals[ count ] = strdup( "1" );
+    else 
+        vals[ count ] = strdup( "0" );
+    count++;
+
+    PacketPtr pkt( new Packet(CTL_STRM_ID, PROT_NET_SETTINGS, "%s %ad %as", 
+                              topo_str.c_str(),
+                              keys, count, 
+                              vals, count) );
+    
+    child_node->sendDirectly( pkt );  
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before adding child subgraph\n", 
                            nt->get_TopologyString().c_str()) );
+    
+    for( unsigned u=0; u < count; u++ )
+        free( vals[u] );
+    free( keys );
+    free( vals );
 
     //Create send/recv threads
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for new child\n") );

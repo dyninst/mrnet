@@ -154,7 +154,7 @@ protected:
 
 public:
     // ctor for Network in FE role
-    XTNetwork( void );
+    XTNetwork(void);
 
     // ctor for Network in BE/IN role
     XTNetwork( bool,
@@ -162,7 +162,7 @@ public:
                int beArgc = 0,
                char** beArgv = NULL );
 
-    virtual ~XTNetwork( void ) { }
+    virtual ~XTNetwork(void) {}
 };
 
 } // namespace MRN

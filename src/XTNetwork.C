@@ -50,7 +50,7 @@ Network::CreateNetworkFE( const char * itopology,
 {
     mrn_dbg_func_begin();
 
-    Network* n = new XTNetwork;
+    Network* n = new XTNetwork( iattrs );
     n->init_FrontEnd( itopology,
                       ibackend_exe,
                       ibackend_argv,
@@ -117,7 +117,8 @@ Network::CreateNetworkIN( int argc, char** argv )
 // XTNetwork methods
 
 // FE and BE constructor
-XTNetwork::XTNetwork( void )
+XTNetwork::XTNetwork(void)
+    : Network()
 {
     set_LocalHostName( GetNodename() );
 }
@@ -287,8 +288,17 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
 
     FindPositionInTopology( topology, myHost, myRank, my_tpos );
     assert( my_tpos != NULL );
-  
-    const char* mrn_commnode_path = Network::FindCommnodePath();
+    
+    std::map< env_key, std::string >& envMap = get_EnvMap();
+    std::string path;
+    if( envMap.find( MRNET_COMM_PATH ) != envMap.end() ) {
+        path = envMap[ MRNET_COMM_PATH];
+    }
+   
+    if( path.empty() )
+        assert( 0 );
+   
+    const char* mrn_commnode_path = path.c_str();
   
     if( topoPipeFd == -1 ) { // first process on this node
 

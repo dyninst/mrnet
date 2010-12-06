@@ -89,8 +89,8 @@ int BackEndNode::proc_DataFromParent(PacketPtr ipacket) const
     int retval = 0;
     Stream * stream = _network->get_Stream( ipacket->get_StreamId() );
     if( stream == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                               ipacket->get_StreamId() ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed for pkt with tag %d\n",
+                               ipacket->get_StreamId(), ipacket->get_Tag() ));
         return -1;
     }
 
