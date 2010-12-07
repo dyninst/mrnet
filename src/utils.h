@@ -85,13 +85,6 @@ struct ltstr
 
 extern XPlat::TLSKey tsd_key;
 
-typedef enum {
-     UNKNOWN_NODE = 0,
-     FE_NODE,
-     BE_NODE,
-     CP_NODE
-} node_type_t;
-
 class Network;
 
 class tsd_t {

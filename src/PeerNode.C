@@ -216,34 +216,16 @@ void * PeerNode::recv_thread_main( void* iargs )
 
     //TLS: setup thread local storage for recv thread
     std::ostringstream namestr;
-
     if( peer_node->is_parent() )
         namestr << "FROMPARENT(";
     else
         namestr << "FROMCHILD(";
-
-    namestr << peer_node->_network->get_LocalHostName()
+    namestr << peer_node->get_HostName()
             << ':'
-            << peer_node->_network->get_LocalRank()
-            << "<-"
-            << peer_node->get_HostName()
-            << ':'
-            << peer_node->get_Rank()
+            << rank
             << ')'
             << std::ends;
-
-    int status;
-    tsd_t * local_data = new tsd_t;
-    local_data->thread_id = XPlat::Thread::GetId();
-    local_data->thread_name = strdup( namestr.str().c_str() );
-    local_data->process_rank = rank;
-    local_data->node_type = UNKNOWN_NODE;
-    local_data->network = net;
-    if( (status = tsd_key.Set(local_data)) != 0 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
-                   strerror(status) ));
-        XPlat::Thread::Exit(args);
-    }
+    net->init_ThreadState( UNKNOWN_NODE, namestr.str().c_str() );
 
     mrn_dbg_func_begin();
 
@@ -305,34 +287,16 @@ void * PeerNode::send_thread_main( void* iargs )
 
     //TLS: setup thread local storage for send thread
     std::ostringstream namestr;
-
     if( peer_node->is_parent() )
         namestr << "TOPARENT(";
     else
         namestr << "TOCHILD(";
-
-    namestr << peer_node->_network->get_LocalHostName()
+    namestr << peer_node->get_HostName()
             << ':'
-            << peer_node->_network->get_LocalRank()
-            << "<-"
-            << peer_node->get_HostName()
-            << ':'
-            << peer_node->get_Rank()
+            << rank
             << ')'
             << std::ends;
-
-    int status;
-    tsd_t * local_data = new tsd_t;
-    local_data->thread_id = XPlat::Thread::GetId();
-    local_data->thread_name = strdup( namestr.str().c_str() );
-    local_data->process_rank = rank;
-    local_data->node_type = UNKNOWN_NODE;
-    local_data->network = net;
-    if( (status = tsd_key.Set(local_data)) != 0 ) {
-        mrn_dbg( 1, mrn_printf(0,0,0, stderr, "XPlat::TLSKey::Set(): %s\n",
-                              strerror(status))); 
-        XPlat::Thread::Exit(args);
-    }
+    net->init_ThreadState( UNKNOWN_NODE, namestr.str().c_str() );
 
     mrn_dbg_func_begin();
 

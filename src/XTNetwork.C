@@ -44,13 +44,13 @@ Network*
 Network::CreateNetworkFE( const char * itopology,
 			  const char * ibackend_exe,
 			  const char **ibackend_argv,
-			  const std::map<std::string,std::string>* iattrs,
+			  const std::map< std::string, std::string > * iattrs,
 			  bool irank_backends,
 			  bool iusing_mem_buf )
 {
     mrn_dbg_func_begin();
 
-    Network* n = new XTNetwork( iattrs );
+    Network* n = new XTNetwork;
     n->init_FrontEnd( itopology,
                       ibackend_exe,
                       ibackend_argv,
@@ -130,11 +130,11 @@ XTNetwork::GetTopology( int topoSocket, Rank& myRank )
     mrn_dbg_func_begin();
 
     char* sTopology = NULL;
-    size_t sTopologyLen = 0;
+    uint32_t sTopologyLen = 0;
 
     // obtain topology from our parent
     read( topoSocket, &sTopologyLen, sizeof(sTopologyLen) );
-    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%d\n", (int)sTopologyLen ));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%u\n", sTopologyLen) );
 
     sTopology = new char[sTopologyLen + 1];
     char* currBufPtr = sTopology;
@@ -149,8 +149,8 @@ XTNetwork::GetTopology( int topoSocket, Rank& myRank )
     // get my rank
     read( topoSocket, &myRank, sizeof(myRank) );
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s, rank=%d\n", 
-                          sTopology, (int)myRank ));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s, rank=%u\n", 
+                          sTopology, myRank) );
 
     SerialGraph* sg = new SerialGraph( sTopology );
     delete[] sTopology;
@@ -218,10 +218,10 @@ XTNetwork::PropagateTopology( int topoFd,
     mrn_dbg_func_begin();
 
     std::string sTopology = topology->get_ByteArray();
-    size_t sTopologyLen = sTopology.length();
+    uint32_t sTopologyLen = (uint32_t) sTopology.length();
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "sending topology=%s, rank=%d\n", 
-                          sTopology.c_str(), (int)childRank ));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "sending topology=%s, rank=%u\n", 
+                          sTopology.c_str(), childRank ));
 
     // send serialized topology size
     ssize_t nwritten = write( topoFd, &sTopologyLen, sizeof(sTopologyLen) );
@@ -257,8 +257,7 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
     if( topoPipeFd == -1 ) {
         // we are the first process on this node
 
-        // set up a listening socket that our parent will connect 
-        // to to provide us the topology
+        // set up a listening socket so our parent can send us the topology
         if( -1 == CreateListeningSocket( listeningTopoSocket, topoPort, false ) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr,
                                   "failed to create topology listening socket\n" ));
@@ -291,13 +290,10 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
     
     std::map< env_key, std::string >& envMap = get_EnvMap();
     std::string path;
-    if( envMap.find( MRNET_COMM_PATH ) != envMap.end() ) {
-        path = envMap[ MRNET_COMM_PATH];
+    if( envMap.find(MRNET_COMM_PATH) != envMap.end() ) {
+        path = envMap[ MRNET_COMM_PATH ];
     }
-   
-    if( path.empty() )
-        assert( 0 );
-   
+    assert( ! path.empty() );
     const char* mrn_commnode_path = path.c_str();
   
     if( topoPipeFd == -1 ) { // first process on this node

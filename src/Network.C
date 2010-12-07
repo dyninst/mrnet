@@ -328,11 +328,10 @@ void Network::init_NetSettings( void )
         CUR_OUTPUT_LEVEL = atoi( _network_settings[MRNET_OUTPUT_LEVEL].c_str() );
     }
 
-    if( _network_settings.find( MRNET_DEBUG_LOG_DIRECTORY ) == _network_settings.end() ) {
+    if( is_LocalNodeFrontEnd() &&
+        (_network_settings.find(MRNET_DEBUG_LOG_DIRECTORY) == _network_settings.end()) ) {
         // Child Nodes should never enter this part of code as settings distribution packet 
         // will always carry MRNET_DEBUG_LOG_DIRECTORY
-	assert( is_LocalNodeFrontEnd() );
-
         const char* home = getenv("HOME");
         char logdir[256];
         snprintf(logdir, sizeof(logdir), "%s/mrnet-log", home);
@@ -379,6 +378,72 @@ void Network::update_BcastCommunicator(void)
     mrn_dbg(5, mrn_printf(FLF, stderr, "Bcast communicator complete \n" ));
 }
 
+// setup thread local storage (TLS)
+void Network::init_ThreadState( node_type_t node_type,
+                                const char* thread_name /*=NULL*/ )
+{
+    Rank myrank = get_LocalRank();
+    node_type_t mytype = node_type;
+
+    if( mytype == UNKNOWN_NODE ) {
+        if( is_LocalNodeFrontEnd() )
+            mytype = FE_NODE;
+        else if( is_LocalNodeBackEnd() )
+            mytype = BE_NODE;
+        else
+            mytype = CP_NODE;
+    }
+
+    std::ostringstream nameStream;
+
+    if( thread_name == NULL ) {
+        switch( mytype ) {
+        case FE_NODE:
+            nameStream << "FE";
+            break;
+        case BE_NODE:
+            nameStream << "BE";
+            break;
+        case CP_NODE:
+            nameStream << "CP";
+            break;
+        default:
+            nameStream << "UNKNOWN";
+            break;
+        }
+
+        string myhost = get_LocalHostName();
+        if( myhost.empty() )
+            XPlat::NetUtils::GetLocalHostName(myhost);
+        
+        string prettyHost, myhostname;
+        XPlat::NetUtils::GetNetworkName( myhost, myhostname );
+        XPlat::NetUtils::GetHostName( myhostname, prettyHost );
+
+        nameStream << "("
+                   << prettyHost
+                   << ":"
+                   << myrank
+                   << ")"
+                   << std::ends;
+    }
+    else
+        nameStream << thread_name; 
+
+    tsd_t *local_data = new tsd_t;
+    local_data->thread_id = XPlat::Thread::GetId( );
+    local_data->thread_name = strdup( nameStream.str().c_str() );
+    local_data->process_rank = myrank;
+    local_data->node_type = mytype;
+    local_data->network = this;
+
+    int status;
+    if( (status = tsd_key.Set(local_data)) != 0 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
+                               strerror(status)) );
+    } 
+}
+
 // initialize a Network in its role as front end
 void Network::init_FrontEnd( const char * itopology,
                              const char * ibackend_exe,
@@ -397,27 +462,19 @@ void Network::init_FrontEnd( const char * itopology,
         return;
     }
 
-    if( ! parsed_graph->validate( ) ) {
+    if( ! parsed_graph->validate() ) {
         parsed_graph->perror( "ParsedGraph not valid." );
         return;
     }
 
     parsed_graph->assign_NodeRanks( irank_backends );
 
-    Rank rootRank = parsed_graph->get_Root( )->get_Rank();
+    Rank rootRank = parsed_graph->get_Root()->get_Rank();
     _local_rank = rootRank;
 
     string prettyHost, rootHost;
     rootHost = parsed_graph->get_Root()->get_HostName();
     XPlat::NetUtils::GetHostName( rootHost, prettyHost );
-    std::ostringstream nameStream;
-    nameStream << "FE("
-                << prettyHost
-                << ":"
-                << rootRank
-                << ")"
-                << std::ends;
-
     if( ! XPlat::NetUtils::IsLocalHost( prettyHost ) ) {
 	string lhost;
 	XPlat::NetUtils::GetLocalHostName(lhost);
@@ -427,17 +484,7 @@ void Network::init_FrontEnd( const char * itopology,
     }
 
     //TLS: setup thread local storage for frontend
-    int status;
-    tsd_t *local_data = new tsd_t;
-    local_data->thread_id = XPlat::Thread::GetId( );
-    local_data->thread_name = strdup( nameStream.str().c_str() );
-    local_data->process_rank = _local_rank;
-    local_data->node_type = FE_NODE;
-    local_data->network = this;
-    if( ( status = tsd_key.Set(local_data) ) != 0 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
-                               strerror(status)) );
-    }
+    init_ThreadState( FE_NODE );
 
     _bcast_communicator = new Communicator( this );
     
@@ -527,17 +574,7 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
             << std::ends;
 
     //TLS: setup thread local storage for backend
-    int status;
-    tsd_t *local_data = new tsd_t;
-    local_data->thread_id = XPlat::Thread::GetId();
-    local_data->thread_name = strdup( nameStream.str().c_str() );
-    local_data->process_rank = _local_rank;
-    local_data->node_type = BE_NODE;
-    local_data->network = this;
-    if( ( status = tsd_key.Set(local_data) ) != 0 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
-                               strerror(status)) );
-    }
+    init_ThreadState( BE_NODE, nameStream.str().c_str() );
 
     BackEndNode* ben = CreateBackEndNode( this, myhostname, imyrank,
                                          iphostname, ipport, iprank );
@@ -561,29 +598,11 @@ void Network::init_InternalNode( const char* iphostname,
 
     _local_rank = imyrank;
 
-    string prettyHost, myhostname;
+    string myhostname;
     XPlat::NetUtils::GetNetworkName( imyhostname, myhostname );
-    XPlat::NetUtils::GetHostName( myhostname, prettyHost );
-    std::ostringstream nameStream;
-    nameStream << "COMM("
-            << prettyHost
-            << ":"
-            << imyrank
-            << ")"
-            << std::ends;
 
-    //TLS: set up thread name
-    int status;
-    tsd_t *local_data = new tsd_t;
-    local_data->thread_id = XPlat::Thread::GetId();
-    local_data->thread_name = strdup( nameStream.str().c_str() );
-    local_data->process_rank = _local_rank;
-    local_data->node_type = CP_NODE;
-    local_data->network = this;    
-    if( ( status = tsd_key.Set(local_data) ) != 0 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
-                               strerror(status)) );
-    }
+    //TLS: setup thread local storage for comm proc
+    init_ThreadState( CP_NODE );
 
     InternalNode* in = CreateInternalNode( this, myhostname, imyrank,
                                            iphostname, ipport, iprank,

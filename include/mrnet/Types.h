@@ -80,6 +80,14 @@ namespace MRN
     extern const Port UnknownPort;
     extern const Rank UnknownRank;
 
+    /* network process types */
+    typedef enum {
+        UNKNOWN_NODE = 0,
+        FE_NODE,
+        BE_NODE,
+        CP_NODE
+    } node_type_t;
+
     /* ------------- Performance Data types ------------- */
     typedef union { 
         int64_t i;

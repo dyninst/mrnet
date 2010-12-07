@@ -319,7 +319,7 @@ void * EventDetector::main( void* iarg )
         parent_node = net->get_ParentNode();
     }
     
-    //set up debugging stuff
+    //TLS: set up thread local storage
     Rank myrank = net->get_LocalRank();
     string prettyHost;
     XPlat::NetUtils::GetHostName( net->get_LocalHostName(), prettyHost );
@@ -330,19 +330,7 @@ void * EventDetector::main( void* iarg )
             << myrank
             << ')'
             << std::ends;
-
-    tsd_t * local_data = new tsd_t;
-    local_data->thread_id = XPlat::Thread::GetId();
-    local_data->thread_name = strdup( namestr.str().c_str() );
-    local_data->process_rank = myrank;
-    local_data->node_type = UNKNOWN_NODE;
-    local_data->network = net;
-
-    int status;
-    if( (status = tsd_key.Set( local_data )) != 0){
-        fprintf(stderr, "XPlat::TLSKey::Set(): %s\n", strerror(status)); 
-        return NULL;
-    }
+    net->init_ThreadState( UNKNOWN_NODE, namestr.str().c_str() );
 
     srand48( net->get_LocalRank() );
     

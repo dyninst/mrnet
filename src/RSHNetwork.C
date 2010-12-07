@@ -27,7 +27,7 @@ Network::CreateNetworkFE( const char * itopology,
                           bool irank_backends,
                           bool iusing_mem_buf )
 {
-    endianTest();
+    // endianTest();
 
     Network* net = new RSHNetwork;
     net->init_FrontEnd( itopology,

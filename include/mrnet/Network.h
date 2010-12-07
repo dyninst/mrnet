@@ -41,6 +41,8 @@ class Stream;
 class PeerNode;
 typedef boost::shared_ptr< PeerNode > PeerNodePtr; 
 
+
+
 class Network: public Error {
 
  public:
@@ -229,6 +231,9 @@ protected:
         PARENT_NODE_AVAILABLE,
         NETWORK_TERMINATION
     };
+
+    void init_ThreadState( node_type_t node_type,
+                           const char* thread_name = NULL );
 
     void update_BcastCommunicator(void);
 
