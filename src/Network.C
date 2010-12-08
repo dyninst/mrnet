@@ -57,7 +57,7 @@ const Rank UnknownRank = (Rank)-1;
 
 const char *empty_str="";
 
-void init_XplatSettings( std::map< env_key, std::string >& envMap );
+void init_XPlatSettings( std::map< env_key, std::string >& envMap );
 int get_NetSettingName( std::string s );
 
 void init_local(void)
@@ -343,23 +343,23 @@ void Network::init_NetSettings( void )
         _network_settings[ MRNET_COMM_PATH ] = COMMNODE_EXE ;
     }
 
-    init_XplatSettings( _network_settings );
+    init_XPlatSettings( _network_settings );
 }
 
-void init_XplatSettings( std::map< env_key, std::string >& envMap )
+void init_XPlatSettings( std::map< env_key, std::string >& envMap )
 {
     std::map< env_key, std::string >::iterator eit;
     eit = envMap.find( XPLAT_RSH );
     if( eit != envMap.end() )
-        XPlat::Process::set_rsh( eit->second );
+        XPlat::Process::set_RemoteShell( eit->second );
    
     eit = envMap.find( XPLAT_RSH_ARGS );
     if( eit != envMap.end() )
-        XPlat::Process::set_rshargs( eit->second );
+        XPlat::Process::set_RemoteShellArgs( eit->second );
 
     eit = envMap.find( XPLAT_REMCMD );
     if( eit != envMap.end() )
-        XPlat::Process::set_remcmd( eit->second );
+        XPlat::Process::set_RemoteCommand( eit->second );
 }
 
 void Network::update_BcastCommunicator(void)

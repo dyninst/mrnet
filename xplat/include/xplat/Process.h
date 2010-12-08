@@ -18,7 +18,7 @@ namespace XPlat
 
 class Process
 {
-private:
+ private:
     static int CreateLocal( const std::string& cmd,
                             const std::vector<std::string>& args );
     static int CreateRemote( const std::string& host,
@@ -29,7 +29,7 @@ private:
     static std::string XPLAT_RSH_ARGS;
     static std::string XPLAT_REMCMD;
 
-public:
+ public:
     static int GetProcessId( void );
 
     // spawn a new process
@@ -38,30 +38,25 @@ public:
                        const std::string& cmd,
                        const std::vector<std::string>& args )
     {
-
-        int ret = -1;
-        if( NetUtils::IsLocalHost( host ) )
-        {
+        int ret;
+        if( NetUtils::IsLocalHost(host) )
             ret = CreateLocal( cmd, args );
-        }
         else
-        {
             ret = CreateRemote( host, cmd, args );
-        }
         return ret;
     }
     
-    static void set_rsh( std::string rsh )
+    static void set_RemoteShell( std::string rsh )
     {
         XPLAT_RSH = rsh;
     }
 
-    static void set_rshargs( std::string rshargs )
+    static void set_RemoteShellArgs( std::string rshargs )
     {
         XPLAT_RSH_ARGS =rshargs;
     }
 
-    static void set_remcmd( std::string remcmd ) 
+    static void set_RemoteCommand( std::string remcmd ) 
     {
         XPLAT_REMCMD = remcmd;
     }
