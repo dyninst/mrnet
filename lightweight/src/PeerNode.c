@@ -40,80 +40,85 @@ Rank PeerNode_get_Rank(PeerNode_t* node)
 
 int PeerNode_connect_DataSocket(PeerNode_t* parent) 
 {
-  mrn_dbg(3, mrn_printf(FLF, stderr, "Creating data conection to (%s:%d) ...\n", parent->net->local_hostname, parent->net->local_port));
+    mrn_dbg(3, mrn_printf(FLF, stderr, 
+                          "Creating data conection to (%s:%d) ...\n", 
+                          parent->net->local_hostname, parent->net->local_port));
 
-  if (connectHost(&(parent->data_sock_fd), parent->hostname, parent->port, -1) == -1) { 
-    error (ERR_SYSTEM, parent->net->local_rank, "connectHost() failed" );
-    mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost() failed\n"));
-    return -1;
-  }
+    if( connectHost(&(parent->data_sock_fd), parent->hostname, 
+                    parent->port, -1) == -1 ) { 
+        error (ERR_SYSTEM, parent->net->local_rank, "connectHost() failed" );
+        mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost() failed\n"));
+        return -1;
+    }
 
-  mrn_dbg(3, mrn_printf(FLF, stderr, "new data socket %d\n", parent->data_sock_fd));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "new data socket %d\n", 
+                          parent->data_sock_fd));
 
-  return 0;
+    return 0;
 }
 
 // don't use this one--intended for non-blocking send
 int PeerNode_send(PeerNode_t* peer, /*const*/ Packet_t* ipacket)
 {
-    mrn_dbg(1, mrn_printf(FLF, stderr, "PeerNode_send is not intended for blocking send\n"));
+    mrn_dbg(1, mrn_printf(FLF, stderr, 
+                          "PeerNode_send is not intended for blocking send\n"));
     return -1;
 }
 
 int PeerNode_sendDirectly (PeerNode_t* peer, /*const*/ Packet_t* ipacket) 
 {
-  int retval = 0;
+    int retval = 0;
 
-  mrn_dbg_func_begin();
+    mrn_dbg_func_begin();
 
-  peer->msg_out.packet = ipacket;
+    peer->msg_out.packet = ipacket;
 
-  mrn_dbg(3, mrn_printf(FLF, stderr, "node[%d].msg(%p).add_packet()\n", peer->rank, peer->msg_out));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "node[%d].msg(%p).add_packet()\n", 
+                          peer->rank, &(peer->msg_out)));
   
-  if (Message_send(peer->net, &(peer->msg_out), peer->data_sock_fd) == -1) { 
-    mrn_dbg(1, mrn_printf(FLF, stderr, "Message_send() failed\n"));
-    retval = -1;
-  }
-  mrn_dbg_func_end();
+    if( Message_send(&(peer->msg_out), peer->data_sock_fd) == -1 ) { 
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Message_send() failed\n"));
+        retval = -1;
+    }
+    mrn_dbg_func_end();
 
-  return retval;
+    return retval;
 }
 
 int PeerNode_has_data(PeerNode_t* node)
 {
-  struct timeval zeroTimeout;
-  fd_set rfds;
-  int sret;
+    struct timeval zeroTimeout;
+    fd_set rfds;
+    int sret;
 
-  zeroTimeout.tv_sec = 0;
-  zeroTimeout.tv_usec = 0;
+    zeroTimeout.tv_sec = 0;
+    zeroTimeout.tv_usec = 0;
   
-  // set up file descriptor set for the poll
-  FD_ZERO(&rfds);
-  FD_SET(node->data_sock_fd, &rfds);
+    // set up file descriptor set for the poll
+    FD_ZERO(&rfds);
+    FD_SET(node->data_sock_fd, &rfds);
 
-  // check if data is available
-  sret = select(node->data_sock_fd + 1, &rfds, NULL, NULL, &zeroTimeout);
-  if (sret == -1) {
-    mrn_dbg(1, mrn_printf(FLF, stderr, "select() failed\n"));
+    // check if data is available
+    sret = select(node->data_sock_fd + 1, &rfds, NULL, NULL, &zeroTimeout);
+    if (sret == -1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "select() failed\n"));
+        return false;
+    }
+
+    // We only put one descriptor in the read set. Therefore, if the read
+    // value from select() is 1, that descriptor has data available.
+    if (sret == 1) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "select(): data to be read.\n"));
+        return true;
+    }
+
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Leaving PeerNode_has_data(). No data available\n"));
     return false;
-  }
-
-  // We only put one descriptor in the read set. Therefore, if the read
-  // value from select() is 1, that descriptor has data available.
-  if (sret == 1) {
-    mrn_dbg(5, mrn_printf(FLF, stderr, "select(): data to be read.\n"));
-    return true;
-  }
-
-  mrn_dbg(3, mrn_printf(FLF, stderr, "Leaving PeerNode_has_data(). No data available\n"));
-  return false;
-
 }
 
 int PeerNode_recv(PeerNode_t* node, /* Packet_t* packet */ vector_t* packet_list)
 {
-  return Message_recv(node->net, node->data_sock_fd, packet_list, node->rank);
+    return Message_recv(node->data_sock_fd, packet_list, node->rank);
 }
 
 int PeerNode_flush(PeerNode_t* peer)

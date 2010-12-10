@@ -27,8 +27,14 @@
 #include "Filter.h"
 
 #define INTERNAL_STREAM_BASE_ID (1 << 30)
+
+// a purely logical stream id
 const unsigned int CTL_STRM_ID = INTERNAL_STREAM_BASE_ID;
+
+// base stream id for all "real" stream objects
 const unsigned int USER_STRM_BASE_ID = INTERNAL_STREAM_BASE_ID + 1;
+
+// some internally created streams
 const unsigned int TOPOL_STRM_ID = INTERNAL_STREAM_BASE_ID + 1;
 const unsigned int PORT_STRM_ID  = INTERNAL_STREAM_BASE_ID + 2;
 

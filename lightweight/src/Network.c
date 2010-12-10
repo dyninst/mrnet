@@ -372,14 +372,12 @@ int Network_reset_Topology(Network_t* net, char* itopology)
 
 int Network_add_SubGraph(Network_t * net, Rank iroot_rank, SerialGraph_t * sg, int iupdate)
 {
-    unsigned topsz = NetworkTopology_get_NumNodes(net->network_topology);
-	
     Node_t * node = NetworkTopology_find_Node(net->network_topology, iroot_rank);
-    if (!node)
+    if( ! node )
         return false;
 
-    if (NetworkTopology_add_SubGraph(net->network_topology, node,
-                                     sg, iupdate)) {
+    if( NetworkTopology_add_SubGraph(net->network_topology, node,
+                                     sg, iupdate) ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n"));
         return false;
     }
@@ -399,8 +397,10 @@ Stream_t* Network_new_Stream(Network_t* net,
     mrn_dbg_func_begin();
 
     stream = new_Stream_t(net, iid, ibackends, inum_backends,
-                          ius_filter_id, isync_filter_id, ids_filter_id);
-    insert(net->streams, iid, stream);
+                          (unsigned)ius_filter_id, 
+                          (unsigned)isync_filter_id, 
+                          (unsigned)ids_filter_id);
+    insert(net->streams, (int)iid, stream);
 
     mrn_dbg_func_end();
     return stream;
@@ -461,11 +461,10 @@ int Network_delete_PeerNode(Network_t* net, Rank irank)
 int Network_change_Parent(Network_t* net, Rank ichild_rank, Rank inew_parent_rank)
 {
     // update topology
-    if (! NetworkTopology_set_Parent(net->network_topology, 
-                                     ichild_rank, inew_parent_rank, false)) {
+    if( ! NetworkTopology_set_Parent(net->network_topology, 
+                                     ichild_rank, inew_parent_rank, false) ) {
         return false;
     }
-
     return true;
 }
 
@@ -476,8 +475,7 @@ int Network_have_Streams(Network_t* net)
 
 Stream_t* Network_get_Stream(Network_t* net, unsigned int iid)
 {
-    Stream_t* ret = (Stream_t*)get_val(net->streams, iid);
-
+    Stream_t* ret = (Stream_t*)get_val(net->streams, (int)iid);
     if (ret == NULL)
         mrn_dbg(5, mrn_printf(FLF, stderr, "ret == NULL\n"));
     return ret;
@@ -485,7 +483,8 @@ Stream_t* Network_get_Stream(Network_t* net, unsigned int iid)
 
 void Network_delete_Stream(Network_t * net, unsigned int iid)
 {
-    Stream_t* ret = (Stream_t*)get_val(net->streams, iid);
+    int key = (int) iid;
+    Stream_t* ret = (Stream_t*)get_val(net->streams, key);
 
     /* if we're deleting the iter, set to the next element */
     if (ret == (Stream_t*)get_val(net->streams, 
@@ -496,7 +495,7 @@ void Network_delete_Stream(Network_t * net, unsigned int iid)
             net->stream_iter = 0;
     }   
 
-    net->streams = erase(net->streams, iid);
+    net->streams = erase(net->streams, key);
 }
 
 int Network_send_PacketToParent(Network_t* net, Packet_t* ipacket)
@@ -689,7 +688,8 @@ char* Network_get_LocalSubTreeStringPtr(Network_t* net)
 
 void Network_set_DebugLogDir( char* value )
 {
-    MRN_DEBUG_LOG_DIRECTORY =  strdup( value );
+    if( value != NULL )
+        MRN_DEBUG_LOG_DIRECTORY = strdup( value );
 }
 
 void Network_set_OutputLevel(int l) 
@@ -705,11 +705,11 @@ void Network_set_OutputLevel(int l)
 
 void Network_set_OutputLevelFromEnvironment(void)
 {
+    int lvl;
     char* output_level = getenv("MRNET_OUTPUT_LEVEL");
-    int l;
-    if (output_level != NULL) {
-        l = atoi(output_level);
-        Network_set_OutputLevel(l);
+    if( output_level != NULL ) {
+        lvl = atoi(output_level);
+        Network_set_OutputLevel(lvl);
     }
 }
 

@@ -48,7 +48,7 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
     mrn_dbg(5, mrn_printf(FLF, stderr, "topology: (%p), \"%s\"\n", 
                           topo_ptr, topo_ptr));
 
-    packet = new_Packet_t_2(0, 
+    packet = new_Packet_t_2(CTL_STRM_ID, 
                             PROT_NEW_CHILD_DATA_CONNECTION, 
                             fmt_str, 
                             be->myhostname,
@@ -94,7 +94,7 @@ int ChildNode_send_SubTreeInitDoneReport(BackEndNode_t* be)
 	
     mrn_dbg_func_begin();
 
-    packet  = new_Packet_t_2(0, PROT_SUBTREE_INITDONE_RPT, "");
+    packet  = new_Packet_t_2(CTL_STRM_ID, PROT_SUBTREE_INITDONE_RPT, "");
 
     if (packet) {
         if (PeerNode_sendDirectly(Network_get_ParentNode(be->network), packet) == -1) {
@@ -122,7 +122,7 @@ int ChildNode_send_NewSubTreeReport(BackEndNode_t* be)
     // leaves and not internal subtrees?
 
     topo_ptr = NetworkTopology_get_LocalSubTreeStringPtr(be->network->network_topology);
-    packet = new_Packet_t_2(0, PROT_NEW_SUBTREE_RPT, "%s", topo_ptr);
+    packet = new_Packet_t_2(CTL_STRM_ID, PROT_NEW_SUBTREE_RPT, "%s", topo_ptr);
 
     if (packet) {
         if (PeerNode_sendDirectly(be->network->parent, packet) == -1) {
@@ -366,7 +366,7 @@ int ChildNode_ack_DeleteSubTree(BackEndNode_t* be)
     
     mrn_dbg_func_begin();
 
-    packet = new_Packet_t_2( 0, PROT_SHUTDOWN_ACK, "" );
+    packet = new_Packet_t_2(CTL_STRM_ID, PROT_SHUTDOWN_ACK, "");
     
     if (packet != NULL) {
         if ( (PeerNode_sendDirectly(be->network->parent, packet) == -1 ) ||
@@ -535,7 +535,7 @@ int ChildNode_proc_TopologyReport(BackEndNode_t* be, Packet_t* ipacket)
 
 int ChildNode_ack_TopologyReport(BackEndNode_t* be)
 {
-    Packet_t* packet = new_Packet_t_2(0, PROT_TOPOLOGY_ACK, "");
+    Packet_t* packet = new_Packet_t_2(CTL_STRM_ID, PROT_TOPOLOGY_ACK, "");
 
     mrn_dbg_func_begin();
 

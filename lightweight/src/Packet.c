@@ -24,8 +24,18 @@
 
 void free_Packet_t(Packet_t* packet)
 {
-    if (packet->data_elements != NULL)
+    if( packet->data_elements != NULL )
         delete_vector_t(packet->data_elements); 
+
+    if( packet->hdr != NULL )
+        free( packet->hdr );
+
+    if( packet->buf != NULL )
+        free( packet->buf );
+
+    if( packet->fmt_str != NULL )
+        free( packet->fmt_str );
+
     free(packet);
 }
 
@@ -33,7 +43,26 @@ Packet_t* Packet_construct(Packet_t* packet)
 {
     PDR pdrs;
 
-    packet->buf_len = pdr_sizeof((pdrproc_t)(Packet_pdr_packet), packet);
+    // header
+    packet->hdr_len = pdr_sizeof((pdrproc_t)(Packet_pdr_packet_header), packet);
+    assert(packet->hdr_len);
+
+    packet->hdr = (char*) malloc((size_t)packet->hdr_len);
+    if( packet->hdr == NULL ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() failed\n"));
+        return NULL;
+    }
+
+    pdrmem_create(&pdrs, packet->hdr, packet->hdr_len, PDR_ENCODE);
+
+    if( ! Packet_pdr_packet_header(&pdrs, packet) ) {
+        error(ERR_PACKING, UnknownRank, "pdr_packet() failed\n");
+        mrn_dbg(1, mrn_printf(FLF, stderr, "pdr_packet() failed\n"));
+        return NULL;
+    }
+
+    // data
+    packet->buf_len = pdr_sizeof((pdrproc_t)(Packet_pdr_packet_data), packet);
     assert(packet->buf_len);
 
     packet->buf = (char*) malloc((size_t)packet->buf_len);
@@ -44,7 +73,7 @@ Packet_t* Packet_construct(Packet_t* packet)
 
     pdrmem_create(&pdrs, packet->buf, packet->buf_len, PDR_ENCODE);
 
-    if( ! Packet_pdr_packet(&pdrs, packet) ) {
+    if( ! Packet_pdr_packet_data(&pdrs, packet) ) {
         error(ERR_PACKING, UnknownRank, "pdr_packet() failed\n");
         mrn_dbg(1, mrn_printf(FLF, stderr, "pdr_packet() failed\n"));
         return NULL;
@@ -69,11 +98,18 @@ Packet_t* new_Packet_t(Rank isrc, unsigned int istream_id, int itag,
     packet->stream_id = istream_id;
     packet->tag = itag;
     packet->fmt_str = strdup(fmt);
+
+    packet->hdr_len = 0;
+    packet->hdr = NULL;
+    packet->buf_len = 0;
     packet->buf = NULL;
+
     packet->inlet_rank = UnknownRank;
-    packet->destroy_data = false;
-    packet->data_elements = new_empty_vector_t();
     packet->src_rank = isrc;
+
+    packet->destroy_data = false;
+
+    packet->data_elements = new_empty_vector_t();
 
     Packet_ArgList2DataElementArray(packet, arg_list);
 
@@ -94,20 +130,29 @@ Packet_t* new_Packet_t_2(unsigned int istream_id, int itag,
     return packet;
 }
 
-Packet_t* new_Packet_t_3(unsigned int ibuf_len, char* ibuf, Rank iinlet_rank)
+Packet_t* new_Packet_t_3(unsigned int ihdr_len, char* ihdr, 
+                         unsigned int ibuf_len, char* ibuf, 
+                         Rank iinlet_rank)
 {
     PDR pdrs;
-    Packet_t* packet = (Packet_t*) malloc(sizeof(Packet_t));
+    Packet_t* packet;
+
+    mrn_dbg_func_begin();
+
+    if( ihdr_len == 0 )
+        return NULL;
+
+    // initialize packet
+    packet = (Packet_t*) malloc(sizeof(Packet_t));
     if( packet == NULL ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() failed\n"));
         return NULL;
     }
   
-    mrn_dbg_func_begin();
-
-    // initialize values
     packet->stream_id = 0;
     packet->fmt_str = NULL;
+    packet->hdr = ihdr;
+    packet->hdr_len = ihdr_len;
     packet->buf = ibuf;
     packet->buf_len = ibuf_len;
     packet->inlet_rank = iinlet_rank;
@@ -115,12 +160,21 @@ Packet_t* new_Packet_t_3(unsigned int ibuf_len, char* ibuf, Rank iinlet_rank)
     packet->data_elements = new_empty_vector_t();
     packet->src_rank = UnknownRank;
     
-    if( packet->buf_len == 0 ) 
-        return NULL;
+    // decode header
+    pdrmem_create(&pdrs, packet->hdr, packet->hdr_len, PDR_DECODE);
 
+    if( ! Packet_pdr_packet_header(&pdrs, packet) ) {
+        mrn_dbg(1, mrn_printf(FLF,stderr, "pdr_packet() failed\n"));
+        error(ERR_PACKING,UnknownRank, "pdr_packet() failed\n");
+    }
+
+    if( packet->buf_len == 0 ) 
+        return packet;
+
+    // decode data
     pdrmem_create(&pdrs, packet->buf, packet->buf_len, PDR_DECODE);
 
-    if( ! Packet_pdr_packet(&pdrs, packet) ) {
+    if( ! Packet_pdr_packet_data(&pdrs, packet) ) {
         mrn_dbg(1, mrn_printf(FLF,stderr, "pdr_packet() failed\n"));
         error(ERR_PACKING,UnknownRank, "pdr_packet() failed\n");
     }
@@ -265,24 +319,15 @@ static const char* op2str( PDR* pdrs )
     return NULL;
 } 
 
-bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
+bool_t Packet_pdr_packet_header( PDR * pdrs, Packet_t * pkt )
 {
-    DataElement_t * cur_elem;
-    void **vp;
-    char **cp;
-    char* fmt = NULL;
-    char* tok;
-    const char* delim = " \t\n%";
     void *vtmp = NULL;
     unsigned int vlen = 0;    
-    unsigned int i;
-    bool_t retval = 0;
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
 
     /* Process Packet Header into/out of the pdr mem (see Packet.h for header layout) */
   
-
     if( pdr_uint32( pdrs, &( pkt->stream_id ) ) == false ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint16() failed\n" ));
         return false;
@@ -306,7 +351,24 @@ bool_t Packet_pdr_packet( PDR * pdrs, Packet_t * pkt )
         return false;
     }
 
-    if( !pkt->fmt_str) {
+    mrn_dbg_func_end();
+    return true;
+}
+
+bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
+{
+    DataElement_t * cur_elem;
+    void **vp;
+    char **cp;
+    char* fmt = NULL;
+    char* tok;
+    const char* delim = " \t\n%";
+    unsigned int i;
+    bool_t retval = 0;
+
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
+
+    if( pkt->fmt_str == NULL ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr,
                                "No data in message. just header info\n" ));
         return true;
