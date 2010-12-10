@@ -18,9 +18,39 @@ namespace MRN
 
 PacketPtr Packet::NullPacket;
 
-void Packet::encode_pdr(void)
+void Packet::encode_pdr_header(void)
 {
-    buf_len = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet), this );
+    data_sync.Lock();
+
+    hdr_len = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_header), this );
+    assert( hdr_len );
+
+    hdr = (char*) malloc( hdr_len );
+    if( hdr == NULL ) { 
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "malloc() failed\n") );
+        return;
+    }
+
+    PDR pdrs;
+    pdrmem_create( &pdrs, hdr, hdr_len, PDR_ENCODE );
+
+    if( ! Packet::pdr_packet_header(&pdrs, this) ) {
+        error( ERR_PACKING, UnknownRank, "pdr_packet_header() failed\n" );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet_header() failed\n") );
+        return;
+    }
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
+                           stream_id, tag, fmt_str) );
+
+    data_sync.Unlock();
+}
+
+void Packet::encode_pdr_data(void)
+{
+    data_sync.Lock();
+
+    buf_len = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_data), this );
     assert( buf_len );
 
     buf = (char*) malloc( buf_len );
@@ -32,18 +62,44 @@ void Packet::encode_pdr(void)
     PDR pdrs;
     pdrmem_create( &pdrs, buf, buf_len, PDR_ENCODE );
 
-    if( ! Packet::pdr_packet(&pdrs, this) ) {
-        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet() failed\n") );
+    if( ! Packet::pdr_packet_data(&pdrs, this) ) {
+        error( ERR_PACKING, UnknownRank, "pdr_packet_data() failed\n" );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet_data() failed\n") );
         return;
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
                            stream_id, tag, fmt_str) );
+
+    data_sync.Unlock();
 }
 
-void Packet::decode_pdr(void) const
+void Packet::decode_pdr_header(void) const
 {
+    data_sync.Lock();
+
+    if( hdr_len == 0 ) // NullPacket has hdr==NULL and hdr_len==0
+        return;
+
+    Packet* me = const_cast< Packet* >(this);
+    PDR pdrs;
+    pdrmem_create( &pdrs, hdr, hdr_len, PDR_DECODE );
+
+    if( ! Packet::pdr_packet_header(&pdrs, me) ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet_header() failed\n") );
+        error( ERR_PACKING, UnknownRank, "pdr_packet_header() failed\n" );
+    }
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
+                           stream_id, tag, fmt_str) );
+
+    data_sync.Unlock();
+}
+
+void Packet::decode_pdr_data(void) const
+{
+    data_sync.Lock();
+
     if( buf_len == 0 ) // NullPacket has buf==NULL and buf_len==0
         return;
 
@@ -51,13 +107,15 @@ void Packet::decode_pdr(void) const
     PDR pdrs;
     pdrmem_create( &pdrs, buf, buf_len, PDR_DECODE );
 
-    if( ! Packet::pdr_packet(&pdrs, me) ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet() failed\n") );
-        error( ERR_PACKING, UnknownRank, "pdr_packet() failed\n" );
+    if( ! Packet::pdr_packet_data(&pdrs, me) ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet_data() failed\n") );
+        error( ERR_PACKING, UnknownRank, "pdr_packet_data() failed\n" );
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
                            stream_id, tag, fmt_str) );
+
+    data_sync.Unlock();
 }
 
 /* API constructors */
@@ -65,37 +123,64 @@ void Packet::decode_pdr(void) const
 Packet::Packet( unsigned int istream_id, int itag, 
                 const char *ifmt_str, ... )
     : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
-      fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0),
+      fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0),
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(false)
 {
-    va_list arg_list;
-    va_start( arg_list, ifmt_str );
-    ArgList2DataElementArray( arg_list ); 
-    va_end( arg_list );
-    encode_pdr();
+    // NOTE: we do lazy encoding for the header at the time the packet
+    //       is really sent (see Message::send())
+    //encode_pdr_header(); 
+
+    if( ifmt_str != NULL ) {
+
+        fmt_str = strdup( ifmt_str );
+
+        va_list arg_list;
+        va_start( arg_list, ifmt_str );
+        ArgList2DataElementArray( arg_list ); 
+        va_end( arg_list );
+        encode_pdr_data();
+    }
 }
 
 Packet::Packet( const char *ifmt_str, va_list idata, 
                 unsigned int istream_id, int itag )
     : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
-      fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0),
+      fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0),
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(false)
 {
-    ArgList2DataElementArray( idata );
-    encode_pdr();
+    // NOTE: we do lazy encoding for the header at the time the packet
+    //       is really sent (see Message::send())
+    //encode_pdr_header();
+
+    if( ifmt_str != NULL ) {
+
+        fmt_str = strdup( ifmt_str );
+
+        ArgList2DataElementArray( idata );
+        encode_pdr_data();
+    }
 }
 
 Packet::Packet( unsigned int istream_id, int itag, 
 		const void **idata, const char *ifmt_str ) 
     : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
-      fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0), 
+      fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0), 
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(false)
 {
-    ArgVec2DataElementArray( idata ); 
-    encode_pdr();
+    // NOTE: we do lazy encoding for the header at the time the packet
+    //       is really sent (see Message::send())
+    //encode_pdr_header();
+
+    if( ifmt_str != NULL ) {
+
+        fmt_str = strdup( ifmt_str );
+
+        ArgVec2DataElementArray( idata ); 
+        encode_pdr_data();
+    }
 }
 
 /* Internal constructors */
@@ -103,44 +188,66 @@ Packet::Packet( unsigned int istream_id, int itag,
 Packet::Packet( Rank isrc, unsigned int istream_id, int itag, 
                 const char *ifmt_str, va_list arg_list )
     : stream_id(istream_id), tag(itag), src_rank(isrc),
-      fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0),
+      fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0),
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(false)
 {
-    ArgList2DataElementArray( arg_list );
-    encode_pdr();
+    // NOTE: we do lazy encoding for the header at the time the packet
+    //       is really sent (see Message::send())
+    //encode_pdr_header();
+
+    if( ifmt_str != NULL ) {
+
+        fmt_str = strdup( ifmt_str );
+
+        ArgList2DataElementArray( arg_list );
+        encode_pdr_data();
+    }
 }
 
 Packet::Packet( Rank isrc, unsigned int istream_id, int itag, 
                 const void **idata, const char *ifmt_str )
     : stream_id(istream_id), tag(itag), src_rank(isrc),
-      fmt_str( strdup(ifmt_str) ), buf(NULL), buf_len(0), 
+      fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0), 
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(false)
 {
-    ArgVec2DataElementArray( idata ); 
-    encode_pdr();
+    // NOTE: we do lazy encoding for the header at the time the packet
+    //       is really sent (see Message::send())
+    //encode_pdr_header();
+
+    if( ifmt_str != NULL ) {
+
+        fmt_str = strdup( ifmt_str );
+
+        ArgVec2DataElementArray( idata ); 
+        encode_pdr_data();
+    }
 }
 
-Packet::Packet( unsigned int ibuf_len, char *ibuf, Rank iinlet_rank )
+Packet::Packet( unsigned int ihdr_len, char *ihdr, 
+                unsigned int ibuf_len, char *ibuf, 
+                Rank iinlet_rank )
     : stream_id((unsigned int)-1), tag(-1), src_rank(UnknownRank), 
-      fmt_str(NULL), buf(ibuf), buf_len(ibuf_len), inlet_rank(iinlet_rank), 
-      dest_arr(NULL), dest_arr_len(0), destroy_data(true)
+      fmt_str(NULL), hdr(ihdr), hdr_len(ihdr_len), buf(ibuf), buf_len(ibuf_len), 
+      inlet_rank(iinlet_rank), dest_arr(NULL), dest_arr_len(0), 
+      destroy_data(true)
 {
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "Packet(%p): buf_len=%u\n",
-                           this, buf_len) );
-    decode_pdr();
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Packet(%p): hdr_len=%u buf_len=%u\n",
+                           this, hdr_len, buf_len) );
+    decode_pdr_header();
+    decode_pdr_data();
 }
 
 Packet::~Packet()
 {
     data_sync.Lock();
     if( fmt_str != NULL ){
-        free(fmt_str);
+        free( fmt_str );
         fmt_str = NULL;
     }
     if( buf != NULL ){
-        free(buf);
+        free( buf );
         buf = NULL;
     }
 
@@ -157,12 +264,13 @@ Packet::~Packet()
 
 int Packet::unpack( char const *ifmt_str, ... )
 {
-    va_list arg_list;
-
-    va_start( arg_list, ifmt_str );
-    int ret = ExtractVaList( ifmt_str, arg_list );
-    va_end( arg_list );
-
+    int ret = -1;
+    if( ifmt_str != NULL ) {
+        va_list arg_list;
+        va_start( arg_list, ifmt_str );
+        ret = ExtractVaList( ifmt_str, arg_list );
+        va_end( arg_list );
+    }
     return ret;
 }
 
@@ -223,6 +331,22 @@ const char *Packet::get_FormatString(void) const
 {
     data_sync.Lock();
     const char * ret = fmt_str;
+    data_sync.Unlock();
+    return ret;
+}
+
+const char *Packet::get_Header(void) const
+{
+    data_sync.Lock();
+    const char * ret = hdr;
+    data_sync.Unlock();
+    return ret;
+}
+
+unsigned int Packet::get_HeaderLen(void) const
+{
+    data_sync.Lock();
+    unsigned int ret = hdr_len;
     data_sync.Unlock();
     return ret;
 }
@@ -310,19 +434,26 @@ bool Packet::get_Destinations( unsigned& num_dest, Rank** dests )
     return false;
 }
 
-int Packet::ExtractVaList( const char * /*fmt*/, va_list arg_list ) const
+int Packet::ExtractVaList( const char *fmt, va_list arg_list ) const
 {
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "ExtractVaList(%p)\n", this) );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "pkt(%p)\n", this) );
 
-    // TODO: proper fmt string comparison
-    // TODO: add exception block here to catch user errors
+    // make sure format strings agree
+    if( strcmp(fmt, fmt_str) ) {
+        mrn_dbg( 3, mrn_printf(FLF, stderr, 
+                               "passed format '%s' does not match packet's '%s'\n", 
+                               fmt, fmt_str) );
+        return -1;
+    }
+
+    int ret;
 
     data_sync.Lock();
-    DataElementArray2ArgList( arg_list );
+    ret = DataElementArray2ArgList( arg_list );
     data_sync.Unlock();
 
     mrn_dbg_func_end();
-    return 0;
+    return ret;
 }
 
 static const char* op2str( PDR* pdrs )
@@ -338,15 +469,9 @@ static const char* op2str( PDR* pdrs )
     return NULL;
 } 
 
-bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
+bool_t Packet::pdr_packet_header( PDR * pdrs, Packet * pkt )
 {
-    unsigned int i;
-    bool_t retval = 0;
-    DataElement * cur_elem=NULL;
-
     mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
-
-    pkt->data_sync.Lock();
 
     /* Process Packet Header into/out of the pdr mem */
 
@@ -373,13 +498,26 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
         return FALSE;
     }
 
-    if( ! pkt->get_FormatString() ) {
+    mrn_dbg_func_end();
+    return TRUE;
+}
+
+bool_t Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
+{
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
+
+    const char* fmtstr = pkt->get_FormatString();
+    if( fmtstr == NULL ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr,
                     "No data in message. just header info\n" ));
         return TRUE;
     }
 
-    std::string fmt = pkt->get_FormatString();
+    unsigned int i;
+    bool_t retval = 0;
+    DataElement* cur_elem = NULL;
+
+    std::string fmt = fmtstr;
     XPlat::Tokenizer tok( fmt );
     std::string::size_type curLen;
     const char* delim = " \t\n%";
@@ -529,13 +667,11 @@ bool_t Packet::pdr_packet( PDR * pdrs, Packet * pkt )
         i++;
     }
 
-    pkt->data_sync.Unlock();
-
     mrn_dbg_func_end();
     return TRUE;
 }
 
-void Packet::ArgList2DataElementArray( va_list arg_list )
+int Packet::ArgList2DataElementArray( va_list arg_list )
 {
     mrn_dbg_func_begin();
 
@@ -556,7 +692,7 @@ void Packet::ArgList2DataElementArray( va_list arg_list )
         cur_elem->type = Fmt2Type( cur_fmt.c_str() );
         switch ( cur_elem->type ) {
         case UNKNOWN_T:
-            assert( 0 );
+            return -1;
         case CHAR_T:
             cur_elem->val.c = ( char )va_arg( arg_list, int32_t );
             break;
@@ -615,7 +751,7 @@ void Packet::ArgList2DataElementArray( va_list arg_list )
                cur_elem->array_len = 0;
             break;
         default:
-            assert( 0 );
+            return -1;
             break;
         }
         data_elements.push_back( cur_elem );
@@ -624,9 +760,10 @@ void Packet::ArgList2DataElementArray( va_list arg_list )
     }
 
     mrn_dbg_func_end();
+    return 0;
 }
 
-void Packet::ArgVec2DataElementArray( const void **idata )
+int Packet::ArgVec2DataElementArray( const void **idata )
 {
     mrn_dbg_func_begin();
 
@@ -648,7 +785,7 @@ void Packet::ArgVec2DataElementArray( const void **idata )
         cur_elem->type = Fmt2Type( cur_fmt.c_str() );
         switch ( cur_elem->type ) {
         case UNKNOWN_T:
-            assert( 0 );
+            return -1;
         case CHAR_T:
             cur_elem->val.c = *( char* )idata[data_ndx];
             break;
@@ -706,7 +843,7 @@ void Packet::ArgVec2DataElementArray( const void **idata )
                cur_elem->array_len = 0;
             break;
         default:
-            assert( 0 );
+            return -1;
             break;
         }
         data_elements.push_back( cur_elem );
@@ -716,15 +853,15 @@ void Packet::ArgVec2DataElementArray( const void **idata )
     }
 
     mrn_dbg_func_end();
+    return 0;
 }
 
-void Packet::DataElementArray2ArgList( va_list arg_list ) const
+int Packet::DataElementArray2ArgList( va_list arg_list ) const
 {
     mrn_dbg_func_begin();
     int i = 0, array_len = 0;
     const DataElement * cur_elem=NULL;
     void *tmp_ptr, *tmp_array;
-
 
     std::string fmt = fmt_str;
     XPlat::Tokenizer tok( fmt );
@@ -741,7 +878,7 @@ void Packet::DataElementArray2ArgList( va_list arg_list ) const
         assert( cur_elem->type == Fmt2Type( cur_fmt.c_str() ) );
         switch ( cur_elem->type ) {
         case UNKNOWN_T:
-            assert( 0 );
+            return -1;
 
         case CHAR_T: {
             char* cp = va_arg( arg_list, char * );
@@ -939,7 +1076,7 @@ void Packet::DataElementArray2ArgList( va_list arg_list ) const
         }
 
         default:
-            assert( 0 );
+            return -1;
         }
         i++;
 
@@ -947,10 +1084,10 @@ void Packet::DataElementArray2ArgList( va_list arg_list ) const
     }
 
     mrn_dbg_func_end();
-    return;
+    return 0;
 }
 
-void Packet::DataElementArray2ArgVec( void **odata ) const
+int Packet::DataElementArray2ArgVec( void **odata ) const
 {
     mrn_dbg_func_begin();
     int i = 0, array_len = 0;
@@ -973,7 +1110,7 @@ void Packet::DataElementArray2ArgVec( void **odata ) const
         assert( cur_elem->type == Fmt2Type( cur_fmt.c_str() ) );
         switch ( cur_elem->type ) {
         case UNKNOWN_T:
-            assert( 0 );
+            return -1;
 
         case CHAR_T: {
             char* cp = ( char* )odata[data_ndx];
@@ -1171,7 +1308,7 @@ void Packet::DataElementArray2ArgVec( void **odata ) const
         }
 
         default:
-            assert( 0 );
+            return -1;
         }
         i++;
 	data_ndx++;
@@ -1180,7 +1317,7 @@ void Packet::DataElementArray2ArgVec( void **odata ) const
     }
 
     mrn_dbg_func_end();
-    return;
+    return 0;
 }
 
 }                               /* namespace MRN */

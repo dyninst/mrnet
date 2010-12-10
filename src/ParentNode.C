@@ -680,7 +680,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
     char** vals = (char**) calloc( envMap.size() + 1, sizeof(char*) ); 
    
     unsigned int count = 0;
-    std::map< env_key, std::string>::const_iterator env_it = envMap.begin();
+    std::map< env_key, std::string >::const_iterator env_it = envMap.begin();
     for( ; env_it != envMap.end(); env_it++, count++ ) {
         keys[count] = env_it->first;
         vals[count] = strdup( (env_it->second).c_str() );

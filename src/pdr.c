@@ -296,6 +296,7 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
             return FALSE;
         }
         nodesize = strlen(sp) + 1; /* add 1-byte null terminator */
+        mrn_dbg(5, mrn_printf(FLF, stderr, "encoding - string size+1: %u\n", nodesize ));
         break;
     case PDR_DECODE:
         break;
@@ -314,7 +315,7 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
     case PDR_FREE:  /* Already handled above, but silences compiler warning */
         return TRUE;
     case PDR_DECODE:
-        mrn_dbg(5, mrn_printf(0,0,0, stderr, "String size+1: %u\n", nodesize ));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "decoding - string size+1: %u\n", nodesize ));
         if (sp == NULL) {
             mrn_dbg(5, mrn_printf(FLF, stderr, "Allocating memory ...\n" ));
             *cpp = sp = (char*) malloc((size_t)nodesize);
@@ -323,7 +324,7 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
             mrn_dbg(5, mrn_printf(FLF, stderr, "Malloc failed\n" ));
             return FALSE;
         }
-        sp[nodesize-1] = 0;
+        sp[nodesize-1] = '\0';
         /* fall into ... */
 				
     case PDR_ENCODE:

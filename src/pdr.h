@@ -60,7 +60,7 @@ struct PDR {
 
     char *        cur;      /* pointer to private data */
     char *        base;     /* private used for position info */
-    int32_t        space;   /* extra private word */
+    uint32_t        space;   /* extra private word */
 };
 
 /*

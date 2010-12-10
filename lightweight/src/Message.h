@@ -21,16 +21,14 @@
 
 typedef struct {
    Packet_t* packet;
-}Message_t ;
+} Message_t ;
 
- Message_t* new_Message_t();
+Message_t* new_Message_t();
 
-int Message_recv(Network_t* net, int sock_fd,  /* Packet_t* packet_in */ vector_t* packets_in, Rank iinlet_rank);
+int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank);
+int Message_send(Message_t* msg_out, int sock_fd);
 
-int Message_send(Network_t* net, Message_t* msg_out, int sock_fd);
-
-int MRN_write(Network_t* net, int ifd, /*const*/ void *ibuf, int ibuf_len);
-
-int MRN_read(Network_t* net, int fd, void *buf, int count);
+int MRN_write(int ifd, void *ibuf, size_t ibuf_len);
+int MRN_read(int fd, void *buf, size_t count);
 
 #endif /* __message_h */

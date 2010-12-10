@@ -20,41 +20,21 @@ const int XPlat_NCBlockingRecvFlag = MSG_WAITALL;
 #define IOV_MAX sysconf(_SC_IOV_MAX)
 #endif
 
-int NCSend(XPSOCKET s, NCBuf_t* ncbuf, unsigned int nBufs)
+int NCSend(XPSOCKET s, NCBuf_t* ncbufs, unsigned int nBufs)
 {
-  
-    int ret = 0;
-
-    //unsigned int nBufsLeftToSend = nBufs;
-    unsigned int nBufsToSend = 1;
-    NCBuf_t* currBuf = ncbuf;
- 
-    // convert our buffer spec into writev's buffer spec
-    unsigned int nBytesToSend = 0;
-    struct iovec* currIov = (struct iovec*)malloc(sizeof(struct iovec));
-    assert(currIov);
-  
-    currIov->iov_len = currBuf->len;
-  
-    currIov->iov_base = currBuf->buf;
-  
-    nBytesToSend += currBuf->len;
-  
-    // do the send
-    //int sret = writev(s, currIov, nBufsToSend);
-    int sret = write(s, currBuf->buf, nBytesToSend);
-    if (sret < 0) {
-        ret = sret;
-    }
-    else {
+    int sret, ret = 0;
+    unsigned int i;
+    
+    for( i = 0; i < nBufs; i++ ) {
+        // do the send
+        sret = write(s, ncbufs[i].buf, ncbufs[i].len);
+        if( sret < 0 ) {
+            ret = sret;
+            break;
+        }
         ret += sret;
     }
-
-    // free things that were malloc'd
-    free(currIov);
-
     return ret;
-
 }
 
 int NCRecv(XPSOCKET s, NCBuf_t* ncbufs, unsigned int nBufs)

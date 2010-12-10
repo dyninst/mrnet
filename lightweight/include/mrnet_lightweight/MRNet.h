@@ -6,12 +6,13 @@
 #if !defined(mrnet_lightweight_h)
 #define mrnet_lightweight_h 1
 
+#include "mrnet_lightweight/Types.h"
+
 #include "mrnet_lightweight/DataElement.h"
 #include "mrnet_lightweight/Error.h"
 #include "mrnet_lightweight/Network.h"
 #include "mrnet_lightweight/NetworkTopology.h"
 #include "mrnet_lightweight/Packet.h"
 #include "mrnet_lightweight/Stream.h"
-#include "mrnet_lightweight/Types.h"
 
 #endif /* mrnet_lightweight_h */
