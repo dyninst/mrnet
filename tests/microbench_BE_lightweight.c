@@ -113,8 +113,7 @@ int main( int argc, char* argv[] )
     if( pkt != NULL )
         free(pkt);    
 
-    // wait for final teardown packet from FE; this will cause
-    // us to exit
+    // wait for final teardown packet from FE
     Network_waitfor_ShutDown(net);
     if( net != NULL )
         delete_Network_t(net);

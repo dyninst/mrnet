@@ -337,7 +337,7 @@ protected:
     InternalNode* _local_internal_node;
     TimeKeeper* _local_time_keeper;
     EventDetector* _edt;
-    unsigned int _next_stream_id; // only used be FE
+    unsigned int _next_stream_id; // only used by FE
     EventMgr* _evt_mgr;
     std::map< env_key, std::string > _network_settings;
 

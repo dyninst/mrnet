@@ -12,17 +12,22 @@ int main(int argc, char **argv)
 {
     Stream * stream=NULL;
     PacketPtr p;
-    int tag=0, recv_val=0, num_iters=0;
+    int rc, tag=0, recv_val=0, num_iters=0;
 
     Network * net = Network::CreateNetworkBE( argc, argv );
 
     do {
-        if( net->recv(&tag, p, &stream) != 1 ) {
-            fprintf( stderr, "BE: stream::recv() failure\n" );
+        
+        rc = net->recv(&tag, p, &stream);
+        if( rc == -1 ) {
+            fprintf( stderr, "BE: Network::recv() failure\n" );
             break;
         }
+        else if( rc == 0 ) {
+            // a stream was closed
+            continue;
+        }
          
-
         switch(tag) {
 
         case PROT_SUM:
@@ -64,7 +69,7 @@ int main(int argc, char **argv)
 
         fflush(stderr);
 
-    } while ( tag != PROT_EXIT );
+    } while( tag != PROT_EXIT );
 
     while( ! stream->is_Closed() )
         sleep(1);

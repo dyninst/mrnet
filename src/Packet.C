@@ -141,6 +141,9 @@ Packet::Packet( unsigned int istream_id, int itag,
         va_end( arg_list );
         encode_pdr_data();
     }
+    else
+        fmt_str = strdup( "" );
+    assert( fmt_str != NULL );
 }
 
 Packet::Packet( const char *ifmt_str, va_list idata, 
@@ -161,6 +164,9 @@ Packet::Packet( const char *ifmt_str, va_list idata,
         ArgList2DataElementArray( idata );
         encode_pdr_data();
     }
+    else
+        fmt_str = strdup( "" );
+    assert( fmt_str != NULL );
 }
 
 Packet::Packet( unsigned int istream_id, int itag, 
@@ -181,6 +187,9 @@ Packet::Packet( unsigned int istream_id, int itag,
         ArgVec2DataElementArray( idata ); 
         encode_pdr_data();
     }
+    else
+        fmt_str = strdup( "" );
+    assert( fmt_str != NULL );
 }
 
 /* Internal constructors */
@@ -203,6 +212,9 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
         ArgList2DataElementArray( arg_list );
         encode_pdr_data();
     }
+    else
+        fmt_str = strdup( "" );
+    assert( fmt_str != NULL );
 }
 
 Packet::Packet( Rank isrc, unsigned int istream_id, int itag, 
@@ -223,6 +235,9 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
         ArgVec2DataElementArray( idata ); 
         encode_pdr_data();
     }
+    else
+        fmt_str = strdup( "" );
+    assert( fmt_str != NULL );
 }
 
 Packet::Packet( unsigned int ihdr_len, char *ihdr, 

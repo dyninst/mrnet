@@ -332,6 +332,7 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
         return pdr_opaque(pdrs, sp, nodesize);
     }
 
+    mrn_dbg(1, mrn_printf(FLF, stderr, "Bad PDR op\n" ));
     return FALSE;
 }
 
@@ -340,7 +341,7 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
  */
 bool_t pdr_wrapstring(PDR *pdrs, char **cpp)
 {
-    return pdr_string(pdrs, cpp, LASTUNSIGNED-1); 
+    return pdr_string(pdrs, cpp, LASTUNSIGNED-1);
 }
 
 /*
