@@ -2047,61 +2047,6 @@ int get_NetSettingName( std::string s )
      return ret;
 }
 
-/* Propagate topology */
-SerialGraph* Network::read_Topology( int fd )
-{
-    mrn_dbg_func_begin(); 
-
-    char* sTopology = NULL;
-    uint32_t sTopologyLen = 0;
-    
-    // obtain topology from our parent
-    ::recv( fd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
-    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%d\n", (int)sTopologyLen ));
-
-    sTopology = new char[sTopologyLen + 1];
-    char* currBufPtr = sTopology;
-    size_t nRemaining = sTopologyLen;
-    while( nRemaining > 0 ) {
-        ssize_t nread = ::recv( fd, currBufPtr, nRemaining, 0);
-        nRemaining -= nread;
-        currBufPtr += nread;
-    }
-    *currBufPtr = 0;
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s\n", sTopology));
-
-    SerialGraph* sg = new SerialGraph( sTopology );
-    delete[] sTopology;
-
-    return sg;
-}
-
-void Network::write_Topology( int fd )
-{
-    mrn_dbg_func_begin();
-
-    std::string sTopology( _network_topology->get_TopologyString() );
-    uint32_t sTopologyLen = (uint32_t) sTopology.length();
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "sending topology=%s\n",
-                          sTopology.c_str() ));
-
-    // send serialized topology size
-    ssize_t nwritten = ::send( fd, (char*)&sTopologyLen, sizeof(sTopologyLen), 0);
-
-    // send the topology itself
-    // NOTE this code assumes the byte array underneath the std::string
-    // remains valid throughout this function
-    size_t nRemaining = sTopologyLen;
-    const char* currBufPtr = sTopology.c_str();
-    while( nRemaining > 0 ) {
-        nwritten = ::send( fd, currBufPtr, nRemaining, 0);
-        nRemaining -= nwritten;
-        currBufPtr += nwritten;
-    }
-}
-
 /* Failure Recovery */
 bool Network::set_FailureRecovery( bool enable_recovery )
 {

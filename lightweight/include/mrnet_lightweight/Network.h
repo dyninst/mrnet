@@ -36,41 +36,25 @@ typedef struct {
 } Network_t;
 
 
-Network_t* new_Network_t();
+/* BEGIN PUBLIC API */
+
+Network_t* Network_CreateNetworkBE( int argc, char* argv[] );
 
 void delete_Network_t( Network_t * net);
 
 char* Network_get_LocalHostName( Network_t* net );
-
 Port Network_get_LocalPort( Network_t* net );
-
 Rank Network_get_LocalRank( Network_t* net );
-
-struct PeerNode_t* Network_get_ParentNode( Network_t* net );
 
 struct NetworkTopology_t* Network_get_NetworkTopology( Network_t* net );
 
-Network_t* Network_CreateNetworkBE( int argc, char* argv[] );
-
-Network_t* Network_init_BackEnd( char *iphostname, Port ipport,
-                                 Rank iprank,
-                                 char *imyhostname, Rank imyrank );
-
-int Network_recv_2( Network_t* net );
+char Network_is_ShutDown( Network_t* net );
+void Network_waitfor_ShutDown( Network_t* net );
 
 int Network_recv( Network_t* net, int *otag,  
                   Packet_t* opacket, struct Stream_t** ostream );
 
-int Network_is_LocalNodeBackEnd( Network_t* net );
-
-int Network_has_PacketsFromParent( Network_t* net );
-
-int Network_recv_PacketsFromParent( Network_t* net, struct vector_t* opacket );
-
-void Network_shutdown_Network( Network_t* net );
-
-int Network_reset_Topology( Network_t* net, char* itopology );
-
+struct Stream_t* Network_get_Stream( Network_t* net, unsigned int iid );
 struct Stream_t* Network_new_Stream( Network_t* net,
                                      unsigned int iid,
                                      Rank* ibackends,
@@ -78,18 +62,35 @@ struct Stream_t* Network_new_Stream( Network_t* net,
                                      int ius_filter_id,
                                      int isync_filter_id,
                                      int ids_filter_id );
+void Network_delete_Stream(Network_t* net, unsigned int iid);
 
-int Network_remove_Node( Network_t* net, Rank ifailed_rank, int iupdate );
+void Network_set_OutputLevel( int l );
+void Network_set_DebugLogDir( char* value );
 
-int Network_delete_PeerNode( Network_t* net, Rank irank );
+/* END PUBLIC API */
 
-int Network_change_Parent( Network_t* net, Rank ichild_rank, Rank inew_parent_rank );
+Network_t* new_Network_t();
 
-int Network_have_Streams( Network_t* net );
+Network_t* Network_init_BackEnd( char *iphostname, Port ipport,
+                                 Rank iprank,
+                                 char *imyhostname, Rank imyrank );
+int Network_is_LocalNodeBackEnd( Network_t* net );
 
-struct Stream_t* Network_get_Stream( Network_t* net, unsigned int iid );
+struct PeerNode_t* Network_get_ParentNode( Network_t* net );
 
+int Network_recv_2( Network_t* net );
+int Network_has_PacketsFromParent( Network_t* net );
+int Network_recv_PacketsFromParent( Network_t* net, struct vector_t* opacket );
 int Network_send_PacketToParent( Network_t* net,  Packet_t* ipacket );
+
+void Network_shutdown_Network( Network_t* net );
+
+int Network_reset_Topology( Network_t* net, char* itopology );
+int Network_remove_Node( Network_t* net, Rank ifailed_rank, int iupdate );
+int Network_change_Parent( Network_t* net, Rank ichild_rank, 
+                           Rank inew_parent_rank );
+int Network_add_SubGraph( Network_t * net, Rank iroot_rank, 
+                          struct SerialGraph_t * sg, int iupdate );
 
 struct PeerNode_t* Network_new_PeerNode( Network_t* network,
                                          char* ihostname,
@@ -97,35 +98,18 @@ struct PeerNode_t* Network_new_PeerNode( Network_t* network,
                                          Rank irank,
                                          int iis_parent,
                                          int iss_internal );
+int Network_delete_PeerNode( Network_t* net, Rank irank );
+
+int Network_have_Streams( Network_t* net );
 
 int Network_recover_FromFailures( Network_t* net );
-
 void Network_enable_FailureRecovery( Network_t* net );
-
 void Network_disable_FailureRecovery( Network_t* net );
-
 int Network_has_ParentFailure( Network_t* net );
-
 int Network_recover_FromParentFailure( Network_t* net );
 
 char* Network_get_LocalSubTreeStringPtr( Network_t* net );
 
-void Network_set_OutputLevel( int l );
-
-void Network_set_DebugLogDir( char* value );
-
 void Network_set_OutputLevelFromEnvironment(void);
-
-char Network_is_ShutDown( Network_t* net );
-
-void Network_waitfor_ShutDown( Network_t* net );
-
-int Network_add_SubGraph(Network_t * net, Rank iroot_rank, struct SerialGraph_t * sg, int iupdate);
-
-char* Network_readTopology(Network_t * net, int topoSocket);
-
-void Network_writeTopology(Network_t * net, int topoFd, struct SerialGraph_t * topology);
-
-void Network_delete_Stream(Network_t* net, unsigned int iid);
 
 #endif /* __network_h */

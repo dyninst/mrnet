@@ -237,10 +237,6 @@ protected:
 
     void update_BcastCommunicator(void);
 
-    // send/recv topology on socket fd
-    SerialGraph* read_Topology( int fd );
-    void write_Topology( int fd );
-
     int parse_Configuration( const char* itopology, bool iusing_mem_buf );
 
     Stream * new_Stream( unsigned int iid,
