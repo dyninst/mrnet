@@ -1168,8 +1168,11 @@ PeerNodePtr NetworkTopology::get_OutletNode( Rank irank ) const
 bool NetworkTopology::node_Failed( Rank irank ) const 
 {
     Node * node = find_Node( irank );
-    if( node == NULL  )
+    if( node == NULL  ) {
+        mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                               "rank %u not found, assuming failed\n", irank) );
         return true;
+    }
 
     return node->failed();
 }
@@ -1290,7 +1293,7 @@ bool NetworkTopology::send_updates_buffer()
             cport_arr[i] = (*it)->chld_port;
         } 
     
-        Stream *s = _network->get_Stream(TOPOL_STRM_ID); // get topol prop stream
+        Stream *s = _network->get_Stream( TOPOL_STRM_ID ); // topol prop stream
 
         //broadcast all topology updates
         mrn_dbg( 5, mrn_printf(FLF, stderr, "sending %d updates\n", vuc_size) );
@@ -1330,46 +1333,47 @@ void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank,
     if( _network->is_ShuttingDown() )
         return;
 
-    Stream* str_one = _network->get_Stream( 1 );
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is before add %s\n", 
-                           get_TopologyString().c_str()) );
-    
-    //create a node for the child node and add it to network topology set of nodes. 
     Node* n = find_Node( chld_rank );
-
     if (n == NULL) {
+
+        // create node
         new_Node( chld_host, chld_port, chld_rank, true );
-	str_one->add_Stream_EndPoint( chld_rank );
+
+        // add it as endpoint for topology update strm
+        Stream* topol_strm = _network->get_Stream( TOPOL_STRM_ID );
+	topol_strm->add_Stream_EndPoint( chld_rank );
         mrn_dbg( 5, mrn_printf(FLF, stderr, "Adding node[%d] as child of node[%d]\n",
                                chld_rank, par_rank) );
          
+        // set its parent
         if( ! set_Parent(chld_rank, par_rank, false) ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "set parent for %s:%d failed\n",
                                    chld_host, chld_rank) );
         }
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is after add %s\n", 
+
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "topology after add %s\n", 
                                get_TopologyString().c_str()) );
+
+        // FE: do callback only after state has been updated
+        if( upstream && _network->is_LocalNodeFrontEnd() ) {
+            
+            update_contents* ub = (update_contents*) malloc( sizeof(update_contents) );
+            ub->type = TOPO_NEW_BE;
+            ub->chld_rank = chld_rank;
+            ub->chld_port = chld_port;
+            ub->chld_host = strdup(chld_host);
+            ub->par_rank = par_rank;
+            insert_updates_buffer( ub );
+
+            TopologyEvent::TopolEventData* ted;
+            ted = new TopologyEvent::TopolEventData( chld_rank, par_rank );
+            TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_ADD_BE, ted );
+            _network->_evt_mgr->add_Event( te );
+        }    
     }
     else
         mrn_dbg( 5, mrn_printf(FLF, stderr, "node already present\n") );
-
-    // do callback only after state has been updated
-    if( upstream && _network->is_LocalNodeFrontEnd() ) {
-        
-        update_contents* ub = (update_contents*) malloc( sizeof(update_contents) );
-        ub->type = TOPO_NEW_BE;
-        ub->chld_rank = chld_rank;
-        ub->chld_port = chld_port;
-        ub->chld_host = strdup(chld_host);
-        ub->par_rank = par_rank;
-        insert_updates_buffer( ub );
-
-        TopologyEvent::TopolEventData* ted;
-        ted = new TopologyEvent::TopolEventData( chld_rank, par_rank );
-        TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_ADD_BE, ted );
-        _network->_evt_mgr->add_Event( te );
-    }    
 }
 
 void NetworkTopology::update_removeNode( Rank par_rank, Rank failed_chld_rank, 
@@ -1466,13 +1470,15 @@ void NetworkTopology::update_addInternalNode( Rank par_rank, Rank chld_rank,
     mrn_dbg( 5, mrn_printf(FLF, stderr, "topology before add: %s\n", 
                            get_TopologyString().c_str()) );
 
-    //create a node for the child and add it to network topology set of nodes.
     Node* n = find_Node( chld_rank );
     if( n == NULL ) {
+
+        // create node
         new_Node( chld_host, chld_port, chld_rank, false ); 
         mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as child of node[%d]\n",
                                 chld_rank, par_rank ) );
 
+        // set is parent
         if( ! set_Parent(chld_rank, par_rank, false) ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "set parent for %s:%d failed\n", 
@@ -1480,35 +1486,36 @@ void NetworkTopology::update_addInternalNode( Rank par_rank, Rank chld_rank,
         }
         mrn_dbg( 5, mrn_printf(FLF, stderr, "topology after add: %s\n", 
                                get_TopologyString().c_str()) );
+
+        // FE: do callback only after state has been updated
+        if( upstream && _network->is_LocalNodeFrontEnd() ) {
+            
+            update_contents* ub = (update_contents*) malloc( sizeof(update_contents) );
+            ub->type = TOPO_NEW_CP;
+            ub->chld_rank = chld_rank;
+            ub->chld_port = chld_port;
+            ub->chld_host = strdup(chld_host);
+            ub->par_rank = par_rank;
+            insert_updates_buffer( ub );
+
+            TopologyEvent::TopolEventData* ted;
+            ted = new TopologyEvent::TopolEventData( chld_rank, par_rank );
+            TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_ADD_CP, ted );
+            _network->_evt_mgr->add_Event( te );
+        }
     } 
     else
         mrn_dbg( 5, mrn_printf(FLF, stderr, "node already present in topology\n") );
 
-    // do callback only after state has been updated
-    if( upstream && _network->is_LocalNodeFrontEnd() ) {
-
-        update_contents* ub = (update_contents*) malloc( sizeof(update_contents) );
-        ub->type = TOPO_NEW_CP;
-        ub->chld_rank = chld_rank;
-        ub->chld_port = chld_port;
-        ub->chld_host = strdup(chld_host);
-        ub->par_rank = par_rank;
-        insert_updates_buffer( ub );
-
-        TopologyEvent::TopolEventData* ted;
-        ted = new TopologyEvent::TopolEventData( chld_rank, par_rank );
-        TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_ADD_CP, ted );
-        _network->_evt_mgr->add_Event( te );
-    }
 }
 
 void NetworkTopology::update_TopoStreamPeers( vector< Rank >& new_nodes )
 {
-    Stream* str_one = _network->get_Stream( 1 );
+    Stream* topol_strm = _network->get_Stream( TOPOL_STRM_ID );
     for( unsigned int i=0; i < new_nodes.size(); i++ ) {
         PeerNodePtr outlet = _network->get_OutletNode( new_nodes[i] );
         if( outlet != NULL )
-            str_one->add_Stream_Peer( outlet->get_Rank() );
+            topol_strm->add_Stream_Peer( outlet->get_Rank() );
         else
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "No outlet for recently added backend %d\n", 

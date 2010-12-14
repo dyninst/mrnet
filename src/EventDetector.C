@@ -680,7 +680,7 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
 
     // generate topology update for failed child
     if( _network->is_LocalNodeInternal() ) {
-        Stream *s = _network->get_Stream(TOPOL_STRM_ID); // get topol prop stream
+        Stream *s = _network->get_Stream( TOPOL_STRM_ID ); // topol prop stream
         int type = NetworkTopology::TOPO_REMOVE_RANK; 
         Port dummy_port = UnknownPort;
         char* dummy_host = strdup("NULL"); // ugh, this needs to be fixed

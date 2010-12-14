@@ -1538,12 +1538,12 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
 {
     mrn_dbg_func_begin();
     map < Rank, vector< PacketPtr >* >::iterator map_iter, del_iter;
-    wfa_state * state;
+    wfa_state* state;
     
     Network* net = const_cast< Network* >( info.get_Network() );
 
     int stream_id = ipackets[0]->get_StreamId();
-    Stream * stream = net->get_Stream( stream_id );
+    Stream* stream = net->get_Stream( stream_id );
     assert(stream);
 
     //1. Setup/Recover Filter State
@@ -1680,6 +1680,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     to_state* state;
 
     Network* net = const_cast< Network* >( info.get_Network() );
+    NetworkTopology* nettop = net->get_NetworkTopology();
 
     bool active = false;
     bool hit_timeout = false;
@@ -1712,10 +1713,11 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
         //Check for failed nodes && closed Peers
         map_iter = state->packets_by_rank.begin();
-        while ( map_iter != state->packets_by_rank.end() ) {
+        while( map_iter != state->packets_by_rank.end() ) {
 
             Rank rank = map_iter->first;
-            if( net->node_Failed( rank ) ) {
+            NetworkTopology::Node* node = nettop->find_Node( rank );
+            if( (node != NULL) && node->failed() ) {
                 mrn_dbg( 5, mrn_printf(FLF, stderr,
                                        "Discarding packets from failed node[%d] ...\n",
                                        rank) );
@@ -1755,15 +1757,23 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         Rank cur_inlet_rank = ipackets[i]->get_InletNodeRank();
 	mrn_dbg( 5, mrn_printf(FLF, stderr, "inlet rank is %u \n", cur_inlet_rank) );
 
-        if(cur_inlet_rank == UnknownRank ) {
+        if( cur_inlet_rank == UnknownRank ) {
             if (ipackets.size() == 1 ) {
-                opackets.push_back( ipackets[i] ) ;
+                opackets.push_back( ipackets[0] ) ;
                 mrn_dbg( 3, mrn_printf (FLF, stderr, "pushing locally sourced packet \n") );
                 return;
             }
 	}   
 
-        if( net->node_Failed( cur_inlet_rank ) ) {
+	if( stream_id == TOPOL_STRM_ID ) {
+            if( peers.find(cur_inlet_rank) == peers.end() ) {
+                stream->add_Stream_Peer( cur_inlet_rank );
+                peers.insert( cur_inlet_rank );
+            }
+	}   
+
+        NetworkTopology::Node* node = nettop->find_Node( cur_inlet_rank );
+        if( (node != NULL) && node->failed() ) {
             //Drop packets from failed node
 	    mrn_dbg( 3, mrn_printf(FLF, stderr, "Dropping packets from failed node %d \n", 
                                    cur_inlet_rank) );
@@ -1782,12 +1792,6 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
         mrn_dbg( 5, mrn_printf(FLF, stderr, "Placing packet[%d] from node[%d]\n",
                                i, cur_inlet_rank) );
         state->packets_by_rank[ cur_inlet_rank ]->push_back( ipackets[i] );
-	if( stream_id == TOPOL_STRM_ID ) {
-            if( peers.find(cur_inlet_rank) == peers.end() ) {
-                stream->add_Stream_Peer( cur_inlet_rank );
-                peers.insert( cur_inlet_rank );
-            }
-	}   
         state->ready_peers.insert( cur_inlet_rank );
     }
 

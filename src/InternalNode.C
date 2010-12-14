@@ -68,7 +68,7 @@ InternalNode::InternalNode( Network * inetwork,
                                    "Internal node not in the topology\n") );
 
             // send topology update for new CP
-            Stream *s = ParentNode::_network->get_Stream(TOPOL_STRM_ID); // get topol prop stream
+            Stream *s = ParentNode::_network->get_Stream( TOPOL_STRM_ID ); 
             int type = NetworkTopology::TOPO_NEW_CP; 
             char *host_arr = strdup( ihostname.c_str() );
             s->send_internal( PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", 

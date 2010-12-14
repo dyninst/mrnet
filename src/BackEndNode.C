@@ -52,13 +52,14 @@ BackEndNode::BackEndNode( Network * inetwork,
       if( ! nt->in_Topology(imyhostname, _port, imyrank) ) {
           //not in topology. backend attach case
 
-          _network->new_Stream( 1, NULL, 0, TFILTER_TOPO_UPDATE, 
+          _network->new_Stream( TOPOL_STRM_ID, NULL, 0, TFILTER_TOPO_UPDATE, 
                                 SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
           mrn_dbg( 5, mrn_printf(FLF, stderr, 
                                  "Backend not already in the topology\n") );
 
           //new be - send topology update packet
-          Stream *s = _network->get_Stream(TOPOL_STRM_ID); // get topol prop stream
+          Stream *s = _network->get_Stream( TOPOL_STRM_ID );
+          assert( s != NULL );
           int type = NetworkTopology::TOPO_NEW_BE;
           char *host_arr = strdup( imyhostname.c_str() );
           uint32_t send_iprank = iprank;

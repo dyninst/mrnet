@@ -660,20 +660,6 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                            child_hostname_ptr, child_rank, child_port,
                            child_incarnation, isock) );
     
-    // if connecting child not in topology, add its subtree
-    NetworkTopology* nt = _network->get_NetworkTopology();
-    SerialGraph sg( topo_ptr );
-    if( NULL == nt->find_Node(sg.get_RootRank()) ) {
-        if( ! _network->add_SubGraph(_network->get_LocalRank(), sg, false) ) {
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "add_SubGraph() failed\n") );
-    	    return -1;
-        }
-        mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                               "topology is %s after adding child subgraph\n", 
-                               nt->get_TopologyString().c_str()) );
-    }
-    std::string topo_str = nt->get_TopologyString();
-
     // propagate initial network settings
     const std::map< env_key, std::string >& envMap = _network->get_SettingsMap();
     int* keys = (int*) calloc( envMap.size() + 1, sizeof(int) );
@@ -692,6 +678,9 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
     else 
         vals[ count ] = strdup( "0" );
     count++;
+
+    NetworkTopology* nt = _network->get_NetworkTopology();
+    std::string topo_str = nt->get_TopologyString();
 
     PacketPtr pkt( new Packet(CTL_STRM_ID, PROT_NET_SETTINGS, "%s %ad %as", 
                               strdup( topo_str.c_str() ),
@@ -726,7 +715,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
 #else
         // generate topology update for child reparenting
         if( _network->is_LocalNodeInternal() ) {
-            Stream *s = _network->get_Stream(TOPOL_STRM_ID); // get topol prop stream
+            Stream *s = _network->get_Stream( TOPOL_STRM_ID );
             int type = NetworkTopology::TOPO_CHANGE_PARENT; 
             Port dummy_port = UnknownPort;
             char* dummy_host = strdup("NULL"); // ugh, this needs to be fixed
