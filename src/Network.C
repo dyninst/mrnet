@@ -307,40 +307,81 @@ std::map< env_key, std::string >&  Network::get_SettingsMap()
 void Network::convert_SettingsMap( const std::map< std::string, std::string > * iattrs )
 {
     std::map<std::string, std::string>::const_iterator it;
-    if( iattrs != NULL )
-    {
-       for( it = iattrs->begin(); it != iattrs->end(); it++ ) {
-           env_key key = (env_key) get_NetSettingName( it->first );
-          _network_settings[ key ] = it->second;
-       }
+    if( iattrs != NULL ) {
+        for( it = iattrs->begin(); it != iattrs->end(); it++ ) {
+            env_key key = (env_key) get_NetSettingName( it->first );
+            if( key != -1 )
+                _network_settings[ key ] = it->second;
+        }
     }
 }
 
 void Network::init_FENetSettings( const std::map< std::string, std::string > * iattrs )
 {
+    char* envval;
     convert_SettingsMap( iattrs );
+
+    // initialize MRNet from environment if not passed in iattrs
+    if( _network_settings.find(MRNET_OUTPUT_LEVEL) == _network_settings.end() ) {
+        envval = getenv( "MRNET_OUTPUT_LEVEL" );
+        if( envval != NULL )
+            _network_settings[ MRNET_OUTPUT_LEVEL ] = std::string( envval );
+    }
+
+    if( _network_settings.find(MRNET_DEBUG_LOG_DIRECTORY) == _network_settings.end() ) {
+        envval = getenv( "MRNET_DEBUG_LOG_DIRECTORY" );
+        if( envval != NULL )
+            _network_settings[ MRNET_DEBUG_LOG_DIRECTORY ] = std::string( envval );
+        else {
+            char* home = getenv("HOME");
+            char logdir[512];
+            snprintf(logdir, sizeof(logdir), "%s/mrnet-log", home);
+            _network_settings[ MRNET_DEBUG_LOG_DIRECTORY ] = std::string( logdir );
+        }
+    }
+
+    if( _network_settings.find(MRNET_COMM_PATH) == _network_settings.end() ) {
+        envval = getenv( "MRNET_COMM_PATH" );
+        if( envval == NULL ) // for backwards compatibility, check MRN_COMM_PATH
+            envval = getenv( "MRN_COMM_PATH" );
+        if( envval != NULL )
+            _network_settings[ MRNET_DEBUG_LOG_DIRECTORY ] = std::string( envval );
+        else
+            _network_settings[ MRNET_COMM_PATH ] = COMMNODE_EXE;
+    }
+
+    // initialize XPlat from environment if not passed in iattrs
+    if( _network_settings.find(XPLAT_RSH) == _network_settings.end() ) {
+        envval = getenv( "XPLAT_RSH" );
+        if( envval != NULL )
+            _network_settings[ XPLAT_RSH ] = std::string( envval );
+    }    
+    if( _network_settings.find(XPLAT_RSH_ARGS) == _network_settings.end() ) {
+        envval = getenv( "XPLAT_RSH_ARGS" );
+        if( envval != NULL )
+            _network_settings[ XPLAT_RSH_ARGS ] = std::string( envval );
+    }
+    if( _network_settings.find(XPLAT_REMCMD) == _network_settings.end() ) {
+        envval = getenv( "XPLAT_REMCMD" );
+        if( envval != NULL )
+            _network_settings[ XPLAT_REMCMD ] = std::string( envval );
+    }
+
     init_NetSettings();
 }
 
 void Network::init_NetSettings( void )
 {
-    if( _network_settings.find(MRNET_OUTPUT_LEVEL) != _network_settings.end() ) {
-        CUR_OUTPUT_LEVEL = atoi( _network_settings[MRNET_OUTPUT_LEVEL].c_str() );
+    std::map< env_key, std::string >::iterator eit;
+
+    eit = _network_settings.find( MRNET_OUTPUT_LEVEL );
+    if( eit != _network_settings.end() ) {
+        CUR_OUTPUT_LEVEL = atoi( eit->second.c_str() );
     }
 
-    if( is_LocalNodeFrontEnd() &&
-        (_network_settings.find(MRNET_DEBUG_LOG_DIRECTORY) == _network_settings.end()) ) {
-        // Child Nodes should never enter this part of code as settings distribution packet 
-        // will always carry MRNET_DEBUG_LOG_DIRECTORY
-        const char* home = getenv("HOME");
-        char logdir[256];
-        snprintf(logdir, sizeof(logdir), "%s/mrnet-log", home);
-        _network_settings[ MRNET_DEBUG_LOG_DIRECTORY ] = std::string(logdir) ;
-    }
-    MRN_DEBUG_LOG_DIRECTORY = strdup( _network_settings[MRNET_DEBUG_LOG_DIRECTORY].c_str() );
-    
-    if( _network_settings.find(MRNET_COMM_PATH) == _network_settings.end() ) {
-        _network_settings[ MRNET_COMM_PATH ] = COMMNODE_EXE ;
+    eit = _network_settings.find( MRNET_DEBUG_LOG_DIRECTORY );
+    if( eit != _network_settings.end() ) {
+        MRN_DEBUG_LOG_DIRECTORY = strdup( eit->second.c_str() );
     }
 
     init_XPlatSettings( _network_settings );
@@ -352,7 +393,7 @@ void init_XPlatSettings( std::map< env_key, std::string >& envMap )
     eit = envMap.find( XPLAT_RSH );
     if( eit != envMap.end() )
         XPlat::Process::set_RemoteShell( eit->second );
-   
+
     eit = envMap.find( XPLAT_RSH_ARGS );
     if( eit != envMap.end() )
         XPlat::Process::set_RemoteShellArgs( eit->second );
@@ -501,9 +542,8 @@ void Network::init_FrontEnd( const char * itopology,
         path = _network_settings[ MRNET_COMM_PATH ];
     }
     if( path.empty() )
-        assert( 0 );
-    const char* mrn_commnode_path = path.c_str();
-    
+        assert( ! "internal error: path for mrnet_commnode is empty" );
+
     if( ibackend_exe == NULL ) {
         ibackend_exe = empty_str;
     }
@@ -517,7 +557,7 @@ void Network::init_FrontEnd( const char * itopology,
    
     // spawn and connect processes that constitute our network
     this->Instantiate( parsed_graph, 
-                       mrn_commnode_path, 
+                       path.c_str(), 
                        ibackend_exe, 
                        ibackend_args, 
                        backend_argc,
@@ -528,7 +568,7 @@ void Network::init_FrontEnd( const char * itopology,
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
 
     if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() )
-            error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
+        error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
    
     mrn_dbg(5, mrn_printf(FLF, stderr, "Updating bcast communicator ... \n" ));
     update_BcastCommunicator();
@@ -1459,6 +1499,7 @@ int Network::waitfor_NonEmptyStream(void)
 
         // not shutdown, any streams now closed?
         for( iter = _streams.begin(); iter != _streams.end(); iter++ ) {
+            cur_strm = iter->second;
             if( cur_strm->is_Closed() ) {
                 mrn_dbg(5, mrn_printf(FLF, stderr, "Error on stream[%d]\n",
                                       cur_strm->get_Id() ));
@@ -2027,21 +2068,20 @@ void set_OutputLevelFromEnvironment( std::map< env_key, std::string>& env)
 int get_NetSettingName( std::string s )
 {
      int ret = -1;
-     if( !s.empty() )
-     {
+     if( ! s.empty() ) {
          if( strcmp("MRNET_OUTPUT_LEVEL", s.c_str()) == 0 )
              ret = MRNET_OUTPUT_LEVEL;
-         else if( strcmp("MRNET_DEBUG_LOG_DIRECTORY", s.c_str() ) == 0 )
+         else if( strcmp("MRNET_DEBUG_LOG_DIRECTORY", s.c_str()) == 0 )
              ret = MRNET_DEBUG_LOG_DIRECTORY;
-         else if( strcmp("MRNET_COMM_PATH", s.c_str() ) == 0 )
+         else if( strcmp("MRNET_COMM_PATH", s.c_str()) == 0 )
              ret = MRNET_COMM_PATH;
-         else if( strcmp("FAILURE_RECOVERY", s.c_str() ) == 0 )
+         else if( strcmp("FAILURE_RECOVERY", s.c_str()) == 0 )
              ret = FAILURE_RECOVERY;
-         else if( strcmp("XPLAT_RSH", s.c_str() ) == 0 )
+         else if( strcmp("XPLAT_RSH", s.c_str()) == 0 )
              ret = XPLAT_RSH;
-         else if( strcmp("XPLAT_RSH_ARGS" , s.c_str() ) == 0 )
+         else if( strcmp("XPLAT_RSH_ARGS", s.c_str()) == 0 )
              ret = XPLAT_RSH_ARGS;
-         else if( strcmp("XPLAT_REMCMD" , s.c_str() ) == 0 )
+         else if( strcmp("XPLAT_REMCMD", s.c_str()) == 0 )
              ret = XPLAT_REMCMD;
      }
      return ret;
