@@ -126,11 +126,16 @@ EventMgr::EventMgr()
 EventMgr::~EventMgr()
 {
     clear_Events();
+
+    data_sync.Lock();
     _cbs.clear();
+    data_sync.Unlock();
 }
 
 void EventMgr::reset_Callbacks()
 {
+    data_sync.Lock();
+
     // initialize the event class/type callback maps
     EventType min, max;
     evt_cb_list empty_list;
@@ -153,23 +158,35 @@ void EventMgr::reset_Callbacks()
     evt_typ_cb_map& topol_map = _cbs[ Event::TOPOLOGY_EVENT ];
     for( u = min; u <= max; u++ )
         topol_map[ u ] = empty_list;
+
+    data_sync.Unlock();
 }
 
 bool EventMgr::have_Events() const
 {
-    return ! _evts.empty();
+    bool rc;
+    data_sync.Lock();
+    rc = ! _evts.empty();
+    data_sync.Unlock();
+    return rc;
 }
 
 unsigned int EventMgr::get_NumEvents() const
 {
-    return _evts.size();
+    unsigned int rc;
+    data_sync.Lock();
+    rc = _evts.size();
+    data_sync.Unlock();
+    return rc;
 }
     
 bool EventMgr::add_Event( Event* ievt )
 {
     if( ievt != NULL ) {
+        data_sync.Lock();
         _evts.push_back( ievt );
         execute_Callbacks( ievt );
+        data_sync.Unlock();
         return true;
     }
     return false;
@@ -177,18 +194,22 @@ bool EventMgr::add_Event( Event* ievt )
 
 Event* EventMgr::get_NextEvent()
 {
+    data_sync.Lock();
     if( _evts.size() ) {
         Event* ret = _evts.front();
         _evts.pop_front();
+        data_sync.Unlock();
         return ret;
     }
-    else
-        return NULL;
+    data_sync.Unlock();
+    return NULL;
 }
 
 void EventMgr::clear_Events()
 {
+    data_sync.Lock();
     _evts.clear();
+    data_sync.Unlock();
 }
 
 bool EventMgr::register_Callback( EventClass iclass, EventType ityp,
@@ -199,9 +220,13 @@ bool EventMgr::register_Callback( EventClass iclass, EventType ityp,
 
     evt_cb_info cb_info = make_pair( ifunc, idata );
 
+    data_sync.Lock();
+
     std::map< EventClass, evt_typ_cb_map >::iterator i = _cbs.find( iclass );
-    if( i == _cbs.end() )
+    if( i == _cbs.end() ) {
+        data_sync.Unlock();
         return false;
+    }
  
     evt_typ_cb_map& ins_map = i->second;
     evt_typ_cb_map::iterator mapi;
@@ -214,12 +239,16 @@ bool EventMgr::register_Callback( EventClass iclass, EventType ityp,
     }
     else {
         mapi = ins_map.find(ityp);                
-        if( mapi == ins_map.end() )
+        if( mapi == ins_map.end() ) {
+            data_sync.Unlock();
             return false;
+        }
 
         evt_cb_list& ins_list = mapi->second;
         ins_list.push_back( cb_info );
     }
+
+    data_sync.Unlock();
     return true;
 }
   
@@ -241,10 +270,16 @@ bool EventMgr::remove_Callbacks( EventClass iclass, EventType ityp )
 
 bool EventMgr::remove_Callback( evt_cb_func ifunc, EventClass iclass, EventType ityp )
 {
+    bool rc;
+
+    data_sync.Lock();
+
     std::map< EventClass, evt_typ_cb_map >::iterator i;
     i = _cbs.find( iclass );
-    if( i == _cbs.end() )
+    if( i == _cbs.end() ) {
+        data_sync.Unlock();
         return false;
+    }
 
     evt_typ_cb_map& rm_map = i->second;
     evt_typ_cb_map::iterator mapi;
@@ -254,16 +289,18 @@ bool EventMgr::remove_Callback( evt_cb_func ifunc, EventClass iclass, EventType 
             //Remove all functions
             for( mapi = rm_map.begin(); mapi != rm_map.end(); mapi++ )
                 mapi->second.clear();
+            data_sync.Unlock();
             return true;
         }
         else {
             //Remove only ifunc 
             bool rm_flag = false;
             for( mapi = rm_map.begin(); mapi != rm_map.end(); mapi++ ) {
-                bool retval = remove_CallbackFunc( ifunc, mapi->second );
-                if( retval )
+                rc = remove_CallbackFunc( ifunc, mapi->second );
+                if( rc )
                     rm_flag = true;
             }
+            data_sync.Unlock();
             return rm_flag;
         }
     }
@@ -271,25 +308,32 @@ bool EventMgr::remove_Callback( evt_cb_func ifunc, EventClass iclass, EventType 
         //Remove for only ityp event type
         mapi = rm_map.find(ityp);
         if( mapi == rm_map.end() )
+            data_sync.Unlock();
             return false;
          
         if( ifunc == (evt_cb_func)NULL ) {
             //Remove all functions
             mapi->second.clear();
+            data_sync.Unlock();
             return true;
         }
         else {
             //Remove only ifunc
-            return remove_CallbackFunc( ifunc, mapi->second );
+            rc = remove_CallbackFunc( ifunc, mapi->second );
+            data_sync.Unlock();
+            return rc;
         }
     }
     // shouldn't get here
+    data_sync.Unlock();
     return false;
 }
  
 bool EventMgr::remove_CallbackFunc( evt_cb_func ifunc,
                                     evt_cb_list& ifuncs )
 {
+    // no need to lock, done at callers
+
     evt_cb_list::iterator rm_li = ifuncs.begin();
     for( ; rm_li != ifuncs.end(); rm_li++ ) {
         if( rm_li->first == ifunc ) {
@@ -302,6 +346,8 @@ bool EventMgr::remove_CallbackFunc( evt_cb_func ifunc,
  
 bool EventMgr::execute_Callbacks( Event* ievt )
 {
+    // no need to lock, done at callers
+
     EventClass c = ievt->get_Class();
     EventType t = ievt->get_Type();
 

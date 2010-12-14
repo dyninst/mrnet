@@ -13,6 +13,8 @@
 
 #include "mrnet/Types.h"
 #include "xplat/Monitor.h"
+#include "xplat/Mutex.h"
+
 
 namespace MRN {
 
@@ -145,7 +147,6 @@ class TopologyEvent: public Event {
         Rank get_Parent_Rank() const { return _parent_rank; }
     };
 
-    
     TopologyEvent( EventType etyp, TopolEventData* edata )
         : Event( TOPOLOGY_EVENT, etyp, edata )
     {}
@@ -162,6 +163,7 @@ class EventMgr {
  private:
     std::list< Event* > _evts;
     std::map< EventClass, evt_typ_cb_map > _cbs;
+    mutable XPlat::Monitor data_sync;
 
     bool execute_Callbacks( Event* ievt );
     bool remove_CallbackFunc( evt_cb_func icb,
