@@ -84,16 +84,26 @@ PthreadMonitorData::~PthreadMonitorData( void )
 int
 PthreadMonitorData::Lock( void )
 {
-    return pthread_mutex_lock( &mutex );
+    int rc = pthread_mutex_lock( &mutex ); 
+    if( rc ) {
+        fprintf(stderr, "XPlat Error: pthread_mutex_lock() returned '%s'\n",
+                strerror( rc ));
+        fflush(stderr);
+    }
+    return rc;
 }
-
 
 int
 PthreadMonitorData::Unlock( void )
 {
-    return pthread_mutex_unlock( &mutex );
+    int rc = pthread_mutex_unlock( &mutex ); 
+    if( rc ) {
+        fprintf(stderr, "XPlat Error: pthread_mutex_unlock() returned '%s'\n",
+                strerror( rc ));
+        fflush(stderr);
+    }
+    return rc;
 }
-
 
 int
 PthreadMonitorData::RegisterCondition( unsigned int cvid )

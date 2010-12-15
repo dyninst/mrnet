@@ -213,12 +213,19 @@ void EventMgr::clear_Events()
 }
 
 bool EventMgr::register_Callback( EventClass iclass, EventType ityp,
-                                  evt_cb_func ifunc, void* idata )
+                                  evt_cb_func ifunc, void* idata,
+                                  bool once )
 {
     if( ifunc == (evt_cb_func)NULL )
         return false;
+    
+    if( once && (ityp == Event::EVENT_TYPE_ALL) ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+           "one-time function must be registered with specific event type\n") );
+        return false;
+    }
 
-    evt_cb_info cb_info = make_pair( ifunc, idata );
+    evt_cb_info cb_info( ifunc, idata, once );
 
     data_sync.Lock();
 
@@ -307,9 +314,10 @@ bool EventMgr::remove_Callback( evt_cb_func ifunc, EventClass iclass, EventType 
     else {
         //Remove for only ityp event type
         mapi = rm_map.find(ityp);
-        if( mapi == rm_map.end() )
+        if( mapi == rm_map.end() ) {
             data_sync.Unlock();
             return false;
+        }
          
         if( ifunc == (evt_cb_func)NULL ) {
             //Remove all functions
@@ -336,7 +344,7 @@ bool EventMgr::remove_CallbackFunc( evt_cb_func ifunc,
 
     evt_cb_list::iterator rm_li = ifuncs.begin();
     for( ; rm_li != ifuncs.end(); rm_li++ ) {
-        if( rm_li->first == ifunc ) {
+        if( rm_li->func == ifunc ) {
             ifuncs.erase( rm_li );
             return true;
         }
@@ -362,12 +370,23 @@ bool EventMgr::execute_Callbacks( Event* ievt )
             return false;
         else {
             evt_cb_list& elist = mapi->second;
-            evt_cb_list::iterator li;
-            for( li = elist.begin(); li != elist.end(); li++ ) {
-                evt_cb_func f = li->first;
-                void* f_data = li->second;
-                (*f)( ievt, f_data );
-            }
+            evt_cb_list::iterator li, tmp;
+            unsigned u, count;
+            li = elist.begin();
+            count = elist.size();
+            for( u = 0; u < count; u++ ) {
+
+                // call function
+                (li->func)( ievt, li->data );
+
+                // remove if one-time callback
+                if( li->onetime ) {
+                    tmp = li++;
+                    elist.erase( tmp );
+                }
+                else
+                    li++;
+            }        
         }
     }
  

@@ -66,18 +66,17 @@ ParentNode::~ParentNode( void )
 int ParentNode::proc_PacketsFromChildren( std::list< PacketPtr > & ipackets )
 {
     int retval = 0;
-    PacketPtr cur_packet;
 
     mrn_dbg_func_begin();
 
-    std::list < PacketPtr >::iterator iter = ipackets.begin(  );
-    for( ; iter != ipackets.end(  ); iter++ ) {
-        if( proc_PacketFromChildren( *iter ) == -1 )
+    std::list< PacketPtr >::iterator iter = ipackets.begin();
+    for( ; iter != ipackets.end(); iter++ ) {
+        if( proc_PacketFromChildren(*iter) == -1 )
             retval = -1;
     }
  
     mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_PacketsFromChildren() %s",
-                           ( retval == -1 ? "failed\n" : "succeeded\n" ) ));
+                           (retval == -1 ? "failed\n" : "succeeded\n")) );
     ipackets.clear(  );
     return retval;
 }
@@ -88,61 +87,61 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
 
     switch ( cur_packet->get_Tag() ) {
     case PROT_CLOSE_STREAM:
-        if( proc_closeStream( cur_packet ) == -1 ) {
+        if( proc_closeStream(cur_packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_closeStream() failed\n" ));
             retval = -1;
         }
         break;
     case PROT_NEW_SUBTREE_RPT:
-        if( proc_newSubTreeReport( cur_packet ) == -1 ) {
+        if( proc_newSubTreeReport(cur_packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_newSubTreeReport() failed\n" ));
             retval = -1;
         }
         break;
     case PROT_SUBTREE_INITDONE_RPT:
-        if( proc_SubTreeInitDoneReport( cur_packet ) == -1 ) {
+        if( proc_SubTreeInitDoneReport(cur_packet) == -1 ) {
 	    mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_SubTreeInitDoneReport() failed\n" ));
 	    retval = -1;
 	}
 	break;
     case PROT_SHUTDOWN_ACK:
-        if( proc_DeleteSubTreeAck( cur_packet ) == -1 ) {
+        if( proc_DeleteSubTreeAck(cur_packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_DeleteSubTreeAck() failed\n" ));
             retval = -1;
         }
         break;
     case PROT_TOPOLOGY_ACK:
-        if( proc_TopologyReportAck( cur_packet ) == -1 ) {
+        if( proc_TopologyReportAck(cur_packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_TopologyReportAck() failed\n" ));
             retval = -1;
         }
         break;
     case PROT_EVENT:
-        if( proc_Event( cur_packet ) == -1 ) {
+        if( proc_Event(cur_packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_Event() failed\n" ));
             retval = -1;
         }
         break;
     case PROT_FAILURE_RPT:
-        if( proc_FailureReport( cur_packet ) == -1 ) {
+        if( proc_FailureReport(cur_packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_FailureReport() failed\n" ));
             retval = -1;
         }
         break;
     case PROT_RECOVERY_RPT:
-        if( proc_RecoveryReport( cur_packet ) == -1 ) {
+        if( proc_RecoveryReport(cur_packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_RecoveryReport() failed\n" ));
             retval = -1;
         }
         break;
     case PROT_NEW_PARENT_RPT:
-        if( proc_NewParentReportFromParent( cur_packet ) == -1 ) {
+        if( proc_NewParentReportFromParent(cur_packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_NewParentReport() failed\n" ));
             retval = -1;
@@ -150,7 +149,7 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
         break;
     default:
         //Any unrecognized tag is assumed to be data
-        if( proc_DataFromChildren( cur_packet ) == -1 ) {
+        if( proc_DataFromChildren(cur_packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_DataFromChildren() failed\n" ));
             retval = -1;

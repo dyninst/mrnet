@@ -123,7 +123,8 @@ class Network: public Error {
     
     /* Callback-based event notification */
     bool register_EventCallback( EventClass iclass, EventType ityp,
-                                 evt_cb_func ifunc, void* idata );
+                                 evt_cb_func ifunc, void* idata,
+                                 bool onetime=false );
     bool remove_EventCallback( evt_cb_func func, EventClass iclass, EventType ityp ); 
     bool remove_EventCallbacks( EventClass iclass, EventType ityp );
 
@@ -250,7 +251,7 @@ protected:
     bool update_Streams(void);
     void close_Streams(void);
     int waitfor_NonEmptyStream(void);
-    void signal_NonEmptyStream(void);
+    void signal_NonEmptyStream( Stream* strm );
 
     int send_PacketsToParent( std::vector< PacketPtr >& );
     int send_PacketToParent( PacketPtr );

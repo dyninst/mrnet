@@ -1251,7 +1251,8 @@ int Network::get_EventNotificationFd( EventClass eclass )
     if( iter == _evt_pipes.end() ) {
         ep = new EventPipe();
         bool rc = _evt_mgr->register_Callback( eclass, Event::EVENT_TYPE_ALL, 
-                                               PipeNotifyCallbackFn, (void*)ep );
+                                               PipeNotifyCallbackFn, (void*)ep,
+                                               false );
         if( ! rc ) {
             mrn_printf(FLF, stderr, "failed to register PipeNotifyCallbackFn");
             delete ep;
@@ -1300,9 +1301,10 @@ void Network::close_EventNotificationFd( EventClass eclass )
 
 /* Register & Remove Callbacks */
 bool Network::register_EventCallback( EventClass iclass, EventType ityp, 
-                                      evt_cb_func ifunc, void* idata )
+                                      evt_cb_func ifunc, void* idata,
+                                      bool onetime /*=false*/ )
 {
-    bool ret = _evt_mgr->register_Callback( iclass, ityp, ifunc, idata );
+    bool ret = _evt_mgr->register_Callback( iclass, ityp, ifunc, idata, onetime );
     if( ret == false ) {
         mrn_printf(FLF, stderr, "failed to register callback");
         return false;
@@ -1517,13 +1519,13 @@ int Network::waitfor_NonEmptyStream(void)
     return -1;
 }
 
-void Network::signal_NonEmptyStream(void)
+void Network::signal_NonEmptyStream( Stream* strm )
 {
     _streams_sync.Lock();
     mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling CV[STREAMS_NONEMPTY] ...\n"));
     _streams_sync.SignalCondition( STREAMS_NONEMPTY );
 
-    DataEvent::DataEventData* ded = new DataEvent::DataEventData( NULL );
+    DataEvent::DataEventData* ded = new DataEvent::DataEventData( strm );
     DataEvent* de = new DataEvent( DataEvent::DATA_AVAILABLE, ded );
     _evt_mgr->add_Event( de );
 

@@ -448,7 +448,6 @@ int Stream::block_ForIncomingPacket(void) const
     _incoming_packet_buffer_sync.Unlock();
 
     if( is_Closed() ) {
-        _incoming_packet_buffer_sync.Unlock();
         mrn_dbg( 3, mrn_printf(FLF, stderr, "stream[%u] is closed.\n", _id) );
         return -1;
     }
@@ -638,7 +637,7 @@ void Stream::add_IncomingPacket( PacketPtr ipacket )
      *       above as it can (and has) cause a circular dependency deadlock.
      *       we use the cached net because by the time we return from
      *       signaling, someone may have deleted this stream */ 
-    net->signal_NonEmptyStream();
+    net->signal_NonEmptyStream( this );
 }
 
 unsigned int Stream::size(void) const

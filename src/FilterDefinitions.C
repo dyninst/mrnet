@@ -1633,34 +1633,37 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
     }
 
     // if we get here, SYNC CONDITION MET!
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "All child nodes ready!" ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "All child nodes ready!") );
 
     //3. All nodes ready! Place output packets
     for( map_iter = state->packets_by_rank.begin();
          map_iter != state->packets_by_rank.end();
          map_iter++ ) {
 
-        if( map_iter->second->empty() ) {
+        Rank r = map_iter->first;
+        vector< PacketPtr >* pkt_vec = map_iter->second;
+        if( pkt_vec->empty() ) {
             // list should only be empty if peer closed stream
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d]'s slot is empty\n",
-                                   map_iter->first ) );
+            mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                                   "Node[%d]'s slot is empty\n", r) );
             continue;
         }
 
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "Popping packet from Node[%d]\n",
-                               map_iter->first ) );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                               "Popping packet from Node[%d]\n", r) );
         // push head of list onto output vector
-        opackets.push_back( map_iter->second->front() );
-        map_iter->second->erase( map_iter->second->begin() );
+        opackets.push_back( pkt_vec->front() );
+        pkt_vec->erase( pkt_vec->begin() );
         
         // if list now empty, remove slot from ready list
-        if( map_iter->second->empty() ) {
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "Removing Node[%d] from ready list\n",
-                                   map_iter->first ) );
-            state->ready_peers.erase( map_iter->first );
+        if( pkt_vec->empty() ) {
+            mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                                   "Removing Node[%d] from ready list\n", r) );
+            state->ready_peers.erase( r );
         }
     }
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Returning %d packets\n", opackets.size(  ) ));
+    mrn_dbg( 3, mrn_printf(FLF, stderr, 
+                           "Returning %d packets\n", opackets.size()) );
 }
 
 typedef struct {
@@ -1834,30 +1837,35 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
          map_iter != state->packets_by_rank.end( );
          map_iter++ ) {
 
-        if( map_iter->second->empty() ) {
+        Rank r = map_iter->first;
+        vector< PacketPtr >* pkt_vec = map_iter->second;
+        if( pkt_vec->empty() ) {
             // should only occur if the peer was closed, or we timed-out
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Node[%d]'s slot is empty\n",
-                                   map_iter->first) );
+                                   r) );
             continue;
         }
 
         if( hit_timeout ) {
             // push all packets
-            opackets.insert( opackets.end(), map_iter->second->begin(), map_iter->second->end() );
-            map_iter->second->clear();
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "Popping all packets from Node[%d]\n",
+                                   r) );
+            opackets.insert( opackets.end(), pkt_vec->begin(), pkt_vec->end() );
+            pkt_vec->clear();
+            state->ready_peers.erase( r );
         }
         else {
             //push head of list onto output vector
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Popping packet from Node[%d]\n",
-                                   map_iter->first) );
-            opackets.push_back( map_iter->second->front() );
-            map_iter->second->erase( map_iter->second->begin() );
+                                   r) );
+            opackets.push_back( pkt_vec->front() );
+            pkt_vec->erase( pkt_vec->begin() );
         
             //if list now empty, remove slot from ready list
-            if( map_iter->second->empty() ) {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "Removing Node[%d] from ready list\n",
-                                       map_iter->first) );
-                state->ready_peers.erase( map_iter->first );
+            if( pkt_vec->empty() ) {
+                mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                                       "Removing Node[%d] from ready list\n", r) );
+                state->ready_peers.erase( r );
             }
         }
 

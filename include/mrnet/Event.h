@@ -155,7 +155,24 @@ class TopologyEvent: public Event {
 };
  
 typedef void (*evt_cb_func)( Event*, void* );
-typedef std::pair< evt_cb_func, void* > evt_cb_info;
+
+class evt_cb_info {
+ public:
+    evt_cb_func func;
+    void* data;
+    bool onetime;
+
+    evt_cb_info( evt_cb_func ifunc, void* idata, bool once )
+        : func(ifunc), data(idata), onetime(once)
+    {}
+
+    evt_cb_info( const evt_cb_info& info )
+        : func(info.func), data(info.data), onetime(info.onetime)
+    {}
+
+    ~evt_cb_info(void) {}
+};
+
 typedef std::list< evt_cb_info > evt_cb_list;
 typedef std::map< EventType, evt_cb_list > evt_typ_cb_map;
 
@@ -185,7 +202,8 @@ class EventMgr {
 
     // callback management
     bool register_Callback( EventClass iclass, EventType ityp, 
-                            evt_cb_func ifunc, void* icb_data );
+                            evt_cb_func ifunc, void* icb_data,
+                            bool once );
     bool remove_Callbacks( EventClass iclass, EventType ityp );
     bool remove_Callback( evt_cb_func ifunc, EventClass iclass, EventType itype );
 };
