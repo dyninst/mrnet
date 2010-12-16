@@ -6,6 +6,8 @@
 // $Id: Monitor-pthread.C,v 1.7 2008/10/09 19:54:09 mjbrim Exp $
 #include <cassert>
 #include <cerrno>
+#include <cstring>
+#include <cstdio>
 #include "Monitor-pthread.h"
 
 namespace XPlat
