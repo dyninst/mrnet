@@ -241,7 +241,7 @@ XTNetwork::PropagateTopology( int topoFd,
     write( topoFd, &childRank, sizeof(childRank) );
 }
 
-// IN constructor
+// CP constructor
 XTNetwork::XTNetwork( bool, int topoPipeFd, 
 		      int beArgc,
 		      char** beArgv )
@@ -288,14 +288,6 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
     FindPositionInTopology( topology, myHost, myRank, my_tpos );
     assert( my_tpos != NULL );
     
-    std::map< env_key, std::string >& envMap = get_EnvMap();
-    std::string path;
-    if( envMap.find(MRNET_COMM_PATH) != envMap.end() ) {
-        path = envMap[ MRNET_COMM_PATH ];
-    }
-    assert( ! path.empty() );
-    const char* mrn_commnode_path = path.c_str();
-  
     if( topoPipeFd == -1 ) { // first process on this node
 
         // spawn other processes on this node, if any
@@ -309,7 +301,7 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
                 TopologyPosition* tpos = *pos_iter;
                 assert( tpos != NULL );
 
-                // check if current pos is a BE or another IN
+                // check if current pos is a BE or another CP
                 pid_t currPid = 0;
                 if( tpos->subtree->is_RootBackEnd() && (beArgc > 0) ) {
                     
@@ -328,7 +320,7 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
                 }
                 else {
                     int currTopoFd = -1;
-                    currPid = SpawnIN( mrn_commnode_path, beArgc, beArgv, &currTopoFd );
+                    currPid = SpawnCP( beArgc, beArgv, &currTopoFd );
                     
                     if( (currPid == 0) || (currTopoFd == -1) ) {
                         // we failed to spawn the process
@@ -357,7 +349,7 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
     // Am I really a BE?
     if( my_tpos->subtree->is_RootBackEnd() && (beArgc > 0) ) {
 
-        // I am supposed to be a BE but currently am an IN.
+        // I am supposed to be a BE but currently am CP.
         // I need to spawn a BE and deliver the topology as I received it
         // I should be the only process on this node
         assert( topoPipeFd == -1 );
@@ -383,7 +375,7 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
         exit( 0 );
     }
 
-    // Initialize as IN
+    // Initialize as CP
     int listeningDataSocket = -1;
     Port listeningDataPort = my_tpos->subtree->get_RootPort();
     if( -1 == CreateListeningSocket( listeningDataSocket, listeningDataPort, true ) ) {
@@ -418,17 +410,13 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
 
 
 pid_t
-XTNetwork::SpawnIN( const char* mrn_commnode_path,
-                    int beArgc, 
-                    char** beArgv,
+XTNetwork::SpawnCP( int beArgc, char** beArgv,
                     int* topoFd )
 {
     mrn_dbg_func_begin();
 
     pid_t ret = 0;
     *topoFd = -1;
-
-    assert( mrn_commnode_path != NULL );
 
     // build the pipe for communicating topology
     int topoFds[2];
@@ -454,14 +442,13 @@ XTNetwork::SpawnIN( const char* mrn_commnode_path,
         mrn_dbg(3, mrn_printf( FLF, stderr, "child closing %d\n", topoFds[1] ));
         XPlat::SocketUtils::Close( topoFds[1] );
 
-        // we need to become another IN process
+        // we need to become another CP process
         // we also need to pass the fd of the topology 
         // pipe on the command line
         int argc = beArgc + 3;
         char** argv = new char*[argc + 3];
 
         int currIdx = 0;
-        argv[currIdx++] = strdup( mrn_commnode_path );
         argv[currIdx++] = strdup( "-T" );
 
         std::ostringstream fdStr;
@@ -473,18 +460,28 @@ XTNetwork::SpawnIN( const char* mrn_commnode_path,
         }
         argv[currIdx] = NULL;        
 
-        mrn_dbg(5, mrn_printf(FLF, stderr, "spawning another IN with arguments:\n" ));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "spawning CP with arguments:\n" ));
         for( int i = 0; i < beArgc + 3; i++ ) {
-            mrn_dbg(5, mrn_printf(FLF, stderr, "IN argv[%d]=%s\n", i, argv[i] ));
+            mrn_dbg(5, mrn_printf(FLF, stderr, "CP argv[%d]=%s\n", i, argv[i] ));
         }
 
-        execvp( argv[0], argv );
-        mrn_dbg(1, mrn_printf(FLF, stderr, "exec of colocated IN failed\n" ));
-        exit( 1 );
+        // now, act like a CP already
+        // NOTE: following code should match actions of CP main() (see CommunicationNodeMain.C)
+        //--- BEGIN CP main() ---
+        Network* net = CreateNetworkIN( argc, argv );
+        if( (net == NULL) || net->has_Error() ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "spawn of CP failed\n" ));
+            return 0;
+        }
+        else {
+            net->waitfor_ShutDown();
+            delete net;
+            exit(0);
+        }
+        //--- END CP main() ---
     }
     else {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "fork of colocated IN failed\n" ));
-        *topoFd = -1;
+        mrn_dbg(1, mrn_printf(FLF, stderr, "fork of colocated CP failed\n" ));
         ret = 0;
     }
     return ret;

@@ -541,8 +541,8 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     }
     free( topo_ptr );
 
-    std::list< PacketPtr > packet_list;
-    
+    // handle network settings packet
+    std::list< PacketPtr > packet_list;    
     int rret = iparent->recv( packet_list );
     if( (rret == -1) || ((rret == 0) && (packet_list.size() == 0)) ) {
         if( rret == -1 ) {
@@ -550,7 +550,6 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
              return -1;
         }
     }
-    
     if( proc_PacketsFromParent( packet_list ) == -1 )
         mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromParent() failed\n"));
 

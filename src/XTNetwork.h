@@ -120,9 +120,7 @@ private:
                    const char* parentHost, Rank parentRank, Port parentPort,
                    const char* myHost, Rank myRank );
                    
-    pid_t SpawnIN( const char* commnode_path, 
-                   int beArgc, 
-                   char** beArgv, 
+    pid_t SpawnCP( int beArgc, char** beArgv, 
                    int* topoFd );
 
 
