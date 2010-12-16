@@ -240,6 +240,10 @@ protected:
 
     int parse_Configuration( const char* itopology, bool iusing_mem_buf );
 
+    Stream* new_InternalStream( Communicator*,
+                                int us_filter_id=TFILTER_NULL,
+                                int sync_id=SFILTER_WAITFORALL,
+                                int ds_filter_id=TFILTER_NULL );
     Stream * new_Stream( unsigned int iid,
                          Rank* ibackends,
                          unsigned int inum_backends,
@@ -338,8 +342,10 @@ protected:
     InternalNode* _local_internal_node;
     TimeKeeper* _local_time_keeper;
     EventDetector* _edt;
-    unsigned int _next_stream_id; // only used by FE
     EventMgr* _evt_mgr;
+    unsigned int _next_user_stream_id; // only used by FE
+    unsigned int _next_int_stream_id; // only used by FE
+
     std::map< env_key, std::string > _network_settings;
 
     std::set< PeerNodePtr > _children;

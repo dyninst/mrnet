@@ -16,6 +16,7 @@ extern const unsigned int CTL_STRM_ID;
 extern const unsigned int TOPOL_STRM_ID;
 extern const unsigned int PORT_STRM_ID;
 extern const unsigned int USER_STRM_BASE_ID;
+extern const unsigned int INTERNAL_STRM_BASE_ID;
 
 struct vector_t;
 struct PerfDataMgr_t;

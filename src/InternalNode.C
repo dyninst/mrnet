@@ -60,15 +60,14 @@ InternalNode::InternalNode( Network * inetwork,
     
         if( ! nt->in_Topology(ihostname, listeningPort, irank) ) {
             // not already in topology => internal node attach case 
-            ParentNode::_network->new_Stream( TOPOL_STRM_ID, NULL, 0, 
-                                              TFILTER_TOPO_UPDATE, 
-                                              SFILTER_TIMEOUT, 
-                                              TFILTER_TOPO_UPDATE_DOWNSTREAM );
             mrn_dbg( 5, mrn_printf(FLF, stderr, 
                                    "Internal node not in the topology\n") );
 
             // send topology update for new CP
-            Stream *s = ParentNode::_network->get_Stream( TOPOL_STRM_ID ); 
+            Stream* s = ParentNode::_network->new_Stream( TOPOL_STRM_ID, NULL, 0, 
+                                                          TFILTER_TOPO_UPDATE, 
+                                                          SFILTER_TIMEOUT, 
+                                              TFILTER_TOPO_UPDATE_DOWNSTREAM );
             int type = NetworkTopology::TOPO_NEW_CP; 
             char *host_arr = strdup( ihostname.c_str() );
             s->send_internal( PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", 

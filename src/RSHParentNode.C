@@ -41,8 +41,8 @@ int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
     if( _network->is_LocalNodeFrontEnd() ) {
         // create a waitforall topology update stream
         Communicator* bcast_comm = _network->get_BroadcastCommunicator();
-        port_strm = _network->new_Stream( bcast_comm, TFILTER_TOPO_UPDATE, 
-                                          SFILTER_WAITFORALL );
+        port_strm = _network->new_InternalStream( bcast_comm, TFILTER_TOPO_UPDATE, 
+                                                  SFILTER_WAITFORALL );
         if( NULL == port_strm ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, 
                                    "failed to create port update stream\n") );

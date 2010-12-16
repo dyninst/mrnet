@@ -28,17 +28,18 @@ using namespace std;
 namespace MRN
 {
 
-#define INTERNAL_STREAM_BASE_ID (1 << 30)
+#define STREAM_BASE_ID (1 << 30)
 
 // a purely logical stream id
-const unsigned int CTL_STRM_ID = INTERNAL_STREAM_BASE_ID;
-
-// base stream id for all "real" stream objects
-const unsigned int USER_STRM_BASE_ID = CTL_STRM_ID + 1;
+const unsigned int CTL_STRM_ID = STREAM_BASE_ID;
 
 // some internally created streams
-const unsigned int TOPOL_STRM_ID = USER_STRM_BASE_ID;
-const unsigned int PORT_STRM_ID  = USER_STRM_BASE_ID + 1;
+const unsigned int INTERNAL_STRM_BASE_ID = CTL_STRM_ID + 1;
+const unsigned int TOPOL_STRM_ID = INTERNAL_STRM_BASE_ID;
+const unsigned int PORT_STRM_ID  = INTERNAL_STRM_BASE_ID + 1;
+
+// base stream id for all "real" stream objects
+const unsigned int USER_STRM_BASE_ID = STREAM_BASE_ID + 10;
 
 Stream::Stream( Network * inetwork, unsigned int iid,
                 Rank *ibackends, unsigned int inum_backends,

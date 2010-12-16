@@ -110,8 +110,9 @@ Network::Network(void)
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
-      _edt( new EventDetector(this) ), 
-      _next_stream_id(USER_STRM_BASE_ID), _evt_mgr( new EventMgr() ),
+      _edt( new EventDetector(this) ), _evt_mgr( new EventMgr() ),
+      _next_user_stream_id(USER_STRM_BASE_ID),
+      _next_int_stream_id(INTERNAL_STRM_BASE_ID),
       _threaded(true), _recover_from_failures(true), 
       _was_shutdown(false), _shutting_down(false)
 {
@@ -574,8 +575,8 @@ void Network::init_FrontEnd( const char * itopology,
     update_BcastCommunicator();
 
     // create topology propagation stream
-    Stream* s = new_Stream( _bcast_communicator, TFILTER_TOPO_UPDATE, 
-                            SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+    Stream* s = new_InternalStream( _bcast_communicator, TFILTER_TOPO_UPDATE, 
+                                    SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
     assert( s->get_Id() == TOPOL_STRM_ID );
     s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
 
@@ -585,7 +586,6 @@ void Network::init_FrontEnd( const char * itopology,
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_PORT_UPDATE, "") );
     if( -1 == get_LocalFrontEndNode()->proc_PortUpdates( packet ) )
         error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
-
 }
 
 void Network::send_TopologyUpdates(void)
@@ -857,18 +857,18 @@ int Network::recv( bool iblocking )
         if( is_LocalNodeThreaded() )
             return waitfor_NonEmptyStream();
         else {
-            mrn_dbg(3, mrn_printf(FLF, stderr, "Calling recv_packets()\n"));
+            mrn_dbg(5, mrn_printf(FLF, stderr, "Calling recv_packets()\n"));
             if( recv_PacketsFromParent( packet_list ) == -1){
                 mrn_dbg(1, mrn_printf(FLF, stderr, "recv_packets() failed\n"));
                 return -1;
             }
 
             if( packet_list.size() == 0 ) {
-                mrn_dbg(3, mrn_printf(FLF, stderr, "No packets read!\n"));
+                mrn_dbg(5, mrn_printf(FLF, stderr, "No packets read!\n"));
                 return 0;
             }
             else {
-                mrn_dbg(3, mrn_printf(FLF, stderr,
+                mrn_dbg(5, mrn_printf(FLF, stderr,
                                       "Calling proc_packets()\n"));
                 if( get_LocalChildNode()->proc_PacketsFromParent(packet_list) == -1){
                     mrn_dbg(1, mrn_printf(FLF, stderr, "proc_packets() failed\n"));
@@ -910,14 +910,13 @@ get_packet_from_stream_label:
         do {
             Stream* cur_stream = _stream_iter->second;
 
-            mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                   "Checking for packets on stream[%d]...",
-                                   cur_stream->get_Id() ));
             cur_packet = cur_stream->get_IncomingPacket();
             if( cur_packet != Packet::NullPacket ){
                 packet_found = true;
             }
-            mrn_dbg( 5, mrn_printf(0,0,0, stderr, "%s!\n",
+            mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                   "Checking for packets on stream[%d] ... %s",
+                                   cur_stream->get_Id(),
                                    (packet_found ? "found" : "not found")));
 
             _streams_sync.Lock();
@@ -935,8 +934,9 @@ get_packet_from_stream_label:
         *ostream = get_Stream( cur_packet->get_StreamId() );
         assert(*ostream);
         opacket = cur_packet;
-        mrn_dbg(4, mrn_printf(FLF, stderr, "cur_packet tag: %d, fmt: %s\n",
-                   cur_packet->get_Tag(), cur_packet->get_FormatString() ));
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "cur_packet tag:%d, fmt:%s\n",
+                               cur_packet->get_Tag(), 
+                               cur_packet->get_FormatString()) );
         return 1;
     }
 
@@ -951,11 +951,11 @@ get_packet_from_stream_label:
             return -1;
         else if ( retval == 1 ){
             // go back if we found a packet
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "Network::recv() found a packet!\n" ));
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "Network::recv() found a packet!\n" ));
             goto get_packet_from_stream_label;
         }
     }
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Network::recv() No packets found.\n" ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Network::recv() No packets found.\n" ));
     return 0;
 }
 
@@ -1050,8 +1050,6 @@ CommunicationNode* Network::new_EndPoint( string &ihostname,
 }
 
 
-//static unsigned int next_stream_id=1;  //id '0' reserved for internal communication
-
 Stream* Network::new_Stream( Communicator *icomm, 
                              int ius_filter_id /*=TFILTER_NULL*/,
                              int isync_filter_id /*=SFILTER_WAITFORALL*/, 
@@ -1060,6 +1058,10 @@ Stream* Network::new_Stream( Communicator *icomm,
     if( NULL == icomm ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, 
                               "cannot create stream from NULL communicator\n") );
+        return NULL;
+    }
+    if( is_LocalNodeBackEnd() ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new_Stream() called from back-end\n") );
         return NULL;
     }
 
@@ -1075,9 +1077,48 @@ Stream* Network::new_Stream( Communicator *icomm,
     }
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_STREAM, "%ud %ad %d %d %d",
-                                 _next_stream_id, backends, num_pts,
+                                 _next_user_stream_id, backends, num_pts,
                                  ius_filter_id, isync_filter_id, ids_filter_id) );
-    _next_stream_id++;
+    _next_user_stream_id++;
+
+    Stream* stream = get_LocalFrontEndNode()->proc_newStream(packet);
+    if( stream == NULL )
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
+
+    delete [] backends;
+    return stream;
+}
+
+Stream* Network::new_InternalStream( Communicator *icomm, 
+                                     int ius_filter_id /*=TFILTER_NULL*/,
+                                     int isync_filter_id /*=SFILTER_WAITFORALL*/, 
+                                     int ids_filter_id /*=TFILTER_NULL*/ )
+{
+    if( NULL == icomm ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "cannot create stream from NULL communicator\n") );
+        return NULL;
+    }
+    if( is_LocalNodeBackEnd() ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new_InternalStream() called from back-end\n") );
+        return NULL;
+    }
+
+    //get array of back-ends from communicator
+    Rank* backends = icomm->get_Ranks();
+    unsigned num_pts = icomm->size();
+    if( num_pts == 0 ) {
+        if( icomm != _bcast_communicator ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                       "cannot create stream from communicator containing zero end-points\n") );
+            return NULL;
+        }
+    }
+
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_STREAM, "%ud %ad %d %d %d",
+                                 _next_int_stream_id, backends, num_pts,
+                                 ius_filter_id, isync_filter_id, ids_filter_id) );
+    _next_int_stream_id++;
 
     Stream* stream = get_LocalFrontEndNode()->proc_newStream(packet);
     if( stream == NULL )
@@ -1122,6 +1163,10 @@ Stream* Network::new_Stream( Communicator* icomm,
         mrn_dbg( 1, mrn_printf(FLF, stderr, "NULL communicator\n") );
         return NULL;
     }
+    if( is_LocalNodeBackEnd() ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new_Stream() called from back-end\n") );
+        return NULL;
+    }
 
     //get array of back-ends from communicator
     Rank* backends = icomm->get_Ranks();
@@ -1135,10 +1180,10 @@ Stream* Network::new_Stream( Communicator* icomm,
     }
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_HETERO_STREAM, "%ud %ad %s %s %s",
-                                 _next_stream_id, backends, num_pts,
+                                 _next_user_stream_id, backends, num_pts,
                                  us_filters.c_str(), sync_filters.c_str(), 
                                  ds_filters.c_str()) );
-    _next_stream_id++;
+    _next_user_stream_id++;
 
     Stream* stream = get_LocalFrontEndNode()->proc_newStream(packet);
     if( stream == NULL ){
@@ -1154,7 +1199,7 @@ Stream* Network::get_Stream( unsigned int iid ) const
     Stream* ret = NULL;
     map< unsigned int, Stream* >::const_iterator iter; 
 
-    if( iid > CTL_STRM_ID ) { // user-created stream
+    if( iid > CTL_STRM_ID ) { // real stream
         _streams_sync.Lock();
 
         iter = _streams.find( iid );

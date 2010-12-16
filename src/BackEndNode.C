@@ -50,15 +50,15 @@ BackEndNode::BackEndNode( Network * inetwork,
     if( nt != NULL ) {
     
       if( ! nt->in_Topology(imyhostname, _port, imyrank) ) {
-          //not in topology. backend attach case
-
-          _network->new_Stream( TOPOL_STRM_ID, NULL, 0, TFILTER_TOPO_UPDATE, 
-                                SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+          // backend attach case
           mrn_dbg( 5, mrn_printf(FLF, stderr, 
                                  "Backend not already in the topology\n") );
 
           //new be - send topology update packet
-          Stream *s = _network->get_Stream( TOPOL_STRM_ID );
+          Stream* s = _network->new_Stream( TOPOL_STRM_ID, NULL, 0, 
+	                                    TFILTER_TOPO_UPDATE, 
+                                            SFILTER_TIMEOUT, 
+                                            TFILTER_TOPO_UPDATE_DOWNSTREAM );
           assert( s != NULL );
           int type = NetworkTopology::TOPO_NEW_BE;
           char *host_arr = strdup( imyhostname.c_str() );
@@ -217,8 +217,14 @@ int BackEndNode::proc_deleteStream( PacketPtr ipacket ) const
         return -1;
     } 
 
-    strm->close();
-
+    if( stream_id < USER_STRM_BASE_ID ) {
+        // kill internal streams
+        delete strm;
+    }
+    else {
+        // close user streams
+        strm->close();
+    }
     mrn_dbg_func_end();
     return 0;
 }

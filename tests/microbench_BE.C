@@ -47,7 +47,7 @@ int main( int argc, char* argv[] )
         tag = 0;
         int rret = net->recv( &tag, pkt, &stream );
         if( rret == -1 ) {
-            std::cerr << "BE: Stream::recv() failed" << std::endl;
+            std::cerr << "BE: Network::recv() failed" << std::endl;
             break;
         }
 
@@ -102,11 +102,11 @@ int main( int argc, char* argv[] )
     // receive a go-away message
     tag = 0;
     int rret = net->recv( &tag, pkt, &stream );
-    if( rret == -1) {
+    if( rret == -1 ) {
         std::cerr << "BE: failed to receive go-away tag" << std::endl;
     }
     else if( tag != MB_EXIT ) {
-        std::cerr << "BE: received unexpected go-away tag " << tag << std::endl;
+        std::cerr << "BE: received tag " << tag << " instead of go-away tag" << std::endl;
     }
 
     // wait for FE to delete network, which will shut us down

@@ -76,11 +76,10 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
 
         if( ! NetworkTopology_isInTopology(nt, imyhostname, UnknownPort, imyrank) ) {
             // back-end attach case
-            Network_new_Stream(inetwork, TOPOL_STRM_ID, NULL, 0, 0, 0, 0);
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend not already in the topology\n") );
 
-            // New topology propagation code - create a new update packet
-            s = Network_get_Stream(inetwork, TOPOL_STRM_ID); // get topol prop stream
+            // send a topology update
+            s = Network_new_Stream(inetwork, TOPOL_STRM_ID, NULL, 0, 0, 0, 0);
             type = TOPO_NEW_BE;
             host_arr = strdup(imyhostname);
             send_iprank = iprank;
@@ -230,7 +229,14 @@ int BackEndNode_proc_deleteStream(BackEndNode_t* be, Packet_t* ipacket)
         return -1;
     }
 
-    strm->_was_closed = 1;
+    if( stream_id < USER_STRM_BASE_ID ) {
+        // kill internal streams
+        delete_Stream_t( strm );
+    }
+    else {
+        // close user streams
+        strm->_was_closed = 1;
+    }
 
     mrn_dbg_func_end();
     return 0;
