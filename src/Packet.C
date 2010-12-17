@@ -414,7 +414,7 @@ const DataElement * Packet::get_DataElement( unsigned int i ) const
     return ret;
 }
 
-bool Packet::set_Destinations( const std::vector< Rank >& bes )
+bool Packet::set_Destinations( const Rank* bes, unsigned int num_bes )
 {
     bool rc = true;
 
@@ -423,15 +423,16 @@ bool Packet::set_Destinations( const std::vector< Rank >& bes )
     if( dest_arr != NULL )
         free( dest_arr );
     
-    dest_arr_len = bes.size(); 
-    dest_arr = (Rank*) calloc( dest_arr_len, sizeof(Rank) );
-    if( dest_arr == NULL )
-        rc = false;
-    else {
-        std::vector< Rank >::const_iterator viter = bes.begin(),
-                                             vend = bes.end();
-        for( unsigned u=0; viter != vend; viter++, u++ )
-            dest_arr[u] = *viter;
+    dest_arr_len = num_bes;
+
+    if( num_bes ) {
+        size_t alloc_sz = dest_arr_len * sizeof(Rank);
+        dest_arr = (Rank*) malloc( alloc_sz );
+        if( dest_arr == NULL )
+            rc = false;
+        else {
+            memcpy( (void*)dest_arr, (const void*)bes, alloc_sz ); 
+        }
     }
 
     data_sync.Unlock();
@@ -439,7 +440,7 @@ bool Packet::set_Destinations( const std::vector< Rank >& bes )
     return rc;
 }
 
-bool Packet::get_Destinations( unsigned& num_dest, Rank** dests )
+bool Packet::get_Destinations( unsigned int& num_dest, Rank** dests )
 {
     if( dest_arr_len ) {
         num_dest = dest_arr_len;

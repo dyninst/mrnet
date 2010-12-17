@@ -52,7 +52,7 @@ class Packet: public Error {
     Rank get_InletNodeRank(void) const;
     Rank get_SourceRank(void) const;
 
-    bool set_Destinations( const std::vector< Rank >& );
+    bool set_Destinations( const Rank* bes, unsigned int num_bes );
 
     bool operator==( const Packet & ) const;
     bool operator!=( const Packet & ) const;

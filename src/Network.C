@@ -988,9 +988,7 @@ int Network::send( Rank ibe, PacketPtr& ipacket )
     if( ! is_LocalNodeFrontEnd() )
         return -1;
 
-    vector< Rank > be_list;
-    be_list.push_back( ibe );
-    ipacket->set_Destinations( be_list );
+    ipacket->set_Destinations( &ibe, 1 );
     ipacket->set_SourceRank( get_LocalRank() );
 
     return send_PacketToChildren( ipacket );
