@@ -44,22 +44,23 @@ LICENSE contains the usage terms for MRNet.
 
     * Open source licensing.
 
-2. MRNet v3.0 RELEASE NOTES
+2. MRNet v3.0.1 RELEASE NOTES
 
   This release of MRNet includes a source distribution for all platforms, 
   as well as associated manuals. The release incorporates improvements made 
-  to MRNet since version 2.1.
+  to MRNet since version 3.0.
  
   For information about the software releases, plus papers and manuals on the
   MRNet system, visit:
       http://www.paradyn.org/mrnet
 
   Release Highlights:
-    * New lightweight C-based, threadless back-end API
-    * Cray XT platform support
-    * Concurrent network support for front-ends
-    * Time-out synchronization filter support
-    * Improved topology generation capabilities
+    * New Network::send() for singlecast from front-end to a specific back-end,
+      and logical streams for singlecast from a back-end to the front-end
+    * New ability to set the list of destination back-ends for a Packet
+    * Network settings (including MRNET and XPLAT environment settings) from
+      the front-end process are now distributed to all processes
+    * Improved topology event notification
     * Numerous bug fixes and enhancements
 
 3. SUPPORTED PLATFORMS
