@@ -129,9 +129,6 @@ Network::~Network(void)
         parsed_graph = NULL;
     }
 
-    if( MRN_DEBUG_LOG_DIRECTORY != NULL )
-        free( MRN_DEBUG_LOG_DIRECTORY );
-
     tsd_t* tsd = (tsd_t*)tsd_key.Get();
     if( tsd != NULL ) {
         tsd_key.Set( NULL );
