@@ -908,12 +908,13 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     }
 
     // check configuration
-    int metric, context, aggr_id, strm_id;
+    int metric, context;
+    uint32_t aggr_id, strm_id;
     if( params == Packet::NullPacket ) {
         mrn_printf(FLF, stderr, "ERROR: configuration params not set\n" );
         return;
     }
-    params->unpack( "%d %d %d %d", &metric, &context, &aggr_id, &strm_id );
+    params->unpack( "%d %d %ud %ud", &metric, &context, &aggr_id, &strm_id );
     Stream* strm = net->get_Stream( strm_id );
     assert(strm);
 
@@ -1743,7 +1744,7 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
    
     mrn_dbg( 5, mrn_printf(FLF, stderr, " input packets size is %d\n" ,ipackets.size()) );
     
-    int stream_id;
+    uint32_t stream_id;
     Stream * stream;
     set< Rank > peers;
 
