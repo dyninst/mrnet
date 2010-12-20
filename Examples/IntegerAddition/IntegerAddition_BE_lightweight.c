@@ -74,9 +74,6 @@ int main(int argc, char **argv)
     if( p != NULL )
         free(p);
 
-    while( ! Stream_is_Closed(stream) )
-        sleep(1);
-
     // wait for final teardown packet from FE; this will cause
     // us to exit
     Network_waitfor_ShutDown(net);
