@@ -52,213 +52,213 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
     int retval = 0;
     int tag = cur_packet->get_Tag();
 
-    switch ( tag ) {
+    if( (tag >= FirstSystemTag) && (tag < PROT_LAST) ) {
 
-    case PROT_SHUTDOWN:
-        if( _network->is_LocalNodeParent() ) {
-            if( _network->get_LocalParentNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n") );
-                retval = -1;
+        switch ( tag ) {
+
+        case PROT_SHUTDOWN:
+            if( _network->is_LocalNodeParent() ) {
+                if( _network->get_LocalParentNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n") );
+                    retval = -1;
+                }
             }
-        }
-        else{
-            if( _network->get_LocalBackEndNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n") );
-                retval = -1;
+            else{
+                if( _network->get_LocalBackEndNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n") );
+                    retval = -1;
+                }
             }
-        }
-        break;
+            break;
         
-    case PROT_NEW_HETERO_STREAM:
-    case PROT_NEW_STREAM:
-        if( _network->is_LocalNodeInternal() ){
-            if( _network->get_LocalInternalNode()->proc_newStream( cur_packet ) == NULL ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n") );
-                retval = -1;
+        case PROT_NEW_HETERO_STREAM:
+        case PROT_NEW_STREAM:
+            if( _network->is_LocalNodeInternal() ){
+                if( _network->get_LocalInternalNode()->proc_newStream( cur_packet ) == NULL ){
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n") );
+                    retval = -1;
+                }
             }
-        }
-        else{
-            if( _network->get_LocalBackEndNode()->proc_newStream( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n") );
-                retval = -1;
+            else{
+                if( _network->get_LocalBackEndNode()->proc_newStream( cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n") );
+                    retval = -1;
+                }
             }
-        }
-        break;
+            break;
         
-    case PROT_SET_FILTERPARAMS_UPSTREAM_TRANS: {
-	FilterType ftype = FILTER_UPSTREAM_TRANS;
-        if( _network->is_LocalNodeInternal() ){
-	     if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
-								       cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
-                retval = -1;
+        case PROT_SET_FILTERPARAMS_UPSTREAM_TRANS: {
+            FilterType ftype = FILTER_UPSTREAM_TRANS;
+            if( _network->is_LocalNodeInternal() ){
+                if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
+                                                                          cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
+                    retval = -1;
+                }
             }
+            else{
+                if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
+                                                                         cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
+                    retval = -1;
+                }
+            }
+            break;
         }
-        else{
-	     if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
-								      cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
-                retval = -1;
+        case PROT_SET_FILTERPARAMS_UPSTREAM_SYNC: {
+            FilterType ftype = FILTER_UPSTREAM_SYNC;
+            if( _network->is_LocalNodeInternal() ){
+                if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
+                                                                          cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
+                    retval = -1;
+                }
             }
+            else{
+                if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
+                                                                         cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
+                    retval = -1;
+                }
+            }
+            break;
         }
-        break;
-    }
-    case PROT_SET_FILTERPARAMS_UPSTREAM_SYNC: {
-        FilterType ftype = FILTER_UPSTREAM_SYNC;
-        if( _network->is_LocalNodeInternal() ){
-	     if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
-								       cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
-                retval = -1;
+        case PROT_SET_FILTERPARAMS_DOWNSTREAM: {
+            FilterType ftype = FILTER_DOWNSTREAM_TRANS;
+            if( _network->is_LocalNodeInternal() ){
+                if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
+                                                                          cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
+                    retval = -1;
+                }
             }
+            else{
+                if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
+                                                                         cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
+                    retval = -1;
+                }
+            }
+            break;
         }
-        else{
-	     if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
-								      cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
+        case PROT_DEL_STREAM:
+            if( _network->is_LocalNodeInternal() ) {
+                if( _network->get_LocalInternalNode()->proc_deleteStream( cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_delStream() failed\n") );
+                    retval = -1;
+                }
+            } else if (_network->is_LocalNodeBackEnd()) {
+                if (_network->get_LocalBackEndNode()->proc_deleteStream(cur_packet) == -1) {
+                    mrn_dbg(1, mrn_printf(FLF, stderr, "proc_deleteStream() failed\n"));
+                    retval = -1;
+                }
+            }
+            break;
+        case PROT_NEW_FILTER:
+            if( _network->is_LocalNodeInternal() ){
+                if( _network->get_LocalInternalNode()->proc_newFilter( cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n") );
+                    retval = -1;
+                }
+            }
+            else {
+                if( _network->get_LocalBackEndNode()->proc_newFilter( cur_packet ) == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n") );
+                    retval = -1;
+                }
+            }
+            break;
+        case PROT_TOPOLOGY_RPT:
+            if( proc_TopologyReport( cur_packet ) == -1 ){
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_TopologyReport() failed\n") );
                 retval = -1;
             }
-        }
-        break;
-    }
-    case PROT_SET_FILTERPARAMS_DOWNSTREAM: {
-        FilterType ftype = FILTER_DOWNSTREAM_TRANS;
-        if( _network->is_LocalNodeInternal() ){
-	    if( _network->get_LocalInternalNode()->proc_FilterParams( ftype,
-								      cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
+            break;
+        case PROT_RECOVERY_RPT:
+            if( proc_RecoveryReport( cur_packet ) == -1 ){
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_RecoveryReport() failed\n") );
                 retval = -1;
             }
-        }
-        else{
-	    if( _network->get_LocalBackEndNode()->proc_FilterParams( ftype,
-								     cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_FilterParams() failed\n") );
+            break;
+        case PROT_ENABLE_PERFDATA:
+            if( proc_EnablePerfData( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_CollectPerfData() failed\n") );
                 retval = -1;
             }
-        }
-        break;
-    }
-    case PROT_DEL_STREAM:
-        if( _network->is_LocalNodeInternal() ) {
-            if( _network->get_LocalInternalNode()->proc_deleteStream( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_delStream() failed\n") );
+            break;
+        case PROT_DISABLE_PERFDATA:
+            if( proc_DisablePerfData( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_CollectPerfData() failed\n") );
                 retval = -1;
             }
-        } else if (_network->is_LocalNodeBackEnd()) {
-            if (_network->get_LocalBackEndNode()->proc_deleteStream(cur_packet) == -1) {
-                mrn_dbg(1, mrn_printf(FLF, stderr, "proc_deleteStream() failed\n"));
+            break;
+        case PROT_COLLECT_PERFDATA:
+            if( proc_CollectPerfData( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_CollectPerfData() failed\n") );
                 retval = -1;
             }
-        }
-        break;
+            break;
+        case PROT_PRINT_PERFDATA:
+            if( proc_PrintPerfData( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_PrintPerfData() failed\n") );
+                retval = -1;
+            }
+            break;
 
-    case PROT_NEW_FILTER:
-        if( _network->is_LocalNodeInternal() ){
-            if( _network->get_LocalInternalNode()->proc_newFilter( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n") );
+        case PROT_ENABLE_RECOVERY:
+            if( proc_EnableFailReco( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_EnableFailReco() failed\n") );
                 retval = -1;
             }
-        }
-        else {
-            if( _network->get_LocalBackEndNode()->proc_newFilter( cur_packet ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newFilter() failed\n") );
+            break;
+        case PROT_DISABLE_RECOVERY:
+            if( proc_DisableFailReco( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_DisableFailReco() failed\n") );
                 retval = -1;
             }
+            break;
+        case PROT_NET_SETTINGS:
+            if( proc_SetTopoEnv( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_SetTopoEnv() failed\n") );
+                retval = -1;
+            }
+            break;
+        case PROT_PORT_UPDATE:
+            if( proc_PortUpdate(cur_packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_PortUpdate() failed\n"));
+                retval = -1;
+            }
+            break;
+        case PROT_TOPO_UPDATE: // not control stream, treat as data
+            if( proc_DataFromParent( cur_packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_Data() failed\n"));
+                retval = -1;
+            }
+            break;
+        default:
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                   "internal protocol tag %d is unhandled\n", tag) );
+            break;
         }
-        break;
-
-    case PROT_FAILURE_RPT:
-        if( proc_FailureReportFromParent( cur_packet ) == -1 ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_FailureReport() failed\n") );
-            retval = -1;
-        }
-        break;
-    case PROT_NEW_PARENT_RPT:
-        if( proc_NewParentReportFromParent( cur_packet ) == -1 ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_NewParentReport() failed\n") );
-            retval = -1;
-        }
-        break;
-    case PROT_TOPOLOGY_RPT:
-        if( proc_TopologyReport( cur_packet ) == -1 ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_TopologyReport() failed\n") );
-            retval = -1;
-        }
-        break;
-    case PROT_RECOVERY_RPT:
-        if( proc_RecoveryReport( cur_packet ) == -1 ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_RecoveryReport() failed\n") );
-            retval = -1;
-        }
-        break;
-    case PROT_ENABLE_PERFDATA:
-        if( proc_EnablePerfData( cur_packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_CollectPerfData() failed\n") );
-            retval = -1;
-        }
-        break;
-    case PROT_DISABLE_PERFDATA:
-        if( proc_DisablePerfData( cur_packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_CollectPerfData() failed\n") );
-            retval = -1;
-        }
-        break;
-    case PROT_COLLECT_PERFDATA:
-        if( proc_CollectPerfData( cur_packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_CollectPerfData() failed\n") );
-            retval = -1;
-        }
-        break;
-    case PROT_PRINT_PERFDATA:
-        if( proc_PrintPerfData( cur_packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_PrintPerfData() failed\n") );
-            retval = -1;
-        }
-        break;
-
-    case PROT_ENABLE_RECOVERY:
-        if( proc_EnableFailReco( cur_packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_EnableFailReco() failed\n") );
-            retval = -1;
-        }
-        break;
-    case PROT_DISABLE_RECOVERY:
-        if( proc_DisableFailReco( cur_packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_DisableFailReco() failed\n") );
-            retval = -1;
-        }
-        break;
-    case PROT_NET_SETTINGS:
-        if( proc_SetTopoEnv( cur_packet ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_SetTopoEnv() failed\n") );
-            retval = -1;
-        }
-        break;
-    case PROT_PORT_UPDATE:
-	if( proc_PortUpdate(cur_packet) == -1 ) {
-	     mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_PortUpdate() failed\n"));
-	     retval = -1;
-	}
-	break;
-    default:
-        //Any Unrecognized tag is assumed to be data
+    }
+    else if( tag >= FirstApplicationTag ) {
         if( proc_DataFromParent( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_Data() failed\n"));
             retval = -1;
         }
-        break;
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "tag %d is invalid\n", tag) );
+        retval = -1;
     }
 
     return retval;
@@ -586,12 +586,6 @@ int ChildNode::send_SubTreeInitDoneReport( ) const
     return 0;
 }
 
-int ChildNode::send_NewSubTreeReport( ) const
-{
-    assert(!"DEPRECATED -- THIS SHOULD NEVER BE CALLED");
-    return 0;
-}
-
 int ChildNode::request_SubTreeInfo( void ) const 
 {
     mrn_dbg_func_begin();
@@ -741,7 +735,7 @@ bool ChildNode::has_PacketsFromParent( ) const
     return _network->has_PacketsFromParent();
 }
 
-/*Failure Recovery Code*/
+/* Failure Recovery Code */
 
 int ChildNode::proc_EnableFailReco( PacketPtr ipacket ) const
 {

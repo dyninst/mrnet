@@ -176,46 +176,4 @@ int InternalNode::proc_DataFromChildren( PacketPtr ipacket ) const
     return retval;
 }
 
-int InternalNode::proc_FailureReportFromParent( PacketPtr ipacket ) const
-{
-    Rank failed_rank;
-
-    ipacket->unpack( "%uhd", &failed_rank ); 
-
-    //update local topology
-    ParentNode::_network->remove_Node( failed_rank );
-
-    //propagate to children as necessary
-    ParentNode::_network->send_PacketToChildren( ipacket );
-
-    return 0;
-}
-
-int InternalNode::proc_NewParentReportFromParent( PacketPtr ipacket ) const
-{
-    Rank child_rank, parent_rank;
-
-    ipacket->unpack( "%ud &ud", &child_rank, &parent_rank ); 
-
-    //update local topology
-    ParentNode::_network->change_Parent( child_rank, parent_rank );
-
-    //propagate to children except on incident channel
-    if( ParentNode::_network->send_PacketToChildren( ipacket, false ) == -1 ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "send_PacketToChildren() failed()\n" ));
-        return -1;
-    }
-
-    if( ipacket->get_InletNodeRank() != ParentNode::_network->get_ParentNode()->get_Rank() ) {
-        //propagate to parent
-        if( ParentNode::_network->send_PacketToParent( ipacket ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send() failed()\n" ));
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-}                               // namespace MRN
+} // namespace MRN

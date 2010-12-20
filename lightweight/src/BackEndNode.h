@@ -26,14 +26,14 @@ typedef struct BackEndNode_t BackEndNode_t;
 
 /* functions */
 
- BackEndNode_t* new_BackEndNode_t( Network_t* inetwork,
+BackEndNode_t* new_BackEndNode_t( Network_t* inetwork,
                                   char* imyhostname,
                                   Rank imyrank,
                                   char* iphostname,
                                   Port ipport,
                                   Rank iprank);
 
- BackEndNode_t* CreateBackEndNode (  Network_t* inetwork,
+BackEndNode_t* CreateBackEndNode (  Network_t* inetwork,
                                 char* imy_hostname,
                                 Rank imy_rank,
                                 char* iphostname,
@@ -49,10 +49,6 @@ int BackEndNode_proc_UpstreamFilterParams( BackEndNode_t* be,  Packet_t* ipacket
 int BackEndNode_proc_DownstreamFilterParams( BackEndNode_t* be,  Packet_t* ipacket);
 
 int BackEndNode_proc_newFilter( BackEndNode_t* be,  Packet_t* ipacket);
-
-int BackEndNode_proc_FailureReportFromParent( BackEndNode_t* be,  Packet_t* ipacket);
-
-int BackEndNode_proc_NewParentReportFromParent( BackEndNode_t* be,  Packet_t* ipacket);
 
 int BackEndNode_proc_DataFromParent( BackEndNode_t* be,  Packet_t* ipacket);
 

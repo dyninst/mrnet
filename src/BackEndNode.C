@@ -247,28 +247,6 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     return 0;
 }
 
-int BackEndNode::proc_FailureReportFromParent( PacketPtr ipacket ) const
-{
-    Rank failed_rank;
-
-    ipacket->unpack( "%uhd", &failed_rank ); 
-
-    _network->remove_Node( failed_rank );
-
-    return 0;
-}
-
-int BackEndNode::proc_NewParentReportFromParent( PacketPtr ipacket ) const
-{
-    Rank child_rank, parent_rank;
-
-    ipacket->unpack( "%ud &ud", &child_rank, &parent_rank ); 
-
-    _network->change_Parent( child_rank, parent_rank );
-
-    return 0;
-}
-
 int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
 {
     int retval = 0;

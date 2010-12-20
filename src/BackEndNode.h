@@ -26,8 +26,6 @@ class BackEndNode: public virtual ChildNode
     virtual ~BackEndNode(void);
 
     virtual int proc_DataFromParent( PacketPtr ) const;
-    virtual int proc_FailureReportFromParent( PacketPtr ) const;
-    virtual int proc_NewParentReportFromParent( PacketPtr  ) const;
 
     int proc_newStream( PacketPtr ) const;
     int proc_deleteStream(PacketPtr) const;

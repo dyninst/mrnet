@@ -110,34 +110,6 @@ int ChildNode_send_SubTreeInitDoneReport(BackEndNode_t* be)
     return true;
 }
 
-int ChildNode_send_NewSubTreeReport(BackEndNode_t* be)
-{
-    char* topo_ptr;
-    Packet_t* packet;
-    
-    mrn_dbg_func_begin();
-
-    // previously, mutex was here to prevent subtree overwriting;
-    // is this no longer necessary because we are only registering
-    // leaves and not internal subtrees?
-
-    topo_ptr = NetworkTopology_get_LocalSubTreeStringPtr(be->network->network_topology);
-    packet = new_Packet_t_2(CTL_STRM_ID, PROT_NEW_SUBTREE_RPT, "%s", topo_ptr);
-
-    if (packet) {
-        if (PeerNode_sendDirectly(be->network->parent, packet) == -1) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "send/flush failed\n"));
-            return -1;
-        }
-    }
-    else {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));
-        return -1;
-    }
-
-    mrn_dbg_func_end();
-    return 0;
-}
 int ChildNode_proc_PacketsFromParent(BackEndNode_t* be, vector_t* packets)
 {
     int retval = 0;
@@ -163,142 +135,154 @@ int ChildNode_proc_PacketsFromParent(BackEndNode_t* be, vector_t* packets)
 
 int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
 {
-    int retval = 0;
+    int tag, retval = 0;
 
     mrn_dbg_func_begin();
  
+    tag = packet->tag;
+
     mrn_dbg(5, mrn_printf(FLF, stderr, 
                           "ChildNode_proc_PacketFromParent, packet->tag = %d\n", 
-                          packet->tag));
+                          tag));
 
-    switch( packet->tag ) {
-    case PROT_SHUTDOWN:
-        if (BackEndNode_proc_DeleteSubTree(be, packet) == -1) {
-            mrn_dbg(1, mrn_printf(FLF, stderr,"BackEndNode_proc_deleteSubTree() failed\n"));
-            retval = -1;
-        }
-        break;
-    case PROT_NEW_HETERO_STREAM:
-    case PROT_NEW_STREAM:
-        if(BackEndNode_proc_newStream(be, packet) == -1) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
-            retval = -1;
-        }
-        break;
+    if( (tag >= FirstSystemTag) && (tag < PROT_LAST) ) {
+
+        switch( tag ) {
+        case PROT_SHUTDOWN:
+            if (BackEndNode_proc_DeleteSubTree(be, packet) == -1) {
+                mrn_dbg(1, mrn_printf(FLF, stderr,"BackEndNode_proc_deleteSubTree() failed\n"));
+                retval = -1;
+            }
+            break;
+        case PROT_NEW_HETERO_STREAM:
+        case PROT_NEW_STREAM:
+            if(BackEndNode_proc_newStream(be, packet) == -1) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
+                retval = -1;
+            }
+            break;
           
-    case PROT_SET_FILTERPARAMS_UPSTREAM_SYNC:
-    case PROT_SET_FILTERPARAMS_UPSTREAM_TRANS:
-        if( BackEndNode_proc_UpstreamFilterParams(be, packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_UpstreamFilterParams() failed\n" ));
-            retval = -1;
-        }
-        break;
+        case PROT_SET_FILTERPARAMS_UPSTREAM_SYNC:
+        case PROT_SET_FILTERPARAMS_UPSTREAM_TRANS:
+            if( BackEndNode_proc_UpstreamFilterParams(be, packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_UpstreamFilterParams() failed\n" ));
+                retval = -1;
+            }
+            break;
 
-    case PROT_SET_FILTERPARAMS_DOWNSTREAM:
-        if( BackEndNode_proc_DownstreamFilterParams(be, packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_DownstreamFilterParams() failed\n" ));
-            retval = -1;
-        }
-        break;
+        case PROT_SET_FILTERPARAMS_DOWNSTREAM:
+            if( BackEndNode_proc_DownstreamFilterParams(be, packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_DownstreamFilterParams() failed\n" ));
+                retval = -1;
+            }
+            break;
 
-    case PROT_DEL_STREAM:
-        /* We're always a leaf node in the lightweight library, 
-           so don't have to do the InternalNode check */
-        if (BackEndNode_proc_deleteStream(be, packet) == -1) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "proc_deleteStream() failed\n"));
-            retval = -1;
-        }
-        break;
+        case PROT_DEL_STREAM:
+            /* We're always a leaf node in the lightweight library, 
+               so don't have to do the InternalNode check */
+            if (BackEndNode_proc_deleteStream(be, packet) == -1) {
+                mrn_dbg(1, mrn_printf(FLF, stderr, "proc_deleteStream() failed\n"));
+                retval = -1;
+            }
+            break;
 
-    case PROT_NEW_FILTER:
-        mrn_dbg(5, mrn_printf(FLF, stderr, "BE ignoring new filter; currently, lightweight backend nodes do not perform any filtering. This is different than standard MRNet behavior.\n"));
-        break;
-
-    case PROT_FAILURE_RPT:
-        if( BackEndNode_proc_FailureReportFromParent(be, packet) == -1 ){
+        case PROT_NEW_FILTER:
+            mrn_dbg(5, mrn_printf(FLF, stderr, "BE ignoring new filter; currently, lightweight backend nodes do not perform any filtering. This is different than standard MRNet behavior.\n"));
+            break;
+        case PROT_TOPOLOGY_RPT:
+            if( ChildNode_proc_TopologyReport(be, packet) == -1 ){
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_TopologyReport() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_RECOVERY_RPT:
+            if( ChildNode_proc_RecoveryReport(be, packet) == -1 ){
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_RecoveryReport() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_ENABLE_PERFDATA:
+            if( ChildNode_proc_EnablePerfData(be, packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_CollectPerfData() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_DISABLE_PERFDATA:
+            if( ChildNode_proc_DisablePerfData(be, packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_CollectPerfData() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_COLLECT_PERFDATA:
+            if( ChildNode_proc_CollectPerfData(be, packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_CollectPerfData() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_PRINT_PERFDATA:
+            if( ChildNode_proc_PrintPerfData(be, packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_PrintPerfData() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_PORT_UPDATE:
+            if (ChildNode_proc_PortUpdate(be, packet) == -1 ) {
+                mrn_dbg(1, mrn_printf(FLF, stderr,
+                                      "proc_PortUpdate() failed\n"));
+                retval = -1;
+            }
+            break;
+        case PROT_TOPO_UPDATE:
+            if (ChildNode_proc_TopologyUpdates(be, packet) == -1 ) {
+                mrn_dbg(1, mrn_printf(FLF, stderr,
+                                      "proc_TopologyUpdates() failed\n"));
+                retval = -1;
+            }
+            break;
+        case PROT_ENABLE_RECOVERY:
+            if( ChildNode_proc_EnableFailReco(be) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_EnableFailReco() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_DISABLE_RECOVERY:
+            if( ChildNode_proc_DisableFailReco(be) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_DisableFailReco() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_NET_SETTINGS:
+            if( ChildNode_proc_SetTopoEnv(be, packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_SetTopoEnv() failed\n" ));
+                retval = -1;
+            }
+            break;
+        default:
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_FailureReport() failed\n" ));
-            retval = -1;
+                                   "internal protocol tag %d is unhandled\n", tag) );
+            break;
         }
-        break;
-    case PROT_NEW_PARENT_RPT:
-        if( BackEndNode_proc_NewParentReportFromParent(be, packet) == -1 ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_NewParentReport() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_TOPOLOGY_RPT:
-        if( ChildNode_proc_TopologyReport(be, packet) == -1 ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_TopologyReport() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_RECOVERY_RPT:
-        if( ChildNode_proc_RecoveryReport(be, packet) == -1 ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_RecoveryReport() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_ENABLE_PERFDATA:
-        if( ChildNode_proc_EnablePerfData(be, packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_CollectPerfData() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_DISABLE_PERFDATA:
-        if( ChildNode_proc_DisablePerfData(be, packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_CollectPerfData() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_COLLECT_PERFDATA:
-        if( ChildNode_proc_CollectPerfData(be, packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_CollectPerfData() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_PRINT_PERFDATA:
-        if( ChildNode_proc_PrintPerfData(be, packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_PrintPerfData() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_PORT_UPDATE:
-        if (ChildNode_proc_PortUpdate(be, packet) == -1 ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr,
-                                  "proc_PortUpdate() failed\n"));
-            retval = -1;
-        }
-        break;
-    case PROT_TOPO_UPDATE:
-        if (ChildNode_proc_TopologyUpdates(be, packet) == -1 ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr,
-                                  "proc_TopologyUpdates() failed\n"));
-            retval = -1;
-        }
-        break;
-    case PROT_NET_SETTINGS:
-        if( ChildNode_proc_SetTopoEnv(be, packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_SetTopoEnv() failed\n" ));
-            retval = -1;
-        }
-        break;
-    default:
-        //Any Unrecognized tag is assumed to be data
+    }
+    else if( tag >= FirstApplicationTag ) {
         if( BackEndNode_proc_DataFromParent(be, packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_Data() failed\n" ));
+                                   "BackEndNode_proc_DataFromParent() failed\n") );
             retval = -1;
         }
-        break;
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr,
+                               "tag %d is invalid\n", tag) );
+        retval = -1;
     }
 
     return retval;
@@ -596,3 +580,17 @@ int ChildNode_proc_TopologyUpdates(BackEndNode_t * be,
     return 0;
 }
 
+
+/*Failure Recovery Code*/
+
+int ChildNode_proc_EnableFailReco(BackEndNode_t * be)
+{
+    be->network->recover_from_failures = 1;
+    return 0;
+}
+
+int ChildNode_proc_DisableFailReco(BackEndNode_t * be)
+{
+    be->network->recover_from_failures = 0;
+    return 0;
+}

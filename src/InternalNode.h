@@ -33,8 +33,6 @@ class InternalNode: public virtual ParentNode,
     void waitLoop() const;
     virtual int proc_DataFromParent( PacketPtr ipacket ) const;
     virtual int proc_DataFromChildren( PacketPtr ipacket ) const;
-    virtual int proc_FailureReportFromParent( PacketPtr ipacket ) const;
-    virtual int proc_NewParentReportFromParent( PacketPtr ipacket ) const;
 };
 
 } // namespace MRN

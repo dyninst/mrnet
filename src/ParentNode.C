@@ -84,76 +84,69 @@ int ParentNode::proc_PacketsFromChildren( std::list< PacketPtr > & ipackets )
 int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
 {
     int retval = 0;
+    
+    int tag = cur_packet->get_Tag();
 
-    switch ( cur_packet->get_Tag() ) {
-    case PROT_CLOSE_STREAM:
-        if( proc_closeStream(cur_packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_closeStream() failed\n" ));
+    if( (tag >= FirstSystemTag) && (tag < PROT_LAST) ) {
+        switch ( cur_packet->get_Tag() ) {
+        case PROT_SUBTREE_INITDONE_RPT:
+            if( proc_SubTreeInitDoneReport(cur_packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_SubTreeInitDoneReport() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_SHUTDOWN_ACK:
+            if( proc_DeleteSubTreeAck(cur_packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_DeleteSubTreeAck() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_TOPOLOGY_ACK:
+            if( proc_TopologyReportAck(cur_packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_TopologyReportAck() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_EVENT:
+            if( proc_Event(cur_packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_Event() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_RECOVERY_RPT:
+            if( proc_RecoveryReport(cur_packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_RecoveryReport() failed\n" ));
+                retval = -1;
+            }
+            break;
+        case PROT_TOPO_UPDATE:      // not control stream, treat as data
+        case PROT_COLLECT_PERFDATA: 
+            if( proc_DataFromChildren(cur_packet) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "proc_DataFromChildren() failed\n" ));
+                retval = -1;
+            }
+            break;
+        default:
+            //Any unrecognized tag is assumed to be data
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                   "internal protocol tag %d is unhandled\n", tag) );
             retval = -1;
         }
-        break;
-    case PROT_NEW_SUBTREE_RPT:
-        if( proc_newSubTreeReport(cur_packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_newSubTreeReport() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_SUBTREE_INITDONE_RPT:
-        if( proc_SubTreeInitDoneReport(cur_packet) == -1 ) {
-	    mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_SubTreeInitDoneReport() failed\n" ));
-	    retval = -1;
-	}
-	break;
-    case PROT_SHUTDOWN_ACK:
-        if( proc_DeleteSubTreeAck(cur_packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_DeleteSubTreeAck() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_TOPOLOGY_ACK:
-        if( proc_TopologyReportAck(cur_packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_TopologyReportAck() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_EVENT:
-        if( proc_Event(cur_packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_Event() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_FAILURE_RPT:
-        if( proc_FailureReport(cur_packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_FailureReport() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_RECOVERY_RPT:
-        if( proc_RecoveryReport(cur_packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_RecoveryReport() failed\n" ));
-            retval = -1;
-        }
-        break;
-    case PROT_NEW_PARENT_RPT:
-        if( proc_NewParentReportFromParent(cur_packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_NewParentReport() failed\n" ));
-            retval = -1;
-        }
-        break;
-    default:
-        //Any unrecognized tag is assumed to be data
+    }
+    else if( tag >= FirstApplicationTag ) {
         if( proc_DataFromChildren(cur_packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "proc_DataFromChildren() failed\n" ));
             retval = -1;
         }
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "tag %d is invalid\n", tag) );
+        retval = -1;
     }
 
     return retval;
@@ -379,13 +372,6 @@ int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ) const
     initdonereport_sync.Unlock( );
 
     mrn_dbg_func_end();
-    return 0;
-}
-
-
-int ParentNode::proc_newSubTreeReport( PacketPtr ) const
-{
-    assert(!"DEPRECATED -- THIS SHOULD NEVER BE CALLED");
     return 0;
 }
 
@@ -735,35 +721,6 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
     return 0;
 }
 
-int ParentNode::proc_FailureReport( PacketPtr ipacket ) const
-{
-    Rank failed_rank;
-
-    ipacket->unpack( "%ud", &failed_rank ); 
-
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "node[%u] has failed\n", failed_rank) );
-
-    // update local topology
-    ParentNode::_network->remove_Node( failed_rank );
-
-    // propagate to children except on incident channel
-    if( _network->send_PacketToChildren( ipacket, false ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "send_PacketToChildren() failed()\n") );
-        return -1;
-    }
-
-    if( _network->is_LocalNodeChild() ) {
-        // propagate to parent
-        if( ( _network->send_PacketToParent( ipacket ) == -1 ) ||
-            ( _network->flush_PacketsToChildren( ) == -1 ) ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send/flush() failed()\n") );
-            return -1;
-        }
-    }
-    return 0;
-}
-
 int ParentNode::proc_RecoveryReport( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
@@ -795,15 +752,6 @@ int ParentNode::proc_RecoveryReport( PacketPtr ipacket ) const
     }
     
     mrn_dbg_func_end();
-    return 0;
-}
-
-int ParentNode::proc_closeStream( PacketPtr ) const
-{
-    mrn_dbg_func_begin();
-
-    assert(!"DEPRECATED -- THIS SHOULD NEVER BE CALLED");
-
     return 0;
 }
 

@@ -46,10 +46,7 @@ class ParentNode: public virtual Error,
 
     virtual int proc_DataFromChildren( PacketPtr ipacket ) const = 0;
 
-    virtual int proc_NewParentReportFromParent( PacketPtr ipacket ) const=0;
-
     int proc_SubTreeInitDoneReport ( PacketPtr ipacket ) const;
-    int proc_newSubTreeReport( PacketPtr ipacket ) const;
 
     int proc_DeleteSubTree( PacketPtr ipacket ) const;
     int proc_DeleteSubTreeAck( PacketPtr ipacket ) const;
@@ -57,7 +54,6 @@ class ParentNode: public virtual Error,
     int proc_TopologyReport( PacketPtr ipacket ) const;
     int proc_TopologyReportAck( PacketPtr ipacket ) const;
 
-    int proc_FailureReport( PacketPtr ipacket ) const;
     int proc_RecoveryReport( PacketPtr ipacket ) const;
 
     int proc_Event( PacketPtr ipacket ) const;
@@ -65,7 +61,6 @@ class ParentNode: public virtual Error,
 
     Stream * proc_newStream( PacketPtr ipacket ) const;
     int proc_deleteStream( PacketPtr ipacket ) const;
-    int proc_closeStream( PacketPtr ipacket ) const;
 
     int proc_newFilter( PacketPtr ipacket ) const;
     int proc_FilterParams( FilterType, PacketPtr &ipacket ) const;

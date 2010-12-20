@@ -248,26 +248,6 @@ int BackEndNode_proc_newFilter(BackEndNode_t* be, Packet_t* ipacket)
     return 0;
 }
 
-int BackEndNode_proc_FailureReportFromParent(BackEndNode_t* be, Packet_t* ipacket)
-{
-    Rank failed_rank;
-    Packet_unpack(ipacket, "%ud", &failed_rank);
-    Network_remove_Node(be->network, failed_rank, false);
-
-    return 0;
-}
-
-int BackEndNode_proc_NewParentReportFromParent(BackEndNode_t* be, Packet_t* ipacket)
-{
-    Rank child_rank, parent_rank;
-
-    Packet_unpack(ipacket, "%ud %ud", &child_rank, &parent_rank);
-
-    Network_change_Parent(be->network, child_rank, parent_rank);
-
-    return 0;
-}
-
 int BackEndNode_proc_DataFromParent(BackEndNode_t* be, Packet_t* ipacket)
 {
     int retval = 0;

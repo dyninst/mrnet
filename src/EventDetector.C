@@ -494,32 +494,14 @@ void * EventDetector::main( void* iarg )
                             mrn_dbg( 5, mrn_printf(FLF, stderr, "New child connected.\n"));
                             break;
 
-#if 0 //deprecated
-                        case PROT_NEW_SUBTREE_RPT:
-                            // NOTE: needed since back-ends are now threaded, and we can't
-                            //       guarantee a packet containing this protocol message
-                            //       won't arrive in a group with NEW_CHILD_DATA_CONNECTION
-                            mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
-                            //get ParentNode obj. Try internal node, then FE
-                            p = net->get_LocalParentNode();
-                            assert(p);
-
-                            if( p->proc_newSubTreeReport( cur_packet ) == -1 ) {
-                                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTreeReport() failed\n" ));
-                            }
-                            break;
-#endif  
                         case PROT_SUBTREE_INITDONE_RPT:
-                            // NOTE: needed since back-ends are now threaded, and we can't
-                            //       guarantee a packet containing this protocol message
-                            //       won't arrive in a group with NEW_CHILD_DATA_CONNECTION
-                            mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_NEW_SUBTREE_RPT\n"));
-                            //get ParentNode obj. Try internal node, then FE
+                            // NOTE: may arrive in a group with NEW_CHILD_DATA_CONNECTION
+                            mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_SUBTREE_INITDONE_RPT\n"));
                             p = net->get_LocalParentNode();
                             assert(p);
-
                             if( p->proc_SubTreeInitDoneReport( cur_packet ) == -1 ) {
-                                mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_SubTreeInitDoneReport() failed\n" ));
+                                mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                                       "proc_SubTreeInitDoneReport() failed\n" ));
                             }
                             break;
 
