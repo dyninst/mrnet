@@ -343,7 +343,7 @@ void Network::init_FENetSettings( const std::map< std::string, std::string > * i
         if( envval == NULL ) // for backwards compatibility, check MRN_COMM_PATH
             envval = getenv( "MRN_COMM_PATH" );
         if( envval != NULL )
-            _network_settings[ MRNET_DEBUG_LOG_DIRECTORY ] = std::string( envval );
+            _network_settings[ MRNET_COMM_PATH ] = std::string( envval );
         else
             _network_settings[ MRNET_COMM_PATH ] = COMMNODE_EXE;
     }
