@@ -191,7 +191,7 @@ int BackEndNode::proc_FilterParams( FilterType ftype, PacketPtr &ipacket ) const
     stream_id = ipacket->get_StreamId();
     strm = _network->get_Stream( stream_id );
     if( strm == NULL ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %ud lookup failed\n",
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n",
                                stream_id) );
         return -1;
     }
@@ -212,7 +212,7 @@ int BackEndNode::proc_deleteStream( PacketPtr ipacket ) const
     stream_id = (*ipacket)[0]->get_uint32_t();
     strm = _network->get_Stream( stream_id );
     if( strm == NULL ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %ud lookup failed\n", 
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n", 
                                stream_id) );
         return -1;
     } 

@@ -718,6 +718,7 @@ XTNetwork::Instantiate( ParsedGraph* topology,
             iter != iattrs->end(); iter++ ) {
             if( strcmp( iter->first.c_str(), "apid" ) == 0 ) {
                 apid = (int)strtol( iter->second.c_str(), NULL, 0 );
+                mrn_dbg(3, mrn_printf(FLF, stderr, "ALPS apid=%d\n", apid));
                 break;
             }
         }
@@ -737,7 +738,7 @@ XTNetwork::Instantiate( ParsedGraph* topology,
                            athFirstNodeNid );
 
     if( aprunHosts.empty() && athHosts.empty() ) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "FE is only node in topology, not spawning anybody\n" ));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "FE is only node in topology, not spawning anybody\n"));
         return;
     }
 
@@ -1209,6 +1210,9 @@ XTNetwork::DetermineProcessTypes( ParsedGraph::Node* node,
         if( aiRet < 0 ) {
             error( ERR_INTERNAL, UnknownRank,
                 "Failed to get ALPS app information");
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                  "Failed to get ALPS app info for apid=%d\n", apid));
+            return; 
         }
 
         // convert the ALPS place information into a set of node names
