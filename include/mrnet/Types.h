@@ -98,20 +98,20 @@ namespace MRN
     typedef std::map< Rank, std::vector< perfdata_t > > rank_perfdata_map;
 
     typedef enum PerfData_MetricType {
-        PERFDATA_TYPE_UINT = 0,
-        PERFDATA_TYPE_INT = 1,
+        PERFDATA_TYPE_UINT  = 0,
+        PERFDATA_TYPE_INT   = 1,
         PERFDATA_TYPE_FLOAT = 2
     } perfdata_mettype_t;
 
     typedef enum PerfData_Metric {
-        PERFDATA_MET_NUM_BYTES = 0,
-        PERFDATA_MET_NUM_PKTS = 1,
+        PERFDATA_MET_NUM_BYTES   = 0,
+        PERFDATA_MET_NUM_PKTS    = 1,
         PERFDATA_MET_ELAPSED_SEC = 2,
         PERFDATA_MET_CPU_SYS_PCT = 3,
-        PERFDATA_MET_CPU_USR_PCT  = 4,
+        PERFDATA_MET_CPU_USR_PCT = 4,
         PERFDATA_MET_MEM_VIRT_KB = 5,
         PERFDATA_MET_MEM_PHYS_KB = 6,
-        PERFDATA_MAX_MET = 7
+        PERFDATA_MAX_MET         = 7
     } perfdata_metric_t;
 
     typedef struct PerfData_MetricInfo {
@@ -122,23 +122,23 @@ namespace MRN
     } perfdata_metinfo_t;
 
     typedef enum PerfData_Context {
-        PERFDATA_CTX_SEND = 0,
-        PERFDATA_CTX_RECV = 1,
-        PERFDATA_CTX_FILT_IN = 2,
+        PERFDATA_CTX_SEND     = 0,
+        PERFDATA_CTX_RECV     = 1,
+        PERFDATA_CTX_FILT_IN  = 2,
         PERFDATA_CTX_FILT_OUT = 3,
-	PERFDATA_CTX_NONE = 4,
-        PERFDATA_MAX_CTX = 5
+	PERFDATA_CTX_NONE     = 4,
+        PERFDATA_MAX_CTX      = 5
     } perfdata_context_t;
     
-    typedef enum mrnet_Env {
-        MRNET_OUTPUT_LEVEL = 0,
-	MRNET_DEBUG_LOG_DIRECTORY =1,
-	MRNET_COMM_PATH = 2, 
-	FAILURE_RECOVERY = 3,
-	XPLAT_RSH = 4, 
-	XPLAT_RSH_ARGS = 5,
-	XPLAT_REMCMD = 6
-    } env_key;	
+    typedef enum NetworkSettings {
+        MRNET_DEBUG_LEVEL         = 0,
+	MRNET_DEBUG_LOG_DIRECTORY = 1,
+	MRNET_COMMNODE_PATH       = 2, 
+	MRNET_FAILURE_RECOVERY    = 3,
+	XPLAT_RSH                 = 4, 
+	XPLAT_RSH_ARGS            = 5,
+	XPLAT_REMCMD              = 6
+    } net_settings_key_t;	
     
 } /* namespace MRN */
 

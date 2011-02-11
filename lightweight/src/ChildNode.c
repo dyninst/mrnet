@@ -317,7 +317,7 @@ int ChildNode_proc_SetTopoEnv( BackEndNode_t* be, Packet_t* ipacket )
     for( i=0; i < count; i++ ) {
 
         switch ( keys[i] ) {
-        case MRNET_OUTPUT_LEVEL :
+        case MRNET_DEBUG_LEVEL :
             Network_set_OutputLevel( atoi(vals[i]) );        
             break;
 	   
@@ -325,7 +325,7 @@ int ChildNode_proc_SetTopoEnv( BackEndNode_t* be, Packet_t* ipacket )
             Network_set_DebugLogDir( vals[i] );
             break;
                
-        case FAILURE_RECOVERY :
+        case MRNET_FAILURE_RECOVERY :
             if( strcmp(vals[i], "0") == 0 )
                 Network_disable_FailureRecovery( be->network );
             break;	   

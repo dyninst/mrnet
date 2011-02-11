@@ -286,16 +286,16 @@ int ChildNode::proc_SetTopoEnv( PacketPtr ipacket ) const
     nt->reset( sg_str, false );
 
     // init other network settings
-    std::map< env_key, std::string >& settingsMap = _network->get_SettingsMap();
+    std::map< net_settings_key_t, std::string >& settingsMap = _network->get_SettingsMap();
     for( i=0; i < count; i++ ) {
-       if( keys[i] == FAILURE_RECOVERY ) {
+       if( keys[i] == MRNET_FAILURE_RECOVERY ) {
            if( atoi(vals[i]) )
                _network->enable_FailureRecovery(); 
 	   else
 	       _network->disable_FailureRecovery();
        }	   
        else
-           settingsMap[ (env_key)keys[i] ] =  vals[i];
+           settingsMap[ (net_settings_key_t) keys[i] ] =  vals[i];
 
        free( vals[i] );
     }

@@ -646,18 +646,18 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                            child_incarnation, isock) );
     
     // propagate initial network settings
-    const std::map< env_key, std::string >& envMap = _network->get_SettingsMap();
+    const std::map< net_settings_key_t, std::string >& envMap = _network->get_SettingsMap();
     int* keys = (int*) calloc( envMap.size() + 1, sizeof(int) );
     char** vals = (char**) calloc( envMap.size() + 1, sizeof(char*) ); 
    
     unsigned int count = 0;
-    std::map< env_key, std::string >::const_iterator env_it = envMap.begin();
+    std::map< net_settings_key_t, std::string >::const_iterator env_it = envMap.begin();
     for( ; env_it != envMap.end(); env_it++, count++ ) {
         keys[count] = env_it->first;
         vals[count] = strdup( (env_it->second).c_str() );
     }
 
-    keys[ count ] = FAILURE_RECOVERY;
+    keys[ count ] = MRNET_FAILURE_RECOVERY;
     if( _network->_recover_from_failures )
         vals[ count ] = strdup( "1" );
     else 

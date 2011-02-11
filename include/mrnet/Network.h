@@ -209,7 +209,7 @@ protected:
     bool reset_Topology(std::string& itopology);
     void update_TopoStream();
 
-    std::map< env_key, std::string >& get_SettingsMap();
+    std::map< net_settings_key_t, std::string >& get_SettingsMap();
     PeerNodePtr _parent;
     
  private:
@@ -323,9 +323,11 @@ protected:
 
     void collect_PerfData(void);
 
-    void init_FENetSettings( const std::map<std::string, std::string> * iattrs );
-    void init_NetSettings( void );
-    void convert_SettingsMap( const std::map<std::string, std::string> * iattrs );
+    static int get_NetSettingKey( const std::string& s );
+    static void init_XPlatSettings( std::map< net_settings_key_t, std::string > & envMap );
+    void convert_SettingsMap( const std::map< std::string, std::string > * iattrs );
+    void init_FE_NetSettings( const std::map< std::string, std::string > * iattrs );
+    void init_NetSettings(void);
 
     bool is_ShuttingDown(void) const;
     void set_ShuttingDown(void);
@@ -346,7 +348,7 @@ protected:
     unsigned int _next_user_stream_id; // only used by FE
     unsigned int _next_int_stream_id; // only used by FE
 
-    std::map< env_key, std::string > _network_settings;
+    std::map< net_settings_key_t, std::string > _network_settings;
 
     std::set< PeerNodePtr > _children;
     std::map< unsigned int, Stream* > _streams;

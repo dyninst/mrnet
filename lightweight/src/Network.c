@@ -707,6 +707,9 @@ void Network_set_OutputLevelFromEnvironment(void)
 {
     int lvl;
     char* output_level = getenv("MRNET_OUTPUT_LEVEL");
+    if( output_level == NULL )
+        output_level = getenv("MRNET_DEBUG_LEVEL");
+
     if( output_level != NULL ) {
         lvl = atoi(output_level);
         Network_set_OutputLevel(lvl);
