@@ -81,7 +81,14 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
     server_addr.sin_port = htons( port );
 
     XPlat::NetUtils::NetworkAddress naddr;
-    XPlat::NetUtils::GetNetworkAddress( hostname, naddr );
+    int rc = XPlat::NetUtils::GetNetworkAddress( hostname, naddr );
+    if( rc == -1 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                               "failed to convert name %s to network address\n",
+                               host) );
+        return -1;
+    }
+
     in_addr_t addr = naddr.GetInAddr();
     memcpy( &server_addr.sin_addr, &addr, sizeof(addr) );
 
