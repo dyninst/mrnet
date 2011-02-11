@@ -42,6 +42,7 @@ class Packet: public Error {
     Packet( unsigned int istream_id, int itag, const void **idata, const char *ifmt );
 
     int unpack( const char *ifmt, ... );
+    int unpack( va_list iarg_list, const char* ifmt );
     const DataElement* operator[]( unsigned int i ) const;
 
     int get_Tag(void) const;

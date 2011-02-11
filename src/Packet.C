@@ -289,6 +289,15 @@ int Packet::unpack( char const *ifmt_str, ... )
     return ret;
 }
 
+int Packet::unpack( va_list iarg_list, const char* ifmt_str )
+{
+    int ret = -1;
+    if( ifmt_str != NULL ) {
+        ret = ExtractVaList( ifmt_str, iarg_list );
+    }
+    return ret;
+}
+
 const DataElement * Packet::operator[]( unsigned int i ) const
 {
     const DataElement * ret = NULL;
@@ -350,7 +359,7 @@ const char *Packet::get_FormatString(void) const
     return ret;
 }
 
-const char *Packet::get_Header(void) const
+const char* Packet::get_Header(void) const
 {
     data_sync.Lock();
     const char * ret = hdr;
@@ -366,7 +375,7 @@ unsigned int Packet::get_HeaderLen(void) const
     return ret;
 }
 
-const char *Packet::get_Buffer(void) const
+const char* Packet::get_Buffer(void) const
 {
     data_sync.Lock();
     const char * ret = buf;
@@ -406,7 +415,7 @@ unsigned int Packet::get_NumDataElements(void) const
     return ret;
 }
 
-const DataElement * Packet::get_DataElement( unsigned int i ) const
+const DataElement* Packet::get_DataElement( unsigned int i ) const
 {
     data_sync.Lock();
     const DataElement * ret = data_elements[i];
