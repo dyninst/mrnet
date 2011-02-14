@@ -1199,9 +1199,10 @@ unsigned int TopologyLocalInfo::get_NumChildren() const
 
 unsigned int TopologyLocalInfo::get_NumSiblings() const
 {
-    if( local_node != NULL )
-        return local_node->_parent->get_NumChildren() - 1;
-
+    if( local_node != NULL ) {
+        if( local_node->_parent != NULL )
+            return local_node->_parent->get_NumChildren() - 1;
+    }
     return 0;
 }
 
