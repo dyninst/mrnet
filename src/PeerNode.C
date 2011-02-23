@@ -41,7 +41,8 @@ PeerNode::PeerNode( Network * inetwork, std::string const& ihostname, Port iport
       _available(true)
 {
     _sync.RegisterCondition( MRN_FLUSH_COMPLETE );
-    _sync.RegisterCondition( MRN_THREAD_STARTED );
+    _sync.RegisterCondition( MRN_RECV_THREAD_STARTED );
+    _sync.RegisterCondition( MRN_SEND_THREAD_STARTED );
 }
 
 int PeerNode::connect_DataSocket(void)
@@ -115,16 +116,10 @@ int PeerNode::start_CommunicationThreads(void)
 void PeerNode::waitfor_CommunicationThreads(void) const
 {
     _sync.Lock();
-    while( ! (_recv_thread_started && _send_thread_started) ) {
-        _sync.WaitOnCondition( MRN_THREAD_STARTED );
+    while( ! _recv_thread_started ) {
+        // recv thread waits for send thread, so just wait for recv
+        _sync.WaitOnCondition( MRN_RECV_THREAD_STARTED );
     }
-    _sync.Unlock();
-}
-
-void PeerNode::signal_CommThreadStarted(void) const
-{
-    _sync.Lock();
-    _sync.SignalCondition( MRN_THREAD_STARTED );
     _sync.Unlock();
 }
 
@@ -230,10 +225,13 @@ void * PeerNode::recv_thread_main( void* iargs )
     mrn_dbg_func_begin();
 
     peer_node->_sync.Lock();
+    // make sure send thread is ready first, prevents a startup deadlock
+    while( ! peer_node->_send_thread_started ) {
+        peer_node->_sync.WaitOnCondition( PeerNode::MRN_SEND_THREAD_STARTED );
+    }
     peer_node->_recv_thread_started = true;
+    peer_node->_sync.SignalCondition( PeerNode::MRN_RECV_THREAD_STARTED );
     peer_node->_sync.Unlock();
-
-    peer_node->signal_CommThreadStarted();
 
     while(true) {
 
@@ -302,9 +300,8 @@ void * PeerNode::send_thread_main( void* iargs )
 
     peer_node->_sync.Lock();
     peer_node->_send_thread_started = true;
+    peer_node->_sync.SignalCondition( PeerNode::MRN_SEND_THREAD_STARTED );
     peer_node->_sync.Unlock();
-
-    peer_node->signal_CommThreadStarted();
 
     while(true) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Blocking for packets to send ...\n") );

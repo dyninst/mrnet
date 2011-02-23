@@ -69,7 +69,6 @@ class PeerNode: public CommunicationNode, public Error {
 
     int start_CommunicationThreads(void);    
     void waitfor_CommunicationThreads(void) const;
-    void signal_CommThreadStarted(void) const;
     
     int waitfor_FlushCompletion(void) const;
     void signal_FlushComplete(void) const;
@@ -94,7 +93,7 @@ class PeerNode: public CommunicationNode, public Error {
     mutable Message _msg_in;
     bool _available;
     mutable XPlat::Monitor _sync;
-    enum{ MRN_FLUSH_COMPLETE, MRN_THREAD_STARTED };
+    enum{ MRN_FLUSH_COMPLETE, MRN_RECV_THREAD_STARTED, MRN_SEND_THREAD_STARTED };
 };
 
 } // namespace MRN

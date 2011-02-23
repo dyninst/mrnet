@@ -2048,7 +2048,7 @@ PeerNodePtr Network::get_PeerNode( Rank irank )
 
     if( peer == PeerNode::NullPeerNode ) {
         _children_mutex.Lock();
-	if(_children.empty())
+	if( _children.empty() )
 	   mrn_dbg( 5, mrn_printf(FLF, stderr, "children is empty\n") );
         for( iter = _children.begin(); iter != _children.end(); iter++ ) {
 	    mrn_dbg( 5, mrn_printf(FLF, stderr, "rank is %d, irank is %d\n", 
