@@ -75,6 +75,9 @@ class PeerNode: public CommunicationNode, public Error {
     void mark_Failed(void);
     bool has_Failed(void) const;
 
+    XPlat::Thread::Id get_SendThrId(void) const;
+    XPlat::Thread::Id get_RecvThrId(void) const;
+
  private:
     PeerNode( Network *, std::string const& ihostname, Port iport, Rank irank,
               bool iis_parent, bool iis_internal );

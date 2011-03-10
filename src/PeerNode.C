@@ -37,7 +37,8 @@ PeerNode::PeerNode( Network * inetwork, std::string const& ihostname, Port iport
     : CommunicationNode(ihostname, iport, irank ), _network(inetwork),
       _data_sock_fd(0), _event_sock_fd(0),
       _is_internal_node(iis_internal), _is_parent(iis_parent), 
-      _recv_thread_started(false), _send_thread_started(false), 
+      _recv_thread_started(false), _send_thread_started(false),
+      recv_thread_id(0), send_thread_id(0), 
       _available(true)
 {
     _sync.RegisterCondition( MRN_FLUSH_COMPLETE );
@@ -88,9 +89,11 @@ int PeerNode::start_CommunicationThreads(void)
     args->net = _network;
     args->r = _rank;
 
+    XPlat::Thread::Id send_id, recv_id;
+
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Creating send_thread ...\n") );
-    retval = XPlat::Thread::Create( send_thread_main, (void*)args, &send_thread_id );
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "id: 0x%x\n", send_thread_id) );
+    retval = XPlat::Thread::Create( send_thread_main, (void*)args, &send_id );
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "id: 0x%x\n", send_id) );
     if( retval != 0 ) {
         error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s\n",
                strerror(errno) );
@@ -99,14 +102,19 @@ int PeerNode::start_CommunicationThreads(void)
     }
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Creating recv_thread ...\n") );
-    retval = XPlat::Thread::Create( recv_thread_main, (void*)args, &recv_thread_id  );
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "id: 0x%x\n", recv_thread_id) );
+    retval = XPlat::Thread::Create( recv_thread_main, (void*)args, &recv_id  );
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "id: 0x%x\n", recv_id) );
     if( retval != 0 ) {
         error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s\n",
                strerror(errno) );
         mrn_dbg( 1, mrn_printf(FLF, stderr, "recv_thread creation failed...\n") );
         return retval;
     }
+    
+    _sync.Lock();
+    send_thread_id = send_id;
+    recv_thread_id = recv_id;
+    _sync.Unlock();
 
     waitfor_CommunicationThreads();
 
@@ -267,6 +275,10 @@ void * PeerNode::recv_thread_main( void* iargs )
         }
     }
 
+    peer_node->_sync.Lock();
+    peer_node->recv_thread_id = 0;
+    peer_node->_sync.Unlock();
+
     mrn_dbg( 3, mrn_printf(FLF, stderr, "I'm going away now!\n") );
     XPlat::Thread::Exit(NULL);
 
@@ -320,6 +332,10 @@ void * PeerNode::send_thread_main( void* iargs )
         peer_node->signal_FlushComplete();
     }
 
+    peer_node->_sync.Lock();
+    peer_node->send_thread_id = 0;
+    peer_node->_sync.Unlock();
+
     XPlat::Thread::Exit(NULL);
 
     // this is redundant, but the compiler doesn't know that
@@ -367,7 +383,7 @@ void PeerNode::mark_Failed(void)
         if( tsd != NULL )
             my_id = tsd->thread_id;
 
-        if( my_id != send_thread_id ) {
+        if( my_id != get_SendThrId() ) {
             // wake up send thread, if that's not this thread
             _msg_out.add_Packet( Packet::NullPacket );
         }
@@ -401,6 +417,24 @@ bool PeerNode::is_parent() const
 bool PeerNode::is_child() const 
 {
     return ! _is_parent;
+}
+
+XPlat::Thread::Id PeerNode::get_SendThrId(void) const
+{
+    XPlat::Thread::Id rc;
+    _sync.Lock();
+    rc = send_thread_id;
+    _sync.Unlock();
+    return rc;
+}
+
+XPlat::Thread::Id PeerNode::get_RecvThrId(void) const
+{
+    XPlat::Thread::Id rc;
+    _sync.Lock();
+    rc = recv_thread_id;
+    _sync.Unlock();
+    return rc;
 }
 
 } // namespace MRN

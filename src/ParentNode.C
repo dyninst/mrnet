@@ -268,7 +268,9 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
             if( parent != NULL ) {
                 mrn_dbg( 5, mrn_printf(FLF, stderr, 
                                        "waiting for parent send thread to finish\n") );
-                XPlat::Thread::Join( parent->send_thread_id, (void**)NULL );
+                XPlat::Thread::Id send_id = parent->get_SendThrId();
+                if( send_id )
+                    XPlat::Thread::Join( send_id, (void**)NULL );
             }
         }
     }

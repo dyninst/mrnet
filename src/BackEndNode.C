@@ -230,7 +230,7 @@ int BackEndNode::proc_deleteStream( PacketPtr ipacket ) const
 }
 
 
-int BackEndNode::proc_DeleteSubTree( PacketPtr ipacket ) const
+int BackEndNode::proc_DeleteSubTree( PacketPtr ) const
 {
     mrn_dbg_func_begin();
 

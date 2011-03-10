@@ -179,10 +179,15 @@ void Network::shutdown_Network(void)
                 if( ! get_LocalChildNode()->ack_DeleteSubTree() ) {
                     mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
                 }
-                XPlat::Thread::Join( _parent->send_thread_id, (void**)NULL );
+
+                XPlat::Thread::Id send_tid = _parent->get_SendThrId();
+                XPlat::Thread::Id recv_tid = _parent->get_RecvThrId();
+
+                if( send_tid )
+                    XPlat::Thread::Join( send_tid, (void**)NULL );
 
                 // cancel recv thread, if that's not this thread
-                if( _parent->recv_thread_id != my_id ) {
+                if( recv_tid && (recv_tid != my_id) ) {
 
                     mrn_dbg( 5, mrn_printf(FLF, stderr, 
 		                           "about to cancel parent recv thread\n") );
@@ -190,15 +195,16 @@ void Network::shutdown_Network(void)
                     // turn off debug output to prevent mrn_printf deadlock
                     MRN::set_OutputLevel( -1 );
 
-                    XPlat::Thread::Cancel( _parent->recv_thread_id );
-                    XPlat::Thread::Join( _parent->recv_thread_id, (void**)NULL );
+                    XPlat::Thread::Cancel( recv_tid );
+                    XPlat::Thread::Join( recv_tid, (void**)NULL );
                 }
             }
         }
 
         // tell EDT to go away, if that's not this thread
         if( _edt != NULL ) {
-            if( _edt->_thread_id != my_id )
+            XPlat::Thread::Id edt_tid = _edt->get_ThrId();
+            if( edt_tid && (edt_tid != my_id) )
                 _edt->stop();
             delete _edt;
             _edt = NULL;
@@ -226,7 +232,9 @@ void Network::shutdown_Network(void)
         if( _parent != PeerNode::NullPeerNode ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr, 
 	                           "waiting for parent recv thread to finish\n") );
-            XPlat::Thread::Join( _parent->recv_thread_id, (void**)NULL );
+            XPlat::Thread::Id recv_id = _parent->get_RecvThrId();
+            if( recv_id )
+                XPlat::Thread::Join( recv_id, (void**)NULL );
 	}
 
 	// this is nasty, but we need to ensure that CPs don't exit too quickly

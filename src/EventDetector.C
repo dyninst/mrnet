@@ -27,14 +27,14 @@ namespace MRN {
 
 bool EventDetector::stop( )
 {
+    int rc;
+
     mrn_dbg_func_begin();
 
     if( 0 == _thread_id )
         return true;
 
     if( _network->_edt != NULL ) {
-
-	_network->_edt = NULL;
 
         if( _network->is_LocalNodeParent() ) {
             // send KILL_SELF message to EDT on listening port
@@ -67,13 +67,23 @@ bool EventDetector::stop( )
             // turn off debug output to prevent mrn_printf deadlock
             MRN::set_OutputLevel( -1 );
 
-            if( XPlat::Thread::Cancel( _thread_id ) != 0 )
-                return false;
+            _sync.Lock();
+            if( _thread_id ) {
+                rc = XPlat::Thread::Cancel( _thread_id );
+                if( rc != 0 ) {
+                    _sync.Unlock();
+                    return false;
+                }
+            }
+            _sync.Unlock();
         }
 
         // wait for EDT to exit
-        if( XPlat::Thread::Join( _thread_id, (void**)NULL ) != 0 )
-            return false;
+        if( _thread_id ) {
+            rc = XPlat::Thread::Join( _thread_id, (void**)NULL );
+            if( rc != 0 )
+                return false;
+        }
     }
 
     mrn_dbg_func_end();
@@ -82,7 +92,7 @@ bool EventDetector::stop( )
 
 bool EventDetector::start( Network* inetwork )
 {
-    long thread_id = 0;
+    XPlat::Thread::Id thread_id = 0;
     mrn_dbg(3, mrn_printf(FLF, stderr, "Creating Event Detection thread ...\n"));
 
     if( XPlat::Thread::Create( main, (void*)inetwork->_edt, &thread_id ) == -1 ) {
@@ -91,7 +101,7 @@ bool EventDetector::start( Network* inetwork )
     }
 
     // record the thread id
-    inetwork->_edt->_thread_id = thread_id;
+    inetwork->_edt->set_ThrId( thread_id );
 
     mrn_dbg_func_end();
     return true;
@@ -379,11 +389,7 @@ void * EventDetector::main( void* iarg )
         int timeout = -1; /* block */
         TimeKeeper* tk = NULL;
 
-        if( net->is_ShuttingDown() ) {
-	    net->_edt = NULL;
-            mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
-            XPlat::Thread::Exit(NULL);
-        }
+        if( net->is_ShuttingDown() ) break;
 
         tk = net->get_TimeKeeper();
 	if( tk != NULL ) {
@@ -449,8 +455,6 @@ void * EventDetector::main( void* iarg )
                         case PROT_KILL_SELF:
                             mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_KILL_SELF\n") );
 
-			    net->_edt = NULL;
-
                             //close event sockets explicitly
                             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                                    "Closing %d sockets\n",
@@ -469,6 +473,7 @@ void * EventDetector::main( void* iarg )
                                     perror("close(event_fd)");
                                 }
                             }
+                            edt->set_ThrId( 0 );
                             mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
                             XPlat::Thread::Exit(NULL);
 
@@ -536,8 +541,10 @@ void * EventDetector::main( void* iarg )
                 else {
                     // couldn't recover or recovery turned off, let's shutdown subtree
 
+                    edt->set_ThrId( 0 ); /* do this before shutdown protocol to avoid
+                                            trying to stop myself */
+
                     if( ! net->is_ShuttingDown() ) {
-                        net->_edt = NULL; // prevents trying to stop myself
 
                         char delete_backends = 'f';
                         PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, 
@@ -555,6 +562,7 @@ void * EventDetector::main( void* iarg )
                             // NOTE: thread will exit in above routine
                         }
                     }
+
                     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
                     XPlat::Thread::Exit(NULL);
                 }
@@ -599,6 +607,9 @@ void * EventDetector::main( void* iarg )
             }
         }//else
     }//while
+
+    edt->set_ThrId( 0 );
+    mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
 
     return NULL;
 }
@@ -838,6 +849,22 @@ int EventDetector::recover_FromParentFailure( int& new_parent_sock )
     mrn_dbg_func_end();
   
     return 0;
+}
+
+XPlat::Thread::Id EventDetector::get_ThrId(void) const
+{
+    XPlat::Thread::Id rc;
+    _sync.Lock();
+    rc = _thread_id;
+    _sync.Unlock();
+    return rc;
+}
+
+void EventDetector::set_ThrId( XPlat::Thread::Id tid )
+{
+    _sync.Lock();
+    _thread_id = tid;
+    _sync.Unlock();
 }
 
 };

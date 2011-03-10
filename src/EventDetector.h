@@ -16,13 +16,16 @@
 #include "PeerNode.h"
 #include "TimeKeeper.h"
 
+#include "xplat/Mutex.h"
+#include "xplat/Thread.h"
+
 #ifdef os_windows
 
-	struct pollfd {
-		int   fd;         /* file descriptor */
-		short events;     /* requested events */
-		short revents;    /* returned events */
-	} ;
+struct pollfd {
+    int   fd;         /* file descriptor */
+    short events;     /* requested events */
+    short revents;    /* returned events */
+};
 	
 #define POLLIN 1
 
@@ -45,14 +48,13 @@ class EventDetector {
         _network = NULL;
     }
 
+    static void * main( void* iarg );
     static bool start( Network* inetwork );
     bool stop( void );
 
+    XPlat::Thread::Id get_ThrId(void) const;
+
  private:
-
-    friend class Network;
-
-    static void * main( void* iarg );
 
     int proc_NewChildFDConnection( PacketPtr ipacket, int isock );
     int init_NewChildFDConnection( PeerNodePtr iparent_node );
@@ -67,8 +69,11 @@ class EventDetector {
 
     void handle_Timeout( TimeKeeper*, int );
 
+    void set_ThrId( XPlat::Thread::Id );
+
+    mutable XPlat::Mutex _sync;
     Network* _network;
-    long _thread_id;
+    XPlat::Thread::Id _thread_id;
     struct pollfd* _pollfds;
     unsigned int _num_pollfds, _max_pollfds;
     int _max_fd;
