@@ -186,19 +186,25 @@ int NetUtils::GetLocalHostName( std::string& this_host )
 {
 
 #if defined(arch_crayxt)
-    // on the XT, the node number is available in /proc/cray_xt/nid
-    std::ifstream ifs( "/proc/cray_xt/nid" );
-    uint32_t nid;
-    ifs >> nid;
 
-    std::ostringstream nidStr;
-    nidStr << "nid"
-        << std::setw( 5 )
-        << std::setfill( '0' )
-        << nid
-        << std::ends;
+    static std::string cached_localhost;
 
-    this_host = nidStr.str();
+    if( cached_localhost.empty() ) {
+        // on the XT, the node number is available in /proc/cray_xt/nid
+        std::ifstream ifs( "/proc/cray_xt/nid" );
+        uint32_t nid;
+        ifs >> nid;
+
+        std::ostringstream nidStr;
+        nidStr << "nid"
+	       << std::setw( 5 )
+	       << std::setfill( '0' )
+	       << nid
+	       << std::ends;
+        cached_localhost = nidStr.str();
+    }
+
+    this_host = cached_localhost;
 
 #else
 

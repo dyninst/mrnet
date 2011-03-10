@@ -25,6 +25,8 @@
 #endif
 #endif
 
+#define XPLAT_MAX_HOSTNAME_LEN 256
+
 namespace XPlat
 {
 
@@ -34,6 +36,7 @@ static bool use_canonical = false;
 
 void get_resolve_env(void)
 {
+#ifndef arch_crayxt
     if( ! checked_resolve_env ) {
         const char* varval = getenv( "XPLAT_RESOLVE_HOSTS" );
         if( varval != NULL ) {
@@ -54,35 +57,45 @@ void get_resolve_env(void)
         }
         checked_resolve_env = true;
     }
+#else
+    use_resolve = false;
+#endif
 }
 
-#define XPLAT_MAX_HOSTNAME_LEN 256
+struct addrinfo* get_host_addrs( const char* ihostname )
+{
+    struct addrinfo hints;
+    struct addrinfo *addrs = NULL;
+    int error;
+
+    // do the lookup
+    memset(&hints, 0, sizeof(hints));
+    if( use_canonical )
+        hints.ai_flags = AI_CANONNAME;
+    hints.ai_socktype = SOCK_STREAM;
+    if( error = getaddrinfo(ihostname, NULL, &hints, &addrs) ) {
+        fprintf(stderr, "%s[%d]: getaddrinfo(%s): %s\n", 
+                __FILE__, __LINE__,
+                ihostname, gai_strerror(error));
+        return NULL;
+    }
+
+    return addrs;
+}
 
 int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
 {
-    struct addrinfo *addrs, hints;
+    struct addrinfo *addrs = NULL;
     int error;
 
     if( ihostname == "" )
         return -1;
 
-#ifndef arch_crayxt
-
     get_resolve_env();
+    if( use_resolve )
+        addrs = get_host_addrs( ihostname.c_str() );
 
-    if( use_resolve ) {
-        // do the lookup
-        memset(&hints, 0, sizeof(hints));
-        if( use_canonical )
-            hints.ai_flags = AI_CANONNAME;
-        hints.ai_socktype = SOCK_STREAM;
-        if( error = getaddrinfo(ihostname.c_str(), NULL, &hints, &addrs) ) {
-            fprintf(stderr, "%s[%d]: getaddrinfo(%s): %s\n", 
-                    __FILE__, __LINE__,
-                    ihostname.c_str(), gai_strerror(error));
-            return -1;
-        }
-
+    if( addrs != NULL ) {
         char* hostname = (char*) calloc( XPLAT_MAX_HOSTNAME_LEN, sizeof(char) );
         if( use_canonical && (addrs->ai_canonname != NULL) ) {
             strncpy( hostname, addrs->ai_canonname, sizeof(hostname) );
@@ -114,14 +127,15 @@ int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
         }
     }
 
-#endif
-
     ohostname = ihostname;
     return 0;
 }
 
 bool NetUtils::IsLocalHost( const std::string& ihostname )
 {
+
+#ifndef arch_crayxt
+
     std::vector< NetworkAddress > local_addresses;
     GetLocalNetworkInterfaces( local_addresses );
 
@@ -140,6 +154,16 @@ bool NetUtils::IsLocalHost( const std::string& ihostname )
         if( local_addresses[i] == iaddress )
             return true;
     }
+
+#else
+
+    std::string localhost;
+    NetUtils::GetLocalHostName( localhost );
+    if( (ihostname == localhost) || 
+	(ihostname == "localhost") )
+        return true;
+
+#endif
 
     return false;
 }
@@ -249,31 +273,22 @@ int NetUtils::FindNetworkAddress( std::string ihostname, NetUtils::NetworkAddres
 
     get_resolve_env();
 
-    // do the lookup
-    memset( &hints, 0, sizeof(hints) );
-    if( use_canonical )
-        hints.ai_flags = AI_CANONNAME;
-    hints.ai_socktype = SOCK_STREAM;
-    if( error = getaddrinfo(ihostname.c_str(), NULL, &hints, &addrs) ) {
-        fprintf(stderr, "%s[%d]: getaddrinfo(%s): %s\n", 
-                __FILE__, __LINE__,
-                ihostname.c_str(), gai_strerror(error));
-        return -1;
-    }
-
-    addrs_iter = addrs;
-    while( addrs_iter != NULL ) {
-        if( addrs_iter->ai_family == AF_INET ) {
-            struct in_addr in;
-	    struct sockaddr_in *sinptr = ( struct sockaddr_in * )(addrs_iter->ai_addr);
-	    memcpy( &in.s_addr, ( void * )&( sinptr->sin_addr ), sizeof( in.s_addr ) );
-	    oaddr = NetworkAddress( in.s_addr );
-	    break;
+    addrs = get_host_addrs( ihostname.c_str() );
+    if( addrs != NULL ) {
+        addrs_iter = addrs;
+        while( addrs_iter != NULL ) {
+            if( addrs_iter->ai_family == AF_INET ) {
+                struct in_addr in;
+		struct sockaddr_in *sinptr = ( struct sockaddr_in * )(addrs_iter->ai_addr);
+		memcpy( &in.s_addr, ( void * )&( sinptr->sin_addr ), sizeof( in.s_addr ) );
+		oaddr = NetworkAddress( in.s_addr );
+		break;
+	    }
+	    addrs_iter = addrs_iter->ai_next;
 	}
-	addrs_iter = addrs_iter->ai_next;
+	freeaddrinfo(addrs);
     }
 
-    freeaddrinfo(addrs);
     return 0;
 }
 
