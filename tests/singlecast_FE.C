@@ -55,7 +55,8 @@ int main( int argc, char* argv[] )
 
     PacketPtr pkt;
     int rret, tag = 0;
-    int send_val = 1;
+    int val, send_val = 1;
+    
 
     set< CommunicationNode* >::const_iterator iter = bes.begin();
     for( ; iter != bes.end() ; iter++ ) {
@@ -73,7 +74,6 @@ int main( int argc, char* argv[] )
             return -1;
         }
         if( tag == SC_SINGLE ) {
-            int val;
             pkt->unpack( "%d", &val );
             if( val != send_val ) {
                 std::cerr << "FE: expected BE to send value " << send_val 
@@ -84,6 +84,26 @@ int main( int argc, char* argv[] )
             std::cerr << "FE: unexpected tag " << tag 
                       << " received instead of SC_SINGLE\n";
         }
+
+        rret = be_strm->recv( &tag, pkt );
+        if( rret == -1 ) {
+            std::cerr << "FE: be_stream recv() failed" << std::endl;
+            return -1;
+        }
+        if( tag == SC_SINGLE ) {
+            pkt->unpack( "%d", &val );
+            if( val != be_rank ) {
+                std::cerr << "FE: expected BE to send value " << be_rank 
+                      << ", got " << val << std::endl;
+            }
+        }
+        else {
+            std::cerr << "FE: unexpected tag " << tag 
+                      << " received instead of SC_SINGLE\n";
+        }
+
+        cout << "FE: successfully received value and rank on BE stream " 
+             << be_rank << endl;
     }
 
     rret = stream->recv( &tag, pkt );

@@ -16,13 +16,10 @@ int main( int argc, char* argv[] )
     Stream_t *be_stream = NULL;
     int tag;
     Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
-    int bCont;
     Network_t* net;
     int done;
     int rret;
-    int nReductions = 0;
     int ival = -1;
-    int i;
 
     assert(pkt);
     
@@ -51,6 +48,12 @@ int main( int argc, char* argv[] )
                 (Stream_flush(be_stream) == -1) ) {
                 fprintf(stderr, "BE: val send single failed\n");
             }
+            fprintf(stdout, "BE: sending rank on BE stream\n");
+            if( (Stream_send(be_stream,  tag, "%d", (int)Stream_get_Id(be_stream) ) == -1) ||
+                (Stream_flush(be_stream) == -1) ) {
+                fprintf(stderr, "BE: val send single failed\n");
+            }
+            fflush(stdout);
         }
         else {
             done = 1;

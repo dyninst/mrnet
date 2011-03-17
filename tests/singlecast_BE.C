@@ -42,7 +42,12 @@ int main( int argc, char* argv[] )
             if( (be_stream->send(tag, "%d", ival) == -1) ||
                 (be_stream->flush() == -1) ) {
                 cerr << "BE: val send single failed" << endl;
-            }   
+            }
+            std::cout << "BE: sending rank on BE stream" << std::endl;
+            if( (be_stream->send(tag, "%d", (int)be_stream->get_Id()) == -1) ||
+                (be_stream->flush() == -1) ) {
+                cerr << "BE: val send single failed" << endl;
+            }
         }
         else {
             cerr << "BE: unexpected tag " << tag << endl;
