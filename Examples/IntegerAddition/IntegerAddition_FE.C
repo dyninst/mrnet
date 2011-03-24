@@ -38,6 +38,8 @@ int main(int argc, char **argv)
     int n = 0;
     while( n++ < nets ) {
 
+        saw_failure = false;
+
         if( nets > 1 )
             fprintf(stdout, "\n\n---------- Network Instance %d ----------\n\n", n);
 
@@ -97,19 +99,17 @@ int main(int argc, char **argv)
         // We expect "num_iters" aggregated responses from all back-ends
         for( unsigned int i=0; i < num_iters; i++ ){
 
-            if( saw_failure ) break;
-
             retval = add_stream->recv(&tag, p);
             if( retval == 0 ) {
                 //shouldn't be 0, either error or block for data, unless a failure occured
-                if( saw_failure ) break;
                 fprintf( stderr, "stream::recv() returned zero\n" );
+                if( saw_failure ) break;
                 return -1;
             }
             if( retval == -1 ) {
                 //recv error
-                if( saw_failure ) break;
                 fprintf( stderr, "stream::recv() unexpected failure\n" );
+                if( saw_failure ) break;
                 return -1;
             }
 
@@ -132,36 +132,35 @@ int main(int argc, char **argv)
         if( saw_failure ) {
             fprintf( stderr, "FE: a network process has failed, killing network\n" );
             delete net;
-            return -1;
         }
+        else {
+            delete add_stream;
 
-        delete add_stream;
-
-        // Tell back-ends to exit
-        Stream * ctl_stream = net->new_Stream( comm_BC, TFILTER_MAX,
-                                               SFILTER_WAITFORALL );
-        if(ctl_stream->send(PROT_EXIT, "") == -1){
-            fprintf( stderr, "stream::send(exit) failure\n" );
-            return -1;
-        }
-        if(ctl_stream->flush() == -1){
-            fprintf( stderr, "stream::flush() failure\n" );
-            return -1;
-        }
-        retval = ctl_stream->recv(&tag, p);
-        if( retval == -1){
-            //recv error
-            fprintf( stderr, "stream::recv() failure\n" );
-            return -1;
-        }
-        delete ctl_stream;
-        if( tag == PROT_EXIT ) {
-            // The Network destructor will cause all internal and leaf tree nodes to exit
-            delete net;
+            // Tell back-ends to exit
+            Stream * ctl_stream = net->new_Stream( comm_BC, TFILTER_MAX,
+                                                   SFILTER_WAITFORALL );
+            if(ctl_stream->send(PROT_EXIT, "") == -1){
+                fprintf( stderr, "stream::send(exit) failure\n" );
+                return -1;
+            }
+            if(ctl_stream->flush() == -1){
+                fprintf( stderr, "stream::flush() failure\n" );
+                return -1;
+            }
+            retval = ctl_stream->recv(&tag, p);
+            if( retval == -1){
+                //recv error
+                fprintf( stderr, "stream::recv() failure\n" );
+                return -1;
+            }
+            delete ctl_stream;
+            if( tag == PROT_EXIT ) {
+                // The Network destructor will cause all internal and leaf tree nodes to exit
+                delete net;
+            }
         }
 
         sleep(5);
-
     }
 
 

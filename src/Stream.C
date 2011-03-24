@@ -786,6 +786,9 @@ int Stream::send_FilterStateToParent(void) const
 
 void Stream::remove_Node( Rank irank )
 {
+    if( is_Closed() )
+        return;
+
     _peers_sync.Lock();
 
     set< PeerNodePtr >::const_iterator iter = _peers.begin(),
@@ -793,7 +796,17 @@ void Stream::remove_Node( Rank irank )
     for( ; iter != iend; iter++ ) {
         Rank cur_rank = (*iter)->get_Rank();
         if( cur_rank == irank ) {
-            _peers.erase( iter );
+            if( _network->is_LocalNodeFrontEnd() &&
+                ! _network->recover_FromFailures() ) {
+                /* if failure recovery is off, we can't expect the BEs that were in
+                   the subtree of the failed peer to re-connect, so the stream is now 
+                   broken, and we should tell the user by closing it */
+                _peers.clear();
+                close();
+            }
+            else {
+                _peers.erase( iter );
+            }
             break;
         }
     }
@@ -803,10 +816,13 @@ void Stream::remove_Node( Rank irank )
 
 void Stream::recompute_ChildrenNodes(void)
 {
-    set< Rank >::const_iterator iter;
+    if( is_Closed() )
+        return;
 
     _peers_sync.Lock();
     _peers.clear();
+
+    set< Rank >::const_iterator iter;
     for( iter = _end_points.begin(); iter != _end_points.end(); iter++ ) {
         Rank cur_rank = *iter;
         PeerNodePtr outlet = _network->get_OutletNode( cur_rank );
