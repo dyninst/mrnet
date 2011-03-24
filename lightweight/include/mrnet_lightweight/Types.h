@@ -17,6 +17,7 @@
 #endif
 
 #include <sys/types.h>
+#include <stdio.h>
 
 #if defined (os_linux)
 #include <stdint.h>
@@ -61,6 +62,9 @@ typedef uint32_t Rank;
 
 #define FirstSystemTag 0
 #define FirstApplicationTag 100
+
+int mrn_printf( const char *file, int line, const char* func, 
+                FILE *fp, const char *format, ... );
 
 /* --------------- Performance Data Types -------------- */
     typedef union { 

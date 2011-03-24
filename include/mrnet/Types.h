@@ -74,6 +74,9 @@ namespace MRN
     extern char* MRN_DEBUG_LOG_DIRECTORY;
     void set_OutputLevel(int l=1);
 
+    int mrn_printf( const char *file, int line, const char * func, 
+                    FILE * fp, const char *format, ... );
+
     /* pretty names for MRNet port and rank types. */
     typedef uint16_t Port;
     typedef uint32_t Rank;

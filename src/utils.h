@@ -121,9 +121,6 @@ do{ \
 #define FLF  __FILE__,__LINE__,__FUNCTION__
 #endif
 
-int mrn_printf( const char *file, int line, const char * func, FILE * fp,
-                const char *format, ... );
-
 #define mrn_dbg_func_end()                    \
 do { \
     mrn_dbg(3, MRN::mrn_printf(FLF, stderr, "Function exit\n"));    \
