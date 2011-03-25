@@ -49,6 +49,8 @@ class Packet: public Error {
     void set_Tag( int itag ) { tag = itag; }
 
     unsigned int get_StreamId(void) const;
+    void set_StreamId( unsigned int istream_id ) { stream_id = istream_id; }
+
     const char* get_FormatString(void) const;
     Rank get_InletNodeRank(void) const;
     Rank get_SourceRank(void) const;
