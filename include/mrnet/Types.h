@@ -58,7 +58,7 @@ typedef long int ssize_t;
 #define NULL (0)
 #endif
 
-
+#include <cstdio>
 #include <map>
 #include <vector>
 
