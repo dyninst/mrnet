@@ -950,9 +950,9 @@ get_packet_from_stream_label:
                 packet_found = true;
             }
             mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                   "Checking for packets on stream[%d] ... %s",
-                                   cur_stream->get_Id(),
-                                   (packet_found ? "found" : "not found")));
+                                   "packets %s on stream[%d]\n",
+                                   (packet_found ? "found" : "not found"),
+				   cur_stream->get_Id()) );
 
             _streams_sync.Lock();
             _stream_iter++;
@@ -1266,8 +1266,8 @@ void Network::delete_Stream( unsigned int iid )
         //if we are about to delete _stream_iter, set it to next elem. (w/wrap)
         if( iter == _stream_iter ) {
             _stream_iter++;
-            if( _stream_iter == Network::_streams.end() ){
-                _stream_iter = Network::_streams.begin();
+            if( _stream_iter == _streams.end() ) {
+                _stream_iter = _streams.begin();
             }
         }
         _streams.erase( iter );
@@ -1562,9 +1562,11 @@ int Network::waitfor_NonEmptyStream(void)
         for( iter = _streams.begin(); iter != _streams.end(); iter++ ) {
             cur_strm = iter->second;
             if( cur_strm->is_Closed() ) {
-                mrn_dbg(5, mrn_printf(FLF, stderr, "Error on stream[%d]\n",
-                                      cur_strm->get_Id() ));
+                unsigned int cur_id = iter->first;
                 _streams_sync.Unlock();
+                mrn_dbg(5, mrn_printf(FLF, stderr, "stream[%d] has been closed\n",
+                                      cur_id ));
+                delete_Stream( cur_id );
                 mrn_dbg_func_end();
                 return 0;
             }
