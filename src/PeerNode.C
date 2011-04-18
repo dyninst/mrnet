@@ -336,6 +336,7 @@ void * PeerNode::send_thread_main( void* iargs )
     peer_node->send_thread_id = 0;
     peer_node->_sync.Unlock();
 
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "I'm going away now!\n") );
     XPlat::Thread::Exit(NULL);
 
     // this is redundant, but the compiler doesn't know that
@@ -378,14 +379,16 @@ void PeerNode::mark_Failed(void)
         _available = false;
         _sync.Unlock();
 
+        // wake up send thread, if that's not this thread
         XPlat::Thread::Id my_id = 0;
         tsd_t *tsd = ( tsd_t * )tsd_key.Get();
         if( tsd != NULL )
             my_id = tsd->thread_id;
 
         if( my_id != get_SendThrId() ) {
-            // wake up send thread, if that's not this thread
-            _msg_out.add_Packet( Packet::NullPacket );
+            // shutdown packet send will fail, but that's expected
+            PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, "") );
+            _msg_out.add_Packet( packet );
         }
     }
 }

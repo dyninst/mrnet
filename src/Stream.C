@@ -827,11 +827,15 @@ void Stream::recompute_ChildrenNodes(void)
         Rank cur_rank = *iter;
         PeerNodePtr outlet = _network->get_OutletNode( cur_rank );
         if( outlet != NULL ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr,
+            mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "Adding outlet[%d] for endpoint[%d] to stream[%u].\n",
                                    outlet->get_Rank(), cur_rank, _id) );
             _peers.insert( outlet );
         }
+        else
+            mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                   "No outlet found for endpoint[%d] in stream[%u].\n",
+                                   cur_rank, _id) );
     }
     _peers_sync.Unlock();
 }

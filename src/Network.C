@@ -2001,6 +2001,7 @@ bool Network::delete_PeerNode( Rank irank )
         _parent_sync.Lock();
         if( _parent != PeerNode::NullPeerNode ) { 
             if( _parent->get_Rank() == irank ) {
+                _parent->mark_Failed();
                 _parent = PeerNode::NullPeerNode;
                 _parent_sync.Unlock();
                 return true;
@@ -2012,9 +2013,10 @@ bool Network::delete_PeerNode( Rank irank )
     _children_mutex.Lock();
     for( iter = _children.begin(); iter != _children.end(); iter++ ) {
         if( (*iter)->get_Rank() == irank ) {
-	     mrn_dbg( 5, mrn_printf(FLF, stderr, "deleted into children\n") );
-            _children.erase( *iter );
+            (*iter)->mark_Failed();
+            _children.erase( iter );
             _children_mutex.Unlock();
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "deleted %d from children\n", irank) );
             return true;
         }
     }

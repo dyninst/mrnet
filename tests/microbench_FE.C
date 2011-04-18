@@ -35,19 +35,7 @@ int DoReductionThroughputExp( Stream* stream,
 int
 main( int argc, char* argv[] )
 {
-    int ret = 0;
-
-    if( getenv( "MRN_DEBUG_FE" ) != NULL ) {
-#ifndef os_windows
-		fprintf( stderr, "FE: spinning, pid=%d\n", getpid() );
-#else
-		fprintf(stderr, "FE: spinning, pid=%d\n", (int)GetCurrentProcessId());
-#endif
-        bool bCont=false;
-        while( !bCont ) {
-            // spin
-        }
-    }
+    int ret;
 
     // parse the command line
     if( argc != 5 ) {
@@ -79,22 +67,25 @@ main( int argc, char* argv[] )
               << std::endl;
 
     // perform roundtrip latency experiment
-    DoRoundtripLatencyExp( stream, nRoundtripIters, nBackends );
+    ret = DoRoundtripLatencyExp( stream, nRoundtripIters, nBackends );
+    if( ret == 0 ) {
 
-    // perform reduction throughput experiment
-    DoReductionThroughputExp( stream, nThroughputIters, nBackends );
+        // perform reduction throughput experiment
+        ret = DoReductionThroughputExp( stream, nThroughputIters, nBackends );
+        if( ret == 0 ) {
 
-    // tell back-ends to go away
-    if( (stream->send( MB_EXIT, "%d", 0 ) == -1) ||
-        (stream->flush() == -1) ) {
-        std::cerr << "FE: failed to broadcast termination message" << std::endl;
+            // tell back-ends to go away
+            if( (stream->send( MB_EXIT, "%d", 0 ) == -1) ||
+                (stream->flush() == -1) ) {
+                std::cerr << "FE: failed to broadcast termination message" << std::endl;
+            }
+            delete stream;
+        }
     }
-    delete stream;
 
     // delete the net
     std::cout << "FE: deleting net" << std::endl;
     delete net;
-
 
     return ret;
 }
@@ -125,6 +116,8 @@ BuildNetwork( std::string cfgfile, std::string backend_exe )
         return NULL;
     }
 
+    net->set_FailureRecovery( false );
+
     // dump net instantiation latency
     double latency = (endTime - startTime).get_double_time();
     std::cout << " latency(sec): " << latency << std::endl;
@@ -143,7 +136,6 @@ DoRoundtripLatencyExp( Stream* stream,
 
     int sret = -1;
     int fret = -1;
-    unsigned int nTries = 0;
 
     std::cout << "FE: roundtrip latency: " << std::flush;
     startTime.set_time();
@@ -153,32 +145,28 @@ DoRoundtripLatencyExp( Stream* stream,
         if( sret != -1 ) {
             fret = stream->flush();
         }
-
         if( (sret == -1) || (fret == -1) ) {
             std::cerr << "broadcast failed" << std::endl;
             return -1;
         }
 
         // receive reduced value
-        int tag;
+        int tag = 0;
         PacketPtr buf;
-        int rret = 0;
-        nTries = 0;
-        do {
-            tag = 0;
-            rret = stream->recv( &tag, buf );
-            if( rret == -1 )
-            {
-                std::cerr << "FE: roundtrip latency recv() failed" << std::endl;
-                return -1;
-            }
-            nTries++;
-        } while( rret == 0 );
+        int rret = stream->recv( &tag, buf );
+        if( rret == -1 ) {
+            std::cerr << "FE: roundtrip latency recv() failed - stream error\n";
+            return -1;
+        }
+        else if( rret == 0 ) {
+            std::cerr << "FE: roundtrip latency recv() failed - stream closed\n";
+            return -1;
+        }
 
+        // check tag and value
         if( tag != MB_ROUNDTRIP_LATENCY ) {
-            std::cerr << "FE: unexpected tag " << tag << " seen"
-                << ", rret = " << rret
-                << std::endl;
+            std::cerr << "FE: roundtrip latency recv() found unexpected tag=" 
+                      << tag << std::endl;
         }
         else {
             int ival = 0;
@@ -195,17 +183,17 @@ DoRoundtripLatencyExp( Stream* stream,
     double totalLatency = (endTime - startTime).get_double_time();
     double avgLatency = totalLatency / nIters;
     std::cout << "total(sec): " << totalLatency
-                << ", nIters: " << nIters
-                << ", avg(sec): " << avgLatency
-                << std::endl;
+              << ", nIters: " << nIters
+              << ", avg(sec): " << avgLatency
+              << std::endl;
 
     return 0;
 }
 
 int
 DoReductionThroughputExp( Stream* stream,
-                            unsigned int nIters,
-                            unsigned int nBackends )
+                          unsigned int nIters,
+                          unsigned int nBackends )
 {
     mb_time startTime;
     mb_time endTime;
@@ -222,28 +210,24 @@ DoReductionThroughputExp( Stream* stream,
     // do the experiment
     startTime.set_time();
     for( unsigned int i = 0; i < nIters; i++ ) {
+
         // receive reduced value
-        int tag;
+        int tag = 0;
         PacketPtr buf;
-        int rret;
-        unsigned int nTries = 0;
-        do {
-            tag = 0;
-            rret = stream->recv( &tag, buf );
-            if( rret == -1 ) {
-                std::cerr << "FE: reduction throughput recv() failed" 
-                          << std::endl;
-                return -1;
-            }
-            nTries++;
-        } while( rret == 0 );
-        if( nTries == kMaxRecvTries ) {
-            std::cerr << "FE: warning! max tries reached" << std::endl;
+        int rret = stream->recv( &tag, buf );
+        if( rret == -1 ) {
+            std::cerr << "FE: reduction throughput recv() failed - stream error\n"; 
+            return -1;
         }
-        else if( tag != MB_RED_THROUGHPUT ) {
-            std::cerr << "FE: unexpected tag " << tag << " seen during throughput experiment"
-                << ", rret = " << rret
-                << std::endl;
+        else if( rret == 0 ) {
+            std::cerr << "FE: reduction throughput recv() failed - stream closed\n";
+            return -1;
+        }
+
+        // check tag and value
+        if( tag != MB_RED_THROUGHPUT ) {
+            std::cerr << "FE: reduction throughput recv() found unexpected tag=" 
+                      << tag << std::endl;
         }
         else {
             int ival = 0;
@@ -260,10 +244,10 @@ DoReductionThroughputExp( Stream* stream,
     double expLatency = (endTime - startTime).get_double_time();
     double throughput = ((double)nIters) / expLatency;
     std::cout << "FE: reduction throughput: "
-                << "nIters: " << nIters
-                << ", latency(sec): " << expLatency
-                << ", throughput(ops/sec): " << throughput
-                << std::endl;
+              << "nIters: " << nIters
+              << ", latency(sec): " << expLatency
+              << ", throughput(ops/sec): " << throughput
+              << std::endl;
 
     return 0;
 }
