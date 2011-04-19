@@ -237,7 +237,7 @@ void Network::shutdown_Network(void)
                 XPlat::Thread::Join( recv_id, (void**)NULL );
 	}
 
-	// this is nasty, but we need to ensure that CPs don't exit too quickly
+	// this is ugly, but we need to ensure that CPs don't exit too quickly
 	// on Cray XTs so ALPS won't kill other CPs that haven't completed shutdown
 	sleep( 10 );
     }
@@ -1504,31 +1504,86 @@ void Network::print_PerformanceData( perfdata_metric_t metric,
 
 int Network::load_FilterFunc( const char* so_file, const char* func_name )
 {
+    std::vector< const char* > funcs;
+    std::vector< int > fids;
+
+    char* func = strdup(func_name);
+    funcs.push_back( func );
+
+    int rc = load_FilterFuncs( so_file, funcs, fids );
+    if( rc == 1 )
+        rc = fids[0];
+
+    if( func != NULL )
+        free( func );
+
+    return rc;
+}
+
+int Network::load_FilterFuncs( const char* so_file,
+                               const std::vector< const char* > & functions,
+                               std::vector< int > & filter_ids )
+{
     // start user-defined filter ids at 100 to avoid conflicts with built-ins
     static unsigned short next_filter_id=100; 
-    unsigned short cur_filter_id=next_filter_id;
-    next_filter_id++;
+
     mrn_dbg_func_begin();
 
-    int rc = Filter::load_FilterFunc( cur_filter_id, so_file, func_name );
-    if( rc != -1 ){
+    unsigned nfuncs = functions.size();
+    if( filter_ids.size() != nfuncs )
+        filter_ids.reserve( nfuncs );
+
+    unsigned short* fids = (unsigned short*) calloc( nfuncs, sizeof(unsigned short) );
+    char** funcs = (char**) calloc( nfuncs, sizeof(char*) );
+    if( (fids == NULL) || (funcs == NULL) ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "calloc() failed\n") );
+        return false;
+    }
+
+    char* so_copy = strdup(so_file);
+
+    int success_count = 0;
+    for( unsigned u=0; u < nfuncs; u++ ) {
+
+        unsigned short cur_filter_id = next_filter_id;
+        const char* func_name = functions[u];
+
+        int rc = Filter::load_FilterFunc( cur_filter_id, so_copy, func_name );
+        if( rc == -1 ) {
+            filter_ids[u] = -1;
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                   "Filter::load_FilterFunc(%hu, %s, %s) failed\n", 
+                                   cur_filter_id, so_copy, func_name) );
+        }
+        else {
+            filter_ids[u] = (int) cur_filter_id;
+            fids[success_count] = cur_filter_id;
+            funcs[success_count] = strdup(func_name);
+            success_count++;
+            next_filter_id++;
+        }
+    }
+
+    if( success_count ) {
         //Filter registered locally, now propagate to tree
         //TODO: ensure that filter is loaded down the entire tree
-        mrn_dbg( 3, mrn_printf(FLF, stderr, 
-                               "load_FilterFunc(%hu, %s, %s) successful, sending PROT_NEW_FILTER\n",
-                               cur_filter_id, so_file, func_name) );
-        PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_FILTER, "%uhd %s %s",
-                                     cur_filter_id, so_file, func_name) );
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "sending PROT_NEW_FILTER\n") );
+        PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_FILTER, "%s %as %auhd",
+                                     so_copy, 
+                                     funcs, success_count, 
+                                     fids, success_count) );
         send_PacketToChildren( packet );
-        rc = cur_filter_id;
+        flush();
     }
-    else {
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "load_FilterFunc(%hu, %s, %s) failed\n", 
-                               cur_filter_id, so_file, func_name) );
-    }
+    
+    free( so_copy );
+    free( fids );
+    for( unsigned u=0; u < success_count; u++ )
+        free( funcs[u] );
+    free( funcs );
+
     mrn_dbg_func_end();
-    return rc;
+    return success_count;
 }
 
 int Network::waitfor_NonEmptyStream(void)

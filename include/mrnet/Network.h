@@ -83,8 +83,13 @@ class Network: public Error {
     Communicator* new_Communicator( std::set< CommunicationNode* > & );
     CommunicationNode* get_EndPoint( Rank ) const;
 
+    /* Filters */
+    int load_FilterFunc( const char* so_file, const char* func );
+    int load_FilterFuncs( const char* so_file,
+                          const std::vector< const char* > & functions,
+                          std::vector< int > & filter_ids );
+    
     /* Streams */
-    int load_FilterFunc( const char * so_file, const char * func );
     Stream* new_Stream( Communicator*,
                         int us_filter_id=TFILTER_NULL,
                         int sync_id=SFILTER_WAITFORALL,

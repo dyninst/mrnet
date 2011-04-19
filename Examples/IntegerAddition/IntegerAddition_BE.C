@@ -10,7 +10,7 @@ using namespace MRN;
 
 int main(int argc, char **argv)
 {
-    Stream * stream=NULL;
+    Stream * stream = NULL;
     PacketPtr p;
     int rc, tag=0, recv_val=0, num_iters=0;
 
@@ -71,10 +71,12 @@ int main(int argc, char **argv)
 
     } while( tag != PROT_EXIT );
 
-    while( ! stream->is_Closed() )
-        sleep(1);
+    if( stream != NULL ) {
+        while( ! stream->is_Closed() )
+            sleep(1);
 
-    delete stream;
+        delete stream;
+    }
 
     // FE delete of the net will cause us to exit, wait for it
     net->waitfor_ShutDown();

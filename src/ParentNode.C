@@ -159,8 +159,6 @@ int ParentNode::proc_PortUpdates( PacketPtr ) const
 
 bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
 {
-    std::list < PacketPtr >packet_list;
-
     initdonereport_sync.Lock( );
 
     while( _num_children > _num_children_reported ) {
@@ -186,8 +184,6 @@ bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
 
 bool ParentNode::waitfor_SubTreeReports( void ) const
 {
-    std::list < PacketPtr >packet_list;
-
     subtreereport_sync.Lock( );
 
     while( _num_children > _num_children_reported ) {
@@ -556,28 +552,39 @@ int ParentNode::proc_deleteStream( PacketPtr ipacket ) const
 
 int ParentNode::proc_newFilter( PacketPtr ipacket ) const
 {
-    int rc = 0;
-    unsigned short fid = 0;
-    const char *so_file = NULL, *func = NULL;
+    int retval = 0;
+    unsigned nfuncs = 0;
+    char* so_file = NULL;
+    char** funcs = NULL;
+    unsigned short* fids = NULL;
 
     mrn_dbg_func_begin();
 
-    fid = (*ipacket)[0]->get_uint16_t();
-    so_file = (*ipacket)[1]->get_string();
-    func = (*ipacket)[2]->get_string();
+    retval = ipacket->unpack( "%s %as %auhd",
+                              &so_file,
+                              &funcs, &nfuncs,
+                              &fids, &nfuncs );
 
-    rc = Filter::load_FilterFunc( fid, so_file, func );
-    if( rc != 0 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "Filter::load_FilterFunc() failed.\n") );
-        rc = -1;
-    }
-
-    //Filter registered locally, now propagate to tree
+    // propagate before local load
     _network->send_PacketToChildren( ipacket );
 
+    if( retval == 0 ) {
+        for( unsigned u=0; u < nfuncs; u++ ) {
+            int rc = Filter::load_FilterFunc( fids[u], so_file, funcs[u] );
+            if( rc == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "Filter::load_FilterFunc(%s,%s) failed.\n",
+                                       so_file, funcs[u]) );
+            }
+            free( funcs[u] );
+        }
+        free( funcs );
+        free( fids );
+        free( so_file );
+    }
+
     mrn_dbg_func_end();
-    return rc;
+    return retval;
 }
 
 bool lt_PeerNodePtr( PeerNode * p1, PeerNode * p2 )
