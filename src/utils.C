@@ -54,6 +54,15 @@ bool Timer::first_time=true;
 
 XPlat::TLSKey tsd_key;
 
+void get_Version( int& major,
+                  int& minor,
+                  int& revision )
+{
+    major = MRNET_VERSION_MAJOR;
+    minor = MRNET_VERSION_MINOR;
+    revision = MRNET_VERSION_REV;
+}
+
 int connectHost( int *sock_in, const std::string & hostname, Port port, 
                  int num_retry /*=-1*/ )
 {

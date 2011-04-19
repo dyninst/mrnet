@@ -57,6 +57,17 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 }
 #endif
 
+void get_Version( int* major,
+                  int* minor,
+                  int* revision )
+{
+    if( major != NULL )
+        *major = MRNET_VERSION_MAJOR;
+    if( minor != NULL )
+        *minor = MRNET_VERSION_MINOR;
+    if( revision != NULL )
+        *revision = MRNET_VERSION_REV;
+}
 
 int connectHost( int *sock_in, char* hostname, 
                  Port port, int num_retry )

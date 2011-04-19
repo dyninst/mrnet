@@ -65,8 +65,18 @@ typedef long int ssize_t;
 #define FirstSystemTag 0
 #define FirstApplicationTag 100
 
+/* version info */
+#define MRNET_VERSION_MAJOR 3
+#define MRNET_VERSION_MINOR 0
+#define MRNET_VERSION_REV   2
+
 namespace MRN
 {
+    /* version info */
+    void get_Version( int& major,
+                      int& minor,
+                      int& revision );
+
     /* debug output control */
     extern const int MIN_OUTPUT_LEVEL;
     extern const int MAX_OUTPUT_LEVEL;
