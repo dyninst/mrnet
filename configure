@@ -271,7 +271,7 @@ PACKAGE_VERSION=
 PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
-ac_unique_file="src/Network.C"
+ac_unique_file="MRNet"
 ac_unique_file="src/Network.C"
 # Factoring default headers for most tests.
 ac_includes_default="\
@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION CXXCPP EGREP MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT EXTRA_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX CXXCPP EGREP COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT EXTRA_LIBS HAVE_BOOST LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2928,589 +2928,9 @@ echo "$as_me: error: flex not found in \$PATH, is it installed?" >&2;}
 fi
 
 
+HAVE_BOOST="no"
 
-STDCFLAGS="-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS"
-CXXFLAGS="$CXXFLAGS $STDCFLAGS"
-CFLAGS="$CFLAGS $STDCFLAGS"
-
-CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
-CFLAGS=`echo $CFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
-
-
-
-  echo "$as_me:$LINENO: checking for compiler type" >&5
-echo $ECHO_N "checking for compiler type... $ECHO_C" >&6
-
-  COMPILER_TYPE="unknown"
-
-  if test "$CXX" = "g++" ; then
-    COMPILER_TYPE="gnu"
-    echo "$as_me:$LINENO: result: gnu" >&5
-echo "${ECHO_T}gnu" >&6
-  elif test "$CXX" = "xlC_r" ; then
-    COMPILER_TYPE="aix-native"
-    echo "$as_me:$LINENO: result: aix-native" >&5
-echo "${ECHO_T}aix-native" >&6
-  elif test "$CXX" = "xlC" ; then
-    COMPILER_TYPE="aix-native"
-    echo "$as_me:$LINENO: result: aix-native" >&5
-echo "${ECHO_T}aix-native" >&6
-  elif test "$CXX" = "xlc++" ; then
-    COMPILER_TYPE="aix-native"
-    echo "$as_me:$LINENO: result: aix-native" >&5
-echo "${ECHO_T}aix-native" >&6
-  elif test "$CXX" = "pgCC" ; then
-    COMPILER_TYPE="pgi"
-    echo "$as_me:$LINENO: result: pgi" >&5
-echo "${ECHO_T}pgi" >&6
-  elif test "$CXX" = "icpc" ; then
-    COMPILER_TYPE="intel"
-    echo "$as_me:$LINENO: result: intel" >&5
-echo "${ECHO_T}intel" >&6
-  fi
-
-  if test "$COMPILER_TYPE" = "unknown"; then
-    $CXX --version 2> /dev/null > version.out
-    $GREP "GCC" version.out > /dev/null
-
-    if test "$?" = 0 ; then
-      COMPILER_TYPE="gnu"
-      echo "$as_me:$LINENO: result: gnu" >&5
-echo "${ECHO_T}gnu" >&6
-    else
-      $GREP "Portland Group" version.out > /dev/null
-      if test "$?" = 0; then
-        COMPILER_TYPE="pgi"
-        echo "$as_me:$LINENO: result: pgi" >&5
-echo "${ECHO_T}pgi" >&6
-      else
-        $GREP "Intel Corporation" version.out > /dev/null
-        if test "$?" = 0; then
-          COMPILER_TYPE="intel"
-          echo "$as_me:$LINENO: result: intel" >&5
-echo "${ECHO_T}intel" >&6
-        fi
-      fi
-    fi
-    $RM -f version.out
-  fi
-
-  if test "$COMPILER_TYPE" = "unknown"; then
-    $CXX -V 2> version.out
-
-    $GREP "Forte" version.out > /dev/null
-    if test "$?" = 0 ; then
-      COMPILER_TYPE="forte"
-      echo "$as_me:$LINENO: result: forte" >&5
-echo "${ECHO_T}forte" >&6
-    else
-      $GREP "Sun" version.out > /dev/null
-      if test "$?" = 0 ; then
-        COMPILER_TYPE="forte"
-        echo "$as_me:$LINENO: result: forte" >&5
-echo "${ECHO_T}forte" >&6
-      fi
-    fi
-    $RM -f version.out
-  fi
-
-  if test "$COMPILER_TYPE" = "unknown"; then
-    echo "$as_me:$LINENO: result: unknown" >&5
-echo "${ECHO_T}unknown" >&6
-  fi
-
-
-
-CXXDEBUGFLAGS="-g"
-CDEBUGFLAGS="-g"
-
-CXXOPTFLAGS="-O2"
-COPTFLAGS="-O2"
-
-if test $COMPILER_TYPE = "gnu" ; then
-
-    CXXFLAGS="$CXXFLAGS -Dcompiler_gnu -fno-default-inline -fPIC"
-    CFLAGS="$CFLAGS -Dcompiler_gnu -fPIC"
-
-    SOFLAGS="-fPIC -shared -rdynamic"
-
-    C_AS_CPLUSPLUS="-x c++"
-
-    # Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_AR+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $AR in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_AR="$AR" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_AR="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-AR=$ac_cv_path_AR
-
-if test -n "$AR"; then
-  echo "$as_me:$LINENO: result: $AR" >&5
-echo "${ECHO_T}$AR" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-
-    ARFLAGS="crv"
-
-
-elif test $COMPILER_TYPE = "aix-native" ; then
-
-    CXXFLAGS="$CXXFLAGS -Dcompiler_ibm"
-    CFLAGS="$CFLAGS -Dcompiler_ibm"
-
-    SOFLAGS="-G"
-
-    C_AS_CPLUSPLUS="-+"
-
-    # Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_AR+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $AR in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_AR="$AR" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_AR="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-AR=$ac_cv_path_AR
-
-if test -n "$AR"; then
-  echo "$as_me:$LINENO: result: $AR" >&5
-echo "${ECHO_T}$AR" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-
-    ARFLAGS="crv"
-
-
-elif test $COMPILER_TYPE = "forte" ; then
-
-    CXXFLAGS="$CXXFLAGS -Dcompiler_sun -KPIC"
-    CFLAGS="$CFLAGS -Dcompiler_sun -KPIC"
-
-    CXXOPTFLAGS="-xO2"
-    COPTFLAGS="-xO2"
-
-    CXXDEBUGFLAGS="-g -xO0"
-    CDEBUGFLAGS="-g -xO0"
-
-    SOFLAGS="-G"
-
-    # Extract the first word of "CC", so it can be a program name with args.
-set dummy CC; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_AR+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $AR in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_AR="$AR" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_AR="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-AR=$ac_cv_path_AR
-
-if test -n "$AR"; then
-  echo "$as_me:$LINENO: result: $AR" >&5
-echo "${ECHO_T}$AR" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-
-    ARFLAGS="-xar -o"
-
-
-elif test $COMPILER_TYPE = "pgi" ; then
-
-    CXXFLAGS="$CXXFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
-    CFLAGS="$CFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
-
-    CXXDEBUGFLAGS="-g -O0"
-    CDEBUGFLAGS="-g -O0"
-
-    GOOD_CXXFLAGS="$CXXFLAGS"
-    CXXFLAGS="$CXXFLAGS --one_instantiation_per_object"
-    echo "$as_me:$LINENO: checking whether pgCC supports --one_instantiation_per_object" >&5
-echo $ECHO_N "checking whether pgCC supports --one_instantiation_per_object... $ECHO_C" >&6
-
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_cxx_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6 ; PGI_OLD_TEMPLATES="yes" ; debug_mode="no"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6 ; PGI_OLD_TEMPLATES="no"
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-
-    CXXFLAGS="$GOOD_CXXFLAGS"
-
-    SOFLAGS="-fPIC -shared"
-
-    # Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_AR+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $AR in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_AR="$AR" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_AR="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-AR=$ac_cv_path_AR
-
-if test -n "$AR"; then
-  echo "$as_me:$LINENO: result: $AR" >&5
-echo "${ECHO_T}$AR" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-
-    ARFLAGS="crv"
-
-
-elif test $COMPILER_TYPE = "intel" ; then
-
-    CXXFLAGS="$CXXFLAGS -Dcompiler_intel -fPIC"
-    CFLAGS="$CFLAGS -Dcompiler_intel -fPIC"
-
-    CXXDEBUGFLAGS="-g -O0"
-    CDEBUGFLAGS="-g -O0"
-
-    SOFLAGS="-fPIC -shared"
-
-    # Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_AR+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $AR in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_AR="$AR" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_AR="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-AR=$ac_cv_path_AR
-
-if test -n "$AR"; then
-  echo "$as_me:$LINENO: result: $AR" >&5
-echo "${ECHO_T}$AR" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-
-    ARFLAGS="crv"
-
-
-fi
-
-if test $debug_mode = "yes" ; then
-    CXXFLAGS="$CXXDEBUGFLAGS $CXXFLAGS -DDEBUG"
-    CFLAGS="$CDEBUGFLAGS $CFLAGS -DDEBUG"
-else
-    CXXFLAGS="$CXXOPTFLAGS $CXXFLAGS"
-    CFLAGS="$COPTFLAGS $CFLAGS"
-fi
-
-
-
-# Make sure we can run config.sub.
-$ac_config_sub sun4 >/dev/null 2>&1 ||
-  { { echo "$as_me:$LINENO: error: cannot run $ac_config_sub" >&5
-echo "$as_me: error: cannot run $ac_config_sub" >&2;}
-   { (exit 1); exit 1; }; }
-
-echo "$as_me:$LINENO: checking build system type" >&5
-echo $ECHO_N "checking build system type... $ECHO_C" >&6
-if test "${ac_cv_build+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_build_alias=$build_alias
-test -z "$ac_cv_build_alias" &&
-  ac_cv_build_alias=`$ac_config_guess`
-test -z "$ac_cv_build_alias" &&
-  { { echo "$as_me:$LINENO: error: cannot guess build type; you must specify one" >&5
-echo "$as_me: error: cannot guess build type; you must specify one" >&2;}
-   { (exit 1); exit 1; }; }
-ac_cv_build=`$ac_config_sub $ac_cv_build_alias` ||
-  { { echo "$as_me:$LINENO: error: $ac_config_sub $ac_cv_build_alias failed" >&5
-echo "$as_me: error: $ac_config_sub $ac_cv_build_alias failed" >&2;}
-   { (exit 1); exit 1; }; }
-
-fi
-echo "$as_me:$LINENO: result: $ac_cv_build" >&5
-echo "${ECHO_T}$ac_cv_build" >&6
-build=$ac_cv_build
-build_cpu=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
-build_vendor=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
-build_os=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
-
-
-echo "$as_me:$LINENO: checking host system type" >&5
-echo $ECHO_N "checking host system type... $ECHO_C" >&6
-if test "${ac_cv_host+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_host_alias=$host_alias
-test -z "$ac_cv_host_alias" &&
-  ac_cv_host_alias=$ac_cv_build_alias
-ac_cv_host=`$ac_config_sub $ac_cv_host_alias` ||
-  { { echo "$as_me:$LINENO: error: $ac_config_sub $ac_cv_host_alias failed" >&5
-echo "$as_me: error: $ac_config_sub $ac_cv_host_alias failed" >&2;}
-   { (exit 1); exit 1; }; }
-
-fi
-echo "$as_me:$LINENO: result: $ac_cv_host" >&5
-echo "${ECHO_T}$ac_cv_host" >&6
-host=$ac_cv_host
-host_cpu=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
-host_vendor=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
-host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
-
-
-MRNET_ARCH=`echo $host | sed 's/[-|.]/_/g'`
-MRNET_OS=`echo $host_os | sed 's/[-0-9].*//'`
-MRNET_OSVER=`echo $host_os | sed 's/[-|.]/_/g'`
-MRNET_ROOT=`pwd`
-MRNET_VERSION='`cat "$(srcdir)"/VERSION`'
-
-
-cat >>confdefs.h <<\_ACEOF
-#define COMMNODE_EXE "mrnet_commnode"
-_ACEOF
-
-
-
-
-
-
-
-LIBS="-lm -lpthread -ldl"
-LIBS_LIGHTWEIGHT="-lm"
-EXTRA_LIBS=""
-
-case "$host_os" in
-  *linux*)
-    LDFLAGS="$LDFLAGS -Wl,-E"
-    CN_LDFLAGS="$CN_LDFLAGS -Wl,-E"
-    os_release=`uname -r`
-    case "$os_release" in
-      2.4*)
-        CXXFLAGS="$CXXFLAGS -Dos_linux=24"
-        CFLAGS="$CFLAGS -Dos_linux=24"
-        ;;
-      2.6*)
-        CXXFLAGS="$CXXFLAGS -Dos_linux=26"
-        CFLAGS="$CFLAGS -Dos_linux=26"
-        ;;
-      *)
-        CXXFLAGS="$CXXFLAGS -Dos_linux"
-        CFLAGS="$CFLAGS -Dos_linux"
-        ;;
-    esac
-    ;;
-  *aix4*)
-    CXXFLAGS="$CXXFLAGS -Dos_aix=4"
-    CFLAGS="$CFLAGS -Dos_aix=4"
-    ;;
-  *aix5*)
-    CXXFLAGS="$CXXFLAGS -Dos_aix=5"
-    CFLAGS="$CFLAGS -Dos_aix=5"
-    ;;
-  *solaris2.8*)
-    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
-    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
-    CXXFLAGS="$CXXFLAGS -Dos_solaris=8"
-    CFLAGS="$CFLAGS -Dos_solaris=8"
-    ;;
-  *solaris2.9*)
-    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
-    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
-    CXXFLAGS="$CXXFLAGS -Dos_solaris=9"
-    CFLAGS="$CFLAGS -Dos_solaris=9"
-    ;;
-  *sunos*)
-    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
-    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
-    CXXFLAGS="$CXXFLAGS -Dos_sunos"
-    CFLAGS="$CFLAGS -Dos_sunos"
-    ;;
-  *)
-    ;;
-esac
-
-if test $MRNET_STARTUP_METHOD = "ssh" ; then
-    echo "$as_me:$LINENO: checking for /proc/cray_xt/nid" >&5
-echo $ECHO_N "checking for /proc/cray_xt/nid... $ECHO_C" >&6
-if test "${ac_cv_file__proc_cray_xt_nid+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "/proc/cray_xt/nid"; then
-  ac_cv_file__proc_cray_xt_nid=yes
-else
-  ac_cv_file__proc_cray_xt_nid=no
-fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_file__proc_cray_xt_nid" >&5
-echo "${ECHO_T}$ac_cv_file__proc_cray_xt_nid" >&6
-if test $ac_cv_file__proc_cray_xt_nid = yes; then
-  MRNET_STARTUP_METHOD="cray_xt"
-fi
-
-fi
-if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
-
-    ac_ext=cc
+ac_ext=cc
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -3994,6 +3414,729 @@ fi
 done
 
 
+if test "${ac_cv_header_boost_shared_ptr_hpp+set}" = set; then
+  echo "$as_me:$LINENO: checking for boost/shared_ptr.hpp" >&5
+echo $ECHO_N "checking for boost/shared_ptr.hpp... $ECHO_C" >&6
+if test "${ac_cv_header_boost_shared_ptr_hpp+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_boost_shared_ptr_hpp" >&5
+echo "${ECHO_T}$ac_cv_header_boost_shared_ptr_hpp" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking boost/shared_ptr.hpp usability" >&5
+echo $ECHO_N "checking boost/shared_ptr.hpp usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <boost/shared_ptr.hpp>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking boost/shared_ptr.hpp presence" >&5
+echo $ECHO_N "checking boost/shared_ptr.hpp presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <boost/shared_ptr.hpp>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_cxx_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_cxx_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_cxx_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: boost/shared_ptr.hpp: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: boost/shared_ptr.hpp: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: present but cannot be compiled" >&5
+echo "$as_me: WARNING: boost/shared_ptr.hpp: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: boost/shared_ptr.hpp:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: boost/shared_ptr.hpp: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: boost/shared_ptr.hpp:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: boost/shared_ptr.hpp: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: boost/shared_ptr.hpp: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------------ ##
+## Report this to the AC_PACKAGE_NAME lists.  ##
+## ------------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for boost/shared_ptr.hpp" >&5
+echo $ECHO_N "checking for boost/shared_ptr.hpp... $ECHO_C" >&6
+if test "${ac_cv_header_boost_shared_ptr_hpp+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_boost_shared_ptr_hpp=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_boost_shared_ptr_hpp" >&5
+echo "${ECHO_T}$ac_cv_header_boost_shared_ptr_hpp" >&6
+
+fi
+if test $ac_cv_header_boost_shared_ptr_hpp = yes; then
+  HAVE_BOOST="yes"
+fi
+
+
+
+STDCFLAGS="-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS"
+CXXFLAGS="$CXXFLAGS $STDCFLAGS"
+CFLAGS="$CFLAGS $STDCFLAGS"
+
+CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
+CFLAGS=`echo $CFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
+
+
+
+  echo "$as_me:$LINENO: checking for compiler type" >&5
+echo $ECHO_N "checking for compiler type... $ECHO_C" >&6
+
+  COMPILER_TYPE="unknown"
+
+  if test "$CXX" = "g++" ; then
+    COMPILER_TYPE="gnu"
+    echo "$as_me:$LINENO: result: gnu" >&5
+echo "${ECHO_T}gnu" >&6
+  elif test "$CXX" = "xlC_r" ; then
+    COMPILER_TYPE="aix-native"
+    echo "$as_me:$LINENO: result: aix-native" >&5
+echo "${ECHO_T}aix-native" >&6
+  elif test "$CXX" = "xlC" ; then
+    COMPILER_TYPE="aix-native"
+    echo "$as_me:$LINENO: result: aix-native" >&5
+echo "${ECHO_T}aix-native" >&6
+  elif test "$CXX" = "xlc++" ; then
+    COMPILER_TYPE="aix-native"
+    echo "$as_me:$LINENO: result: aix-native" >&5
+echo "${ECHO_T}aix-native" >&6
+  elif test "$CXX" = "pgCC" ; then
+    COMPILER_TYPE="pgi"
+    echo "$as_me:$LINENO: result: pgi" >&5
+echo "${ECHO_T}pgi" >&6
+  elif test "$CXX" = "icpc" ; then
+    COMPILER_TYPE="intel"
+    echo "$as_me:$LINENO: result: intel" >&5
+echo "${ECHO_T}intel" >&6
+  fi
+
+  if test "$COMPILER_TYPE" = "unknown"; then
+    $CXX --version 2> /dev/null > version.out
+    $GREP "GCC" version.out > /dev/null
+
+    if test "$?" = 0 ; then
+      COMPILER_TYPE="gnu"
+      echo "$as_me:$LINENO: result: gnu" >&5
+echo "${ECHO_T}gnu" >&6
+    else
+      $GREP "Portland Group" version.out > /dev/null
+      if test "$?" = 0; then
+        COMPILER_TYPE="pgi"
+        echo "$as_me:$LINENO: result: pgi" >&5
+echo "${ECHO_T}pgi" >&6
+      else
+        $GREP "Intel Corporation" version.out > /dev/null
+        if test "$?" = 0; then
+          COMPILER_TYPE="intel"
+          echo "$as_me:$LINENO: result: intel" >&5
+echo "${ECHO_T}intel" >&6
+        fi
+      fi
+    fi
+    $RM -f version.out
+  fi
+
+  if test "$COMPILER_TYPE" = "unknown"; then
+    $CXX -V 2> version.out
+
+    $GREP "Forte" version.out > /dev/null
+    if test "$?" = 0 ; then
+      COMPILER_TYPE="forte"
+      echo "$as_me:$LINENO: result: forte" >&5
+echo "${ECHO_T}forte" >&6
+    else
+      $GREP "Sun" version.out > /dev/null
+      if test "$?" = 0 ; then
+        COMPILER_TYPE="forte"
+        echo "$as_me:$LINENO: result: forte" >&5
+echo "${ECHO_T}forte" >&6
+      fi
+    fi
+    $RM -f version.out
+  fi
+
+  if test "$COMPILER_TYPE" = "unknown"; then
+    echo "$as_me:$LINENO: result: unknown" >&5
+echo "${ECHO_T}unknown" >&6
+  fi
+
+
+
+CXXDEBUGFLAGS="-g"
+CDEBUGFLAGS="-g"
+
+CXXOPTFLAGS="-O2"
+COPTFLAGS="-O2"
+
+if test $COMPILER_TYPE = "gnu" ; then
+
+    CXXFLAGS="$CXXFLAGS -Dcompiler_gnu -fno-default-inline -fPIC"
+    CFLAGS="$CFLAGS -Dcompiler_gnu -fPIC"
+
+    SOFLAGS="-fPIC -shared -rdynamic"
+
+    C_AS_CPLUSPLUS="-x c++"
+
+    # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_AR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $AR in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_AR="$AR" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_AR="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+AR=$ac_cv_path_AR
+
+if test -n "$AR"; then
+  echo "$as_me:$LINENO: result: $AR" >&5
+echo "${ECHO_T}$AR" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+    ARFLAGS="crv"
+
+
+elif test $COMPILER_TYPE = "aix-native" ; then
+
+    CXXFLAGS="$CXXFLAGS -Dcompiler_ibm"
+    CFLAGS="$CFLAGS -Dcompiler_ibm"
+
+    SOFLAGS="-G"
+
+    C_AS_CPLUSPLUS="-+"
+
+    # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_AR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $AR in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_AR="$AR" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_AR="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+AR=$ac_cv_path_AR
+
+if test -n "$AR"; then
+  echo "$as_me:$LINENO: result: $AR" >&5
+echo "${ECHO_T}$AR" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+    ARFLAGS="crv"
+
+
+elif test $COMPILER_TYPE = "forte" ; then
+
+    CXXFLAGS="$CXXFLAGS -Dcompiler_sun -KPIC"
+    CFLAGS="$CFLAGS -Dcompiler_sun -KPIC"
+
+    CXXOPTFLAGS="-xO2"
+    COPTFLAGS="-xO2"
+
+    CXXDEBUGFLAGS="-g -xO0"
+    CDEBUGFLAGS="-g -xO0"
+
+    SOFLAGS="-G"
+
+    # Extract the first word of "CC", so it can be a program name with args.
+set dummy CC; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_AR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $AR in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_AR="$AR" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_AR="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+AR=$ac_cv_path_AR
+
+if test -n "$AR"; then
+  echo "$as_me:$LINENO: result: $AR" >&5
+echo "${ECHO_T}$AR" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+    ARFLAGS="-xar -o"
+
+
+elif test $COMPILER_TYPE = "pgi" ; then
+
+    CXXFLAGS="$CXXFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
+    CFLAGS="$CFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
+
+    CXXDEBUGFLAGS="-g -O0"
+    CDEBUGFLAGS="-g -O0"
+
+    GOOD_CXXFLAGS="$CXXFLAGS"
+    CXXFLAGS="$CXXFLAGS --one_instantiation_per_object"
+    echo "$as_me:$LINENO: checking whether pgCC supports --one_instantiation_per_object" >&5
+echo $ECHO_N "checking whether pgCC supports --one_instantiation_per_object... $ECHO_C" >&6
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6 ; PGI_OLD_TEMPLATES="yes" ; debug_mode="no"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6 ; PGI_OLD_TEMPLATES="no"
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
+    CXXFLAGS="$GOOD_CXXFLAGS"
+
+    SOFLAGS="-fPIC -shared"
+
+    # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_AR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $AR in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_AR="$AR" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_AR="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+AR=$ac_cv_path_AR
+
+if test -n "$AR"; then
+  echo "$as_me:$LINENO: result: $AR" >&5
+echo "${ECHO_T}$AR" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+    ARFLAGS="crv"
+
+
+elif test $COMPILER_TYPE = "intel" ; then
+
+    CXXFLAGS="$CXXFLAGS -Dcompiler_intel -fPIC"
+    CFLAGS="$CFLAGS -Dcompiler_intel -fPIC"
+
+    CXXDEBUGFLAGS="-g -O0"
+    CDEBUGFLAGS="-g -O0"
+
+    SOFLAGS="-fPIC -shared"
+
+    # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_AR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $AR in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_AR="$AR" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_AR="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+AR=$ac_cv_path_AR
+
+if test -n "$AR"; then
+  echo "$as_me:$LINENO: result: $AR" >&5
+echo "${ECHO_T}$AR" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+    ARFLAGS="crv"
+
+
+fi
+
+if test $debug_mode = "yes" ; then
+    CXXFLAGS="$CXXDEBUGFLAGS $CXXFLAGS -DDEBUG"
+    CFLAGS="$CDEBUGFLAGS $CFLAGS -DDEBUG"
+else
+    CXXFLAGS="$CXXOPTFLAGS $CXXFLAGS"
+    CFLAGS="$COPTFLAGS $CFLAGS"
+fi
+
+
+
+# Make sure we can run config.sub.
+$ac_config_sub sun4 >/dev/null 2>&1 ||
+  { { echo "$as_me:$LINENO: error: cannot run $ac_config_sub" >&5
+echo "$as_me: error: cannot run $ac_config_sub" >&2;}
+   { (exit 1); exit 1; }; }
+
+echo "$as_me:$LINENO: checking build system type" >&5
+echo $ECHO_N "checking build system type... $ECHO_C" >&6
+if test "${ac_cv_build+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_build_alias=$build_alias
+test -z "$ac_cv_build_alias" &&
+  ac_cv_build_alias=`$ac_config_guess`
+test -z "$ac_cv_build_alias" &&
+  { { echo "$as_me:$LINENO: error: cannot guess build type; you must specify one" >&5
+echo "$as_me: error: cannot guess build type; you must specify one" >&2;}
+   { (exit 1); exit 1; }; }
+ac_cv_build=`$ac_config_sub $ac_cv_build_alias` ||
+  { { echo "$as_me:$LINENO: error: $ac_config_sub $ac_cv_build_alias failed" >&5
+echo "$as_me: error: $ac_config_sub $ac_cv_build_alias failed" >&2;}
+   { (exit 1); exit 1; }; }
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_build" >&5
+echo "${ECHO_T}$ac_cv_build" >&6
+build=$ac_cv_build
+build_cpu=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+build_vendor=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+build_os=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
+
+
+echo "$as_me:$LINENO: checking host system type" >&5
+echo $ECHO_N "checking host system type... $ECHO_C" >&6
+if test "${ac_cv_host+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_host_alias=$host_alias
+test -z "$ac_cv_host_alias" &&
+  ac_cv_host_alias=$ac_cv_build_alias
+ac_cv_host=`$ac_config_sub $ac_cv_host_alias` ||
+  { { echo "$as_me:$LINENO: error: $ac_config_sub $ac_cv_host_alias failed" >&5
+echo "$as_me: error: $ac_config_sub $ac_cv_host_alias failed" >&2;}
+   { (exit 1); exit 1; }; }
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_host" >&5
+echo "${ECHO_T}$ac_cv_host" >&6
+host=$ac_cv_host
+host_cpu=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+host_vendor=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
+
+
+MRNET_ARCH=`echo $host | sed 's/[-|.]/_/g'`
+MRNET_OS=`echo $host_os | sed 's/[-0-9].*//'`
+MRNET_OSVER=`echo $host_os | sed 's/[-|.]/_/g'`
+MRNET_ROOT=`pwd`
+MRNET_VERSION='`cat "$(srcdir)"/VERSION`'
+
+
+cat >>confdefs.h <<\_ACEOF
+#define COMMNODE_EXE "mrnet_commnode"
+_ACEOF
+
+
+
+
+
+
+
+LIBS="-lm -lpthread -ldl"
+LIBS_LIGHTWEIGHT="-lm"
+EXTRA_LIBS=""
+
+case "$host_os" in
+  *linux*)
+    LDFLAGS="$LDFLAGS -Wl,-E"
+    CN_LDFLAGS="$CN_LDFLAGS -Wl,-E"
+    os_release=`uname -r`
+    case "$os_release" in
+      2.4*)
+        CXXFLAGS="$CXXFLAGS -Dos_linux=24"
+        CFLAGS="$CFLAGS -Dos_linux=24"
+        ;;
+      2.6*)
+        CXXFLAGS="$CXXFLAGS -Dos_linux=26"
+        CFLAGS="$CFLAGS -Dos_linux=26"
+        ;;
+      *)
+        CXXFLAGS="$CXXFLAGS -Dos_linux"
+        CFLAGS="$CFLAGS -Dos_linux"
+        ;;
+    esac
+    ;;
+  *aix4*)
+    CXXFLAGS="$CXXFLAGS -Dos_aix=4"
+    CFLAGS="$CFLAGS -Dos_aix=4"
+    ;;
+  *aix5*)
+    CXXFLAGS="$CXXFLAGS -Dos_aix=5"
+    CFLAGS="$CFLAGS -Dos_aix=5"
+    ;;
+  *solaris2.8*)
+    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
+    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
+    CXXFLAGS="$CXXFLAGS -Dos_solaris=8"
+    CFLAGS="$CFLAGS -Dos_solaris=8"
+    ;;
+  *solaris2.9*)
+    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
+    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
+    CXXFLAGS="$CXXFLAGS -Dos_solaris=9"
+    CFLAGS="$CFLAGS -Dos_solaris=9"
+    ;;
+  *sunos*)
+    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
+    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
+    CXXFLAGS="$CXXFLAGS -Dos_sunos"
+    CFLAGS="$CFLAGS -Dos_sunos"
+    ;;
+  *)
+    ;;
+esac
+
+if test $MRNET_STARTUP_METHOD = "ssh" ; then
+    echo "$as_me:$LINENO: checking for /proc/cray_xt/nid" >&5
+echo $ECHO_N "checking for /proc/cray_xt/nid... $ECHO_C" >&6
+if test "${ac_cv_file__proc_cray_xt_nid+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "/proc/cray_xt/nid"; then
+  ac_cv_file__proc_cray_xt_nid=yes
+else
+  ac_cv_file__proc_cray_xt_nid=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file__proc_cray_xt_nid" >&5
+echo "${ECHO_T}$ac_cv_file__proc_cray_xt_nid" >&6
+if test $ac_cv_file__proc_cray_xt_nid = yes; then
+  MRNET_STARTUP_METHOD="cray_xt"
+fi
+
+fi
+if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
+
 
 for ac_header in alps/apInfo.h
 do
@@ -4358,6 +4501,7 @@ echo "$as_me: error: no" >&2;}
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
 
 
 
@@ -9133,6 +9277,8 @@ s,@GREP@,$GREP,;t t
 s,@CP@,$CP,;t t
 s,@RM@,$RM,;t t
 s,@FLEX@,$FLEX,;t t
+s,@CXXCPP@,$CXXCPP,;t t
+s,@EGREP@,$EGREP,;t t
 s,@COMPILER_TYPE@,$COMPILER_TYPE,;t t
 s,@AR@,$AR,;t t
 s,@ARFLAGS@,$ARFLAGS,;t t
@@ -9149,14 +9295,13 @@ s,@MRNET_ARCH@,$MRNET_ARCH,;t t
 s,@MRNET_OS@,$MRNET_OS,;t t
 s,@MRNET_ROOT@,$MRNET_ROOT,;t t
 s,@MRNET_VERSION@,$MRNET_VERSION,;t t
-s,@CXXCPP@,$CXXCPP,;t t
-s,@EGREP@,$EGREP,;t t
 s,@MRNET_STARTUP_METHOD@,$MRNET_STARTUP_METHOD,;t t
 s,@CN_LDFLAGS@,$CN_LDFLAGS,;t t
 s,@SOFLAGS@,$SOFLAGS,;t t
 s,@C_AS_CPLUSPLUS@,$C_AS_CPLUSPLUS,;t t
 s,@LIBS_LIGHTWEIGHT@,$LIBS_LIGHTWEIGHT,;t t
 s,@EXTRA_LIBS@,$EXTRA_LIBS,;t t
+s,@HAVE_BOOST@,$HAVE_BOOST,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
