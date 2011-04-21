@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX CXXCPP EGREP COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT EXTRA_LIBS HAVE_BOOST LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX CXXCPP EGREP COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT EXTRA_LIBS HAVE_BOOST PLATFORM_BUILD LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1317,11 +1317,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-
-
-          ac_config_headers="$ac_config_headers src/config.h"
-
-          ac_config_headers="$ac_config_headers xplat/config.h"
 
 
 ac_aux_dir=
@@ -7230,10 +7225,13 @@ _ACEOF
 
 
 
+PLATFORM_BUILD="${MRNET_ROOT}/build/${host}"
+
+
 { if $as_mkdir_p; then
-    mkdir -p obj/${host}
+    mkdir -p ${PLATFORM_BUILD}/bin
   else
-    as_dir=obj/${host}
+    as_dir=${PLATFORM_BUILD}/bin
     as_dirs=
     while test ! -d "$as_dir"; do
       as_dirs="$as_dir $as_dirs"
@@ -7251,14 +7249,14 @@ echo X"$as_dir" |
   	  s/.*/./; q'`
     done
     test ! -n "$as_dirs" || mkdir $as_dirs
-  fi || { { echo "$as_me:$LINENO: error: cannot create directory obj/${host}" >&5
-echo "$as_me: error: cannot create directory obj/${host}" >&2;}
+  fi || { { echo "$as_me:$LINENO: error: cannot create directory ${PLATFORM_BUILD}/bin" >&5
+echo "$as_me: error: cannot create directory ${PLATFORM_BUILD}/bin" >&2;}
    { (exit 1); exit 1; }; }; }
 
 { if $as_mkdir_p; then
-    mkdir -p lib/${host}
+    mkdir -p ${PLATFORM_BUILD}/depends/ltwt
   else
-    as_dir=lib/${host}
+    as_dir=${PLATFORM_BUILD}/depends/ltwt
     as_dirs=
     while test ! -d "$as_dir"; do
       as_dirs="$as_dir $as_dirs"
@@ -7276,14 +7274,14 @@ echo X"$as_dir" |
   	  s/.*/./; q'`
     done
     test ! -n "$as_dirs" || mkdir $as_dirs
-  fi || { { echo "$as_me:$LINENO: error: cannot create directory lib/${host}" >&5
-echo "$as_me: error: cannot create directory lib/${host}" >&2;}
+  fi || { { echo "$as_me:$LINENO: error: cannot create directory ${PLATFORM_BUILD}/depends/ltwt" >&5
+echo "$as_me: error: cannot create directory ${PLATFORM_BUILD}/depends/ltwt" >&2;}
    { (exit 1); exit 1; }; }; }
 
 { if $as_mkdir_p; then
-    mkdir -p bin/${host}
+    mkdir -p ${PLATFORM_BUILD}/depends/xplat/ltwt
   else
-    as_dir=bin/${host}
+    as_dir=${PLATFORM_BUILD}/depends/xplat/ltwt
     as_dirs=
     while test ! -d "$as_dir"; do
       as_dirs="$as_dir $as_dirs"
@@ -7301,14 +7299,14 @@ echo X"$as_dir" |
   	  s/.*/./; q'`
     done
     test ! -n "$as_dirs" || mkdir $as_dirs
-  fi || { { echo "$as_me:$LINENO: error: cannot create directory bin/${host}" >&5
-echo "$as_me: error: cannot create directory bin/${host}" >&2;}
+  fi || { { echo "$as_me:$LINENO: error: cannot create directory ${PLATFORM_BUILD}/depends/xplat/ltwt" >&5
+echo "$as_me: error: cannot create directory ${PLATFORM_BUILD}/depends/xplat/ltwt" >&2;}
    { (exit 1); exit 1; }; }; }
 
 { if $as_mkdir_p; then
-    mkdir -p depends
+    mkdir -p ${PLATFORM_BUILD}/lib
   else
-    as_dir=depends
+    as_dir=${PLATFORM_BUILD}/lib
     as_dirs=
     while test ! -d "$as_dir"; do
       as_dirs="$as_dir $as_dirs"
@@ -7326,14 +7324,14 @@ echo X"$as_dir" |
   	  s/.*/./; q'`
     done
     test ! -n "$as_dirs" || mkdir $as_dirs
-  fi || { { echo "$as_me:$LINENO: error: cannot create directory depends" >&5
-echo "$as_me: error: cannot create directory depends" >&2;}
+  fi || { { echo "$as_me:$LINENO: error: cannot create directory ${PLATFORM_BUILD}/lib" >&5
+echo "$as_me: error: cannot create directory ${PLATFORM_BUILD}/lib" >&2;}
    { (exit 1); exit 1; }; }; }
 
 { if $as_mkdir_p; then
-    mkdir -p lightweight/obj/${host}
+    mkdir -p ${PLATFORM_BUILD}/obj/ltwt
   else
-    as_dir=lightweight/obj/${host}
+    as_dir=${PLATFORM_BUILD}/obj/ltwt
     as_dirs=
     while test ! -d "$as_dir"; do
       as_dirs="$as_dir $as_dirs"
@@ -7351,14 +7349,14 @@ echo X"$as_dir" |
   	  s/.*/./; q'`
     done
     test ! -n "$as_dirs" || mkdir $as_dirs
-  fi || { { echo "$as_me:$LINENO: error: cannot create directory lightweight/obj/${host}" >&5
-echo "$as_me: error: cannot create directory lightweight/obj/${host}" >&2;}
+  fi || { { echo "$as_me:$LINENO: error: cannot create directory ${PLATFORM_BUILD}/obj/ltwt" >&5
+echo "$as_me: error: cannot create directory ${PLATFORM_BUILD}/obj/ltwt" >&2;}
    { (exit 1); exit 1; }; }; }
 
 { if $as_mkdir_p; then
-    mkdir -p lightweight/depends
+    mkdir -p ${PLATFORM_BUILD}/obj/xplat/ltwt
   else
-    as_dir=lightweight/depends
+    as_dir=${PLATFORM_BUILD}/obj/xplat/ltwt
     as_dirs=
     while test ! -d "$as_dir"; do
       as_dirs="$as_dir $as_dirs"
@@ -7376,8 +7374,8 @@ echo X"$as_dir" |
   	  s/.*/./; q'`
     done
     test ! -n "$as_dirs" || mkdir $as_dirs
-  fi || { { echo "$as_me:$LINENO: error: cannot create directory lightweight/depends" >&5
-echo "$as_me: error: cannot create directory lightweight/depends" >&2;}
+  fi || { { echo "$as_me:$LINENO: error: cannot create directory ${PLATFORM_BUILD}/obj/xplat/ltwt" >&5
+echo "$as_me: error: cannot create directory ${PLATFORM_BUILD}/obj/xplat/ltwt" >&2;}
    { (exit 1); exit 1; }; }; }
 
 
@@ -8634,7 +8632,9 @@ fi
 done
 
 
-                                                  ac_config_files="$ac_config_files Makefile:conf/Makefile.in lightweight/Makefile lightweight/xplat/Makefile xplat/Makefile Examples/Makefile"
+          ac_config_headers="$ac_config_headers ${PLATFORM_BUILD}/config.h:conf/config.h.in"
+
+                                                  ac_config_files="$ac_config_files ${PLATFORM_BUILD}/Makefile:conf/Makefile.in ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in"
 
 
 cat >confcache <<\_ACEOF
@@ -9162,13 +9162,12 @@ for ac_config_target in $ac_config_targets
 do
   case "$ac_config_target" in
   # Handling of arguments.
-  "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile:conf/Makefile.in" ;;
-  "lightweight/Makefile" ) CONFIG_FILES="$CONFIG_FILES lightweight/Makefile" ;;
-  "lightweight/xplat/Makefile" ) CONFIG_FILES="$CONFIG_FILES lightweight/xplat/Makefile" ;;
-  "xplat/Makefile" ) CONFIG_FILES="$CONFIG_FILES xplat/Makefile" ;;
-  "Examples/Makefile" ) CONFIG_FILES="$CONFIG_FILES Examples/Makefile" ;;
-  "src/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS src/config.h" ;;
-  "xplat/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS xplat/config.h" ;;
+  "${PLATFORM_BUILD}/Makefile" ) CONFIG_FILES="$CONFIG_FILES ${PLATFORM_BUILD}/Makefile:conf/Makefile.in" ;;
+  "${PLATFORM_BUILD}/Makefile.ltwt" ) CONFIG_FILES="$CONFIG_FILES ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in" ;;
+  "${PLATFORM_BUILD}/Makefile.xplat" ) CONFIG_FILES="$CONFIG_FILES ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in" ;;
+  "${PLATFORM_BUILD}/Makefile.xplat_ltwt" ) CONFIG_FILES="$CONFIG_FILES ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in" ;;
+  "${PLATFORM_BUILD}/Makefile.examples" ) CONFIG_FILES="$CONFIG_FILES ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in" ;;
+  "${PLATFORM_BUILD}/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS ${PLATFORM_BUILD}/config.h:conf/config.h.in" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -9302,6 +9301,7 @@ s,@C_AS_CPLUSPLUS@,$C_AS_CPLUSPLUS,;t t
 s,@LIBS_LIGHTWEIGHT@,$LIBS_LIGHTWEIGHT,;t t
 s,@EXTRA_LIBS@,$EXTRA_LIBS,;t t
 s,@HAVE_BOOST@,$HAVE_BOOST,;t t
+s,@PLATFORM_BUILD@,$PLATFORM_BUILD,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

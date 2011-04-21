@@ -4,47 +4,51 @@
 # ****************************************************************************/
 # $Id: Makefile.in,v 1.14 2008/10/09 19:50:12 mjbrim Exp $
 
-rootdir = @MRNET_ROOT@
-BASEDIR = @abs_srcdir@
-SRCDIR  = $(BASEDIR)/src
+ROOTDIR = @MRNET_ROOT@
+BASEDIR = $(ROOTDIR)
+SRCDIR  = $(BASEDIR)/src/lightweight
 INCDIR  = $(BASEDIR)/include
-DEPDIR  = ./depends
-OBJDIR  = ./obj/@host@
+
+PLATDIR = @PLATFORM_BUILD@
+BINDIR   = $(PLATDIR)/bin
+LIBDIR   = $(PLATDIR)/lib
+OBJDIR   = $(PLATDIR)/obj/ltwt
+DEPDIR   = $(PLATDIR)/depends/ltwt
 
 mrnet_INCDIR = $(INCDIR)/mrnet_lightweight
 install_INCDIR = $(IINCDIR)/mrnet_lightweight
 
-VPATH = $(SRCDIR)
+VPATH = $(SRCDIR) $(ROOTDIR)/src
 
-TARGET    = libmrnet_lightweight.a
-TARGET_SO = libmrnet_lightweight.so
+TARGET    = $(LIBDIR)/libmrnet_lightweight.a
+TARGET_SO = $(LIBDIR)/libmrnet_lightweight.so
 
 TARGETS = $(TARGET)
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(TARGET_SO)
 endif 
 
-LTWT_SRCS = BackEndNode.c \
-            ChildNode.c \
-            DataElement.c \
-            Error.c \
-            Filter.c \
-	    FilterDefinitions.c \
-            map.c \
-            Message.c \
-            Network.c \
-            NetworkTopology.c \
-            Packet.c \
-            PeerNode.c \
-            PerfDataEvent.c \
-            SerialGraph.c \
-            Stream.c \
-            utils_lightweight.c \
-            vector.c \
-            $(rootdir)/src/byte_order.c \
-            $(rootdir)/src/pdr.c \
-            $(rootdir)/src/pdr_mem.c \
-            $(rootdir)/src/pdr_sizeof.c
+LTWT_SRCS = $(SRCDIR)/BackEndNode.c \
+            $(SRCDIR)/ChildNode.c \
+            $(SRCDIR)/DataElement.c \
+            $(SRCDIR)/Error.c \
+            $(SRCDIR)/Filter.c \
+	    $(SRCDIR)/FilterDefinitions.c \
+            $(SRCDIR)/map.c \
+            $(SRCDIR)/Message.c \
+            $(SRCDIR)/Network.c \
+            $(SRCDIR)/NetworkTopology.c \
+            $(SRCDIR)/Packet.c \
+            $(SRCDIR)/PeerNode.c \
+            $(SRCDIR)/PerfDataEvent.c \
+            $(SRCDIR)/SerialGraph.c \
+            $(SRCDIR)/Stream.c \
+            $(SRCDIR)/utils_lightweight.c \
+            $(SRCDIR)/vector.c \
+            $(ROOTDIR)/src/byte_order.c \
+            $(ROOTDIR)/src/pdr.c \
+            $(ROOTDIR)/src/pdr_mem.c \
+            $(ROOTDIR)/src/pdr_sizeof.c
 
 ifeq ($(MRNET_OS), linux)
     LTWT_SRCS += PerfDataSysEvent_linux.c
@@ -55,8 +59,8 @@ endif
 LIBMRNET_HEADERS = $(wildcard $(mrnet_INCDIR)/*.h)
 INSTALL_HEADERS = $(addprefix $(install_INCDIR)/, $(notdir $(LIBMRNET_HEADERS)))
 
-LTWT_OBJS = $(addprefix $(OBJDIR)/, $(subst $(rootdir)/src/, , $(LTWT_SRCS:.c=.o)))
-LTWT_DEPS = $(addprefix $(DEPDIR)/, $(subst $(rootdir)/src/, , $(LTWT_SRCS:.c=.d)))
+LTWT_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o,$(notdir $(LTWT_SRCS))))
+LTWT_DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.c,%.d,$(notdir $(LTWT_SRCS))))
 
 all: $(TARGETS)
 
@@ -91,15 +95,9 @@ install: all install-prep $(INSTALL_HEADERS)
         fi
 
 clean:
-	for file in $(LTWT_OBJS) $(TARGETS) ; do \
+	for file in $(LTWT_DEPS) $(LTWT_OBJS) $(TARGETS) ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
-
-distclean: clean
-	for file in $(LTWT_DEPS) config.status config.log config.h Makefile ; do \
-	    if [ -f $$file ] ; then $(RM) $$file ; fi \
-	done
-	for file in `find $(BASEDIR) -name "*~" -print` ; do $(RM) $$file ; done
 
 # pattern rules
 @VERBOSEMAKE@
@@ -119,11 +117,11 @@ $(OBJDIR)/%.o: %.c
 	@echo Compiling `basename $@` ...
 	$(CC) $(CCFLAGS) -o $@ -c $<
 
-$(DEPDIR)/%.d: $(rootdir)/src/%.c
+$(DEPDIR)/%.d: $(ROOTDIR)/src/%.c
 	@echo Building depends file `basename $@` ...
 	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCLUDES_LIGHTWEIGHT)
 
-$(OBJDIR)/%.o: $(rootdir)/src/%.c
+$(OBJDIR)/%.o: $(ROOTDIR)/src/%.c
 	@echo Compiling `basename $@` ...
 	$(CC) $(CCFLAGS) -o $@ -c $<
 

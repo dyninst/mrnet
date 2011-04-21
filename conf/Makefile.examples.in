@@ -12,9 +12,10 @@ MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
 #############################
 ####  BUILD DIRECTORIES  ####
 #############################
-BINDIR  = $(MRNET_ROOT)/bin/$(MRNET_PLATFORM)
-LIBDIR  = $(MRNET_ROOT)/lib/$(MRNET_PLATFORM)
-OBJDIR  = $(MRNET_ROOT)/obj/$(MRNET_PLATFORM)
+PLATDIR = @PLATFORM_BUILD@
+BINDIR  = $(PLATDIR)/bin
+LIBDIR  = $(PLATDIR)/lib
+OBJDIR  = $(PLATDIR)/obj
 
 #############################
 #### INSTALL DIRECTORIES ####
@@ -55,7 +56,7 @@ LDFLAGS = @LDFLAGS@
 SOFLAGS = @SOFLAGS@
 
 INCDIRS = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include
-INCDIRS_LIGHTWEIGHT = -I$(MRNET_ROOT)/lightweight/include -I$(MRNET_ROOT)/lightweight/xplat/include
+INCDIRS_LIGHTWEIGHT = $(INCDIRS)
 
 #####################################
 #### System Specific Definitions ####

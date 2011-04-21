@@ -5,36 +5,42 @@
 # $Id: Makefile.in,v 1.14 2008/10/09 19:50:12 mjbrim Exp $
 
 ROOTDIR  = @MRNET_ROOT@
-BASEDIR  = @abs_srcdir@
+BASEDIR  = $(ROOTDIR)/xplat
 INCDIR   = $(BASEDIR)/include
-SRCDIR   = $(BASEDIR)/src
+SRCDIR   = $(BASEDIR)/src/lightweight
+
+PLATDIR = @PLATFORM_BUILD@
+BINDIR  = $(PLATDIR)/bin
+LIBDIR  = $(PLATDIR)/lib
+OBJDIR  = $(PLATDIR)/obj/xplat/ltwt
+DEPDIR  = $(PLATDIR)/depends/xplat/ltwt
 
 xplat_INCDIR = $(INCDIR)/xplat_lightweight
 install_INCDIR = $(IINCDIR)/xplat_lightweight
 
 VPATH = $(SRCDIR) 
 
-TARGET    = libxplat_lightweight.a
-TARGET_SO = libxplat_lightweight.so
+TARGET    = $(LIBDIR)/libxplat_lightweight.a
+TARGET_SO = $(LIBDIR)/libxplat_lightweight.so
 
 TARGETS = $(TARGET)
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(TARGET_SO)
 endif 
 
-XPLAT_LTWT_SRCS = Error-unix.c \
-                  NCIO.c \
-                  NCIO-unix.c \
-                  NetUtils.c \
-                  NetUtils-unix.c \
-                  PathUtils-unix.c \
-                  Process-unix.c
+XPLAT_LTWT_SRCS = $(SRCDIR)/Error-unix.c \
+                  $(SRCDIR)/NCIO.c \
+                  $(SRCDIR)/NCIO-unix.c \
+                  $(SRCDIR)/NetUtils.c \
+                  $(SRCDIR)/NetUtils-unix.c \
+                  $(SRCDIR)/PathUtils-unix.c \
+                  $(SRCDIR)/Process-unix.c
 
 XPLAT_HEADERS = $(wildcard $(xplat_INCDIR)/*.h)
 INSTALL_HEADERS = $(addprefix $(install_INCDIR)/, $(notdir $(XPLAT_HEADERS)))
 
-XPLAT_LTWT_OBJS = $(XPLAT_LTWT_SRCS:.c=.o)
-XPLAT_LTWT_DEPS = $(XPLAT_LTWT_SRCS:.c=.d)
+XPLAT_LTWT_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o,$(notdir $(XPLAT_LTWT_SRCS))))
+XPLAT_LTWT_DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.c,%.d,$(notdir $(XPLAT_LTWT_SRCS))))
 
 all: $(TARGETS)
 
@@ -69,15 +75,9 @@ install: $(TARGETS) install-prep $(INSTALL_HEADERS)
         fi
 
 clean:
-	for file in $(XPLAT_LTWT_OBJS) $(TARGETS) ; do \
+	for file in $(XPLAT_LTWT_DEPS) $(XPLAT_LTWT_OBJS) $(TARGETS) ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
-
-distclean: clean
-	for file in $(XPLAT_LTWT_DEPS) config.status config.log config.h Makefile ; do \
-	    if [ -f $$file ] ; then $(RM) $$file ; fi \
-	done
-	for file in `find $(BASEDIR) -name "*~" -print` ; do $(RM) $$file ; done
 
 # pattern rules
 @VERBOSEMAKE@
@@ -89,11 +89,11 @@ distclean: clean
 # -- and then we could build in parallel
 .NOTPARALLEL:
 
-%.d: %.c
+$(DEPDIR)/%.d: %.c
 	@echo Building depends file `basename $@` ...
 	$(MAKEDEPENDS)  $< $*.o $@ $(INCLUDES_LIGHTWEIGHT)
 
-%.o: %.c
+$(OBJDIR)/%.o: %.c
 	@echo Compiling `basename $@` ...
 	$(CC) $(CCFLAGS) -o $@ -c $<
 

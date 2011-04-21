@@ -14,26 +14,27 @@ MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
 #### INSTALL DIRECTORIES ####
 #############################
 
-BINDIR  = ./bin/${MRNET_PLATFORM}
-LIBDIR  = ./lib/${MRNET_PLATFORM}
-OBJDIR  = ./obj/${MRNET_PLATFORM}
-DEPDIR = ./depends
+PLATDIR = @PLATFORM_BUILD@
+BINDIR  = $(PLATDIR)/bin
+LIBDIR  = $(PLATDIR)/lib
+OBJDIR  = $(PLATDIR)/obj
+DEPDIR  = $(PLATDIR)/depends
 
 BASEDIR  = $(MRNET_ROOT)
 INCDIR   = $(BASEDIR)/include
-LTWTDIR  = $(BASEDIR)/lightweight
 SRCDIR   = $(BASEDIR)/src
 TSTDIR   = $(BASEDIR)/tests
 XPLATDIR = $(BASEDIR)/xplat
 EXTDIR   = $(BASEDIR)/external
+BUILDDIR = $(BASEDIR)/build
 
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
-IBINDIR = @bindir@
-ILIBDIR = @libdir@
-IINCDIR = @includedir@
+IBINDIR     = @bindir@
+ILIBDIR     = @libdir@
+IINCDIR     = @includedir@
 
-mrnet_incdir = $(INCDIR)/mrnet
+mrnet_incdir   = $(INCDIR)/mrnet
 install_incdir = $(IINCDIR)/mrnet
 
 ##########################
@@ -75,13 +76,13 @@ SOFLAGS = @SOFLAGS@
 LIBS = $(LIBXPLAT) @LIBS@ @EXTRA_LIBS@
 LIBS_LIGHTWEIGHT = $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS@
 
-INCLUDES = -I$(INCDIR) -I$(SRCDIR) -I$(XPLATDIR)/include -I$(TSTDIR)
+COMMON_INCLUDES = -I$(INCDIR) -I$(XPLATDIR)/include -I$(TSTDIR) -I$(PLATDIR) -I$(SRCDIR) 
+INCLUDES = $(COMMON_INCLUDES)
 ifeq ($(HAVE_SYSTEM_BOOST), no)
     INCLUDES += -I$(EXTDIR)/boost/include
 endif
 
-INCLUDES_LIGHTWEIGHT = -I$(LTWTDIR)/include -I$(LTWTDIR)/src -I$(LTWTDIR)/xplat/include \
-                       -I$(TSTDIR) -I$(SRCDIR)
+INCLUDES_LIGHTWEIGHT = $(COMMON_INCLUDES) -I$(SRCDIR)/lightweight
 
 ifeq ($(COMPILER_TYPE), gnu)
     ifndef SILENCE_WARNINGS
@@ -150,16 +151,20 @@ export
 #############################
 COMMNODE    = $(BINDIR)/mrnet_commnode 
 TOPGEN      = $(BINDIR)/mrnet_topgen
+
 LIBMRNET    = $(LIBDIR)/libmrnet.a
 LIBMRNET_SO = $(LIBDIR)/libmrnet.so
-LIBXPLAT    = $(XPLATDIR)/libxplat.a
-LIBXPLAT_SO = $(XPLATDIR)/libxplat.so
-LIBMRNET_LIGHTWEIGHT    = $(LTWTDIR)/libmrnet_lightweight.a
-LIBMRNET_LIGHTWEIGHT_SO = $(LTWTDIR)/libmrnet_lightweight.so
-LIBXPLAT_LIGHTWEIGHT    = $(LTWTDIR)/xplat/libxplat_lightweight.a
-LIBXPLAT_LIGHTWEIGHT_SO = $(LTWTDIR)/xplat/libxplat_lightweight.so
 
-TARGETS = $(LIBMRNET) $(COMMNODE) $(TOPGEN)
+LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a
+LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so
+
+LIBXPLAT    = $(LIBDIR)/libxplat.a
+LIBXPLAT_SO = $(LIBDIR)/libxplat.so
+
+LIBXPLAT_LIGHTWEIGHT    = $(LIBDIR)/libxplat_lightweight.a
+LIBXPLAT_LIGHTWEIGHT_SO = $(LIBDIR)/libxplat_lightweight.so
+
+TARGETS = $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT) $(COMMNODE) $(TOPGEN)
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
     TARGETS += $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
@@ -289,31 +294,25 @@ PDR_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdi
 ALL_SRCS = $(LIBMRNET_SRCS) $(COMMNODE_SRCS) $(TEST_SRCS)
 DEPS	= $(addprefix $(DEPDIR)/, $(patsubst %.C,%.d,$(patsubst %.c,%.d,$(notdir $(ALL_SRCS)))))
 
-all: xplat-all xplat_lightweight-all $(TARGETS) lightweight-all
+all: $(TARGETS)
 
 xplat-all:
-	cd $(XPLATDIR) ; $(MAKE) all
-	$(CP) $(LIBXPLAT) $(LIBDIR)/
+	$(MAKE) -f $(PLATDIR)/Makefile.xplat all
 
 xplat-sharedobj:
-	cd $(XPLATDIR) ; $(MAKE) sharedobj
-	$(CP) $(LIBXPLAT_SO) $(LIBDIR)/
-
-lightweight-all:
-	cd $(LTWTDIR) ; $(MAKE) all
-	$(CP) $(LIBMRNET_LIGHTWEIGHT) $(LIBDIR)/
-
-lightweight-sharedobj:
-	cd $(LTWTDIR) ; $(MAKE) sharedobj
-	$(CP) $(LIBMRNET_LIGHTWEIGHT_SO) $(LIBDIR)/
+	$(MAKE) -f $(PLATDIR)/Makefile.xplat sharedobj
 
 xplat_lightweight-all:
-	cd $(LTWTDIR)/xplat ; $(MAKE) all
-	$(CP) $(LIBXPLAT_LIGHTWEIGHT) $(LIBDIR)/
+	$(MAKE) -f $(PLATDIR)/Makefile.xplat_ltwt all
 
 xplat_lightweight-sharedobj:
-	cd $(LTWTDIR)/xplat ; $(MAKE) sharedobj
-	$(CP) $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBDIR)/
+	$(MAKE) -f $(PLATDIR)/Makefile.xplat_ltwt sharedobj
+
+lightweight-all:
+	$(MAKE) -f $(PLATDIR)/Makefile.ltwt all
+
+lightweight-sharedobj:
+	$(MAKE) -f $(PLATDIR)/Makefile.ltwt sharedobj
 
 install: install-prep install-local lightweight-install xplat-install xplat_lightweight-install
 
@@ -373,23 +372,23 @@ install-tests-opt: tests-opt
 	$(INSTALL) -m 755 $(LIBDIR)/test_RecoveryFilter.so $(ILIBDIR)/
 
 install-examples: examples
-	$(MAKE) -C Examples install
+	$(MAKE) -f $(PLATDIR)/Makefile.examples install
 
 xplat-install:
-	cd $(XPLATDIR) ; $(MAKE) install
+	$(MAKE) -f $(PLATDIR)/Makefile.xplat install
 
 lightweight-install:
-	cd $(LTWTDIR) ; $(MAKE) install
+	$(MAKE) -f $(PLATDIR)/Makefile.ltwt install
 
 xplat_lightweight-install:
-	cd $(LTWTDIR)/xplat ; $(MAKE) install
+	$(MAKE) -f $(PLATDIR)/Makefile.xplat_ltwt install
 
 tests: all $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(LIBDIR)/test_DynamicFilters.so
 
 tests-opt: $(OPT_TESTS)
 
 examples: all
-	$(MAKE) -C Examples
+	$(MAKE) -f $(PLATDIR)/Makefile.examples 
 
 $(SRCDIR)/scanner.C: $(SRCDIR)/scanner.l $(SRCDIR)/parser.tab.C
 	@echo Building `basename $@` ...
@@ -409,6 +408,7 @@ $(LIBMRNET): $(LIBMRNET_OBJS)
 	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
 	    $(AR) $(ARFLAGS) $@ $^ Template.dir/*.o ; \
+	    $(RM) -r Template.dir ; \
 	else \
 	    $(AR) $(ARFLAGS) $@ $^ ; \
 	fi
@@ -419,6 +419,7 @@ $(LIBMRNET_SO): $(LIBMRNET_OBJS)
 	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
 	    $(CXX) $(SOFLAGS) -o $@ $^ Template.dir/*.o ; \
+	    $(RM) -r Template.dir ; \
 	else \
 	    $(CXX) $(SOFLAGS) -o $@ $^ ; \
 	fi
@@ -435,12 +436,12 @@ $(LIBXPLAT_LIGHTWEIGHT): xplat_lightweight-all
 
 $(LIBXPLAT_LIGHTWEIGHT_SO): xplat_lightweight-sharedobj
 
-$(BINDIR)/mrnet_commnode: $(COMMNODE_OBJS) $(LIBMRNET) $(LIBXPLAT)
+$(COMMNODE): $(COMMNODE_OBJS) $(LIBMRNET) $(LIBXPLAT)
 	@echo Linking `basename $@` ...
 	$(PURIFY) $(CXX) $(CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(COMMNODE_OBJS) \
 	   $(LIBMRNET) $(LIBS)
 
-$(BINDIR)/mrnet_topgen: $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
+$(TOPGEN): $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
 	@echo "Linking `basename $@` ..."
 	$(PURIFY) $(CXX) $(CXXFLAGS) -o $@ $(OBJDIR)/config_generator.o \
            $(LIBMRNET) $(LIBS)
@@ -516,57 +517,38 @@ $(BINDIR)/xdr_test: tests/xdr_test.c
 #################################
 # Cleaning rules
 #################################
-clean: local-clean xplat-clean lightweight-clean xplat_lightweight-clean
+clean: local-clean xplat-clean
 
-local-clean:
+local-clean: examples-clean lightweight-clean
 	@echo Cleaning $(MRNET_PLATFORM) platform ...
-	for file in $(BINDIR)/* $(LIBDIR)/* $(OBJDIR)/* ; do \
+	for file in $(DEPS) $(OBJDIR)/*.o $(BINDIR)/* $(LIBMRNET) $(LIBMRNET_SO) $(LIBDIR)/test_DynamicFilters.so ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
-	if [ -d Template.dir ] ; then $(RM) -r Template.dir ; fi
 	for file in `find $(BASEDIR) -name "*.ti" -print` ; do $(RM) $$file ; done
-
-xplat-clean:
-	@echo Cleaning xplat library
-	cd $(XPLATDIR) ; $(MAKE) clean
 
 lightweight-clean:
 	@echo Cleaning lightweight back-end library
-	cd $(LTWTDIR) ; $(MAKE) clean
+	$(MAKE) -f $(PLATDIR)/Makefile.ltwt clean
+
+xplat-clean: xplat_lightweight-clean
+	@echo Cleaning xplat library
+	$(MAKE) -f $(PLATDIR)/Makefile.xplat clean
 
 xplat_lightweight-clean:
 	@echo Cleaning xplat for lightweight back-end library
-	cd $(LTWTDIR)/xplat ; $(MAKE) clean
+	$(MAKE) -f $(PLATDIR)/Makefile.xplat_ltwt clean
 
-CLEAN: local-CLEAN xplat-clean lightweight-clean xplat_lightweight-clean
+examples-clean:
+	$(MAKE) -f $(PLATDIR)/Makefile.examples clean
 
-local-CLEAN: local-clean
+distclean: local-distclean
+
+local-distclean: local-clean
 	@echo Cleaning all platforms ...
-	for dir in $(DEPDIR) bin lib obj ; do \
+	for dir in $(BUILDDIR)/* ; do \
 	    if [ -d $$dir ] ; then $(RM) -r $$dir ; fi \
 	done
-	for file in `find $(BASEDIR) -name "*~" -print` ; do $(RM) $$file ; done
-
-distclean: local-distclean xplat-distclean lightweight-distclean xplat_lightweight-distclean
-
-local-distclean: local-CLEAN
-	for file in config.* src/config.h Makefile Examples/Makefile ; do  \
-	    if [ -f $$file ] ; then $(RM) $$file ; fi \
-	done
-	if [ -d autom4te.cache ] ; then $(RM) -r autom4te.cache ; fi
-
-xplat-distclean:
-	@echo "Cleaning xplat library (distclean)"
-	cd $(XPLATDIR) ; $(MAKE) distclean
-
-lightweight-distclean:
-	@echo "Cleaning lightweight back-end library (distclean)"
-	cd $(LTWTDIR) ; $(MAKE) distclean
-
-xplat_lightweight-distclean:
-	@echo "Cleaning xplat for lightweight back-end library (distclean)"
-	cd $(LTWTDIR)/xplat ; $(MAKE) distclean
-
+	if [ -d conf/autom4te.cache ] ; then $(RM) -r conf/autom4te.cache ; fi
 
 #################################
 # Default Build rules
