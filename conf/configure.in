@@ -105,7 +105,7 @@ if test $COMPILER_TYPE = "gnu" ; then
     CXXFLAGS="$CXXFLAGS -Dcompiler_gnu -fno-default-inline -fPIC"
     CFLAGS="$CFLAGS -Dcompiler_gnu -fPIC"
 
-    SOFLAGS="-fPIC -shared -rdynamic"
+    SOFLAGS="$SOFLAGS -fPIC -shared -rdynamic"
 
     C_AS_CPLUSPLUS="-x c++"
 
@@ -119,7 +119,7 @@ elif test $COMPILER_TYPE = "aix-native" ; then
     CXXFLAGS="$CXXFLAGS -Dcompiler_ibm"
     CFLAGS="$CFLAGS -Dcompiler_ibm"
 
-    SOFLAGS="-G"
+    SOFLAGS="$SOFLAGS -G"
 
     C_AS_CPLUSPLUS="-+"
 
@@ -139,7 +139,7 @@ elif test $COMPILER_TYPE = "forte" ; then
     CXXDEBUGFLAGS="-g -xO0"
     CDEBUGFLAGS="-g -xO0"
 
-    SOFLAGS="-G"
+    SOFLAGS="$SOFLAGS -G"
 
     AC_PATH_PROG(AR, CC)
     AC_SUBST(AR)
@@ -163,7 +163,7 @@ elif test $COMPILER_TYPE = "pgi" ; then
     AC_SUBST(PGI_OLD_TEMPLATES)
     CXXFLAGS="$GOOD_CXXFLAGS"
 
-    SOFLAGS="-fPIC -shared"
+    SOFLAGS="$SOFLAGS -fPIC -shared"
 
     AC_PATH_PROG(AR, ar)
     AC_SUBST(AR)
@@ -178,7 +178,7 @@ elif test $COMPILER_TYPE = "intel" ; then
     CXXDEBUGFLAGS="-g -O0"
     CDEBUGFLAGS="-g -O0"
 
-    SOFLAGS="-fPIC -shared"
+    SOFLAGS="$SOFLAGS -fPIC -shared"
 
     AC_PATH_PROG(AR, ar)
     AC_SUBST(AR)
@@ -208,7 +208,7 @@ changequote(<<, >>)dnl
 MRNET_ARCH=`echo $host | sed 's/[-|.]/_/g'`
 MRNET_OS=`echo $host_os | sed 's/[-0-9].*//'`
 MRNET_OSVER=`echo $host_os | sed 's/[-|.]/_/g'`
-MRNET_ROOT=`pwd`
+MRNET_ROOT=$abs_srcdir
 MRNET_VERSION='`cat "$(srcdir)"/VERSION`'
 changequote([, ])dnl
 
@@ -227,7 +227,7 @@ EXTRA_LIBS=""
 case "$host_os" in
   *linux*)
     LDFLAGS="$LDFLAGS -Wl,-E"
-    CN_LDFLAGS="$CN_LDFLAGS -Wl,-E"
+    CN_LDFLAGS="$LDFLAGS"
     os_release=`uname -r`
     case "$os_release" in
       2.4*)
@@ -340,7 +340,7 @@ AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 
-PLATFORM_BUILD="${MRNET_ROOT}/build/${host}"
+PLATFORM_BUILD="`pwd`/build/${host}"
 AC_SUBST(PLATFORM_BUILD)
 
 AS_MKDIR_P([${PLATFORM_BUILD}/bin])

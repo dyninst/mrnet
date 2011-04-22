@@ -3655,7 +3655,7 @@ if test $COMPILER_TYPE = "gnu" ; then
     CXXFLAGS="$CXXFLAGS -Dcompiler_gnu -fno-default-inline -fPIC"
     CFLAGS="$CFLAGS -Dcompiler_gnu -fPIC"
 
-    SOFLAGS="-fPIC -shared -rdynamic"
+    SOFLAGS="$SOFLAGS -fPIC -shared -rdynamic"
 
     C_AS_CPLUSPLUS="-x c++"
 
@@ -3707,7 +3707,7 @@ elif test $COMPILER_TYPE = "aix-native" ; then
     CXXFLAGS="$CXXFLAGS -Dcompiler_ibm"
     CFLAGS="$CFLAGS -Dcompiler_ibm"
 
-    SOFLAGS="-G"
+    SOFLAGS="$SOFLAGS -G"
 
     C_AS_CPLUSPLUS="-+"
 
@@ -3765,7 +3765,7 @@ elif test $COMPILER_TYPE = "forte" ; then
     CXXDEBUGFLAGS="-g -xO0"
     CDEBUGFLAGS="-g -xO0"
 
-    SOFLAGS="-G"
+    SOFLAGS="$SOFLAGS -G"
 
     # Extract the first word of "CC", so it can be a program name with args.
 set dummy CC; ac_word=$2
@@ -3872,7 +3872,7 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 
     CXXFLAGS="$GOOD_CXXFLAGS"
 
-    SOFLAGS="-fPIC -shared"
+    SOFLAGS="$SOFLAGS -fPIC -shared"
 
     # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
@@ -3925,7 +3925,7 @@ elif test $COMPILER_TYPE = "intel" ; then
     CXXDEBUGFLAGS="-g -O0"
     CDEBUGFLAGS="-g -O0"
 
-    SOFLAGS="-fPIC -shared"
+    SOFLAGS="$SOFLAGS -fPIC -shared"
 
     # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
@@ -4039,7 +4039,7 @@ host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 MRNET_ARCH=`echo $host | sed 's/[-|.]/_/g'`
 MRNET_OS=`echo $host_os | sed 's/[-0-9].*//'`
 MRNET_OSVER=`echo $host_os | sed 's/[-|.]/_/g'`
-MRNET_ROOT=`pwd`
+MRNET_ROOT=$abs_srcdir
 MRNET_VERSION='`cat "$(srcdir)"/VERSION`'
 
 
@@ -4060,7 +4060,7 @@ EXTRA_LIBS=""
 case "$host_os" in
   *linux*)
     LDFLAGS="$LDFLAGS -Wl,-E"
-    CN_LDFLAGS="$CN_LDFLAGS -Wl,-E"
+    CN_LDFLAGS="$LDFLAGS"
     os_release=`uname -r`
     case "$os_release" in
       2.4*)
@@ -7225,7 +7225,7 @@ _ACEOF
 
 
 
-PLATFORM_BUILD="${MRNET_ROOT}/build/${host}"
+PLATFORM_BUILD="`pwd`/build/${host}"
 
 
 { if $as_mkdir_p; then
