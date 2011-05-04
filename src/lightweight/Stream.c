@@ -275,8 +275,9 @@ int Stream_push_Packet(Stream_t* stream,
     return 0;
 }
 
-int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket)
+int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket, bool_t blocking)
 {
+    int rc;
     Packet_t * cur_packet;
 	
     mrn_dbg_func_begin();
@@ -290,15 +291,24 @@ int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket)
         return 1;
     }
 
-    // At this point, no packets are available for this stream
+    if( blocking == false ) {
+        int avail = Network_has_PacketsFromParent(stream->network);
+        if( ! avail )
+            return 0;
+    }
 
-    // Block until this stream gets a packet 
-    while (stream->incoming_packet_buffer->size == 0) {
-        if (Network_recv_2(stream->network) == -1) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "FrontEnd::recv() failed\n"));
+    // Try to get packet for this stream
+    do {
+        rc = Network_recv_2(stream->network, blocking);
+        if( rc == -1 ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "Network_recv_2() failed\n"));
             return -1;
         }
-    }
+	else if( (blocking == false) && (rc == 0) ) {
+            mrn_dbg_func_end();
+            return 0;
+	}
+    } while (stream->incoming_packet_buffer->size == 0);
 
     // we should have a packet now
     cur_packet = Stream_get_IncomingPacket(stream);

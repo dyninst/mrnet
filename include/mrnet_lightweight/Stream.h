@@ -56,7 +56,7 @@ int Stream_find_FilterAssignment(char* assignments,
                                  Rank me, 
                                  int filter_id);
 
-int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket);
+int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket, bool_t blocking);
 
 Packet_t* Stream_get_IncomingPacket(Stream_t* stream);
 

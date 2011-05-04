@@ -116,9 +116,11 @@ int PeerNode_has_data(PeerNode_t* node)
     return false;
 }
 
-int PeerNode_recv(PeerNode_t* node, /* Packet_t* packet */ vector_t* packet_list)
+int PeerNode_recv(PeerNode_t* node, vector_t* packet_list, bool_t blocking)
 {
-    return Message_recv(node->data_sock_fd, packet_list, node->rank);
+    if( blocking || PeerNode_has_data(node) )
+        return Message_recv(node->data_sock_fd, packet_list, node->rank);
+    return 0;
 }
 
 int PeerNode_flush(PeerNode_t* peer)

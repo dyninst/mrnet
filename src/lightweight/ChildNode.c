@@ -67,7 +67,7 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
     free(topo_ptr);
      
     vector_t* packets = new_empty_vector_t();
-    int ret = PeerNode_recv( be->network->parent, packets );
+    int ret = PeerNode_recv( be->network->parent, packets, true );
     if( (ret == -1) || ((ret ==0 ) && (packets->size == 0)) ) {
         if( ret == -1 ) {
 	    mrn_dbg( 3, mrn_printf(FLF, stderr,

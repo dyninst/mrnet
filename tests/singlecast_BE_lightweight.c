@@ -33,7 +33,7 @@ int main( int argc, char* argv[] )
         tag = 0;
         rret = Network_recv(net,  &tag, pkt, &stream);
         if( rret == -1 ) {
-            fprintf(stderr, "BE: Stream_recv() failed\n");
+            fprintf(stderr, "BE: Network_recv() failed\n");
             return -1;
         }
 

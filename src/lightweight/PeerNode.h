@@ -31,7 +31,7 @@ struct PeerNode_t {
 
 typedef struct PeerNode_t PeerNode_t;
 
- PeerNode_t* new_PeerNode_t( Network_t* inetwork,
+ PeerNode_t* new_PeerNode_t(Network_t* inetwork,
                             char* iphostname,
                             Port ipport,
                             Rank iprank,
@@ -40,17 +40,17 @@ typedef struct PeerNode_t PeerNode_t;
 
 Rank PeerNode_get_Rank(PeerNode_t* node);
 
-int PeerNode_connect_DataSocket( PeerNode_t* parent);
+int PeerNode_connect_DataSocket(PeerNode_t* parent);
 
-int PeerNode_send( PeerNode_t* peer,  Packet_t* ipacket);
+int PeerNode_send(PeerNode_t* peer,  Packet_t* ipacket);
 
-int PeerNode_sendDirectly (  PeerNode_t* peer,  Packet_t* ipacket);
+int PeerNode_sendDirectly(PeerNode_t* peer,  Packet_t* ipacket);
 
-int PeerNode_has_data( PeerNode_t* node);
+int PeerNode_has_data(PeerNode_t* node);
 
-int PeerNode_recv( PeerNode_t* node,  /* Packet_t* packet*/ vector_t* opacket);
+int PeerNode_recv(PeerNode_t* node, vector_t* opacket, bool_t blocking);
 
-int PeerNode_flush( PeerNode_t* peer);
+int PeerNode_flush(PeerNode_t* peer);
 
 void PeerNode_mark_Failed(PeerNode_t* node);
 

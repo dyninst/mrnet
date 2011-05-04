@@ -192,7 +192,7 @@ Network_t* Network_init_BackEnd(/*const*/ char* iphostname, Port ipport,
 
 }
 
-int Network_recv_2(Network_t* net)
+int Network_recv_2(Network_t* net, bool_t blocking)
 {
     vector_t* packet_list;
     
@@ -205,11 +205,11 @@ int Network_recv_2(Network_t* net)
 
         // check if we already have data
         mrn_dbg(3, mrn_printf(FLF, stderr, "Calling recv_packets()\n"));
-        if( Network_recv_PacketsFromParent(net, packet_list) == -1 ) {
+        if( Network_recv_PacketsFromParent(net, packet_list, blocking) == -1 ) {
             mrn_dbg(3, mrn_printf(FLF, stderr, "recv_packets() failed\n"));
             if (Network_recover_FromFailures(net)) {
                 Network_recover_FromParentFailure(net);
-                if (Network_recv_PacketsFromParent(net, packet_list) == -1) {
+                if (Network_recv_PacketsFromParent(net, packet_list, blocking) == -1) {
                     mrn_dbg(3, mrn_printf(FLF, stderr, 
                                           "recv() failed twice, return -1\n"));
                     return -1;
@@ -302,7 +302,7 @@ int Network_recv(Network_t* net, int *otag,
     // check whether there is data waiting to be read on our socket
     mrn_dbg(5, mrn_printf(FLF, stderr, 
             "No packets waiting in stream, checking for data on socket\n"));
-    retval = Network_recv_2(net);
+    retval = Network_recv_2(net, true);
 
     checked_network = true;
 
@@ -325,15 +325,14 @@ int Network_is_LocalNodeBackEnd(Network_t* net) {
 }
 
 
-int Network_has_PacketsFromParent(Network_t* net) {
-    assert(Network_is_LocalNodeBackEnd(net));
+int Network_has_PacketsFromParent(Network_t* net)
+{
     return PeerNode_has_data(net->parent);
 }
 
-int Network_recv_PacketsFromParent(Network_t* net, /*Packet_t* opacket*/ vector_t* opackets)
+int Network_recv_PacketsFromParent(Network_t* net, vector_t* opackets, bool_t blocking)
 {
-    assert(Network_is_LocalNodeBackEnd(net));
-    return PeerNode_recv(net->parent, opackets);
+    return PeerNode_recv(net->parent, opackets, blocking);
 }
 
 void Network_shutdown_Network(Network_t* net)

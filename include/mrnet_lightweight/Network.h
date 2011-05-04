@@ -78,9 +78,9 @@ int Network_is_LocalNodeBackEnd( Network_t* net );
 
 struct PeerNode_t* Network_get_ParentNode( Network_t* net );
 
-int Network_recv_2( Network_t* net );
 int Network_has_PacketsFromParent( Network_t* net );
-int Network_recv_PacketsFromParent( Network_t* net, struct vector_t* opacket );
+int Network_recv_2( Network_t* net, bool_t blocking );
+int Network_recv_PacketsFromParent( Network_t* net, struct vector_t* opacket, bool_t blocking );
 int Network_send_PacketToParent( Network_t* net,  Packet_t* ipacket );
 
 void Network_shutdown_Network( Network_t* net );
