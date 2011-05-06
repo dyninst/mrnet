@@ -150,7 +150,8 @@ namespace MRN
 	MRNET_FAILURE_RECOVERY    = 3,
 	XPLAT_RSH                 = 4, 
 	XPLAT_RSH_ARGS            = 5,
-	XPLAT_REMCMD              = 6
+	XPLAT_REMCMD              = 6,
+        CRAY_ALPS_APID            = 7
     } net_settings_key_t;	
     
 } /* namespace MRN */

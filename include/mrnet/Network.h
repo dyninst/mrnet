@@ -171,7 +171,7 @@ protected:
                                               std::string ihostname,
                                               Rank irank ) = 0;
     FrontEndNode* get_LocalFrontEndNode(void) const;
-    virtual void Instantiate( ParsedGraph* parsed_graph,
+    virtual bool Instantiate( ParsedGraph* parsed_graph,
                               const char* mrn_commnode_path,
                               const char* ibackend_exe,
                               const char** ibackend_args,
@@ -214,8 +214,11 @@ protected:
     bool reset_Topology(std::string& itopology);
     void update_TopoStream();
 
-    std::map< net_settings_key_t, std::string >& get_SettingsMap();
     PeerNodePtr _parent;
+
+    std::map< net_settings_key_t, std::string > _network_settings;
+    std::map< net_settings_key_t, std::string >& get_SettingsMap();
+    virtual void init_NetSettings(void);
     
  private:
     friend class Stream;
@@ -329,10 +332,8 @@ protected:
     void collect_PerfData(void);
 
     static int get_NetSettingKey( const std::string& s );
-    static void init_XPlatSettings( std::map< net_settings_key_t, std::string > & envMap );
     void convert_SettingsMap( const std::map< std::string, std::string > * iattrs );
     void init_FE_NetSettings( const std::map< std::string, std::string > * iattrs );
-    void init_NetSettings(void);
 
     bool is_ShuttingDown(void) const;
     void set_ShuttingDown(void);
@@ -352,8 +353,6 @@ protected:
     EventMgr* _evt_mgr;
     unsigned int _next_user_stream_id; // only used by FE
     unsigned int _next_int_stream_id; // only used by FE
-
-    std::map< net_settings_key_t, std::string > _network_settings;
 
     std::set< PeerNodePtr > _children;
     std::map< unsigned int, Stream* > _streams;

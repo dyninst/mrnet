@@ -85,6 +85,7 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
     const char *commnode_path = NULL;
     const char **backend_argv;
     unsigned int backend_argc;
+    int rc;
   
     DataType dt;
 
@@ -108,7 +109,8 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
 
     _initial_subtree_packet = packet;
     
-    std::string backend_exe_str( ( backend_exe == NULL ) ? "" : backend_exe );
+    bool have_backend_exe = ( backend_exe != NULL );
+    std::string backend_exe_str( have_backend_exe ? backend_exe : "" );
 
     SerialGraph *cur_sg, *my_sg;
     my_sg = sg.get_MySubTree( _hostname, _network->get_LocalPort(), _rank );
@@ -128,41 +130,51 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
         std::string cur_node_hostname = cur_sg->get_RootHostName( ); 
         Rank cur_node_rank = cur_sg->get_RootRank( );
 
-        if( !cur_sg->is_RootBackEnd( ) ) {
+        if( ! cur_sg->is_RootBackEnd() ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr, "launching internal node ...\n") );
-            launch_InternalNode( cur_node_hostname, cur_node_rank, commnode_path );
+            rc = launch_InternalNode( cur_node_hostname, cur_node_rank, commnode_path );
+            if( rc == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "launch_InternalNode() failed\n") );
+                return rc;
+            }
         }
         else {
-            if( backend_exe_str.length() ) {
+            if( have_backend_exe ) {
                 mrn_dbg( 5, mrn_printf(FLF, stderr, "launching backend_exe: \"%s\"\n",
                                        backend_exe_str.c_str()) ); 
                 std::vector < std::string > args;
                 for( unsigned int i=0; i < backend_argc; i++ ) {
                     args.push_back( backend_argv[i] );
                 }
-                if( launch_Application( cur_node_hostname, cur_node_rank,
-                                        backend_exe_str, args ) == -1 ){
+                rc = launch_Application( cur_node_hostname, cur_node_rank,
+                                         backend_exe_str, args );
+                if( rc == -1 ) {
                     mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                           "launch_application() failed\n" ));
-                    return -1;
+                                           "launch_Application() failed\n") );
+                    return rc;
                 }
             }
             else {
                 // BE attach case
                 mrn_dbg( 5, mrn_printf(FLF, stderr, "launching internal node ...\n") );
-                launch_InternalNode( cur_node_hostname, cur_node_rank, commnode_path );
+                rc = launch_InternalNode( cur_node_hostname, cur_node_rank, commnode_path );
+                if( rc == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                           "launch_InternalNode() failed\n") );
+                    return rc;
+                }
             }
         }
     }
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newSubTree() succeeded\n") );
+    mrn_dbg_func_end();
     return 0;
 }
 
 int 
 RSHParentNode::launch_InternalNode( std::string ihostname, Rank irank,
-                                     std::string icommnode_exe )
-    const
+                                    std::string icommnode_exe ) const
 {
     char parent_port_str[128];
     snprintf(parent_port_str, sizeof(parent_port_str), "%d", _port);

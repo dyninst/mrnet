@@ -21,10 +21,10 @@ class SerialGraph {
     unsigned int _num_backends;
 
  public:
-    SerialGraph( const char * ibyte_array)
+    SerialGraph( const char * ibyte_array )
         :_byte_array(ibyte_array), _num_nodes(0), _num_backends(0) { }
 
-    SerialGraph(std::string ibyte_array)
+    SerialGraph( std::string ibyte_array )
         :_byte_array(ibyte_array), _num_nodes(0), _num_backends(0) { }
 
     SerialGraph() :_num_nodes(0), _num_backends(0) { }

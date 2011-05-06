@@ -309,33 +309,41 @@ std::map< net_settings_key_t, std::string >& Network::get_SettingsMap()
 
 int Network::get_NetSettingKey( const std::string & s )
 {
-     int ret = -1;
-     if( ! s.empty() ) {
-         if( (strcmp("MRNET_OUTPUT_LEVEL", s.c_str()) == 0) ||
-             (strcmp("MRNET_DEBUG_LEVEL", s.c_str()) == 0) )
-             ret = MRNET_DEBUG_LEVEL;
+    if( s.empty() )
+        return -1;
 
-         else if( strcmp("MRNET_DEBUG_LOG_DIRECTORY", s.c_str()) == 0 )
-             ret = MRNET_DEBUG_LOG_DIRECTORY;
+    int ret = -1;
 
-         else if( (strcmp("MRNET_COMM_PATH", s.c_str()) == 0) || 
-                  (strcmp("MRNET_COMMNODE_PATH", s.c_str()) == 0) )
-             ret = MRNET_COMMNODE_PATH;
+    const char* cstr = s.c_str();
+    if( 0 == strncmp("MRNET_", cstr, 6) ) {
+        if( (strcmp("MRNET_OUTPUT_LEVEL", cstr) == 0) ||
+            (strcmp("MRNET_DEBUG_LEVEL", cstr) == 0) )
+            ret = MRNET_DEBUG_LEVEL;
 
-         else if( (strcmp("FAILURE_RECOVERY", s.c_str()) == 0) || 
-                  (strcmp("MRNET_FAILURE_RECOVERY", s.c_str()) == 0) )
-             ret = MRNET_FAILURE_RECOVERY;
+        else if( strcmp("MRNET_DEBUG_LOG_DIRECTORY", cstr) == 0 )
+            ret = MRNET_DEBUG_LOG_DIRECTORY;
 
-         else if( strcmp("XPLAT_RSH", s.c_str()) == 0 )
-             ret = XPLAT_RSH;
+        else if( (strcmp("MRNET_COMM_PATH", cstr) == 0) || 
+                 (strcmp("MRNET_COMMNODE_PATH", cstr) == 0) )
+            ret = MRNET_COMMNODE_PATH;
 
-         else if( strcmp("XPLAT_RSH_ARGS", s.c_str()) == 0 )
-             ret = XPLAT_RSH_ARGS;
+        else if( strcmp("MRNET_FAILURE_RECOVERY", cstr) == 0 )
+            ret = MRNET_FAILURE_RECOVERY;
+    }
+    else if( 0 == strncmp("XPLAT_", cstr, 6) ) {
+        if( strcmp("XPLAT_RSH", cstr) == 0 )
+            ret = XPLAT_RSH;
 
-         else if( strcmp("XPLAT_REMCMD", s.c_str()) == 0 )
-             ret = XPLAT_REMCMD;
-     }
-     return ret;
+        else if( strcmp("XPLAT_RSH_ARGS", cstr) == 0 )
+            ret = XPLAT_RSH_ARGS;
+        
+        else if( strcmp("XPLAT_REMCMD", cstr) == 0 )
+            ret = XPLAT_REMCMD;
+    }
+    else if( strcmp("CRAY_ALPS_APID", cstr) == 0 )
+        ret = CRAY_ALPS_APID;
+
+    return ret;
 }
 
 void Network::convert_SettingsMap( const std::map< std::string, std::string > * iattrs )
@@ -370,9 +378,11 @@ void Network::init_FE_NetSettings( const std::map< std::string, std::string > * 
             _network_settings[ MRNET_DEBUG_LOG_DIRECTORY ] = std::string( envval );
         else {
             char* home = getenv("HOME");
-            char logdir[512];
-            snprintf(logdir, sizeof(logdir), "%s/mrnet-log", home);
-            _network_settings[ MRNET_DEBUG_LOG_DIRECTORY ] = std::string( logdir );
+            if( home != NULL ) {
+                char logdir[512];
+                snprintf(logdir, sizeof(logdir), "%s/mrnet-log", home);
+                _network_settings[ MRNET_DEBUG_LOG_DIRECTORY ] = std::string( logdir );
+            }
         }
     }
 
@@ -386,28 +396,13 @@ void Network::init_FE_NetSettings( const std::map< std::string, std::string > * 
             _network_settings[ MRNET_COMMNODE_PATH ] = COMMNODE_EXE;
     }
 
-    // initialize XPlat from environment if not passed in iattrs
-    if( _network_settings.find(XPLAT_RSH) == _network_settings.end() ) {
-        envval = getenv( "XPLAT_RSH" );
-        if( envval != NULL )
-            _network_settings[ XPLAT_RSH ] = std::string( envval );
-    }    
-    if( _network_settings.find(XPLAT_RSH_ARGS) == _network_settings.end() ) {
-        envval = getenv( "XPLAT_RSH_ARGS" );
-        if( envval != NULL )
-            _network_settings[ XPLAT_RSH_ARGS ] = std::string( envval );
-    }
-    if( _network_settings.find(XPLAT_REMCMD) == _network_settings.end() ) {
-        envval = getenv( "XPLAT_REMCMD" );
-        if( envval != NULL )
-            _network_settings[ XPLAT_REMCMD ] = std::string( envval );
-    }
-
     init_NetSettings();
 }
 
 void Network::init_NetSettings(void)
 {
+    // these settings are valid for any type of network
+
     std::map< net_settings_key_t, std::string >::iterator eit;
 
     eit = _network_settings.find( MRNET_DEBUG_LEVEL );
@@ -419,24 +414,6 @@ void Network::init_NetSettings(void)
     if( eit != _network_settings.end() ) {
         MRN_DEBUG_LOG_DIRECTORY = strdup( eit->second.c_str() );
     }
-
-    init_XPlatSettings( _network_settings );
-}
-
-void Network::init_XPlatSettings( std::map< net_settings_key_t, std::string > & envMap )
-{
-    std::map< net_settings_key_t, std::string >::iterator eit;
-    eit = envMap.find( XPLAT_RSH );
-    if( eit != envMap.end() )
-        XPlat::Process::set_RemoteShell( eit->second );
-
-    eit = envMap.find( XPLAT_RSH_ARGS );
-    if( eit != envMap.end() )
-        XPlat::Process::set_RemoteShellArgs( eit->second );
-
-    eit = envMap.find( XPLAT_REMCMD );
-    if( eit != envMap.end() )
-        XPlat::Process::set_RemoteCommand( eit->second );
 }
 
 void Network::update_BcastCommunicator(void)
@@ -567,9 +544,11 @@ void Network::init_FrontEnd( const char * itopology,
     
     FrontEndNode* fen = CreateFrontEndNode( this, rootHost, rootRank );
     assert( fen != NULL );
-    if( fen->has_Error() ) 
-        error( ERR_SYSTEM, rootRank, 
-               "Failed to initialize via CreateFrontEndNode()\n" );
+    if( fen->has_Error() ) {
+        error( ERR_INTERNAL, rootRank, 
+               "Failed to create front-end node\n" );
+        return;
+    }
 
     init_FE_NetSettings( iattrs );
 
@@ -577,8 +556,11 @@ void Network::init_FrontEnd( const char * itopology,
     if( _network_settings.find(MRNET_COMMNODE_PATH) != _network_settings.end() ) {
         path = _network_settings[ MRNET_COMMNODE_PATH ];
     }
-    if( path.empty() )
-        assert( ! "internal error: path for mrnet_commnode is empty" );
+    if( path.empty() ) {
+        error( ERR_INTERNAL, rootRank, 
+               "path for mrnet_commnode is empty" );
+        return;
+    }
 
     if( ibackend_exe == NULL ) {
         ibackend_exe = empty_str;
@@ -592,19 +574,29 @@ void Network::init_FrontEnd( const char * itopology,
     }
    
     // spawn and connect processes that constitute our network
-    this->Instantiate( parsed_graph, 
-                       path.c_str(), 
-                       ibackend_exe, 
-                       ibackend_args, 
-                       backend_argc,
-                       iattrs );
+    bool success = Instantiate( parsed_graph, 
+                                path.c_str(), 
+                                ibackend_exe, 
+                                ibackend_args, 
+                                backend_argc,
+                                iattrs );
     delete parsed_graph;
     parsed_graph = NULL;
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
+    if( ! success ) {
+        error( ERR_NETWORK_FAILURE, rootRank,
+               "Failed to instantiate the network.\n" );
+        // some TBON processes may have been started, so tell them to go away
+        shutdown_Network();
+        return;
+    }
 
-    if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() )
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
+    if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() ) {
         error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
+        shutdown_Network();
+        return;
+    }
    
     mrn_dbg(5, mrn_printf(FLF, stderr, "Updating bcast communicator ... \n" ));
     update_BcastCommunicator();
@@ -612,15 +604,21 @@ void Network::init_FrontEnd( const char * itopology,
     // create topology propagation stream
     Stream* s = new_InternalStream( _bcast_communicator, TFILTER_TOPO_UPDATE, 
                                     SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
-    assert( s->get_Id() == TOPOL_STRM_ID );
+    if( s->get_Id() != TOPOL_STRM_ID ) {
+        error( ERR_INTERNAL, rootRank, "topology update stream id is wrong");
+        shutdown_Network();
+        return;
+    }
     s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
 
     /* collect port updates and broadcast them
      * - this is a no-op on XT
      */
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_PORT_UPDATE, "") );
-    if( -1 == get_LocalFrontEndNode()->proc_PortUpdates( packet ) )
+    if( -1 == get_LocalFrontEndNode()->proc_PortUpdates(packet) ) {
         error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
+        shutdown_Network();
+    }
 }
 
 void Network::send_TopologyUpdates(void)
@@ -1537,7 +1535,7 @@ int Network::load_FilterFuncs( const char* so_file,
     char** funcs = (char**) calloc( nfuncs, sizeof(char*) );
     if( (fids == NULL) || (funcs == NULL) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "calloc() failed\n") );
-        return false;
+        return 0;
     }
 
     char* so_copy = strdup(so_file);

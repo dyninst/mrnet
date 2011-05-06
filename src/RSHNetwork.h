@@ -12,7 +12,9 @@ namespace MRN
 class RSHNetwork : public Network
 {
  protected:
-    virtual void Instantiate( ParsedGraph* parsed_graph,
+    void init_NetSettings(void);
+
+    virtual bool Instantiate( ParsedGraph* parsed_graph,
                               const char* mrn_commnode_path,
                               const char* ibackend_exe,
                               const char** ibackend_args,
@@ -40,10 +42,10 @@ class RSHNetwork : public Network
                                               Port idataPort = UnknownPort );
 
  public:
-    // ctor for Network in FE role
-    RSHNetwork(void);
+    // FE ctor
+    RSHNetwork( const std::map< std::string, std::string>* iattrs );
 
-    // ctor for Network in BE/IN role
+    // BE/IN ctor
     RSHNetwork( const char* phostname, Port pport, Rank prank,
                 const char* myhostname, Rank myrank, bool isInternal );
 

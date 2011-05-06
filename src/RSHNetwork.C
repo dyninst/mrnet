@@ -12,6 +12,7 @@
 #include "RSHNetwork.h"
 
 #include "mrnet/MRNet.h"
+#include "xplat/Process.h"
 
 namespace MRN
 {
@@ -29,7 +30,7 @@ Network::CreateNetworkFE( const char * itopology,
 {
     // endianTest();
 
-    Network* net = new RSHNetwork;
+    Network* net = new RSHNetwork(iattrs);
     net->init_FrontEnd( itopology,
                         ibackend_exe,
                         ibackend_argv,
@@ -116,15 +117,51 @@ RSHNetwork::CreateInternalNode( Network* inetwork,
 
 //----------------------------------------------------------------------------
 // RSHNetwork methods
-//only FE calls this constructor
 
-RSHNetwork::RSHNetwork(void)
+// FE constructor
+RSHNetwork::RSHNetwork( const std::map< std::string, std::string >* iattrs )
     : Network()
 {
-    //nothing to do here
+    // check attributes for XPlat RSH settings
+    if( iattrs != NULL ) {
+        std::map< std::string, std::string >::const_iterator iter = iattrs->begin();
+        for( ; iter != iattrs->end(); iter++ ) {
+            const char* cstr = iter->first.c_str();
+            if( 0 == strncmp(cstr, "XPLAT_", 6) ) {
+                if( 0 == strcmp(cstr, "XPLAT_RSH") ) {
+                    _network_settings[ XPLAT_RSH ] = iter->second;
+                }
+                else if( 0 == strcmp(cstr, "XPLAT_RSH_ARGS") ) {
+                    _network_settings[ XPLAT_RSH_ARGS ] = iter->second;
+                }
+                else if( 0 == strcmp(cstr, "XPLAT_REMCMD") ) {
+                    _network_settings[ XPLAT_REMCMD ] = iter->second;
+                }
+            }
+        }
+
+    }
+
+    // initialize XPlat from environment if not passed in iattrs
+    char* envval;
+    if( _network_settings.find(XPLAT_RSH) == _network_settings.end() ) {
+        envval = getenv( "XPLAT_RSH" );
+        if( envval != NULL )
+            _network_settings[ XPLAT_RSH ] = std::string( envval );
+    }    
+    if( _network_settings.find(XPLAT_RSH_ARGS) == _network_settings.end() ) {
+        envval = getenv( "XPLAT_RSH_ARGS" );
+        if( envval != NULL )
+            _network_settings[ XPLAT_RSH_ARGS ] = std::string( envval );
+    }
+    if( _network_settings.find(XPLAT_REMCMD) == _network_settings.end() ) {
+        envval = getenv( "XPLAT_REMCMD" );
+        if( envval != NULL )
+            _network_settings[ XPLAT_REMCMD ] = std::string( envval );
+    }
 }
 
-//BE and IN constructor
+// BE and IN constructor
 RSHNetwork::RSHNetwork( const char* phostname, Port pport, Rank prank,
                         const char* myhostname, Rank myrank, bool isInternal )
 {
@@ -146,7 +183,27 @@ RSHNetwork::RSHNetwork( const char* phostname, Port pport, Rank prank,
     }
 }
 
-void
+void RSHNetwork::init_NetSettings(void)
+{
+    // XPlat RSH settings
+    std::map< net_settings_key_t, std::string >::iterator eit;
+    eit = _network_settings.find( XPLAT_RSH );
+    if( eit != _network_settings.end() )
+        XPlat::Process::set_RemoteShell( eit->second );
+
+    eit = _network_settings.find( XPLAT_RSH_ARGS );
+    if( eit != _network_settings.end() )
+        XPlat::Process::set_RemoteShellArgs( eit->second );
+
+    eit = _network_settings.find( XPLAT_REMCMD );
+    if( eit != _network_settings.end() )
+        XPlat::Process::set_RemoteCommand( eit->second );
+
+    // still need to process standard settings
+    Network::init_NetSettings();
+}
+
+bool
 RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
                          const char* mrn_commnode_path,
                          const char* ibackend_exe,
@@ -169,13 +226,20 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
                                  ibackend_exe, ibackend_args, backend_argc) );
     
     RSHFrontEndNode* fe = dynamic_cast<RSHFrontEndNode*>( get_LocalFrontEndNode() );
-    assert( fe != NULL );
+    if( fe == NULL ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "front-end dynamic_cast failed\n") );
+        return false;
+    }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Instantiating network ... \n") );
 
     if( fe->proc_newSubTree( packet ) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTree() failed!\n") );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to spawn subtree\n") );
+        error( ERR_INTERNAL, get_LocalRank(), "failed to spawn subtree");
+        return false;
     }
+
+    return true;
 }
 
 FrontEndNode*
