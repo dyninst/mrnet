@@ -192,71 +192,54 @@ Network_t* Network_init_BackEnd(/*const*/ char* iphostname, Port ipport,
 
 }
 
-int Network_recv_2(Network_t* net, bool_t blocking)
+int Network_recv_internal(Network_t* net, bool_t blocking)
 {
     vector_t* packet_list;
     
     mrn_dbg_func_begin();
 
-    if (Network_is_LocalNodeBackEnd(net)) {
-        packet_list = new_empty_vector_t();
-        mrn_dbg(3, mrn_printf(FLF, stderr, "In backend.recv(blocking)...\n"));
+    packet_list = new_empty_vector_t();
 
-
-        // check if we already have data
-        mrn_dbg(3, mrn_printf(FLF, stderr, "Calling recv_packets()\n"));
-        if( Network_recv_PacketsFromParent(net, packet_list, blocking) == -1 ) {
-            mrn_dbg(3, mrn_printf(FLF, stderr, "recv_packets() failed\n"));
-            if (Network_recover_FromFailures(net)) {
-                Network_recover_FromParentFailure(net);
-                if (Network_recv_PacketsFromParent(net, packet_list, blocking) == -1) {
-                    mrn_dbg(3, mrn_printf(FLF, stderr, 
-                                          "recv() failed twice, return -1\n"));
-                    return -1;
-                }
-            } else {
-                return -1;
-            } 
-        }
-
-        if( packet_list->size == 0 ) {
-            mrn_dbg(5, mrn_printf(FLF, stderr, "No packets read!\n"));
-            return 0;
-        }
-        else {
-            mrn_dbg(5, mrn_printf(FLF, stderr, "Calling proc_packets()\n"));
-
-            if( ChildNode_proc_PacketsFromParent(net->local_back_end_node, packet_list) ) {
-                mrn_dbg(1, mrn_printf(FLF, stderr, "proc_packets() failed\n"));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Calling recv_packets()\n"));
+    if( Network_recv_PacketsFromParent(net, packet_list, blocking) == -1 ) {
+        mrn_dbg(3, mrn_printf(FLF, stderr, "recv_packets() failed\n"));
+        if (Network_recover_FromFailures(net)) {
+            Network_recover_FromParentFailure(net);
+            if (Network_recv_PacketsFromParent(net, packet_list, blocking) == -1) {
+                mrn_dbg(3, mrn_printf(FLF, stderr, 
+                                      "recv() failed twice, return -1\n"));
                 return -1;
             }
-        }
-  
-        // if we get here, we have found data to return
-        mrn_dbg(5, mrn_printf(FLF, stderr, 
-                              "Found/processed packets! Returning\n"));
-    
-        return 1;
+        } 
+        else return -1;
     }
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "About to return -1\n"));
-    return -1; // shouldn't get here
+    if( packet_list->size == 0 ) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "No packets read!\n"));
+        return 0;
+    }
+    else {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Calling proc_packets()\n"));
 
+        if( ChildNode_proc_PacketsFromParent(net->local_back_end_node, packet_list) ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "proc_packets() failed\n"));
+            return -1;
+        }
+    }
+  
+    // if we get here, we have found data to return
+    mrn_dbg(5, mrn_printf(FLF, stderr, 
+                          "Found/processed packets! Returning\n"));
+    
+    return 1;
 }
 
-/* called from BE instantiation file */
-int Network_recv(Network_t* net, int *otag, 
-                 Packet_t* opacket, Stream_t** ostream)
+Packet_t* Network_recv_stream_check(Network_t* net)
 {
-    int checked_network = false; // have we checked sockets for input?
-    Packet_t* cur_packet = NULL;
     int packet_found;  
     int start_iter;
     Stream_t* cur_stream;
-    int retval;
-
-    // check streams for input:
- get_packet_from_stream_label: 
+    Packet_t* cur_packet = NULL;
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "calling Network_have_Streams()\n"));
     if( Network_have_Streams(net) ) {
@@ -285,9 +268,47 @@ int Network_recv(Network_t* net, int *otag,
                 net->stream_iter = 0;
             }
         } while((start_iter != net->stream_iter) && !packet_found);
-
     }
+    
+    return cur_packet;
+}
 
+
+int Network_recv_nonblock(Network_t* net, int *otag, 
+                          Packet_t* opacket, Stream_t** ostream)
+{
+    Packet_t* cur_packet = NULL;
+    cur_packet = Network_recv_stream_check(net);
+    if( cur_packet != NULL ) {
+        *otag = cur_packet->tag;
+        *ostream = Network_get_Stream(net, cur_packet->stream_id);
+        assert(*ostream);
+        *opacket = *cur_packet;
+        mrn_dbg(5, mrn_printf(FLF, stderr, "cur_packet tag: %d, fmt: %s\n", 
+                              cur_packet->tag, cur_packet->fmt_str));
+        return 1;
+    }
+    
+    if( Network_has_PacketsFromParent(net) )
+        return Network_recv(net, otag, opacket, ostream);
+
+    return 0;
+}
+
+int Network_recv(Network_t* net, int *otag, 
+                 Packet_t* opacket, Stream_t** ostream)
+{
+    int checked_network = false; // have we checked sockets for input?
+    Packet_t* cur_packet = NULL;
+    int packet_found;  
+    int start_iter;
+    Stream_t* cur_stream;
+    int retval;
+
+    // check streams for input:
+ get_packet_from_stream_label: 
+
+    cur_packet = Network_recv_stream_check(net);
     if( cur_packet != NULL ) {
         *otag = cur_packet->tag;
         *ostream = Network_get_Stream(net, cur_packet->stream_id);
@@ -302,7 +323,7 @@ int Network_recv(Network_t* net, int *otag,
     // check whether there is data waiting to be read on our socket
     mrn_dbg(5, mrn_printf(FLF, stderr, 
             "No packets waiting in stream, checking for data on socket\n"));
-    retval = Network_recv_2(net, true);
+    retval = Network_recv_internal(net, true);
 
     checked_network = true;
 

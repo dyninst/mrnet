@@ -299,9 +299,9 @@ int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket, bool_t blocking
 
     // Try to get packet for this stream
     do {
-        rc = Network_recv_2(stream->network, blocking);
+        rc = Network_recv_internal(stream->network, blocking);
         if( rc == -1 ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Network_recv_2() failed\n"));
+            mrn_dbg(1, mrn_printf(FLF, stderr, "Network_recv_internal() failed\n"));
             return -1;
         }
 	else if( (blocking == false) && (rc == 0) ) {

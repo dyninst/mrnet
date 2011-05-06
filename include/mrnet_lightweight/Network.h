@@ -53,6 +53,8 @@ void Network_waitfor_ShutDown( Network_t* net );
 
 int Network_recv( Network_t* net, int *otag,  
                   Packet_t* opacket, struct Stream_t** ostream );
+int Network_recv_nonblock( Network_t* net, int *otag,  
+                           Packet_t* opacket, struct Stream_t** ostream );
 
 struct Stream_t* Network_get_Stream( Network_t* net, unsigned int iid );
 struct Stream_t* Network_new_Stream( Network_t* net,
@@ -79,7 +81,7 @@ int Network_is_LocalNodeBackEnd( Network_t* net );
 struct PeerNode_t* Network_get_ParentNode( Network_t* net );
 
 int Network_has_PacketsFromParent( Network_t* net );
-int Network_recv_2( Network_t* net, bool_t blocking );
+int Network_recv_internal( Network_t* net, bool_t blocking );
 int Network_recv_PacketsFromParent( Network_t* net, struct vector_t* opacket, bool_t blocking );
 int Network_send_PacketToParent( Network_t* net,  Packet_t* ipacket );
 
