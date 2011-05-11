@@ -541,15 +541,6 @@ xplat_lightweight-clean:
 examples-clean:
 	$(MAKE) -f $(PLATDIR)/Makefile.examples clean
 
-distclean: local-distclean
-
-local-distclean: local-clean
-	@echo Cleaning all platforms ...
-	for dir in $(BUILDDIR)/* ; do \
-	    if [ -d $$dir ] ; then $(RM) -r $$dir ; fi \
-	done
-	if [ -d conf/autom4te.cache ] ; then $(RM) -r conf/autom4te.cache ; fi
-
 #################################
 # Default Build rules
 #################################
