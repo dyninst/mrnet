@@ -7,10 +7,11 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-#ifndef os_windows
+
+#include <libgen.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#endif
+#include <sys/stat.h>
 
 #include "config.h"
 #include "utils.h"
@@ -26,8 +27,15 @@
 
 extern "C"
 {
+#include <alps/alps.h>
+#include <alps/alps_toolAssist.h>
+#ifdef HAVE_ALPS_LIBALPS_H
+#include <alps/libalps.h>
+#define HAVE_LIBALPS
+#endif
 #ifdef HAVE_LIBALPS_H
 #include "libalps.h"
+#define HAVE_LIBALPS
 #endif
 }
 
@@ -50,7 +58,7 @@ Network::CreateNetworkFE( const char * itopology,
 {
     mrn_dbg_func_begin();
 
-    Network* n = new XTNetwork;
+    Network* n = new XTNetwork( iattrs );
     n->init_FrontEnd( itopology,
                       ibackend_exe,
                       ibackend_argv,
@@ -116,11 +124,119 @@ Network::CreateNetworkIN( int argc, char** argv )
 //----------------------------------------------------------------------------
 // XTNetwork methods
 
-// FE and BE constructor
-XTNetwork::XTNetwork(void)
-    : Network()
+// FE constructor
+XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
+    : alps_apid((uint64_t)-1)
 {
-    set_LocalHostName( GetNodename() );
+    int nid = GetLocalNid();
+    set_LocalHostName( GetNodename(nid) );
+
+#ifdef HAVE_LIBALPS
+    char* stage_files = getenv("MRNET_ALPS_STAGE_FILES");
+#endif
+
+    if( iattrs != NULL ) {
+        std::map< std::string, std::string >::const_iterator iter = iattrs->begin();
+        for( ; iter != iattrs->end(); iter++ ) {
+            if( (strcmp(iter->first.c_str(), "apid") == 0) ||
+                (strcmp(iter->first.c_str(), "CRAY_ALPS_APID") == 0) ) {
+                alps_apid = (uint64_t) strtoul( iter->second.c_str(), NULL, 0 );
+                mrn_dbg(1, mrn_printf(FLF, stderr, "ALPS apid=%d\n", alps_apid));
+            }
+#ifdef HAVE_LIBALPS
+            else if( strcmp(iter->first.c_str(), "CRAY_ALPS_APRUN_PID") == 0 ) {
+                int aprun_pid = (int)strtol( iter->second.c_str(), NULL, 0 );
+                alps_apid = alps_get_apid(nid, aprun_pid); 
+                mrn_dbg(1, mrn_printf(FLF, stderr, "ALPS aprun pid=%d, apid=%d\n", 
+                                      aprun_pid, alps_apid));
+            }
+            else if( (stage_files == NULL) &&
+                (strcmp(iter->first.c_str(), "CRAY_ALPS_STAGE_FILES") == 0) ) {
+                stage_files = const_cast< char* >( iter->second.c_str() );
+            }
+#endif
+        }
+        if( alps_apid != (uint64_t)-1 ) {
+            char apid_str[32];
+            sprintf( apid_str, "%lu", (unsigned long)alps_apid );
+            _network_settings[ CRAY_ALPS_APID ] = std::string(apid_str); 
+        }
+    }
+
+#ifdef HAVE_LIBALPS
+    if( stage_files != NULL ) {
+        char* files = strdup( stage_files );
+        char* nextf = files;
+        while( true ) {
+            char* split = strchr( nextf, (int)':' );
+            if( split != NULL )
+                *split = '\0';
+            
+            mrn_dbg(5, mrn_printf(FLF, stderr, "ATH stage file is %s\n", nextf) );
+            alps_stage_files.insert( std::string(nextf) );
+            
+            if( split == NULL )
+                break;
+            else
+                nextf = split + 1; 
+        }
+        free( files );
+    }
+#endif    
+}
+
+// BE constructor
+XTNetwork::XTNetwork(void)
+    : alps_apid((uint64_t)-1)
+{
+    set_LocalHostName( GetNodename(GetLocalNid()) );
+}
+
+void XTNetwork::init_NetSettings(void)
+{
+    // still need to process standard settings
+    Network::init_NetSettings();
+
+    // ALPS settings
+    std::map< net_settings_key_t, std::string >::iterator eit;
+    eit = _network_settings.find( CRAY_ALPS_APID );
+    if( eit != _network_settings.end() ) {
+        alps_apid = (uint64_t) strtoul( eit->second.c_str(), NULL, 10 );
+        std::string ath_dir;
+        if( GetToolHelperDir(ath_dir) ) {
+            // update LD_LIBRARY_PATH to find staged libraries
+            size_t pathlen = 0;
+            const char* ldlibpath = "LD_LIBRARY_PATH";
+            char* lib_path = getenv(ldlibpath);
+            if( lib_path != NULL )
+                pathlen = strlen(lib_path);
+            char *new_lib_path = (char*) malloc( pathlen + ath_dir.length() );
+            if( new_lib_path == NULL ) {
+                mrn_dbg(1, mrn_printf(FLF, stderr, "malloc(new_lib_path) failed\n"));
+                return;
+            }
+            sprintf(new_lib_path, "%s:%s", 
+                    ath_dir.c_str(), lib_path);
+            setenv(ldlibpath, new_lib_path, 1);
+            free( new_lib_path );
+
+            // update PATH to find staged executables
+            const char* path = "PATH";
+            char* old_path = getenv(path);
+            pathlen = 0;
+            if( old_path != NULL )
+                pathlen = strlen(old_path);
+            char *new_path = (char*) malloc( pathlen + ath_dir.length() );
+            if( new_path == NULL ) {
+                mrn_dbg(1, mrn_printf(FLF, stderr, "malloc(new_path) failed\n"));
+                return;
+            }
+            sprintf(new_path, "%s:%s", 
+                    ath_dir.c_str(), old_path);
+            setenv(path, new_path, 1);
+            free( new_path );
+        }
+    }
 }
 
 SerialGraph*
@@ -192,13 +308,12 @@ XTNetwork::PropagateTopologyOffNode( Port topoPort,
                                       childHost.c_str(), childRank ));
 
                 int childTopoSocket = -1;
-                int cret = connectHost( &childTopoSocket, childHost.c_str(), topoPort, 10 );
+                int cret = connectHost( &childTopoSocket, childHost.c_str(), topoPort, 15 );
                 if( cret != 0 ) {
-                    // TODO how to handle this error?
                     mrn_dbg(1, mrn_printf(FLF, stderr, 
                                           "Failure: unable to connect to %s:%d to send topology\n", 
                                           childHost.c_str(), childRank ) );
-                    continue;
+                    return -1;
                 }
                 PropagateTopology( childTopoSocket, topology, childRank );
                 XPlat::SocketUtils::Close( childTopoSocket );
@@ -242,26 +357,29 @@ XTNetwork::PropagateTopology( int topoFd,
 }
 
 // CP constructor
-XTNetwork::XTNetwork( bool, int topoPipeFd, 
-		      int beArgc,
-		      char** beArgv )
+XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */, 
+		      int beArgc /* = 0 */,
+		      char** beArgv /* = NULL */ )
+    : alps_apid((uint64_t)-1)
 {
     mrn_dbg_func_begin();
 
     // ensure we know our node's hostname
-    set_LocalHostName( GetNodename() );
+    set_LocalHostName( GetNodename(GetLocalNid()) );
 
     int topoFd = -1;
     int listeningTopoSocket = -1;
     Port topoPort = FindTopoPort();
+    bool firstproc = false;
     if( topoPipeFd == -1 ) {
         // we are the first process on this node
+        firstproc = true;
 
         // set up a listening socket so our parent can send us the topology
-        if( -1 == CreateListeningSocket( listeningTopoSocket, topoPort, false ) ) {
+        if( -1 == CreateListeningSocket(listeningTopoSocket, topoPort, false) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr,
-                                  "failed to create topology listening socket\n" ));
-            exit( 1 );
+                                  "failed to create topology listening socket\n"));
+            exit(1);
         }
 	int inout_errno;
         topoFd = getSocketConnection( listeningTopoSocket, inout_errno );
@@ -284,11 +402,35 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
         XPlat::SocketUtils::Close( listeningTopoSocket );
 
     TopologyPosition* my_tpos = NULL;
-
     FindPositionInTopology( topology, myHost, myRank, my_tpos );
     assert( my_tpos != NULL );
-    
-    if( topoPipeFd == -1 ) { // first process on this node
+
+    XTInternalNode* in = NULL;
+    bool am_BE = ( my_tpos->subtree->is_RootBackEnd() && (beArgc > 0) );
+
+    if( beArgc > 0 ) {
+        std::string ath_dir;
+        if( GetToolHelperDir(ath_dir) ) {
+            // check for and substitute staged BE executable
+            char* be_exe = beArgv[0];
+            char* be_base = basename( strdup(be_exe) );
+            char* be = (char*) malloc( ath_dir.length() + strlen(be_base) );
+            if( be == NULL ) {
+                mrn_dbg(1, mrn_printf(FLF, stderr, "malloc(be) failed\n"));
+            }
+            else {
+                sprintf( be, "%s/%s", 
+                         ath_dir.c_str(), be_base ); 
+                struct stat s;
+                if( stat(be, &s) == 0 )
+                    beArgv[0] = be;
+                else
+                    free(be);
+            }
+        }
+    }
+
+    if( firstproc ) { // first process on this node
 
         // spawn other processes on this node, if any
         std::vector< TopologyPosition* > other_procs;
@@ -311,24 +453,21 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
                     
                     if( currPid == 0 ) {
                         // we failed to spawn the process
-                        // TODO how to handle the error?
                         mrn_dbg(1, mrn_printf(FLF, stderr, 
                                               "Failure: unable to spawn child %s:%d\n", 
-                                              myHost.c_str(), (int)tpos->myRank ));
-                        continue;
+                                              myHost.c_str(), (int)tpos->myRank));
+                        exit(1);
                     }
                 }
                 else {
                     int currTopoFd = -1;
-                    currPid = SpawnCP( beArgc, beArgv, &currTopoFd );
-                    
+                    currPid = SpawnCP( &currTopoFd );
                     if( (currPid == 0) || (currTopoFd == -1) ) {
                         // we failed to spawn the process
-                        // TODO how to handle the error?
                         mrn_dbg(1, mrn_printf(FLF, stderr, 
                                               "Failure: unable to spawn child %s:%d\n", 
-                                              myHost.c_str(), (int)tpos->myRank ));
-                        continue;
+                                              myHost.c_str(), (int)tpos->myRank));
+                        exit(1);
                     }
        
                     // deliver the full topology
@@ -339,20 +478,16 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
                 delete tpos;
             }
             mrn_dbg(3, mrn_printf(FLF, stderr, 
-                                 "done spawning co-located processes\n" ));
+                                 "done spawning co-located processes\n"));
         }
 	else
             mrn_dbg(3, mrn_printf(FLF, stderr,
-                                  "no other processes on this node to spawn\n" ));    
+                                  "no other processes on this node to spawn\n"));    
     }
     
-    // Am I really a BE?
-    if( my_tpos->subtree->is_RootBackEnd() && (beArgc > 0) ) {
-
+    if( am_BE ) {
         // I am supposed to be a BE but currently am CP.
         // I need to spawn a BE and deliver the topology as I received it
-        // I should be the only process on this node
-        assert( topoPipeFd == -1 );
 
         // spawn the BE process
         pid_t bePid = SpawnBE( beArgc, beArgv, my_tpos->parentHostname.c_str(),
@@ -363,25 +498,26 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
             // TODO is this best way to handle error?
             mrn_dbg(1, mrn_printf(FLF, stderr, 
                                   "Failure: unable to spawn child on %s\n", 
-                                  (my_tpos->myHostname).c_str() ) );
-            exit( 1 );
+                                  (my_tpos->myHostname).c_str()));
+            exit(1);
         }
+        delete my_tpos;
         
         // we can't just go away - 
         // in case we were started by aprun, we need to stick
         // around so that it doesn't think the "application" is done.
         int beProcessStatus = 0;
         waitpid( bePid, &beProcessStatus, 0 );
-        exit( 0 );
+        exit(0);
     }
-
+    
     // Initialize as CP
     int listeningDataSocket = -1;
     Port listeningDataPort = my_tpos->subtree->get_RootPort();
-    if( -1 == CreateListeningSocket( listeningDataSocket, listeningDataPort, true ) ) {
+    if( -1 == CreateListeningSocket(listeningDataSocket, listeningDataPort, true) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr,
-                              "failed to create listening data socket\n" ));
-        exit( 1 );
+                              "failed to create listening data socket\n"));
+        exit(1);
     }
     
     Network::init_InternalNode( my_tpos->parentHostname.c_str(),
@@ -393,16 +529,24 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
                                 listeningDataPort );
 
     // Tell local ParentNode how many children to expect
-    XTInternalNode* in = dynamic_cast<XTInternalNode*>( get_LocalInternalNode() );
-    assert( in != NULL );
+    in = dynamic_cast< XTInternalNode* >( get_LocalInternalNode() );
+    if( in == NULL ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "internal node dynamic_cast failed\n"));
+        exit(1);
+    }
     in->init_numChildrenExpected( *(my_tpos->subtree) );
     mrn_dbg(5, mrn_printf(FLF, stderr, "expecting %u children\n", 
-                          in->get_numChildrenExpected() ));
-
+                          in->get_numChildrenExpected()));
+   
+    // propagate topology to any off-node children
     if( ! my_tpos->subtree->is_RootBackEnd() ) {
-        // propagate full topology to any off-node children
-        PropagateTopologyOffNode( topoPort, my_tpos->subtree, topology );
+        int rc = PropagateTopologyOffNode( topoPort, my_tpos->subtree, topology );
+        if( rc != 0 ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "off-node topology propagation failed\n"));
+            exit(1);
+        }
     }
+    
     delete my_tpos;
 
     in->PropagateSubtreeReports();
@@ -410,8 +554,7 @@ XTNetwork::XTNetwork( bool, int topoPipeFd,
 
 
 pid_t
-XTNetwork::SpawnCP( int beArgc, char** beArgv,
-                    int* topoFd )
+XTNetwork::SpawnCP( int* topoFd )
 {
     mrn_dbg_func_begin();
 
@@ -445,23 +588,17 @@ XTNetwork::SpawnCP( int beArgc, char** beArgv,
         // we need to become another CP process
         // we also need to pass the fd of the topology 
         // pipe on the command line
-        int argc = beArgc + 3;
-        char** argv = new char*[argc + 3];
-
         int currIdx = 0;
+        int argc = 3;
+        char** argv = new char*[argc];
+        char fdstr[10];
+        sprintf(fdstr, "%d", topoFds[0]);
         argv[currIdx++] = strdup( "-T" );
-
-        std::ostringstream fdStr;
-        fdStr << topoFds[0];
-        argv[currIdx++] = strdup( fdStr.str().c_str() );
-
-        for( int i = 0; i < beArgc; i++ ) {
-            argv[currIdx++] = beArgv[i];
-        }
+        argv[currIdx++] = strdup( fdstr );
         argv[currIdx] = NULL;        
 
         mrn_dbg(5, mrn_printf(FLF, stderr, "spawning CP with arguments:\n" ));
-        for( int i = 0; i < beArgc + 3; i++ ) {
+        for( int i = 0; i < currIdx; i++ ) {
             mrn_dbg(5, mrn_printf(FLF, stderr, "CP argv[%d]=%s\n", i, argv[i] ));
         }
 
@@ -535,7 +672,7 @@ XTNetwork::SpawnBE( int beArgc, char** beArgv, const char* parentHost,
 
         execvp( argv[0], argv );
         mrn_dbg(1, mrn_printf(FLF, stderr, "exec of BE failed\n" ));
-        exit( 1 );
+        exit(1);
     }
     else {
         mrn_dbg(1, mrn_printf(FLF, stderr, "fork of BE failed\n" ));
@@ -699,31 +836,18 @@ XTNetwork::FindHostsInTopology( SerialGraph* topology,
 }
 
 
-void
+bool
 XTNetwork::Instantiate( ParsedGraph* topology,
                         const char* mrn_commnode_path,
                         const char* be_path,
                         const char** be_argv,
                         unsigned int be_argc,
-                        const std::map<std::string,std::string>* iattrs )
+                        const std::map<std::string,std::string>* /* iattrs */ )
 {
     mrn_dbg_func_begin();
 
     bool have_backends = (strlen(be_path) != 0);
  
-   // determine whether we will be using the ALPS tool helper at all
-    int apid = -1;
-    if( iattrs != NULL ) {
-        for( std::map<std::string, std::string>::const_iterator iter = iattrs->begin();
-            iter != iattrs->end(); iter++ ) {
-            if( strcmp( iter->first.c_str(), "apid" ) == 0 ) {
-                apid = (int)strtol( iter->second.c_str(), NULL, 0 );
-                mrn_dbg(3, mrn_printf(FLF, stderr, "ALPS apid=%d\n", apid));
-                break;
-            }
-        }
-    }
-
     // analyze the topology and attributes to determine 
     // which processes we need to start with aprun (if any)
     // and which we need to start with ALPS tool helper (if any)
@@ -732,63 +856,59 @@ XTNetwork::Instantiate( ParsedGraph* topology,
     int athFirstNodeNid = -1;
 
     DetermineProcessTypes( topology->get_Root(),
-                           apid,
                            aprunHosts,
                            athHosts,
                            athFirstNodeNid );
 
     if( aprunHosts.empty() && athHosts.empty() ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "FE is only node in topology, not spawning anybody\n"));
-        return;
+        return true;
     }
 
     // start any needed internal processes and back end processes
     int spawnRet = SpawnProcesses( aprunHosts,
                                    athHosts,
-                                   apid,
                                    athFirstNodeNid,
                                    mrn_commnode_path,
                                    be_path,
                                    be_argc, be_argv );
     if( spawnRet != 0 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: unable to instantiate network\n" ));
-        error( ERR_INTERNAL, UnknownRank, "");  // we don't know our process' rank yet
+        mrn_dbg(1, mrn_printf(FLF, stderr, "failed to spawn processes\n" ));
+        error( ERR_INTERNAL, get_LocalRank(), "failed to spawn processes");
+        return false;
     }
     mrn_dbg(5, mrn_printf(FLF, stderr, "done spawning processes\n" ));
 
     // connect the processes we started into a tree
     int connectRet = ConnectProcesses( topology, have_backends );
     if( connectRet != 0 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: unable to instantiate network\n" ));
-        error( ERR_INTERNAL, UnknownRank, "");  // we don't know our process' rank yet
+        mrn_dbg(1, mrn_printf(FLF, stderr, "failed to connect processes\n" ));
+        error( ERR_INTERNAL, get_LocalRank(), "failed to connect processes");
+        return false;
     }
     mrn_dbg(5, mrn_printf(FLF, stderr, "done connecting processes\n" ));
 
     mrn_dbg_func_end();
+    return true;
 }
 
 int
 XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
                            const std::set<std::string>& athHosts,
-                           int apid,
                            int athFirstNodeNid,
                            const char* mrn_commnode_path,
                            std::string be_path,
                            int argc,
                            const char** argv )
 {
-    int ret = 0;
-
     mrn_dbg_func_begin();
 
     // we should never be asked not to spawn any processes
-    assert( !(aprunHosts.empty() && athHosts.empty()) );
+    assert( ! (aprunHosts.empty() && athHosts.empty()) );
 
     // start processes (if any) that need to be started with aprun
-    if( !aprunHosts.empty() ) {
-        // TODO remove hardcoded aprun spec, especially to ORNL site-specific
-        // location
-        std::string cmd = "/usr/bin/aprun";
+    if( ! aprunHosts.empty() ) {
+        std::string cmd = "aprun";
         std::vector<std::string> args;
         args.push_back( cmd );
 
@@ -839,10 +959,10 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         }
     }
 
-#ifdef HAVE_LIBALPS_H
+#ifdef HAVE_LIBALPS
     // start processes (if any) that need to be started with alps tool helper
-    if( !athHosts.empty() ) {
-        assert( apid != -1 );
+    if( ! athHosts.empty() ) {
+        assert( alps_apid != (uint64_t)-1 );
         assert( athFirstNodeNid != -1 );
 
         std::ostringstream cmdStr;
@@ -853,31 +973,74 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         mrn_dbg(3, mrn_printf(FLF, stderr, "Using ALPS tool helper to start: %s\n", 
                               cmdStr.str().c_str() ));
 
+        const char* lthRet;
         char** cmds = new char*[2];
-        cmds[0] = new char[cmdStr.str().length() + 1];
-        strcpy( cmds[0], cmdStr.str().c_str() );
         cmds[1] = NULL;
 
+        // stage back-end if there is one
+        if( be_path.length() ) {
+            cmds[0] = const_cast< char* >( be_path.c_str() );
+            lthRet = alps_launch_tool_helper(
+                                 alps_apid,       // app id
+                                 athFirstNodeNid, // first node in placement list
+                                 1,               // transfer helper program
+                                 0,               // don't execute helper program
+                                 1,               // number of helper commands
+                                 cmds             // helper commands
+                                             );
+            if( lthRet != NULL ) {
+                mrn_dbg(1, mrn_printf(FLF, stderr,
+                                      "ALPS tool helper failed to stage %s - error is '%s'\n",
+                                      cmds[0], lthRet) );
+                return -1;
+            }
+        }
+
+        // stage files if requested
+        if( alps_stage_files.size() ) {
+            std::set< std::string >::iterator fiter = alps_stage_files.begin();
+            for( ; fiter != alps_stage_files.end() ; fiter++ ) {
+                cmds[0] = const_cast< char* >( fiter->c_str() );
+                lthRet = alps_launch_tool_helper(
+                                 alps_apid,       // app id 
+                                 athFirstNodeNid, // first node in placement list
+                                 1,               // transfer helper program
+                                 0,               // don't execute helper program
+                                 1,               // number of helper commands
+                                 cmds             // helper commands
+                                                 ); 
+                if( lthRet != NULL ) {
+                    mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                          "ALPS tool helper failed to stage %s - error is '%s'\n", 
+                                          cmds[0], lthRet) );
+                    return -1;
+                }
+            }
+        }
+
         // launch the processes using ALPS tool helper
-        const char* launchRet = alps_launch_tool_helper( 
-                                   apid,            // app id 
-                                   athFirstNodeNid, // nid of first node in placement list
-                                   1,               // transfer helper program
-                                   1,               // execute helper program
-                                   1,               // number of helper program commands
-                                   cmds             // helper program and args
-                                                        ); 
-        delete[] cmds[0];
-        delete[] cmds;
-        if( launchRet != NULL ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "ALPS tool helper failed to start %s - error is '%s'\n", 
-                                  cmdStr.str().c_str(), launchRet) );
+        cmds[0] = new char[cmdStr.str().length() + 1];
+        strcpy( cmds[0], cmdStr.str().c_str() );
+        lthRet = alps_launch_tool_helper(
+                                 alps_apid,       // app id 
+                                 athFirstNodeNid, // first node in placement list
+                                 1,               // transfer helper program
+                                 1,               // execute helper program
+                                 1,               // number of helper commands
+                                 cmds             // helper commands
+                                         ); 
+        if( lthRet != NULL ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                  "ALPS tool helper failed to start %s - error is '%s'\n", 
+                                  cmds[0], lthRet) );
             return -1;
         }
+        delete[] cmds[0];
+        delete[] cmds;
     }
-#endif // HAVE_LIBALPS_H
+#endif // HAVE_LIBALPS
 
-    return ret;
+    return 0;
 }
 
 // Build compact specifications of compute node ids, for use
@@ -960,16 +1123,15 @@ XTNetwork::GetNidFromNodename( std::string nodename )
 {
     uint32_t nid = (uint32_t)-1;
 
+    if( 0 == strncmp(nodename.c_str(), "nid", 3) ) {
+        // skip over "nid" prefix
+        std::string nidstring = nodename.substr( 3 );
 
-    // skip over "nid" prefix
-    assert( nodename[0] == 'n' );
-    assert( nodename[1] == 'i' );
-    assert( nodename[2] == 'd' );
-    std::string nidstring = nodename.substr( 3 );
-
-    // extract the nid number
-    std::istringstream istr( nidstring );
-    istr >> std::dec >> nid;
+        // extract the nid number
+        std::istringstream istr( nidstring );
+        istr >> std::dec >> nid;
+    }
+    // else, not in expected format
 
     return nid;
 }
@@ -1027,20 +1189,30 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology, bool have_backends )
         
     // tell our FE object about the topology
     XTFrontEndNode* fe = dynamic_cast<XTFrontEndNode*>( get_LocalFrontEndNode() );
-    assert( fe != NULL );
+    if( fe == NULL ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "front-end dynamic_cast failed\n") );
+        return -1;
+    }
     fe->init_numChildrenExpected( sgtmp );
     mrn_dbg(5, mrn_printf(FLF, stderr, "expecting %u children\n", 
-                          fe->get_numChildrenExpected() ));
+                          fe->get_numChildrenExpected()) );
 
     // tell our children about the topology and update front end topology
-    std::string reset_topo=sgnew;
-    reset_Topology(reset_topo);
+    std::string reset_topo = sgnew;
+    reset_Topology( reset_topo );
     SerialGraph* sgo = new SerialGraph( sgnew );
-    assert( sgo != NULL );
+    if( sgo == NULL ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new SerialGraph() failed\n") );
+        return -1;
+    }
     free( sgnew );
-    Port topoPort = FindTopoPort();
-    PropagateTopologyOffNode( topoPort, sgo, sgo );
 
+    Port topoPort = FindTopoPort();
+    int rc = PropagateTopologyOffNode( topoPort, sgo, sgo );
+    if( rc != 0 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "off-node topology propagation failed\n") );
+        return -1;
+    }
     return 0;
 }
 
@@ -1061,14 +1233,14 @@ XTNetwork::CreateFrontEndNode( Network* n, std::string ihost, Rank irank )
     {
            mrn_dbg(1, mrn_printf(FLF, stderr,
                    "failed to get flags on the listening data socket\n" ));
-           exit( 1 );
+           exit(1);
     }
 
     if(fcntl(listeningSocket,F_SETFL,flags|O_NONBLOCK) < 0)
     {
            mrn_dbg(1, mrn_printf(FLF, stderr,
                    "failed to set non blocking flags on listening data socket \n" ));
-           exit( 1 );
+           exit(1);
     }
 
     return new XTFrontEndNode( n, ihost, irank, 
@@ -1150,22 +1322,58 @@ XTNetwork::CreateListeningSocket( int& ps, Port& pp, bool nonblock ) const
 }
 
 
-std::string
-XTNetwork::GetNodename( void )
+int XTNetwork::GetLocalNid(void)
 {
-    // on the XT, the node number is available in /proc/cray_xt/nid
-    std::ifstream ifs( "/proc/cray_xt/nid" );
-    uint32_t nid;
-    ifs >> nid;
+    int nid = -1;
+    
+    // alps.h defines ALPS_XT_NID to be the file containing the nid.
+    // it's /proc/cray_xt/nid for the machines we've seen so far
+    std::ifstream ifs( ALPS_XT_NID );
+    if( ifs.is_open() ) {
+        ifs >> nid;
+        ifs.close();
+    }
 
+    return nid;
+}
+
+std::string
+XTNetwork::GetNodename(int nid)
+{
     std::ostringstream nidStr;
     nidStr << "nid"
         << std::setw( 5 )
         << std::setfill( '0' )
-        << nid
-        << std::ends;
+        << nid;
         
     return nidStr.str();
+}
+
+bool
+XTNetwork::GetToolHelperDir( std::string& path )
+{
+    if( alps_apid != (uint64_t)-1 ) {
+
+        // alps.h defines ALPS_CNODE_PATH_FMT.
+        // it's '/var/spool/alps/%llu' for the machines we've seen so far.
+
+        // alps_toolAssist.h defines ALPS_CNODE_TOOL_FMT.
+        // it's 'toolhelper%llu' for the machines we've seen so far.
+
+        // for both formats, the '%llu' corresponds to the ALPS apid
+
+        char ath_dir[128];
+        unsigned long long apid = (unsigned long long) alps_apid;
+        sprintf( ath_dir, ALPS_CNODE_PATH_FMT "/" ALPS_CNODE_TOOL_FMT,
+                 apid, apid );
+
+        struct stat s;
+        if( stat(ath_dir, &s) == 0 ) {
+            path = ath_dir;
+            return true;
+        }
+    }
+    return false;
 }
 
 void
@@ -1173,45 +1381,50 @@ XTNetwork::FindAppNodes( int nPlaces,
                          placeList_t* places,
                          std::set<std::string>& hosts )
 {
+    int lastNid = -1;
     for( int i = 0; i < nPlaces; i++ ) {
         int currNid = places[i].nid;
-        std::ostringstream nodeNameStr;
-        nodeNameStr << "nid" 
-                    << std::setw( 5 ) 
-                    << std::setfill('0') 
-                    << currNid;
-
-        // add node name into set, unless it is already there
-        hosts.insert( nodeNameStr.str() );
+	if( currNid != lastNid ) {
+            // add node name into set
+            std::string nodeStr = GetNodename( currNid );
+            //mrn_dbg(5, mrn_printf(FLF, stderr, 
+            //                      "node %s has app procs\n", 
+            //                      nodeStr.c_str()));
+            hosts.insert( nodeStr );
+            lastNid = currNid;	
+        }
     }
+    mrn_dbg(5, mrn_printf(FLF, stderr, 
+                         "Found %zd app nodes\n", hosts.size()));
 }
 
 void
 XTNetwork::DetermineProcessTypes( ParsedGraph::Node* node,
-                                  int apid,
                                   std::set<std::string>& aprunHosts,
                                   std::set<std::string>& athHosts,
                                   int& athFirstNodeNid ) const
 {
     std::set<std::string> appHosts;
 
-#ifdef HAVE_LIBALPS_H
+#ifdef HAVE_LIBALPS
     // figure out whehter we will be co-locating processes with app processes,
     // and if so, where they are
-    if( -1 != apid ) {
+    if( (uint64_t)-1 != alps_apid ) {
         // find out about app process placement...
+        mrn_dbg(5, mrn_printf(FLF, stderr, 
+                              "using ALPS tool helper to find app info for apid=%d\n", alps_apid));
         appInfo_t alpsAppInfo;
         cmdDetail_t* alpsCmdDetail = NULL;
         placeList_t* alpsPlaces = NULL;
-        int aiRet = alps_get_appinfo( apid,
-                                    &alpsAppInfo,
-                                    &alpsCmdDetail,
-                                    &alpsPlaces );
+        int aiRet = alps_get_appinfo( alps_apid,
+                                      &alpsAppInfo,
+                                      &alpsCmdDetail,
+                                      &alpsPlaces );
         if( aiRet < 0 ) {
             error( ERR_INTERNAL, UnknownRank,
                 "Failed to get ALPS app information");
             mrn_dbg(1, mrn_printf(FLF, stderr, 
-                                  "Failed to get ALPS app info for apid=%d\n", apid));
+                                  "Failed to get ALPS app info for apid=%d\n", alps_apid));
             return; 
         }
 
@@ -1227,7 +1440,7 @@ XTNetwork::DetermineProcessTypes( ParsedGraph::Node* node,
         free( alpsPlaces );
         alpsPlaces = NULL;
     }
-#endif // HAVE_LIBALPS_H
+#endif // HAVE_LIBALPS
 
     // now figure out hosts where processes will have to be
     // created with aprun (if any) and where they will have to be
@@ -1248,17 +1461,23 @@ XTNetwork::DetermineProcessTypesAux( ParsedGraph::Node* node,
     std::string nodeName = node->get_HostName();
 
     // check whether this process is co-located with an app process
-    if( node->get_Parent() != NULL ) {
-        // it is not the FE process
-        if( appHosts.find( nodeName ) != appHosts.end() ) {
+    if( node->get_Parent() != NULL ) { // not the FE process
+        std::set< std::string >::const_iterator iend = appHosts.end();
+        std::set< std::string >::const_iterator finder = appHosts.find( nodeName );
+        if( finder != iend ) {
             // this process must be co-located with an app process
             // it will be created with ALPS tool helper
             athHosts.insert( nodeName );
+            //mrn_dbg(5, mrn_printf(FLF, stderr, 
+            //                      "node %s IS co-located with app\n", nodeName.c_str()));
         }
         else {
             // this process is not co-located with an app process
             // it will be created with aprun
             aprunHosts.insert( nodeName );
+            //mrn_dbg(5, mrn_printf(FLF, stderr, 
+            //                      "node %s NOT co-located with app\n", 
+            //                      nodeName.c_str()));
         }
     }
 
@@ -1275,7 +1494,6 @@ XTNetwork::DetermineProcessTypesAux( ParsedGraph::Node* node,
         }
     }
 }
-
 
 } // namespace MRN
 

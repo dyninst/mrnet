@@ -30,14 +30,16 @@ class XTNetwork : public Network
 private:
     static Port defaultTopoPort;
 
-    static std::string GetNodename( void );
-    static Port FindTopoPort( void );
-    static Port FindParentPort( void );
-
+    static int GetLocalNid(void);
+    static std::string GetNodename(int nid);
+    static Port FindTopoPort(void);
+    static Port FindParentPort(void);
 
     // FE support
+    uint64_t alps_apid;
+    std::set< std::string > alps_stage_files;
+
     void DetermineProcessTypes( ParsedGraph::Node* node,
-                                int apid,
                                 std::set<std::string>& aprunHosts,
                                 std::set<std::string>& athHosts,
                                 int& athFirstNodeNid ) const;
@@ -58,7 +60,6 @@ private:
 
     int SpawnProcesses( const std::set<std::string>& aprunHosts,
                         const std::set<std::string>& athHosts,
-                        int apid,
                         int athFirstNodeNid,
                         const char* mrn_commnode_path,
                         std::string be_path,
@@ -120,12 +121,15 @@ private:
                    const char* parentHost, Rank parentRank, Port parentPort,
                    const char* myHost, Rank myRank );
                    
-    pid_t SpawnCP( int beArgc, char** beArgv, 
-                   int* topoFd );
+    pid_t SpawnCP( int* topoFd );
+                   
 
+    bool GetToolHelperDir( std::string& path );
 
 protected:
-    virtual void Instantiate( ParsedGraph* parsed_graph,
+    void init_NetSettings(void);
+
+    virtual bool Instantiate( ParsedGraph* parsed_graph,
                               const char* mrn_commnode_path,
                               const char* ibackend_exe,
                               const char** ibackend_args,
@@ -151,10 +155,13 @@ protected:
                                               Port idataPort = UnknownPort );
 
 public:
-    // ctor for Network in FE role
+    // FE role
+    XTNetwork( const std::map<std::string,std::string> * iattrs );
+
+    // BE role
     XTNetwork(void);
 
-    // ctor for Network in BE/IN role
+    // CP role
     XTNetwork( bool,
                int topoPipeFd = -1,
                int beArgc = 0,

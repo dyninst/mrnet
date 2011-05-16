@@ -338,8 +338,7 @@ void * EventDetector::main( void* iarg )
             << prettyHost
             << ':'
             << myrank
-            << ')'
-            << std::ends;
+            << ')' ;
     net->init_ThreadState( UNKNOWN_NODE, namestr.str().c_str() );
 
     srand48( net->get_LocalRank() );
@@ -350,7 +349,7 @@ void * EventDetector::main( void* iarg )
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                                    "init_NewChildFDConnection() failed\n") );
         }
-        mrn_dbg( 5, mrn_printf(0,0,0, stderr, "success!\n"));
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "event connection successful.\n"));
 
         //monitor parent sock for failure
         parent_sock = parent_node->get_EventSocketFd();

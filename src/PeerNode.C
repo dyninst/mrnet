@@ -226,8 +226,7 @@ void * PeerNode::recv_thread_main( void* iargs )
     namestr << peer_node->get_HostName()
             << ':'
             << rank
-            << ')'
-            << std::ends;
+            << ')' ;
     net->init_ThreadState( UNKNOWN_NODE, namestr.str().c_str() );
 
     mrn_dbg_func_begin();
@@ -304,8 +303,7 @@ void * PeerNode::send_thread_main( void* iargs )
     namestr << peer_node->get_HostName()
             << ':'
             << rank
-            << ')'
-            << std::ends;
+            << ')' ;
     net->init_ThreadState( UNKNOWN_NODE, namestr.str().c_str() );
 
     mrn_dbg_func_begin();

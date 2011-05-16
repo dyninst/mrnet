@@ -478,8 +478,7 @@ void Network::init_ThreadState( node_type_t node_type,
                    << prettyHost
                    << ":"
                    << myrank
-                   << ")"
-                   << std::ends;
+                   << ")" ;
     }
     else
         nameStream << thread_name; 
@@ -640,11 +639,10 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
     XPlat::NetUtils::GetHostName( myhostname, prettyHost );
     std::ostringstream nameStream;
     nameStream << "BE("
-            << prettyHost
-            << ":"
-            << imyrank
-            << ")"
-            << std::ends;
+               << prettyHost
+               << ":"
+               << imyrank
+               << ")" ;
 
     //TLS: setup thread local storage for backend
     init_ThreadState( BE_NODE, nameStream.str().c_str() );
