@@ -18,6 +18,8 @@
 #include "PerfDataEvent.h"
 #include "TimeKeeper.h"
 
+typedef unsigned char uchar_t;
+
 using namespace std;
 
 namespace MRN

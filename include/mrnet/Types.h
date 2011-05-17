@@ -6,61 +6,22 @@
 #if !defined(Types_h)
 #define Types_h
 
-
-#if !defined (__STDC_LIMIT_MACROS)
-#  define __STDC_LIMIT_MACROS
-#endif
-#if !defined (__STDC_CONSTANT_MACROS)
-#  define __STDC_CONSTANT_MACROS
-#endif
-#if !defined (__STDC_FORMAT_MACROS)
-#  define __STDC_FORMAT_MACROS
-#endif
-
 #include <sys/types.h>
 
-#if defined (os_linux)
-#include <stdint.h>
-#elif defined(os_solaris)
-#include <inttypes.h>
-#elif defined(os_windows)
-#include "xplat/Types.h"
-#define sleep(x) Sleep(1000*(DWORD)x)
-typedef long int ssize_t;
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#endif
-
-#if !defined (bool_t)
-#define bool_t int32_t
-#endif
-
-#if !defined (enum_t)
-#define enum_t int32_t
-#endif
-
-#if !defined (char_t)
-#define char_t char
-#endif
-
-#if !defined (uchar_t)
-#define uchar_t unsigned char
-#endif
-
-#ifndef FALSE
-#define FALSE   (0)
-#endif
-
-#ifndef TRUE
-#define TRUE    (1)
-#endif
-
-#if !defined(NULL)
-#define NULL (0)
+/* need the fixed bit-width integer types */
+#ifndef os_windows
+# include <stdint.h>
+#else
+# include "xplat/Types.h"
 #endif
 
 #include <cstdio>
 #include <map>
 #include <vector>
+
+#if !defined(NULL)
+#define NULL (0)
+#endif
 
 #define FirstSystemTag 0
 #define FirstApplicationTag 100

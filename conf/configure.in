@@ -58,6 +58,21 @@ AC_ARG_WITH(purify,
     ])
 AC_SUBST(PURIFY)
 
+
+dnl === Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h signal.h sys/ioctl.h sys/socket.h sys/sockio.h sys/time.h])
+
+dnl === Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_TYPE_PID_T
+
+dnl === Checks for library functions.
+AC_FUNC_FORK
+AC_CHECK_FUNCS([gethostbyname socket strchr strerror])
+
+
 dnl === Check for required programs
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
@@ -280,25 +295,27 @@ if test $MRNET_STARTUP_METHOD = "ssh" ; then
 fi
 if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 
-    AC_CHECK_HEADERS([alps/apInfo.h])
-
     CXXFLAGS="$CXXFLAGS -Darch_crayxt"
     CFLAGS="$CFLAGS -Darch_crayxt"
 
-    if test "$CRAYXT_ATH_INCDIR" != "" ; then
+    AC_CHECK_HEADERS([alps/alps.h] [alps/alps_toolAssist.h] [alps/apInfo.h], [], 
+                     [AC_MSG_ERROR([One of the required ALPS include files was not found: alps/alps.h, alps/alps_toolAssist.h, alps/apInfo.h])])
+
+    HAVE_SYSTEM_LIBALPS="no"
+    AC_CHECK_HEADERS([alps/libalps.h], HAVE_SYSTEM_LIBALPS="yes")
+    if test $HAVE_SYSTEM_LIBALPS == "no" ; then
+      if test "$CRAYXT_ATH_INCDIR" != "" ; then
         CXXFLAGS="$CXXFLAGS -I$CRAYXT_ATH_INCDIR"
         AC_CHECK_HEADERS([libalps.h], [], 
                          [AC_MSG_ERROR(Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc)],
-[#if HAVE_STDINT_H
-# include <stdint.h>
-#endif
-#if HAVE_SYS_TYPES_H
-# include <sys/types.h>
+[#if HAVE_ALPS_ALPS_TOOLASSIST_H
+# include <alps/alps_toolAssist.h>
 #endif
 #if HAVE_ALPS_APINFO_H 
 # include <alps/apInfo.h> 
 #endif]
                         )
+      fi
     fi
 
     CRAYXT_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
@@ -349,19 +366,6 @@ AS_MKDIR_P([${PLATFORM_BUILD}/depends/xplat/ltwt])
 AS_MKDIR_P([${PLATFORM_BUILD}/lib])
 AS_MKDIR_P([${PLATFORM_BUILD}/obj/ltwt])
 AS_MKDIR_P([${PLATFORM_BUILD}/obj/xplat/ltwt])
-
-# Checks for header files.
-AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h sys/sockio.h])
-
-# Checks for typedefs, structures, and compiler characteristics.
-AC_HEADER_STDBOOL
-AC_C_CONST
-AC_TYPE_PID_T
-
-# Checks for library functions.
-AC_FUNC_FORK
-AC_CHECK_FUNCS([gethostbyname socket strchr strerror])
 
 AC_CONFIG_HEADER([${PLATFORM_BUILD}/config.h:conf/config.h.in])
 AC_CONFIG_FILES([${PLATFORM_BUILD}/Makefile:conf/Makefile.in ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in])

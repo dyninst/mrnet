@@ -494,7 +494,7 @@ static const char* op2str( PDR* pdrs )
     return NULL;
 } 
 
-bool_t Packet::pdr_packet_header( PDR * pdrs, Packet * pkt )
+bool Packet::pdr_packet_header( PDR * pdrs, Packet * pkt )
 {
     mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
 
@@ -502,32 +502,32 @@ bool_t Packet::pdr_packet_header( PDR * pdrs, Packet * pkt )
 
     if( pdr_uint32( pdrs, &( pkt->stream_id ) ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint16() failed\n" ));
-        return FALSE;
+        return false;
     }
     if( pdr_int32( pdrs, &( pkt->tag ) ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_int32() failed\n" ));
-        return FALSE;
+        return false;
     }
     if( pdr_uint32( pdrs, &( pkt->src_rank ) ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint32() failed\n" ));
-        return FALSE;
+        return false;
     }
     if( pdr_wrapstring( pdrs, &( pkt->fmt_str ) ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_wrapstring() failed\n" ));
-        return FALSE;
+        return false;
     }
     if( pdr_array( pdrs, (void**) &( pkt->dest_arr ), &( pkt->dest_arr_len ), 
                    INT32_MAX, sizeof(uint32_t), 
                    (pdrproc_t) pdr_uint32 ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_array() failed\n" ));
-        return FALSE;
+        return false;
     }
 
     mrn_dbg_func_end();
-    return TRUE;
+    return true;
 }
 
-bool_t Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
+bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
 {
     mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
 
@@ -535,7 +535,7 @@ bool_t Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
     if( fmtstr == NULL ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr,
                     "No data in message. just header info\n" ));
-        return TRUE;
+        return true;
     }
 
     unsigned int i;
@@ -682,7 +682,7 @@ bool_t Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                         "pdr_xxx() failed for elem[%d] of type %d\n", 
                                    i, cur_elem->type) );
-            return retval;
+            return false;
         }
         if( pdrs->p_op == PDR_DECODE ) {
             pkt->data_elements.push_back( cur_elem );
@@ -693,7 +693,7 @@ bool_t Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
     }
 
     mrn_dbg_func_end();
-    return TRUE;
+    return true;
 }
 
 int Packet::ArgList2DataElementArray( va_list arg_list )

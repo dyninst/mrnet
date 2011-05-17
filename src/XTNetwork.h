@@ -11,16 +11,13 @@
 #include <vector>
 #include <utility>
 
-#include "mrnet/Network.h"
-
-#include "ParsedGraph.h"
-
-#ifndef os_windows
 extern "C"
 {
 #include <alps/apInfo.h>
 }
-#endif
+
+#include "mrnet/Network.h"
+#include "ParsedGraph.h"
 
 namespace MRN
 {

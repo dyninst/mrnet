@@ -6,32 +6,52 @@
 #if !defined(__utils_lightweight_h)
 #define __utils_lightweight_h 1
 
+#if !defined (__STDC_LIMIT_MACROS)
+#  define __STDC_LIMIT_MACROS
+#endif
+#if !defined (__STDC_CONSTANT_MACROS)
+#  define __STDC_CONSTANT_MACROS
+#endif
+#if !defined (__STDC_FORMAT_MACROS)
+#  define __STDC_FORMAT_MACROS
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "mrnet_lightweight/Types.h"
 #include "xplat_lightweight/Types.h"
 
-#ifndef os_windows
-#include <signal.h>
-#include <unistd.h>
-#include <sys/time.h>
-#else
-#include <io.h>
-#include <sys/timeb.h>
-#include <winsock2.h>
+#ifndef os_windows // unix
 
-#define srand48 srand
-#define drand48 (double)rand
-#define snprintf _snprintf
-#define sleep(x) Sleep(1000*(DWORD)x)
+# include "config.h"
+
+# ifdef HAVE_SIGNAL_H
+#  include <signal.h>
+# endif
+# ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+# endif
+# ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# endif
+
+#else // windows
+
+# include <io.h>
+# include <sys/timeb.h>
+# include <winsock2.h>
+
+# define srand48 srand
+# define drand48 (double)rand
+# define snprintf _snprintf
+# define sleep(x) Sleep(1000*(DWORD)x)
 
 int gettimeofday(struct timeval *tv, struct timezone *tz);
 
-#endif //ifndef(os_windows)
+#endif // ifndef os_windows
 
 #define MRN_RELEASE_DATE_SECS 1277800000
-
 
 struct hostent *copy_hostent (struct hostent *in);
 void delete_hostent(struct hostent *in);

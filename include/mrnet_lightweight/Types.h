@@ -6,29 +6,15 @@
 #if !defined(__types_h)
 #define __types_h 1
 
-#if !defined (__STDC_LIMIT_MACROS)
-#  define __STDC_LIMIT_MACROS
-#endif
-#if !defined (__STDC_CONSTANT_MACROS)
-#  define __STDC_CONSTANT_MACROS
-#endif
-#if !defined (__STDC_FORMAT_MACROS)
-#  define __STDC_FORMAT_MACROS
-#endif
-
 #include <sys/types.h>
 #include <stdio.h>
 
-#if defined (os_linux)
-#include <stdint.h>
-#elif defined(os_solaris)
-#include <inttypes.h>
-#elif defined(os_windows)
-#include "xplat_lightweight/Types.h"
-#define sleep(x) Sleep(1000*(DWORD)x)
-typedef long int ssize_t;
+/* need the fixed bit-width integer types */
+#ifndef os_windows
+# include <stdint.h>
+#else
+# include "xplat_lightweight/Types.h"
 #endif
-
 
 #define true 1
 #define false 0

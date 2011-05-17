@@ -3,10 +3,7 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "config.h"
 #include "utils.h"
-
-#include "mrnet/Types.h"
 #include "mrnet/MRNet.h"
 
 #include "xplat/NetUtils.h"
@@ -15,7 +12,6 @@
 #include "xplat/Mutex.h"
 #include "xplat/Error.h"
 #include "xplat/Process.h"
-#include "xplat/Thread.h"
 using namespace XPlat;
 
 #include <sys/stat.h>

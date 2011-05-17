@@ -5,9 +5,10 @@
 
 #include "byte_order.h"
 #include "pdr_mem.h"
-#include <assert.h>
 
+#ifndef os_windows // unix
 #include "config.h"
+#endif
 
 #if defined(__cplusplus)
 

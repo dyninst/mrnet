@@ -6,14 +6,16 @@
 #if !defined(test_h)
 #define test_h
 
-#include "mrnet/DataElement.h"
-#include "utils.h"
 #include "mrnet/MRNet.h"
+#include "utils.h"
+
 using namespace MRN;
 
 #include <string>
 #include <map>
 
+typedef char char_t;
+typedef unsigned char uchar_t;
 
 namespace MRN_test {
 

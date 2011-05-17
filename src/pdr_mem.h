@@ -6,18 +6,10 @@
 #if !defined(__pdr_mem_h)
 #define __pdr_mem_h 
 
-
 #include "pdr.h"
 
-#if defined(__cplusplus)
-
+#ifdef __cplusplus
 extern "C" {
-
-#else
-
-#define TRUE true
-#define FALSE false
-
 #endif
 
 bool_t   pdrmem_putchar(PDR *, char *);
@@ -51,8 +43,8 @@ uint32_t pdrmem_getpos(PDR *);
 int32_t* pdrmem_inline(PDR *, int32_t);
 void     pdrmem_destroy(PDR *);
 
-#if defined(__cplusplus)
-}
+#ifdef __cplusplus
+} /* extern C */
 #endif
 
 #endif /* __pdr_mem_h */

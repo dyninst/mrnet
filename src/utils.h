@@ -6,6 +6,16 @@
 #ifndef utils_h
 #define utils_h 1
 
+#if !defined (__STDC_LIMIT_MACROS)
+#  define __STDC_LIMIT_MACROS
+#endif
+#if !defined (__STDC_CONSTANT_MACROS)
+#  define __STDC_CONSTANT_MACROS
+#endif
+#if !defined (__STDC_FORMAT_MACROS)
+#  define __STDC_FORMAT_MACROS
+#endif
+
 #include "mrnet/Types.h"
 #include "xplat/Types.h"
 #include "xplat/TLSKey.h"
@@ -21,17 +31,26 @@
 #include <cstdlib>
 #include <cstring>
 
-#include <fcntl.h>
-#include <sys/types.h>
+#ifndef os_windows // unix
 
-#ifndef os_windows
+# include "config.h"
 
-# include <signal.h>
-# include <unistd.h>
-# include <sys/time.h>
+# if HAVE_FCNTL_H
+#  include <fcntl.h>
+# endif
+# if HAVE_SIGNAL_H
+#  include <signal.h>
+# endif
+# if HAVE_UNISTD_H
+#  include <unistd.h>
+# endif
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# endif
 
-#else
+#else // windows
 
+# include <fcntl.h>
 # include <io.h>
 # include <sys/timeb.h>
 
@@ -39,6 +58,7 @@
 # define drand48 (double)rand
 # define snprintf _snprintf
 # define sleep(x) Sleep(1000*(DWORD)x)
+# define EWOULDBLOCK WSAEWOULDBLOCK
 
 inline int gettimeofday( struct timeval *tv, struct timezone *tz )
 {
@@ -51,7 +71,7 @@ inline int gettimeofday( struct timeval *tv, struct timezone *tz )
     return 0;
 }
 
-#endif // ifndef(os_windows)
+#endif // ifndef os_windows
 
 #include <vector>
 #include <string>
@@ -67,12 +87,6 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
 
 int bindPort( int *sock_in, Port *port_in, bool nonblock=false );
 int getSocketConnection( int bound_socket, int& inout_errno );
-
-#if READY
-int getSocketPeer( int connected_socket,
-                   std::string & hostname, Port *port );
-#endif // READY
-
 int getPortFromSocket( int sock, Port *port );
 
 struct ltstr

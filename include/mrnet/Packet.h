@@ -99,8 +99,8 @@ class Packet: public Error {
     int ArgVec2DataElementArray( const void **data );
     int DataElementArray2ArgVec( void **data ) const;
 
-    static bool_t pdr_packet_data( struct PDR *, Packet * );
-    static bool_t pdr_packet_header( struct PDR *, Packet * );
+    static bool pdr_packet_data( struct PDR *, Packet * );
+    static bool pdr_packet_header( struct PDR *, Packet * );
 
     //Data Members
     uint32_t stream_id;

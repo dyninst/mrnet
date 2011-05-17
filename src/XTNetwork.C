@@ -29,6 +29,7 @@ extern "C"
 {
 #include <alps/alps.h>
 #include <alps/alps_toolAssist.h>
+
 #ifdef HAVE_ALPS_LIBALPS_H
 #include <alps/libalps.h>
 #define HAVE_LIBALPS

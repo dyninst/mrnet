@@ -3,22 +3,75 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined(__PDR_HEADER__)
+#ifndef __PDR_HEADER__
 #define __PDR_HEADER__
 
+#if !defined (__STDC_LIMIT_MACROS)
+#  define __STDC_LIMIT_MACROS
+#endif
+#if !defined (__STDC_CONSTANT_MACROS)
+#  define __STDC_CONSTANT_MACROS
+#endif
+#if !defined (__STDC_FORMAT_MACROS)
+#  define __STDC_FORMAT_MACROS
+#endif
 
+#define SIZEOF_INT16 2
+#define SIZEOF_INT32 4
+#define SIZEOF_INT64 8
 
+#include <sys/types.h>
 
-#if defined(__cplusplus)
+#ifndef os_windows
+# include "config.h"
+# if HAVE_INTTYPES_H
+#  include <inttypes.h>
+# else
+#  if HAVE_STDINT_H
+#   include <stdint.h>
+#  endif
+# endif
+#endif // ifndef os_windows
 
-#include "mrnet/Types.h"
+#ifndef bool_t
+# define bool_t int32_t
+#endif
+
+#ifndef enum_t
+# define enum_t int32_t
+#endif
+
+#ifndef char_t
+# define char_t char
+#endif
+
+#ifndef uchar_t
+# define uchar_t unsigned char
+#endif
+
+#ifndef FALSE
+#define FALSE (0)
+#endif
+
+#ifndef TRUE
+#define TRUE (1)
+#endif
+
+#ifdef __cplusplus
+
 extern "C" {
 
-#else /* ! defined(__cplusplus) */
+#else
 
-#include "mrnet_lightweight/Types.h"
+# ifndef false
+#  define false (0)
+# endif
 
-#endif /* defined(__cplusplus) */
+# ifndef true
+#  define true (1)
+# endif
+
+#endif // __cplusplus
 
 enum pdr_op {
     PDR_FREE=0,
@@ -50,17 +103,17 @@ struct pdr_ops {
     bool_t  (*getbytes)(PDR *pdrs, char *, uint32_t);
     bool_t  (*setpos)(PDR *pdrs, uint32_t ip);
     uint32_t (*getpos)(PDR *pdrs);
-    int32_t * (*pinline)(PDR *pdrs, int32_t ip);
+    int32_t* (*pinline)(PDR *pdrs, int32_t ip);
     void    (*destroy)(PDR *pdrs);
 };
 
 struct PDR {
-    enum pdr_op p_op;       /* operation; */
+    enum pdr_op      p_op;       /* operation; */
     struct pdr_ops * p_ops; 
 
-    char *        cur;      /* pointer to private data */
-    char *        base;     /* private used for position info */
-    uint32_t        space;   /* extra private word */
+    char *   cur;      /* pointer to private data */
+    char *   base;     /* private used for position info */
+    uint32_t space;    /* extra private word */
 };
 
 /*
@@ -99,9 +152,9 @@ extern bool_t   pdr_bytes(PDR *pdrs, char **cpp, uint32_t *sizep,
 extern bool_t   pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize);
 extern bool_t   pdr_wrapstring(PDR *pdrs, char **cpp);
 extern bool_t   pdr_reference(PDR *pdrs, char * *pp, uint32_t size,
-                          pdrproc_t proc);
+                              pdrproc_t proc);
 extern bool_t   pdr_pointer(PDR *pdrs, char **objpp, uint32_t obj_size,
-                          pdrproc_t pdr_obj);
+                            pdrproc_t pdr_obj);
 
 extern bool_t   pdr_array(PDR *pdrs, void **addrp, uint32_t *sizep,
                           uint32_t maxsize, uint32_t elsize, pdrproc_t elproc);
@@ -113,20 +166,19 @@ extern bool_t   pdr_vector(PDR *pdrs, char *basep, uint32_t nelem,
  * These are the public routines for the various implementations of
  * pdr streams.
  */
-extern void   pdrmem_create(PDR *pdrs, char * addr, uint32_t size,
-                            enum pdr_op op);          /* PDR using memory buffers */
-
-extern void     pdr_free (pdrproc_t proc, char *objp);
+extern void pdrmem_create(PDR *pdrs, char * addr, uint32_t size,
+                          enum pdr_op op);          /* PDR using memory buffers */
+extern void pdr_free(pdrproc_t proc, char *objp);
 
 uint32_t pdr_getpos(PDR *pdrs);
-bool_t pdr_setpos(PDR *pdrs, uint32_t pos);
-int32_t pdr_inline(PDR *pdrs, int32_t pos);
+bool_t   pdr_setpos(PDR *pdrs, uint32_t pos);
+int32_t  pdr_inline(PDR *pdrs, int32_t pos);
 
 extern uint32_t pdr_sizeof (pdrproc_t, void *);
 
-#if defined(__cplusplus)
-}
-#endif /* defined(__cplusplus) */
+#ifdef __cplusplus
+} /* extern C */
+#endif
 
 #ifdef NEED_XDR_COMPAT_MACROS
 
@@ -143,8 +195,8 @@ extern uint32_t pdr_sizeof (pdrproc_t, void *);
 #define x_op p_op
 
 #define xdrproc_t pdrproc_t
-#if !defined(NULL_xdrproc_t)
-#define NULL_xdrproc_t NULL_pdrproc_t
+#ifndef NULL_xdrproc_t
+# define NULL_xdrproc_t NULL_pdrproc_t
 #endif
 
 #define xdr_void          pdr_void
@@ -168,11 +220,7 @@ extern uint32_t pdr_sizeof (pdrproc_t, void *);
 #define xdr_vector        pdr_vector
 #define xdr_bytes         pdr_bytes
 #define xdr_string        pdr_string
-
 #define xdr_sizeof        pdr_sizeof
-
-
-
 #define xdr_opaque        pdr_opaque
 #define xdr_reference     pdr_reference
 #define xdr_pointer       pdr_pointer
@@ -182,10 +230,7 @@ extern uint32_t pdr_sizeof (pdrproc_t, void *);
  * These are the public routines for the various implementations of
  * xdr streams.
  */
-
 #define xdrmem_create pdrmem_create
-
-/* free memory buffers for xdr */
 #define xdr_free pdr_free
 
 #endif /* NEED_XDR_COMPAT_MACROS */
@@ -236,4 +281,6 @@ extern uint32_t pdr_sizeof (pdrproc_t, void *);
 
 #define pdr_destroy(pdrs)                               \
         (*(pdrs)->p_ops->destroy)(pdrs)
-#endif /* !__PDR_HEADER__ */
+
+
+#endif /* __PDR_HEADER__ */
