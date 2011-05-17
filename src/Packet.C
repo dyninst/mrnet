@@ -277,7 +277,7 @@ Packet::~Packet()
     data_sync.Unlock();
 }
 
-int Packet::unpack( char const *ifmt_str, ... )
+int Packet::unpack( const char *ifmt_str, ... )
 {
     int ret = -1;
     if( ifmt_str != NULL ) {
@@ -289,7 +289,8 @@ int Packet::unpack( char const *ifmt_str, ... )
     return ret;
 }
 
-int Packet::unpack( va_list iarg_list, const char* ifmt_str )
+int Packet::unpack( va_list iarg_list, const char* ifmt_str, 
+                    bool /*dummy parameter to make sure signatures differ*/ )
 {
     int ret = -1;
     if( ifmt_str != NULL ) {

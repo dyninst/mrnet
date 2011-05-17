@@ -14,8 +14,8 @@ using namespace MRN;
 #include <string>
 #include <map>
 
-typedef char char_t;
-typedef unsigned char uchar_t;
+#define char_t char
+#define uchar_t unsigned char
 
 namespace MRN_test {
 
