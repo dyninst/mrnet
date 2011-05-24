@@ -38,7 +38,7 @@ Message::Message()
     _packet_sync.RegisterCondition( MRN_QUEUE_NONEMPTY );
 }
 
-int Message::recv( int sock_fd, std::list < PacketPtr >&packets_in,
+int Message::recv( int sock_fd, std::list< PacketPtr > &packets_in,
                    Rank iinlet_rank )
 {
     mrn_dbg_func_begin();

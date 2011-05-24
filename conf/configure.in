@@ -302,7 +302,14 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
                      [AC_MSG_ERROR([One of the required ALPS include files was not found: alps/alps.h, alps/alps_toolAssist.h, alps/apInfo.h])])
 
     HAVE_SYSTEM_LIBALPS="no"
-    AC_CHECK_HEADERS([alps/libalps.h], HAVE_SYSTEM_LIBALPS="yes")
+    AC_CHECK_HEADERS([alps/libalps.h], HAVE_SYSTEM_LIBALPS="yes", [], 
+[#if HAVE_ALPS_ALPS_TOOLASSIST_H
+# include <alps/alps_toolAssist.h>
+#endif
+#if HAVE_ALPS_APINFO_H 
+# include <alps/apInfo.h> 
+#endif]
+                    )
     if test $HAVE_SYSTEM_LIBALPS == "no" ; then
       if test "$CRAYXT_ATH_INCDIR" != "" ; then
         CXXFLAGS="$CXXFLAGS -I$CRAYXT_ATH_INCDIR"
