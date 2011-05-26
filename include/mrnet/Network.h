@@ -214,6 +214,9 @@ protected:
     bool reset_Topology(std::string& itopology);
     void update_TopoStream();
 
+    void init_ThreadState( node_type_t node_type,
+                           const char* thread_name = NULL );
+
     PeerNodePtr _parent;
 
     std::map< net_settings_key_t, std::string > _network_settings;
@@ -240,9 +243,6 @@ protected:
         PARENT_NODE_AVAILABLE,
         NETWORK_TERMINATION
     };
-
-    void init_ThreadState( node_type_t node_type,
-                           const char* thread_name = NULL );
 
     void update_BcastCommunicator(void);
 

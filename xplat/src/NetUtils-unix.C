@@ -199,8 +199,7 @@ int NetUtils::GetLocalHostName( std::string& this_host )
         nidStr << "nid"
 	       << std::setw( 5 )
 	       << std::setfill( '0' )
-	       << nid
-	       << std::ends;
+	       << nid;
         cached_localhost = nidStr.str();
     }
 

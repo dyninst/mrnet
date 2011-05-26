@@ -2164,23 +2164,6 @@ void set_OutputLevel(int l)
     }
 }
 
-void set_OutputLevelFromEnvironment( std::map< net_settings_key_t, std::string > & env ) 
-{
-    char* output_level = NULL;
-    if( env.find(MRNET_DEBUG_LEVEL) != env.end() ){
-        output_level = strdup( env[MRNET_DEBUG_LEVEL].c_str() );
-    }
-       
-    if( output_level != NULL ) {
-        int l = atoi( output_level );
-        free( output_level );
-        set_OutputLevel( l );
-    }
-    
-    if( env.find(MRNET_DEBUG_LOG_DIRECTORY) != env.end() )
-        MRN_DEBUG_LOG_DIRECTORY = strdup( env[MRNET_DEBUG_LOG_DIRECTORY].c_str() );
-}
-
 /* Failure Recovery */
 bool Network::set_FailureRecovery( bool enable_recovery )
 {

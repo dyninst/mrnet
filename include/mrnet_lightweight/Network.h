@@ -112,6 +112,4 @@ int Network_recover_FromParentFailure( Network_t* net );
 
 char* Network_get_LocalSubTreeStringPtr( Network_t* net );
 
-void Network_set_OutputLevelFromEnvironment(void);
-
 #endif /* __network_h */

@@ -509,9 +509,10 @@ int mrn_printf( const char *file, int line, const char * func,
     va_start( arglist, format );
     retval = vfprintf( f, format, arglist );
     va_end( arglist );
-    fflush( f );
     
     mrn_printf_mutex.Unlock();
+
+    fflush( f );
      
     return retval;
 }
