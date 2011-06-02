@@ -372,6 +372,9 @@ int MRN_read(int fd, void *buf, size_t count)
     size_t bytes_recvd = 0;
     int retval, err;
 
+    if( count == 0 )
+        return 0;
+
     while( bytes_recvd != count ) {
 
         mrn_dbg(5, mrn_printf(FLF, stderr, "About to call recv\n"));

@@ -425,6 +425,9 @@ int write( int ifd, const void *ibuf, int ibuf_len )
 int read( int fd, void *buf, int count )
 {
     int bytes_recvd = 0, retval, err;
+    if( count == 0 )
+        return 0;
+
     while( bytes_recvd != count ) {
 
         retval = ::recv( fd, ( ( char * )buf ) + bytes_recvd,
