@@ -649,11 +649,6 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
 
     child_node->set_DataSocketFd( isock );
     
-    mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                           "New child node[%s:%u:%u] (incarnation:%u) on socket %d\n",
-                           child_hostname_ptr, child_rank, child_port,
-                           child_incarnation, isock) );
-    
     // propagate initial network settings
     const std::map< net_settings_key_t, std::string >& envMap = _network->get_SettingsMap();
     int* keys = (int*) calloc( envMap.size() + 1, sizeof(int) );
@@ -681,17 +676,24 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                               keys, count, 
                               vals, count) );
     pkt->set_DestroyData( true );
-    child_node->sendDirectly( pkt );  
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before adding child subgraph\n", 
-                           nt->get_TopologyString().c_str()) );
+    child_node->sendDirectly( pkt );
     
+    Rank my_rank = _network->get_LocalRank();
+    if( NULL == nt->find_Node(child_rank) ) {
+        std::string child_topo(topo_ptr);
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before adding child subgraph %s\n", 
+                               nt->get_TopologyString().c_str(),
+                               child_topo.c_str()) );
+        SerialGraph sg( child_topo );
+        nt->add_SubGraph( my_rank, sg, true );
+    }
+
     //Create send/recv threads
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for new child\n") );
     child_node->start_CommunicationThreads();
 
     if( child_incarnation > 1 ) {
         //child's parent has failed
-        Rank my_rank = _network->get_LocalRank();
         mrn_dbg(3, mrn_printf(FLF, stderr,
                               "child[%s:%u]'s old parent: %u, new parent: %u\n",
                               child_hostname_ptr, child_rank,
@@ -701,7 +703,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
         PacketPtr packet( new Packet(CTL_STRM_ID, PROT_RECOVERY_RPT, "%ud %ud %ud",
                                      child_rank,
                                      old_parent_rank,
-                                     _network->get_LocalRank()) );
+                                     my_rank) );
 
         if( proc_RecoveryReport(packet) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_RecoveryReport() failed()\n") );
