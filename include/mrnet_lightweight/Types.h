@@ -16,8 +16,12 @@
 # include "xplat_lightweight/Types.h"
 #endif
 
-#define true 1
-#define false 0
+#ifndef true
+#define true (1)
+#endif
+#ifndef false
+#define false (0)
+#endif
 
 #if !defined (TRUE)
 #define TRUE true
