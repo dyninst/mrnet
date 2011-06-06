@@ -266,8 +266,11 @@ XTNetwork::GetTopology( int topoSocket, Rank& myRank )
     // get my rank
     read( topoSocket, &myRank, sizeof(myRank) );
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s, rank=%u\n", 
-                          sTopology, myRank) );
+    // get ALPS apid 
+    read( topoSocket, &alps_apid, sizeof(alps_apid) );
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s, rank=%u, ALPS apid=%lu\n", 
+                          sTopology, myRank, alps_apid) );
 
     SerialGraph* sg = new SerialGraph( sTopology );
     delete[] sTopology;
@@ -355,6 +358,9 @@ XTNetwork::PropagateTopology( int topoFd,
 
     // deliver the child rank
     write( topoFd, &childRank, sizeof(childRank) );
+
+    // deliver the ALPS apid
+    write( topoFd, &alps_apid, sizeof(alps_apid) );
 }
 
 // CP constructor
@@ -367,8 +373,10 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
 
     // ensure we know our node's hostname
     set_LocalHostName( GetNodename(GetLocalNid()) );
+    std::string myHost = get_LocalHostName();
 
     int topoFd = -1;
+    int listeningDataSocket = -1;    
     int listeningTopoSocket = -1;
     Port topoPort = FindTopoPort();
     bool firstproc = false;
@@ -394,7 +402,6 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
     assert( topoFd != -1 );
 
     // Get the topology
-    std::string myHost = get_LocalHostName();
     Rank myRank;
     SerialGraph* topology = GetTopology( topoFd, myRank );
     assert( topology != NULL );
@@ -405,16 +412,24 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
     TopologyPosition* my_tpos = NULL;
     FindPositionInTopology( topology, myHost, myRank, my_tpos );
     assert( my_tpos != NULL );
-
-    XTInternalNode* in = NULL;
     bool am_BE = ( my_tpos->subtree->is_RootBackEnd() && (beArgc > 0) );
+
+#if 0 // set to 1 for early startup debugging
+    set_LocalRank( myRank );
+    init_ThreadState( CP_NODE );
+    set_OutputLevel(5);
+    extern char* MRN_DEBUG_LOG_DIRECTORY;
+    MRN_DEBUG_LOG_DIRECTORY = strdup("/some/path/to/mrnet-log");
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Hello\n"));
+#endif 
 
     if( beArgc > 0 ) {
         std::string ath_dir;
-        if( GetToolHelperDir(ath_dir) ) {
+	if( GetToolHelperDir(ath_dir) ) {
             // check for and substitute staged BE executable
             char* be_exe = beArgv[0];
-            char* be_base = basename( strdup(be_exe) );
+            mrn_dbg(5, mrn_printf(FLF, stderr, "BE executable is %s\n", be_exe));
+	    char* be_base = basename( strdup(be_exe) );
             char* be = (char*) malloc( ath_dir.length() + strlen(be_base) );
             if( be == NULL ) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "malloc(be) failed\n"));
@@ -423,8 +438,10 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
                 sprintf( be, "%s/%s", 
                          ath_dir.c_str(), be_base ); 
                 struct stat s;
-                if( stat(be, &s) == 0 )
+                if( stat(be, &s) == 0 ) {
                     beArgv[0] = be;
+		    mrn_dbg(5, mrn_printf(FLF, stderr, "Using staged BE executable %s\n", be));
+		}
                 else
                     free(be);
             }
@@ -462,7 +479,7 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
                 }
                 else {
                     int currTopoFd = -1;
-                    currPid = SpawnCP( &currTopoFd );
+                    currPid = SpawnCP( &currTopoFd, listeningDataSocket );
                     if( (currPid == 0) || (currTopoFd == -1) ) {
                         // we failed to spawn the process
                         mrn_dbg(1, mrn_printf(FLF, stderr, 
@@ -511,16 +528,16 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
         waitpid( bePid, &beProcessStatus, 0 );
         exit(0);
     }
-    
-    // Initialize as CP
-    int listeningDataSocket = -1;
+
+    // Start listening only AFTER spawning co-located processes
     Port listeningDataPort = my_tpos->subtree->get_RootPort();
     if( -1 == CreateListeningSocket(listeningDataSocket, listeningDataPort, true) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr,
                               "failed to create listening data socket\n"));
         exit(1);
     }
-    
+
+    // Initialize as CP
     Network::init_InternalNode( my_tpos->parentHostname.c_str(),
                                 my_tpos->parentPort,
                                 my_tpos->parentRank,
@@ -530,6 +547,7 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
                                 listeningDataPort );
 
     // Tell local ParentNode how many children to expect
+    XTInternalNode* in = NULL;
     in = dynamic_cast< XTInternalNode* >( get_LocalInternalNode() );
     if( in == NULL ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "internal node dynamic_cast failed\n"));
@@ -555,7 +573,7 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
 
 
 pid_t
-XTNetwork::SpawnCP( int* topoFd )
+XTNetwork::SpawnCP( int* topoFd, int listeningSocket )
 {
     mrn_dbg_func_begin();
 
@@ -586,17 +604,20 @@ XTNetwork::SpawnCP( int* topoFd )
         mrn_dbg(3, mrn_printf( FLF, stderr, "child closing %d\n", topoFds[1] ));
         XPlat::SocketUtils::Close( topoFds[1] );
 
+	if( listeningSocket != -1 )
+	    XPlat::SocketUtils::Close( listeningSocket );
+
         // we need to become another CP process
         // we also need to pass the fd of the topology 
         // pipe on the command line
         int currIdx = 0;
-        int argc = 3;
-        char** argv = new char*[argc];
+        int argc = 2;
+        char** argv = new char*[argc+1];
         char fdstr[10];
         sprintf(fdstr, "%d", topoFds[0]);
         argv[currIdx++] = strdup( "-T" );
         argv[currIdx++] = strdup( fdstr );
-        argv[currIdx] = NULL;        
+        argv[currIdx] = NULL;
 
         mrn_dbg(5, mrn_printf(FLF, stderr, "spawning CP with arguments:\n" ));
         for( int i = 0; i < currIdx; i++ ) {
@@ -619,7 +640,7 @@ XTNetwork::SpawnCP( int* topoFd )
         //--- END CP main() ---
     }
     else {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "fork of colocated CP failed\n" ));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "fork of colocated CP failed\n"));
         ret = 0;
     }
     return ret;
@@ -642,37 +663,38 @@ XTNetwork::SpawnBE( int beArgc, char** beArgv, const char* parentHost,
     sprintf(prank, "%d", (int)parentRank);
     sprintf(crank, "%d", (int)childRank);
 
+    // we need to pass the connection info
+    int argc = beArgc + 5;
+    char** argv = new char*[argc + 1];
+
+    int currIdx = 0;
+    for( int i = 0; i < beArgc; i++ ) {
+        argv[currIdx++] = strdup(beArgv[i]);
+    }
+    argv[currIdx++] = strdup(parentHost);
+    argv[currIdx++] = strdup(pport);
+    argv[currIdx++] = strdup(prank);
+    argv[currIdx++] = strdup(childHost);
+    argv[currIdx++] = strdup(crank);
+    argv[currIdx] = NULL;
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "spawning BE with arguments:\n"));
+    for( int i = 0; i < argc; i++ ) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "BE argv[%d]=%s\n", i, argv[i] ));
+    }
+
     // we can't use the XPlat::Process::Create function here
     // because we need the pid to wait on.
     pid_t pid = fork();
     if( pid > 0 ) {
         // we are the parent
         ret = pid;
+	mrn_dbg(5, mrn_printf(FLF, stderr, "spawned BE has pid %d\n", (int)pid));
     }
     else if( pid == 0 ) {
         // we are the child
-        // we also need to pass the connection info
-        int argc = beArgc + 5;
-        char** argv = new char*[argc + 1];
-
-        int currIdx = 0;
-        for( int i = 0; i < beArgc; i++ ) {
-            argv[currIdx++] = beArgv[i];
-        }
-        argv[currIdx++] = strdup(parentHost);
-        argv[currIdx++] = pport;
-	argv[currIdx++] = prank;
-        argv[currIdx++] = strdup(childHost);
-	argv[currIdx++] = crank;
-        argv[currIdx] = NULL;
-
-        mrn_dbg(5, mrn_printf(FLF, stderr, "spawning BE with arguments:\n" ));
-        for( int i = 0; i < argc; i++ ) {
-	    mrn_dbg(5, mrn_printf(FLF, stderr, "BE argv[%d]=%s\n", i, argv[i] ));
-        }
-
         execvp( argv[0], argv );
-        mrn_dbg(1, mrn_printf(FLF, stderr, "exec of BE failed\n" ));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "exec of BE failed\n"));
         exit(1);
     }
     else {
@@ -971,8 +993,6 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         for( int i = 0; i < argc; i++ ) {
             cmdStr << argv[i] << ' ';
         }
-        mrn_dbg(3, mrn_printf(FLF, stderr, "Using ALPS tool helper to start: %s\n", 
-                              cmdStr.str().c_str() ));
 
         const char* lthRet;
         char** cmds = new char*[2];
@@ -980,7 +1000,9 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
 
         // stage back-end if there is one
         if( be_path.length() ) {
-            cmds[0] = const_cast< char* >( be_path.c_str() );
+            mrn_dbg(3, mrn_printf(FLF, stderr, "Using ALPS tool helper to stage: %s\n", 
+				  be_path.c_str()));
+	    cmds[0] = const_cast< char* >( be_path.c_str() );
             lthRet = alps_launch_tool_helper(
                                  alps_apid,       // app id
                                  athFirstNodeNid, // first node in placement list
@@ -1001,7 +1023,9 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         if( alps_stage_files.size() ) {
             std::set< std::string >::iterator fiter = alps_stage_files.begin();
             for( ; fiter != alps_stage_files.end() ; fiter++ ) {
-                cmds[0] = const_cast< char* >( fiter->c_str() );
+                mrn_dbg(3, mrn_printf(FLF, stderr, "Using ALPS tool helper to stage: %s\n", 
+				      fiter->c_str()));
+		cmds[0] = const_cast< char* >( fiter->c_str() );
                 lthRet = alps_launch_tool_helper(
                                  alps_apid,       // app id 
                                  athFirstNodeNid, // first node in placement list
@@ -1020,6 +1044,8 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         }
 
         // launch the processes using ALPS tool helper
+        mrn_dbg(3, mrn_printf(FLF, stderr, "Using ALPS tool helper to start: %s\n", 
+                              cmdStr.str().c_str()));
         cmds[0] = new char[cmdStr.str().length() + 1];
         strcpy( cmds[0], cmdStr.str().c_str() );
         lthRet = alps_launch_tool_helper(

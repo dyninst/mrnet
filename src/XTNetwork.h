@@ -118,7 +118,7 @@ private:
                    const char* parentHost, Rank parentRank, Port parentPort,
                    const char* myHost, Rank myRank );
                    
-    pid_t SpawnCP( int* topoFd );
+    pid_t SpawnCP( int* topoFd, int listeningSocket );
                    
 
     bool GetToolHelperDir( std::string& path );
