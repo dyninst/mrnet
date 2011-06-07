@@ -529,6 +529,18 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
         exit(0);
     }
 
+    /**************************************************************
+     *
+     * BEGIN CP INITIALIZATION REGION
+     *
+     * Note: the code in this region should not be moved before we
+     *       spawn co-located processes, as there seems to be an
+     *       issue with becoming multi-threaded before forking other
+     *       CPs (the symptom is the EDT poll/select not seeing
+     *       connection attempts on its listening socket).
+     *
+     **************************************************************/
+
     // Start listening only AFTER spawning co-located processes
     Port listeningDataPort = my_tpos->subtree->get_RootPort();
     if( -1 == CreateListeningSocket(listeningDataSocket, listeningDataPort, true) ) {
@@ -556,6 +568,12 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
     in->init_numChildrenExpected( *(my_tpos->subtree) );
     mrn_dbg(5, mrn_printf(FLF, stderr, "expecting %u children\n", 
                           in->get_numChildrenExpected()));
+
+    /**************************************************************
+     *
+     * END CP INITIALIZATION REGION
+     *
+     **************************************************************/
    
     // propagate topology to any off-node children
     if( ! my_tpos->subtree->is_RootBackEnd() ) {
