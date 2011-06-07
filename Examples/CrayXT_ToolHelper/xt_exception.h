@@ -1,3 +1,8 @@
+/****************************************************************************
+ * Copyright 2003-2011 Dorian C. Arnold, Philip C. Roth, Barton P. Miller   *
+ *                  Detailed MRNet usage rights in "LICENSE" file.          *
+ ****************************************************************************/
+
 #ifndef XT_TOOL_EXCEPTION_H
 #define XT_TOOL_EXCEPTION_H
 
