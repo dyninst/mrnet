@@ -48,15 +48,26 @@ Stream_t* new_Stream_t(Network_t* net,
                        unsigned int isync_filter_id,
                        unsigned int ids_filter_id);
 
+/* BEGIN PUBLIC API */
+
+char Stream_is_Closed(Stream_t* stream);
+
 void delete_Stream_t(Stream_t * stream);
 
 unsigned int Stream_get_Id(Stream_t* stream);
 
+int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ...);
+int Stream_send_packet(Stream_t* stream, Packet_t* ipacket);
+
+int Stream_flush(Stream_t* stream);
+
+int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket, bool_t blocking);
+
+/* END PUBLIC API */
+
 int Stream_find_FilterAssignment(char* assignments, 
                                  Rank me, 
                                  int filter_id);
-
-int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket, bool_t blocking);
 
 Packet_t* Stream_get_IncomingPacket(Stream_t* stream);
 
@@ -68,11 +79,7 @@ int Stream_push_Packet(Stream_t* stream,
 
 void Stream_add_IncomingPacket(Stream_t* stream, Packet_t* packet);
 
-int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ... );
-
 int Stream_send_aux(Stream_t* stream, int itag, const char* ifmt, Packet_t* ipacket);
-
-int Stream_flush(Stream_t* stream);
 
 void Stream_set_FilterParams(Stream_t* stream, int upstream, Packet_t* iparams);
 
@@ -94,7 +101,6 @@ void Stream_print_PerfData(Stream_t* stream,
                            perfdata_context_t context);
 int Stream_remove_Node(Stream_t* stream, Rank irank);
 
-char Stream_is_Closed(Stream_t* stream);
 //DEPRECATED -- renamed is_ShutDown to is_Closed
 char Stream_is_ShutDown(Stream_t* stream);
 

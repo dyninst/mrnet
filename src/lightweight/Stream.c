@@ -357,6 +357,25 @@ int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ... )
     return status;
 }
 
+int Stream_send_packet(Stream_t* stream, Packet_t* packet)
+{
+    int status;
+  
+    mrn_dbg_func_begin();
+
+    if (packet == NULL) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "invalid arg: NULL packet\n"));
+        return -1;
+    }
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Calling send_aux(\n"));
+
+    status = Stream_send_aux(stream, packet->tag, packet->fmt_str, packet);
+
+    mrn_dbg_func_end();
+
+    return status;
+}
+
 int Stream_send_aux(Stream_t* stream, int itag, const char* ifmt, Packet_t* ipacket)
 {
     Timer_t tagg = new_Timer_t();

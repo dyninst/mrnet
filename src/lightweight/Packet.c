@@ -196,9 +196,19 @@ int Packet_get_Tag(Packet_t* packet)
     return packet->tag;
 }
 
-unsigned short Packet_get_StreamId(Packet_t* packet)
+void Packet_set_Tag(Packet_t* packet, int tag)
+{
+    packet->tag = tag;
+}
+
+unsigned int Packet_get_StreamId(Packet_t* packet)
 {
     return packet->stream_id;
+}
+
+void Packet_set_StreamId(Packet_t* packet, unsigned int strm_id)
+{
+    packet->stream_id = strm_id;
 }
 
 char* Packet_get_FormatString(Packet_t* packet) 
@@ -531,6 +541,12 @@ int Packet_unpack(Packet_t* packet, const char *ifmt_str, ... )
     ret = Packet_ExtractVaList(packet, ifmt_str, arg_list);
     va_end(arg_list);
   
+    return ret;
+}
+
+int Packet_unpack_valist(Packet_t* packet, va_list arg_list, const char *ifmt_str )
+{
+    int ret = Packet_ExtractVaList(packet, ifmt_str, arg_list);
     return ret;
 }
 

@@ -29,23 +29,34 @@ typedef struct {
   struct vector_t* data_elements;
 } Packet_t;
 
-
-Packet_t* Packet_construct(Packet_t* packet);
+/* BEGIN PUBLIC API */
 
 Packet_t* new_Packet_t(Rank isrc, unsigned int istream_id, int itag, 
                        const char* fmt, va_list arg_list);
 
 Packet_t* new_Packet_t_2(unsigned int istream_id, int itag, const char* fmt, ...);
 
-Packet_t* new_Packet_t_3(unsigned int ihdr_len, char* ihdr, 
-                         unsigned int ibuf_len, char* ibuf, 
-                         Rank iinlet_rank);
+int Packet_get_Tag(Packet_t* packet);
+void Packet_set_Tag(Packet_t* packet, int tag);
+
+unsigned int Packet_get_StreamId(Packet_t* packet);
+void Packet_set_StreamId(Packet_t* packet, unsigned int strm_id);
+
+char* Packet_get_FormatString(Packet_t* packet);
 
 void Packet_set_DestroyData(Packet_t * packet, int dd);
 
-int Packet_get_Tag(Packet_t* packet);
-unsigned short Packet_get_StreamId(Packet_t* packet);
-char* Packet_get_FormatString(Packet_t* packet);
+int Packet_unpack(Packet_t* packet, const char *ifmt_str, ...);
+int Packet_unpack_valist(Packet_t* packet, va_list arg_list, const char *ifmt_str);
+
+/* END PUBLIC API */
+
+Packet_t* Packet_construct(Packet_t* packet);
+
+
+Packet_t* new_Packet_t_3(unsigned int ihdr_len, char* ihdr, 
+                         unsigned int ibuf_len, char* ibuf, 
+                         Rank iinlet_rank);
 
 Packet_t* Packet_pushBackElement(Packet_t* packet, DataElement_t* cur_elem);
 
@@ -55,7 +66,5 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list);
 
 bool_t Packet_pdr_packet_header(struct PDR *pdrs,  Packet_t* pkt);
 bool_t Packet_pdr_packet_data(struct PDR *pdrs,  Packet_t* pkt);
-
-int Packet_unpack(Packet_t* packet, const char *ifmt_str, ...);
 
 #endif /* __packet_h */

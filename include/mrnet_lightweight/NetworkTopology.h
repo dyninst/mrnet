@@ -67,17 +67,33 @@ Node_t* new_Node_t(char* ihostname,
                    Rank irank,
                    int iis_backend);
 
-
 NetworkTopology_t* new_NetworkTopology_t(Network_t* inetwork,
                                          char* ihostname,
                                          Port iport,
                                          Rank irank,
                                          int iis_backend);
 
+/* BEGIN PUBLIC API */
+
 /* NetworkTopology */
 unsigned int NetworkTopology_get_NumNodes(NetworkTopology_t* net_top);
 
 Node_t* NetworkTopology_get_Root(NetworkTopology_t* net_top);
+
+Node_t* NetworkTopology_find_Node(NetworkTopology_t* net_top, Rank irank);
+
+/* NetworkTopology_Node */
+char* NetworkTopology_Node_get_HostName(Node_t* node);
+
+Port NetworkTopology_Node_get_Port(Node_t* node);
+
+Rank NetworkTopology_Node_get_Rank(Node_t* node);
+
+Rank NetworkTopology_Node_get_Parent(Node_t* node);
+
+unsigned int NetworkTopology_Node_find_SubTreeHeight(Node_t* node);
+
+/* END PUBLIC API */
 
 char* NetworkTopology_get_TopologyStringPtr(NetworkTopology_t * net_top);
 
@@ -95,8 +111,6 @@ int NetworkTopology_set_Parent(NetworkTopology_t* net_top, Rank ichild_rank,
                                Rank inew_Parent_rank, int iupdate);
 
 int NetworkTopology_remove_Orphan(NetworkTopology_t* net_top, Rank r);
-
-Node_t* NetworkTopology_find_Node(NetworkTopology_t* net_top, Rank irank);
 
 int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode, 
                                  struct SerialGraph_t* isg, int iupdate);
@@ -146,17 +160,7 @@ void NetworkTopology_update_TopoStreamPeers(NetworkTopology_t * net_top,
 /* NetworkTopology_Node */
 int NetworkTopology_Node_is_BackEnd(Node_t* node);
 
-char* NetworkTopology_Node_get_HostName(Node_t* node);
-
-Port NetworkTopology_Node_get_Port(Node_t* node);
-
-Rank NetworkTopology_Node_get_Rank(Node_t* node);
-
-Rank NetworkTopology_Node_get_Parent(Node_t* node);
-
 void NetworkTopology_Node_set_Parent(Node_t* node, Node_t* parent);
-
-unsigned int NetworkTopology_Node_find_SubTreeHeight(Node_t* node);
 
 unsigned int NetworkTopology_Node_get_Proximity(Node_t* adopter, Node_t* iorphan);
 
