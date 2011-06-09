@@ -133,7 +133,7 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
     set_LocalHostName( GetNodename(nid) );
 
 #ifdef HAVE_LIBALPS
-    char* stage_files = getenv("MRNET_ALPS_STAGE_FILES");
+    char* stage_files = getenv("CRAY_ALPS_STAGE_FILES");
 #endif
 
     if( iattrs != NULL ) {
