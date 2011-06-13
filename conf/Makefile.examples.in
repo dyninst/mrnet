@@ -16,6 +16,7 @@ PLATDIR = @PLATFORM_BUILD@
 BINDIR  = $(PLATDIR)/bin
 LIBDIR  = $(PLATDIR)/lib
 OBJDIR  = $(PLATDIR)/obj
+EXTDIR  = $(MRNET_ROOT)/external
 
 #############################
 #### INSTALL DIRECTORIES ####
@@ -57,6 +58,16 @@ SOFLAGS = @SOFLAGS@
 
 INCDIRS = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include
 INCDIRS_LIGHTWEIGHT = $(INCDIRS)
+
+HAVE_SYSTEM_BOOST = @HAVE_SYSTEM_BOOST@
+HAVE_USER_BOOST   = @HAVE_USER_BOOST@
+ifeq ($(HAVE_USER_BOOST), yes)
+    INCDIRS += -I@BOOST_INCDIR@
+else
+    ifeq ($(HAVE_SYSTEM_BOOST), no)
+        INCDIRS += -I$(EXTDIR)/boost/include
+    endif
+endif
 
 #####################################
 #### System Specific Definitions ####

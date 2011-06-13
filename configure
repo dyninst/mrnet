@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY CXXCPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT EXTRA_LIBS HAVE_BOOST PLATFORM_BUILD LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY CXXCPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX HAVE_SYSTEM_BOOST HAVE_USER_BOOST BOOST_INCDIR COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT EXTRA_LIBS PLATFORM_BUILD LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -863,10 +863,15 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-startup=METHOD   Tree instantiation method - "ssh" (default),
                           "cray_xt"
-  --with-alpstoolhelp-lib (CrayXT only) Absolute path to directory containing
+  --with-alpstoolhelp-lib=PATH
+                          (CrayXT only) Absolute path to directory containing
                           libalps library
-  --with-alpstoolhelp-inc (CrayXT only) Absolute path to directory containing
+  --with-alpstoolhelp-inc=PATH
+                          (CrayXT only) Absolute path to directory containing
                           libalps.h
+  --with-boost=PATH       Absolute path to installation of Boost C++ libraries
+                          (note: specify the path to the directory containing
+                          the "boost" directory)
   --with-purify           Use purify for memory debugging
 
 Some influential environment variables:
@@ -2431,6 +2436,7 @@ else
   MRNET_STARTUP_METHOD="ssh"
 fi;
 
+
 # Check whether --with-alpstoolhelp-lib or --without-alpstoolhelp-lib was given.
 if test "${with_alpstoolhelp_lib+set}" = set; then
   withval="$with_alpstoolhelp_lib"
@@ -2446,6 +2452,15 @@ if test "${with_alpstoolhelp_inc+set}" = set; then
   CRAYXT_ATH_INCDIR="${withval}"
 else
   CRAYXT_ATH_INCDIR=""
+fi;
+
+
+# Check whether --with-boost or --without-boost was given.
+if test "${with_boost+set}" = set; then
+  withval="$with_boost"
+  BOOST_INCDIR="${withval}"
+else
+  BOOST_INCDIR=""
 fi;
 
 # Check whether --enable-shared or --disable-shared was given.
@@ -4493,8 +4508,10 @@ echo "$as_me: error: flex not found in \$PATH, is it installed?" >&2;}
 fi
 
 
-HAVE_BOOST="no"
-if test "${ac_cv_header_boost_shared_ptr_hpp+set}" = set; then
+HAVE_SYSTEM_BOOST="no"
+HAVE_USER_BOOST="no"
+if test "$BOOST_INCDIR" = "" ; then
+    if test "${ac_cv_header_boost_shared_ptr_hpp+set}" = set; then
   echo "$as_me:$LINENO: checking for boost/shared_ptr.hpp" >&5
 echo $ECHO_N "checking for boost/shared_ptr.hpp... $ECHO_C" >&6
 if test "${ac_cv_header_boost_shared_ptr_hpp+set}" = set; then
@@ -4632,8 +4649,35 @@ echo "${ECHO_T}$ac_cv_header_boost_shared_ptr_hpp" >&6
 
 fi
 if test $ac_cv_header_boost_shared_ptr_hpp = yes; then
-  HAVE_BOOST="yes"
+  HAVE_SYSTEM_BOOST="yes"
 fi
+
+
+else
+    as_ac_File=`echo "ac_cv_file_$BOOST_INCDIR/boost/shared_ptr.hpp" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $BOOST_INCDIR/boost/shared_ptr.hpp" >&5
+echo $ECHO_N "checking for $BOOST_INCDIR/boost/shared_ptr.hpp... $ECHO_C" >&6
+if eval "test \"\${$as_ac_File+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$BOOST_INCDIR/boost/shared_ptr.hpp"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
+if test `eval echo '${'$as_ac_File'}'` = yes; then
+  HAVE_USER_BOOST="yes"
+fi
+
+fi
+
 
 
 
@@ -5654,7 +5698,6 @@ echo "$as_me: error: no" >&2;}
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
-
 
 
 
@@ -9183,6 +9226,9 @@ s,@GREP@,$GREP,;t t
 s,@CP@,$CP,;t t
 s,@RM@,$RM,;t t
 s,@FLEX@,$FLEX,;t t
+s,@HAVE_SYSTEM_BOOST@,$HAVE_SYSTEM_BOOST,;t t
+s,@HAVE_USER_BOOST@,$HAVE_USER_BOOST,;t t
+s,@BOOST_INCDIR@,$BOOST_INCDIR,;t t
 s,@COMPILER_TYPE@,$COMPILER_TYPE,;t t
 s,@AR@,$AR,;t t
 s,@ARFLAGS@,$ARFLAGS,;t t
@@ -9205,7 +9251,6 @@ s,@SOFLAGS@,$SOFLAGS,;t t
 s,@C_AS_CPLUSPLUS@,$C_AS_CPLUSPLUS,;t t
 s,@LIBS_LIGHTWEIGHT@,$LIBS_LIGHTWEIGHT,;t t
 s,@EXTRA_LIBS@,$EXTRA_LIBS,;t t
-s,@HAVE_BOOST@,$HAVE_BOOST,;t t
 s,@PLATFORM_BUILD@,$PLATFORM_BUILD,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
