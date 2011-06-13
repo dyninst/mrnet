@@ -28,8 +28,8 @@
 
 /* version info */
 #define MRNET_VERSION_MAJOR 3
-#define MRNET_VERSION_MINOR 0
-#define MRNET_VERSION_REV   2
+#define MRNET_VERSION_MINOR 1
+#define MRNET_VERSION_REV   0
 
 namespace MRN
 {
