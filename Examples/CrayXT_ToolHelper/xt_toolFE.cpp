@@ -26,8 +26,7 @@ extern "C"
 {
 #include <alps/alps.h>
 #include <alps/apInfo.h>
-//#include <alps/libalps.h>
-#include "libalps.h"
+#include <alps/libalps.h>
 }
 
 using namespace MRN;
