@@ -76,7 +76,7 @@ inline int gettimeofday( struct timeval *tv, struct timezone *tz )
 #include <vector>
 #include <string>
 
-#define MRN_RELEASE_DATE_SECS 1277800000
+#define MRN_RELEASE_DATE_SECS 1308200400
 
 using namespace MRN;
 namespace MRN

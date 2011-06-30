@@ -494,7 +494,7 @@ int mrn_printf( const char *file, int line, const char * func,
     }
 
     // print timestamp and thread info
-    fprintf( f, "%ld.%ld: %s(0x%lx): ", 
+    fprintf( f, "%ld.%06ld: %s(0x%lx): ", 
              tv.tv_sec-MRN_RELEASE_DATE_SECS, tv.tv_usec,
              ( thread_name != NULL ) ? thread_name : "UNKNOWN_THREAD",
              tid );
