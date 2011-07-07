@@ -28,7 +28,6 @@ struct Stream_t {
     struct Filter_t* us_filter;
     struct Filter_t* ds_filter;
     struct vector_t* incoming_packet_buffer;
-    struct vector_t* peers; // peers in stream
     struct PerfDataMgr_t* perf_data;
     Network_t* network;
     unsigned int id;

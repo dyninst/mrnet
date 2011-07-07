@@ -184,7 +184,7 @@ int mrn_printf( const char *file, int line, const char * func,
 
     struct timeval tv;
     Rank rank = getrank();
-    char host[256];
+    char host[XPLAT_MAX_HOSTNAME_LEN];
     char logdir[256];
     char logfile[512];
     
@@ -202,7 +202,7 @@ int mrn_printf( const char *file, int line, const char * func,
             logfile[0] = '\0';
 
             NetUtils_GetLocalHostName(host);
-            host[255] = '\0';
+            host[XPLAT_MAX_HOSTNAME_LEN-1] = '\0';
 
             // find log directory
             if (varval != NULL) {
@@ -245,8 +245,12 @@ int mrn_printf( const char *file, int line, const char * func,
 Timer_t new_Timer_t()
 {
     Timer_t time;
-    time.offset = 0;
-    time.first_time=true;
+    time.start_tv.tv_sec = 0;
+    time.start_tv.tv_usec = 0;
+    time.stop_tv.tv_sec = 0;
+    time.stop_tv.tv_usec = 0;
+    time.start_d = 0;
+    time.stop_d = 0;
 
     return time;
 }
@@ -270,14 +274,14 @@ struct timeval dbl2tv(double d)
 void Timer_start(Timer_t time) 
 {
     while (gettimeofday(&(time.start_tv), NULL) == -1) {}
-    time.start_d = tv2dbl(time.start_tv) + (time.offset/1000.0);
+    time.start_d = tv2dbl(time.start_tv);
     time.start_tv = dbl2tv(time.start_d);
 }
 
 void Timer_stop(Timer_t time)
 {
     while (gettimeofday(&(time.stop_tv), NULL) == -1) {}
-    time.stop_d = tv2dbl(time.stop_tv) + (time.offset/1000.0);
+    time.stop_d = tv2dbl(time.stop_tv);
     time.stop_tv = dbl2tv(time.stop_d);
 }
 

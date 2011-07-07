@@ -21,7 +21,7 @@ int NetUtils_GetLocalHostName(char* this_host)
 {
 #if defined(arch_crayxt)
     // on the XT, the node number is available in /proc/cray_xt/nid
-    char* filename = "/proc/cray_xt/nid";
+    const char* filename = "/proc/cray_xt/nid";
     FILE* f;
     f = fopen(filename, "r");
     uint32_t nid;
@@ -38,15 +38,13 @@ int NetUtils_GetLocalHostName(char* this_host)
     strcat(nidStr, "nid");
     strcat(nidStr, nid_str);
 
-    strncpy(this_host, nidStr, 256);
+    strncpy(this_host, nidStr, XPLAT_MAX_HOSTNAME_LEN);
 #else
-
-    char host[256];
-    gethostname(host,256);
-    host[255] = '\0';
-    strncpy(this_host, host, 256);
+    char host[XPLAT_MAX_HOSTNAME_LEN];
+    gethostname(host, (size_t)XPLAT_MAX_HOSTNAME_LEN);
+    host[XPLAT_MAX_HOSTNAME_LEN-1] = '\0';
+    strncpy(this_host, host, (size_t)XPLAT_MAX_HOSTNAME_LEN);
 #endif
 
   return 0;
-    
 }

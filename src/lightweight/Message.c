@@ -50,7 +50,7 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     PDR pdrs;
     enum pdr_op op = PDR_DECODE;
     int retval;
-    int readRet;
+    ssize_t readRet;
     NCBuf_t* ncbufs;
     int total_bytes = 0;
     Packet_t* new_packet;
@@ -71,8 +71,8 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Reading packet count\n"));
 
-    retval = MRN_read(sock_fd, buf, buf_len);
-    if( (size_t)retval != buf_len ) {
+    readRet = MRN_read(sock_fd, buf, buf_len);
+    if( readRet != (ssize_t)buf_len ) {
         mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_read() of packet count failed\n"));
         free(buf);
         return -1;
@@ -120,11 +120,11 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     }
 
     mrn_dbg(5, mrn_printf(FLF, stderr, 
-                          "Calling read(%p, %d) for %d buffer lengths.\n",
+                          "Calling read(%p, %zd) for %d buffer lengths.\n",
                           buf, buf_len, num_buffers));
     readRet = MRN_read(sock_fd, buf, buf_len);
-    if( readRet != buf_len ) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_read() %d of %d bytes received\n", readRet, buf_len));
+    if( readRet != (ssize_t)buf_len ) {
+        mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_read() %zd of %zd bytes received\n", readRet, buf_len));
         free(buf);
         //free(packet_sizes);
         return -1;
@@ -171,7 +171,7 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
                                   "MRN_read() failed for packet %u\n", i));
             break;
         }
-        retval += readRet;
+        retval += (int) readRet;
     }
     if( retval != total_bytes ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "%d of %d received\n", 
@@ -210,7 +210,7 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
 
     // Note: on success return, don't release the packet buffers; 
     //       that memory was passed to the Packet object(s).
-    if( retval == -1) {
+    if( retval == -1 ) {
         for (i = 0; i < num_buffers; i++) {
             char * b = ncbufs[i].buf;
             free(b);
@@ -232,7 +232,8 @@ int Message_send(Message_t* msg_out, int sock_fd)
     PDR pdrs;
     enum pdr_op op = PDR_ENCODE;
     NCBuf_t* ncbufs;
-    int total_bytes, err, mcwret, sret;
+    int total_bytes, err, sret;
+    ssize_t mcwret;
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Sending packets from message %p\n", msg_out));
 
@@ -282,7 +283,7 @@ int Message_send(Message_t* msg_out, int sock_fd)
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "writing packet count\n"));
     mcwret = MRN_write(sock_fd, buf, buf_len);
-    if( mcwret != buf_len ) {
+    if( mcwret != (ssize_t)buf_len ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "MRN_write() failed\n"));
         free(buf);
         free(ncbufs);
@@ -313,7 +314,7 @@ int Message_send(Message_t* msg_out, int sock_fd)
     mrn_dbg(5, mrn_printf(FLF, stderr, "write(%p, %d) of size vector\n", 
                           buf, buf_len));
     mcwret = MRN_write(sock_fd, buf, buf_len);
-    if( mcwret != buf_len ) {
+    if( mcwret != (ssize_t)buf_len ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "MRN_write failed\n"));
         free(buf);
         free(ncbufs);
@@ -351,9 +352,9 @@ int Message_send(Message_t* msg_out, int sock_fd)
  * data types
  ******************************************************************/
 
-int MRN_write(int ifd, void *ibuf, size_t ibuf_len)
+ssize_t MRN_write(int ifd, void *ibuf, size_t ibuf_len)
 {
-    int ret;
+    ssize_t ret;
 
     // don't generate SIGPIPE
     int flags = MSG_NOSIGNAL;
@@ -362,15 +363,16 @@ int MRN_write(int ifd, void *ibuf, size_t ibuf_len)
 
     ret = send(ifd, (char*)ibuf, ibuf_len, flags);
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "send => %d\n", ret));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "send => %zd\n", ret));
   
     return ret;
 }
 
-int MRN_read(int fd, void *buf, size_t count)
+ssize_t MRN_read(int fd, void *buf, size_t count)
 {
     size_t bytes_recvd = 0;
-    int retval, err;
+    ssize_t retval;
+    int err;
 
     if( count == 0 )
         return 0;
@@ -411,6 +413,6 @@ int MRN_read(int fd, void *buf, size_t count)
             }
         }
     }
-    assert(0);
+    assert(0); // should never get here
     return -1;
 }

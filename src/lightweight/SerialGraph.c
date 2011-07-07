@@ -184,10 +184,10 @@ void SerialGraph_end_SubTree(SerialGraph_t* serial_graph)
 
     mrn_dbg_func_begin();
 
-    len += strlen(serial_graph->byte_array) + 1;
+    len = (unsigned)( strlen(serial_graph->byte_array) ) + 1;
     if( len > serial_graph->arr_len ) {
         len <<= 1;
-        serial_graph->byte_array = (char*)realloc(serial_graph->byte_array, (size_t)len);
+        serial_graph->byte_array = (char*) realloc(serial_graph->byte_array, (size_t)len);
         if( serial_graph->byte_array == NULL ) {
             mrn_printf(FLF, stderr, "realloc(%zu) failed\n", len);
             exit(0);
@@ -241,7 +241,7 @@ Port SerialGraph_get_RootPort(SerialGraph_t* serial_graph)
 {
     char *buf, *port_string;
     const char* delim;
-    size_t loc, len;
+    size_t loc;
     Port retval;
     
     // start searching at index 1
@@ -270,7 +270,7 @@ Rank SerialGraph_get_RootRank(SerialGraph_t* serial_graph)
 {
     char *buf, *rank_string;
     const char* delim;
-    size_t loc, len;
+    size_t loc;
     Rank retval;
     
     // start searching at index 1 

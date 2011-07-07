@@ -62,7 +62,6 @@ Stream_t* new_Stream_t(Network_t* net,
     new_stream->perf_data = new_PerfDataMgr_t();
 
     new_stream->incoming_packet_buffer = new_empty_vector_t();
-    new_stream->peers = new_empty_vector_t();
     new_stream->_was_closed = 0;
 
     mrn_dbg(3, mrn_printf(FLF, stderr,
@@ -79,7 +78,6 @@ void delete_Stream_t(Stream_t * stream)
 {
     /* clean up data structures */
     delete_vector_t(stream->incoming_packet_buffer);
-    delete_vector_t(stream->peers);
 
     /* remove the stream from Network streams map */
     Network_delete_Stream(stream->network, stream->id);
@@ -385,7 +383,7 @@ int Stream_send_aux(Stream_t* stream, int itag, const char* ifmt, Packet_t* ipac
     Packet_t* opacket;
     int upstream = true;
     perfdata_t val;
-    int i;
+    unsigned int i;
 
     mrn_dbg_func_begin();
     mrn_dbg(3, mrn_printf(FLF, stderr, "stream_id: %d, tag:%d, fmt=\"%s\"\n", stream->id, itag, ifmt));
@@ -489,13 +487,12 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
                                   unsigned int aggr_strm_id)
 {
     vector_t* data = new_empty_vector_t();
-    int iter = 0;
+    unsigned int u, iter = 0;
     Rank my_rank;
     unsigned num_elems;
     void* data_arr;
     const char* fmt;
     uint64_t* u64_arr;
-    unsigned u;
     int64_t* i64_arr;
     double* dbl_arr;
     int* rank_arr;
@@ -604,19 +601,7 @@ void Stream_print_PerfData(Stream_t* stream,
 
 int Stream_remove_Node(Stream_t* stream, Rank irank)
 {
-    // stream->peers.erase(irank);
-
-    vector_t* new_peers = new_empty_vector_t();
-    int i;
-    for (i = 0; i < stream->peers->size; i++) {
-        if ( *((Rank*)(stream->peers->vec[i])) != irank ) {
-            pushBackElement(new_peers, stream->peers->vec[i]);
-        }   
-    }
-
-    delete_vector_t(stream->peers);
-    stream->peers = new_peers;
-
+    // BEs don't keep track of stream peers
     return 1;
 }
 

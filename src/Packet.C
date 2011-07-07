@@ -517,7 +517,8 @@ bool Packet::pdr_packet_header( PDR * pdrs, Packet * pkt )
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_wrapstring() failed\n" ));
         return false;
     }
-    if( pdr_array( pdrs, (void**) &( pkt->dest_arr ), &( pkt->dest_arr_len ), 
+    Rank** rank_arr = &(pkt->dest_arr);
+    if( pdr_array( pdrs, (void**)rank_arr, &( pkt->dest_arr_len ), 
                    INT32_MAX, sizeof(uint32_t), 
                    (pdrproc_t) pdr_uint32 ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_array() failed\n" ));

@@ -367,7 +367,7 @@ bool_t Packet_pdr_packet_header( PDR * pdrs, Packet_t * pkt )
 
 bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
 {
-    DataElement_t * cur_elem;
+    DataElement_t * cur_elem = NULL;
     void **vp;
     char **cp;
     char* fmt = NULL;

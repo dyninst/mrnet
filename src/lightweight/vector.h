@@ -16,8 +16,8 @@
 
 struct vector_t {
     void** vec;
-    int size;
-    int alloc_size;
+    size_t size;
+    size_t alloc_size;
 };
 
 typedef struct vector_t vector_t;

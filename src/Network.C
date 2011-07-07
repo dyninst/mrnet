@@ -1538,7 +1538,7 @@ int Network::load_FilterFuncs( const char* so_file,
 
     char* so_copy = strdup(so_file);
 
-    int success_count = 0;
+    unsigned int success_count = 0;
     for( unsigned u=0; u < nfuncs; u++ ) {
 
         unsigned short cur_filter_id = next_filter_id;

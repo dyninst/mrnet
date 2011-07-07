@@ -22,10 +22,9 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
                                           PeerNode_t* iparent, 
                                           Rank ifailed_rank) 
 {
-    char *topo_ptr, *init_topo;
+    char *topo_ptr;
     Packet_t* packet;
     NetworkTopology_t* nettop;
-    SerialGraph_t* sg;
     const char* fmt_str = "%s %uhd %ud %uhd %ud %c %s";
 
     mrn_dbg_func_begin();
@@ -113,7 +112,7 @@ int ChildNode_send_SubTreeInitDoneReport(BackEndNode_t* be)
 int ChildNode_proc_PacketsFromParent(BackEndNode_t* be, vector_t* packets)
 {
     int retval = 0;
-    int i;
+    unsigned int i;
     Packet_t * cur_packet;
 
     mrn_dbg_func_begin();

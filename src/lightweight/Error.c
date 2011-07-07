@@ -32,7 +32,7 @@ void error(ErrorCode e, Rank r, const char* fmt, ... )
 
     va_list arglist;
     va_start(arglist, fmt);
-    vsnprintf(buf, 1024, fmt, arglist);
+    vsnprintf(buf, (size_t)1024, fmt, arglist);
     va_end(arglist);
 
     switch(resp) {

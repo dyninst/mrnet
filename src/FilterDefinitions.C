@@ -1746,8 +1746,8 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
    
     mrn_dbg( 5, mrn_printf(FLF, stderr, " input packets size is %d\n" ,ipackets.size()) );
     
-    uint32_t stream_id;
-    Stream * stream;
+    uint32_t stream_id = 0;
+    Stream * stream = NULL;
     set< Rank > peers;
 
     if( ipackets.size() > 0 ) {

@@ -25,8 +25,6 @@
 #endif
 #endif
 
-#define XPLAT_MAX_HOSTNAME_LEN 256
-
 namespace XPlat
 {
 

@@ -73,7 +73,7 @@ class ParsedGraph: public Error {
     Node *find_Node( char *ihostname, Rank ilocal_rank );
     bool validate( );
     void add_Node( Node * );
-    int get_Size ( ) const { return _nodes.size(); }
+    size_t get_Size ( ) const { return _nodes.size(); }
     void assign_NodeRanks( bool iassign_backend_ranks );
 
     std::string get_SerializedGraphString( bool have_backends );

@@ -61,8 +61,6 @@ map_node_t* insert_recursive(map_node_t* root, int key, void* val)
         assert(new_node);
 
         new_node->key = key;
-        new_node->val = (void*)malloc(sizeof(val));
-        assert(new_node->val);
         new_node->val = val;
         new_node->left = NULL;
         new_node->right = NULL;
@@ -91,7 +89,6 @@ void insert(mrn_map_t* map, int key, void* val)
 {
     int i;
     int new_val = 1;
-    int keys[1];
 
     for (i = 0; i < map->size; i++) {
         if (map->keys[i] == key) 
@@ -103,9 +100,9 @@ void insert(mrn_map_t* map, int key, void* val)
         // update map size
         map->size++;
         // insert key into key array
-        map->keys = (int*)realloc(map->keys, sizeof(keys) * map->size);
+        map->keys = (int*)realloc(map->keys, sizeof(int) * map->size);
         if( map->keys == NULL ) {
-            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", sizeof(keys) * map->size);
+            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", sizeof(int) * map->size);
             exit(0);
         }
         map->keys[map->size-1] = key;
@@ -117,11 +114,13 @@ void* get_val_recursive(map_node_t* root, int key)
 {
     if (root == NULL)
         return NULL;
-    else if (root->key == key) {
+
+    else if (root->key == key)
         return root->val;
-    }
+
     else if (key < root->key)
         return get_val_recursive(root->left, key);
+
     else
         return get_val_recursive(root->right, key);
 
@@ -143,7 +142,7 @@ mrn_map_t* erase(mrn_map_t* map, int ikey)
         }
     }
 
-    /* free the struct, but don't free the element since it might eb 
+    /* free the struct, but don't free the element since it might be 
      * referenced elsewhere */ 
     delete_map_t(map);
 

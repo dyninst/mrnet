@@ -101,8 +101,6 @@ typedef struct {
     struct timeval stop_tv;
     double start_d;
     double stop_d;
-    double offset;
-    double first_time;
 } Timer_t;
 
 Timer_t new_Timer_t();

@@ -65,7 +65,6 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
 
     int err, sock = *sock_in;
     struct sockaddr_in server_addr;
-    struct hostent *server_hostent = NULL;
     const char* host = hostname.c_str();
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "In connectHost(%s:%d) sock:%d ...\n",
@@ -97,7 +96,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
     in_addr_t addr = naddr.GetInAddr();
     memcpy( &server_addr.sin_addr, &addr, sizeof(addr) );
 
-    unsigned int nConnectTries = 0;
+    int nConnectTries = 0;
     int cret = -1;
     do {
         cret = connect( sock, (sockaddr *) & server_addr, sizeof( server_addr ) );
@@ -464,7 +463,7 @@ int mrn_printf( const char *file, int line, const char * func,
     // get thread info
     XPlat::Thread::Id tid = -1;
     const char* thread_name = NULL;
-    int rank = UnknownRank;
+    Rank rank = UnknownRank;
     node_type_t node_type = UNKNOWN_NODE;
     Network* net = NULL;
     

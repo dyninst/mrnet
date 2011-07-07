@@ -22,17 +22,18 @@ const int XPlat_NCBlockingRecvFlag = MSG_WAITALL;
 
 int NCSend(XPSOCKET s, NCBuf_t* ncbufs, unsigned int nBufs)
 {
-    int sret, ret = 0;
+    ssize_t sret;
+    int ret = 0;
     unsigned int i;
     
     for( i = 0; i < nBufs; i++ ) {
         // do the send
-        sret = write(s, ncbufs[i].buf, ncbufs[i].len);
+        sret = write(s, ncbufs[i].buf, (size_t)(ncbufs[i].len));
         if( sret < 0 ) {
-            ret = sret;
+            ret = (int)sret;
             break;
         }
-        ret += sret;
+        ret += (int)sret;
     }
     return ret;
 }
@@ -41,13 +42,15 @@ int NCRecv(XPSOCKET s, NCBuf_t* ncbufs, unsigned int nBufs)
 {
 
     int err, ret = 0;
+    ssize_t sret;
 
-    unsigned int nBufsLeftToRecv = nBufs;
+    unsigned long nBufsLeftToRecv = (unsigned long) nBufs;
     NCBuf_t* currBuf = ncbufs;
     while (nBufsLeftToRecv > 0) {
         // determine how many bufs we will try to receive
         //int IOV_MAX = 1000; //this should get loaded from inc'd file
-        unsigned int nBufsToRecv = ((nBufsLeftToRecv > IOV_MAX) ? IOV_MAX : nBufsLeftToRecv);
+	unsigned long iomax = (unsigned long) IOV_MAX;
+        unsigned long nBufsToRecv = ((nBufsLeftToRecv > iomax) ? iomax : nBufsLeftToRecv);
 
         // convert our buffer spec to recvmsg/readv's buffer spec
         struct msghdr msg;
@@ -74,10 +77,10 @@ int NCRecv(XPSOCKET s, NCBuf_t* ncbufs, unsigned int nBufs)
         }
 
         // do the receive
-        int sret = recvmsg(s, &msg, XPlat_NCBlockingRecvFlag);
+        sret = recvmsg(s, &msg, XPlat_NCBlockingRecvFlag);
         if (sret < 0) {
             perror("recvmsg()");
-            ret = sret;
+            ret = (int) sret;
 #ifndef os_solaris
             err = msg.msg_flags;
             fprintf(stderr, "NCRecv error msg_flags=%x\n", err);
@@ -85,13 +88,13 @@ int NCRecv(XPSOCKET s, NCBuf_t* ncbufs, unsigned int nBufs)
             free( iovec_new );
             break;
         } else {
-            ret += sret;
+            ret += (int) sret;
         }
         free( iovec_new );
 
         // advance through buffers
         nBufsLeftToRecv -= nBufsToRecv;
-        currBuf+= nBufsToRecv;
+        currBuf += nBufsToRecv;
     }
 
     return ret;

@@ -106,11 +106,6 @@ ifeq ($(COMPILER_TYPE), gnu)
                 -Wlong-long \
                 -Woverloaded-virtual \
                 -Wno-non-template-friend
-   endif # SILENCE_WARNINGS
-endif #GNU options
-
-ifeq ($(COMPILER_TYPE), gnu)
-    ifndef SILENCE_WARNINGS
     WARNFLAGS_LIGHTWEIGHT = -Wall \
                 -W \
                 -Wno-system-headers \

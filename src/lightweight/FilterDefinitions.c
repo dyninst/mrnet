@@ -36,39 +36,40 @@ void tfilter_TopoUpdate(vector_t * ipackets,
     vector_t * icport_arr = new_empty_vector_t();
     vector_t * iarray_lens = new_empty_vector_t();
 
-    int * rtype_arr;
-    uint32_t * rprank_arr;
-    uint32_t * rcrank_arr;
-    char ** rchost_arr;
-    uint16_t * rcport_arr;
-    unsigned rarray_len = 0;
+    int * rtype_arr = NULL;
+    uint32_t * rprank_arr = NULL;
+    uint32_t * rcrank_arr = NULL;
+    char ** rchost_arr = NULL;
+    uint16_t * rcport_arr = NULL;
+    size_t rarray_len = 0;
 
-    int * type_arr;
-    uint32_t * prank_arr;
-    uint32_t * crank_arr;
-    char ** chost_arr;
-    uint16_t * cport_arr;
-    unsigned arr_len;
+    int * type_arr = NULL;
+    uint32_t * prank_arr = NULL;
+    uint32_t * crank_arr = NULL;
+    char ** chost_arr = NULL;
+    uint16_t * cport_arr = NULL;
+    unsigned arr_len = 0;
+    unsigned long arr_len_long = 0;
 
-    char * format_string;
+    char * format_string = NULL;
     
     unsigned i, u, z;
     
-    int data_size;
-    int uhd_size;
-    int ud_size;
-    int charptr_size;
+    size_t data_size;
+    size_t uhd_size;
+    size_t ud_size;
+    size_t charptr_size;
 
     unsigned int32_pos;
     unsigned uint32_pos;
     unsigned uint16_pos;
     unsigned char_pos;
 
-    Packet_t * cur_packet;
+    Packet_t * cur_packet = NULL;
 
-    NetworkTopology_t * nt;
+    NetworkTopology_t * nt = NULL;
 
-    Packet_t * new_packet;
+    Packet_t * new_packet = NULL;
 
     mrn_dbg_func_begin();
 
@@ -105,13 +106,14 @@ void tfilter_TopoUpdate(vector_t * ipackets,
             pushBackElement(icrank_arr, crank_arr);
             pushBackElement(ichost_arr, chost_arr);
             pushBackElement(icport_arr, cport_arr);
-            pushBackElement(iarray_lens, arr_len);
+	    arr_len_long = (unsigned long) arr_len;
+            pushBackElement(iarray_lens, (void*)arr_len_long);
             rarray_len += arr_len;
         }
 
         for (z = 0; z < arr_len; z++) {
             mrn_dbg(5, mrn_printf(FLF, stderr, "Packet contents: "
-                        "type:%d prank:%d crank:%d chost:%d cport:%d arrlen:%d \n",
+                        "type:%d prank:%u crank:%u chost:%s cport:%hu arrlen:%u \n",
                                   type_arr[z], prank_arr[z], crank_arr[z], 
                                   chost_arr[z], cport_arr[z], arr_len));
         }
@@ -138,16 +140,17 @@ void tfilter_TopoUpdate(vector_t * ipackets,
     char_pos = 0;
 
     for (i = 0; i < itype_arr->size; i++) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "size of itype_arr %d\n", itype_arr->size));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "size of itype_arr %zd\n", itype_arr->size));
+	arr_len_long = (unsigned long)(iarray_lens->vec[i]);
         memcpy(rtype_arr + int32_pos,
                (int *)itype_arr->vec[i],
-               (size_t)((unsigned)(iarray_lens->vec[i]) * data_size));
+               (size_t)arr_len_long * data_size);
 
         mrn_dbg(5, mrn_printf(FLF, stderr, 
                               "copying for itype_arr: %d to rtype_arr %d\n",
                               *(int*)(itype_arr->vec[i]), *rtype_arr));
 
-        u = (unsigned) (iarray_lens->vec[i]);
+        u = arr_len;
         memcpy(rprank_arr + uint32_pos,
                iprank_arr->vec[i],
                (size_t) (u * ud_size));

@@ -28,7 +28,7 @@ Message_t* new_Message_t();
 int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank);
 int Message_send(Message_t* msg_out, int sock_fd);
 
-int MRN_write(int ifd, void *ibuf, size_t ibuf_len);
-int MRN_read(int fd, void *buf, size_t count);
+ssize_t MRN_write(int ifd, void *ibuf, size_t ibuf_len);
+ssize_t MRN_read(int fd, void *buf, size_t count);
 
 #endif /* __message_h */

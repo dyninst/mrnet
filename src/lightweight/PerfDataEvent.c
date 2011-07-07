@@ -253,7 +253,7 @@ void PerfDataMgr_print(PerfDataMgr_t* perf_data,
     perfdata_metinfo_t* mi;
     int size;
     char* report;
-    int k;
+    unsigned int k;
 
     mrn_dbg_func_begin();
 

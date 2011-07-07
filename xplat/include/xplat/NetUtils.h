@@ -21,6 +21,10 @@
 
 #include "xplat/Types.h"
 
+#ifndef XPLAT_MAX_HOSTNAME_LEN
+#define XPLAT_MAX_HOSTNAME_LEN 256
+#endif
+
 namespace XPlat
 {
 

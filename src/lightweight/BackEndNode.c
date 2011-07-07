@@ -250,12 +250,11 @@ int BackEndNode_proc_newFilter(BackEndNode_t* be, Packet_t* ipacket)
 
 int BackEndNode_proc_DataFromParent(BackEndNode_t* be, Packet_t* ipacket)
 {
-    int retval = 0;
     Stream_t* stream;
     Packet_t* opacket;
     vector_t * opackets = new_empty_vector_t();
     vector_t * opackets_reverse = new_empty_vector_t();
-    int i;
+    unsigned int i;
 
     mrn_dbg_func_begin();
 
@@ -280,5 +279,5 @@ int BackEndNode_proc_DataFromParent(BackEndNode_t* be, Packet_t* ipacket)
   
     mrn_dbg_func_end();
 
-    return retval;
+    return 0;
 }

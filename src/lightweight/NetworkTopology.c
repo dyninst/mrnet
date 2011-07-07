@@ -132,7 +132,7 @@ char * NetworkTopology_get_TopologyStringPtr(NetworkTopology_t * net_top)
 
     NetworkTopology_serialize(net_top, net_top->root);
 
-    retval = strdup(SerialGraph_get_ByteArray(net_top->serial_graph));
+    retval = strdup( SerialGraph_get_ByteArray(net_top->serial_graph) );
 
     return retval;
 }
@@ -169,7 +169,7 @@ char* NetworkTopology_get_LocalSubTreeStringPtr(NetworkTopology_t* net_top)
 
 void NetworkTopology_serialize(NetworkTopology_t* net_top, Node_t* inode)
 {
-    int iter;
+    unsigned int iter;
 
     if (inode->is_backend) {
         // leaf node, just add my name to serial representation and return
@@ -303,7 +303,7 @@ int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode,
 int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
 {
     Node_t* node_to_delete;
-    int i;
+    unsigned int i;
     Node_t* cur_node;
 
     mrn_dbg_func_begin();
@@ -312,7 +312,7 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
         net_top->root = NULL;
 
     // remove from ophans, back-ends, parents list
-    net_top->nodes = erase(net_top->nodes, inode->rank);
+    net_top->nodes = erase(net_top->nodes, (int)inode->rank);
     net_top->orphans = eraseElement(net_top->orphans, inode);
 
     if (inode->is_backend) {
@@ -395,7 +395,7 @@ Node_t* NetworkTopology_find_Node(NetworkTopology_t* net_top, Rank irank)
     
     mrn_dbg_func_begin();
     
-    ret = (Node_t*)(get_val(net_top->nodes, irank));
+    ret = (Node_t*)(get_val(net_top->nodes, (int)irank));
 
     mrn_dbg_func_end();
 
@@ -409,7 +409,7 @@ int NetworkTopology_Node_is_BackEnd(Node_t* node)
 
 void NetworkTopology_remove_SubGraph(NetworkTopology_t* net_top, Node_t* inode)
 {
-    int iter;
+    unsigned int iter;
     
     mrn_dbg_func_begin();
 
@@ -430,7 +430,7 @@ int NetworkTopology_set_Parent(NetworkTopology_t* net_top, Rank ichild_rank,
 {
     Node_t* child_node;
     Node_t* new_parent_node;
-    int j;
+    unsigned int j;
     
     mrn_dbg_func_begin();
 
@@ -462,7 +462,6 @@ int NetworkTopology_set_Parent(NetworkTopology_t* net_top, Rank ichild_rank,
     if (!findElement(child_node->ascendants, new_parent_node))
         pushBackElement(child_node->ascendants, new_parent_node);
     
-
     mrn_dbg_func_end();
     return 1;
 }
@@ -470,7 +469,7 @@ int NetworkTopology_set_Parent(NetworkTopology_t* net_top, Rank ichild_rank,
 int NetworkTopology_remove_Orphan(NetworkTopology_t* net_top, Rank r) 
 {
     // find the node associated with r
-    Node_t* node = (Node_t*)(get_val(net_top->nodes, r));
+    Node_t* node = (Node_t*)(get_val(net_top->nodes, (int)r));
 
     if (!node)
         return false;
@@ -487,7 +486,7 @@ void NetworkTopology_print(NetworkTopology_t* net_top, FILE * f)
     char rank_str[128];
     int node_iter;
     Node_t* cur_node;
-    int set_iter;
+    unsigned int set_iter;
     
     cur_parent_str = (char*)malloc(sizeof(char)*256);
     assert(cur_parent_str);
@@ -529,18 +528,15 @@ Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top,
                                         ALGORITHM_T ialgorithm)
 {
     vector_t* potential_adopters = new_empty_vector_t(); // vec of Node_t*
-    Node_t* adopter;
-    Node_t* orphan;
-    int i, j;
-    Node_t* cur;
-    Node_t* cur_node;
-
-    //adopter = (Node_t*)malloc(sizeof(Node_t*));
-    //assert(adopter);
+    Node_t* adopter = NULL;
+    Node_t* orphan = NULL;
+    unsigned int i, j;
+    Node_t* cur = NULL;
+    Node_t* cur_node = NULL;
 
     mrn_dbg_func_begin();
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "called with ichild_rank=%d\n", ichild_rank));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "called with ichild_rank=%u\n", ichild_rank));
 
     if (inum_attempts > 0) {
         // previously computed list, but failed to contact new parent
@@ -580,7 +576,7 @@ Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top,
 
         for (j = 0; j < potential_adopters->size; j++) {
             cur = (Node_t*)(potential_adopters->vec[j]);
-            mrn_dbg(5, mrn_printf(FLF, stderr, "adopter[%d] is [%s:%d], adoption_wrs_key=%f\n", j, cur->hostname, cur->rank, cur->wrs_key)); 
+            mrn_dbg(5, mrn_printf(FLF, stderr, "adopter[%d] is [%s:%u], adoption_wrs_key=%f\n", j, cur->hostname, cur->rank, cur->wrs_key)); 
         }   
         adopter = (Node_t*)(potential_adopters->vec[0]);
         cur_node = (Node_t*)malloc(sizeof(Node_t));
@@ -602,7 +598,7 @@ Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top,
     }
     
     if (adopter) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Returning: node[%d]:%s:%d\n",
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Returning: node[%u]:%s:%d\n",
                             NetworkTopology_Node_get_Rank(adopter),
                             NetworkTopology_Node_get_HostName(adopter),
                             NetworkTopology_Node_get_Port(adopter)));
@@ -620,12 +616,12 @@ void NetworkTopology_find_PotentialAdopters(NetworkTopology_t* net_top,
                                             Node_t* ipotential_adopter,
                                             vector_t* potential_adopters)
 {
-    int i;
+    unsigned int i;
     
     mrn_dbg_func_begin();
 
     mrn_dbg(5, mrn_printf(FLF, stderr, 
-                "Can Node[%d]:%s:%d (%s) adopt Orphan{%d]:%s :%d ...",
+                "Can Node[%u]:%s:%hu (%s) adopt Orphan[%u]:%s :%hu ...",
                 NetworkTopology_Node_get_Rank(ipotential_adopter),
                 NetworkTopology_Node_get_HostName(ipotential_adopter),
                 NetworkTopology_Node_get_Port(ipotential_adopter),
@@ -645,7 +641,8 @@ void NetworkTopology_find_PotentialAdopters(NetworkTopology_t* net_top,
     pushBackElement(potential_adopters, ipotential_adopter);
 
     for (i = 0; i < ipotential_adopter->children->size; i++) {
-        NetworkTopology_find_PotentialAdopters(net_top, iorphan, ipotential_adopter->children->vec[i], potential_adopters);
+        NetworkTopology_find_PotentialAdopters(net_top, iorphan,
+                                               ipotential_adopter->children->vec[i], potential_adopters);
     }
     
     mrn_dbg_func_end();
@@ -660,7 +657,9 @@ void NetworkTopology_compute_AdoptionScores(NetworkTopology_t* net_top,
     NetworkTopology_compute_TreeStatistics(net_top);
 
     for (i = 0; i < iadopters->size; i++) {
-        NetworkTopology_Node_compute_AdoptionScore(net_top, (Node_t*)(iadopters->vec[i]), orphan, net_top->min_fanout, net_top->max_fanout, net_top->depth); 
+        NetworkTopology_Node_compute_AdoptionScore(net_top, (Node_t*)(iadopters->vec[i]), 
+	                                           orphan, net_top->min_fanout, net_top->max_fanout, 
+						   net_top->depth); 
     } 
 }
 
@@ -669,7 +668,7 @@ void NetworkTopology_compute_AdoptionScores(NetworkTopology_t* net_top,
 
 void NetworkTopology_compute_TreeStatistics(NetworkTopology_t* net_top)
 {
-    int i;
+    unsigned int i;
     double diff = 0, sum_of_square = 0;
 
     net_top->max_fanout = 0;
@@ -730,7 +729,7 @@ void NetworkTopology_Node_set_Parent(Node_t* node, Node_t* parent)
 unsigned int NetworkTopology_Node_find_SubTreeHeight(Node_t* node)
 {
     unsigned int max_height = 0, cur_height;
-    int i;
+    unsigned int i;
     
     if (node->children->size == 0)
         node->subtree_height = 0;
@@ -903,15 +902,15 @@ int NetworkTopology_Node_remove_Child(Node_t* parent, Node_t* child)
 int NetworkTopology_new_Node(NetworkTopology_t* net_top, const char * host, 
                              Port port, Rank rank, int iis_backend)
 {
-    char * host_name = host;
+    char * host_name = (char*) host;
     Node_t * node;
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Creating back node[%d] %s:%d\n",
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Creating back node[%u] %s:%hu\n",
                 rank, host_name, port));
-    node = new_Node_t(host,port,rank,iis_backend);
+    node = new_Node_t(host_name, port, rank, iis_backend);
     insert(net_top->nodes, (int)rank, node);
    
     if (iis_backend) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as backend\n", rank));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%u] as backend\n", rank));
         pushBackElement(net_top->backend_nodes, node);
     }
     return true;
@@ -931,7 +930,7 @@ void NetworkTopology_add_BackEnd(NetworkTopology_t * net_top,
 
     if (n == NULL) {
         NetworkTopology_new_Node(net_top, rchost, rcport, rcrank, true);
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as child of node[%d]\n",
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%u] as child of node[%u]\n",
                               rcrank, rprank));
 
         if ( !(NetworkTopology_set_Parent(net_top, rcrank, rprank, false))) {
@@ -960,7 +959,7 @@ void NetworkTopology_add_InternalNode(NetworkTopology_t * net_top,
 
     if (n == NULL) {
         NetworkTopology_new_Node(net_top, rchost, rcport, rcrank, false);
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as child of node[%d]\n",
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%u] as child of node[%u]\n",
                               rcrank, rprank));
 
         if ( !(NetworkTopology_set_Parent(net_top, rcrank, rprank, false))) {

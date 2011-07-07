@@ -300,9 +300,6 @@ int Network_recv(Network_t* net, int *otag,
 {
     int checked_network = false; // have we checked sockets for input?
     Packet_t* cur_packet = NULL;
-    int packet_found;  
-    int start_iter;
-    Stream_t* cur_stream;
     int retval;
 
     // check streams for input:
@@ -428,9 +425,6 @@ Stream_t* Network_new_Stream(Network_t* net,
 
 int Network_remove_Node(Network_t* net, Rank ifailed_rank, int iupdate)
 {
-    int i;
-    int retval;
-    
     mrn_dbg_func_begin();
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Deleting PeerNode: node[%u] ...\n", ifailed_rank));
@@ -440,25 +434,14 @@ int Network_remove_Node(Network_t* net, Rank ifailed_rank, int iupdate)
                           ifailed_rank));
     NetworkTopology_remove_Node(net->network_topology, ifailed_rank);
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "Removing from Streams: node[%u] ...\n" , 
-                          ifailed_rank));
-  
-    for (i = 0; i < net->streams->size; i++) {
-        Stream_remove_Node((Stream_t*)get_val(net->streams, 
-                                              net->streams->keys[i]), 
-                           ifailed_rank);
-    }
-
-    retval = true;
-
     mrn_dbg_func_end();
-    return retval;
+    return true;
 }
 
 int Network_delete_PeerNode(Network_t* net, Rank irank)
 {
     struct PeerNode_t* peerNode;
-    int iter;
+    unsigned int iter;
     Node_t* cur_child;
     
     if (net->parent->rank == irank) {
@@ -474,7 +457,6 @@ int Network_delete_PeerNode(Network_t* net, Rank irank)
             return true; 
         }
     } 
-
     return false;
 }
 
@@ -503,18 +485,14 @@ Stream_t* Network_get_Stream(Network_t* net, unsigned int iid)
 
 void Network_delete_Stream(Network_t * net, unsigned int iid)
 {
-    int key = (int) iid;
-    Stream_t* ret = (Stream_t*)get_val(net->streams, key);
-
     /* if we're deleting the iter, set to the next element */
-    if (ret == (Stream_t*)get_val(net->streams, 
-                                  net->streams->keys[net->stream_iter])) {
+    int key = (int) iid;
+    if (key == net->streams->keys[net->stream_iter]) {
         net->stream_iter++;
         // wrap around to the beginning of the map, if necessary
         if (net->stream_iter == net->streams->size)
             net->stream_iter = 0;
     }   
-
     net->streams = erase(net->streams, key);
 }
 
