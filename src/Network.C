@@ -55,7 +55,7 @@ char* MRN_DEBUG_LOG_DIRECTORY = NULL;
 const Port UnknownPort = (Port)-1;
 const Rank UnknownRank = (Rank)-1;
 
-const char *empty_str="";
+const char *empty_str = NULL_STRING;
 
 void init_local(void)
 {
@@ -166,7 +166,8 @@ void Network::shutdown_Network(void)
             if( ( _network_topology != NULL ) && 
                 ( _network_topology->get_NumNodes() > 0 ) ) {
 
-                PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, "") );
+                PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, 
+                                             strdup(NULL_STRING)) );
                 get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
             }
         }
@@ -211,7 +212,7 @@ void Network::shutdown_Network(void)
         }
         
         if( _network_topology != NULL ) {
-            string empty("");
+            string empty(NULL_STRING);
             reset_Topology(empty);
         }
 
@@ -613,7 +614,8 @@ void Network::init_FrontEnd( const char * itopology,
     /* collect port updates and broadcast them
      * - this is a no-op on XT
      */
-    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_PORT_UPDATE, "") );
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_PORT_UPDATE, 
+                                 strdup(NULL_STRING)) );
     if( -1 == get_LocalFrontEndNode()->proc_PortUpdates(packet) ) {
         error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
         shutdown_Network();

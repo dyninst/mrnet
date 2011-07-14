@@ -3,9 +3,6 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <sstream>
-
-#include "config.h"
 #include "utils.h"
 #include "ChildNode.h"
 #include "ParentNode.h"
@@ -16,6 +13,7 @@
 #include "xplat/Error.h"
 #include "xplat/NetUtils.h"
 
+#include <sstream>
 using namespace std;
 
 namespace MRN
@@ -385,7 +383,8 @@ void PeerNode::mark_Failed(void)
 
         if( my_id != get_SendThrId() ) {
             // shutdown packet send will fail, but that's expected
-            PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, "") );
+            PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, 
+                                         strdup(NULL_STRING)) );
             _msg_out.add_Packet( packet );
         }
     }

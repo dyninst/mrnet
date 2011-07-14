@@ -142,7 +142,7 @@ Packet::Packet( unsigned int istream_id, int itag,
         encode_pdr_data();
     }
     else
-        fmt_str = strdup( "" );
+        fmt_str = strdup( NULL_STRING );
     assert( fmt_str != NULL );
 }
 
@@ -165,7 +165,7 @@ Packet::Packet( const char *ifmt_str, va_list idata,
         encode_pdr_data();
     }
     else
-        fmt_str = strdup( "" );
+        fmt_str = strdup( NULL_STRING );
     assert( fmt_str != NULL );
 }
 
@@ -188,7 +188,7 @@ Packet::Packet( unsigned int istream_id, int itag,
         encode_pdr_data();
     }
     else
-        fmt_str = strdup( "" );
+        fmt_str = strdup( NULL_STRING );
     assert( fmt_str != NULL );
 }
 
@@ -213,7 +213,7 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
         encode_pdr_data();
     }
     else
-        fmt_str = strdup( "" );
+        fmt_str = strdup( NULL_STRING );
     assert( fmt_str != NULL );
 }
 
@@ -236,7 +236,7 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
         encode_pdr_data();
     }
     else
-        fmt_str = strdup( "" );
+        fmt_str = strdup( NULL_STRING );
     assert( fmt_str != NULL );
 }
 

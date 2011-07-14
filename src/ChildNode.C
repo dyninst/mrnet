@@ -568,7 +568,8 @@ int ChildNode::send_SubTreeInitDoneReport( ) const
     
     _network->get_NetworkTopology()->update_Router_Table();
 
-    PacketPtr packet( new Packet( CTL_STRM_ID, PROT_SUBTREE_INITDONE_RPT,"") );
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SUBTREE_INITDONE_RPT, 
+                                 strdup(NULL_STRING)) );
 
     if( !packet->has_Error( ) ) {
         _network->get_ParentNode()->send( packet );
@@ -638,7 +639,8 @@ bool ChildNode::ack_DeleteSubTree( void ) const
 {
     mrn_dbg_func_begin();
 
-    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN_ACK, "") );
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN_ACK, 
+                                 strdup(NULL_STRING)) );
 
     if( ! packet->has_Error() ) {
         /* note: don't request flush as send thread will exit 
@@ -658,7 +660,8 @@ bool ChildNode::ack_TopologyReport( void ) const
 {
     mrn_dbg_func_begin();
 
-    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_TOPOLOGY_ACK, "") );
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_TOPOLOGY_ACK, 
+                                 strdup(NULL_STRING)) );
 
     if( ! packet->has_Error() ) {
         _network->get_ParentNode()->send( packet );

@@ -702,7 +702,7 @@ std::string NetworkTopology::get_TopologyString(void)
 
     if( _serial_graph != NULL )
         delete _serial_graph;
-    _serial_graph = new SerialGraph("");
+    _serial_graph = new SerialGraph(NULL_STRING);
 
     serialize( _root );
 
@@ -738,7 +738,7 @@ std::string NetworkTopology::get_LocalSubTreeString(void)
 
     if( _serial_graph != NULL )
         delete _serial_graph;
-    _serial_graph = new SerialGraph("");
+    _serial_graph = new SerialGraph(NULL_STRING);
     serialize( _root );
 
     std::string localhost = _network->get_LocalHostName();
@@ -1006,7 +1006,7 @@ bool NetworkTopology::reset( string itopology_str, bool iupdate /* =true */ )
     _orphans.clear();
     _backend_nodes.clear();
 
-    if( itopology_str == "" ) {
+    if( itopology_str == NULL_STRING ) {
         _sync.Unlock();
         return true;
     }

@@ -164,14 +164,14 @@ void ParsedGraph::assign_NodeRanks( bool iassign_backend_ranks )
 
 std::string ParsedGraph::get_SerializedGraphString( bool have_backends )
 {
-    _serial_graph = "";
+    _serial_graph = NULL_STRING;
     serialize( _root, have_backends );
     return _serial_graph.get_ByteArray();
 }
 
 SerialGraph & ParsedGraph::get_SerializedGraph( bool have_backends )
 {
-    _serial_graph = "";
+    _serial_graph = NULL_STRING;
     serialize( _root, have_backends );
     return _serial_graph;
 }

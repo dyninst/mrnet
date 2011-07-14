@@ -26,34 +26,34 @@ namespace MRN
 {
 
 FilterId TFILTER_NULL=0;
-const char * TFILTER_NULL_FORMATSTR="";  // "" => "Don't check fmt string"
+const char* TFILTER_NULL_FORMATSTR = NULL_STRING;  // Don't check fmt string
 
 FilterId TFILTER_SUM=0;
-const char * TFILTER_SUM_FORMATSTR="";  // "" => "Don't check fmt string"
+const char* TFILTER_SUM_FORMATSTR = NULL_STRING;  // Don't check fmt string
 
 FilterId TFILTER_AVG=0;
-const char * TFILTER_AVG_FORMATSTR="";  // "" => "Don't check fmt string"
+const char* TFILTER_AVG_FORMATSTR = NULL_STRING;  // Don't check fmt string
 
 FilterId TFILTER_MIN=0;
-const char * TFILTER_MIN_FORMATSTR="";  // "" => "Don't check fmt string"
+const char* TFILTER_MIN_FORMATSTR = NULL_STRING;  // Don't check fmt string
 
 FilterId TFILTER_MAX=0;
-const char * TFILTER_MAX_FORMATSTR="";  // "" => "Don't check fmt string"
+const char* TFILTER_MAX_FORMATSTR = NULL_STRING;  // Don't check fmt string
 
 FilterId TFILTER_ARRAY_CONCAT=0;
-const char * TFILTER_ARRAY_CONCAT_FORMATSTR=""; // "" => "Don't check fmt string"
+const char* TFILTER_ARRAY_CONCAT_FORMATSTR = NULL_STRING; // Don't check fmt string
 
 FilterId TFILTER_TOPO_UPDATE=0;
-const char * TFILTER_TOPO_UPDATE_FORMATSTR="";
+const char* TFILTER_TOPO_UPDATE_FORMATSTR = NULL_STRING; // Don't check fmt string
 
 FilterId TFILTER_TOPO_UPDATE_DOWNSTREAM=0;
-const char * TFILTER_TOPO_UPDATE_DOWNSTREAM_FORMATSTR="";
+const char* TFILTER_TOPO_UPDATE_DOWNSTREAM_FORMATSTR = NULL_STRING; // Don't check fmt string
 
 FilterId TFILTER_INT_EQ_CLASS=0;
-const char * TFILTER_INT_EQ_CLASS_FORMATSTR="%aud %aud %aud";
+const char* TFILTER_INT_EQ_CLASS_FORMATSTR = "%aud %aud %aud";
 
 FilterId TFILTER_PERFDATA=0;
-const char * TFILTER_PERFDATA_FORMATSTR=""; // "" => "Don't check fmt string"
+const char* TFILTER_PERFDATA_FORMATSTR = NULL_STRING; // Don't check fmt string
 
 FilterId SFILTER_WAITFORALL=0;
 FilterId SFILTER_DONTWAIT=0;
@@ -161,7 +161,7 @@ void tfilter_Sum( const vector< PacketPtr >& ipackets,
     }
 
     if( type == CHAR_T ){
-        char tmp = *((char *)result);
+        char tmp = *((char*)result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
                                           format_string.c_str(), tmp ) );
@@ -309,7 +309,7 @@ void tfilter_Max( const vector< PacketPtr >& ipackets,
     }
 
     if( type == CHAR_T ){
-        char tmp = *((char *)result);
+        char tmp = *((char*)result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
                                           format_string.c_str(), tmp ) );
@@ -458,7 +458,7 @@ void tfilter_Min( const vector< PacketPtr >& ipackets,
     }
     
     if( type == CHAR_T ){
-        char tmp = *((char *)result);
+        char tmp = *((char*)result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
                                           format_string.c_str(), tmp ) );
@@ -595,7 +595,7 @@ void tfilter_Avg( const vector < PacketPtr >& ipackets,
     div( result, num_results, result, type );
 
     if( type == CHAR_T ){
-        char tmp = *((char *)result);
+        char tmp = *((char*)result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
                                           format_string.c_str(), tmp, num_results ) );
@@ -681,7 +681,7 @@ void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
                           const TopologyLocalInfo& )
 {
     unsigned int result_array_size=0, i, j;
-    char * result_array=NULL;
+    char* result_array=NULL;
     int data_size=0;
     string format_string;
     DataType type=UNKNOWN_T;
@@ -775,7 +775,7 @@ void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
         }
     }
 
-    result_array = (char *) malloc( result_array_size * data_size );
+    result_array = (char*) malloc( result_array_size * data_size );
     
     unsigned pos = 0;
     for( i = 0; i < iarrays.size( ); i++ ) {

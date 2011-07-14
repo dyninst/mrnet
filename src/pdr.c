@@ -25,6 +25,7 @@
 #else /* defined(__cplusplus) */
 
 #include "utils.h"
+using namespace MRN;
 
 #endif /* ! defined(__cplusplus) */
 
@@ -318,7 +319,8 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
         mrn_dbg(5, mrn_printf(FLF, stderr, "decoding - string size+1: %u\n", nodesize ));
         if (sp == NULL) {
             mrn_dbg(5, mrn_printf(FLF, stderr, "Allocating memory ...\n" ));
-            *cpp = sp = (char*) malloc((size_t)nodesize);
+            sp = (char*) malloc((size_t)nodesize);
+            *cpp = sp;
         }
         if (sp == NULL) {
             mrn_dbg(5, mrn_printf(FLF, stderr, "Malloc failed\n" ));

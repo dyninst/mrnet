@@ -14,6 +14,7 @@
 #include "mrnet/NetworkTopology.h"
 #include "xplat/Mutex.h"
 
+#include "utils.h"
 #include "FilterDefinitions.h"
 #include "Message.h"
 #include "ParadynFilterDefinitions.h"
@@ -29,7 +30,7 @@ class Filter: public Error {
         friend class Filter;
      public:
         FilterInfo(void)
-            : filter_func(NULL), state_func(NULL), filter_fmt("")
+            : filter_func(NULL), state_func(NULL), filter_fmt(NULL_STRING)
         {
         }
          FilterInfo( void(*ifilter)(), void(*istate)(), const char* ifmt )
@@ -157,15 +158,15 @@ inline void Filter::initialize_static_stuff( )
 
     SFILTER_DONTWAIT = sfilter_start++;
     register_Filter( SFILTER_DONTWAIT, 
-                     (void(*)())NULL, NULL, "" );
+                     (void(*)())NULL, NULL, NULL_STRING );
 
     SFILTER_WAITFORALL = sfilter_start++;
     register_Filter( SFILTER_WAITFORALL, 
-                     (void(*)())sfilter_WaitForAll, NULL, "" );
+                     (void(*)())sfilter_WaitForAll, NULL, NULL_STRING );
 
     SFILTER_TIMEOUT = sfilter_start++;
     register_Filter( SFILTER_TIMEOUT, 
-                     (void(*)())sfilter_TimeOut, NULL, "" );
+                     (void(*)())sfilter_TimeOut, NULL, NULL_STRING );
 }
 
 inline void Filter::free_static_stuff( )

@@ -110,7 +110,7 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
     _initial_subtree_packet = packet;
     
     bool have_backend_exe = ( backend_exe != NULL );
-    std::string backend_exe_str( have_backend_exe ? backend_exe : "" );
+    std::string backend_exe_str( have_backend_exe ? backend_exe : NULL_STRING );
 
     SerialGraph *cur_sg, *my_sg;
     my_sg = sg.get_MySubTree( _hostname, _network->get_LocalPort(), _rank );

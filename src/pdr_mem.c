@@ -13,6 +13,7 @@
 #if defined(__cplusplus)
 
 #include "utils.h"
+using namespace MRN;
 
 #else /* ! defined(__cplusplus) */ 
 

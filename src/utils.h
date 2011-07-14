@@ -78,7 +78,8 @@ inline int gettimeofday( struct timeval *tv, struct timezone *tz )
 
 #define MRN_RELEASE_DATE_SECS 1308200400
 
-using namespace MRN;
+#define NULL_STRING ""
+
 namespace MRN
 {
 
@@ -126,11 +127,9 @@ do{ \
     }                                           \
 }while(0)
 
-
 //FLF is used to call mrn_printf(FLF, ...)
 #if !defined( __GNUC__ )
-#define CURRENT_FUNCTION ((const char*)0)
-#define FLF  __FILE__,__LINE__,""
+#define FLF  __FILE__,__LINE__,"unknown"
 #else
 #define FLF  __FILE__,__LINE__,__FUNCTION__
 #endif
@@ -144,6 +143,7 @@ do { \
 do { \
     mrn_dbg(3, MRN::mrn_printf(FLF, stderr, "Function start ...\n")); \
 } while(0)
+
 
 /* struct timeval/double conversion */
 double tv2dbl( struct timeval tv);

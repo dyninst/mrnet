@@ -39,14 +39,14 @@ static XPlat::Mutex mrn_printf_mutex;
 namespace MRN
 {
 
-std::string LocalHostName="";
-std::string LocalDomainName="";
-std::string LocalNetworkName="";
-std::string LocalNetworkAddr="";
+std::string LocalHostName = NULL_STRING;
+std::string LocalDomainName = NULL_STRING;
+std::string LocalNetworkName = NULL_STRING;
+std::string LocalNetworkAddr = NULL_STRING;
 
-Port LocalPort=0;
-double Timer::offset=0;
-bool Timer::first_time=true;
+Port LocalPort = 0;
+double Timer::offset = 0;
+bool Timer::first_time = true;
 
 XPlat::TLSKey tsd_key;
 

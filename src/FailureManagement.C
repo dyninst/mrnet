@@ -178,7 +178,8 @@ int inject_Failure( NetworkTopology::Node * inode )
         return -1;
     }
     
-    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_KILL_SELF, "") );
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_KILL_SELF, 
+                                 strdup(NULL_STRING)) );
 
     Message msg;
     msg.add_Packet( packet );
