@@ -77,10 +77,11 @@ do{ \
     }                                 \
 }while(0);
 
+#define NULL_STRING ""
+
 // FLF is used to call mrn_printf(FLF, ...)
 #if !defined( __GNUC__)
-#define CURRENT_FUNCTION ((const char*)0)
-#define FLF __FILE__,__LINE__,""
+#define FLF __FILE__,__LINE__,"unknown"
 #else
 #define FLF __FILE__,__LINE__,__FUNCTION__
 #endif

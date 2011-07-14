@@ -7,23 +7,23 @@
 #define __map_h 1
 
 struct map_node_t {
-  int key;
-  void* val;
-  struct map_node_t* left;
-  struct map_node_t* right;
-} ;
-
+    struct map_node_t* left;
+    struct map_node_t* right;
+    int key;
+    int hashed_key;
+    void* val;
+};
 typedef struct map_node_t map_node_t;
 
 struct mrn_map_t {
-   map_node_t* root;
-   int size;
-   int* keys;
+    map_node_t* root;
+    int* keys;
+    size_t size;
+    size_t alloc_size;
 };
-
 typedef struct mrn_map_t mrn_map_t;
 
- mrn_map_t* new_map_t();
+mrn_map_t* new_map_t();
 
 void insert( mrn_map_t* map, int key, void* val);
 

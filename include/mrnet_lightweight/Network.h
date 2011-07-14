@@ -30,7 +30,7 @@ typedef struct {
     struct BackEndNode_t* local_back_end_node;
     struct NetworkTopology_t* network_topology;
     struct mrn_map_t* streams;
-    int stream_iter;
+    unsigned int stream_iter;
     int recover_from_failures;
     char _was_shutdown;
 } Network_t;

@@ -31,21 +31,21 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
     BackEndNode_t* be;
     PeerNode_t* parent;
     NetworkTopology_t* nt;
+
     Stream_t* s;
-    char* host_arr;
+    char** host_arr;
+    int32_t* type;
+    uint32_t* send_iprank;
+    uint32_t* send_myrank;
+    uint16_t* send_port;
 
-    int type;
-    uint32_t send_iprank;
-    uint32_t send_myrank;
-    uint16_t send_port;
-
-    be = (BackEndNode_t*)malloc(sizeof(BackEndNode_t));
+    be = (BackEndNode_t*) calloc( (size_t)1, sizeof(BackEndNode_t) );
     assert(be != NULL);
     be->network = inetwork;
-    be->myhostname = imyhostname;
+    be->myhostname = strdup(imyhostname);
     be->myrank = imyrank;
     be->myport = UnknownPort;
-    be->phostname = iphostname;
+    be->phostname = strdup(iphostname);
     be->pport = ipport;
     be->prank = iprank;
     be->incarnation = 0;
@@ -58,7 +58,7 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
     inetwork->local_rank = imyrank;
     inetwork->local_back_end_node = be;
 
-    nt = new_NetworkTopology_t(inetwork, imyhostname, 
+    nt = new_NetworkTopology_t(inetwork, strdup(imyhostname), 
                                UnknownPort, imyrank, true);
     inetwork->network_topology = nt;
 
@@ -80,21 +80,27 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
 
             // send a topology update
             s = Network_new_Stream(inetwork, TOPOL_STRM_ID, NULL, 0, 0, 0, 0);
-            type = TOPO_NEW_BE;
-            host_arr = strdup(imyhostname);
-            send_iprank = iprank;
-            send_myrank = imyrank;
-            send_port = UnknownPort;
+
+            /* these must be heap allocated, since Stream_send() frees
+               packets sent on non-user streams */
+            host_arr = (char**) malloc( sizeof(char*) );
+            type = (int32_t*) malloc( sizeof(int32_t) );
+            send_iprank = (uint32_t*) malloc( sizeof(uint32_t) );
+            send_myrank = (uint32_t*) malloc( sizeof(uint32_t) );
+            send_port = (uint16_t*) malloc( sizeof(uint16_t) );
+
+            type[0] = TOPO_NEW_BE;
+            send_iprank[0] = iprank;
+            send_myrank[0] = imyrank;
+            host_arr[0] = strdup(imyhostname);
+            send_port[0] = UnknownPort;
 
             Stream_send(s, PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                        &type, 1, 
-                        &send_iprank, 1, 
-                        &send_myrank, 1, 
-                        &host_arr, 1, 
-                        &send_port, 1);
-
-            free(host_arr);
-
+                        type, 1, 
+                        send_iprank, 1, 
+                        send_myrank, 1, 
+                        host_arr, 1, 
+                        send_port, 1);
         } else {
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend already in the topology\n") );
         }
@@ -106,6 +112,16 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
     return be; 
 }
 
+void delete_BackEndNode_t( BackEndNode_t* be )
+{
+    if( be != NULL ) {
+        if( be->myhostname != NULL )
+	    free( be->myhostname );
+        if( be->phostname != NULL )
+	    free( be->phostname );
+        free( be );
+    }
+}
 
 BackEndNode_t* CreateBackEndNode( Network_t* inetwork,
                                   char* imy_hostname,
@@ -193,6 +209,9 @@ int BackEndNode_proc_newStream(BackEndNode_t* be, Packet_t* packet)
     Network_new_Stream(be->network, stream_id, backends, num_backends,
                        us_filter_id, sync_id, ds_filter_id);
 
+    if( backends != NULL )
+        free( backends );
+
     mrn_dbg_func_end();
 
     return 0;
@@ -272,10 +291,14 @@ int BackEndNode_proc_DataFromParent(BackEndNode_t* be, Packet_t* ipacket)
 
     for (i = 0; i < opackets->size; i++) {
         opacket = opackets->vec[i];
+        Packet_set_DestroyData( opacket, true );
         mrn_dbg(5, mrn_printf(FLF, stderr, "adding Packet on stream[%u]\n", 
                               stream->id));
         Stream_add_IncomingPacket(stream, opacket);
     }
+
+    delete_vector_t( opackets );
+    delete_vector_t( opackets_reverse );
   
     mrn_dbg_func_end();
 

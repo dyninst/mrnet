@@ -22,7 +22,7 @@ char* SerialGraph_get_ByteArray(SerialGraph_t * sg);
 
 SerialGraph_t* new_SerialGraph_t(char* byte_array);
 
-void free_SerialGraph_t(SerialGraph_t* sg);
+void delete_SerialGraph_t(SerialGraph_t* sg);
 
 SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* serial_graph, 
                                          char* ihostname, Port iport, Rank irank);

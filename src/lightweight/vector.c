@@ -16,12 +16,13 @@
 
 vector_t* new_empty_vector_t()
 {
-    vector_t* new_vector = (vector_t*)malloc(sizeof(vector_t));
-    assert(new_vector);
-    new_vector->alloc_size = 64;
-    new_vector->vec = (void**) malloc( sizeof(void*) * new_vector->alloc_size );
-    assert(new_vector->vec);
+    vector_t* new_vector = (vector_t*) calloc( 1, sizeof(vector_t) );
+    assert( new_vector != NULL );
+
     new_vector->size = 0;
+    new_vector->alloc_size = 64;
+    new_vector->vec = (void**) calloc( new_vector->alloc_size, sizeof(void*) );
+    assert( new_vector->vec != NULL );
     
     return new_vector;
 }
@@ -41,10 +42,7 @@ void copy_vector(vector_t* fromvec, vector_t* tovec)
     /* grow tovec to number of elements in fromvec, if necessary */
     if( fromvec->size > tovec->alloc_size ) {
         tovec->vec = (void**) realloc( tovec->vec, sizeof(void*) * fromvec->size );
-        if( tovec->vec == NULL ) {
-            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", sizeof(void*) * fromvec->size);
-            exit(0);
-        }
+        assert( tovec->vec != NULL );
         tovec->alloc_size = fromvec->size;
     }
     memcpy( tovec->vec, fromvec->vec, sizeof(void*) * fromvec->size );
@@ -57,19 +55,24 @@ void pushBackElement(vector_t* vector, void* elem)
     if( (vector->size + 1) == vector->alloc_size ) {
         vector->alloc_size += vector->alloc_size;
         vector->vec = (void**) realloc( vector->vec, sizeof(void*) * vector->alloc_size );
-        if( vector->vec == NULL ) {
-            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", sizeof(void*) * vector->alloc_size);
-            exit(0);
-        }
+        assert( vector->vec != NULL );
     }
     vector->vec[ vector->size ] = elem;
     vector->size++;
 }
 
 
+void* getBackElement(vector_t* vector )
+{
+    if( vector->size )
+        return vector->vec[ vector->size - 1 ];
+
+    return NULL;
+}
+
 void* popBackElement(vector_t* vector)
 {
-    void* elem = vector->vec[ vector->size - 1 ];
+    void* elem = getBackElement( vector );
 
     /* no need to shrink the allocation, just decrement size */
     vector->size--;
@@ -77,16 +80,14 @@ void* popBackElement(vector_t* vector)
     return elem;
 }
 
-void* getBackElement(vector_t* vector )
-{
-    return vector->vec[ vector->size - 1 ];
-}
-
 void delete_vector_t(vector_t* vector)
 {
     /* because elements stored are pointers, they might be in use 
        elsewhere, so don't free */
-    free(vector->vec);
+
+    if( vector->vec != NULL )
+        free(vector->vec);
+
     free(vector);
 }
 
@@ -106,11 +107,12 @@ vector_t* eraseElement(vector_t* vector, void* elem)
     unsigned int i;
     for( i = 0; i < vector->size; i++ ) {
         if( vector->vec[i] == elem ) {
-            /* shift the elements after this one */
-            while( (i+1) < vector->size ) {
-                vector[i] = vector[i+1];
-                i++;
+            if( i != (vector->size - 1) ) {
+                // shift rest of elements by one
+                memmove( (void*)(vector->vec + i), (void*)(vector->vec + (i+1)),
+                         sizeof(void*) * (vector->size - (i+1)));
             }
+
             vector->size--;
         }
     }

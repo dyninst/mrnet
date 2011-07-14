@@ -12,14 +12,14 @@
 
 /*  definition */
 struct BackEndNode_t {
-   Network_t* network;
-  char* myhostname;
-  Rank myrank;
-  Port myport;
-  char* phostname;
-  Port pport;
-  Rank prank;
-  uint16_t incarnation;
+    Network_t* network;
+    char* myhostname;
+    Rank myrank;
+    Port myport;
+    char* phostname;
+    Port pport;
+    Rank prank;
+    uint16_t incarnation;
 };
 
 typedef struct BackEndNode_t BackEndNode_t;
@@ -39,6 +39,8 @@ BackEndNode_t* CreateBackEndNode (  Network_t* inetwork,
                                 char* iphostname,
                                 Port ipport,
                                 Rank iprank);
+
+void delete_BackEndNode_t( BackEndNode_t* ben );
 
 int BackEndNode_proc_DeleteSubTree( BackEndNode_t* be,  Packet_t* packet);
 

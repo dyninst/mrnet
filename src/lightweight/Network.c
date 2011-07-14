@@ -56,10 +56,13 @@ void cleanup_local(void)
 
 Network_t* new_Network_t()
 {
-    Network_t* net = (Network_t*)malloc(sizeof(Network_t));
-    assert(net);
+    Network_t* net = (Network_t*) calloc( (size_t)1, sizeof(Network_t) );
+    assert(net != NULL);
     net->local_port = UnknownPort;
     net->local_rank = UnknownRank;
+    net->parent = NULL;
+    net->local_back_end_node = NULL;
+    net->network_topology = NULL;
     net->children = new_empty_vector_t();
     net->streams = new_map_t();
     net->stream_iter = 0;
@@ -73,20 +76,37 @@ Network_t* new_Network_t()
 
 void delete_Network_t(Network_t * net)
 {
-    int i;
+    unsigned int i;
     Stream_t * cur_stream;
 
     cleanup_local();
 
-    delete_vector_t(net->children);
+    if( net != NULL ) {
 
-    for (i = 0; i < net->streams->size; i++) {
-        cur_stream = (Stream_t*)get_val(net->streams, net->streams->keys[i]);
-        delete_Stream_t(cur_stream);
+        if( net->local_hostname != NULL )
+            free( net->local_hostname );
+
+        if( net->parent != NULL )
+            free( net->parent );
+
+        delete_BackEndNode_t( net->local_back_end_node );
+
+        delete_NetworkTopology_t( net->network_topology );
+
+        delete_vector_t(net->children);
+
+        // delete all Stream_t in streams map, then the map
+        while( net->streams->size > 0 ) {
+            /* remove streams in reverse order to avoid lots of key movement
+               caused by the use of map erase() */
+            cur_stream = (Stream_t*)get_val(net->streams, 
+                                            net->streams->keys[net->streams->size - 1]);
+            delete_Stream_t(cur_stream);
+        }
+        delete_map_t(net->streams);
+
+        free(net);
     }
-
-    delete_map_t(net->streams);
-    free(net);
 
     if( MRN_DEBUG_LOG_DIRECTORY != NULL )
         free( MRN_DEBUG_LOG_DIRECTORY );      
@@ -152,24 +172,21 @@ Network_CreateNetworkBE ( int argc, char* argv[] )
 
 /* back-end constructor method that is used to attach to an 
  * instantiated MRNet process tree */
-Network_t* Network_init_BackEnd(/*const*/ char* iphostname, Port ipport, 
+Network_t* Network_init_BackEnd(char* iphostname, Port ipport, 
                                 Rank iprank, 
-                                /*const*/ char* imyhostname, Rank imyrank)
+                                char* imyhostname, Rank imyrank)
 {
  
-    Network_t* net = new_Network_t();
-    char* pretty_host;
-    char* myhostname;
     BackEndNode_t* be;
+    char* myhostname = NULL;
+    Network_t* net = new_Network_t();
+    assert( net != NULL );
   
     setrank(imyrank);  
     
-    pretty_host = (char*) malloc(sizeof(char)*256);
-    assert(pretty_host);
-    myhostname = (char*) malloc(sizeof(char)*256);
-    assert(myhostname);
+    myhostname = (char*) malloc( sizeof(char) * XPLAT_MAX_HOSTNAME_LEN );
+    assert( myhostname != NULL );
     NetUtils_FindNetworkName( imyhostname, myhostname );
-    NetUtils_GetHostName( myhostname, pretty_host );
 
     net->local_rank = imyrank;
 
@@ -177,19 +194,16 @@ Network_t* Network_init_BackEnd(/*const*/ char* iphostname, Port ipport,
     be = CreateBackEndNode( net, myhostname, imyrank,
                             iphostname, ipport, iprank );
   
-    assert ( be != NULL);
+    assert( be != NULL );
  
     // update the network struct
     mrn_dbg(5, mrn_printf(FLF, stderr, "Setting network's local BE\n"));
     net->local_back_end_node = be;
 
-    free(pretty_host);
-
     // create the BE-specific stream
     Network_new_Stream(net, imyrank, NULL, 0, 0, 0, 0);
 
     return net;
-
 }
 
 int Network_recv_internal(Network_t* net, bool_t blocking)
@@ -208,14 +222,19 @@ int Network_recv_internal(Network_t* net, bool_t blocking)
             if (Network_recv_PacketsFromParent(net, packet_list, blocking) == -1) {
                 mrn_dbg(3, mrn_printf(FLF, stderr, 
                                       "recv() failed twice, return -1\n"));
+	        delete_vector_t( packet_list );
                 return -1;
             }
         } 
-        else return -1;
+        else {
+	    delete_vector_t( packet_list );
+	    return -1;
+	}
     }
 
     if( packet_list->size == 0 ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "No packets read!\n"));
+	delete_vector_t( packet_list );
         return 0;
     }
     else {
@@ -223,9 +242,11 @@ int Network_recv_internal(Network_t* net, bool_t blocking)
 
         if( ChildNode_proc_PacketsFromParent(net->local_back_end_node, packet_list) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "proc_packets() failed\n"));
+	    delete_vector_t( packet_list );
             return -1;
         }
     }
+    delete_vector_t( packet_list );
   
     // if we get here, we have found data to return
     mrn_dbg(5, mrn_printf(FLF, stderr, 
@@ -237,7 +258,7 @@ int Network_recv_internal(Network_t* net, bool_t blocking)
 Packet_t* Network_recv_stream_check(Network_t* net)
 {
     int packet_found;  
-    int start_iter;
+    unsigned int start_iter;
     Stream_t* cur_stream;
     Packet_t* cur_packet = NULL;
 
@@ -255,8 +276,8 @@ Packet_t* Network_recv_stream_check(Network_t* net)
                                             net->streams->keys[net->stream_iter]);
 
             mrn_dbg(5, mrn_printf(FLF, stderr,
-                                  "Checking for packets on stream[%d]...\n",
-                                  cur_stream->id));
+                                  "Checking for packets on stream[%d] id=%u ...\n",
+                                  net->stream_iter, cur_stream->id));
             cur_packet = Stream_get_IncomingPacket(cur_stream);
             if (cur_packet != NULL) 
                 packet_found = true;
@@ -266,6 +287,8 @@ Packet_t* Network_recv_stream_check(Network_t* net)
             if (net->stream_iter == net->streams->size) {
                 // wrap around to the beginning of the map
                 net->stream_iter = 0;
+                mrn_dbg(5, mrn_printf(FLF, stderr,
+                                      "wraparound, setting stream_iter to zero\n"));
             }
         } while((start_iter != net->stream_iter) && !packet_found);
     }
@@ -286,6 +309,9 @@ int Network_recv_nonblock(Network_t* net, int *otag,
         *opacket = *cur_packet;
         mrn_dbg(5, mrn_printf(FLF, stderr, "cur_packet tag: %d, fmt: %s\n", 
                               cur_packet->tag, cur_packet->fmt_str));
+        
+        // cur_packet fields now owned by opacket, just free the Packet_t
+        free( cur_packet );
         return 1;
     }
     
@@ -313,6 +339,9 @@ int Network_recv(Network_t* net, int *otag,
         *opacket = *cur_packet;
         mrn_dbg(5, mrn_printf(FLF, stderr, "cur_packet tag: %d, fmt: %s\n", 
                               cur_packet->tag, cur_packet->fmt_str));
+
+        // cur_packet fields now owned by opacket, just free the Packet_t
+        free( cur_packet );
         return 1;
     }
 
@@ -355,7 +384,7 @@ int Network_recv_PacketsFromParent(Network_t* net, vector_t* opackets, bool_t bl
 
 void Network_shutdown_Network(Network_t* net)
 {
-    int i;
+    unsigned int i;
     Stream_t * cur_stream;
     
     mrn_dbg_func_begin();
@@ -380,6 +409,9 @@ int Network_reset_Topology(Network_t* net, char* itopology)
     mrn_dbg_func_begin();
 
     sg = new_SerialGraph_t( itopology );
+    if( itopology != NULL )
+    	free( itopology );
+
     if( ! NetworkTopology_reset(net->network_topology, sg) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Topology->reset() failed\n"));
         return false;
@@ -440,13 +472,12 @@ int Network_remove_Node(Network_t* net, Rank ifailed_rank, int iupdate)
 
 int Network_delete_PeerNode(Network_t* net, Rank irank)
 {
-    struct PeerNode_t* peerNode;
     unsigned int iter;
     Node_t* cur_child;
     
-    if (net->parent->rank == irank) {
-        peerNode = NULL;
-        net->parent = peerNode;
+    if ( (net->parent != NULL) && (net->parent->rank == irank) ) {
+        free( net->parent );
+        net->parent = NULL;
         return true;
     }
 
@@ -485,15 +516,20 @@ Stream_t* Network_get_Stream(Network_t* net, unsigned int iid)
 
 void Network_delete_Stream(Network_t * net, unsigned int iid)
 {
+    mrn_dbg_func_begin();
+
     /* if we're deleting the iter, set to the next element */
     int key = (int) iid;
-    if (key == net->streams->keys[net->stream_iter]) {
+    if (key == net->streams->keys[net->stream_iter])
         net->stream_iter++;
-        // wrap around to the beginning of the map, if necessary
-        if (net->stream_iter == net->streams->size)
-            net->stream_iter = 0;
-    }   
+
     net->streams = erase(net->streams, key);
+
+    // wrap around to the beginning of the map, if necessary
+    if (net->stream_iter >= net->streams->size)
+        net->stream_iter = 0;
+
+    mrn_dbg_func_end();
 }
 
 int Network_send_PacketToParent(Network_t* net, Packet_t* ipacket)
@@ -521,16 +557,16 @@ PeerNode_t* Network_new_PeerNode(Network_t* network,
                                  char* ihostname,
                                  Port iport,
                                  Rank irank,
-                                 int iis_parent,
-                                 int iis_internal)
+                                 int is_parent,
+                                 int is_internal)
 {
     PeerNode_t* node = new_PeerNode_t(network, ihostname, iport, 
-                                      irank, iis_parent, iis_internal);
+                                      irank, is_parent, is_internal);
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "new peer node: %s:%d (%p) \n", 
                           node->hostname, node->rank, node));
 
-    if (iis_parent) {
+    if (is_parent) {
         network->parent = node;  
     } else {
         pushBackElement(network->children, node); 
@@ -711,6 +747,8 @@ void Network_waitfor_ShutDown(Network_t* net)
     Stream_t* stream;
     Packet_t* p;
     int tag = 0;
+
+    mrn_dbg_func_begin();
 	
     p = (Packet_t*) malloc(sizeof(Packet_t));
     assert(p);
@@ -725,4 +763,6 @@ void Network_waitfor_ShutDown(Network_t* net)
     }
 
     free(p);
+
+    mrn_dbg_func_end();
 }

@@ -19,10 +19,10 @@ SerialGraph_t* new_SerialGraph_t(char* ibyte_array)
     
     mrn_dbg_func_begin();
    
-    serial_graph = (SerialGraph_t*) malloc(sizeof(SerialGraph_t));
+    serial_graph = (SerialGraph_t*) calloc( (size_t)1, sizeof(SerialGraph_t) );
     assert(serial_graph != NULL);
 
-    if( ibyte_array ) {
+    if( ibyte_array != NULL ) {
         serial_graph->byte_array = strdup(ibyte_array);
         serial_graph->arr_len = strlen(ibyte_array) + 1;        
         mrn_dbg(5, mrn_printf(FLF, stderr, 
@@ -30,7 +30,7 @@ SerialGraph_t* new_SerialGraph_t(char* ibyte_array)
                               serial_graph->byte_array));
     } else {
         serial_graph->arr_len = 1024; /* pre-allocation */
-        serial_graph->byte_array = (char*)malloc((size_t)serial_graph->arr_len);
+        serial_graph->byte_array = (char*) malloc((size_t)serial_graph->arr_len);
         assert(serial_graph->byte_array);
         serial_graph->byte_array[0] = '\0';
         mrn_dbg(5, mrn_printf(FLF, stderr, 
@@ -41,10 +41,12 @@ SerialGraph_t* new_SerialGraph_t(char* ibyte_array)
     return serial_graph;
 }
 
-void free_SerialGraph_t(SerialGraph_t* sg)
+void delete_SerialGraph_t(SerialGraph_t* sg)
 {
-    free(sg->byte_array);
-    free(sg);
+    if( sg != NULL ) {
+        free(sg->byte_array);
+        free(sg);
+    }
 }
 
 char* SerialGraph_get_ByteArray(SerialGraph_t* sg)

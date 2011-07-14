@@ -25,7 +25,6 @@ typedef struct {
   char* buf;  // the packed data payload
   unsigned int buf_len;
   Rank inlet_rank;
-  int destroy_data;
   struct vector_t* data_elements;
 } Packet_t;
 
@@ -44,10 +43,11 @@ void Packet_set_StreamId(Packet_t* packet, unsigned int strm_id);
 
 char* Packet_get_FormatString(Packet_t* packet);
 
-void Packet_set_DestroyData(Packet_t * packet, int dd);
-
 int Packet_unpack(Packet_t* packet, const char *ifmt_str, ...);
 int Packet_unpack_valist(Packet_t* packet, va_list arg_list, const char *ifmt_str);
+
+void delete_Packet_t(Packet_t* packet);
+void Packet_set_DestroyData(Packet_t * packet, int dd);
 
 /* END PUBLIC API */
 
@@ -58,7 +58,7 @@ Packet_t* new_Packet_t_3(unsigned int ihdr_len, char* ihdr,
                          unsigned int ibuf_len, char* ibuf, 
                          Rank iinlet_rank);
 
-Packet_t* Packet_pushBackElement(Packet_t* packet, DataElement_t* cur_elem);
+void Packet_pushBackElement(Packet_t* packet, DataElement_t* cur_elem);
 
 int Packet_ExtractVaList(Packet_t* packet, const char* fmt, va_list arg_list);
 void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list);

@@ -44,7 +44,7 @@ const char* perfdata_context_names[PERFDATA_MAX_CTX] =
 
 PerfDataMgr_t* new_PerfDataMgr_t()
 {
-    int i;
+    unsigned int i;
     mrn_map_t* newmap;
     PerfDataMgr_t* newperf = (PerfDataMgr_t*)malloc(sizeof(PerfDataMgr_t));
     assert(newperf != NULL);
@@ -55,6 +55,19 @@ PerfDataMgr_t* new_PerfDataMgr_t()
         pushBackElement(newperf->the_data, newmap);
     }
     return newperf;
+}
+
+void delete_PerfDataMgr_t( PerfDataMgr_t* mgr )
+{
+    unsigned int i;
+    if( mgr != NULL ) {
+        if( mgr->the_data != NULL ) {
+            for (i = 0; i < mgr->the_data->size; i++) 
+                delete_map_t( (mrn_map_t*)(mgr->the_data->vec[i]) );
+            delete_vector_t( mgr->the_data );
+        }
+        free( mgr );
+    }
 }
 
 const char* PerfDataMgr_get_MetricName(PerfDataMgr_t* perf_data,

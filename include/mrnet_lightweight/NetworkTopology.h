@@ -73,6 +73,8 @@ NetworkTopology_t* new_NetworkTopology_t(Network_t* inetwork,
                                          Rank irank,
                                          int iis_backend);
 
+void delete_NetworkTopology_t( NetworkTopology_t* net_top );
+
 /* BEGIN PUBLIC API */
 
 /* NetworkTopology */
@@ -151,8 +153,8 @@ void NetworkTopology_add_InternalNode(NetworkTopology_t * net_top,
 void NetworkTopology_change_Port(NetworkTopology_t * net_top,
                                  Rank rcrank, Port rcport);
 
-int NetworkTopology_new_Node(NetworkTopology_t * net_top, const char * host, 
-                             Port port, Rank rank, int iis_backend);
+Node_t* NetworkTopology_new_Node(NetworkTopology_t * net_top, char * host, 
+                                 Port port, Rank rank, int iis_backend);
 
 void NetworkTopology_update_TopoStreamPeers(NetworkTopology_t * net_top, 
                                             struct vector_t * new_nodes);

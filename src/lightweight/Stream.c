@@ -46,7 +46,7 @@ Stream_t* new_Stream_t(Network_t* net,
                        unsigned int isync_filter_id,
                        unsigned int ids_filter_id)
 {
-    Stream_t* new_stream = (Stream_t*)malloc(sizeof(Stream_t));
+    Stream_t* new_stream = (Stream_t*) calloc( (size_t) 1, sizeof(Stream_t) );
     assert(new_stream);
 
     new_stream->network = net;
@@ -76,14 +76,19 @@ Stream_t* new_Stream_t(Network_t* net,
 
 void delete_Stream_t(Stream_t * stream)
 {
+    mrn_dbg_func_begin();
+
     /* clean up data structures */
-    delete_vector_t(stream->incoming_packet_buffer);
+    delete_vector_t( stream->incoming_packet_buffer );
+    delete_PerfDataMgr_t( stream->perf_data );
 
     /* remove the stream from Network streams map */
     Network_delete_Stream(stream->network, stream->id);
 
     /* free the stream */
     free(stream);
+
+    mrn_dbg_func_end();
 }
 
 unsigned int Stream_get_Id(Stream_t* stream)
@@ -205,13 +210,13 @@ int Stream_push_Packet(Stream_t* stream,
     // run transformation filter
     // NOTE: Currently, we do not support filtering at lightweight
     // backend nodes. Thus, nothing happens during this process
-    // except *opacket = *ipacket;
+    // except opackets[0] = ipacket;
     if (Filter_push_Packets(trans_filter, 
-                ipackets, 
-                opackets,
-                opackets_reverse, 
-                topol_info,
-                igoing_upstream) == -1) {
+                            ipackets, 
+                            opackets,
+                            opackets_reverse, 
+                            topol_info,
+                            igoing_upstream) == -1) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Filter_push_packets() failed\n"));
         return -1;
     }
@@ -269,6 +274,11 @@ int Stream_push_Packet(Stream_t* stream,
         }
     }
 
+    delete_vector_t( ipackets );
+    
+    if( topol_info != NULL )
+        free( topol_info );
+
     mrn_dbg_func_end();
     return 0;
 }
@@ -286,6 +296,9 @@ int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket, bool_t blocking
         *otag = Packet_get_Tag(cur_packet);
         *opacket = *cur_packet; 
         mrn_dbg(5, mrn_printf(FLF, stderr, "cur_packet tag:%d\n", opacket->tag));
+        
+        // cur_packet fields now owned by opacket, just free the Packet_t
+        free( cur_packet );
         return 1;
     }
 
@@ -315,6 +328,9 @@ int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket, bool_t blocking
     *otag = Packet_get_Tag(cur_packet);
     *opacket = *cur_packet;
 
+    // cur_packet fields now owned by opacket, just free the Packet_t
+    free( cur_packet );
+        
     mrn_dbg(5, mrn_printf(FLF, stderr, "Received packet tag: %d\n", *otag));
 
     mrn_dbg_func_end();
@@ -340,7 +356,7 @@ int Stream_send(Stream_t* stream, int itag, const char *iformat_str, ... )
 
     packet = new_Packet_t(stream->network->local_rank, 
                           stream->id, itag, iformat_str, arg_list);
-    if (packet == NULL) {
+    if( packet == NULL ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));
         return -1;
     }
@@ -361,7 +377,7 @@ int Stream_send_packet(Stream_t* stream, Packet_t* packet)
   
     mrn_dbg_func_begin();
 
-    if (packet == NULL) {
+    if( packet == NULL ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "invalid arg: NULL packet\n"));
         return -1;
     }
@@ -386,7 +402,11 @@ int Stream_send_aux(Stream_t* stream, int itag, const char* ifmt, Packet_t* ipac
     unsigned int i;
 
     mrn_dbg_func_begin();
-    mrn_dbg(3, mrn_printf(FLF, stderr, "stream_id: %d, tag:%d, fmt=\"%s\"\n", stream->id, itag, ifmt));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "stream_id: %d, tag:%d, fmt=\"%s\"\n", 
+                          stream->id, itag, ifmt));
+
+    if( (stream->id >= CTL_STRM_ID) && (stream->id < USER_STRM_BASE_ID) )
+        Packet_set_DestroyData( ipacket, true );
   
     // performance data update for STREAM_SEND
     if (PerfDataMgr_is_Enabled(stream->perf_data, 
@@ -427,15 +447,20 @@ int Stream_send_aux(Stream_t* stream, int itag, const char* ifmt, Packet_t* ipac
     for (i = 0; i < opackets->size; i++) {
         opacket = opackets->vec[i];
         if (opacket != NULL) {
-            if (Network_send_PacketToParent(stream->network, opacket) == -1) {
+            if( Network_send_PacketToParent(stream->network, opacket) == -1 ) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "Network_send_PacketToParent failed\n"));
                 return -1;
             }
-            free(opacket);
+            delete_Packet_t(opacket);
         }
     }
     Timer_stop(tsend);
-    mrn_dbg(5, mrn_printf(FLF, stderr, "agg_lat: %.5lf send_lat: %.5lf\n", Timer_get_latency_msecs(tagg), Timer_get_latency_msecs(tsend)));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "agg_lat: %.5lf send_lat: %.5lf\n", 
+                          Timer_get_latency_msecs(tagg), 
+                          Timer_get_latency_msecs(tsend)));
+
+    delete_vector_t( opackets );
+    delete_vector_t( opackets_reverse );
 
     mrn_dbg_func_end();
     return 0;
@@ -577,7 +602,7 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
         return NULL;
     }
    
-    packet->destroy_data = 1; // free arrays when Packet no longer in use
+    Packet_set_DestroyData( packet, 1 ); // free arrays when Packet no longer in use
 
     return packet;
 

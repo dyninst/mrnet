@@ -176,8 +176,9 @@ extern char* MRN_DEBUG_LOG_DIRECTORY;
 int mrn_printf( const char *file, int line, const char * func,
                 FILE * ifp, const char *format, ... )
 {
-    static FILE * fp = NULL;
-    const char *node_type = "BE";
+    static FILE* fp = NULL;
+    char* base_file;
+    const char* node_type = "BE";
     int retval;
     va_list arglist;
     struct stat s;
@@ -225,13 +226,14 @@ int mrn_printf( const char *file, int line, const char * func,
         f = ifp;
 
     if (file) {
-    
+        base_file = GetFilename(file);
         fprintf( f, "%ld.%06ld: %s[%d] %s() - ",
                  tv.tv_sec-MRN_RELEASE_DATE_SECS, 
                  tv.tv_usec, 
-                 GetFilename(file),
+                 base_file,
                  line,
                  func );
+        free(base_file);
     }
 
     va_start(arglist, format);

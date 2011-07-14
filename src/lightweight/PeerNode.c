@@ -14,20 +14,21 @@ PeerNode_t* new_PeerNode_t(Network_t* inetwork,
                             char* ihostname,
                             Port iport,
                             Rank irank,
-                            int iis_parent,
-                            int iis_internal_node)
+                            int is_parent,
+                            int is_internal_node)
 {
 
   struct PeerNode_t* peer_node = (PeerNode_t*)malloc(sizeof(struct PeerNode_t));
-  assert(peer_node);
+  assert( peer_node != NULL );
+
   peer_node->net = inetwork;
   peer_node->hostname = ihostname;
   peer_node->rank = irank;
   peer_node->port = iport;
   peer_node->data_sock_fd = 0;
   peer_node->event_sock_fd = 0;
-  peer_node->is_internal_node = iis_internal_node;
-  peer_node->is_parent = iis_parent;
+  peer_node->is_internal_node = is_internal_node;
+  peer_node->is_parent = is_parent;
   peer_node->available = true;
 
   return peer_node;

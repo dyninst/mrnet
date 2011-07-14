@@ -3,9 +3,10 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+#include <string.h>
 
 #ifndef os_windows
 #include <unistd.h>
@@ -14,152 +15,252 @@
 #include "map.h"
 #include "utils_lightweight.h"
 
+int hash_key(int key)
+{
+    // MJB TODO: need 1:1 hash function
+    return key;
+}
+
 mrn_map_t* new_map_t()
 {
-    mrn_map_t* new_map = (mrn_map_t*)malloc(sizeof(mrn_map_t));
+    mrn_map_t* new_map = (mrn_map_t*) malloc( sizeof(mrn_map_t) );
     assert(new_map);
 
     new_map->root = NULL;
     new_map->size = 0;
-    new_map->keys = (int*) malloc( sizeof(int) * 32 );
-    assert(new_map->keys);
+    new_map->alloc_size = 8;
+    new_map->keys = (int*) calloc( new_map->alloc_size, sizeof(int) );
+    assert( new_map->keys != NULL );
 
     return new_map;
 }
 
-map_node_t* delete_map_recursive(map_node_t* root) {
-    if (root) {
-        delete_map_recursive(root->left);
-        delete_map_recursive(root->right);
-        /* because elements are stored as pointers, might
-         * be in use elsewhere */
-        //free(root);
+void delete_map_nodes(map_node_t* root)
+{
+    if( root != NULL ) {
+        delete_map_nodes(root->left);
+        delete_map_nodes(root->right);
+        // we don't free map node values, just nodes
+        free(root);
         root = NULL;
     }
-
-    return root;
 }
 
-void delete_map_t(mrn_map_t* map) {
-    map->root = delete_map_recursive(map->root);
+void delete_map_t(mrn_map_t* map)
+{
+    delete_map_nodes(map->root);
+
+    if( map->keys != NULL )
+        free( map->keys );
 
     free(map);
 }
 
-void clear_map_t(mrn_map_t** map) {
-    delete_map_recursive((*map)->root);
+void clear_map_t(mrn_map_t** map)
+{
+    if( *map != NULL )
+        delete_map_t( *map );
+
     *map = new_map_t();
 }
 
-map_node_t* insert_recursive(map_node_t* root, int key, void* val)
+map_node_t* insert_recursive(map_node_t* root, int key, int hashed_key, void* val)
 {
     map_node_t* new_node;
 
-    // map is currently empty
-    if (root == NULL) {
-        new_node = (map_node_t*)malloc(sizeof(map_node_t));
-        assert(new_node);
+    mrn_dbg_func_begin();
+
+    if (root == NULL) { // empty subtree, we've found place for new node
+ 
+        new_node = (map_node_t*) malloc( sizeof(map_node_t) );
+        assert( new_node != NULL );
 
         new_node->key = key;
+        new_node->hashed_key = hashed_key;
         new_node->val = val;
         new_node->left = NULL;
         new_node->right = NULL;
 
+        mrn_dbg(5, mrn_printf(FLF, stderr, "created new node\n"));
         return new_node;
     }
-  
-    // check if we need to insert into left subtree or right subtree
-    else {
-        if (key < root->key) {
-            root->left = insert_recursive(root->left, key, val);
-        }
-        else if (key == root->key) {
-            perror("Cannot have multiple map entries with same key");
+    else { // check if we need to insert into left subtree or right subtree
+
+        if (hashed_key == root->hashed_key) {
+            mrn_printf(FLF, stderr, 
+                       "Cannot have multiple map entries with same key %d\n", key);
             return NULL;
         }
+        else if (hashed_key < root->hashed_key) {
+            root->left = insert_recursive(root->left, key, hashed_key, val);
+        }
         else {
-            root->right = insert_recursive(root->right, key, val);
+            root->right = insert_recursive(root->right, key, hashed_key, val);
         }
     }
 
-    return root;
+     mrn_dbg_func_end();
+     return root;
 }
 
 void insert(mrn_map_t* map, int key, void* val)
 {
-    int i;
-    int new_val = 1;
+    // insert new (key, val) pair into map
+    int hashed_key = hash_key( key );
+    map->root = insert_recursive(map->root, key, hashed_key, val);
 
-    for (i = 0; i < map->size; i++) {
-        if (map->keys[i] == key) 
-            new_val = 0;
+    // update map size
+    map->size++;
+
+    if( map->size == map->alloc_size ) {
+        // grow by doubling allocation as necessary
+        map->alloc_size += map->alloc_size;
+        map->keys = (int*) realloc( (void*)(map->keys), sizeof(int) * map->alloc_size );
+        assert( map->keys != NULL );
     }
-    if (new_val) {
-        // insert new (key, val) pair into map
-        map->root = insert_recursive(map->root, key, val);
-        // update map size
-        map->size++;
-        // insert key into key array
-        map->keys = (int*)realloc(map->keys, sizeof(int) * map->size);
-        if( map->keys == NULL ) {
-            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", sizeof(int) * map->size);
-            exit(0);
-        }
-        map->keys[map->size-1] = key;
-    }
-    //print(map);
+
+    map->keys[ map->size - 1 ] = key;
+
+    print(map);
 }
 
-void* get_val_recursive(map_node_t* root, int key)
+map_node_t* find_node_recursive(map_node_t* root, int hashed_key, map_node_t** parent)
 {
+    mrn_dbg_func_begin();
+
     if (root == NULL)
         return NULL;
 
-    else if (root->key == key)
-        return root->val;
+    if (root->hashed_key == hashed_key)
+        return root;
 
-    else if (key < root->key)
-        return get_val_recursive(root->left, key);
+    if( parent != NULL ) 
+        *parent = root;
 
-    else
-        return get_val_recursive(root->right, key);
-
+    if (hashed_key < root->hashed_key) {
+        return find_node_recursive(root->left, hashed_key, parent);
+    }
+    else {
+        return find_node_recursive(root->right, hashed_key, parent);
+    }
 }
 
 void* get_val(mrn_map_t* map, int key)
 {
-    return get_val_recursive(map->root, key);
+    int hashed_key = hash_key( key );
+    map_node_t* target = find_node_recursive( map->root, hashed_key, NULL );
+    if( target == NULL )
+        return NULL;
+    else {
+        assert( target->key == key );
+        return target->val;
+    }
 }
 
-mrn_map_t* erase(mrn_map_t* map, int ikey)
-{   
+mrn_map_t* erase(mrn_map_t* map, int key)
+{
+    unsigned int i;
+    int hashed_key = hash_key( key );
+
+#ifdef OLD_ERASE_BY_NEW_MAP_INSERT
     mrn_map_t* new_map = new_map_t();
 
-    int i;
-    for (i = 0; i < map->size; i++) {
-        if (map->keys[i] != ikey) {
+    for( i = 0; i < map->size; i++ ) {
+        if (map->keys[i] != key) {
             insert(new_map, map->keys[i], get_val(map, map->keys[i]));
         }
     }
 
-    /* free the struct, but don't free the element since it might be 
-     * referenced elsewhere */ 
+    // free the old map
     delete_map_t(map);
 
+    print(new_map);
     return new_map;
+#else
+    map_node_t* parent = NULL;
+    map_node_t* target = NULL;
+    map_node_t* tmp = NULL;
+    char found = 0;
+
+    // remove from keys
+    for( i = 0; i < map->size; i++ ) {
+        if( map->keys[i] == key ) {
+            found = 1;
+            if( i != (map->size - 1) ) {
+                // shift rest of keys by one
+                memmove( (void*)(map->keys + i), (void*)(map->keys + (i+1)),
+                         sizeof(int) * (map->size - (i+1)));
+            }
+        }
+    }
+    
+    if( found == 0 ) { // not found, we're done
+        mrn_dbg(5, mrn_printf(FLF, stderr, "map node with key %d not found\n", key));
+        return map;
+    }
+
+    map->size--;
+
+    // kill the node
+    target = find_node_recursive( map->root, hashed_key, &parent );
+    assert( target != NULL );
+        
+    // Case 1: leaf node
+    if( (target->left == NULL) && (target->right == NULL) ) {
+        if( parent == NULL ) { // target is root
+            map->root = NULL;
+        }
+        else if( parent->left == target ) {
+            parent->left = NULL;
+        }
+        else {
+            parent->right = NULL;
+        }
+        free( target );
+    }
+    else {
+        // Case 2: has left subtree, promote it
+        if( target->left != NULL )
+            tmp = target->left;
+
+        // Case 3: has right subtree, promote it
+        else if( target->right != NULL )
+            tmp = target->right;
+
+        // Case 4: has left and right subtrees, 
+        //         promote rightmost descendant of left subtree
+        else {
+            tmp = target->left;
+            while( tmp->right != NULL )
+                tmp = tmp->right;
+        }
+            
+        // move tmp data to target, free tmp
+        target->key = tmp->key;
+        target->hashed_key = tmp->hashed_key;
+        target->val = tmp->val;
+        target->left = tmp->left;
+        target->right = tmp->right;
+        free(tmp);
+    }
+        
+    print(map);
+    return map;
+#endif
 }
 
 void print_recursive(map_node_t* node) 
 {
-    if (node) {
+    if( node != NULL ) {
         print_recursive(node->left);
-        mrn_dbg(5, mrn_printf(0,0,0, stderr, "%d\n", node->key));
+        mrn_dbg(5, mrn_printf(0,0,0, stderr, "\t%d\n", node->key));
         print_recursive(node->right);
     }
 }
 
 void print(mrn_map_t* map)
 {
+    mrn_dbg(5, mrn_printf(0,0,0, stderr, "printing map:\n"));
     print_recursive(map->root);
 }   
 

@@ -22,19 +22,33 @@
 #include "utils_lightweight.h"
 #include "vector.h"
 
-void free_Packet_t(Packet_t* packet)
+void delete_Packet_t(Packet_t* packet)
 {
-    if( packet->data_elements != NULL )
-        delete_vector_t(packet->data_elements); 
+    unsigned int i;
 
-    if( packet->hdr != NULL )
-        free( packet->hdr );
+    if( packet->data_elements != NULL ) {
+        for( i = 0; i < packet->data_elements->size; i++ ) {
+            DataElement_t* de = packet->data_elements->vec[i];
+            delete_DataElement_t( de );
+        }
+        delete_vector_t(packet->data_elements);
+        packet->data_elements = NULL;
+    }
 
-    if( packet->buf != NULL )
-        free( packet->buf );
-
-    if( packet->fmt_str != NULL )
+    if( packet->fmt_str != NULL ) {
         free( packet->fmt_str );
+        packet->fmt_str = NULL;
+    }
+
+    if( packet->hdr != NULL ) {
+        free( packet->hdr );
+        packet->hdr = NULL;
+    }
+
+    if( packet->buf != NULL ) {
+        free( packet->buf );
+        packet->buf = NULL;
+    }
 
     free(packet);
 }
@@ -88,16 +102,20 @@ Packet_t* Packet_construct(Packet_t* packet)
 Packet_t* new_Packet_t(Rank isrc, unsigned int istream_id, int itag, 
                        const char* fmt, va_list arg_list)
 {
-    Packet_t* packet = (Packet_t*) malloc(sizeof(Packet_t));
+    Packet_t* packet = (Packet_t*) calloc( (size_t)1, sizeof(Packet_t) );
     if( packet == NULL ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() failed\n"));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "calloc() failed\n"));
         return NULL;
     }
   
     // initialize values
     packet->stream_id = istream_id;
     packet->tag = itag;
-    packet->fmt_str = strdup(fmt);
+
+    if( fmt != NULL )
+        packet->fmt_str = strdup(fmt);
+    else
+        packet->fmt_str = NULL;
 
     packet->hdr_len = 0;
     packet->hdr = NULL;
@@ -106,8 +124,6 @@ Packet_t* new_Packet_t(Rank isrc, unsigned int istream_id, int itag,
 
     packet->inlet_rank = UnknownRank;
     packet->src_rank = isrc;
-
-    packet->destroy_data = false;
 
     packet->data_elements = new_empty_vector_t();
 
@@ -143,9 +159,9 @@ Packet_t* new_Packet_t_3(unsigned int ihdr_len, char* ihdr,
         return NULL;
 
     // initialize packet
-    packet = (Packet_t*) malloc(sizeof(Packet_t));
+    packet = (Packet_t*) calloc( (size_t)1, sizeof(Packet_t) );
     if( packet == NULL ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() failed\n"));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "calloc() failed\n"));
         return NULL;
     }
   
@@ -156,7 +172,6 @@ Packet_t* new_Packet_t_3(unsigned int ihdr_len, char* ihdr,
     packet->buf = ibuf;
     packet->buf_len = ibuf_len;
     packet->inlet_rank = iinlet_rank;
-    packet->destroy_data = true;
     packet->data_elements = new_empty_vector_t();
     packet->src_rank = UnknownRank;
     
@@ -168,27 +183,35 @@ Packet_t* new_Packet_t_3(unsigned int ihdr_len, char* ihdr,
         error(ERR_PACKING,UnknownRank, "pdr_packet() failed\n");
     }
 
-    if( packet->buf_len == 0 ) 
-        return packet;
-
-    // decode data
-    pdrmem_create(&pdrs, packet->buf, packet->buf_len, PDR_DECODE);
-
-    if( ! Packet_pdr_packet_data(&pdrs, packet) ) {
-        mrn_dbg(1, mrn_printf(FLF,stderr, "pdr_packet() failed\n"));
-        error(ERR_PACKING,UnknownRank, "pdr_packet() failed\n");
-    }
-
     mrn_dbg(3, mrn_printf(FLF, stderr,  
                           "Packet(%p): stream:%d tag:%d fmt:'%s'\n", 
                           packet, packet->stream_id, packet->tag, packet->fmt_str));
 
+    if( packet->buf_len != 0 ) { 
+
+        // decode data
+        pdrmem_create(&pdrs, packet->buf, packet->buf_len, PDR_DECODE);
+
+        if( ! Packet_pdr_packet_data(&pdrs, packet) ) {
+            mrn_dbg(1, mrn_printf(FLF,stderr, "pdr_packet() failed\n"));
+            error(ERR_PACKING,UnknownRank, "pdr_packet() failed\n");
+        }
+    }
+
+    Packet_set_DestroyData( packet, true );
     return packet;
 }
 
 void Packet_set_DestroyData(Packet_t * packet, int dd)
 {
-    packet->destroy_data = dd;
+    unsigned int i;
+    if( packet->data_elements != NULL ) {
+        for( i = 0; i < packet->data_elements->size; i++ ) {
+            DataElement_t* de = packet->data_elements->vec[i];
+            if( de != NULL )
+                de->destroy_data = dd;
+        }
+    }
 }
 
 int Packet_get_Tag(Packet_t* packet)
@@ -218,10 +241,10 @@ char* Packet_get_FormatString(Packet_t* packet)
 
 void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
 {
-    DataElement_t* cur_elem = new_DataElement_t();
+    char* tok;
     char* fmt;
     const char* delim = " \t\n%";
-    char* tok;
+    DataElement_t* cur_elem = NULL;
     
     mrn_dbg_func_begin();
 
@@ -231,6 +254,7 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
     tok = strtok(fmt, delim);
 
     while (tok != NULL) {
+        cur_elem = new_DataElement_t();
         cur_elem->type = DataType_Fmt2Type(tok);
 
         switch (cur_elem->type) {
@@ -294,26 +318,25 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
             break;
         }
 
-	packet = Packet_pushBackElement(packet, cur_elem);
+	Packet_pushBackElement(packet, cur_elem);
+        delete_DataElement_t(cur_elem);
+        cur_elem = NULL;
 
         tok = strtok(NULL, delim);
     }
 
-    free(cur_elem);
     free(fmt);
 
     mrn_dbg_func_end();
 
 }
 
-Packet_t* Packet_pushBackElement(Packet_t* packet, DataElement_t* cur_elem)
+void Packet_pushBackElement(Packet_t* packet, DataElement_t* cur_elem)
 {
-    DataElement_t* new_elem = (DataElement_t*)malloc(sizeof(DataElement_t));
-    assert(new_elem);
+    DataElement_t* new_elem = (DataElement_t*) calloc( (size_t)1, sizeof(DataElement_t) );
+    assert(new_elem != NULL);
     *new_elem = *cur_elem;
     pushBackElement(packet->data_elements, new_elem);
-
-    return packet;
 }
 
 static const char* op2str( PDR* pdrs )
@@ -521,12 +544,15 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
             return retval;
         }
         if( pdrs->p_op == PDR_DECODE ) {
-            Packet_pushBackElement(pkt, cur_elem);
+            Packet_pushBackElement( pkt, cur_elem );
+            delete_DataElement_t( cur_elem );
+            cur_elem = NULL;
         }
 
         tok = strtok(NULL, delim);
         i++;
     }
+    free(fmt);
 
     mrn_dbg_func_end();
     return true;
@@ -805,6 +831,7 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
 
         tok = strtok(NULL, delim);
     }
+    free(fmt);
 
     mrn_dbg_func_end();
     return;

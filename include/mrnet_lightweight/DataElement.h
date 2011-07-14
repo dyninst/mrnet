@@ -11,21 +11,22 @@
 #include "mrnet_lightweight/Types.h"
 
 typedef union {
-  char c;
-  unsigned char uc;
-  int16_t hd;
-  uint16_t uhd;
-  int32_t d;
-  uint32_t ud;
-  int64_t ld;
-  uint64_t uld;
-  float f;
-  double lf;
-  void * p; // may need to be allocated by pdr routine
+    char c;
+    unsigned char uc;
+    int16_t hd;
+    uint16_t uhd;
+    int32_t d;
+    uint32_t ud;
+    int64_t ld;
+    uint64_t uld;
+    float f;
+    double lf;
+    void * p; // may need to be allocated by pdr routine
 } DataValue;
 
 typedef enum {
-    UNKNOWN_T, CHAR_T, UCHAR_T,
+    UNKNOWN_T = 0, 
+    CHAR_T, UCHAR_T,
     CHAR_ARRAY_T, UCHAR_ARRAY_T,
     STRING_T, STRING_ARRAY_T,
     INT16_T, UINT16_T,
@@ -39,13 +40,15 @@ typedef enum {
 } DataType;
 
 typedef struct{
-  DataValue val;
-  DataType type;
-  uint32_t array_len;
-  int destroy_data;
+    DataValue val;
+    DataType type;
+    uint32_t array_len;
+    int destroy_data;
 } DataElement_t;
 
 DataElement_t* new_DataElement_t();
+
+void delete_DataElement_t( DataElement_t* de );
 
 DataType DataType_Fmt2Type(char* cur_fmt);
 

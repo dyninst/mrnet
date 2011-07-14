@@ -21,6 +21,7 @@ extern perfdata_metinfo_t perfdata_metric_info[PERFDATA_MAX_MET];
 extern const char* perfdata_context_names[PERFDATA_MAX_CTX];
 
 PerfDataMgr_t* new_PerfDataMgr_t();
+void delete_PerfDataMgr_t( PerfDataMgr_t* mgr );
 
 void PerfDataMgr_enable(PerfDataMgr_t* perf_data,
                         perfdata_metric_t met,
