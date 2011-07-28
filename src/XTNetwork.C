@@ -914,7 +914,6 @@ XTNetwork::Instantiate( ParsedGraph* topology,
                                    be_path,
                                    be_argc, be_argv );
     if( spawnRet != 0 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "failed to spawn processes\n" ));
         error( ERR_INTERNAL, get_LocalRank(), "failed to spawn processes");
         return false;
     }
@@ -923,7 +922,6 @@ XTNetwork::Instantiate( ParsedGraph* topology,
     // connect the processes we started into a tree
     int connectRet = ConnectProcesses( topology, have_backends );
     if( connectRet != 0 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "failed to connect processes\n" ));
         error( ERR_INTERNAL, get_LocalRank(), "failed to connect processes");
         return false;
     }
@@ -1467,9 +1465,7 @@ XTNetwork::DetermineProcessTypes( ParsedGraph::Node* node,
                                       &alpsPlaces );
         if( aiRet < 0 ) {
             error( ERR_INTERNAL, UnknownRank,
-                "Failed to get ALPS app information");
-            mrn_dbg(1, mrn_printf(FLF, stderr, 
-                                  "Failed to get ALPS app info for apid=%d\n", alps_apid));
+                   "Failed to get ALPS app information for apid=%d", alps_apid);
             return; 
         }
 

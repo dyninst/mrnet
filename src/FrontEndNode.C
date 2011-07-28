@@ -27,10 +27,9 @@ FrontEndNode::FrontEndNode( Network * inetwork, std::string const& ihostname, Ra
     inetwork->set_NetworkTopology( new NetworkTopology( inetwork, _hostname, _port, _rank ));
     inetwork->set_FailureManager( new CommunicationNode( _hostname, _port, _rank ) );
     
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "start_EventDetectionThread() ...\n" ));
-    if( EventDetector::start( inetwork ) == false ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "start_EventDetectionThread() failed\n" ));
-        error( ERR_INTERNAL, _rank, "start_EventDetectionThread failed\n" );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "starting EventDetectionThread\n" ));
+    if( EventDetector::start( inetwork ) == false ) {
+        error( ERR_INTERNAL, _rank, "EventDetector::start() failed" );
         return;
     }
     mrn_dbg_func_end();

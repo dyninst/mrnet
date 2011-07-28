@@ -546,7 +546,7 @@ void Network::init_FrontEnd( const char * itopology,
     assert( fen != NULL );
     if( fen->has_Error() ) {
         error( ERR_INTERNAL, rootRank, 
-               "Failed to create front-end node\n" );
+               "Failed to create front-end node" );
         return;
     }
 
@@ -585,7 +585,7 @@ void Network::init_FrontEnd( const char * itopology,
 
     if( ! success ) {
         error( ERR_NETWORK_FAILURE, rootRank,
-               "Failed to instantiate the network.\n" );
+               "Failed to instantiate the network." );
         // some TBON processes may have been started, so tell them to go away
         shutdown_Network();
         return;
@@ -653,7 +653,7 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
                                          iphostname, ipport, iprank );
     assert( ben != NULL );
     if( ben->has_Error() ) 
-        error( ERR_SYSTEM, imyrank, "Failed to initialize via CreateBackEndNode()\n" );
+        error( ERR_SYSTEM, imyrank, "Failed to initialize via CreateBackEndNode()" );
 
     // create the BE-specific stream
     new_Stream(imyrank, &imyrank, 1, TFILTER_NULL, SFILTER_DONTWAIT, TFILTER_NULL);   
@@ -681,7 +681,7 @@ void Network::init_InternalNode( const char* iphostname,
                                            iphostname, ipport, iprank,
                                            idataSocket, idataPort );
     if( (in == NULL) || in->has_Error() )
-        error( ERR_SYSTEM, imyrank, "Failed to initialize using CreateInternalNode()\n" );
+        error( ERR_SYSTEM, imyrank, "Failed to initialize using CreateInternalNode()" );
 }
 
 int Network::parse_Configuration( const char* itopology, bool iusing_mem_buf )
@@ -698,8 +698,9 @@ int Network::parse_Configuration( const char* itopology, bool iusing_mem_buf )
         // 'filename' member variable
         mrnin = fopen( itopology, "r" );
         if( mrnin == NULL ) {
+            int rc = errno;
             error( ERR_SYSTEM, get_LocalRank(), "fopen(%s): %s", itopology,
-                   strerror( errno ) );
+                   strerror(rc) );
             return -1;
         }
     }
@@ -707,8 +708,6 @@ int Network::parse_Configuration( const char* itopology, bool iusing_mem_buf )
     status = mrnparse( );
 
     if( status != 0 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "Failure: mrnparse(\"%s\"): Parse Error\n",
-                               itopology ));
         error( ERR_TOPOLOGY_FORMAT, get_LocalRank(), "%s", itopology );
         return -1;
     }
@@ -1311,7 +1310,7 @@ int Network::get_EventNotificationFd( EventClass eclass )
                                                PipeNotifyCallbackFn, (void*)ep,
                                                false );
         if( ! rc ) {
-            mrn_printf(FLF, stderr, "failed to register PipeNotifyCallbackFn");
+            mrn_dbg(1, mrn_printf(FLF, stderr, "failed to register PipeNotifyCallbackFn"));
             delete ep;
             return -1;
         }
@@ -1346,7 +1345,7 @@ void Network::close_EventNotificationFd( EventClass eclass )
         bool rc = _evt_mgr->remove_Callback( PipeNotifyCallbackFn, 
                                              eclass, Event::EVENT_TYPE_ALL );
         if( ! rc ) {
-            mrn_printf(FLF, stderr, "failed to remove PipeNotifyCallbackFn");
+            mrn_dbg(1, mrn_printf(FLF, stderr, "failed to remove PipeNotifyCallbackFn"));
         }
         else {
             delete ep;
@@ -1363,7 +1362,7 @@ bool Network::register_EventCallback( EventClass iclass, EventType ityp,
 {
     bool ret = _evt_mgr->register_Callback( iclass, ityp, ifunc, idata, onetime );
     if( ret == false ) {
-        mrn_printf(FLF, stderr, "failed to register callback");
+        mrn_dbg(1, mrn_printf(FLF, stderr, "failed to register callback"));
         return false;
     }
     return true;
@@ -1374,7 +1373,7 @@ bool Network::remove_EventCallback( evt_cb_func ifunc,
 {
     bool ret = _evt_mgr->remove_Callback( ifunc, iclass, ityp );
     if( ret == false ) {
-        mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n");
+        mrn_dbg(1, mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n"));
         return false;
     }
     return true;
@@ -1384,7 +1383,7 @@ bool Network::remove_EventCallbacks( EventClass iclass, EventType ityp )
 {
     bool ret = _evt_mgr->remove_Callbacks( iclass, ityp );
     if( ret == false ) {    
-        mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n");
+        mrn_dbg(1, mrn_printf(FLF, stderr, "failed to remove Callback function for Topology Event\n"));
         return false;
     }
     return true;
@@ -1405,8 +1404,8 @@ bool Network::enable_PerformanceData( perfdata_metric_t metric,
     for( iter = _streams.begin(); iter != _streams.end(); iter++ ) {
         bool rc = (*iter).second->enable_PerformanceData( metric, context );
         if( rc == false ) {
-           mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                    "strm->enable_PerformanceData() failed, cancelling prior enables\n" ));
+           mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                 "strm->enable_PerformanceData() failed, cancelling prior enables\n"));
            while( iter != _streams.begin() ) {
               iter--;
               (*iter).second->disable_PerformanceData( metric, context );

@@ -199,13 +199,9 @@ RSHParentNode::launch_InternalNode( std::string ihostname, Rank irank,
     if( XPlat::Process::Create( ihostname, icommnode_exe, args ) != 0 ){
         int err = XPlat::Process::GetLastError();
         
-        error( ERR_SYSTEM, get_Rank(), "XPlat::Process::Create(%s %s): %s\n",
+        error( ERR_SYSTEM, get_Rank(), "XPlat::Process::Create(%s %s): %s",
                ihostname.c_str(), icommnode_exe.c_str(),
                XPlat::Error::GetErrorString( err ).c_str() );
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "XPlat::Process::Create(%s %s): %s\n",
-                               ihostname.c_str(), icommnode_exe.c_str(),
-                               XPlat::Error::GetErrorString( err ).c_str()) );
         return -1;
     }
 

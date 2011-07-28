@@ -61,24 +61,25 @@ class Error {
 
     // BEGIN MRNET API
 
-    inline bool has_Error() const {
+    inline bool has_Error() const 
+    {
         return (MRN_errno != ERR_NONE);
     }
 
-    inline ErrorCode get_Error() const {
+    inline ErrorCode get_Error() const
+    {
         return MRN_errno;
     }
 
-    inline const char* get_ErrorStr( ErrorCode err ) const {
+    inline const char* get_ErrorStr( ErrorCode err ) const
+    {
         if( err < ERR_CODE_LAST )
             return errors[err].msg;
         else
             return errors[ERR_CODE_LAST].msg;
     }
 
-    inline void perror(const char *str) const {
-        fprintf(stderr, "%s: %s\n", errors[MRN_errno].msg, str );
-    }
+    void perror(const char *str) const;
 
     // END MRNET API
 

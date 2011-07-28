@@ -35,8 +35,7 @@ void Packet::encode_pdr_header(void)
     pdrmem_create( &pdrs, hdr, hdr_len, PDR_ENCODE );
 
     if( ! Packet::pdr_packet_header(&pdrs, this) ) {
-        error( ERR_PACKING, UnknownRank, "pdr_packet_header() failed\n" );
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet_header() failed\n") );
+        error( ERR_PACKING, UnknownRank, "pdr_packet_header() failed" );
         return;
     }
 
@@ -63,8 +62,7 @@ void Packet::encode_pdr_data(void)
     pdrmem_create( &pdrs, buf, buf_len, PDR_ENCODE );
 
     if( ! Packet::pdr_packet_data(&pdrs, this) ) {
-        error( ERR_PACKING, UnknownRank, "pdr_packet_data() failed\n" );
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet_data() failed\n") );
+        error( ERR_PACKING, UnknownRank, "pdr_packet_data() failed" );
         return;
     }
 
@@ -86,8 +84,7 @@ void Packet::decode_pdr_header(void) const
     pdrmem_create( &pdrs, hdr, hdr_len, PDR_DECODE );
 
     if( ! Packet::pdr_packet_header(&pdrs, me) ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet_header() failed\n") );
-        error( ERR_PACKING, UnknownRank, "pdr_packet_header() failed\n" );
+        error( ERR_PACKING, UnknownRank, "pdr_packet_header() failed" );
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
@@ -108,8 +105,7 @@ void Packet::decode_pdr_data(void) const
     pdrmem_create( &pdrs, buf, buf_len, PDR_DECODE );
 
     if( ! Packet::pdr_packet_data(&pdrs, me) ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_packet_data() failed\n") );
-        error( ERR_PACKING, UnknownRank, "pdr_packet_data() failed\n" );
+        error( ERR_PACKING, UnknownRank, "pdr_packet_data() failed" );
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",

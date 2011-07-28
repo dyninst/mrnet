@@ -213,7 +213,7 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
         }
         else {
             fret = fcntl( sock, F_SETFL, fdflag | O_NONBLOCK );
-            if(fret == -1 ) {
+            if( fret == -1 ) {
                 // failed to set the socket status flags
                 mrn_dbg( 1, mrn_printf(FLF, stderr, 
                         "failed to set listening socket to non blocking\n") );
@@ -221,7 +221,7 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
         }
 #else
         unsigned long mode = 1; // 0 is blocking, !0 is non-blocking
-        if (ioctlsocket(sock, FIONBIO, &mode) != 0) {
+        if( ioctlsocket(sock, FIONBIO, &mode) != 0 ) {
             // failed to set the socket flags
             mrn_dbg( 1, mrn_printf(FLF, stderr, 
                                    "failed to set listening socket to non blocking\n") );

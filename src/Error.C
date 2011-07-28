@@ -10,16 +10,16 @@ namespace MRN
 {
 
 ErrorDef errors[] = {
-    { ERR_NONE, ERR_INFO, ERR_IGNORE, "No Error"},
-    { ERR_TOPOLOGY_FORMAT, ERR_CRIT, ERR_ABORT, "Topology error: file format"},
-    { ERR_TOPOLOGY_CYCLE, ERR_CRIT, ERR_ABORT, "Topology error: cycle exists"},
-    { ERR_TOPOLOGY_NOTCONNECTED, ERR_CRIT, ERR_ABORT, "Topology error: not fully connected"},
-    { ERR_NETWORK_FAILURE, ERR_CRIT, ERR_ABORT, "Network failure"},
-    { ERR_FORMATSTR, ERR_ERR, ERR_ALERT, "Format string mismatch"},
-    { ERR_PACKING, ERR_CRIT, ERR_ABORT, "Packet encoding/decoding failure"},
-    { ERR_INTERNAL, ERR_CRIT, ERR_ABORT, "Internal failure"},
-    { ERR_SYSTEM, ERR_ERR, ERR_ABORT, "System/library call failure"},
-    { ERR_CODE_LAST, ERR_LEVEL_LAST, ERR_RESPONSE_LAST, "Bad error code"}
+    { ERR_NONE, ERR_INFO, ERR_IGNORE, "MRNet: No Error"},
+    { ERR_TOPOLOGY_FORMAT, ERR_CRIT, ERR_ABORT, "MRNet: Topology error: file has incorrect format"},
+    { ERR_TOPOLOGY_CYCLE, ERR_CRIT, ERR_ABORT, "MRNet: Topology error: cycle exists"},
+    { ERR_TOPOLOGY_NOTCONNECTED, ERR_CRIT, ERR_ABORT, "MRNet: Topology error: not fully connected"},
+    { ERR_NETWORK_FAILURE, ERR_CRIT, ERR_ABORT, "MRNet: Network failure"},
+    { ERR_FORMATSTR, ERR_ERR, ERR_ALERT, "MRNet: Format string mismatch"},
+    { ERR_PACKING, ERR_CRIT, ERR_ABORT, "MRNet: Packet encoding/decoding failure"},
+    { ERR_INTERNAL, ERR_CRIT, ERR_ABORT, "MRNet: Internal failure"},
+    { ERR_SYSTEM, ERR_ERR, ERR_ABORT, "MRNet: System/library call failure"},
+    { ERR_CODE_LAST, ERR_LEVEL_LAST, ERR_RESPONSE_LAST, "MRNet: Bad error code"}
 };
 
 
@@ -47,6 +47,11 @@ void Error::error( ErrorCode e, Rank, const char * fmt, ... ) const
     default:
         break;
     }
+}
+
+inline void Error::perror(const char *str) const
+{
+    mrn_dbg(1, mrn_printf(FLF, stderr, "%s: %s\n", errors[MRN_errno].msg, str) );
 }
 
 } // namespace MRN

@@ -151,9 +151,9 @@ void tfilter_Sum( const vector< PacketPtr >& ipackets,
             case STRING_T:
             case UNKNOWN_T:
             default:
-                mrn_printf(FLF, stderr, 
-                           "ERROR: tfilter_Sum() - invalid packet type: %d (%s)\n", type,
-                           cur_packet->get_FormatString() );
+                mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                      "ERROR: tfilter_Sum() - invalid packet type: %d (%s)\n", 
+                                      type, cur_packet->get_FormatString()));
                 return;
             }
         }
@@ -296,9 +296,9 @@ void tfilter_Max( const vector< PacketPtr >& ipackets,
             case STRING_T:
             case UNKNOWN_T:
             default:
-                mrn_printf(FLF, stderr, 
-                           "ERROR: tfilter_Max() - invalid packet type: %d (%s)\n", type,
-                           cur_packet->get_FormatString() );
+                mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                      "ERROR: tfilter_Max() - invalid packet type: %d (%s)\n",
+                                      type, cur_packet->get_FormatString()));
                 return;
             }
             mrn_max( &((*cur_packet)[0]->val.p), &((*cur_packet)[0]->val.p), result, type );
@@ -445,9 +445,9 @@ void tfilter_Min( const vector< PacketPtr >& ipackets,
             case STRING_T:
             case UNKNOWN_T:
             default:
-                mrn_printf(FLF, stderr, 
-                           "ERROR: tfilter_Min() - invalid packet type: %d (%s)\n", type,
-                           cur_packet->get_FormatString() );
+                mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                      "ERROR: tfilter_Min() - invalid packet type: %d (%s)\n",
+                                      type, cur_packet->get_FormatString()));
                 return;
             }
             mrn_min( &((*cur_packet)[0]->val.p), &((*cur_packet)[0]->val.p), result, type );
@@ -577,9 +577,9 @@ void tfilter_Avg( const vector < PacketPtr >& ipackets,
             else if( format_string == "%lf %d" )
                 type = DOUBLE_T;
             else {
-                mrn_printf(FLF, stderr, 
-                           "ERROR: tfilter_Avg() - invalid packet type: %d (%s)\n", 
-                           type, cur_packet->get_FormatString() );
+                mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                      "ERROR: tfilter_Avg() - invalid packet type: %d (%s)\n", 
+                                      type, cur_packet->get_FormatString()));
                 return;
             }
         }
@@ -756,17 +756,17 @@ void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
             case STRING_T:
             case UNKNOWN_T:
             default:
-                mrn_printf(FLF, stderr, 
-                           "ERROR: tfilter_ArrayConcat() - invalid packet type: %d (%s)\n", 
-                           type, cur_packet->get_FormatString() );
+                mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                      "ERROR: tfilter_ArrayConcat() - invalid packet type: %d (%s)\n", 
+                                      type, cur_packet->get_FormatString()));
                 return;
             }
         }
         if( cur_packet->unpack( format_string.c_str(), 
                                 &tmp_arr, &tmp_arr_len ) == -1 ) {
-            mrn_printf(FLF, stderr, 
-                       "ERROR: tfilter_ArrayConcat() - unpack(%s) failure\n", 
-                       cur_packet->get_FormatString() );
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                  "ERROR: tfilter_ArrayConcat() - unpack(%s) failure\n", 
+                                  cur_packet->get_FormatString()));
         }
         else {
            iarrays.push_back( tmp_arr );
@@ -828,13 +828,13 @@ void tfilter_IntEqClass( const vector< PacketPtr >& ipackets,
 	unsigned int curClassMemIdx = 0;
 	for( unsigned int j = 0; j < array_len0; j++ ) {
 	    mrn_dbg( 3, mrn_printf(FLF, stderr,
-			"\tclass %d: val = %u, nMems = %u, mems = ", j,
-			vals[j], memcnts[j] ));
+                                   "\tclass %d: val = %u, nMems = %u, mems = ", j,
+                                   vals[j], memcnts[j] ));
 
 	    // update the members for the current class
 	    for( unsigned int k = 0; k < memcnts[j]; k++ ) {
 	        mrn_dbg( 3, mrn_printf(FLF, stderr, "%d ",
-			    mems[curClassMemIdx + k] ));
+                                       mems[curClassMemIdx + k] ));
 		classes[vals[j]].push_back( mems[curClassMemIdx + k] );
 	    }
 	    mrn_dbg( 3, mrn_printf(FLF, stderr, "\n" ));
@@ -913,7 +913,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     int metric, context;
     uint32_t aggr_id, strm_id;
     if( params == Packet::NullPacket ) {
-        mrn_printf(FLF, stderr, "ERROR: configuration params not set\n" );
+        mrn_dbg(1, mrn_printf(FLF, stderr, "ERROR: configuration params not set\n"));
         return;
     }
     params->unpack( "%d %d %ud %ud", &metric, &context, &aggr_id, &strm_id );
@@ -939,7 +939,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
          typ = DOUBLE_T;
          break;
      default:
-         mrn_printf(FLF, stderr, "ERROR: bad metric type\n" );
+         mrn_dbg(1, mrn_printf(FLF, stderr, "ERROR: bad metric type\n"));
          return;
     }
 
@@ -1139,21 +1139,21 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     if( orank_len ) {
         orank_arr = (int*) malloc( orank_len * sizeof(int) );
         if( orank_arr == NULL ) {
-            mrn_printf(FLF, stderr, "ERROR: malloc output rank array failed\n" );
+            mrn_dbg(1, mrn_printf(FLF, stderr, "ERROR: malloc output rank array failed\n"));
             return;
         }
     }
     if( onelems_len ) {
         onelems_arr = (int*) malloc( onelems_len * sizeof(int) );
         if( onelems_arr == NULL ) {
-            mrn_printf(FLF, stderr, "ERROR: malloc output nelems array failed\n" );
+            mrn_dbg(1, mrn_printf(FLF, stderr, "ERROR: malloc output nelems array failed\n"));
             return;
         }
     }
     if( odata_len ) {
         odata_arr = malloc( odata_len * data_size );
         if( odata_arr == NULL ) {
-            mrn_printf(FLF, stderr, "ERROR: malloc output data array failed\n" );
+            mrn_dbg(1, mrn_printf(FLF, stderr, "ERROR: malloc output data array failed\n"));
             return;
         }
     }
@@ -1279,8 +1279,8 @@ void tfilter_TopoUpdate_common( bool upstream,
 				&type_arr, &arr_len, &prank_arr, &arr_len,
                                 &crank_arr, &arr_len, &chost_arr, &arr_len, 
                                 &cport_arr, &arr_len ) == -1 ) {
-	     mrn_dbg( 1, mrn_printf(FLF, stderr, "ERROR: unpack(%s) failure\n",
-                                    format_string.c_str()) );
+	     mrn_dbg(1, mrn_printf(FLF, stderr, "ERROR: unpack(%s) failure\n",
+                                   format_string.c_str()));
 	}
 	else {
             //Putting the array pointers and its length in a vector

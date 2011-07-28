@@ -33,7 +33,7 @@ EventPipe::EventPipe()
         _sync.Unlock();
     }
     else
-        mrn_printf(FLF, stderr, "pipe() failed - %s", strerror(errno));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "pipe() failed - %s", strerror(errno)));
 #endif
 }
 
@@ -67,7 +67,7 @@ void EventPipe::signal(void)
     char c = '!';
     int ret = write( get_WriteFd(), &c, sizeof(char) );
     if( ret == -1 )
-        mrn_printf(FLF, stderr, "write() failed - %s", strerror(errno));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "write() failed - %s", strerror(errno)));
     else {
         _sync.Lock();
         _has_data = true;;
@@ -90,7 +90,7 @@ void EventPipe::clear(void)
     char c;
     int ret = read( get_ReadFd(), &c, sizeof(char) );
     if( ret == -1 )
-        mrn_printf(FLF, stderr, "read() failed - %s", strerror(errno));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "read() failed - %s", strerror(errno)));
     else {
         _sync.Lock();
         _has_data = false;

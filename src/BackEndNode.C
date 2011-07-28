@@ -42,8 +42,7 @@ BackEndNode::BackEndNode( Network * inetwork,
 
     //start event detection thread
     if( ! EventDetector::start( _network ) ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "start_EventDetector() failed\n" ));
-        error( ERR_INTERNAL, _rank, "start_EventDetector failed\n" );
+        error( ERR_INTERNAL, _rank, "start_EventDetector() failed" );
         return;
     }
     

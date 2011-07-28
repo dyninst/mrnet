@@ -51,7 +51,6 @@ int PeerNode::connect_DataSocket(void)
 
     if( connectHost(&_data_sock_fd, _hostname.c_str(), _port) == -1) {
         error( ERR_SYSTEM, _rank, "connectHost() failed" );
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "connectHost() failed\n") );
         return -1;
     }
     
@@ -67,7 +66,6 @@ int PeerNode::connect_EventSocket(void)
 
     if( connectHost(&_event_sock_fd, _hostname.c_str(), _port) == -1 ) {
         error( ERR_SYSTEM, _rank, "connectHost() failed" );
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "connectHost() failed\n") );
         return -1;
     }
     
@@ -93,9 +91,9 @@ int PeerNode::start_CommunicationThreads(void)
     retval = XPlat::Thread::Create( send_thread_main, (void*)args, &send_id );
     mrn_dbg( 3, mrn_printf(FLF, stderr, "id: 0x%x\n", send_id) );
     if( retval != 0 ) {
-        error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s\n",
-               strerror(errno) );
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "send_thread creation failed...\n") );
+        string err = XPlat::Error::GetErrorString( retval );
+        error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s",
+               err.c_str() );
         return retval;
     }
 
@@ -103,9 +101,9 @@ int PeerNode::start_CommunicationThreads(void)
     retval = XPlat::Thread::Create( recv_thread_main, (void*)args, &recv_id  );
     mrn_dbg( 3, mrn_printf(FLF, stderr, "id: 0x%x\n", recv_id) );
     if( retval != 0 ) {
-        error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s\n",
-               strerror(errno) );
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "recv_thread creation failed...\n") );
+        string err = XPlat::Error::GetErrorString( retval );
+        error( ERR_SYSTEM, _rank, "XPlat::Thread::Create() failed: %s",
+               err.c_str() );
         return retval;
     }
     

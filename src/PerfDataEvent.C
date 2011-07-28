@@ -136,16 +136,16 @@ void PerfDataMgr::print( perfdata_metric_t met, perfdata_context_t ctx )
 
     for( iter = data.begin() ; iter != data.end(); iter++ ) {
         if( mi->type == PERFDATA_TYPE_UINT ) {
-            mrn_printf(FLF, stderr, "%s %" PRIu64 " %s\n", 
-                       report, (*iter).u, mi->units );
+            mrn_dbg(1, mrn_printf(FLF, stderr, "%s %" PRIu64 " %s\n", 
+                                  report, (*iter).u, mi->units));
         }
         else if( mi->type == PERFDATA_TYPE_INT ) {
-            mrn_printf(FLF, stderr, "%s %" PRIi64 " %s\n", 
-                       report, (*iter).i, mi->units );
+            mrn_dbg(1, mrn_printf(FLF, stderr, "%s %" PRIi64 " %s\n", 
+                                  report, (*iter).i, mi->units));
         }
         else if( mi->type == PERFDATA_TYPE_FLOAT ) {
-            mrn_printf(FLF, stderr, "%s %lf %s\n", 
-                       report, (*iter).d, mi->units );
+            mrn_dbg(1, mrn_printf(FLF, stderr, "%s %lf %s\n", 
+                                  report, (*iter).d, mi->units));
         }
     }
     if( report != NULL )
