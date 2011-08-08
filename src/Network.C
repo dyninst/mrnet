@@ -415,6 +415,12 @@ void Network::init_NetSettings(void)
     if( eit != _network_settings.end() ) {
         MRN_DEBUG_LOG_DIRECTORY = strdup( eit->second.c_str() );
     }
+
+    eit = _network_settings.find( MRNET_FAILURE_RECOVERY );
+    if( eit != _network_settings.end() ) {
+        if( ! strcmp( eit->second.c_str(), "0") )
+            disable_FailureRecovery();
+    }
 }
 
 void Network::update_BcastCommunicator(void)
