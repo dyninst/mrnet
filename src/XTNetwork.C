@@ -131,6 +131,7 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
 {
     int nid = GetLocalNid();
     set_LocalHostName( GetNodename(nid) );
+    disable_FailureRecovery();
 
 #ifdef HAVE_LIBALPS
     char* stage_files = getenv("CRAY_ALPS_STAGE_FILES");
@@ -191,6 +192,7 @@ XTNetwork::XTNetwork(void)
     : alps_apid((uint64_t)-1)
 {
     set_LocalHostName( GetNodename(GetLocalNid()) );
+    disable_FailureRecovery();
 }
 
 void XTNetwork::init_NetSettings(void)
@@ -374,6 +376,8 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
     // ensure we know our node's hostname
     set_LocalHostName( GetNodename(GetLocalNid()) );
     std::string myHost = get_LocalHostName();
+
+    disable_FailureRecovery();
 
     int topoFd = -1;
     int listeningDataSocket = -1;    
