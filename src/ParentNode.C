@@ -711,16 +711,18 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
         // generate topology update for child reparenting
         if( _network->is_LocalNodeInternal() ) {
             Stream *s = _network->get_Stream( TOPOL_STRM_ID );
-            int type = NetworkTopology::TOPO_CHANGE_PARENT; 
-            Port dummy_port = UnknownPort;
-            char* dummy_host = strdup("NULL"); // ugh, this needs to be fixed
-            s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                              &type, 1, 
-                              &my_rank, 1, 
-                              &child_rank, 1, 
-                              &dummy_host, 1, 
-                              &dummy_port, 1 );
-            free( dummy_host );
+            if( s != NULL ) {
+                int type = NetworkTopology::TOPO_CHANGE_PARENT; 
+                Port dummy_port = UnknownPort;
+                char* dummy_host = strdup("NULL"); // ugh, this needs to be fixed
+                s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
+                                  &type, 1, 
+                                  &my_rank, 1, 
+                                  &child_rank, 1, 
+                                  &dummy_host, 1, 
+                                  &dummy_port, 1 );
+                free( dummy_host );
+            }
         }
         else { // FE
             nt->update_changeParent( my_rank, child_rank, true );

@@ -107,8 +107,7 @@ int InternalNode::proc_DataFromParent( PacketPtr ipacket ) const
 
         Stream *stream = ParentNode::_network->get_Stream( strm_id );
         if( stream == NULL ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                                   ipacket->get_StreamId( ) ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", strm_id));
             return -1;
         }
 
@@ -151,8 +150,7 @@ int InternalNode::proc_DataFromChildren( PacketPtr ipacket ) const
 
         Stream *stream = ParentNode::_network->get_Stream( strm_id );
         if( stream == NULL ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                                   ipacket->get_StreamId( ) ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", strm_id));
             return -1;
         }
 

@@ -918,7 +918,10 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     }
     params->unpack( "%d %d %ud %ud", &metric, &context, &aggr_id, &strm_id );
     Stream* strm = net->get_Stream( strm_id );
-    assert(strm);
+    if( strm == NULL ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "ERROR: stream lookup %d failed\n", strm_id));
+        return;
+    }
 
     // determine type of data
     int data_size=0;
@@ -1547,7 +1550,10 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
 
     int stream_id = ipackets[0]->get_StreamId();
     Stream* stream = net->get_Stream( stream_id );
-    assert(stream);
+    if( stream == NULL ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "ERROR: stream lookup %d failed\n", stream_id));
+        return;
+    }
 
     //1. Setup/Recover Filter State
     if( *local_storage == NULL ) {
@@ -1753,7 +1759,10 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
     if( ipackets.size() > 0 ) {
         stream_id = ipackets[0]->get_StreamId();
         stream = net->get_Stream( stream_id );
-        assert(stream);
+        if( stream == NULL ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "ERROR: stream lookup %d failed\n", stream_id));
+            return;
+        }
         stream->get_ChildRanks( peers );
     }	
 

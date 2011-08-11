@@ -700,29 +700,34 @@ int ChildNode::proc_PortUpdate( PacketPtr ipacket ) const
     // else, i'm a back-end or a leaf commnode, so send a port update packet
 
     Stream *s = _network->get_Stream(PORT_STRM_ID);
-
-    int type = NetworkTopology::TOPO_CHANGE_PORT ;
-    char *host_arr = strdup("NULL"); // ugh, this needs to be fixed
-    Rank send_iprank = UnknownRank;
-    Rank send_myrank = _network->get_LocalRank();
-    Port send_port = _network->get_LocalPort();
-
-    if( _network->is_LocalNodeBackEnd() )
-        s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                 &type, 1,
-                 &send_iprank, 1,
-                 &send_myrank, 1,
-                 &host_arr, 1,
-                 &send_port, 1 );
-    else
-        s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                          &type, 1,
-                          &send_iprank, 1,
-                          &send_myrank, 1,
-                          &host_arr, 1,
-                          &send_port, 1 );
-    s->flush();
-    free(host_arr);
+    if( s != NULL ) {
+        int type = NetworkTopology::TOPO_CHANGE_PORT ;
+        char *host_arr = strdup("NULL"); // ugh, this needs to be fixed
+        Rank send_iprank = UnknownRank;
+        Rank send_myrank = _network->get_LocalRank();
+        Port send_port = _network->get_LocalPort();
+        
+        if( _network->is_LocalNodeBackEnd() )
+            s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
+                     &type, 1,
+                     &send_iprank, 1,
+                     &send_myrank, 1,
+                     &host_arr, 1,
+                     &send_port, 1 );
+        else
+            s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
+                              &type, 1,
+                              &send_iprank, 1,
+                              &send_myrank, 1,
+                              &host_arr, 1,
+                              &send_port, 1 );
+        s->flush();
+        free(host_arr);
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n",
+                               PORT_STRM_ID) );
+    }
 
     mrn_dbg_func_end();
     return 0;

@@ -826,8 +826,7 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
             // all peers in stream
             Stream* stream = get_Stream( strm_id );   
             if( stream == NULL ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n",
-                                       ipacket->get_StreamId( ) ));
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", strm_id));
                 return -1;
             }
             stream->send_to_children( ipacket );
@@ -1196,11 +1195,11 @@ Stream* Network::new_Stream( Communicator* icomm,
                              std::string ds_filters )
 {
     if( NULL == icomm ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "NULL communicator\n") );
+        mrn_dbg(1, mrn_printf(FLF, stderr, "NULL communicator\n"));
         return NULL;
     }
     if( is_LocalNodeBackEnd() ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "new_Stream() called from back-end\n") );
+        mrn_dbg(1, mrn_printf(FLF, stderr, "new_Stream() called from back-end\n"));
         return NULL;
     }
 
@@ -1209,8 +1208,8 @@ Stream* Network::new_Stream( Communicator* icomm,
     unsigned num_pts = icomm->size();
     if( num_pts == 0 ) {
         if( icomm != _bcast_communicator ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                                   "communicator contains zero end-points\n") );
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                  "communicator contains zero end-points\n"));
             return NULL;
         }
     }
@@ -1222,8 +1221,8 @@ Stream* Network::new_Stream( Communicator* icomm,
     _next_user_stream_id++;
 
     Stream* stream = get_LocalFrontEndNode()->proc_newStream(packet);
-    if( stream == NULL ){
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
+    if( stream == NULL ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "proc_newStream() failed\n"));
     }
 
     delete [] backends;
@@ -1254,7 +1253,7 @@ Stream* Network::get_Stream( unsigned int iid ) const
         }
     }
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "network(%p): stream[%d] = %p\n", this, iid, ret ));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "network(%p): stream[%d] = %p\n", this, iid, ret));
     return ret;
 }
 

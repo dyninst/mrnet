@@ -1284,44 +1284,45 @@ bool NetworkTopology::send_updates_buffer()
   
     if( vuc_size ) {
          
-        int* type_arr = (int*) malloc( sizeof(int) * vuc_size );
-        char** host_arr = (char**) malloc( sizeof(char*) * vuc_size );
-        Rank* prank_arr = (Rank*) malloc( sizeof(Rank) * vuc_size );
-        Rank* crank_arr = (Rank*) malloc( sizeof(Rank) * vuc_size );
-        Port* cport_arr = (Port*) malloc( sizeof(Port) * vuc_size );
-
-        int i = 0;
-        std::vector< NetworkTopology::update_contents* >::iterator it;
-        for( it = _updates_buffer.begin(); it != _updates_buffer.end() ; it++, i++ ) {
-            type_arr[i] = (*it)->type;
-            prank_arr[i] = (*it)->par_rank;
-            host_arr[i] = (*it)->chld_host;
-            crank_arr[i] = (*it)->chld_rank;
-            cport_arr[i] = (*it)->chld_port;
-        } 
-    
         Stream *s = _network->get_Stream( TOPOL_STRM_ID ); // topol prop stream
+        if( s != NULL ) {
 
-        //broadcast all topology updates
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "sending %d updates\n", vuc_size) );
+            int* type_arr = (int*) malloc( sizeof(int) * vuc_size );
+            char** host_arr = (char**) malloc( sizeof(char*) * vuc_size );
+            Rank* prank_arr = (Rank*) malloc( sizeof(Rank) * vuc_size );
+            Rank* crank_arr = (Rank*) malloc( sizeof(Rank) * vuc_size );
+            Port* cport_arr = (Port*) malloc( sizeof(Port) * vuc_size );
+            
+            int i = 0;
+            std::vector< NetworkTopology::update_contents* >::iterator it;
+            for( it = _updates_buffer.begin(); it != _updates_buffer.end() ; it++, i++ ) {
+                type_arr[i] = (*it)->type;
+                prank_arr[i] = (*it)->par_rank;
+                host_arr[i] = (*it)->chld_host;
+                crank_arr[i] = (*it)->chld_rank;
+                cport_arr[i] = (*it)->chld_port;
+            } 
+    
+            //broadcast all topology updates
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "sending %d updates\n", vuc_size) );
+            s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
+                     type_arr, vuc_size, 
+                     prank_arr, vuc_size, 
+                     crank_arr, vuc_size, 
+                     host_arr, vuc_size, 
+                     cport_arr, vuc_size );
+            s->flush();
 
-        s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                 type_arr, vuc_size, 
-                 prank_arr, vuc_size, 
-                 crank_arr, vuc_size, 
-                 host_arr, vuc_size, 
-                 cport_arr, vuc_size );
-        s->flush();
+            _updates_buffer.clear();
+            free( type_arr );
+            free( prank_arr );
+            free( host_arr );
+            free( crank_arr );
+            free( cport_arr );
 
-        _updates_buffer.clear();
-	free( type_arr );
-	free( prank_arr );
-	free( host_arr );
-	free( crank_arr );
-	free( cport_arr );
-
-        mrn_dbg_func_end();
-        return true;
+            mrn_dbg_func_end();
+            return true;
+        }
     }
     
     mrn_dbg_func_end();
@@ -1348,22 +1349,25 @@ void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank,
 
         // set its parent
         if( ! set_Parent(chld_rank, par_rank, false) ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
+            mrn_dbg(1, mrn_printf(FLF, stderr,
                                    "set parent for %s:%d failed\n",
-                                   chld_host, chld_rank) );
+                                   chld_host, chld_rank));
         }
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "topology after add %s\n", 
-                               get_TopologyString().c_str()) );
+        mrn_dbg(5, mrn_printf(FLF, stderr, "topology after add %s\n", 
+                              get_TopologyString().c_str()));
     }
     else
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "node already present\n") );
+        mrn_dbg(5, mrn_printf(FLF, stderr, "node already present\n"));
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as child of node[%d]\n",
+                          chld_rank, par_rank));
 
     // add it as endpoint for topology update strm
     Stream* topol_strm = _network->get_Stream( TOPOL_STRM_ID );
-    topol_strm->add_Stream_EndPoint( chld_rank );
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "Adding node[%d] as child of node[%d]\n",
-                           chld_rank, par_rank) );
-         
+    if( topol_strm != NULL ) {
+        topol_strm->add_Stream_EndPoint( chld_rank );
+    }
+
     // FE: do callback only after state has been updated
     if( upstream && _network->is_LocalNodeFrontEnd() ) {
             
@@ -1517,14 +1521,16 @@ void NetworkTopology::update_addInternalNode( Rank par_rank, Rank chld_rank,
 void NetworkTopology::update_TopoStreamPeers( vector< Rank >& new_nodes )
 {
     Stream* topol_strm = _network->get_Stream( TOPOL_STRM_ID );
-    for( unsigned int i=0; i < new_nodes.size(); i++ ) {
-        PeerNodePtr outlet = _network->get_OutletNode( new_nodes[i] );
-        if( outlet != NULL )
-            topol_strm->add_Stream_Peer( outlet->get_Rank() );
-        else
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "No outlet for recently added backend %d\n", 
-                                   new_nodes[i]) );
+    if( topol_strm != NULL ) {
+        for( unsigned int i=0; i < new_nodes.size(); i++ ) {
+            PeerNodePtr outlet = _network->get_OutletNode( new_nodes[i] );
+            if( outlet != NULL )
+                topol_strm->add_Stream_Peer( outlet->get_Rank() );
+            else
+                mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                       "No outlet for recently added backend %d\n", 
+                                       new_nodes[i]) );
+        }
     }
 }
 
