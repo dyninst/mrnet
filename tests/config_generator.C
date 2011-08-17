@@ -152,12 +152,17 @@ int main(int argc, char **argv)
             usage_exit(argv[0]);
         }
     }
+    if( have_max && (have_be_hosts || have_cp_hosts) ) {
+        fprintf(stderr, "Error: cannot specify --maxprocs and --behosts,--cphosts\n");
+        usage_exit(argv[0]);
+    }
+
     if( ! have_topology ) {
         fprintf(stderr, "Error: --topology option must be provided\n");
         usage_exit(argv[0]);
     }
    
-	init_local();
+    init_local();
 
     // read input hosts file(s)
     std::list< std::pair<std::string, unsigned> > hosts, cp_hosts, be_hosts;
@@ -307,9 +312,10 @@ void usage_exit(char* program)
              "\t\t standard output.\n\n"
 
              "\t -p max-host-procs, --maxprocs=max-host-procs\n"
-             "\t\t Specify the maximum number of processes to place on any machine,\n"
-             "\t\t in which case the number of processes allocated to a machine will be\n"
-             "\t\t the minimum of its processor count and \"max-host-procs\".\n\n"
+             "\t\t This option is only valid in combination with --hosts. Specify the \n"
+             "\t\t maximum number of processes to place on any machine, in which case \n"
+             "\t\t the number of processes allocated to a machine will be the \n"
+             "\t\t minimum of its processor count and \"max-host-procs\".\n\n"
 
              "\t -q max-be-procs, --beprocs=max-be-procs\n"
              "\t\t This option is only valid in combination with --behosts. Specify the\n"

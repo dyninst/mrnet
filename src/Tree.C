@@ -331,8 +331,6 @@ bool BalancedTree::initialize_Tree( list< pair<string,unsigned> > & backend_host
         }
     }
 
-
-    
     //Process last level (leaves)
     list_iter = backend_hosts.begin();
     nodes_at_cur_level *= _fanouts[ _fanouts.size()-1 ];
@@ -546,7 +544,7 @@ bool KnomialTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
             host_proc_counts[ liter->first ] = 0;
 
         unsigned& cnt = host_proc_counts[ liter->first ];
-        for( ; cnt < liter->second && cnt < _int_procs_per_host; cnt++ ) {
+        for( unsigned u=0; u < liter->second && u < _int_procs_per_host; u++, cnt++ ) {
             snprintf( cur_host, sizeof(cur_host), "%s:%u",
                       liter->first.c_str(), cnt );
             int_hostids.push_back( cur_host );
@@ -561,7 +559,7 @@ bool KnomialTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
             host_proc_counts[ liter->first ] = 0;
 
         unsigned& cnt = host_proc_counts[ liter->first ];
-        for( ; cnt < liter->second && cnt < _be_procs_per_host; cnt++ ) {
+        for( unsigned u=0; u < liter->second && u < _be_procs_per_host; u++, cnt++ ) {
             snprintf( cur_host, sizeof(cur_host), "%s:%u",
                       liter->first.c_str(), cnt );
             be_hostids.push_back( cur_host );
@@ -665,7 +663,7 @@ bool KnomialTree::initialize_Tree( list< pair<string,unsigned> > & hosts )
     // get locations
     list< pair<string,unsigned> >::iterator liter = hosts.begin();
     for( ; liter != hosts.end() ; liter++ ) {
-        unsigned u = 0;
+	unsigned u = 0;
         if( liter->first == _fe_host ) u++;
         for( ; u < liter->second && u < _int_procs_per_host; u++ ) {
             snprintf( cur_host, sizeof(cur_host), "%s:%u",
@@ -846,7 +844,6 @@ bool GenericTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
     list< string > int_hostids;
     list< string > be_hostids;
 
-
     if( internal_hosts.empty() && (_children_by_level.size() > 1) ) {
         fprintf( stderr, "Input internal host list is empty. Not enough hosts for topology %s\n",
                  _topology_spec.c_str() );
@@ -864,7 +861,7 @@ bool GenericTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
             host_proc_counts[ liter->first ] = 0;
 
         unsigned& cnt = host_proc_counts[ liter->first ];
-        for( ; cnt < liter->second && cnt < _int_procs_per_host; cnt++ ) {
+        for( unsigned u=0; u < liter->second && u < _int_procs_per_host; u++, cnt++ ) {
             snprintf( cur_host, sizeof(cur_host), "%s:%u",
                       liter->first.c_str(), cnt );
             int_hostids.push_back( cur_host );
@@ -877,7 +874,7 @@ bool GenericTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
             host_proc_counts[ liter->first ] = 0;
 
         unsigned& cnt = host_proc_counts[ liter->first ];
-        for( ; cnt < liter->second && cnt < _be_procs_per_host; cnt++ ) {
+        for( unsigned u=0; u < liter->second && u < _be_procs_per_host; u++, cnt++ ) {
             snprintf( cur_host, sizeof(cur_host), "%s:%u",
                       liter->first.c_str(), cnt );
             be_hostids.push_back( cur_host );
@@ -932,7 +929,7 @@ bool GenericTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
         cur_node = cur_level_nodes[ i ];
 
         for( unsigned int j=0; j < cur_num_children; j++ ) {
-            if( avail_iter == int_hostids.end() ) {
+            if( avail_iter == be_hostids.end() ) {
                 fprintf( stderr, "Not enough hosts(%zu) for topology %s\n", 
                          int_hostids.size() + be_hostids.size(), _topology_spec.c_str() );
                 return false;
@@ -942,14 +939,14 @@ bool GenericTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
             cur_node->add_Child( next_child );
         }
     }
-    
+
     return validate();
 }
 
 bool GenericTree::initialize_Tree( list< pair<string,unsigned> > & hosts )
 {
     unsigned int cur_num_children;
-    vector< Tree::Node *> cur_level_nodes, next_level_nodes;
+    vector< Tree::Node* > cur_level_nodes, next_level_nodes;
     Tree::Node *cur_node, *next_child;
 
     char cur_host[HOST_NAME_MAX];
