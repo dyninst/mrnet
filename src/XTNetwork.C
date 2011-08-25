@@ -43,9 +43,6 @@ extern "C"
 namespace MRN
 {
 
-Port XTNetwork::defaultTopoPort = 26500;
-
-
 //----------------------------------------------------------------------------
 // base class factory methods
 // creates objects of our specialization
@@ -94,31 +91,61 @@ Network::CreateNetworkBE( int argc, char** argv )
 }
 
 
+const char* topofd_optstr = "--topofd";
+const char* port_optstr = "--listen-port";
+const char* timeout_optstr = "--listen-timeout";
+
 Network*
 Network::CreateNetworkIN( int argc, char** argv )
 {
     mrn_dbg_func_begin();
 
+    int port = -1;
+    int timeout = -1;
     int topoPipeFd = -1;
     int beArgc = 0;
     char** beArgv = NULL;
     if( argc > 0 ) {
-        if( strcmp(argv[0], "-T") == 0 ) {
-            // we are not the first process on this node
-            // we are being passed the FD of a pipe from which we 
-            // can read the topology
+        if( strcmp(argv[0], topofd_optstr) == 0 ) {
+            // we are NOT the first process on this node
+            /* passed the FD of a pipe from which we 
+               can read the topology */
             topoPipeFd = (int)strtol( argv[1], NULL, 10 );
             beArgc = argc - 2;
             beArgv = argv + 2;
         }
         else {
-            // just pass along BE information
             beArgc = argc;
             beArgv = argv;
+
+            // we ARE the first process on this node
+            for( int i=0; i < argc; i++ ) {
+                if( strcmp(argv[i], port_optstr) == 0 ) {
+                    /* passed a timeout that should be used when listening
+                       for the topology */
+                    port = atoi( argv[++i] );
+                    beArgc -= 2;
+                    beArgv += 2;
+                }
+                else if ( strcmp(argv[i], timeout_optstr) == 0 ) {
+                    /* passed a timeout that should be used when listening
+                       for the topology */
+                    timeout = atoi( argv[++i] );
+                    beArgc -= 2;
+                    beArgv += 2;
+                }
+            }
         }
     }
 
-    return new XTNetwork( true, topoPipeFd, beArgc, beArgv );
+    Port topoPort = XTNetwork::FindTopoPort(port);
+    Network* net = new XTNetwork( true, topoPipeFd, topoPort,
+                                  beArgc, beArgv ); 
+
+    if( timeout != -1 )
+        net->_startup_timeout = timeout;
+
+    return net;
 }
 
 
@@ -143,13 +170,13 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
             if( (strcmp(iter->first.c_str(), "apid") == 0) ||
                 (strcmp(iter->first.c_str(), "CRAY_ALPS_APID") == 0) ) {
                 alps_apid = (uint64_t) strtoul( iter->second.c_str(), NULL, 0 );
-                mrn_dbg(1, mrn_printf(FLF, stderr, "ALPS apid=%d\n", alps_apid));
+                mrn_dbg(3, mrn_printf(FLF, stderr, "ALPS apid=%d\n", alps_apid));
             }
 #ifdef HAVE_LIBALPS
             else if( strcmp(iter->first.c_str(), "CRAY_ALPS_APRUN_PID") == 0 ) {
                 int aprun_pid = (int)strtol( iter->second.c_str(), NULL, 0 );
                 alps_apid = alps_get_apid(nid, aprun_pid); 
-                mrn_dbg(1, mrn_printf(FLF, stderr, "ALPS aprun pid=%d, apid=%d\n", 
+                mrn_dbg(3, mrn_printf(FLF, stderr, "ALPS aprun pid=%d, apid=%d\n", 
                                       aprun_pid, alps_apid));
             }
             else if( (stage_files == NULL) &&
@@ -157,6 +184,11 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
                 stage_files = const_cast< char* >( iter->second.c_str() );
             }
 #endif
+            else if( strcmp(iter->first.c_str(), "MRNET_PORT_BASE") == 0 ) {
+                int base_port = (int)strtol( iter->second.c_str(), NULL, 0 );
+                FindTopoPort(base_port); // despite name, actually sets the base 
+                mrn_dbg(3, mrn_printf(FLF, stderr, "MRNET_PORT_BASE=%d\n", base_port));
+            }
         }
         if( alps_apid != (uint64_t)-1 ) {
             char apid_str[32];
@@ -366,9 +398,11 @@ XTNetwork::PropagateTopology( int topoFd,
 }
 
 // CP constructor
-XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */, 
-		      int beArgc /* = 0 */,
-		      char** beArgv /* = NULL */ )
+XTNetwork::XTNetwork( bool, /* dummy for distinguising from other constructors */ 
+                      int topoPipeFd /*= -1*/,
+                      Port topoPort /*= -1*/,
+		      int beArgc /*= 0*/,
+		      char** beArgv /*= NULL*/ )
     : alps_apid((uint64_t)-1)
 {
     mrn_dbg_func_begin();
@@ -382,20 +416,27 @@ XTNetwork::XTNetwork( bool, int topoPipeFd /* = -1 */,
     int topoFd = -1;
     int listeningDataSocket = -1;    
     int listeningTopoSocket = -1;
-    Port topoPort = FindTopoPort();
     bool firstproc = false;
     if( topoPipeFd == -1 ) {
         // we are the first process on this node
         firstproc = true;
 
         // set up a listening socket so our parent can send us the topology
-        if( -1 == CreateListeningSocket(listeningTopoSocket, topoPort, false) ) {
+        Port p = (Port) topoPort;
+        if( -1 == CreateListeningSocket(listeningTopoSocket, p, false) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr,
                                   "failed to create topology listening socket\n"));
             exit(1);
         }
 	int inout_errno;
-        topoFd = getSocketConnection( listeningTopoSocket, inout_errno );
+	int timeout = get_StartupTimeout();
+        topoFd = getSocketConnection( listeningTopoSocket, inout_errno, 
+                                      timeout, false );
+        if( topoFd == -1 ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr,
+                                  "failed to get topology listening socket connection\n"));
+            exit(1);
+        }
     }
     else {
         // we are not the first process on this node
@@ -637,7 +678,7 @@ XTNetwork::SpawnCP( int* topoFd, int listeningSocket )
         char** argv = new char*[argc+1];
         char fdstr[10];
         sprintf(fdstr, "%d", topoFds[0]);
-        argv[currIdx++] = strdup( "-T" );
+        argv[currIdx++] = strdup( topofd_optstr );
         argv[currIdx++] = strdup( fdstr );
         argv[currIdx] = NULL;
 
@@ -728,15 +769,19 @@ XTNetwork::SpawnBE( int beArgc, char** beArgv, const char* parentHost,
 }
 
 Port
-XTNetwork::FindTopoPort( void )
+XTNetwork::FindTopoPort( int passed_port /*= -1*/ )
 {
-    Port topoPort = UnknownPort;
+    static Port defaultTopoPort = 26500;
 
-    char* topoPortStr = getenv( "MRNET_PORT" );
+    if( passed_port != -1 )
+        defaultTopoPort = (Port) passed_port;
+
+    Port topoPort = defaultTopoPort;
+
+    // allow env to override default
+    char* topoPortStr = getenv( "MRNET_PORT_BASE" );
     if( topoPortStr != NULL )
-         topoPort = (Port)strtoul( topoPortStr, NULL, 10 );
-    else
-         topoPort = defaultTopoPort;
+        topoPort = (Port) atoi( topoPortStr );
 
     return topoPort;
 }
@@ -744,10 +789,10 @@ XTNetwork::FindTopoPort( void )
 Port
 XTNetwork::FindParentPort( void )
 {
+    // assumption: EDT port == topology port + 1
     Port ret = FindTopoPort();
     assert( ret != UnknownPort );
-    ret++;
-    return ret;
+    return ret + 1;
 }
 
 
@@ -949,6 +994,10 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
     // we should never be asked not to spawn any processes
     assert( ! (aprunHosts.empty() && athHosts.empty()) );
 
+    char timeout[8], topoport[8];
+    sprintf(timeout, "%d", get_StartupTimeout());
+    sprintf(topoport, "%hd", FindTopoPort());
+
     // start processes (if any) that need to be started with aprun
     if( ! aprunHosts.empty() ) {
         std::string cmd = "aprun";
@@ -974,7 +1023,11 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         // the executable
         assert( mrn_commnode_path != NULL );
         args.push_back( mrn_commnode_path );
-
+        args.push_back( port_optstr );
+        args.push_back( topoport ); 
+        args.push_back( timeout_optstr );
+        args.push_back( timeout ); 
+        
         // since the created processes may become a BE, we need to pass this too
         args.push_back( be_path );
         for( int i = 0; i < argc; i++ ) {
@@ -1009,7 +1062,10 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         assert( athFirstNodeNid != -1 );
 
         std::ostringstream cmdStr;
-        cmdStr << mrn_commnode_path << ' ' << be_path << ' ';
+        cmdStr << mrn_commnode_path << ' ';
+        cmdStr << port_optstr << ' ' << topoport << ' ';
+        cmdStr << timeout_optstr << ' ' << timeout << ' ';
+        cmdStr << be_path << ' ';
         for( int i = 0; i < argc; i++ ) {
             cmdStr << argv[i] << ' ';
         }
@@ -1188,7 +1244,10 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology, bool have_backends )
 {
     mrn_dbg_func_begin();
 
-    Port fe_port = get_LocalPort();
+    Port base, fe_port;
+    base = FindParentPort();
+    fe_port = get_LocalPort();
+
     std::string fe_host = get_LocalHostName();
 
     // get SerialGraph topology
@@ -1196,8 +1255,7 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology, bool have_backends )
     SerialGraph sgtmp(sg);
 
     // statically assign data listening ports for all processes
-    char currPort[10];
-    Port base = FindParentPort();
+    char currPort[8];
     char* sgnew = strdup( sg.c_str() );
     std::map< std::string, int > hosts;
     FindHostsInTopology( &sgtmp, hosts );

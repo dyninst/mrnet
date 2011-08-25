@@ -111,7 +111,8 @@ Network::Network(void)
       _next_user_stream_id(USER_STRM_BASE_ID),
       _next_int_stream_id(INTERNAL_STRM_BASE_ID),
       _threaded(true), _recover_from_failures(true), 
-      _was_shutdown(false), _shutting_down(false)
+      _was_shutdown(false), _shutting_down(false),
+      _startup_timeout(120)
 {
     init_local();
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
@@ -317,6 +318,7 @@ int Network::get_NetSettingKey( const std::string & s )
 
     const char* cstr = s.c_str();
     if( 0 == strncmp("MRNET_", cstr, 6) ) {
+
         if( (strcmp("MRNET_OUTPUT_LEVEL", cstr) == 0) ||
             (strcmp("MRNET_DEBUG_LEVEL", cstr) == 0) )
             ret = MRNET_DEBUG_LEVEL;
@@ -330,8 +332,15 @@ int Network::get_NetSettingKey( const std::string & s )
 
         else if( strcmp("MRNET_FAILURE_RECOVERY", cstr) == 0 )
             ret = MRNET_FAILURE_RECOVERY;
+
+        else if( strcmp("MRNET_STARTUP_TIMEOUT", cstr) == 0 )
+            ret = MRNET_STARTUP_TIMEOUT;
+
+        else if( strcmp("MRNET_PORT_BASE", cstr) == 0 )
+            ret = MRNET_PORT_BASE;
     }
     else if( 0 == strncmp("XPLAT_", cstr, 6) ) {
+
         if( strcmp("XPLAT_RSH", cstr) == 0 )
             ret = XPLAT_RSH;
 
@@ -341,8 +350,17 @@ int Network::get_NetSettingKey( const std::string & s )
         else if( strcmp("XPLAT_REMCMD", cstr) == 0 )
             ret = XPLAT_REMCMD;
     }
-    else if( strcmp("CRAY_ALPS_APID", cstr) == 0 )
-        ret = CRAY_ALPS_APID;
+    else if( 0 == strncmp("CRAY_ALPS_", cstr, 10) ) {
+
+        if( strcmp("CRAY_ALPS_APID", cstr) == 0 )
+            ret = CRAY_ALPS_APID;
+
+        else if( strcmp("CRAY_ALPS_APRUN_PID", cstr) == 0 )
+            ret = CRAY_ALPS_APRUN_PID;
+
+        else if( strcmp("CRAY_ALPS_STAGE_FILES", cstr) == 0 )
+            ret = CRAY_ALPS_STAGE_FILES;
+    }
 
     return ret;
 }
@@ -397,6 +415,14 @@ void Network::init_FE_NetSettings( const std::map< std::string, std::string > * 
             _network_settings[ MRNET_COMMNODE_PATH ] = COMMNODE_EXE;
     }
 
+    if( _network_settings.find(MRNET_STARTUP_TIMEOUT) == _network_settings.end() ) {
+        envval = getenv( "MRNET_STARTUP_TIMEOUT" );
+        if( envval != NULL ) {
+            _network_settings[ MRNET_STARTUP_TIMEOUT ] = std::string( envval );
+            _startup_timeout = atoi( envval );
+        }
+    }
+
     init_NetSettings();
 }
 
@@ -421,6 +447,11 @@ void Network::init_NetSettings(void)
         if( ! strcmp( eit->second.c_str(), "0") )
             disable_FailureRecovery();
     }
+}
+
+int Network::get_StartupTimeout(void)
+{
+    return _startup_timeout;
 }
 
 void Network::update_BcastCommunicator(void)

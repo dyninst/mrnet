@@ -217,12 +217,17 @@ protected:
     void init_ThreadState( node_type_t node_type,
                            const char* thread_name = NULL );
 
+    void disable_FailureRecovery(void);
+    void enable_FailureRecovery(void);
+
     PeerNodePtr _parent;
 
     std::map< net_settings_key_t, std::string > _network_settings;
     std::map< net_settings_key_t, std::string >& get_SettingsMap();
     virtual void init_NetSettings(void);
     
+    int get_StartupTimeout(void);
+
  private:
     friend class Stream;
     friend class FrontEndNode;
@@ -325,8 +330,6 @@ protected:
     bool delete_PeerNode( Rank );
     void close_PeerNodeConnections(void);
 
-    void disable_FailureRecovery(void);
-    void enable_FailureRecovery(void);
     bool recover_FromFailures(void) const;
 
     void collect_PerfData(void);
@@ -362,6 +365,8 @@ protected:
     bool _threaded;
     bool _recover_from_failures;
     bool _was_shutdown, _shutting_down;
+
+    int _startup_timeout;
 
     /* EventPipe notifications */
     std::map< EventClass, EventPipe* > _evt_pipes;

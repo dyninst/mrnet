@@ -109,10 +109,14 @@ namespace MRN
 	MRNET_DEBUG_LOG_DIRECTORY = 1,
 	MRNET_COMMNODE_PATH       = 2, 
 	MRNET_FAILURE_RECOVERY    = 3,
-	XPLAT_RSH                 = 4, 
-	XPLAT_RSH_ARGS            = 5,
-	XPLAT_REMCMD              = 6,
-        CRAY_ALPS_APID            = 7
+	MRNET_STARTUP_TIMEOUT     = 4,
+	MRNET_PORT_BASE           = 5,
+	XPLAT_RSH                 = 6, 
+	XPLAT_RSH_ARGS            = 7,
+	XPLAT_REMCMD              = 8,
+        CRAY_ALPS_APID            = 9,
+        CRAY_ALPS_APRUN_PID       = 10,
+        CRAY_ALPS_STAGE_FILES     = 11
     } net_settings_key_t;	
     
 } /* namespace MRN */

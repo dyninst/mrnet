@@ -25,12 +25,9 @@ namespace MRN
 class XTNetwork : public Network
 {
 private:
-    static Port defaultTopoPort;
 
     static int GetLocalNid(void);
     static std::string GetNodename(int nid);
-    static Port FindTopoPort(void);
-    static Port FindParentPort(void);
 
     // FE support
     uint64_t alps_apid;
@@ -161,10 +158,14 @@ public:
     // CP role
     XTNetwork( bool,
                int topoPipeFd = -1,
+               Port topoPort = -1,
                int beArgc = 0,
                char** beArgv = NULL );
 
     virtual ~XTNetwork(void) {}
+
+    static Port FindTopoPort(int iport=-1);
+    static Port FindParentPort(void);
 };
 
 } // namespace MRN

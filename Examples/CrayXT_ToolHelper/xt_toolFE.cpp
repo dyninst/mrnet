@@ -253,8 +253,7 @@ main( int argc, char* argv[] )
         // clean up
         if( stream != NULL )
         {
-            if( (stream->send( XTM_EXIT, "%d", 0 ) == -1) ||
-                (stream->flush() == -1) )
+            if( stream->send( XTM_EXIT, "%d", 0 ) == -1 )
             {
                 cerr << "FE: failed to broadcast tool daemon termination message" << endl;
             }

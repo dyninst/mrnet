@@ -302,21 +302,51 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
     return 0;
 }
 
-int getSocketConnection( int bound_socket , int& inout_errno )
+int getSocketConnection( int bound_socket , int& inout_errno,
+                         int timeout_sec /*=0*/ , bool nonblock /*=false*/ )
 {
     int connected_socket;
     int fdflag, fret;
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "In get_connection(sock:%d).\n",
                 bound_socket ) );
+
+    if( nonblock && (timeout_sec == 0) )
+        timeout_sec = 5;
+
     do {
+        if( timeout_sec > 0 ) {
+            // use select with timeout
+            fd_set readfds;
+            FD_ZERO( &readfds );
+            FD_SET( bound_socket, &readfds );
+            
+            struct timeval tv = {timeout_sec, 0};
+        
+            int maxfd = bound_socket + 1;
+            int retval = select( maxfd, &readfds, NULL, NULL, &tv );
+            inout_errno = XPlat::NetUtils::GetLastError();
+            if( retval == 0 ) { // timed-out
+                if( ! nonblock )
+                    return -1; // let our caller decide what's next
+
+                continue;
+            }
+            else if( retval < 0 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "select() failed with '%s'\n", 
+		                       strerror(inout_errno)) );
+                return -1;
+            }
+        }
         connected_socket = accept( bound_socket, NULL, NULL );
         if( connected_socket == -1 ) {
             inout_errno = XPlat::NetUtils::GetLastError();
+            if( nonblock && (inout_errno == EWOULDBLOCK) )
+                continue;
 	    if( inout_errno != EWOULDBLOCK ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "accept() failed with '%s'\n", 
 		                       strerror(inout_errno)) );
-	    }  
+	    } 
             if( inout_errno != EINTR )
                 return -1;
         }

@@ -354,15 +354,12 @@ int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ) const
     }
     else {
         _num_children_reported++;
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "%d of %d descendants reported\n",
-                               _num_children_reported, _num_children ));
+        mrn_dbg(3, mrn_printf(FLF, stderr, "%d of %d descendants reported\n",
+                              _num_children_reported, _num_children));
         if( _num_children_reported == _num_children ) {
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "Signalling condition\n"
-                               ));
+            mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling ALLNODESREPORTED\n"));
             initdonereport_sync.SignalCondition( ALLNODESREPORTED );
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "Signalling condition done \n"
-                               ));
-
+            mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling done\n"));
         }
     }
 
@@ -378,15 +375,17 @@ int ParentNode::proc_DeleteSubTreeAck( PacketPtr ) const
 
     subtreereport_sync.Lock( );
     _num_children_reported++;
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
-                           _num_children_reported, _num_children ));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
+                          _num_children_reported, _num_children));
     if( _num_children_reported == _num_children ) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling ALLNODESREPORTED\n"));
         subtreereport_sync.SignalCondition( ALLNODESREPORTED );
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling done\n"));
     }
     subtreereport_sync.Unlock( );
 	
     // exit recv thread from child
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
     XPlat::Thread::Exit(NULL);
 
     return 0;
@@ -398,10 +397,12 @@ int ParentNode::proc_TopologyReportAck( PacketPtr ) const
 
     subtreereport_sync.Lock( );
     _num_children_reported++;
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
-                           _num_children_reported, _num_children ));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
+                          _num_children_reported, _num_children));
     if( _num_children_reported == _num_children ) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling ALLNODESREPORTED\n"));
         subtreereport_sync.SignalCondition( ALLNODESREPORTED );
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling done\n"));
     }
     subtreereport_sync.Unlock( );
 	

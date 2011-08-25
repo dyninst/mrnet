@@ -87,7 +87,8 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
                  int num_retry = -1 );
 
 int bindPort( int *sock_in, Port *port_in, bool nonblock=false );
-int getSocketConnection( int bound_socket, int& inout_errno );
+int getSocketConnection( int bound_socket, int& inout_errno,
+                         int timeout_sec=0, bool nonblock=false );
 int getPortFromSocket( int sock, Port *port );
 
 struct ltstr
