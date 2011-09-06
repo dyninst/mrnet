@@ -71,8 +71,8 @@ LDFLAGS = @LDFLAGS@
 COMMNODE_LDFLAGS = @CN_LDFLAGS@
 SOFLAGS = @SOFLAGS@
 
-LIBS = $(LIBXPLAT) @LIBS@ @EXTRA_LIBS@
-LIBS_LIGHTWEIGHT = $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS@
+LIBS = @LIBS@ @EXTRA_LIBS@
+LIBS_LIGHTWEIGHT = @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS@
 
 COMMON_INCLUDES = -I$(INCDIR) -I$(XPLATDIR)/include -I$(TSTDIR) -I$(PLATDIR) -I$(SRCDIR) 
 INCLUDES = $(COMMON_INCLUDES)
@@ -154,9 +154,11 @@ TOPGEN      = $(BINDIR)/mrnet_topgen
 
 LIBMRNET    = $(LIBDIR)/libmrnet.a
 LIBMRNET_SO = $(LIBDIR)/libmrnet.so
+LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat $(LIBS)
 
 LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a
 LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so
+LIBMRNET_LIGHTWEIGHT_SO_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight $(LIBS_LIGHTWEIGHT)
 
 LIBXPLAT    = $(LIBDIR)/libxplat.a
 LIBXPLAT_SO = $(LIBDIR)/libxplat.so
@@ -169,6 +171,7 @@ ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
     TARGETS += $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
 endif
+
 
 STD_TESTS_FE = $(BINDIR)/test_basic_FE \
                $(BINDIR)/microbench_FE \
@@ -410,21 +413,21 @@ $(LIBMRNET): $(LIBMRNET_OBJS)
 	@echo Archiving `basename $@` ...
 	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
-	    $(AR) $(ARFLAGS) $@ $^ Template.dir/*.o ; \
+	    $(AR) $(ARFLAGS) $@ $(LIBMRNET_OBJS) Template.dir/*.o ; \
 	    $(RM) -r Template.dir ; \
 	else \
-	    $(AR) $(ARFLAGS) $@ $^ ; \
+	    $(AR) $(ARFLAGS) $@ $(LIBMRNET_OBJS)  ; \
 	fi
 	$(RANLIB) $@
 
-$(LIBMRNET_SO): $(LIBMRNET_OBJS)
+$(LIBMRNET_SO): $(LIBMRNET_OBJS) $(LIBXPLAT_SO)
 	@echo Building `basename $@` ...
 	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
-	    $(CXX) $(SOFLAGS) -o $@ $^ Template.dir/*.o ; \
+	    $(CXX) $(SOFLAGS) -o $@  $(LIBMRNET_OBJS) Template.dir/*.o $(LIBMRNET_SO_DEPLIBS) ; \
 	    $(RM) -r Template.dir ; \
 	else \
-	    $(CXX) $(SOFLAGS) -o $@ $^ ; \
+	    $(CXX) $(SOFLAGS) -o $@ $(LIBMRNET_OBJS) $(LIBMRNET_SO_DEPLIBS) ; \
 	fi
 
 $(LIBXPLAT): xplat-all
@@ -442,39 +445,39 @@ $(LIBXPLAT_LIGHTWEIGHT_SO): xplat_lightweight-sharedobj
 $(COMMNODE): $(COMMNODE_OBJS) $(LIBMRNET) $(LIBXPLAT)
 	@echo Linking `basename $@` ...
 	$(PURIFY) $(CXX) $(CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(COMMNODE_OBJS) \
-	   $(LIBMRNET) $(LIBS)
+	   $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
 $(TOPGEN): $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
 	@echo "Linking `basename $@` ..."
 	$(PURIFY) $(CXX) $(CXXFLAGS) -o $@ $(OBJDIR)/config_generator.o \
-           $(LIBMRNET) $(LIBS)
+           $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
 $(STD_TESTS_FE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
               $(TSTDIR)/test_common.h \
               $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
+	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
 $(STD_TESTS_BE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
               $(TSTDIR)/test_common.h \
               $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
+	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
 $(STD_TESTS_FE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
               $(TSTDIR)/test_common.h \
               $(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBS)
+	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
 $(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o \
 				$(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CC) $(TEST_CCFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-		$(LIBMRNET_LIGHTWEIGHT) $(LIBS_LIGHTWEIGHT)
+		$(LIBMRNET_LIGHTWEIGHT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBS_LIGHTWEIGHT)
 
 $(BINDIR)/mrnet_tests.sh: $(BASEDIR)/conf/mrnet_tests.sh
 	$(CP) $(BASEDIR)/conf/mrnet_tests.sh $(BINDIR)/
@@ -493,7 +496,7 @@ $(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(LIBMRNET) \
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_Recovery.o $(OBJDIR)/test_Recovery_aux.o \
-           $(OBJDIR)/ThroughputExperiment.o $(LIBMRNET) $(LIBS)
+           $(OBJDIR)/ThroughputExperiment.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
 $(BINDIR)/test_Recovery_BE: $(BINDIR)/%: $(LIBMRNET) \
                             $(OBJDIR)/%.o \
@@ -502,7 +505,7 @@ $(BINDIR)/test_Recovery_BE: $(BINDIR)/%: $(LIBMRNET) \
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
            $(OBJDIR)/ThroughputExperiment.o \
-           $(OBJDIR)/test_Recovery.o $(LIBMRNET) $(LIBS)
+           $(OBJDIR)/test_Recovery.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
 $(LIBDIR)/test_RecoveryFilter.so: $(TSTDIR)/test_Recovery/test_RecoveryFilter.C
 	@echo "Building `basename $@` ..."

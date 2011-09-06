@@ -22,6 +22,7 @@ VPATH = $(SRCDIR) $(ROOTDIR)/src
 
 TARGET    = $(LIBDIR)/libmrnet_lightweight.a
 TARGET_SO = $(LIBDIR)/libmrnet_lightweight.so
+TARGET_SO_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight
 
 TARGETS = $(TARGET)
 ifeq ($(BUILD_SHARED_LIBS), yes)
@@ -73,7 +74,7 @@ $(TARGET): $(LTWT_OBJS)
 
 $(TARGET_SO): $(LTWT_OBJS)
 	@echo Building `basename $@` ...
-	$(CC) $(SOFLAGS) -o $@ $^
+	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_DEPLIBS)
 
 install-prep:
 	for dir in $(ILIBDIR) $(install_INCDIR) ; do \

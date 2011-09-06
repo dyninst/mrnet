@@ -5566,7 +5566,7 @@ done
       fi
     fi
 
-    CRAYXT_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
+    CRAYXT_ATH_LIBS="-lalps -lxmlrpc"
     if test "$CRAYXT_ATH_LIBDIR" != "" ; then
         LIBS_HOLD=$LIBS
 	LIBS="-L$CRAYXT_ATH_LIBDIR $CRAYXT_ATH_LIBS $LIBS_HOLD"

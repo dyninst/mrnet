@@ -60,6 +60,7 @@ SOFLAGS  = @SOFLAGS@
 
 TARGET    = $(LIBDIR)/libxplat.a
 TARGET_SO = $(LIBDIR)/libxplat.so
+TARGET_SO_DEPLIBS = @LIBS@
 
 TARGETS = $(TARGET)
 ifeq ($(BUILD_SHARED_LIBS), yes)
@@ -111,9 +112,9 @@ $(TARGET_SO): $(XPLAT_OBJS)
 	@echo Building `basename $@` ...
 	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
 	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
-	    $(CXX) $(SOFLAGS) -o $@ $^ Template.dir/*.o ; \
+	    $(CXX) $(SOFLAGS) -o $@ $(XPLAT_OBJS) Template.dir/*.o $(TARGET_SO_DEPLIBS) ; \
 	else \
-	    $(CXX) $(SOFLAGS) -o $@ $^ ; \
+	    $(CXX) $(SOFLAGS) -o $@ $(XPLAT_OBJS) $(TARGET_SO_DEPLIBS) ; \
 	fi
 
 install-prep:
