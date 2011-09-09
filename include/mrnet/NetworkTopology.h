@@ -37,7 +37,6 @@ typedef boost::shared_ptr< PeerNode > PeerNodePtr;
 
 class NetworkTopology: public Error {
 
-    friend class Router;
     friend class TopologyLocalInfo;
 
   public:
@@ -138,6 +137,10 @@ class NetworkTopology: public Error {
 
     // END MRNET API
 
+    void get_Descendants( Node *, std::vector< Node * > &odescendants ) const;
+    void get_LeafDescendants( Node *inode, 
+                              std::vector< Node * > &odescendants ) const;
+
     NetworkTopology( Network *, SerialGraph & );
     NetworkTopology( Network *, std::string &ihostname, Port iport, Rank irank, 
                      bool iis_backend = false );
@@ -186,9 +189,6 @@ class NetworkTopology: public Error {
     bool remove_Orphan( Rank );
     void remove_SubGraph( Node * inode );
 
-    void get_Descendants( Node *, std::vector< Node * > &odescendants ) const;
-    void get_LeafDescendants( Node *inode, 
-                              std::vector< Node * > &odescendants ) const;
 
     unsigned int get_TreeDepth(void) const;
 

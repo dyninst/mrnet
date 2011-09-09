@@ -16,8 +16,9 @@ namespace MRN {
 
 bool Router::update_Table()
 {
-    _sync.Lock();
     mrn_dbg_func_begin();
+
+    _sync.Lock();
 
     NetworkTopology * net_topo = _network->get_NetworkTopology( );
 
@@ -25,8 +26,7 @@ bool Router::update_Table()
     _table.clear();
 
     //get local node from network topology
-    NetworkTopology::Node * local_node = net_topo->
-        find_NodeHoldingLock( _network->get_LocalRank() );
+    NetworkTopology::Node * local_node = net_topo->find_Node( _network->get_LocalRank() );
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "local_node: %p\n", local_node) );
 
