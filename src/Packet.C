@@ -529,7 +529,7 @@ bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
 {
     mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
 
-    const char* fmtstr = pkt->get_FormatString();
+    const char* fmtstr = pkt->fmt_str;
     if( fmtstr == NULL ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr,
                     "No data in message. just header info\n" ));
