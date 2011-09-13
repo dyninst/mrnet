@@ -76,6 +76,7 @@ PthreadMonitorData::~PthreadMonitorData( void )
         for( ConditionVariableMap::iterator iter = cvmap.begin();
              iter != cvmap.end(); iter++ ) {
             pthread_cond_destroy( iter->second );
+            delete iter->second;
         }
         cvmap.clear();
 

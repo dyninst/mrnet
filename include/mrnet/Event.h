@@ -35,10 +35,10 @@ class Event {
     EventData* _data;
 
  public:
-    static EventClass EVENT_CLASS_ALL;
-    static EventClass DATA_EVENT;
-    static EventClass TOPOLOGY_EVENT;
-    static EventClass ERROR_EVENT;
+    static const EventClass EVENT_CLASS_ALL;
+    static const EventClass DATA_EVENT;
+    static const EventClass TOPOLOGY_EVENT;
+    static const EventClass ERROR_EVENT;
 
     static EventType EVENT_TYPE_ALL;
 

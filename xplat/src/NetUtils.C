@@ -121,8 +121,10 @@ int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
 
         if( strlen(hostname) ) {
             ohostname = hostname;
+            free( hostname );
             return 0;
         }
+        free( hostname );
     }
 
     ohostname = ihostname;

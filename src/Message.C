@@ -364,6 +364,12 @@ int Message::send( int sock_fd )
     if( go_away ) {
         // exit send thread
         mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));
+        tsd_t* tsd = (tsd_t*)tsd_key.Get();
+        if( tsd != NULL ) {
+            tsd_key.Set( NULL );
+            free( const_cast<char*>( tsd->thread_name ) );
+            delete tsd;
+        }
         XPlat::Thread::Exit(NULL);
     }
 

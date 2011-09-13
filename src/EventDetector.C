@@ -475,6 +475,7 @@ void * EventDetector::main( void* iarg )
                             }
                             edt->set_ThrId( 0 );
                             mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
+                            net->free_ThreadState();
                             XPlat::Thread::Exit(NULL);
 
                         case PROT_NEW_CHILD_FD_CONNECTION:
@@ -564,6 +565,7 @@ void * EventDetector::main( void* iarg )
                     }
 
                     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
+                    net->free_ThreadState();
                     XPlat::Thread::Exit(NULL);
                 }
             }
@@ -610,7 +612,7 @@ void * EventDetector::main( void* iarg )
 
     edt->set_ThrId( 0 );
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
-
+    net->free_ThreadState();
     return NULL;
 }
 
@@ -641,19 +643,18 @@ int EventDetector::init_NewChildFDConnection( PeerNodePtr iparent_node )
 
 int EventDetector::proc_NewChildFDConnection( PacketPtr ipacket, int isock )
 {
-    char * child_hostname_ptr;
+    char* child_hostname = NULL;
     Port child_port;
     Rank child_rank;
 
-    ipacket->unpack( "%s %uhd %ud", &child_hostname_ptr, &child_port,
+    ipacket->unpack( "%s %uhd %ud", &child_hostname, &child_port,
                     &child_rank ); 
-
-
-    string child_hostname( child_hostname_ptr );
 
     mrn_dbg(5, mrn_printf(FLF, stderr,
                           "New FD connection on sock %d from: %s:%u:%u\n",
-                          isock, child_hostname_ptr, child_port, child_rank ) ); 
+                          isock, child_hostname, child_port, child_rank ) ); 
+    if( child_hostname != NULL )
+        free( child_hostname );
 
     childRankByEventDetectionSocket[ isock ] = child_rank;
 

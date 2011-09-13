@@ -144,6 +144,7 @@ class NetworkTopology: public Error {
     NetworkTopology( Network *, SerialGraph & );
     NetworkTopology( Network *, std::string &ihostname, Port iport, Rank irank, 
                      bool iis_backend = false );
+    ~NetworkTopology(void);
 
     //Topology update operations
     bool add_SubGraph( Rank, SerialGraph &, bool iupdate );

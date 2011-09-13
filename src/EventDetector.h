@@ -46,6 +46,8 @@ class EventDetector {
     {
         _thread_id = 0;
         _network = NULL;
+        if( _pollfds != NULL )
+            free( _pollfds );
     }
 
     static void * main( void* iarg );

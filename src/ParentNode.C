@@ -276,6 +276,7 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 
         // exit recv/EDT thread
         mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));
+        _network->free_ThreadState();
         XPlat::Thread::Exit(NULL);
     }
 
@@ -386,6 +387,12 @@ int ParentNode::proc_DeleteSubTreeAck( PacketPtr ) const
 	
     // exit recv thread from child
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
+    tsd_t* tsd = (tsd_t*)tsd_key.Get();
+    if( tsd != NULL ) {
+        tsd_key.Set( NULL );
+        free( const_cast<char*>( tsd->thread_name ) );
+        delete tsd;
+    }
     XPlat::Thread::Exit(NULL);
 
     return 0;
@@ -616,12 +623,12 @@ bool equal_PeerNodePtr( PeerNode * p1, PeerNode * p2 )
 
 int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
 {
-    char * child_hostname_ptr=NULL;
+    char* topo_ptr = NULL;
+    char* child_hostname_ptr = NULL;
     Port child_port;
     Rank child_rank, old_parent_rank;
     uint16_t child_incarnation;
     char is_internal_char;
-    char * topo_ptr=NULL;
 
     ipacket->unpack( "%s %uhd %ud %uhd %ud %c %s",
                      &child_hostname_ptr,
@@ -648,7 +655,9 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                                                      is_internal );
 
     child_node->set_DataSocketFd( isock );
-    
+    if( child_hostname_ptr != NULL )
+        free( child_hostname_ptr );
+
     // propagate initial network settings
     const std::map< net_settings_key_t, std::string >& envMap = _network->get_SettingsMap();
     int* keys = (int*) calloc( envMap.size() + 1, sizeof(int) );
@@ -687,6 +696,8 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
         SerialGraph sg( child_topo );
         nt->add_SubGraph( my_rank, sg, true );
     }
+    if( topo_ptr != NULL )
+        free( topo_ptr );
 
     //Create send/recv threads
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for new child\n") );

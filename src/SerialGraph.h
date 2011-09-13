@@ -28,6 +28,7 @@ class SerialGraph {
         :_byte_array(ibyte_array), _num_nodes(0), _num_backends(0) { }
 
     SerialGraph() :_num_nodes(0), _num_backends(0) { }
+    ~SerialGraph() { }
 
     void add_Leaf( std::string, Port, Rank );
     void add_SubTreeRoot( std::string, Port, Rank );

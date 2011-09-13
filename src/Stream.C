@@ -101,6 +101,15 @@ Stream::~Stream()
     }
 
     _network->delete_Stream( _id );
+
+    if( _sync_filter != NULL )
+        delete _sync_filter;
+    if( _us_filter != NULL )
+        delete _us_filter;
+    if( _ds_filter != NULL )
+        delete _ds_filter;
+    if( _perf_data != NULL )
+        delete _perf_data;
 }
 
 void Stream::add_Stream_EndPoint( Rank irank )

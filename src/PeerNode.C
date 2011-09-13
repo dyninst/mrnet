@@ -114,6 +114,8 @@ int PeerNode::start_CommunicationThreads(void)
 
     waitfor_CommunicationThreads();
 
+    free( args );
+
     return retval;
 }
 
@@ -275,6 +277,7 @@ void * PeerNode::recv_thread_main( void* iargs )
     peer_node->_sync.Unlock();
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "I'm going away now!\n") );
+    net->free_ThreadState();
     XPlat::Thread::Exit(NULL);
 
     // this is redundant, but the compiler doesn't know that
@@ -331,6 +334,7 @@ void * PeerNode::send_thread_main( void* iargs )
     peer_node->_sync.Unlock();
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "I'm going away now!\n") );
+    net->free_ThreadState();
     XPlat::Thread::Exit(NULL);
 
     // this is redundant, but the compiler doesn't know that

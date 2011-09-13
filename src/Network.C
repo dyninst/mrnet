@@ -121,27 +121,63 @@ Network::Network(void)
 Network::~Network(void)
 {
     shutdown_Network( );
-    cleanup_local( );
+    clear_EndPoints();
+
     if( parsed_graph != NULL ) {
         delete parsed_graph;
         parsed_graph = NULL;
     }
-
-    tsd_t* tsd = (tsd_t*)tsd_key.Get();
-    if( tsd != NULL ) {
-        tsd_key.Set( NULL );
-        free( const_cast<char*>( tsd->thread_name ) );
-        delete tsd;
+    if( _network_topology != NULL ) {
+        delete _network_topology;
+        _network_topology = NULL;
     }
+    if( _failure_manager != NULL ) {
+        delete _failure_manager;
+        _failure_manager = NULL;
+    }
+    if( _bcast_communicator != NULL ) {
+        delete _bcast_communicator;
+        _bcast_communicator = NULL;
+    }
+    if( _local_front_end_node != NULL ) {
+        delete _local_front_end_node;
+        _local_front_end_node = NULL;
+    }
+    if( _local_back_end_node != NULL ) {
+        delete _local_back_end_node;
+        _local_back_end_node = NULL;
+    }
+    if( _local_internal_node != NULL ) {
+        delete _local_internal_node;
+        _local_internal_node = NULL;
+    }
+    if( _local_time_keeper != NULL ) {
+        delete _local_time_keeper;
+        _local_time_keeper = NULL;
+    }
+    if( _evt_mgr != NULL ) {
+        delete _evt_mgr;
+        _evt_mgr = NULL;
+    }
+
+    cleanup_local();
+    free_ThreadState();
 }
 
 void Network::close_Streams(void)
 {
-    map< unsigned int, Stream* >::iterator iter;
+    map< unsigned int, Stream* >::iterator miter;
+    vector< Stream* >::iterator viter;
+
     _streams_sync.Lock();
-    for( iter=_streams.begin(); iter != _streams.end(); iter++ ) {
-        (*iter).second->close();
+
+    for( miter = _streams.begin(); miter != _streams.end(); miter++ ) {
+        (*miter).second->close();
     }
+    for( viter = _internal_streams.begin(); viter != _internal_streams.end(); viter++ ) {
+        delete *viter;
+    }
+
     _streams_sync.Unlock();
 }
 
@@ -168,7 +204,7 @@ void Network::shutdown_Network(void)
                 ( _network_topology->get_NumNodes() > 0 ) ) {
 
                 PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, 
-                                             strdup(NULL_STRING)) );
+                                             empty_str) );
                 get_LocalFrontEndNode()->proc_DeleteSubTree( packet );
             }
         }
@@ -213,7 +249,7 @@ void Network::shutdown_Network(void)
         }
         
         if( _network_topology != NULL ) {
-            string empty(NULL_STRING);
+            string empty(empty_str);
             reset_Topology(empty);
         }
 
@@ -534,6 +570,15 @@ void Network::init_ThreadState( node_type_t node_type,
                                strerror(status)) );
     } 
 }
+void Network::free_ThreadState(void)
+{
+    tsd_t* tsd = (tsd_t*)tsd_key.Get();
+    if( tsd != NULL ) {
+        tsd_key.Set( NULL );
+        free( const_cast<char*>( tsd->thread_name ) );
+        delete tsd;
+    }
+}
 
 // initialize a Network in its role as front end
 void Network::init_FrontEnd( const char * itopology,
@@ -647,12 +692,15 @@ void Network::init_FrontEnd( const char * itopology,
         return;
     }
     s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
+    _streams_sync.Lock();
+    _internal_streams.push_back( s );
+    _streams_sync.Unlock();
 
     /* collect port updates and broadcast them
      * - this is a no-op on XT
      */
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_PORT_UPDATE, 
-                                 strdup(NULL_STRING)) );
+                                 empty_str) );
     if( -1 == get_LocalFrontEndNode()->proc_PortUpdates(packet) ) {
         error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
         shutdown_Network();
@@ -1131,6 +1179,9 @@ Stream* Network::new_Stream( Communicator *icomm,
         return NULL;
     }
 
+    // seems like a good time to send any topology updates
+    send_TopologyUpdates();
+
     //get array of back-ends from communicator
     Rank* backends = icomm->get_Ranks();
     unsigned num_pts = icomm->size();
@@ -1191,6 +1242,7 @@ Stream* Network::new_InternalStream( Communicator *icomm,
         mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
 
     delete [] backends;
+
     return stream;
 }
 
@@ -1945,6 +1997,18 @@ bool Network::remove_EndPoint( Rank irank )
     _endpoints_mutex.Unlock();
     
     return true;
+}
+
+void Network::clear_EndPoints()
+{
+    if( is_LocalNodeFrontEnd() ) {
+        _endpoints_mutex.Lock();
+        map< Rank, CommunicationNode* >::iterator iter = _end_points.begin();
+        for( ; iter != _end_points.end(); iter++ )
+            delete iter->second;
+        _end_points.clear();
+        _endpoints_mutex.Unlock();
+    }
 }
 
 bool Network::update_Streams(void)

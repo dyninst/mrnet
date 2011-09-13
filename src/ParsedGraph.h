@@ -64,16 +64,16 @@ class ParsedGraph: public Error {
     SerialGraph _serial_graph;
 
  public:
-    ParsedGraph( )
+    ParsedGraph(void)
         : _root(NULL), _fully_connected(true), _cycle_free(true) { }
-    ~ParsedGraph( ) { _next_node_rank = 0; }
+    ~ParsedGraph(void);
 
     void set_Root( Node * r ) { _root = r; }
-    Node *get_Root( ) const  { return _root; }
+    Node *get_Root(void) const  { return _root; }
     Node *find_Node( char *ihostname, Rank ilocal_rank );
-    bool validate( );
+    bool validate(void);
     void add_Node( Node * );
-    size_t get_Size ( ) const { return _nodes.size(); }
+    size_t get_Size(void) const { return _nodes.size(); }
     void assign_NodeRanks( bool iassign_backend_ranks );
 
     std::string get_SerializedGraphString( bool have_backends );

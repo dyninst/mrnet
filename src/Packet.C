@@ -257,6 +257,10 @@ Packet::~Packet()
         free( fmt_str );
         fmt_str = NULL;
     }
+    if( hdr != NULL ){
+        free( hdr );
+        hdr = NULL;
+    }
     if( buf != NULL ){
         free( buf );
         buf = NULL;

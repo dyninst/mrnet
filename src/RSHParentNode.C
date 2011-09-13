@@ -166,7 +166,9 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
                 }
             }
         }
+        delete cur_sg;
     }
+    delete my_sg;
 
     mrn_dbg_func_end();
     return 0;

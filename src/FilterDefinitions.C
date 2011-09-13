@@ -1245,7 +1245,7 @@ void tfilter_TopoUpdate_common( bool upstream,
     Rank *prank_arr, *crank_arr, *rprank_arr, *rcrank_arr;
     char **chost_arr, **rchost_arr;
     Port *cport_arr, *rcport_arr;
-    unsigned arr_len, rarr_len = 0;
+    unsigned i, arr_len, rarr_len = 0;
  
     string format_string;
 
@@ -1257,6 +1257,22 @@ void tfilter_TopoUpdate_common( bool upstream,
     vector< unsigned > iarray_lens;
 
     NetworkTopology* nettop = net->get_NetworkTopology();
+
+    unsigned int strm_id = ipackets[0]->get_StreamId();
+
+    bool gen_output = true;
+    if( strm_id != PORT_STRM_ID ) {
+        if( upstream ) {
+            if( net->is_LocalNodeFrontEnd() ) {
+                gen_output = false;
+            }
+        }
+        else {
+            if( net->is_LocalNodeBackEnd() ) {
+                gen_output = false;
+            }
+        }
+    }
 
     /* Process each input packet
      *   5 parallel arrays: type, parent rank, child rank, child host, child port
@@ -1270,7 +1286,7 @@ void tfilter_TopoUpdate_common( bool upstream,
     icport_arr.reserve( nreserve );
     iarray_lens.reserve( nreserve );
     
-    for( unsigned int i = 0; i < npackets; i++ ) {
+    for( i = 0; i < npackets; i++ ) {
      
 	PacketPtr cur_packet( ipackets[i] );
 
@@ -1302,7 +1318,6 @@ void tfilter_TopoUpdate_common( bool upstream,
     int rank_size = sizeof(Rank);
     int charptr_size = sizeof(char*);
 
-    unsigned int strm_id = ipackets[0]->get_StreamId();
     if( strm_id == PORT_STRM_ID ) {
 
         if( net->is_LocalNodeInternal() ) {
@@ -1348,7 +1363,7 @@ void tfilter_TopoUpdate_common( bool upstream,
     // Aggregating input packets to one large update array
     unsigned arr_pos=0;
 
-    for(unsigned int i = 0; i < itype_arr.size(); i++ ) {
+    for( i = 0; i < itype_arr.size(); i++ ) {
      
 	unsigned iarr_len = iarray_lens[i];
 
@@ -1395,7 +1410,7 @@ void tfilter_TopoUpdate_common( bool upstream,
     bool update_table = false;
 
     // Apply updates to NetworkTopology object
-    for( unsigned int i=0; i < rarr_len; i++ ) {
+    for( i = 0; i < rarr_len; i++ ) {
         switch( rtype_arr[i] ) {
 
           case NetworkTopology::TOPO_NEW_BE :
@@ -1429,28 +1444,13 @@ void tfilter_TopoUpdate_common( bool upstream,
         }
     }
 
-    if(update_table)
+    if( update_table )
         nettop->update_Router_Table();
 
     if( new_nodes.size() && (! net->is_LocalNodeBackEnd()) )
         nettop->update_TopoStreamPeers( new_nodes );
 
-    bool gen_output = true;
-    if( strm_id != PORT_STRM_ID ) {
-        if( upstream ) {
-            if( net->is_LocalNodeFrontEnd() ) {
-                gen_output = false;
-            }
-        }
-        else {
-            if( net->is_LocalNodeBackEnd() ) {
-                gen_output = false;
-            }
-        }
-    }
-
     if( gen_output ) {
-
         // Create output packet
         opacket = PacketPtr( new Packet(ipackets[0]->get_StreamId(),
                                         ipackets[0]->get_Tag(),
@@ -1461,6 +1461,18 @@ void tfilter_TopoUpdate_common( bool upstream,
 
         // tell MRNet to free arrays
         opacket->set_DestroyData(true);
+    }
+    else {
+        // free the arrays
+        if( rarr_len ) {
+            free( rtype_arr );
+            free( rprank_arr );
+            free( rcrank_arr );
+            free( rcport_arr );
+            for( i = 0; i < rarr_len; i++ )
+                free( rchost_arr[i] );
+            free( rchost_arr );
+        }
     }
 }
 

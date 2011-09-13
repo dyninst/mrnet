@@ -241,6 +241,7 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ) const
 
     // exit recv/EDT thread
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
+    _network->free_ThreadState();
     XPlat::Thread::Exit(NULL);
 
     return 0;

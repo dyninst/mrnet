@@ -63,6 +63,18 @@ void ParsedGraph::Node::print_Node( FILE * ifd, unsigned int idepth )
  * ParsedGraph
  **************************************************/
 
+ParsedGraph::~ParsedGraph(void)
+{ 
+    _next_node_rank = 0;
+    _root = NULL;
+
+    std::map< std::string, Node * >::iterator niter = _nodes.begin();
+    for( ; niter != _nodes.end(); niter++ )
+        delete niter->second;
+    _nodes.clear();
+
+}
+
 void ParsedGraph::add_Node(Node* new_node)
 {
     char local_rank_str[128];

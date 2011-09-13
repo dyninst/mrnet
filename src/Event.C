@@ -100,10 +100,10 @@ void EventPipe::clear(void)
 }
 
 // static Event members
-EventClass Event::EVENT_CLASS_ALL = -1;
-EventClass Event::DATA_EVENT      = 0;
-EventClass Event::TOPOLOGY_EVENT  = 1;
-EventClass Event::ERROR_EVENT     = 2;
+const EventClass Event::EVENT_CLASS_ALL = 0;
+const EventClass Event::DATA_EVENT      = 1;
+const EventClass Event::TOPOLOGY_EVENT  = 2;
+const EventClass Event::ERROR_EVENT     = 3;
 
 EventType Event::EVENT_TYPE_ALL = -1;
 
@@ -208,7 +208,32 @@ Event* EventMgr::get_NextEvent()
 void EventMgr::clear_Events()
 {
     data_sync.Lock();
+
+    std::list< Event* >::iterator eiter = _evts.begin();
+    for( ; eiter != _evts.end(); eiter++ ) {
+        if( *eiter != NULL ) {
+            Event* evt = *eiter;
+            EventData* evt_data = evt->get_Data();
+            if( evt_data != NULL ) {
+                EventClass c = evt->get_Class();
+                switch( c ) {
+                case Event::DATA_EVENT:
+                    delete (DataEvent::DataEventData*) evt_data;
+                    break;
+                case Event::TOPOLOGY_EVENT:
+                    delete (TopologyEvent::TopolEventData*) evt_data;
+                    break;
+                case Event::ERROR_EVENT:
+                    delete (ErrorEvent::ErrorEventData*) evt_data;
+                    break;
+                }
+            }
+            delete evt;
+        }
+    }
+
     _evts.clear();
+
     data_sync.Unlock();
 }
 

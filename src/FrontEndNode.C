@@ -25,7 +25,9 @@ FrontEndNode::FrontEndNode( Network * inetwork, std::string const& ihostname, Ra
     inetwork->set_LocalRank( _rank );
     inetwork->set_FrontEndNode( this );
     inetwork->set_NetworkTopology( new NetworkTopology( inetwork, _hostname, _port, _rank ));
+#if 0
     inetwork->set_FailureManager( new CommunicationNode( _hostname, _port, _rank ) );
+#endif
     
     mrn_dbg( 5, mrn_printf(FLF, stderr, "starting EventDetectionThread\n" ));
     if( EventDetector::start( inetwork ) == false ) {

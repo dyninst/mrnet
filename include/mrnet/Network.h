@@ -216,6 +216,7 @@ protected:
 
     void init_ThreadState( node_type_t node_type,
                            const char* thread_name = NULL );
+    void free_ThreadState(void);
 
     void disable_FailureRecovery(void);
     void enable_FailureRecovery(void);
@@ -323,6 +324,7 @@ protected:
     CommunicationNode * new_EndPoint( std::string& hostname, Port port, Rank rank );
     bool insert_EndPoint( std::string& hostname, Port port, Rank rank );
     bool remove_EndPoint( Rank irank );
+    void clear_EndPoints(void);
 
     PeerNodePtr new_PeerNode( std::string const& ihostname, Port iport,
                               Rank irank, bool iis_upstream,
@@ -361,6 +363,8 @@ protected:
     std::map< unsigned int, Stream* > _streams;
     std::map< Rank, CommunicationNode* > _end_points;
     std::map< unsigned int, Stream* >::iterator _stream_iter;
+
+    std::vector< Stream* > _internal_streams;
 
     bool _threaded;
     bool _recover_from_failures;

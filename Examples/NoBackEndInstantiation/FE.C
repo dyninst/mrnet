@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "mrnet/MRNet.h"
+#include "xplat/Mutex.h"
 #include "header.h"
 
 using namespace MRN;
@@ -16,11 +17,18 @@ using namespace std;
 
 int num_callbacks = 0;
 
-void BE_Add_Callback( Event* evt, void* )
+static XPlat::Mutex cb_lock;
+void BE_Add_Callback( Event* evt, void* evt_data )
 {
     if( (evt->get_Class() == Event::TOPOLOGY_EVENT) &&
-        (evt->get_Type() == TopologyEvent::TOPOL_ADD_BE) )
+        (evt->get_Type() == TopologyEvent::TOPOL_ADD_BE) ) {
+        cb_lock.Lock();
         num_callbacks++;
+        cb_lock.Unlock();
+
+        TopologyEvent::TopolEventData* ted = (TopologyEvent::TopolEventData*) evt_data;
+        delete ted;
+    }
 }
 
 void write_be_connections(vector< NetworkTopology::Node * >& leaves, unsigned num_be)
@@ -102,13 +110,17 @@ int main(int argc, char **argv)
 
     // Wait for backends to attach
     unsigned int waitfor_count = num_backends * num_be_thrds;
-    fprintf( stdout, "Please start backends now.\n\nWaiting for %u backends to connect ...", 
+    fprintf( stdout, "Please start backends now.\n\nWaiting for %u backends to connect\n", 
              waitfor_count );
     fflush(stdout);
+    unsigned curr_count = 0;
     do {
         sleep(1);
-    } while( num_callbacks != waitfor_count );
-    fprintf( stdout, "complete!\n");
+        cb_lock.Lock();
+        curr_count = num_callbacks;
+        cb_lock.Unlock();
+    } while( curr_count != waitfor_count );
+    fprintf( stdout, "All %u backends have attached!\n", waitfor_count);
 
     // A simple broadcast/gather
     comm_BC = net->get_BroadcastCommunicator();
@@ -144,6 +156,9 @@ int main(int argc, char **argv)
         printf("stream::send_exit() failure\n");
         return -1;
     }
+
+    sleep(1);
+    delete stream;
   
     // The Network destructor causes internal and leaf nodes to exit
     delete net;
