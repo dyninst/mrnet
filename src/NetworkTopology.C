@@ -337,6 +337,26 @@ NetworkTopology::NetworkTopology( Network *inetwork, SerialGraph & isg )
     reset( sg_str );
 }
 
+NetworkTopology::~NetworkTopology(void)
+{
+    string empty(NULL_STRING);
+    reset( empty, false ); // deletes the nodes
+
+    _sync.Lock();
+
+    _network = NULL;
+    if( _serial_graph != NULL ) {
+        delete _serial_graph;
+        _serial_graph = NULL;
+    }
+    if( _router != NULL ) {
+        delete _router;
+        _router = NULL;
+    }
+
+    _sync.Unlock();
+}
+
 void NetworkTopology::remove_SubGraph( Node * inode )
 {
     // assumes we are holding the lock
@@ -368,9 +388,8 @@ bool NetworkTopology::add_SubGraph( Rank irank, SerialGraph & isg, bool iupdate 
     }
     else {
         retval = add_SubGraph( node, isg, false );
-
         if( iupdate )
-            _router->update_Table();
+            update_Router_Table();
     }
 
     _sync.Unlock();
@@ -379,11 +398,11 @@ bool NetworkTopology::add_SubGraph( Rank irank, SerialGraph & isg, bool iupdate 
 
 void NetworkTopology::update_Router_Table( )
 {
-
-   mrn_dbg_func_begin();
-   _router->update_Table();
-   mrn_dbg_func_end();
-
+    mrn_dbg_func_begin();
+    _sync.Lock();
+    _router->update_Table();
+    _sync.Unlock();
+    mrn_dbg_func_end();
 }
 
 bool NetworkTopology::add_SubGraph( Node * inode, SerialGraph & isg, bool iupdate )
@@ -512,7 +531,7 @@ bool NetworkTopology::remove_Node( Rank irank, bool iupdate /* = false */ )
     bool retval = remove_Node( node_to_remove );
 
     if( iupdate )
-        _router->update_Table();
+        update_Router_Table();
 
     _sync.Unlock();
     return retval;
@@ -554,7 +573,7 @@ bool NetworkTopology::set_Parent( Rank ichild_rank, Rank inew_parent_rank, bool 
     child_node->_ascendants.insert( new_parent_node );
 
     if( iupdate )
-        _router->update_Table();
+        update_Router_Table();
 
     _sync.Unlock();
     mrn_dbg_func_end();
@@ -1011,7 +1030,7 @@ bool NetworkTopology::reset( string itopology_str, bool iupdate /* =true */ )
         return true;
     }
 
-    _serial_graph->set_ToFirstChild( );
+    _serial_graph->set_ToFirstChild();
     
     mrn_dbg( 5, mrn_printf( FLF, stderr, "Root: %s:%u:%hu\n",
                             _serial_graph->get_RootHostName().c_str(),
@@ -1026,24 +1045,24 @@ bool NetworkTopology::reset( string itopology_str, bool iupdate /* =true */ )
 
 #if 0
     if( _network )
-        _network->set_FailureManager ( new CommunicationNode( _root->get_HostName(),
-                                                              FAILURE_REPORTING_PORT,
-                                                              UnknownRank) );
+        _network->set_FailureManager ( new CommunicationNode(_root->get_HostName(),
+                                                             FAILURE_REPORTING_PORT,
+                                                             UnknownRank) );
 #endif     
 
-    SerialGraph *cur_sg;
-    for( cur_sg = _serial_graph->get_NextChild( ); cur_sg;
-         cur_sg = _serial_graph->get_NextChild( ) ) {
-        if( !add_SubGraph( _root, *cur_sg, false ) ){
+    SerialGraph *cur_sg = _serial_graph->get_NextChild();
+    for( ; cur_sg; cur_sg = _serial_graph->get_NextChild() ) {
+        if( ! add_SubGraph(_root, *cur_sg, false) ){
             mrn_dbg( 1, mrn_printf(FLF, stderr, "add_SubTreeRoot() failed\n" ));
             _sync.Unlock();
             return false;
         }
+        delete cur_sg;
     }
 
     if( iupdate ) {
         if( _network )
-            _router->update_Table();
+            update_Router_Table();
     }
     _sync.Unlock();
 
@@ -1275,11 +1294,14 @@ bool NetworkTopology::send_updates_buffer()
     mrn_dbg_func_begin();
 
     if( _network->is_ShuttingDown() ) {
+        _sync.Lock();
         _updates_buffer.clear();
+        _sync.Unlock();
         mrn_dbg_func_end();
         return true;
     }
 
+    _sync.Lock();
     int vuc_size = _updates_buffer.size();
   
     if( vuc_size ) {
@@ -1301,6 +1323,7 @@ bool NetworkTopology::send_updates_buffer()
                 host_arr[i] = (*it)->chld_host;
                 crank_arr[i] = (*it)->chld_rank;
                 cport_arr[i] = (*it)->chld_port;
+                free( *it );
             } 
     
             //broadcast all topology updates
@@ -1314,16 +1337,22 @@ bool NetworkTopology::send_updates_buffer()
             s->flush();
 
             _updates_buffer.clear();
+            _sync.Unlock();
+
             free( type_arr );
             free( prank_arr );
-            free( host_arr );
             free( crank_arr );
             free( cport_arr );
+
+            for( unsigned u=0; u < vuc_size; u++ )
+                free( host_arr[u] );
+            free( host_arr );
 
             mrn_dbg_func_end();
             return true;
         }
     }
+    _sync.Unlock();
     
     mrn_dbg_func_end();
     return false;
@@ -1331,7 +1360,9 @@ bool NetworkTopology::send_updates_buffer()
 
 void NetworkTopology::insert_updates_buffer( update_contents* uc )
 {
+    _sync.Lock();
     _updates_buffer.push_back(uc);
+    _sync.Unlock();
 }
 
 void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank, 
@@ -1404,7 +1435,7 @@ void NetworkTopology::update_removeNode( Rank par_rank, Rank failed_chld_rank,
         ub->type = TOPO_REMOVE_RANK;
         ub->chld_rank = failed_chld_rank;
         ub->chld_port = UnknownPort;
-        ub->chld_host = strdup("NULL"); //ugh, this should be fixed
+        ub->chld_host = strdup(NULL_STRING); //ugh, this should be fixed
         ub->par_rank = par_rank;
         insert_updates_buffer( ub );
         
@@ -1431,7 +1462,7 @@ void NetworkTopology::update_changeParent( Rank par_rank, Rank chld_rank,
         ub->type = TOPO_CHANGE_PARENT ;
         ub->chld_rank = chld_rank;
         ub->chld_port = UnknownPort;
-        ub->chld_host = strdup("NULL"); //ugh, this should be fixed
+        ub->chld_host = strdup(NULL_STRING); //ugh, this should be fixed
         ub->par_rank = par_rank;
         insert_updates_buffer( ub );
 
@@ -1461,7 +1492,7 @@ void NetworkTopology::update_changePort( Rank chld_rank, Port chld_port,
         ub->type = TOPO_CHANGE_PORT;
         ub->chld_rank = chld_rank;
         ub->chld_port = chld_port;
-        ub->chld_host = strdup("NULL"); //ugh, this should be fixed
+        ub->chld_host = strdup(NULL_STRING); //ugh, this should be fixed
         ub->par_rank = UnknownRank;
         insert_updates_buffer( ub );
     }
