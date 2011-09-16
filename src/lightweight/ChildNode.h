@@ -14,6 +14,8 @@
 int ChildNode_init_newChildDataConnection (BackEndNode_t* be, 
                                            PeerNode_t* iparent,
                                            Rank ifailed_rank);
+int ChildNode_init_newChildEventConnection (BackEndNode_t* be, 
+                                            PeerNode_t* iparent);
 
 int ChildNode_send_SubTreeInitDoneReport(BackEndNode_t* be);
 

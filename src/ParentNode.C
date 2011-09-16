@@ -374,15 +374,18 @@ int ParentNode::proc_DeleteSubTreeAck( PacketPtr ) const
 {
     mrn_dbg_func_begin();
 
-    subtreereport_sync.Lock( );
+    subtreereport_sync.Lock();
+
     _num_children_reported++;
     mrn_dbg(3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
                           _num_children_reported, _num_children));
+
     if( _num_children_reported == _num_children ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling ALLNODESREPORTED\n"));
         subtreereport_sync.SignalCondition( ALLNODESREPORTED );
         mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling done\n"));
     }
+
     subtreereport_sync.Unlock( );
 	
     // exit recv thread from child

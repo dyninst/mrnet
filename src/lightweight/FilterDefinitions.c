@@ -96,9 +96,9 @@ void tfilter_TopoUpdate(vector_t * ipackets,
                           &prank_arr, &arr_len, &crank_arr,
                           &arr_len, &chost_arr, &arr_len, 
                           &cport_arr, &arr_len) == -1) {
-            mrn_printf(FLF, stderr, 
-                       "ERROR: tfilter_TopoUpdate() - unpack(%s) failure\n",
-                       Packet_get_FormatString(cur_packet));
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                  "ERROR: tfilter_TopoUpdate() - unpack(%s) failure\n",
+                                  Packet_get_FormatString(cur_packet)));
         } else {
             // Putting the array pointers and its length in a vector
             pushBackElement(itype_arr, type_arr);

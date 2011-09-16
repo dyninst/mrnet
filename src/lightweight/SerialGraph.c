@@ -96,7 +96,7 @@ SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* _serial_graph, char* iho
 
     new_byte_array = (char*)malloc((size_t)end+1);
     if( new_byte_array == NULL ) {
-        mrn_printf(FLF, stderr, "malloc(%zu) failed\n", end+1);
+        mrn_dbg(1, mrn_printf(FLF, stderr, "malloc(%zu) failed\n", end+1));
         exit(0);
     }    
     strncpy(new_byte_array, byte_array, end);
@@ -134,7 +134,7 @@ void SerialGraph_add_Leaf(SerialGraph_t* serial_graph, char* ihostname,
         len <<= 1;
         serial_graph->byte_array = (char*)realloc(serial_graph->byte_array, (size_t)len);
         if( serial_graph->byte_array == NULL ) {
-            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", len);
+            mrn_dbg(1, mrn_printf(FLF, stderr, "realloc(%zu) failed\n", len));
             exit(0);
         }
         serial_graph->arr_len = len;
@@ -167,7 +167,7 @@ void SerialGraph_add_SubTreeRoot(SerialGraph_t* serial_graph, char* ihostname,
         len <<= 1;
         serial_graph->byte_array = (char*)realloc(serial_graph->byte_array, (size_t)len);
         if( serial_graph->byte_array == NULL ) {
-            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", len);
+            mrn_dbg(1, mrn_printf(FLF, stderr, "realloc(%zu) failed\n", len));
             exit(0);
         }
         serial_graph->arr_len = len;
@@ -191,7 +191,7 @@ void SerialGraph_end_SubTree(SerialGraph_t* serial_graph)
         len <<= 1;
         serial_graph->byte_array = (char*) realloc(serial_graph->byte_array, (size_t)len);
         if( serial_graph->byte_array == NULL ) {
-            mrn_printf(FLF, stderr, "realloc(%zu) failed\n", len);
+            mrn_dbg(1, mrn_printf(FLF, stderr, "realloc(%zu) failed\n", len));
             exit(0);
         }
         serial_graph->arr_len = len;

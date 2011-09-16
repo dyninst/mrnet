@@ -79,9 +79,13 @@ void delete_Network_t(Network_t * net)
     unsigned int i;
     Stream_t * cur_stream;
 
-    cleanup_local();
-
     if( net != NULL ) {
+
+        if( ! net->_was_shutdown ) {
+            // detach before shutdown
+            BackEndNode_proc_DeleteSubTree( net->local_back_end_node, 
+                                            NULL /* Packet_t* - not used */ );
+        }
 
         if( net->local_hostname != NULL )
             free( net->local_hostname );
@@ -101,7 +105,8 @@ void delete_Network_t(Network_t * net)
                caused by the use of map erase() */
             cur_stream = (Stream_t*)get_val(net->streams, 
                                             net->streams->keys[net->streams->size - 1]);
-            delete_Stream_t(cur_stream);
+            if( cur_stream != NULL )
+                delete_Stream_t(cur_stream);
         }
         delete_map_t(net->streams);
 
@@ -110,6 +115,8 @@ void delete_Network_t(Network_t * net)
 
     if( MRN_DEBUG_LOG_DIRECTORY != NULL )
         free( MRN_DEBUG_LOG_DIRECTORY );      
+
+    cleanup_local();
 }
 
 char* Network_get_LocalHostName(Network_t* net) {
@@ -262,7 +269,9 @@ Packet_t* Network_recv_stream_check(Network_t* net)
     Stream_t* cur_stream;
     Packet_t* cur_packet = NULL;
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "calling Network_have_Streams()\n"));
+    mrn_dbg_func_begin();
+
+    /* mrn_dbg(5, mrn_printf(FLF, stderr, "calling Network_have_Streams()\n")); */
     if( Network_have_Streams(net) ) {
     
         packet_found = false;
@@ -274,17 +283,18 @@ Packet_t* Network_recv_stream_check(Network_t* net)
             // which is an index into the keys array
             cur_stream = (Stream_t*)get_val(net->streams, 
                                             net->streams->keys[net->stream_iter]);
-
-            mrn_dbg(5, mrn_printf(FLF, stderr,
-                                  "Checking for packets on stream[%d] id=%u ...\n",
-                                  net->stream_iter, cur_stream->id));
-            cur_packet = Stream_get_IncomingPacket(cur_stream);
-            if (cur_packet != NULL) 
-                packet_found = true;
-            mrn_dbg(5, mrn_printf(FLF, stderr, "... %s!\n", 
-                                  (packet_found ? "found" : "not found" )));
+            if( cur_stream != NULL ) {
+                mrn_dbg(5, mrn_printf(FLF, stderr,
+                                      "Checking for packets on stream[%d] id=%u ...\n",
+                                      net->stream_iter, cur_stream->id));
+                cur_packet = Stream_get_IncomingPacket(cur_stream);
+                if (cur_packet != NULL) 
+                    packet_found = true;
+                mrn_dbg(5, mrn_printf(FLF, stderr, "... %s!\n", 
+                                      (packet_found ? "found" : "not found" )));
+            }
             net->stream_iter++;
-            if (net->stream_iter == net->streams->size) {
+            if (net->stream_iter >= net->streams->size) {
                 // wrap around to the beginning of the map
                 net->stream_iter = 0;
                 mrn_dbg(5, mrn_printf(FLF, stderr,
@@ -327,6 +337,8 @@ int Network_recv(Network_t* net, int *otag,
     int checked_network = false; // have we checked sockets for input?
     Packet_t* cur_packet = NULL;
     int retval;
+
+    mrn_dbg_func_begin();
 
     // check streams for input:
  get_packet_from_stream_label: 
@@ -389,14 +401,17 @@ void Network_shutdown_Network(Network_t* net)
     
     mrn_dbg_func_begin();
 
-    net->_was_shutdown = 1;
+    if( ! net->_was_shutdown ) { 
+        net->_was_shutdown = 1;
 
-    Network_reset_Topology(net, NULL);
+        Network_reset_Topology(net, NULL);
 
-    // close streams
-    for (i = 0; i < net->streams->size; i++) {
-        cur_stream = (Stream_t*)get_val(net->streams, net->streams->keys[i]);
-        cur_stream->_was_closed = 1;
+        // close streams
+        for (i = 0; i < net->streams->size; i++) {
+            cur_stream = (Stream_t*)get_val(net->streams, net->streams->keys[i]);
+            if( cur_stream != NULL )
+                cur_stream->_was_closed = 1;
+        }
     }
 
     mrn_dbg_func_end();
@@ -520,13 +535,13 @@ void Network_delete_Stream(Network_t * net, unsigned int iid)
 
     /* if we're deleting the iter, set to the next element */
     int key = (int) iid;
-    if (key == net->streams->keys[net->stream_iter])
+    if( key == net->streams->keys[net->stream_iter] )
         net->stream_iter++;
 
     net->streams = erase(net->streams, key);
 
     // wrap around to the beginning of the map, if necessary
-    if (net->stream_iter >= net->streams->size)
+    if( net->stream_iter >= net->streams->size )
         net->stream_iter = 0;
 
     mrn_dbg_func_end();

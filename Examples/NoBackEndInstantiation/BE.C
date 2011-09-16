@@ -71,9 +71,13 @@ int main(int argc, char **argv) {
 
     } while ( tag != PROT_EXIT );
 
+#if 0 // TESTING detach before shutdown
+    delete net;
+#else    
     // wait for FE to delete the net
     net->waitfor_ShutDown();
     delete net;
+#endif
 
     return 0;
 }

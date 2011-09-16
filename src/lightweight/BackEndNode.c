@@ -58,7 +58,7 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
     inetwork->local_rank = imyrank;
     inetwork->local_back_end_node = be;
 
-    nt = new_NetworkTopology_t(inetwork, strdup(imyhostname), 
+    nt = new_NetworkTopology_t(inetwork, imyhostname, 
                                UnknownPort, imyrank, true);
     inetwork->network_topology = nt;
 
@@ -66,7 +66,7 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
     if( ChildNode_init_newChildDataConnection(be, inetwork->parent, 
                                               UnknownRank) == -1 ) {
         mrn_dbg (1, mrn_printf(FLF, stderr,
-                    "init_newBEDataConnection() failed\n"));
+                    "init_newChildDataConnection() failed\n"));
         return NULL;
     }
 
@@ -109,6 +109,14 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
             mrn_dbg( 1, mrn_printf(FLF, stderr, "ChildNode_send_SubTreeInitDoneReport() failed\n") );
         }
     } 
+
+    // establish event connection with parent
+    if( ChildNode_init_newChildEventConnection(be, inetwork->parent) == -1 ) {
+        mrn_dbg (1, mrn_printf(FLF, stderr,
+                    "init_newChildEventConnection() failed\n"));
+        return NULL;
+    }
+
     return be; 
 }
 
@@ -145,9 +153,13 @@ int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
     Network_disable_FailureRecovery(be->network);
 
     // Send ack to parent
-    if (!ChildNode_ack_DeleteSubTree(be)) {
+    if( ! ChildNode_ack_DeleteSubTree(be) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "ChildNode_ack_DeleteSubTree() failed\n"));
     }
+    
+    // close event connection
+    if( be->network->parent->event_sock_fd != 0 )
+        close(be->network->parent->event_sock_fd);
   
     // kill topology  
     Network_shutdown_Network(be->network);

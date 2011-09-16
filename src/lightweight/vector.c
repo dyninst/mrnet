@@ -23,6 +23,9 @@ vector_t* new_empty_vector_t()
     new_vector->alloc_size = 64;
     new_vector->vec = (void**) calloc( new_vector->alloc_size, sizeof(void*) );
     assert( new_vector->vec != NULL );
+
+/*     mrn_dbg(5, mrn_printf(FLF, stderr, */
+/*                           "new_vector_t() = %p, vec->vec = %p\n", new_vector, new_vector->vec)); */
     
     return new_vector;
 }
@@ -85,6 +88,9 @@ void delete_vector_t(vector_t* vector)
     /* because elements stored are pointers, they might be in use 
        elsewhere, so don't free */
 
+/*     mrn_dbg(5, mrn_printf(FLF, stderr, */
+/*                           "delete_vector_t() = %p, vec->vec = %p\n", vector, vector->vec)); */
+    
     if( vector->vec != NULL )
         free(vector->vec);
 

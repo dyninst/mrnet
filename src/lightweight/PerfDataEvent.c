@@ -46,24 +46,29 @@ PerfDataMgr_t* new_PerfDataMgr_t()
 {
     unsigned int i;
     mrn_map_t* newmap;
-    PerfDataMgr_t* newperf = (PerfDataMgr_t*)malloc(sizeof(PerfDataMgr_t));
-    assert(newperf != NULL);
-    newperf->the_data = new_empty_vector_t();
-    memset(newperf->active_metrics, 0, sizeof(newperf->active_metrics));
+    PerfDataMgr_t* newmgr = (PerfDataMgr_t*) calloc(1, sizeof(PerfDataMgr_t));
+    assert(newmgr != NULL);
+    newmgr->the_data = new_empty_vector_t();
+/*     mrn_dbg(5, mrn_printf(FLF, stderr, "new_PerfDataMgr_t() = %p, mgr->the_data = %p\n", newmgr, newmgr->the_data)); */
+    memset(newmgr->active_metrics, 0, sizeof(newmgr->active_metrics));
     for (i = 0; i < PERFDATA_MAX_CTX; i++) {
         newmap = new_map_t();
-        pushBackElement(newperf->the_data, newmap);
+        pushBackElement(newmgr->the_data, newmap);
     }
-    return newperf;
+    return newmgr;
 }
 
 void delete_PerfDataMgr_t( PerfDataMgr_t* mgr )
 {
+    mrn_map_t* amap;
     unsigned int i;
     if( mgr != NULL ) {
+/*         mrn_dbg(5, mrn_printf(FLF, stderr, "delete_PerfDataMgr_t() = %p, mgr->the_data = %p\n", mgr, mgr->the_data)); */
         if( mgr->the_data != NULL ) {
-            for (i = 0; i < mgr->the_data->size; i++) 
-                delete_map_t( (mrn_map_t*)(mgr->the_data->vec[i]) );
+            for (i = 0; i < mgr->the_data->size; i++) {
+                amap = (mrn_map_t*)(mgr->the_data->vec[i]);
+                delete_map_t(amap);
+            }
             delete_vector_t( mgr->the_data );
         }
         free( mgr );
@@ -288,14 +293,14 @@ void PerfDataMgr_print(PerfDataMgr_t* perf_data,
 
     for (k = 0; k < data->size; k++) {
         if (mi->type == PERFDATA_TYPE_UINT) {
-            mrn_printf(FLF, stderr, "%s %u %s\n",
-                    report, ((perfdata_t*)data->vec[k])->u, mi->units);
+            mrn_dbg(1, mrn_printf(FLF, stderr, "%s %u %s\n",
+                    report, ((perfdata_t*)data->vec[k])->u, mi->units));
         } else if (mi->type == PERFDATA_TYPE_INT) {
-            mrn_printf(FLF, stderr, "%s %i %s\n",
-                    report, ((perfdata_t*)data->vec[k])->i, mi->units);
+            mrn_dbg(1, mrn_printf(FLF, stderr, "%s %i %s\n",
+                    report, ((perfdata_t*)data->vec[k])->i, mi->units));
         } else if (mi->type == PERFDATA_TYPE_FLOAT) {
-            mrn_printf(FLF, stderr, "%s %lf %s\n",
-                    report, ((perfdata_t*)data->vec[k])->d, mi->units);
+            mrn_dbg(1, mrn_printf(FLF, stderr, "%s %lf %s\n",
+                    report, ((perfdata_t*)data->vec[k])->d, mi->units));
         }
     }
     if (report != NULL)

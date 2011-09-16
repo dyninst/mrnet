@@ -29,7 +29,7 @@ Node_t* new_Node_t(char* ihostname,
   
     Node_t* node = (Node_t*) calloc( (size_t)1, sizeof(Node_t) );
     assert( node != NULL );
-    node->hostname = ihostname;
+    node->hostname = strdup( ihostname );
     node->port = iport;
     node->rank = irank;
     node->failed = false;
@@ -100,15 +100,21 @@ void delete_NetworkTopology_t( NetworkTopology_t* net_top )
             delete_Node_t( tmp_node );
         }
         delete_map_t(net_top->nodes);
+	net_top->nodes = NULL;
 
         // delete the vectors
         delete_vector_t(net_top->orphans);
+        net_top->orphans = NULL;
         delete_vector_t(net_top->backend_nodes);
+        net_top->backend_nodes = NULL;
         delete_vector_t(net_top->parent_nodes);
+        net_top->parent_nodes = NULL;
 
         // delete the serial graph
-        delete_SerialGraph_t( net_top->serial_graph );
-        
+	if( net_top->serial_graph != NULL ) {
+            delete_SerialGraph_t( net_top->serial_graph );
+            net_top->serial_graph = NULL;
+        }
         free( net_top );
     }
 }
@@ -235,8 +241,9 @@ int NetworkTopology_reset(NetworkTopology_t* net_top, SerialGraph_t* isg)
 
     sg_str = SerialGraph_get_ByteArray(isg);
     mrn_dbg(5, mrn_printf(FLF, stderr, "Reseting topology to '%s'\n", sg_str)); 
-                     
-    delete_SerialGraph_t( net_top->serial_graph );
+    
+    if( net_top->serial_graph != NULL )
+        delete_SerialGraph_t( net_top->serial_graph );
     net_top->serial_graph = isg;
 
     // delete all Node_t in nodes map, then clear the map
@@ -264,7 +271,9 @@ int NetworkTopology_reset(NetworkTopology_t* net_top, SerialGraph_t* isg)
            
     net_top->root = NetworkTopology_new_Node(net_top, host, port, rank, 
                                              SerialGraph_is_RootBackEnd(isg));
-    
+    if( host != NULL )
+        free(host);
+
     cur_sg = SerialGraph_get_NextChild(isg);
     for( ; cur_sg != NULL; cur_sg = SerialGraph_get_NextChild(isg) ) {
 
@@ -284,6 +293,7 @@ int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode,
 {
     Node_t *node;
     SerialGraph_t* cur_sg;
+    char* host;
     Rank r;
     
     mrn_dbg_func_begin();
@@ -298,11 +308,14 @@ int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode,
     if (node == NULL) {
         // Not found! allocate
         mrn_dbg(5, mrn_printf(FLF, stderr, "node==NULL, about to allocate\n"));
+        host = SerialGraph_get_RootHostName(isg);
         node = NetworkTopology_new_Node(net_top,
-                                        SerialGraph_get_RootHostName(isg),
+                                        host,
                                         SerialGraph_get_RootPort(isg),
                                         SerialGraph_get_RootRank(isg),
                                         SerialGraph_is_RootBackEnd(isg));
+        if( host != NULL )
+            free(host);
     }
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%u] as child of node[%u]\n", 

@@ -58,6 +58,25 @@ int PeerNode_connect_DataSocket(PeerNode_t* parent)
     return 0;
 }
 
+int PeerNode_connect_EventSocket(PeerNode_t* parent) 
+{
+    mrn_dbg(3, mrn_printf(FLF, stderr, 
+                          "Creating event conection to (%s:%d) ...\n", 
+                          parent->net->local_hostname, parent->net->local_port));
+
+    if( connectHost(&(parent->event_sock_fd), parent->hostname, 
+                    parent->port, -1) == -1 ) { 
+        error (ERR_SYSTEM, parent->net->local_rank, "connectHost() failed" );
+        mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost() failed\n"));
+        return -1;
+    }
+
+    mrn_dbg(3, mrn_printf(FLF, stderr, "new event socket %d\n", 
+                          parent->event_sock_fd));
+
+    return 0;
+}
+
 // don't use this one--intended for non-blocking send
 int PeerNode_send(PeerNode_t* peer, /*const*/ Packet_t* ipacket)
 {

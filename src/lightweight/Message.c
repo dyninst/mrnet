@@ -11,6 +11,7 @@
 
 #include "mrnet_lightweight/MRNet.h"
 #include "Message.h"
+#include "Protocol.h"
 #include "utils_lightweight.h"
 #include "vector.h"
 
@@ -232,7 +233,7 @@ int Message_send(Message_t* msg_out, int sock_fd)
     PDR pdrs;
     enum pdr_op op = PDR_ENCODE;
     NCBuf_t* ncbufs;
-    int total_bytes, err, sret;
+    int total_bytes, err, sret, go_away = 0;
     ssize_t mcwret;
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Sending packets from message %p\n", msg_out));
@@ -241,6 +242,10 @@ int Message_send(Message_t* msg_out, int sock_fd)
         mrn_dbg(3, mrn_printf(FLF, stderr, "Nothing to send!\n"));
         return 0;
     }
+
+    if( (msg_out->packet->tag == PROT_SHUTDOWN) || 
+        (msg_out->packet->tag == PROT_SHUTDOWN_ACK) )
+        go_away = 1;
 
     //
     // pre-processing
@@ -342,6 +347,9 @@ int Message_send(Message_t* msg_out, int sock_fd)
         return -1;
     }
     free(ncbufs);
+
+    if( go_away )
+        close(sock_fd);
 
     mrn_dbg_func_end();
     return 0;

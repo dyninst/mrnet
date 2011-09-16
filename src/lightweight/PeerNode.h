@@ -41,6 +41,7 @@ typedef struct PeerNode_t PeerNode_t;
 Rank PeerNode_get_Rank(PeerNode_t* node);
 
 int PeerNode_connect_DataSocket(PeerNode_t* parent);
+int PeerNode_connect_EventSocket(PeerNode_t* parent);
 
 int PeerNode_send(PeerNode_t* peer,  Packet_t* ipacket);
 

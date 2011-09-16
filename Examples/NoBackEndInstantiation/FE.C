@@ -15,7 +15,8 @@
 using namespace MRN;
 using namespace std;
 
-int num_callbacks = 0;
+int num_attach_callbacks = 0;
+int num_detach_callbacks = 0;
 
 static XPlat::Mutex cb_lock;
 void BE_Add_Callback( Event* evt, void* evt_data )
@@ -23,7 +24,19 @@ void BE_Add_Callback( Event* evt, void* evt_data )
     if( (evt->get_Class() == Event::TOPOLOGY_EVENT) &&
         (evt->get_Type() == TopologyEvent::TOPOL_ADD_BE) ) {
         cb_lock.Lock();
-        num_callbacks++;
+        num_attach_callbacks++;
+        cb_lock.Unlock();
+
+        TopologyEvent::TopolEventData* ted = (TopologyEvent::TopolEventData*) evt_data;
+        delete ted;
+    }
+}
+void BE_Remove_Callback( Event* evt, void* evt_data )
+{
+    if( (evt->get_Class() == Event::TOPOLOGY_EVENT) &&
+        (evt->get_Type() == TopologyEvent::TOPOL_REMOVE_NODE) ) {
+        cb_lock.Lock();
+        num_detach_callbacks++;
         cb_lock.Unlock();
 
         TopologyEvent::TopolEventData* ted = (TopologyEvent::TopolEventData*) evt_data;
@@ -98,6 +111,14 @@ int main(int argc, char **argv)
         delete net;
         return -1;
     }
+    cbrett = net->register_EventCallback( Event::TOPOLOGY_EVENT,
+                                          TopologyEvent::TOPOL_REMOVE_NODE,
+                                          BE_Remove_Callback, NULL );
+    if(cbrett == false) {
+        fprintf( stdout, "Failed to register callback for back-end remove topology event\n");
+        delete net;
+        return -1;
+    }
 
     // Query net for topology object
     NetworkTopology * topology = net->get_NetworkTopology();
@@ -117,7 +138,7 @@ int main(int argc, char **argv)
     do {
         sleep(1);
         cb_lock.Lock();
-        curr_count = num_callbacks;
+        curr_count = num_attach_callbacks;
         cb_lock.Unlock();
     } while( curr_count != waitfor_count );
     fprintf( stdout, "All %u backends have attached!\n", waitfor_count);
@@ -158,8 +179,22 @@ int main(int argc, char **argv)
     }
 
     sleep(1);
-    delete stream;
-  
+    //delete stream;
+
+#if 0 // TESTING detach before shutdown
+    fprintf( stdout, "Waiting for %u backends to detach\n", 
+             waitfor_count );
+    fflush(stdout);
+    curr_count = 0;
+    do {
+        sleep(1);
+        cb_lock.Lock();
+        curr_count = num_detach_callbacks;
+        cb_lock.Unlock();
+    } while( curr_count != waitfor_count );
+    fprintf( stdout, "All %u backends have detached!\n", waitfor_count);
+#endif
+
     // The Network destructor causes internal and leaf nodes to exit
     delete net;
 

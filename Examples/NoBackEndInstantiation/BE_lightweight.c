@@ -29,8 +29,7 @@ int main(int argc, char **argv) {
     fprintf( stderr, "Backend %s[%d] connecting to %s:%d\n",
              myHostname, myRank, parHostname, parPort );
     
-    Packet_t* p = (Packet_t*)malloc(sizeof(Packet_t));
-    assert(p);
+    Packet_t* p = (Packet_t*) calloc( (size_t)1, sizeof(Packet_t) );
 
     Network_t* net = Network_CreateNetworkBE(argc, argv);
     assert(net);
@@ -78,15 +77,15 @@ int main(int argc, char **argv) {
         fflush(stderr);
 
     } while ( tag != PROT_EXIT );
-    
 
-    if (p != NULL)
-        free(p);
-    
+#if 0 // TESTING delete_Network_t as detach before shutdown
+    delete_Network_t(net);
+#else    
     // wait for final teardown packet from FE
     Network_waitfor_ShutDown(net);
     if (net != NULL )
         delete_Network_t(net);
+#endif
 
     return 0;
 }

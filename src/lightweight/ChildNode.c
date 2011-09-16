@@ -93,6 +93,46 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
     return 0;
 }
 
+int ChildNode_init_newChildEventConnection(BackEndNode_t* be, 
+                                           PeerNode_t* iparent) 
+{
+    int retval = 0;
+    char *topo_ptr;
+    Packet_t* packet;
+    const char* fmt_str = "%s %uhd %ud";
+
+    mrn_dbg_func_begin();
+
+    // establish data detection connect with new parent
+    if( PeerNode_connect_EventSocket(iparent) == -1 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "PeerNode_connect_data_socket() failed\n"));
+        return -1;
+    }
+
+    packet = new_Packet_t_2(CTL_STRM_ID, 
+                            PROT_NEW_CHILD_FD_CONNECTION, 
+                            fmt_str,
+                            strdup(be->myhostname),
+                            be->myport,
+                            be->myrank);
+  
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Initializing new Child FD Connection\n\n" ));
+  
+    iparent->msg_out.packet = packet;  
+    if( Message_send(&(iparent->msg_out), iparent->event_sock_fd) == -1 ) { 
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Message_send() failed\n"));
+        retval = -1;
+    }
+
+    Packet_set_DestroyData( packet, true );
+    delete_Packet_t( packet );
+     
+    mrn_dbg_func_end();
+
+    return retval;
+}
+
 int ChildNode_send_SubTreeInitDoneReport(BackEndNode_t* be)
 {
     Packet_t * packet;
