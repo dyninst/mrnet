@@ -159,6 +159,7 @@ public:
     XTNetwork( bool,
                int topoPipeFd = -1,
                Port topoPort = -1,
+               int timeOut = -1,
                int beArgc = 0,
                char** beArgv = NULL );
 

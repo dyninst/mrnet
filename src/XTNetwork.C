@@ -108,7 +108,7 @@ Network::CreateNetworkIN( int argc, char** argv )
     if( argc > 0 ) {
         if( strcmp(argv[0], topofd_optstr) == 0 ) {
             // we are NOT the first process on this node
-            /* passed the FD of a pipe from which we 
+            /* we were passed the FD of a pipe from which we 
                can read the topology */
             topoPipeFd = (int)strtol( argv[1], NULL, 10 );
             beArgc = argc - 2;
@@ -140,10 +140,7 @@ Network::CreateNetworkIN( int argc, char** argv )
 
     Port topoPort = XTNetwork::FindTopoPort(port);
     Network* net = new XTNetwork( true, topoPipeFd, topoPort,
-                                  beArgc, beArgv ); 
-
-    if( timeout != -1 )
-        net->_startup_timeout = timeout;
+                                  timeout, beArgc, beArgv ); 
 
     return net;
 }
@@ -401,11 +398,15 @@ XTNetwork::PropagateTopology( int topoFd,
 XTNetwork::XTNetwork( bool, /* dummy for distinguising from other constructors */ 
                       int topoPipeFd /*= -1*/,
                       Port topoPort /*= -1*/,
+                      int timeOut /*= -1*/,
 		      int beArgc /*= 0*/,
 		      char** beArgv /*= NULL*/ )
     : alps_apid((uint64_t)-1)
 {
     mrn_dbg_func_begin();
+
+    if( timeOut != -1 )
+        _startup_timeout = timeOut;
 
     // ensure we know our node's hostname
     set_LocalHostName( GetNodename(GetLocalNid()) );
