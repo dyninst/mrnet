@@ -23,7 +23,7 @@ int hash_key(int key)
 
 mrn_map_t* new_map_t()
 {
-    mrn_map_t* new_map = (mrn_map_t*) malloc( sizeof(mrn_map_t) );
+    mrn_map_t* new_map = (mrn_map_t*) calloc( (size_t)1, sizeof(mrn_map_t) );
     assert(new_map);
 
     new_map->root = NULL;
@@ -31,23 +31,30 @@ mrn_map_t* new_map_t()
     new_map->alloc_size = 8;
     new_map->keys = (int*) calloc( new_map->alloc_size, sizeof(int) );
     assert( new_map->keys != NULL );
-
+    
+/*     mrn_dbg(5, mrn_printf(FLF, stderr,  */
+/*                           "new_map_t() = %p, map->keys = %p\n", new_map, new_map->keys)); */
     return new_map;
 }
 
 void delete_map_nodes(map_node_t* root)
 {
-    if( root != NULL ) {
-        delete_map_nodes(root->left);
-        delete_map_nodes(root->right);
-        // we don't free map node values, just nodes
-        free(root);
-        root = NULL;
-    }
+    if( root == NULL ) return;
+
+    delete_map_nodes(root->left);
+    delete_map_nodes(root->right);
+    // we don't free map node values, just nodes
+    free(root);
+    root = NULL;
 }
 
 void delete_map_t(mrn_map_t* map)
 {
+    if( map == NULL ) return;
+
+/*     mrn_dbg(5, mrn_printf(FLF, stderr,  */
+/*                           "delete_map_t() = %p, map->root = %p, map->keys = %p\n", map, map->root, map->keys)); */
+
     delete_map_nodes(map->root);
 
     if( map->keys != NULL )
@@ -87,8 +94,8 @@ map_node_t* insert_recursive(map_node_t* root, int key, int hashed_key, void* va
     else { // check if we need to insert into left subtree or right subtree
 
         if (hashed_key == root->hashed_key) {
-            mrn_printf(FLF, stderr, 
-                       "Cannot have multiple map entries with same key %d\n", key);
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                  "Cannot have multiple map entries with same key %d\n", key));
             return NULL;
         }
         else if (hashed_key < root->hashed_key) {
@@ -162,6 +169,8 @@ mrn_map_t* erase(mrn_map_t* map, int key)
     unsigned int i;
     int hashed_key = hash_key( key );
 
+    mrn_dbg(5, mrn_printf(FLF, stderr, "map %p erase(key=%d)\n", map, key));
+
 #ifdef OLD_ERASE_BY_NEW_MAP_INSERT
     mrn_map_t* new_map = new_map_t();
 
@@ -182,6 +191,8 @@ mrn_map_t* erase(mrn_map_t* map, int key)
     map_node_t* tmp = NULL;
     char found = 0;
 
+    /* mrn_dbg(5, mrn_printf(FLF, stderr, "erasing map node with key %d, map->size=%zd\n", key, map->size)); */
+
     // remove from keys
     for( i = 0; i < map->size; i++ ) {
         if( map->keys[i] == key ) {
@@ -195,9 +206,11 @@ mrn_map_t* erase(mrn_map_t* map, int key)
     }
     
     if( found == 0 ) { // not found, we're done
-        mrn_dbg(5, mrn_printf(FLF, stderr, "map node with key %d not found\n", key));
+        mrn_dbg(3, mrn_printf(FLF, stderr, "map node with key %d not found\n", key));
         return map;
     }
+
+    
 
     map->size--;
 
@@ -219,30 +232,49 @@ mrn_map_t* erase(mrn_map_t* map, int key)
         free( target );
     }
     else {
-        // Case 2: has left subtree, promote it
-        if( target->left != NULL )
-            tmp = target->left;
-
-        // Case 3: has right subtree, promote it
-        else if( target->right != NULL )
-            tmp = target->right;
-
-        // Case 4: has left and right subtrees, 
+        // Case 2: has left and right subtrees, 
         //         promote rightmost descendant of left subtree
-        else {
+        if( (target->left != NULL) && (target->right != NULL) ) {
             tmp = target->left;
-            while( tmp->right != NULL )
+            parent = target;
+            while( tmp->right != NULL ) {
+                parent = tmp;
                 tmp = tmp->right;
-        }
+            }
+            /* mrn_dbg(5, mrn_printf(FLF, stderr, "replacing erased map node with rightmost descendant of left subtree whose key=%d\n", tmp->key)); */
             
+            if( parent->left == tmp ) {
+                parent->left = tmp->left;
+                /* mrn_dbg(5, mrn_printf(FLF, stderr, "moving tmp->left to parent->left\n")); */
+            }
+            else {
+                parent->right = tmp->left;
+                /* mrn_dbg(5, mrn_printf(FLF, stderr, "moving tmp->left to parent->right\n")); */
+            }            
+        }   
+        // Case 3: has left subtree, promote it
+        else if( target->left != NULL ) {
+            tmp = target->left;
+            target->left = tmp->left;
+            target->right = tmp->right;
+            /* mrn_dbg(5, mrn_printf(FLF, stderr, "replacing erased map node with left subtree\n")); */
+        }
+        // Case 4: has right subtree, promote it
+        else if( target->right != NULL ) {
+            tmp = target->right;
+            target->left = tmp->left;
+            target->right = tmp->right;
+            /* mrn_dbg(5, mrn_printf(FLF, stderr, "replacing erased map node with right subtree\n")); */
+        }
         // move tmp data to target, free tmp
+        mrn_dbg(5, mrn_printf(FLF, stderr, "replacing erased map node with key %d with map node with key %d\n", target->key, tmp->key));
         target->key = tmp->key;
         target->hashed_key = tmp->hashed_key;
         target->val = tmp->val;
-        target->left = tmp->left;
-        target->right = tmp->right;
         free(tmp);
     }
+
+    /* mrn_dbg(5, mrn_printf(FLF, stderr, "after erasing map node with key %d, map->size=%zd\n", key, map->size)); */
         
     print(map);
     return map;
