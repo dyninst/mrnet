@@ -490,6 +490,11 @@ int Network::get_StartupTimeout(void)
     return _startup_timeout;
 }
 
+void Network::set_StartupTimeout( int new_timeout )
+{
+    _startup_timeout = new_timeout;
+}
+
 void Network::update_BcastCommunicator(void)
 {
     //add end-points to broadcast communicator

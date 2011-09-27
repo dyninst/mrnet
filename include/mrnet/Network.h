@@ -228,6 +228,7 @@ protected:
     virtual void init_NetSettings(void);
     
     int get_StartupTimeout(void);
+    void set_StartupTimeout( int new_timeout );
 
  private:
     friend class Stream;

@@ -406,7 +406,7 @@ XTNetwork::XTNetwork( bool, /* dummy for distinguising from other constructors *
     mrn_dbg_func_begin();
 
     if( timeOut != -1 )
-        _startup_timeout = timeOut;
+        set_StartupTimeout( timeOut );
 
     // ensure we know our node's hostname
     set_LocalHostName( GetNodename(GetLocalNid()) );
