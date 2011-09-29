@@ -242,7 +242,7 @@ void XTNetwork::init_NetSettings(void)
             char* lib_path = getenv(ldlibpath);
             if( lib_path != NULL )
                 pathlen = strlen(lib_path);
-            char *new_lib_path = (char*) malloc( pathlen + ath_dir.length() );
+            char *new_lib_path = (char*) malloc( pathlen + ath_dir.length() + 2 );
             if( new_lib_path == NULL ) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "malloc(new_lib_path) failed\n"));
                 return;
@@ -258,7 +258,7 @@ void XTNetwork::init_NetSettings(void)
             pathlen = 0;
             if( old_path != NULL )
                 pathlen = strlen(old_path);
-            char *new_path = (char*) malloc( pathlen + ath_dir.length() );
+            char *new_path = (char*) malloc( pathlen + ath_dir.length() + 2 );
             if( new_path == NULL ) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "malloc(new_path) failed\n"));
                 return;
@@ -476,7 +476,7 @@ XTNetwork::XTNetwork( bool, /* dummy for distinguising from other constructors *
             char* be_exe = beArgv[0];
             mrn_dbg(5, mrn_printf(FLF, stderr, "BE executable is %s\n", be_exe));
 	    char* be_base = basename( strdup(be_exe) );
-            char* be = (char*) malloc( ath_dir.length() + strlen(be_base) );
+            char* be = (char*) malloc( ath_dir.length() + strlen(be_base) + 2 );
             if( be == NULL ) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "malloc(be) failed\n"));
             }
@@ -677,7 +677,7 @@ XTNetwork::SpawnCP( int* topoFd, int listeningSocket )
         int currIdx = 0;
         int argc = 2;
         char** argv = new char*[argc+1];
-        char fdstr[10];
+        char fdstr[8];
         sprintf(fdstr, "%d", topoFds[0]);
         argv[currIdx++] = strdup( topofd_optstr );
         argv[currIdx++] = strdup( fdstr );
