@@ -49,7 +49,7 @@ void Error::error( ErrorCode e, Rank, const char * fmt, ... ) const
     }
 }
 
-inline void Error::perror(const char *str) const
+void Error::perror(const char *str) const
 {
     mrn_dbg(1, mrn_printf(FLF, stderr, "%s: %s\n", errors[MRN_errno].msg, str) );
 }
