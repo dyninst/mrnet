@@ -81,6 +81,8 @@ void delete_Stream_t(Stream_t * stream)
     /* clean up data structures */
     delete_vector_t( stream->incoming_packet_buffer );
     delete_PerfDataMgr_t( stream->perf_data );
+    stream->incoming_packet_buffer = NULL;
+    stream->perf_data = NULL;
 
     /* remove the stream from Network streams map */
     Network_delete_Stream(stream->network, stream->id);

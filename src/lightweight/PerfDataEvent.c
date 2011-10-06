@@ -67,9 +67,11 @@ void delete_PerfDataMgr_t( PerfDataMgr_t* mgr )
         if( mgr->the_data != NULL ) {
             for (i = 0; i < mgr->the_data->size; i++) {
                 amap = (mrn_map_t*)(mgr->the_data->vec[i]);
-                delete_map_t(amap);
+                if( amap != NULL )
+                    delete_map_t(amap);
             }
             delete_vector_t( mgr->the_data );
+	    mgr->the_data = NULL;
         }
         free( mgr );
     }
