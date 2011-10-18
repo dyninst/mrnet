@@ -131,8 +131,8 @@ void PeerNode::waitfor_CommunicationThreads(void) const
 
 void PeerNode::send( const PacketPtr ipacket ) const
 {
-    mrn_dbg( 5, mrn_printf(FLF, stderr,
-                           "node[%d].msg(%p).add_Packet()\n", _rank, &_msg_out) );
+    mrn_dbg(5, mrn_printf(FLF, stderr,
+                          "msg(%p).add_Packet()\n", &_msg_out));
 
     _msg_out.add_Packet( ipacket );
 }
@@ -385,8 +385,7 @@ void PeerNode::mark_Failed(void)
 
         if( my_id != get_SendThrId() ) {
             // shutdown packet send will fail, but that's expected
-            PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, 
-                                         strdup(NULL_STRING)) );
+            PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, NULL) );
             _msg_out.add_Packet( packet );
         }
     }

@@ -198,8 +198,10 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
                 retval = -1;
             }
             break;
-        case PROT_NEW_HETERO_STREAM:
+
         case PROT_NEW_STREAM:
+        case PROT_NEW_HETERO_STREAM:
+        case PROT_NEW_INTERNAL_STREAM:
             if(BackEndNode_proc_newStream(be, packet) == -1) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
                 retval = -1;
@@ -233,13 +235,7 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
         case PROT_NEW_FILTER:
             mrn_dbg(5, mrn_printf(FLF, stderr, "BE ignoring new filter; currently, lightweight backend nodes do not perform any filtering. This is different than standard MRNet behavior.\n"));
             break;
-        case PROT_TOPOLOGY_RPT:
-            if( ChildNode_proc_TopologyReport(be, packet) == -1 ){
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "proc_TopologyReport() failed\n" ));
-                retval = -1;
-            }
-            break;
+
         case PROT_RECOVERY_RPT:
             if( ChildNode_proc_RecoveryReport(be, packet) == -1 ){
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
@@ -394,17 +390,17 @@ int ChildNode_proc_SetTopoEnv( BackEndNode_t* be, Packet_t* ipacket )
     return 0;
 }
 
-int ChildNode_ack_DeleteSubTree(BackEndNode_t* be)
+int ChildNode_ack_ControlProtocol(BackEndNode_t* be, int ack_tag)
 {
     Packet_t* packet;
     
     mrn_dbg_func_begin();
 
-    packet = new_Packet_t_2(CTL_STRM_ID, PROT_SHUTDOWN_ACK, NULL_STRING);
-    
-    if (packet != NULL) {
-        if ( (PeerNode_sendDirectly(be->network->parent, packet) == -1 ) ||
-             (PeerNode_flush(be->network->parent) == -1) ) {
+    packet = new_Packet_t_2(CTL_STRM_ID, ack_tag, NULL_STRING);
+   
+    if( packet != NULL ) {
+        if((PeerNode_sendDirectly(be->network->parent, packet) == -1 ) ||
+           (PeerNode_flush(be->network->parent) == -1)) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "send failed\n"));
             return false;
         }
@@ -418,7 +414,12 @@ int ChildNode_ack_DeleteSubTree(BackEndNode_t* be)
 
     mrn_dbg_func_end();
     return true;
-      
+}
+
+int ChildNode_ack_DeleteSubTree(BackEndNode_t* be)
+{
+    mrn_dbg_func_begin();
+    return ChildNode_ack_ControlProtocol(be, PROT_SHUTDOWN_ACK);
 }
 
 int ChildNode_proc_RecoveryReport(BackEndNode_t* be, Packet_t* ipacket)
@@ -544,53 +545,6 @@ int ChildNode_proc_PrintPerfData(BackEndNode_t* be, Packet_t* ipacket)
 
     mrn_dbg_func_end();
     return 0;
-}
-
-int ChildNode_proc_TopologyReport(BackEndNode_t* be, Packet_t* ipacket)
-{
-    char* topology = NULL;
-   
-    mrn_dbg_func_begin();
-
-    Packet_unpack(ipacket, "%s", &topology);
-
-    if( ! Network_reset_Topology(be->network, topology) ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Topology->reset() failed\n"));
-        return -1;
-    }
-    
-    // send ack to parent
-    if( ! ChildNode_ack_TopologyReport(be) ) {
-        mrn_dbg(1, mrn_printf(FLF,stderr, "ack_TopologyReport() failed\n"));
-        return -1;
-    }
-
-    mrn_dbg_func_end();
-    return 0;
-}
-
-int ChildNode_ack_TopologyReport(BackEndNode_t* be)
-{
-    Packet_t* packet = new_Packet_t_2(CTL_STRM_ID, PROT_TOPOLOGY_ACK, NULL_STRING);
-
-    mrn_dbg_func_begin();
-
-    if (packet != NULL) {
-        if ((PeerNode_sendDirectly(be->network->parent, packet) == -1) ||
-            (PeerNode_flush(be->network->parent) == -1)) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "send/flush failed\n"));
-            return 0;
-        }
-    }
-    else {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));
-        return 0;
-    }
-
-    delete_Packet_t( packet );
-
-    mrn_dbg_func_end();
-    return 1;
 }
 
 int ChildNode_proc_PortUpdate(BackEndNode_t * be,

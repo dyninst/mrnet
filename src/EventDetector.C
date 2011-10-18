@@ -41,8 +41,7 @@ bool EventDetector::stop( )
             int edt_port, sock_fd=0;
             string edt_host;
             Message msg;
-            PacketPtr packet( new Packet(CTL_STRM_ID, PROT_KILL_SELF, 
-                                         strdup(NULL_STRING)) );
+            PacketPtr packet( new Packet(CTL_STRM_ID, PROT_KILL_SELF, NULL) );
 
             edt_host = _network->get_LocalHostName();
             edt_port = _network->get_LocalPort();

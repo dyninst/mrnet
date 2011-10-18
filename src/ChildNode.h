@@ -23,19 +23,18 @@ class ChildNode: public virtual Error,
     ChildNode( Network *inetwork,
                std::string const& ihostname, Rank irank,
                std::string const& iphostname, Port ipport, Rank iprank );
-    virtual ~ChildNode(void) {};
+    virtual ~ChildNode(void) {}
 
     int proc_PacketsFromParent( std::list<PacketPtr> & );
     virtual int proc_DataFromParent( PacketPtr ipacket ) const=0;
 
-    int proc_TopologyReport( PacketPtr ipacket ) const;
-    bool ack_TopologyReport( void ) const ;
+    bool ack_ControlProtocol( int ack_tag ) const;
 
     int proc_RecoveryReport( PacketPtr ipacket ) const;
 
-    int send_SubTreeInitDoneReport( void ) const;
-    int request_SubTreeInfo( void ) const ;
-    bool ack_DeleteSubTree( void ) const ;
+    int send_SubTreeInitDoneReport(void) const;
+    int request_SubTreeInfo(void) const;
+    bool ack_DeleteSubTree(void) const;
 
     int proc_PortUpdate(PacketPtr ipacket ) const;
 

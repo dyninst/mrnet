@@ -167,15 +167,14 @@ Network::~Network(void)
 void Network::close_Streams(void)
 {
     map< unsigned int, Stream* >::iterator miter;
-    vector< Stream* >::iterator viter;
 
     _streams_sync.Lock();
 
     for( miter = _streams.begin(); miter != _streams.end(); miter++ ) {
         (*miter).second->close();
     }
-    for( viter = _internal_streams.begin(); viter != _internal_streams.end(); viter++ ) {
-        delete *viter;
+    for( miter = _internal_streams.begin(); miter != _internal_streams.end(); miter++ ) {
+        delete (*miter).second;
     }
 
     _streams_sync.Unlock();
@@ -549,9 +548,8 @@ void Network::init_ThreadState( node_type_t node_type,
         if( myhost.empty() )
             XPlat::NetUtils::GetLocalHostName(myhost);
         
-        string prettyHost, myhostname;
-        XPlat::NetUtils::GetNetworkName( myhost, myhostname );
-        XPlat::NetUtils::GetHostName( myhostname, prettyHost );
+        string prettyHost;
+        XPlat::NetUtils::GetHostName( myhost, prettyHost );
 
         nameStream << "("
                    << prettyHost
@@ -680,7 +678,7 @@ void Network::init_FrontEnd( const char * itopology,
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
     if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() ) {
-        error( ERR_INTERNAL, rootRank, "waitfor_SubTreeReports() failed");
+        error( ERR_INTERNAL, rootRank, "waitfor_SubTreeInitDoneReports() failed");
         shutdown_Network();
         return;
     }
@@ -697,9 +695,6 @@ void Network::init_FrontEnd( const char * itopology,
         return;
     }
     s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
-    _streams_sync.Lock();
-    _internal_streams.push_back( s );
-    _streams_sync.Unlock();
 
     /* collect port updates and broadcast them
      * - this is a no-op on XT
@@ -726,19 +721,10 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
 
     _local_rank = imyrank;
 
-    string prettyHost, myhostname;
-    XPlat::NetUtils::GetNetworkName( imyhostname, myhostname );
-    XPlat::NetUtils::GetHostName( myhostname, prettyHost );
-    std::ostringstream nameStream;
-    nameStream << "BE("
-               << prettyHost
-               << ":"
-               << imyrank
-               << ")" ;
-
     //TLS: setup thread local storage for backend
-    init_ThreadState( BE_NODE, nameStream.str().c_str() );
+    init_ThreadState( BE_NODE );
 
+    string myhostname(imyhostname);
     BackEndNode* ben = CreateBackEndNode( this, myhostname, imyrank,
                                          iphostname, ipport, iprank );
     assert( ben != NULL );
@@ -761,12 +747,10 @@ void Network::init_InternalNode( const char* iphostname,
 
     _local_rank = imyrank;
 
-    string myhostname;
-    XPlat::NetUtils::GetNetworkName( imyhostname, myhostname );
-
     //TLS: setup thread local storage for comm proc
     init_ThreadState( CP_NODE );
 
+    string myhostname(imyhostname);
     InternalNode* in = CreateInternalNode( this, myhostname, imyrank,
                                            iphostname, ipport, iprank,
                                            idataSocket, idataPort );
@@ -1237,7 +1221,7 @@ Stream* Network::new_InternalStream( Communicator *icomm,
         }
     }
 
-    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_STREAM, "%ud %ad %d %d %d",
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_INTERNAL_STREAM, "%ud %ad %d %d %d",
                                  _next_int_stream_id, backends, num_pts,
                                  ius_filter_id, isync_filter_id, ids_filter_id) );
     _next_int_stream_id++;
@@ -1247,6 +1231,10 @@ Stream* Network::new_InternalStream( Communicator *icomm,
         mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
 
     delete [] backends;
+
+    _streams_sync.Lock();
+    _internal_streams[ stream->get_Id() ] = stream;
+    _streams_sync.Unlock();
 
     return stream;
 }
@@ -1351,6 +1339,7 @@ void Network::delete_Stream( unsigned int iid )
 
     _streams_sync.Lock();
 
+    // is it a user stream?
     iter = _streams.find( iid );
     if( iter != _streams.end() ) {
         //if we are about to delete _stream_iter, set it to next elem. (w/wrap)
@@ -1361,6 +1350,12 @@ void Network::delete_Stream( unsigned int iid )
             }
         }
         _streams.erase( iter );
+    }
+
+    // must be an internal stream
+    iter = _internal_streams.find( iid );
+    if( iter != _internal_streams.end() ) {
+        _internal_streams.erase( iter );
     }
 
     _streams_sync.Unlock();

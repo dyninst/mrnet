@@ -1447,7 +1447,7 @@ void tfilter_TopoUpdate_common( bool upstream,
     if( update_table )
         nettop->update_Router_Table();
 
-    if( new_nodes.size() && (! net->is_LocalNodeBackEnd()) )
+    if( upstream && new_nodes.size() && (! net->is_LocalNodeBackEnd()) )
         nettop->update_TopoStreamPeers( new_nodes );
 
     if( gen_output ) {

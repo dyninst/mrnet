@@ -194,21 +194,24 @@ int BackEndNode_proc_newStream(BackEndNode_t* be, Packet_t* packet)
         }
   
         if (!Stream_find_FilterAssignment(us_filters, me, us_filter_id)) {
-            mrn_dbg(3, mrn_printf(FLF, stderr, "Stream_find_FilterAssignment(upstream) failed, using default\n"));
+            mrn_dbg(3, mrn_printf(FLF, stderr, 
+                                  "Stream_find_FilterAssignment(upstream) failed, using default\n"));
             us_filter_id = TFILTER_NULL;
         }
     
         if (!Stream_find_FilterAssignment(ds_filters, me, ds_filter_id)) {
-            mrn_dbg(3, mrn_printf(FLF, stderr, "Stream_find_FilterAssignment(downstream) failed, using default\n"));
+            mrn_dbg(3, mrn_printf(FLF, stderr, 
+                                  "Stream_find_FilterAssignment(downstream) failed, using default\n"));
             ds_filter_id = TFILTER_NULL;
         }
         if (!Stream_find_FilterAssignment(sync_filters, me, sync_id)) {
-            mrn_dbg(3, mrn_printf(FLF, stderr, "Stream_find_FilterAssignment(sync) failed, using default\n"));
+            mrn_dbg(3, mrn_printf(FLF, stderr, 
+                                  "Stream_find_FilterAssignment(sync) failed, using default\n"));
             sync_id = SFILTER_WAITFORALL;
         }
     }
 
-    else if (tag == PROT_NEW_STREAM) {
+    else { // PROT_NEW_STREAM or PROT_NEW_INTERNAL_STREAM
         if (Packet_unpack(packet, "%ud %ad %d %d %d", 
                           &stream_id, &backends,&num_backends,
                           &us_filter_id, &sync_id, &ds_filter_id) == -1) 
@@ -223,6 +226,14 @@ int BackEndNode_proc_newStream(BackEndNode_t* be, Packet_t* packet)
 
     if( backends != NULL )
         free( backends );
+
+    if (tag == PROT_NEW_INTERNAL_STREAM) {
+        // Send ack to parent
+        if( ! ChildNode_ack_ControlProtocol(be, PROT_NEW_STREAM_ACK) ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                  "ChildNode_ack_ControlProtocol() failed\n"));
+        }
+    }
 
     mrn_dbg_func_end();
 

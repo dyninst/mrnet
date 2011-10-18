@@ -104,8 +104,9 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
                  _network->get_LocalRank() );
     std::string new_topo = sg.get_ByteArray();
 
-    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_SUBTREE, "%s %s %s %as", new_topo.c_str(),
-                                 commnode_path, backend_exe, backend_argv, backend_argc) );  
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_LAUNCH_SUBTREE, "%s %s %s %as", 
+                                 new_topo.c_str(), commnode_path, 
+                                 backend_exe, backend_argv, backend_argc) );  
 
     _initial_subtree_packet = packet;
     

@@ -23,6 +23,8 @@ int ChildNode_proc_PacketsFromParent(BackEndNode_t* be, vector_t* packets);
 
 int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet);
 
+int ChildNode_ack_ControlProtocol(BackEndNode_t* be, int ack_tag);
+
 int ChildNode_ack_DeleteSubTree(BackEndNode_t* be);
 
 int ChildNode_proc_SetTopoEnv(BackEndNode_t* be, Packet_t* packet); 
@@ -36,10 +38,6 @@ int ChildNode_proc_DisablePerfData(BackEndNode_t* be, Packet_t* ipacket);
 int ChildNode_proc_CollectPerfData(BackEndNode_t* be, Packet_t* ipacket);
 
 int ChildNode_proc_PrintPerfData(BackEndNode_t* be, Packet_t* ipacket);
-
-int ChildNode_proc_TopologyReport(BackEndNode_t* be, Packet_t* ipacket);
-
-int ChildNode_ack_TopologyReport(BackEndNode_t* be);
 
 int ChildNode_proc_PortUpdate(BackEndNode_t * be,
                               Packet_t* packet);

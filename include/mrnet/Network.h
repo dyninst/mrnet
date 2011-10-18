@@ -360,12 +360,14 @@ protected:
     unsigned int _next_user_stream_id; // only used by FE
     unsigned int _next_int_stream_id; // only used by FE
 
-    std::set< PeerNodePtr > _children;
-    std::map< unsigned int, Stream* > _streams;
     std::map< Rank, CommunicationNode* > _end_points;
+
+    std::set< PeerNodePtr > _children;
+
+    std::map< unsigned int, Stream* > _internal_streams;
+    std::map< unsigned int, Stream* > _streams;
     std::map< unsigned int, Stream* >::iterator _stream_iter;
 
-    std::vector< Stream* > _internal_streams;
 
     bool _threaded;
     bool _recover_from_failures;

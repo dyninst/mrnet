@@ -160,7 +160,7 @@ int BackEndNode::proc_newStream( PacketPtr ipacket ) const
         if( ds_filters != NULL )
             free( ds_filters );
     } 
-    else if( tag == PROT_NEW_STREAM ) {
+    else { // PROT_NEW_STREAM or PROT_NEW_INTERNAL_STREAM
 
         if( ipacket->unpack("%ud %ad %d %d %d", 
                             &stream_id, &backends, &num_backends, 
@@ -175,6 +175,14 @@ int BackEndNode::proc_newStream( PacketPtr ipacket ) const
 
     if( backends != NULL )
         free( backends );
+
+    if( tag == PROT_NEW_INTERNAL_STREAM ) {
+        // send ack to parent
+        if( ! ack_ControlProtocol(PROT_NEW_STREAM_ACK) ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                                  "ack_ControlProtocol(PROT_NEW_STREAM_ACK) failed\n"));
+        }
+    }
 
     mrn_dbg_func_end();
     return 0;
