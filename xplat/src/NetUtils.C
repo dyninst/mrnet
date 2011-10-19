@@ -5,7 +5,9 @@
 
 // $Id: NetUtils.C,v 1.11 2008/10/09 19:54:04 mjbrim Exp $
 
+#include <cctype>
 #include <cstdio>
+#include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -81,19 +83,118 @@ struct addrinfo* get_host_addrs( const char* ihostname )
     return addrs;
 }
 
+bool NetUtils::IsIPAddressStr( std::string& iaddr )
+{
+    const char* addrstr = iaddr.c_str();
+    size_t len = iaddr.length();
+    size_t ndx = 0;
+
+    char* str = const_cast<char*>( addrstr );
+    char* sep;
+    char* beg = str;
+    if( (sep = strchr(beg, (int)'.')) != NULL ) {
+        // IPv4 -  examine four segments
+        unsigned nseg = 1;
+        do {
+            // check segment is at most 3 digits
+            size_t run = sep - beg;
+            if( run > 3 ) {
+                return false;
+            }
+
+            // each segment must be a val in [0, 255]
+            if( isdigit(*beg) ) {
+                char* endptr = NULL;
+                long int val = strtol(beg, &endptr, 10);
+                if( endptr != sep ) {
+                    return false;
+                }
+                if( (val < 0) || (val > 255) ) {
+                    return false;
+                }
+            }
+            else {
+                return false;
+            }
+
+            // get next segment
+            beg = sep + 1;
+            if( (beg - str) > len )
+                break;
+            nseg++;
+            sep = strchr(beg, (int)'.');
+            if( sep == NULL )
+                sep = str + len;
+        } while( nseg <= 4 );
+
+        // check that we saw exactly 4 segments
+        if( nseg != 4 ) {
+            return false;
+        }
+
+        return true;
+    }
+    else if( (sep = strchr(beg, (int)':')) != NULL ) {
+        // IPv6 - there can be up to eight segments
+        long int max = 0x0FFFF;
+        unsigned nseg = 1;
+        do {
+            // check segment is at most 4 digits
+            size_t run = sep - beg;
+            if( run > 4 ) {
+                return false;
+            }
+
+            // each segment must be a val in [0, 0xFFFF]
+            if( run > 0 ) {
+                if( isxdigit(*beg) ) {
+                    char* endptr = NULL;
+                    long int val = strtol(beg, &endptr, 16);
+                    if( endptr != sep ) {
+                        return false;
+                    }
+                    if( (val < 0) || (val > max) ) {
+                        return false;
+                    }
+                }
+                else return false;
+            }
+
+            // get next segment
+            beg = sep + 1;
+            if( (beg - str) > len )
+                break;
+            if( *beg == ':' )
+                beg++;
+            nseg++;
+            sep = strchr(beg, (int)':');
+            if( sep == NULL )
+                sep = str + len;
+        } while( nseg <= 8 );
+
+        // check that we didn't see too many segments
+        if( nseg > 8 ) {
+            return false;
+        }
+    }
+    return false;
+}
+
 int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
 {
-    struct addrinfo *addrs = NULL;
-    int error;
-
     if( ihostname == "" )
         return -1;
 
     get_resolve_env();
-    if( use_resolve )
+    if( use_resolve ) {
+        struct addrinfo *addrs = NULL;
+        int error;
+        
         addrs = get_host_addrs( ihostname.c_str() );
+        if( addrs == NULL ) {
+            return -1;
+        }
 
-    if( addrs != NULL ) {
         char* hostname = (char*) calloc( XPLAT_MAX_HOSTNAME_LEN, sizeof(char) );
         if( use_canonical && (addrs->ai_canonname != NULL) ) {
             strncpy( hostname, addrs->ai_canonname, sizeof(hostname) );
@@ -171,13 +272,17 @@ bool NetUtils::IsLocalHost( const std::string& ihostname )
 
 int NetUtils::GetHostName( std::string ihostname, std::string &ohostname )
 {
-
-    std::string fqdn;
-    if( FindNetworkName( ihostname, fqdn ) == -1 ){
-        return -1;
+    if( IsIPAddressStr(ihostname) ) {
+        ohostname = ihostname;
+        return 0;
     }
 
-    // extract host name from the fully-qualified domain name
+    // get fully-qualified domain name
+    std::string fqdn;
+    if( -1 == FindNetworkName(ihostname, fqdn) )
+        return -1;
+
+    // extract host name from FQDN
     std::string::size_type firstDotPos = fqdn.find_first_of( '.' );
     if( firstDotPos != std::string::npos )
         ohostname = fqdn.substr( 0, firstDotPos );
@@ -190,6 +295,11 @@ int NetUtils::GetHostName( std::string ihostname, std::string &ohostname )
 
 int NetUtils::GetNetworkName( std::string ihostname, std::string & ohostname )
 {
+    if( IsIPAddressStr(ihostname) ) {
+        ohostname = ihostname;
+        return 0;
+    }
+
     return FindNetworkName( ihostname, ohostname );
 }
 

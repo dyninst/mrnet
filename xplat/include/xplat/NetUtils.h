@@ -107,6 +107,7 @@ private:
     static int FindLocalNetworkInterfaces( std::vector< NetworkAddress >& );
 
 public:
+    static bool IsIPAddressStr( std::string& iaddr );
     static int GetHostName( std::string ihostname, std::string& );
     static int GetNetworkName( std::string ihostname, std::string& );
     static int GetNetworkAddress( std::string ihostname, NetworkAddress& );
