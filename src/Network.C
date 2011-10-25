@@ -454,7 +454,6 @@ void Network::init_FE_NetSettings( const std::map< std::string, std::string > * 
         envval = getenv( "MRNET_STARTUP_TIMEOUT" );
         if( envval != NULL ) {
             _network_settings[ MRNET_STARTUP_TIMEOUT ] = std::string( envval );
-            _startup_timeout = atoi( envval );
         }
     }
 
@@ -481,6 +480,12 @@ void Network::init_NetSettings(void)
     if( eit != _network_settings.end() ) {
         if( ! strcmp( eit->second.c_str(), "0") )
             disable_FailureRecovery();
+    }
+
+    eit = _network_settings.find( MRNET_STARTUP_TIMEOUT );
+    if( eit != _network_settings.end() ) {
+        int timeout = atoi( eit->second.c_str() );
+        set_StartupTimeout( timeout );
     }
 }
 
