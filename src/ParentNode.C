@@ -105,7 +105,7 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
         case PROT_NEW_STREAM_ACK:
             if( proc_ControlProtocolAck(PROT_NEW_STREAM_ACK) == -1 ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "proc_DeleteSubTreeAck() failed\n" ));
+                                       "proc_ControlProtocolAck() failed\n" ));
                 retval = -1;
             }
             break;
@@ -222,20 +222,21 @@ int ParentNode::proc_ControlProtocolAck( int ack_tag ) const
     XPlat::Monitor* wait_sync = NULL;
 
     std::map< int, std::pair< XPlat::Monitor*, unsigned > >::iterator cps_iter;
-    cps_sync.Lock();
-    cps_iter = ctl_protocol_syncs.find( ack_tag );
-    if( cps_iter == ctl_protocol_syncs.end() ) {
+    do {
+        cps_sync.Lock();
+        cps_iter = ctl_protocol_syncs.find( ack_tag );
+        if( cps_iter != ctl_protocol_syncs.end() ) {
+            wait_sync = (*cps_iter).second.first;
+        }
+        else {
+            // an ack can arrive before we have even started waiting
+            mrn_dbg(5, mrn_printf(FLF, stderr, 
+                                  "ctl_protocol_sync for tag %d was not found, spin-waiting\n", 
+                                  ack_tag));
+        }
         cps_sync.Unlock();
-        mrn_dbg(1, mrn_printf(FLF, stderr, 
-                              "ctl_protocol_sync for tag %d was not found\n", 
-                              ack_tag));
-        return -1;
-    }
-    wait_sync = (*cps_iter).second.first;
-    cps_sync.Unlock();
-    
-    assert( wait_sync != NULL );
-    
+    } while( wait_sync == NULL );
+
     wait_sync->Lock();
     (*cps_iter).second.second++;
     wait_sync->SignalCondition( NODE_REPORTED );
