@@ -270,7 +270,8 @@ protected:
     bool update_Streams(void);
     void close_Streams(void);
     int waitfor_NonEmptyStream(void);
-    void signal_NonEmptyStream( Stream* strm );
+    void signal_NonEmptyStream( Stream* );
+    static bool is_UserStreamId( unsigned int );
 
     int send_PacketsToParent( std::vector< PacketPtr >& );
     int send_PacketToParent( PacketPtr );

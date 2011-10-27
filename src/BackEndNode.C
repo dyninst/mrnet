@@ -224,7 +224,7 @@ int BackEndNode::proc_deleteStream( PacketPtr ipacket ) const
         return -1;
     } 
 
-    if( stream_id < USER_STRM_BASE_ID ) {
+    if( ! Network::is_UserStreamId(stream_id) ) {
         // kill internal streams
         delete strm;
     }

@@ -271,7 +271,7 @@ int BackEndNode_proc_deleteStream(BackEndNode_t* be, Packet_t* ipacket)
         return -1;
     }
 
-    if( stream_id < USER_STRM_BASE_ID ) {
+    if( ! Network_is_UserStreamId(stream_id) ) {
         // kill internal streams
         delete_Stream_t( strm );
     }

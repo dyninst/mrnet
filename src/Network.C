@@ -166,15 +166,23 @@ Network::~Network(void)
 
 void Network::close_Streams(void)
 {
-    map< unsigned int, Stream* >::iterator miter;
+    map< unsigned int, Stream* >::iterator miter, tmpiter;
 
     _streams_sync.Lock();
 
     for( miter = _streams.begin(); miter != _streams.end(); miter++ ) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "closing stream with id=%u\n", miter->first));
         (*miter).second->close();
     }
-    for( miter = _internal_streams.begin(); miter != _internal_streams.end(); miter++ ) {
-        delete (*miter).second;
+    for( miter = _internal_streams.begin(); miter != _internal_streams.end(); ) {
+        /* Need to be safe with iterator use. ~Stream() calls Network::delete_Stream(), 
+           which erases it from the map. To prevent that erase from mucking with the
+           increment of miter, we do the erase ourselves in a safe manner. */
+        Stream* strm = (*miter).second;
+        tmpiter = miter++;
+        _internal_streams.erase( tmpiter );
+        mrn_dbg(5, mrn_printf(FLF, stderr, "deleting stream with id=%u\n", tmpiter->first));
+        delete strm;
     }
 
     _streams_sync.Unlock();
@@ -1200,76 +1208,6 @@ Stream* Network::new_Stream( Communicator *icomm,
     return stream;
 }
 
-Stream* Network::new_InternalStream( Communicator *icomm, 
-                                     int ius_filter_id /*=TFILTER_NULL*/,
-                                     int isync_filter_id /*=SFILTER_WAITFORALL*/, 
-                                     int ids_filter_id /*=TFILTER_NULL*/ )
-{
-    if( NULL == icomm ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, 
-                              "cannot create stream from NULL communicator\n") );
-        return NULL;
-    }
-    if( is_LocalNodeBackEnd() ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "new_InternalStream() called from back-end\n") );
-        return NULL;
-    }
-
-    //get array of back-ends from communicator
-    Rank* backends = icomm->get_Ranks();
-    unsigned num_pts = icomm->size();
-    if( num_pts == 0 ) {
-        if( icomm != _bcast_communicator ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, 
-                       "cannot create stream from communicator containing zero end-points\n") );
-            return NULL;
-        }
-    }
-
-    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_INTERNAL_STREAM, "%ud %ad %d %d %d",
-                                 _next_int_stream_id, backends, num_pts,
-                                 ius_filter_id, isync_filter_id, ids_filter_id) );
-    _next_int_stream_id++;
-
-    Stream* stream = get_LocalFrontEndNode()->proc_newStream(packet);
-    if( stream == NULL )
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
-
-    delete [] backends;
-
-    _streams_sync.Lock();
-    _internal_streams[ stream->get_Id() ] = stream;
-    _streams_sync.Unlock();
-
-    return stream;
-}
-
-Stream* Network::new_Stream( unsigned int iid,
-                             Rank* ibackends,
-                             unsigned int inum_backends,
-                             int ius_filter_id,
-                             int isync_filter_id,
-                             int ids_filter_id )
-{
-    mrn_dbg_func_begin();
-
-    Stream* stream = new Stream( this, iid, ibackends, inum_backends,
-                                 ius_filter_id, isync_filter_id, ids_filter_id );
-
-    _streams_sync.Lock();
-
-    _streams[iid] = stream;
-
-    if( _streams.size() == 1 )
-        _stream_iter = _streams.begin();
-
-    _streams_sync.Unlock();
-
-    mrn_dbg_func_end();
-
-    return stream;
-}
-
 Stream* Network::new_Stream( Communicator* icomm,
                              std::string us_filters,
                              std::string sync_filters,
@@ -1310,15 +1248,98 @@ Stream* Network::new_Stream( Communicator* icomm,
     return stream;
 }
 
+Stream* Network::new_InternalStream( Communicator *icomm, 
+                                     int ius_filter_id /*=TFILTER_NULL*/,
+                                     int isync_filter_id /*=SFILTER_WAITFORALL*/, 
+                                     int ids_filter_id /*=TFILTER_NULL*/ )
+{
+    if( NULL == icomm ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "cannot create stream from NULL communicator\n") );
+        return NULL;
+    }
+    if( is_LocalNodeBackEnd() ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new_InternalStream() called from back-end\n") );
+        return NULL;
+    }
+
+    //get array of back-ends from communicator
+    Rank* backends = icomm->get_Ranks();
+    unsigned num_pts = icomm->size();
+    if( num_pts == 0 ) {
+        if( icomm != _bcast_communicator ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, 
+                       "cannot create stream from communicator containing zero end-points\n") );
+            return NULL;
+        }
+    }
+
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_INTERNAL_STREAM, "%ud %ad %d %d %d",
+                                 _next_int_stream_id, backends, num_pts,
+                                 ius_filter_id, isync_filter_id, ids_filter_id) );
+    _next_int_stream_id++;
+
+    Stream* stream = get_LocalFrontEndNode()->proc_newStream(packet);
+    if( stream == NULL )
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "proc_newStream() failed\n" ));
+
+    delete [] backends;
+
+    return stream;
+}
+
+bool Network::is_UserStreamId( unsigned int id )
+{
+    return (id >= USER_STRM_BASE_ID) || (id < CTL_STRM_ID);
+}
+
+Stream* Network::new_Stream( unsigned int iid,
+                             Rank* ibackends,
+                             unsigned int inum_backends,
+                             int ius_filter_id,
+                             int isync_filter_id,
+                             int ids_filter_id )
+{
+    mrn_dbg_func_begin();
+
+    Stream* stream = new Stream( this, iid, ibackends, inum_backends,
+                                 ius_filter_id, isync_filter_id, ids_filter_id );
+
+    _streams_sync.Lock();
+
+    if( is_UserStreamId(iid) ) {
+        _streams[iid] = stream;
+        if( _streams.size() == 1 )
+            _stream_iter = _streams.begin();
+    }
+    else
+        _internal_streams[iid] = stream;
+
+    _streams_sync.Unlock();
+
+    mrn_dbg_func_end();
+
+    return stream;
+}
+
 Stream* Network::get_Stream( unsigned int iid ) const
 {
     Stream* ret = NULL;
     map< unsigned int, Stream* >::const_iterator iter; 
 
     _streams_sync.Lock();
-    iter = _streams.find( iid );
-    if( iter != _streams.end() )
-        ret = iter->second;
+
+    if( is_UserStreamId(iid) ) {
+        iter = _streams.find( iid );
+        if( iter != _streams.end() )
+            ret = iter->second;
+    }
+    else {
+        iter = _internal_streams.find( iid );
+        if( iter != _internal_streams.end() )
+            ret = iter->second;
+    }
+
     _streams_sync.Unlock();
 
     if( (ret == NULL) && is_LocalNodeFrontEnd() && (iid < CTL_STRM_ID) ) {
@@ -1345,22 +1366,24 @@ void Network::delete_Stream( unsigned int iid )
     _streams_sync.Lock();
 
     // is it a user stream?
-    iter = _streams.find( iid );
-    if( iter != _streams.end() ) {
-        //if we are about to delete _stream_iter, set it to next elem. (w/wrap)
-        if( iter == _stream_iter ) {
-            _stream_iter++;
-            if( _stream_iter == _streams.end() ) {
-                _stream_iter = _streams.begin();
+    if( is_UserStreamId(iid) ) {
+        iter = _streams.find( iid );
+        if( iter != _streams.end() ) {
+            //if we are about to delete _stream_iter, set it to next elem. (w/wrap)
+            if( iter == _stream_iter ) {
+                _stream_iter++;
+                if( _stream_iter == _streams.end() ) {
+                    _stream_iter = _streams.begin();
+                }
             }
+            _streams.erase( iter );
         }
-        _streams.erase( iter );
     }
-
-    // must be an internal stream
-    iter = _internal_streams.find( iid );
-    if( iter != _internal_streams.end() ) {
-        _internal_streams.erase( iter );
+    else { // must be an internal stream
+        iter = _internal_streams.find( iid );
+        if( iter != _internal_streams.end() ) {
+            _internal_streams.erase( iter );
+        }
     }
 
     _streams_sync.Unlock();

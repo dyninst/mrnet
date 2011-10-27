@@ -366,12 +366,12 @@ int Network_recv(Network_t* net, int *otag,
     checked_network = true;
 
     if( retval == -1 ) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv() failed\n"));
+        mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv_internal() failed\n"));
         return -1;
     }
     else if( retval == 1 ) {
         // go back if we found a packet
-        mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv() found packet!\n"));
+        mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv_internal() found packet!\n"));
         goto get_packet_from_stream_label;
     } 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv() No packets found\n"));
@@ -545,6 +545,13 @@ void Network_delete_Stream(Network_t * net, unsigned int iid)
         net->stream_iter = 0;
 
     mrn_dbg_func_end();
+}
+
+int Network_is_UserStreamId( unsigned int id )
+{
+    if( (id >= USER_STRM_BASE_ID) || (id < CTL_STRM_ID) )
+        return 1;
+    return 0;
 }
 
 int Network_send_PacketToParent(Network_t* net, Packet_t* ipacket)

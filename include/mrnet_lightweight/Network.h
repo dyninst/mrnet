@@ -103,6 +103,7 @@ struct PeerNode_t* Network_new_PeerNode( Network_t* network,
 int Network_delete_PeerNode( Network_t* net, Rank irank );
 
 int Network_have_Streams( Network_t* net );
+int Network_is_UserStreamId( unsigned int id );
 
 int Network_recover_FromFailures( Network_t* net );
 void Network_enable_FailureRecovery( Network_t* net );
