@@ -664,9 +664,9 @@ void Network::init_FrontEnd( const char * itopology,
         ibackend_exe = empty_str;
     }
 
-    unsigned int backend_argc=0;
-    if( ibackend_args != NULL ){
-        for(unsigned int i=0; ibackend_args[i] != NULL; i++){
+    unsigned int backend_argc = 0;
+    if( ibackend_args != NULL ) {
+        for( unsigned int i=0; ibackend_args[i] != NULL; i++ ) {
             backend_argc++;
         }
     }

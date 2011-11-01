@@ -987,8 +987,8 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
                            int athFirstNodeNid,
                            const char* mrn_commnode_path,
                            std::string be_path,
-                           int argc,
-                           const char** argv )
+                           int be_argc,
+                           const char** be_argv )
 {
     mrn_dbg_func_begin();
 
@@ -1031,8 +1031,8 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         
         // since the created processes may become a BE, we need to pass this too
         args.push_back( be_path );
-        for( int i = 0; i < argc; i++ ) {
-            args.push_back( argv[i] );
+        for( int i = 0; i < be_argc; i++ ) {
+            args.push_back( be_argv[i] );
         }
 
         // spawn the processes
@@ -1067,8 +1067,8 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         cmdStr << port_optstr << ' ' << topoport << ' ';
         cmdStr << timeout_optstr << ' ' << timeout << ' ';
         cmdStr << be_path << ' ';
-        for( int i = 0; i < argc; i++ ) {
-            cmdStr << argv[i] << ' ';
+        for( int i = 0; i < be_argc; i++ ) {
+            cmdStr << be_argv[i] << ' ';
         }
 
         const char* lthRet;

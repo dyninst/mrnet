@@ -1372,6 +1372,9 @@ void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank,
     if( _network->is_ShuttingDown() )
         return;
 
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Adding backend node[%d] as child of node[%d]\n",
+                          chld_rank, par_rank));
+
     Node* n = find_Node( chld_rank );
     if (n == NULL) {
 
@@ -1389,9 +1392,6 @@ void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank,
     }
     else
         mrn_dbg(5, mrn_printf(FLF, stderr, "node already present\n"));
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%d] as child of node[%d]\n",
-                          chld_rank, par_rank));
 
     // add it as endpoint for topology update strm
     Stream* topol_strm = _network->get_Stream( TOPOL_STRM_ID );
@@ -1417,90 +1417,6 @@ void NetworkTopology::update_addBackEnd( Rank par_rank, Rank chld_rank,
     }    
 }
 
-void NetworkTopology::update_removeNode( Rank par_rank, Rank failed_chld_rank, 
-                                         bool upstream )
-{
-    if( _network->is_ShuttingDown() )
-        return;
-
-    if( par_rank == _network->get_LocalRank() )
-        _network->remove_Node( failed_chld_rank, true );
-    else
-        remove_Node( failed_chld_rank, false ); 
-
-    // do callback only after state has been updated
-    if( upstream && _network->is_LocalNodeFrontEnd() ) {
-        
-        update_contents* ub = (update_contents*) malloc( sizeof(update_contents) );
-        ub->type = TOPO_REMOVE_RANK;
-        ub->chld_rank = failed_chld_rank;
-        ub->chld_port = UnknownPort;
-        ub->chld_host = strdup(NULL_STRING); //ugh, this should be fixed
-        ub->par_rank = par_rank;
-        insert_updates_buffer( ub );
-        
-        TopologyEvent::TopolEventData* ted;
-        ted = new TopologyEvent::TopolEventData( failed_chld_rank, par_rank );
-        TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_REMOVE_NODE, 
-                                               ted );
-        _network->_evt_mgr->add_Event( te );
-    }
-}
-
-void NetworkTopology::update_changeParent( Rank par_rank, Rank chld_rank, 
-                                           bool upstream )
-{
-    if( _network->is_ShuttingDown() )
-        return;
-
-    _network->change_Parent( chld_rank, par_rank );
-
-    // do callback only after state has been updated
-    if( upstream && _network->is_LocalNodeFrontEnd()) {
-
-        update_contents* ub = (update_contents*) malloc( sizeof(update_contents) );
-        ub->type = TOPO_CHANGE_PARENT ;
-        ub->chld_rank = chld_rank;
-        ub->chld_port = UnknownPort;
-        ub->chld_host = strdup(NULL_STRING); //ugh, this should be fixed
-        ub->par_rank = par_rank;
-        insert_updates_buffer( ub );
-
-        TopologyEvent::TopolEventData* ted;
-        ted = new TopologyEvent::TopolEventData( chld_rank, par_rank );
-        TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_CHANGE_PARENT, 
-                                               ted );
-        _network->_evt_mgr->add_Event( te );
-    }
-}
-
-void NetworkTopology::update_changePort( Rank chld_rank, Port chld_port, 
-                                         bool upstream )
-{
-    if( _network->is_ShuttingDown() )
-        return;
-
-    Node* update_node = find_Node( chld_rank );
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before update\n", 
-                           get_TopologyString().c_str()) );
-   
-    //Actual port update on the local network topology's
-    update_node->set_Port(chld_port );
-
-    if( upstream && _network->is_LocalNodeFrontEnd() ) {
-        update_contents* ub = (update_contents*) malloc( sizeof(update_contents) );
-        ub->type = TOPO_CHANGE_PORT;
-        ub->chld_rank = chld_rank;
-        ub->chld_port = chld_port;
-        ub->chld_host = strdup(NULL_STRING); //ugh, this should be fixed
-        ub->par_rank = UnknownRank;
-        insert_updates_buffer( ub );
-    }
-
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s after port update\n", 
-                           get_TopologyString().c_str()) );
-}
-
 void NetworkTopology::update_addInternalNode( Rank par_rank, Rank chld_rank, 
                                               char* chld_host, Port chld_port, 
                                               bool upstream )
@@ -1508,16 +1424,15 @@ void NetworkTopology::update_addInternalNode( Rank par_rank, Rank chld_rank,
     if( _network->is_ShuttingDown() )
         return;
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology before add: %s\n", 
-                           get_TopologyString().c_str()) );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                           "Adding internal node[%d] as child of node[%d]\n",
+                           chld_rank, par_rank) );
 
     Node* n = find_Node( chld_rank );
     if( n == NULL ) {
 
         // create node
         new_Node( chld_host, chld_port, chld_rank, false ); 
-        mrn_dbg( 5, mrn_printf( FLF, stderr, "Adding node[%d] as child of node[%d]\n",
-                                chld_rank, par_rank ) );
 
         // set is parent
         if( ! set_Parent(chld_rank, par_rank, false) ) {
@@ -1546,6 +1461,98 @@ void NetworkTopology::update_addInternalNode( Rank par_rank, Rank chld_rank,
         ted = new TopologyEvent::TopolEventData( chld_rank, par_rank );
         TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_ADD_CP, ted );
         _network->_evt_mgr->add_Event( te );
+    }
+}
+
+void NetworkTopology::update_removeNode( Rank par_rank, Rank failed_chld_rank, 
+                                         bool upstream )
+{
+    if( _network->is_ShuttingDown() )
+        return;
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Removing node[%d]\n", failed_chld_rank));
+
+    if( par_rank == _network->get_LocalRank() )
+        _network->remove_Node( failed_chld_rank, true );
+    else
+        remove_Node( failed_chld_rank, false );
+
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology after remove: %s\n", 
+                               get_TopologyString().c_str()) );
+
+    // do callback only after state has been updated
+    if( upstream && _network->is_LocalNodeFrontEnd() ) {
+        
+        update_contents* ub = (update_contents*) malloc( sizeof(update_contents) );
+        ub->type = TOPO_REMOVE_RANK;
+        ub->chld_rank = failed_chld_rank;
+        ub->chld_port = UnknownPort;
+        ub->chld_host = strdup(NULL_STRING); //ugh, this should be fixed
+        ub->par_rank = par_rank;
+        insert_updates_buffer( ub );
+        
+        TopologyEvent::TopolEventData* ted;
+        ted = new TopologyEvent::TopolEventData( failed_chld_rank, par_rank );
+        TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_REMOVE_NODE, 
+                                               ted );
+        _network->_evt_mgr->add_Event( te );
+    }
+}
+
+void NetworkTopology::update_changeParent( Rank par_rank, Rank chld_rank, 
+                                           bool upstream )
+{
+    if( _network->is_ShuttingDown() )
+        return;
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Changing parent of node[%d] to node[%d]\n",
+                          chld_rank, par_rank));
+
+    _network->change_Parent( chld_rank, par_rank );
+
+    // do callback only after state has been updated
+    if( upstream && _network->is_LocalNodeFrontEnd()) {
+
+        update_contents* ub = (update_contents*) malloc( sizeof(update_contents) );
+        ub->type = TOPO_CHANGE_PARENT ;
+        ub->chld_rank = chld_rank;
+        ub->chld_port = UnknownPort;
+        ub->chld_host = strdup(NULL_STRING); //ugh, this should be fixed
+        ub->par_rank = par_rank;
+        insert_updates_buffer( ub );
+
+        TopologyEvent::TopolEventData* ted;
+        ted = new TopologyEvent::TopolEventData( chld_rank, par_rank );
+        TopologyEvent *te = new TopologyEvent( TopologyEvent::TOPOL_CHANGE_PARENT, 
+                                               ted );
+        _network->_evt_mgr->add_Event( te );
+    }
+}
+
+void NetworkTopology::update_changePort( Rank rank, Port port, 
+                                         bool upstream )
+{
+    if( _network->is_ShuttingDown() )
+        return;
+
+    if( port == UnknownPort )
+        return;
+
+    Node* update_node = find_Node( rank );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Changing port of node[%d] from %hu to %hu\n", 
+                           rank, update_node->get_Port(), port) );
+   
+    //Actual port update on the local network topology's
+    update_node->set_Port( port );
+
+    if( upstream && _network->is_LocalNodeFrontEnd() ) {
+        update_contents* ub = (update_contents*) malloc( sizeof(update_contents) );
+        ub->type = TOPO_CHANGE_PORT;
+        ub->chld_rank = rank;
+        ub->chld_port = port;
+        ub->chld_host = strdup(NULL_STRING); //ugh, this should be fixed
+        ub->par_rank = UnknownRank;
+        insert_updates_buffer( ub );
     }
 }
 

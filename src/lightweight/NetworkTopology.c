@@ -468,20 +468,23 @@ int NetworkTopology_set_Parent(NetworkTopology_t* net_top, Rank ichild_rank,
     Node_t* new_parent_node;
     unsigned int j;
     
-    mrn_dbg_func_begin();
+    mrn_dbg(5, mrn_printf(FLF, stderr, 
+                          "Setting node[%d] parent to node[%d]\n", 
+                          ichild_rank, inew_parent_rank));
 
     child_node = NetworkTopology_find_Node(net_top, ichild_rank);
-
     if (child_node == NULL) {
-        mrn_dbg_func_end();
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "child node[%d] not found!\n", ichild_rank));
         return 0;
     }
 
     new_parent_node = NetworkTopology_find_Node(net_top, inew_parent_rank);
 
     if (new_parent_node == NULL) {
-        mrn_dbg_func_end();
-        return false;
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "parent node[%d] not found!\n", inew_parent_rank));
+        return 0;
     }
 
     if (child_node->parent != NULL) {
@@ -493,12 +496,12 @@ int NetworkTopology_set_Parent(NetworkTopology_t* net_top, Rank ichild_rank,
     NetworkTopology_remove_Orphan(net_top, child_node->rank); 
     
     //child_node->ascendants = new_parent_node->ascendants;
-    for (j = 0; j < new_parent_node->ascendants->size; j++)
-        pushBackElement(child_node->ascendants, new_parent_node->ascendants->vec[j]);
-    if (!findElement(child_node->ascendants, new_parent_node))
+    for( j = 0; j < new_parent_node->ascendants->size; j++ )
+        pushBackElement(child_node->ascendants, 
+                        new_parent_node->ascendants->vec[j]);
+    if( ! findElement(child_node->ascendants, new_parent_node) )
         pushBackElement(child_node->ascendants, new_parent_node);
     
-    mrn_dbg_func_end();
     return 1;
 }
 
@@ -559,9 +562,9 @@ void NetworkTopology_print(NetworkTopology_t* net_top, FILE * f)
 }
 
 Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top, 
-                                        Rank ichild_rank,
-                                        unsigned int inum_attempts,
-                                        ALGORITHM_T ialgorithm)
+                                       Rank ichild_rank,
+                                       unsigned int inum_attempts,
+                                       ALGORITHM_T ialgorithm)
 {
     vector_t* potential_adopters = new_empty_vector_t(); // vec of Node_t*
     Node_t* adopter = NULL;
@@ -572,7 +575,7 @@ Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top,
 
     mrn_dbg_func_begin();
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "called with ichild_rank=%u\n", ichild_rank));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "rank=%u\n", ichild_rank));
 
     if (inum_attempts > 0) {
         // previously computed list, but failed to contact new parent
@@ -961,17 +964,14 @@ void NetworkTopology_add_BackEnd(NetworkTopology_t * net_top,
                                  uint32_t rprank, uint32_t rcrank, 
                                  char * rchost, uint16_t rcport)
 {
-    Node_t * n;
-    
-    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is before add %s\n", 
-                          NetworkTopology_get_TopologyStringPtr(net_top)));
+    Node_t * n = NetworkTopology_find_Node(net_top, rcrank);
 
-    n = NetworkTopology_find_Node(net_top, rcrank);
+    mrn_dbg(5, mrn_printf(FLF, stderr, 
+                          "Adding backend node[%u] as child of node[%u]\n",
+                          rcrank, rprank));
 
     if (n == NULL) {
         n = NetworkTopology_new_Node(net_top, rchost, rcport, rcrank, true);
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%u] as child of node[%u]\n",
-                              rcrank, rprank));
 
         if ( !(NetworkTopology_set_Parent(net_top, rcrank, rprank, false))) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
@@ -980,9 +980,7 @@ void NetworkTopology_add_BackEnd(NetworkTopology_t * net_top,
         mrn_dbg(5, mrn_printf(FLF, stderr, "topology is after add %s\n", 
                               NetworkTopology_get_TopologyStringPtr(net_top)));
     } else {
-        mrn_dbg(5, mrn_printf(FLF, stderr, 
-                              "node already present, topology after add %s\n", 
-                              NetworkTopology_get_TopologyStringPtr(net_top)));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "node already present\n"));
     }
 }
 
@@ -990,41 +988,38 @@ void NetworkTopology_add_InternalNode(NetworkTopology_t * net_top,
                                       uint32_t rprank, uint32_t rcrank, 
                                       char * rchost, uint16_t rcport)
 {
-    Node_t * n;
-    
-    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is before add %s\n", 
-                          NetworkTopology_get_TopologyStringPtr(net_top)));
+    Node_t * n = NetworkTopology_find_Node(net_top, rcrank);
 
-    n = NetworkTopology_find_Node(net_top, rcrank);
+    mrn_dbg(5, mrn_printf(FLF, stderr, 
+                          "Adding internal node[%u] as child of node[%u]\n",
+                          rcrank, rprank));
 
     if (n == NULL) {
         NetworkTopology_new_Node(net_top, rchost, rcport, rcrank, false);
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Adding node[%u] as child of node[%u]\n",
-                              rcrank, rprank));
 
         if ( !(NetworkTopology_set_Parent(net_top, rcrank, rprank, false))) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
                                   "Set parent for %s failed\n", rchost));
         }
-        mrn_dbg(5, mrn_printf(FLF, stderr, "topology is after add %s\n", 
+        mrn_dbg(5, mrn_printf(FLF, stderr, "topology after add %s\n", 
                               NetworkTopology_get_TopologyStringPtr(net_top)));
     } else {
-        mrn_dbg(5, mrn_printf(FLF, stderr, 
-                              "node already present, topology after add %s\n", 
-                              NetworkTopology_get_TopologyStringPtr(net_top)));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "node already present\n")); 
     }
 }
 
 void NetworkTopology_change_Port(NetworkTopology_t * net_top,
                                  uint32_t rcrank, uint16_t rcport)
 {
+    if( rcport == UnknownPort )
+        return;
+
     Node_t * update_node = NetworkTopology_find_Node(net_top, rcrank);
-    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is before update port %s\n", 
-                          NetworkTopology_get_TopologyStringPtr(net_top)));
-    
+
+    mrn_dbg(5, mrn_printf(FLF, stderr, 
+                          "Changing port of node[%u] from %hu to %hu\n",
+                          rcrank, update_node->port, rcport));
+
     // Actual port update on the local network topology
     NetworkTopology_Node_set_Port(update_node, rcport);
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "topology is after port update %s\n", 
-                          NetworkTopology_get_TopologyStringPtr(net_top)));
 }

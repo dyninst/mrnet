@@ -206,12 +206,12 @@ void RSHNetwork::init_NetSettings(void)
 bool
 RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
                          const char* mrn_commnode_path,
-                         const char* ibackend_exe,
-                         const char** ibackend_args,
+                         const char* backend_exe,
+                         const char** backend_args,
                          unsigned int backend_argc,
                          const std::map< std::string, std::string >* /* iattrs */ )
 {
-    bool have_backends = ( strlen(ibackend_exe) != 0 );
+    bool have_backends = ( strlen(backend_exe) != 0 );
     std::string sg = _parsed_graph->get_SerializedGraphString( have_backends );
 
     NetworkTopology* nt = get_NetworkTopology();
@@ -223,7 +223,7 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_LAUNCH_SUBTREE, "%s %s %s %as", 
                                  sg.c_str(), mrn_commnode_path, 
-                                 ibackend_exe, ibackend_args, backend_argc) );
+                                 backend_exe, backend_args, backend_argc) );
     
     RSHFrontEndNode* fe = dynamic_cast<RSHFrontEndNode*>( get_LocalFrontEndNode() );
     if( fe == NULL ) {

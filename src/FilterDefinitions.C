@@ -1289,20 +1289,34 @@ void tfilter_TopoUpdate_common( bool upstream,
     for( i = 0; i < npackets; i++ ) {
      
 	PacketPtr cur_packet( ipackets[i] );
+        format_string = cur_packet->get_FormatString();
 
-	//Get format string
-	format_string = cur_packet->get_FormatString();
-
-	//Give the format string and extract the array
-	if( cur_packet->unpack( format_string.c_str(),
-				&type_arr, &arr_len, &prank_arr, &arr_len,
-                                &crank_arr, &arr_len, &chost_arr, &arr_len, 
-                                &cport_arr, &arr_len ) == -1 ) {
+	if( cur_packet->unpack(format_string.c_str(),
+                               &type_arr, &arr_len, &prank_arr, &arr_len,
+                               &crank_arr, &arr_len, &chost_arr, &arr_len, 
+                               &cport_arr, &arr_len) == -1 ) {
 	     mrn_dbg(1, mrn_printf(FLF, stderr, "ERROR: unpack(%s) failure\n",
                                    format_string.c_str()));
 	}
 	else {
-            //Putting the array pointers and its length in a vector
+
+            if( (strm_id == PORT_STRM_ID) &&
+                (arr_len == 1) && 
+                (type_arr[0] == NetworkTopology::TOPO_CHANGE_PORT) &&
+                (cport_arr[0] == UnknownPort) ) {
+                /* back-ends don't actually have listening ports, so discard the
+                   back-end port updates that were used to start the port update
+                   stream wave */
+                free( type_arr );
+                free( prank_arr );
+                free( crank_arr );
+                free( chost_arr[0] );
+                free( chost_arr );
+                free( cport_arr );
+                continue;
+            }
+
+            // Cache the update arrays
 	    itype_arr.push_back( type_arr );
 	    iprank_arr.push_back( prank_arr );
 	    icrank_arr.push_back( crank_arr );

@@ -681,7 +681,9 @@ int Network_recover_FromParentFailure(Network_t* net)
     //Step 1: Compute new parent
     Timer_start(overall_timer);
     Timer_start(new_parent_timer);
-    new_parent_node = NetworkTopology_find_NewParent(Network_get_NetworkTopology(net), Network_get_LocalRank(net), 0, ALG_WRS);
+    new_parent_node = NetworkTopology_find_NewParent(Network_get_NetworkTopology(net), 
+                                                     Network_get_LocalRank(net), 
+                                                     0, ALG_WRS);
     if (!new_parent_node) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Can't find new parent! Exiting...\n"));
         exit(-1);
@@ -706,10 +708,13 @@ int Network_recover_FromParentFailure(Network_t* net)
     Timer_start(connection_timer);
     mrn_dbg(3, mrn_printf(FLF, stderr, "Establish new data connection ...\n"));
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "local child node rank = %d\n", Network_get_LocalChildNode(net)->myrank));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "local child node rank = %d\n", 
+                          Network_get_LocalChildNode(net)->myrank));
 
-    if (ChildNode_init_newChildDataConnection(Network_get_LocalChildNode(net), new_parent, failed_rank) == -1) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "ChildNode_init_newChildDataConnection() failed\n"));
+    if (ChildNode_init_newChildDataConnection(Network_get_LocalChildNode(net), 
+                                              new_parent, failed_rank) == -1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "ChildNode_init_newChildDataConnection() failed\n"));
         return -1;
     }
 

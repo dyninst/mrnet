@@ -25,7 +25,7 @@ void tfilter_TopoUpdate(vector_t * ipackets,
                         void ** v,
                         Packet_t* pkt,
                         TopologyLocalInfo_t * info,
-                        int igoingupstream)
+                        int upstream)
 {
     Network_t * net = TopologyLocalInfo_get_Network(info);
 
@@ -198,7 +198,7 @@ void tfilter_TopoUpdate(vector_t * ipackets,
         }
     }
 
-    if (igoingupstream) {
+    if (upstream) {
         // Create output packet
         new_packet = new_Packet_t_2(Packet_get_StreamId(ipackets->vec[0]),
                                     Packet_get_Tag(ipackets->vec[0]),
