@@ -29,7 +29,7 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
 
     mrn_dbg_func_begin();
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, 
+    mrn_dbg(5, mrn_printf(FLF, stderr,
                           "new parent rank=%d, hostname=%s, port=%d, ifailed_rank=%d\n",
                           iparent->rank, iparent->hostname, 
                           iparent->port, ifailed_rank));
@@ -585,7 +585,12 @@ int ChildNode_proc_PortUpdate(BackEndNode_t * be,
 int ChildNode_proc_TopologyUpdates(BackEndNode_t * be,
                                    Packet_t* ipacket)
 {
-    // TODO: implmentation requires NetworkTopology_update_XXX methods
+    // topology stream is a real stream, so process as stream data
+    if( BackEndNode_proc_DataFromParent(be, ipacket) == -1 ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr,
+                               "BackEndNode_proc_DataFromParent() failed\n") );
+        return -1;
+    }
     return 0;
 }
 
