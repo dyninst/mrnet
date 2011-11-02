@@ -99,7 +99,7 @@ void delete_vector_t(vector_t* vector)
 
 int findElement(vector_t* vector, void* elem)
 {
-    unsigned int i;
+    size_t i;
     for( i = 0; i < vector->size; i++ ) {
         if( vector->vec[i] == elem )
             return (int)(i+1);
@@ -110,7 +110,7 @@ int findElement(vector_t* vector, void* elem)
 
 vector_t* eraseElement(vector_t* vector, void* elem)
 {
-    unsigned int i;
+    size_t i;
     for( i = 0; i < vector->size; i++ ) {
         if( vector->vec[i] == elem ) {
             if( i != (vector->size - 1) ) {
