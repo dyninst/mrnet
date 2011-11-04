@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     Packet_t* p = (Packet_t*)malloc(sizeof(Packet_t));
     Network_t * net;
     assert(p);
-    int tag=0;
+    int rc, tag=0;
     unsigned int min_val=fr_range_max, max_val=0, num_iters=0;
 
     char pct[fr_bins];
@@ -35,8 +35,12 @@ int main(int argc, char **argv)
     seed += (seed * 1000) + (now % 100);
     srandom( seed );
 
-    do{
-        if ( Network_recv(net,&tag, p, &stream) != 1 ) {
+    do {
+        
+        rc = Network_recv(net,&tag, p, &stream);
+        if( rc != 1 ) {
+            if( rc == 0 ) continue; // no worries, a stream was just closed
+            
             fprintf(stderr, "BE: stream::recv() failure\n");
             break;
         }

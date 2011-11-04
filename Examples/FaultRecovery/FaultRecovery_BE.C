@@ -30,9 +30,12 @@ int main(int argc, char **argv)
     seed += (seed * 1000) + (now % 100);
     srandom( seed );
 
-    do{
-        if ( net->recv(&tag, p, &stream) != 1 ) {
-            fprintf(stderr, "BE: stream::recv() failure\n");
+    do {
+        int rc = net->recv(&tag, p, &stream);
+        if( rc != 1 ) {
+            if( rc == 0 ) continue; // no worries, a stream was just closed
+
+            fprintf(stderr, "BE: Network::recv() failure\n");
             break;
         }
 
