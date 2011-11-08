@@ -145,6 +145,7 @@ bool EventDetector::add_FD( int ifd )
     
     _pollfds[_num_pollfds].fd = ifd;
     _pollfds[_num_pollfds].events = POLLIN;
+    _pollfds[_num_pollfds].revents = 0;
     mrn_dbg( 5, mrn_printf(FLF, stderr, "added fd %d\n", ifd) );
  
     _num_pollfds++;  
@@ -236,8 +237,26 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
     for( unsigned int num=0; num < _num_pollfds; num++ ) {
         bool add = false;
         if( use_poll ) {
-            if(( _pollfds[num].revents & POLLIN ) )
-                add = true;   
+            int pfd = _pollfds[num].fd;
+            int revts = _pollfds[num].revents;
+            if( revts & POLLIN ) {
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "poll() fd %d POLLIN\n",
+                                       pfd) );
+                add = true;
+            }
+            else if( (revts & POLLHUP) || 
+                     (revts & POLLERR) || 
+                     (revts & POLLNVAL) ) {
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "poll() fd %d POLLHUP | POLLERR | POLLNVAL\n",
+                                       pfd) );
+                add = true;
+            }
+            else if( revts ) {
+                mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                                       "poll() fd %d unhandled condition revents=%x\n",
+                                       pfd, revts) );
+            }
+            _pollfds[num].revents = 0;
         }
         else { // select
             if( FD_ISSET( _pollfds[num].fd, &readfds ) )
@@ -582,8 +601,13 @@ void * EventDetector::main( void* iarg )
                     continue;
                 }
                     
-                mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                                       "socket:%d IS set\n", cur_sock) );
+                // remove from watched lists
+                edt->remove_FD( cur_sock );
+                list< int >::iterator tmp_iter = iter++;
+                watch_list.erase( tmp_iter );
+
+                /*mrn_dbg( 5, mrn_printf(FLF, stderr, 
+                  "socket:%d IS set\n", cur_sock) );*/
 
                 map< int, Rank >:: iterator iter2 =
                     edt->childRankByEventDetectionSocket.find( cur_sock );
@@ -593,18 +617,13 @@ void * EventDetector::main( void* iarg )
                     int failed_rank = (*iter2).second;
                     
                     mrn_dbg( 3, mrn_printf(FLF, stderr,
-                                           "Child[%u] failure detected ...\n",
-                                           failed_rank) );
+                                           "Child[%u] failure detected on event fd %d\n",
+                                           failed_rank, cur_sock) );
 
                     edt->recover_FromChildFailure( failed_rank );
                     edt->childRankByEventDetectionSocket.erase( iter2 );
                 }
                     
-                // remove from watched lists
-                edt->remove_FD( cur_sock );
-                list< int >::iterator tmp_iter = iter++;
-                watch_list.erase( tmp_iter );
-
             }
         }//else
     }//while
@@ -656,6 +675,11 @@ int EventDetector::proc_NewChildFDConnection( PacketPtr ipacket, int isock )
         free( child_hostname );
 
     childRankByEventDetectionSocket[ isock ] = child_rank;
+
+    PeerNodePtr child_peer = _network->get_PeerNode( child_rank );
+    if( child_peer != PeerNode::NullPeerNode ) {
+        child_peer->set_EventSocketFd( isock );
+    }
 
     return 0;
 }

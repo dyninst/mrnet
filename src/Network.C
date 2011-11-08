@@ -2062,32 +2062,16 @@ void Network::close_PeerNodeConnections(void)
  
     if( is_LocalNodeParent() ) {
         _children_mutex.Lock();
-        for( iter=_children.begin(); iter!=_children.end(); iter++ ) {
+        for( iter = _children.begin(); iter != _children.end(); iter++ ) {
             PeerNodePtr cur_node = *iter;
-            mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                   "Closing data(%d) and event(%d) sockets to %s:%d\n",
-                                   cur_node->_data_sock_fd,
-                                   cur_node->_event_sock_fd,
-                                   cur_node->get_HostName().c_str(),
-                                   cur_node->get_Rank()) );
-            if( XPlat::SocketUtils::Close( cur_node->_data_sock_fd ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "error on close(data_fd)\n") );
-            }
-            if( XPlat::SocketUtils::Close( cur_node->_event_sock_fd ) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "error on close(event_fd)\n") );
-            }
+            cur_node->close_Sockets();
         }
         _children_mutex.Unlock();
     }
 
     if( is_LocalNodeChild() ) {
         _parent_sync.Lock();
-        if( XPlat::SocketUtils::Close( _parent->_data_sock_fd ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "error on close(data_fd)\n") );
-        }
-        if( XPlat::SocketUtils::Close( _parent->_event_sock_fd ) == -1 ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "error on close(event_fd)\n") );
-        }
+        _parent->close_Sockets();
         _parent_sync.Unlock();
     }
 

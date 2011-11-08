@@ -42,6 +42,11 @@ class PeerNode: public CommunicationNode, public Error {
 
     int connect_DataSocket(void);
     int connect_EventSocket(void);
+    void set_DataSocketFd( int isock );
+    void set_EventSocketFd( int isock );
+    int get_DataSocketFd(void) const { return _data_sock_fd; }
+    int get_EventSocketFd(void) const { return _event_sock_fd; }
+    void close_Sockets(void);
 
     int new_InternalNode( int listening_sock_fd,
                           std::string parent_hostname, Port parent_port,
@@ -62,10 +67,6 @@ class PeerNode: public CommunicationNode, public Error {
     bool is_internal(void) const;
     bool is_parent(void) const;
     bool is_child(void) const;
-
-    void set_DataSocketFd( int isock ) { _data_sock_fd = isock; }
-    int get_DataSocketFd(void) const { return _data_sock_fd; }
-    int get_EventSocketFd(void) const { return _event_sock_fd; }
 
     int start_CommunicationThreads(void);    
     void waitfor_CommunicationThreads(void) const;
