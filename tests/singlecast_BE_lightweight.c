@@ -26,7 +26,6 @@ int main( int argc, char* argv[] )
     // join the MRNet net
     net = Network_CreateNetworkBE( argc, argv );
 
-    // participate in the broadcast/reduction roundtrip latency experiment
     done = 0;
     while( !done ) {
         // receive the broadcast message

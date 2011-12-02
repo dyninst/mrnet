@@ -41,40 +41,40 @@ int main(int argc, char **argv)
 
     do {
         if ( Network_recv(net,  &tag, pkt, &stream) != 1 ) {
-            fprintf(stderr, "stream_recv() failure ... backend exiting\n");
+            fprintf(stderr, "BE: stream_recv() failure ... exiting\n");
             exit (-1);
         }
 
         switch(tag){
         case PROT_CHAR:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_CHAR ...\n");
+            fprintf( stderr, "BE: Processing PROT_CHAR ...\n");
 #endif
             if( Packet_unpack(pkt, "%c", &recv_char ) == -1 ) {
-                fprintf(stderr, "stream_unpack(%%c) failure\n");
+                fprintf(stderr, "BE: stream_unpack(%%c) failure\n");
                 success=0;
             }
             if( Stream_send(stream,  tag, "%c", recv_char ) == -1 ) {
-                fprintf(stderr, "stream_send(%%c) failure\n");
+                fprintf(stderr, "BE: stream_send(%%c) failure\n");
                 success=0;
             }
             break;
         case PROT_INT:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_INT ...\n");
+            fprintf( stderr, "BE: Processing PROT_INT ...\n");
 #endif
             if( Packet_unpack(pkt, "%d", &recv_int ) == -1 ) {
-                fprintf(stderr, "stream_unpack(%%d) failure\n");
+                fprintf(stderr, "BE: stream_unpack(%%d) failure\n");
                 success=0;
             }
             if( Stream_send(stream,  tag, "%d", recv_int ) == -1 ) {
-                fprintf(stderr, "stream_send(%%d) failure\n");
+                fprintf(stderr, "BE: stream_send(%%d) failure\n");
                 success=0;
             }
             break;
         case PROT_UINT:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_UINT ...\n");
+            fprintf( stderr, "BE: Processing PROT_UINT ...\n");
 #endif
             if( Packet_unpack(pkt, "%ud", &recv_uint ) == -1 ) {
                 fprintf(stderr, "stream_unpack(%%ud) failure\n");
@@ -87,33 +87,33 @@ int main(int argc, char **argv)
             break;
         case PROT_SHORT:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_SHORT ...\n");
+            fprintf( stderr, "BE: Processing PROT_SHORT ...\n");
 #endif
             if( Packet_unpack(pkt, "%hd", &recv_short ) == -1 ) {
-                fprintf(stderr, "stream_unpack(%%hd) failure\n");
+                fprintf(stderr, "BE: stream_unpack(%%hd) failure\n");
                 success=0;
             }
             if( Stream_send(stream,  tag, "%hd", recv_short ) == -1 ) {
-                fprintf(stderr, "stream_send(%%hd) failure\n");
+                fprintf(stderr, "BE: stream_send(%%hd) failure\n");
                 success=0;
             }
             break;
         case PROT_USHORT:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_USHORT ...\n");
+            fprintf( stderr, "BE: Processing PROT_USHORT ...\n");
 #endif
             if( Packet_unpack(pkt, "%uhd", &recv_ushort ) == -1 ) {
-                fprintf(stderr, "stream_unpack(%%uhd) failure\n");
+                fprintf(stderr, "BE: stream_unpack(%%uhd) failure\n");
                 success=0;
             }
             if( Stream_send(stream,  tag, "%uhd", recv_ushort ) == -1 ) {
-                fprintf(stderr, "stream_send(%%uhd) failure\n");
+                fprintf(stderr, "BE: stream_send(%%uhd) failure\n");
                 success=0;
             }
             break;
         case PROT_LONG:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_LONG ...\n");
+            fprintf( stderr, "BE: Processing PROT_LONG ...\n");
 #endif
             if( Packet_unpack(pkt, "%ld", &recv_long ) == -1 ) {
                 fprintf(stderr, "stream_unpack(%%ld) failure\n");
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
             break;
         case PROT_ULONG:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_ULONG ...\n");
+            fprintf( stderr, "BE: Processing PROT_ULONG ...\n");
 #endif
             if( Packet_unpack(pkt, "%uld", &recv_ulong ) == -1 ) {
                 fprintf(stderr, "stream_unpack(%%uld) failure\n");
@@ -139,20 +139,20 @@ int main(int argc, char **argv)
             break;
         case PROT_FLOAT:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_FLOAT ...\n");
+            fprintf( stderr, "BE: Processing PROT_FLOAT ...\n");
 #endif
             if( Packet_unpack(pkt, "%f", &recv_float ) == -1 ) {
-                fprintf(stderr, "stream_unpack(%%f) failure\n");
+                fprintf(stderr, "BE: stream_unpack(%%f) failure\n");
                 success=0;
             }
             if( Stream_send(stream,  tag, "%f", recv_float ) == -1 ) {
-                fprintf(stderr, "stream_send(%%f) failure\n");
+                fprintf(stderr, "BE: stream_send(%%f) failure\n");
                 success=0;
             }
             break;
         case PROT_DOUBLE:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_DOUBLE ...\n");
+            fprintf( stderr, "BE: Processing PROT_DOUBLE ...\n");
 #endif
             if( Packet_unpack(pkt, "%lf", &recv_double ) == -1 ) {
                 fprintf(stderr, "stream_unpack(%%lf) failure\n");
@@ -165,48 +165,52 @@ int main(int argc, char **argv)
             break;
         case PROT_STRING:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_STRING ...\n");
+            fprintf( stderr, "BE: Processing PROT_STRING ...\n");
 #endif
             if( Packet_unpack(pkt, "%s", &recv_string ) == -1 ) {
-                fprintf(stderr, "stream_unpack(%%s) failure\n");
+                fprintf(stderr, "BE: stream_unpack(%%s) failure\n");
                 success=0;
             }
             if( Stream_send(stream,  tag, "%s", recv_string ) == -1 ) {
-                fprintf(stderr, "stream_send(%%s) failure\n");
+                fprintf(stderr, "BE: stream_send(%%s) failure\n");
                 success=0;
+            }
+            if( Stream_flush(stream) == -1){
+                fprintf(stderr, "BE: stream_flush() failure\n");
+                return -1;
             }
             free(recv_string);
             break;
         case PROT_ALL:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_ALL ...\n");
+            fprintf( stderr, "BE: Processing PROT_ALL ...\n");
 #endif
             if( Packet_unpack(pkt, "%c %uc %hd %uhd %d %ud %ld %uld %f %lf %s",
                              &recv_char, &recv_uchar, &recv_short, &recv_ushort,
                              &recv_int, &recv_uint, &recv_long, &recv_ulong,
                              &recv_float, &recv_double, &recv_string ) == 1 ) {
-                fprintf(stderr, "stream_unpack(all) failure\n");
+                fprintf(stderr, "BE: stream_unpack(all) failure\n");
                 success = 0;
             }
             if( Stream_send(stream,  tag, "%c %uc %hd %uhd %d %ud %ld %uld %f %lf %s",
                               recv_char, recv_uchar, recv_short, recv_ushort,
                               recv_int, recv_uint, recv_long, recv_ulong,
                               recv_float, recv_double, recv_string ) == 1 ) {
-                fprintf(stderr, "stream_send(all) failure\n");
+                fprintf(stderr, "BE: stream_send(all) failure\n");
                 success=0;
             }
             break;
         case PROT_EXIT:
 #if defined(DEBUG)
-            fprintf( stderr, "Processing PROT_EXIT ...\n");
+            fprintf( stderr, "BE: Processing PROT_EXIT ...\n");
 #endif
             break;
         default:
-            fprintf(stderr, "Unknown Protocol: %d\n", tag);
+            fprintf(stderr, "BE: Unknown Protocol: %d\n", tag);
             exit(-1);
         }
         if( Stream_flush(stream) == -1){
-            fprintf(stderr, "stream_flush() failure\n");
+            fprintf(stderr, "BE: stream_flush() failure\n");
             return -1;
         }
 

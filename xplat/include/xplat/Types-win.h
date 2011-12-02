@@ -42,6 +42,24 @@ typedef unsigned __int64 uint64_t;
 #  define UINT64_MAX _UI64_MAX
 #endif // !defined(INT64_MAX)
 
+
+// size_t and ssize_t
+#if !defined(size_t)
+# ifdef SIZE_T
+#  define size_t SIZE_T
+# else
+#  define size_t uint64_t
+# endif // SIZE_T
+#endif // !defined(size_t)
+
+#if !defined(ssize_t)
+# ifdef SSIZE_T
+#  define ssize_t SSIZE_T
+# else
+#  define ssize_t int64_t
+# endif // SSIZE_T
+#endif // !defined(ssize_t)
+
 // "address" type
 typedef char* caddr_t;
 

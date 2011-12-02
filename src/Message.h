@@ -13,6 +13,7 @@
 #include "mrnet/Types.h"
 #include "mrnet/Packet.h"
 #include "xplat/Monitor.h"
+#include "xplat/NCIO.h"
 
 namespace MRN
 {
@@ -35,11 +36,9 @@ class Message: public Error{
    XPlat::Monitor _packet_sync;
 };
 
-#if READY
-int read( int fd, void *buf, int size );
-int write( int fd, const void *buf, int size );
-#endif // READY
+int MRN_recv( XPlat::XPSOCKET fd, char *buf, int size );
+int MRN_send( XPlat::XPSOCKET fd, const char *buf, int size );
 
-}                               // namespace MRN
+} // namespace MRN
 
-#endif                          /* Message_h */
+#endif /* Message_h */

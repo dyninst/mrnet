@@ -21,7 +21,6 @@ int main( int argc, char* argv[] )
     // join the MRNet net
     Network * net = Network::CreateNetworkBE( argc, argv );
 
-    // participate in the broadcast/reduction roundtrip latency experiment
     bool done = false;
     while( !done ) {
 

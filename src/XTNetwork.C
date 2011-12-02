@@ -15,6 +15,7 @@
 
 #include "config.h"
 #include "utils.h"
+#include "Message.h"
 #include "SerialGraph.h"
 #include "XTNetwork.h"
 #include "XTFrontEndNode.h"
@@ -281,24 +282,24 @@ XTNetwork::GetTopology( int topoSocket, Rank& myRank )
     uint32_t sTopologyLen = 0;
 
     // obtain topology from our parent
-    read( topoSocket, &sTopologyLen, sizeof(sTopologyLen) );
+    MRN_recv( topoSocket, &sTopologyLen, sizeof(sTopologyLen) );
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%u\n", sTopologyLen) );
 
     sTopology = new char[sTopologyLen + 1];
     char* currBufPtr = sTopology;
     size_t nRemaining = sTopologyLen;
     while( nRemaining > 0 ) {
-        ssize_t nread = read( topoSocket, currBufPtr, nRemaining );
+        ssize_t nread = MRN_recv( topoSocket, currBufPtr, nRemaining );
         nRemaining -= nread;
         currBufPtr += nread;
     }
     *currBufPtr = 0;
 
     // get my rank
-    read( topoSocket, &myRank, sizeof(myRank) );
+    MRN_recv( topoSocket, &myRank, sizeof(myRank) );
 
     // get ALPS apid 
-    read( topoSocket, &alps_apid, sizeof(alps_apid) );
+    MRN_recv( topoSocket, &alps_apid, sizeof(alps_apid) );
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s, rank=%u, ALPS apid=%lu\n", 
                           sTopology, myRank, alps_apid) );

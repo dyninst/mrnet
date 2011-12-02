@@ -16,10 +16,10 @@ namespace XPlat
 // a blocking receive.
 const int NCBlockingRecvFlag = 0;
 
-int
+ssize_t
 NCSend( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
 {
-    int ret = 0;
+    ssize_t ret = 0;
     DWORD nBytesSent = 0;
 
     // convert buffer specifiers
@@ -46,11 +46,11 @@ NCSend( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
 }
 
 
-int
+ssize_t
 NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
 {
-    int ret = 0;
-	signed int bytes_remaining = 0;
+    ssize_t ret = 0;
+    signed int bytes_remaining = 0;
     // convert buffer specifiers
     WSABUF* wsaBufs = new WSABUF[nBufs];
     for( unsigned int i = 0; i < nBufs; i++ )
@@ -96,6 +96,29 @@ NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
     return ret;
 }
 
+ssize_t NCsend( XPSOCKET s, const void *buf, size_t count )
+{
+    if( count == 0 )
+        return 0;
+
+    NCBuf ncbuf;
+    ncbuf.buf = buf;
+    ncbuf.len = count;
+
+    return NCSend( s, &ncbuf, 1 );
+}
+
+ssize_t NCrecv( XPSOCKET s, void *buf, size_t count )
+{
+    if( count == 0 )
+        return 0;
+
+    NCBuf ncbuf;
+    ncbuf.buf = buf;
+    ncbuf.len = count;
+
+    return NCRecv( s, &ncbuf, 1 );
+}
 
 
 } // namespace XPlat

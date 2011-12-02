@@ -14,31 +14,21 @@ using namespace MRN_test;
 Test * test;
 
 int test_char( Network *, Stream *, bool anonymous=false, bool block=true );
-int test_char_array( Network *, Stream *, bool anonymous=false, bool block=true );
 
 int test_short( Network *, Stream *, bool anonymous=false, bool block=true );
-int test_short_array( Network *, Stream *, bool anonymous=false, bool block=true );
 int test_ushort( Network *, Stream *, bool anonymous=false, bool block=true );
-int test_ushort_array( Network *, Stream *, bool anonymous=false, bool block=true );
 
 int test_int( Network *, Stream *, bool anonymous=false, bool block=true );
-int test_int_array( Network *, Stream *, bool anonymous=false, bool block=true );
 int test_uint( Network *, Stream *, bool anonymous=false, bool block=true );
-int test_uint_array( Network *, Stream *, bool anonymous=false, bool block=true );
 
 int test_long( Network *, Stream *, bool anonymous=false, bool block=true );
-int test_long_array( Network *, Stream *, bool anonymous=false, bool block=true );
 int test_ulong( Network *, Stream *, bool anonymous=false, bool block=true );
-int test_ulong_array( Network *, Stream *, bool anonymous=false, bool block=true );
 
 int test_float( Network *, Stream *, bool anonymous=false, bool block=true );
-int test_float_array( Network *, Stream *, bool anonymous=false, bool block=true );
-
 int test_double( Network *, Stream *, bool anonymous=false, bool block=true );
-int test_double_array( Network *, Stream *, bool anonymous=false, bool block=true );
 
 int test_string( Network *, Stream *, bool anonymous=false, bool block=true );
-int test_string_array( Network *, Stream *, bool anonymous=false, bool block=true );
+int test_really_big_string( Network *, Stream *, bool anonymous=false, bool block=true );
 
 int test_alltypes( Network *, Stream *, bool anonymous=false, bool block=true );
 
@@ -76,60 +66,65 @@ int main(int argc, char **argv)
      * and the 2nd bool param indicates whether the recv should block *
      * or not */
 
-    if( test_char( net, stream_BC, false, true ) == -1 ) {}
-    if( test_char( net, stream_BC, false, false) == -1 ) {}
-    if( test_char( net, stream_BC, true, false) == -1 ) {}
-    if( test_char( net, stream_BC, true, true ) == -1 ) {}
+    if( test_char(net, stream_BC, false, true) == -1 ) {}
+    if( test_char(net, stream_BC, false, false) == -1 ) {}
+    if( test_char(net, stream_BC, true, false) == -1 ) {}
+    if( test_char(net, stream_BC, true, true) == -1 ) {}
             
-    if( test_short( net, stream_BC, false, true ) == -1 ) {}
-    if( test_short( net, stream_BC, false, false) == -1 ) {}
-    if( test_short( net, stream_BC, true, false) == -1 ) {}
-    if( test_short( net, stream_BC, true, true ) == -1 ) {}
+    if( test_short(net, stream_BC, false, true) == -1 ) {}
+    if( test_short(net, stream_BC, false, false) == -1 ) {}
+    if( test_short(net, stream_BC, true, false) == -1 ) {}
+    if( test_short(net, stream_BC, true, true) == -1 ) {}
             
-    if( test_ushort( net, stream_BC, false, true ) == -1 ) {}
-    if( test_ushort( net, stream_BC, false, false) == -1 ) {}
-    if( test_ushort( net, stream_BC, true, false) == -1 ) {}
-    if( test_ushort( net, stream_BC, true, true ) == -1 ) {}
+    if( test_ushort(net, stream_BC, false, true) == -1 ) {}
+    if( test_ushort(net, stream_BC, false, false) == -1 ) {}
+    if( test_ushort(net, stream_BC, true, false) == -1 ) {}
+    if( test_ushort(net, stream_BC, true, true) == -1 ) {}
             
-    if( test_int( net, stream_BC, false, true ) == -1 ) {}
-    if( test_int( net, stream_BC, false, false) == -1 ) {}
-    if( test_int( net, stream_BC, true, false) == -1 ) {}
-    if( test_int( net, stream_BC, true, true ) == -1 ) {}
+    if( test_int(net, stream_BC, false, true) == -1 ) {}
+    if( test_int(net, stream_BC, false, false) == -1 ) {}
+    if( test_int(net, stream_BC, true, false) == -1 ) {}
+    if( test_int(net, stream_BC, true, true) == -1 ) {}
             
-    if( test_uint( net, stream_BC, false, true ) == -1 ) {}
-    if( test_uint( net, stream_BC, false, false) == -1 ) {}
-    if( test_uint( net, stream_BC, true, false) == -1 ) {}
-    if( test_uint( net, stream_BC, true, true ) == -1 ) {}
+    if( test_uint(net, stream_BC, false, true) == -1 ) {}
+    if( test_uint(net, stream_BC, false, false) == -1 ) {}
+    if( test_uint(net, stream_BC, true, false) == -1 ) {}
+    if( test_uint(net, stream_BC, true, true) == -1 ) {}
                
-    if( test_long( net, stream_BC, false, true ) == -1 ) {}
-    if( test_long( net, stream_BC, false, false) == -1 ) {}
-    if( test_long( net, stream_BC, true, false) == -1 ) {}
-    if( test_long( net, stream_BC, true, true ) == -1 ) {}
+    if( test_long(net, stream_BC, false, true) == -1 ) {}
+    if( test_long(net, stream_BC, false, false) == -1 ) {}
+    if( test_long(net, stream_BC, true, false) == -1 ) {}
+    if( test_long(net, stream_BC, true, true) == -1 ) {}
             
-    if( test_ulong( net, stream_BC, false, true ) == -1 ) {}
-    if( test_ulong( net, stream_BC, false, false) == -1 ) {}
-    if( test_ulong( net, stream_BC, true, false) == -1 ) {}
-    if( test_ulong( net, stream_BC, true, true ) == -1 ) {}
+    if( test_ulong(net, stream_BC, false, true) == -1 ) {}
+    if( test_ulong(net, stream_BC, false, false) == -1 ) {}
+    if( test_ulong(net, stream_BC, true, false) == -1 ) {}
+    if( test_ulong(net, stream_BC, true, true) == -1 ) {}
 
-    if( test_float( net, stream_BC, false, true ) == -1 ) {}
-    if( test_float( net, stream_BC, false, false) == -1 ) {}
-    if( test_float( net, stream_BC, true, false) == -1 ) {}
-    if( test_float( net, stream_BC, true, true ) == -1 ) {}
+    if( test_float(net, stream_BC, false, true) == -1 ) {}
+    if( test_float(net, stream_BC, false, false) == -1 ) {}
+    if( test_float(net, stream_BC, true, false) == -1 ) {}
+    if( test_float(net, stream_BC, true, true) == -1 ) {}
             
-    if( test_double( net, stream_BC, false, true ) == -1 ) {}
-    if( test_double( net, stream_BC, false, false) == -1 ) {}
-    if( test_double( net, stream_BC, true, false) == -1 ) {}
-    if( test_double( net, stream_BC, true, true ) == -1 ) {}
+    if( test_double(net, stream_BC, false, true) == -1 ) {}
+    if( test_double(net, stream_BC, false, false) == -1 ) {}
+    if( test_double(net, stream_BC, true, false) == -1 ) {}
+    if( test_double(net, stream_BC, true, true) == -1 ) {}
 
-    if( test_string( net, stream_BC, false, true ) == -1 ) {}
-    if( test_string( net, stream_BC, false, false) == -1 ) {}
-    if( test_string( net, stream_BC, true, false) == -1 ) {}
-    if( test_string( net, stream_BC, true, true ) == -1 ) {}
+    if( test_string(net, stream_BC, false, true) == -1 ) {}
+    if( test_string(net, stream_BC, false, false) == -1 ) {}
+    if( test_string(net, stream_BC, true, false) == -1 ) {}
+    if( test_string(net, stream_BC, true, true) == -1 ) {}
+    
+//     if( test_really_big_string(net, stream_BC, false, true) == -1 ) {}
+//     if( test_really_big_string(net, stream_BC, false, false) == -1 ) {}
+//     if( test_really_big_string(net, stream_BC, true, false) == -1 ) {}
+//     if( test_really_big_string(net, stream_BC, true, true) == -1 ) {}
             
-    if( test_alltypes( net, stream_BC, false, true ) == -1 ) {}
-    if( test_alltypes( net, stream_BC, false, false) == -1 ) {}
-    if( test_alltypes( net, stream_BC, true, false) == -1 ) {}
-    if( test_alltypes( net, stream_BC, true, true ) == -1 ) {}
+    if( test_alltypes(net, stream_BC, false, true) == -1 ) {}
+    if( test_alltypes(net, stream_BC, false, false) == -1 ) {}
+    if( test_alltypes(net, stream_BC, true, false) == -1 ) {}
+    if( test_alltypes(net, stream_BC, true, true) == -1 ) {}
 
     if( stream_BC->send( PROT_EXIT, "" ) == -1 ) {
         test->print("stream::send(exit) failure\n");
@@ -1139,7 +1134,7 @@ int test_double( Network * net, Stream *stream, bool anonymous, bool block )
 int test_string( Network * net, Stream *stream, bool anonymous, bool block )
 {
     Stream *recv_stream;
-    char *send_val=strdup("Test String"), *recv_val=0;
+    char *send_val=strdup("Test String"), *recv_val=NULL;
     int num_received=0, num_to_receive=0;
     int tag;
     PacketPtr pkt;
@@ -1226,8 +1221,134 @@ int test_string( Network * net, Stream *stream, bool anonymous, bool block )
                 test->print(tmp_buf, testname);
                 success = false;
             }
+            free( recv_val );
         }
     } while( num_received < num_to_receive );
+
+    free( send_val );
+
+    if( success ) {
+        test->end_SubTest(testname, SUCCESS);
+        return 0;
+    }
+    else {
+        test->end_SubTest(testname, FAILURE);
+        return -1;
+    }
+
+    return 0;
+}
+
+/* 
+ *  test_really_big_string():
+ *    bcast a null-terminated string to all endpoints in stream.
+ *    recv  a null-terminated string from every endpoint
+ */
+int test_really_big_string( Network * net, Stream *stream, bool anonymous, bool block )
+{
+    Stream *recv_stream;
+    char *send_val, *recv_val=NULL;
+    int num_received=0, num_to_receive=0;
+    int tag;
+    PacketPtr pkt;
+    bool success = true;
+    std::string testname( "test_really_big_string(" );
+
+    size_t bigMB = 64 * 1024 * 1024;
+    send_val = (char*) malloc( bigMB );
+    if( send_val == NULL ) {
+        test->print("malloc(bigMB) failure\n", testname);
+        test->end_SubTest(testname, FAILURE);
+        return -1;
+    }
+    
+    memset( send_val, 'X', bigMB );
+    send_val[ bigMB - 1 ] = '\0';
+
+    if( ! anonymous ) {
+        testname += "stream_specific, ";
+    }
+    else {
+        testname += "stream_anonymous, ";
+    }
+
+    if( block ) {
+        testname += "blocking_recv)";
+    }
+    else {
+        testname += "non-blocking_recv)";
+    }
+
+    test->start_SubTest(testname);
+
+    num_to_receive = stream->size();
+    if( num_to_receive == 0 ) {
+        test->print("No endpoints in stream\n", testname);
+        test->end_SubTest(testname, NOTRUN);
+        return -1;
+    }
+
+    if( stream->send( PROT_STRING, "%s", send_val ) == -1 ) {
+        test->print("stream::send() failure\n", testname);
+        test->end_SubTest(testname, FAILURE);
+        return -1;
+    }
+
+    if( stream->flush() == -1 ) {
+        test->print("stream::flush() failure\n", testname);
+        test->end_SubTest(testname, FAILURE);
+        return -1;
+    }
+
+    do {
+        int retval;
+
+        //In non-blocking mode we sleep b/n recv attempts
+        if( ! block ) sleep(1);
+       
+        if( ! anonymous ) {
+            retval = stream->recv( &tag, pkt, block );
+        }
+        else {
+            retval = net->recv( &tag, pkt, &recv_stream, block );
+        }
+
+        if( retval == -1 ) {
+            //recv error
+            test->print("stream::recv() failure\n", testname);
+            test->end_SubTest(testname, FAILURE);
+            return -1;
+        }
+        else if ( retval == 0 ) {
+            //No data available
+        }
+        else {
+            //Got data
+            char tmp_buf[256];
+
+            num_received++;
+#if defined(DEBUG)
+            sprintf(tmp_buf, "Received %d packets; %d left.\n",
+                    num_received, num_to_receive-num_received);
+            test->print(tmp_buf, testname);
+#endif
+
+            if( pkt->unpack( "%s", &recv_val ) == -1 ) {
+                test->print("stream::unpack() failure\n", testname);
+                success = false;
+            }
+            if( strcmp( send_val, recv_val) ) {
+                sprintf(tmp_buf,
+                        "send_val(\"%s\") != recv_val(\"%s\") failure.\n",
+                        send_val, recv_val);
+                test->print(tmp_buf, testname);
+                success = false;
+            }
+            free( recv_val );
+        }
+    } while( num_received < num_to_receive );
+
+    free( send_val );
 
     if( success ) {
         test->end_SubTest(testname, SUCCESS);
@@ -1385,8 +1506,11 @@ int test_alltypes( Network * net, Stream *stream, bool anonymous, bool block )
                 test->print(tmp_buf, testname);
                 success = false;
             }
+            free( recv_string );
         }
     } while( num_received < num_to_receive );
+
+    free( send_string );
 
     if( success ) {
         test->end_SubTest(testname, SUCCESS);

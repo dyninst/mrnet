@@ -29,25 +29,22 @@ static XPlat::Atomic<uint64_t> MRN_bytes_recv = 0;
 uint64_t get_TotalBytesSend(void) { return MRN_bytes_send.Get(); }
 uint64_t get_TotalBytesRecv(void) { return MRN_bytes_recv.Get(); }
 
-
-int read( int fd, void *buf, int size );
-int write( int fd, const void *buf, int size );
-
 Message::Message()
 {
     _packet_sync.RegisterCondition( MRN_QUEUE_NONEMPTY );
 }
 
-int Message::recv( int sock_fd, std::list< PacketPtr > &packets_in,
+int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
                    Rank iinlet_rank )
 {
-    mrn_dbg_func_begin();
     unsigned int i, j;
     int32_t buf_len;
     uint32_t num_packets = 0, num_buffers, *packet_sizes;
     char *buf = NULL;
     PDR pdrs;
     enum pdr_op op = PDR_DECODE;
+
+    mrn_dbg_func_begin();
 
     //
     // packet count
@@ -61,8 +58,8 @@ int Message::recv( int sock_fd, std::list< PacketPtr > &packets_in,
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Reading packet count\n") );
     int retval;
-    if( (retval = MRN::read(sock_fd, buf, buf_len)) != buf_len ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN::read() %d of %d bytes received\n", 
+    if( (retval = MRN_recv(sock_fd, buf, buf_len)) != buf_len ) {
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %d of %d bytes received\n", 
                                retval, buf_len ));
         free( buf );
         return -1;
@@ -105,11 +102,11 @@ int Message::recv( int sock_fd, std::list< PacketPtr > &packets_in,
         return -1;
     }
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling MRN::read(%d, %p, %d)\n",
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling MRN_recv(%d, %p, %d)\n",
                            sock_fd, buf, buf_len) );
-    int readRet = MRN::read( sock_fd, buf, buf_len );
+    int readRet = MRN_recv( sock_fd, buf, buf_len );
     if( readRet != buf_len ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN::read() %d of %d bytes received\n", 
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %d of %d bytes received\n", 
                                readRet, buf_len ));
         free( buf );
         free( packet_sizes );
@@ -137,7 +134,7 @@ int Message::recv( int sock_fd, std::list< PacketPtr > &packets_in,
 
     XPlat::NCBuf* ncbufs = new XPlat::NCBuf[num_buffers];
 
-    int total_bytes = 0;
+    ssize_t total_bytes = 0;
     for( i = 0; i < num_buffers; i++ ) {
         uint32_t len = packet_sizes[i];
         ncbufs[i].buf = (char*) malloc( len );
@@ -154,7 +151,7 @@ int Message::recv( int sock_fd, std::list< PacketPtr > &packets_in,
                                retval, total_bytes) );
 
         for( i = 0; i < num_buffers; i++ )
-            free( (void*)(ncbufs[i].buf) );
+            free( ncbufs[i].buf );
         delete[] ncbufs;
         free( packet_sizes );
 
@@ -179,7 +176,7 @@ int Message::recv( int sock_fd, std::list< PacketPtr > &packets_in,
         if( new_packet->has_Error() ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "packet creation failed\n") );
             for( unsigned u = 0; u < num_buffers; u++ )
-                free( (void*)(ncbufs[u].buf) );
+                free( ncbufs[u].buf );
             delete[] ncbufs;
             free( packet_sizes );
             return -1;
@@ -197,13 +194,14 @@ int Message::recv( int sock_fd, std::list< PacketPtr > &packets_in,
     return 0;
 }
 
-int Message::send( int sock_fd )
+int Message::send( XPlat::XPSOCKET sock_fd )
 {
     unsigned int i, j;
     uint32_t num_packets, num_buffers;
     uint32_t *packet_sizes = NULL;
     char *buf = NULL;
-    int buf_len, total_bytes = 0;
+    int buf_len;
+    ssize_t total_bytes = 0;
     PDR pdrs;
     enum pdr_op op = PDR_ENCODE;
     bool go_away = false;
@@ -283,9 +281,9 @@ int Message::send( int sock_fd )
         return -1;
     }
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "calling MRN::write() for number of packets\n" ));
-    if( MRN::write( sock_fd, buf, buf_len ) != buf_len ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "MRN::write() failed\n" ));
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "calling MRN_send() for number of packets\n" ));
+    if( MRN_send( sock_fd, buf, buf_len ) != buf_len ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "MRN_send() failed\n" ));
         free( buf );
         delete[] ncbufs;
         free( packet_sizes );
@@ -317,11 +315,11 @@ int Message::send( int sock_fd )
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                           "calling MRN::write() for packet-size vec of len %d\n", 
+                           "calling MRN_send() for packet-size vec of len %d\n", 
                            buf_len) );
-    int mcwret = MRN::write( sock_fd, buf, buf_len );
+    int mcwret = MRN_send( sock_fd, buf, buf_len );
     if( mcwret != buf_len ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "MRN::write() failed\n" ));
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "MRN_send() failed\n" ));
         free( buf );
         delete[] ncbufs;
         free( packet_sizes );
@@ -341,7 +339,7 @@ int Message::send( int sock_fd )
                 "calling XPlat::NCSend(%d buffers, %d total bytes)\n",
                            num_buffers, total_bytes ));
 
-    int sret = XPlat::NCSend( sock_fd, ncbufs, num_buffers );
+    ssize_t sret = XPlat::NCSend( sock_fd, ncbufs, num_buffers );
     if( sret != total_bytes ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                     "XPlat::NCSend() returned %d of %d bytes, nbuffers = %d\n",
@@ -411,68 +409,26 @@ void Message::waitfor_MessagesToSend( void )
  *  some basic data types
  *********************************************************/
 
-int write( int ifd, const void *ibuf, int ibuf_len )
-{
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "%d, %p, %d\n", ifd, ibuf, ibuf_len ));
-
-    // don't generate SIGPIPE
-    int flags = MSG_NOSIGNAL;
-
-    int ret = ::send( ifd, (const char*)ibuf, ibuf_len, flags );
-    if( ret == -1 ) {
-        int err = XPlat::NetUtils::GetLastError();
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "send() failed with error '%s'\n", 
-                               XPlat::Error::GetErrorString( err ).c_str()) );
-    }
-    else mrn_dbg( 5, mrn_printf(FLF, stderr, "send => %d\n", ret ));
-    return ret;
+int MRN_send( XPlat::XPSOCKET fd, const char *buf, int count )
+{    
+    ssize_t rc;
+    size_t nbytes = (size_t) count;
+    rc = XPlat::NCsend( fd, buf, nbytes );
+    if( rc < 0 )
+        return -1;
+    else
+        return (int) rc;
 }
 
-int read( int fd, void *buf, int count )
+int MRN_recv( XPlat::XPSOCKET fd, char *buf, int count )
 {
-    int bytes_recvd = 0, retval, err;
-    if( count == 0 )
-        return 0;
-
-    while( bytes_recvd != count ) {
-
-        retval = ::recv( fd, ( ( char * )buf ) + bytes_recvd,
-                       count - bytes_recvd,
-                       XPlat::NCBlockingRecvFlag );
-
-        err = XPlat::NetUtils::GetLastError();
-
-        if( retval == -1 ) {
-            if( err == EINTR ) {
-                continue;
-            }
-            else {
-                std::string errstr = XPlat::Error::GetErrorString( err );
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "premature return from recv(). Got %d of %d "
-                                       " bytes. error '%s'\n", bytes_recvd, count,
-                                       errstr.c_str()) );
-                return -1;
-            }
-        }
-        else if( retval == 0 ) {
-            // the remote endpoint has gone away
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "recv() returned 0 (peer likely gone)\n") );
-            return -1;
-        }
-        else {
-            bytes_recvd += retval;
-            if( bytes_recvd < count ) {
-                continue;
-            }
-            else {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "returning %d\n", bytes_recvd) );
-                return bytes_recvd;
-            }
-        }
-    }
-    assert( 0 );
-    return -1;
+    ssize_t rc;
+    size_t nbytes = (size_t) count;
+    rc = XPlat::NCrecv( fd, buf, nbytes );
+    if( rc < 0 )
+        return -1;
+    else
+        return (int) rc;
 }
 
 } // namespace MRN

@@ -1207,8 +1207,11 @@ int test_string( Network * net, Stream *stream, bool anonymous, bool block )
                 test->print(tmp_buf, testname);
                 success = false;
             }
+            free( recv_val );
         }
     } while( num_received < num_to_receive );
+
+    free( send_val );
 
     if( success ) {
         test->end_SubTest(testname, SUCCESS);
@@ -1366,8 +1369,11 @@ int test_alltypes( Network * net, Stream *stream, bool anonymous, bool block )
                 test->print(tmp_buf, testname);
                 success = false;
             }
+            free( recv_string );
         }
     } while( num_received < num_to_receive );
+
+    free( send_string );
 
     if( success ) {
         test->end_SubTest(testname, SUCCESS);

@@ -7,24 +7,28 @@
 #ifndef XPLAT_NCIO_H
 #define XPLAT_NCIO_H
 
+#include "xplat/Types.h"
+
 namespace XPlat
 {
 
-#if defined(WIN32)
+#ifdef WIN32
 typedef SOCKET XPSOCKET;
 #else
 typedef int XPSOCKET;
-#endif // defined(WIN32)
+#endif // WIN32
 
 struct NCBuf
 {
-    unsigned int len;
+    size_t len;
     char* buf;
 };
 
+ssize_t NCSend( XPSOCKET s, NCBuf* bufs, unsigned int nBufs );
+ssize_t NCRecv( XPSOCKET s, NCBuf* bufs, unsigned int nBufs );
 
-int NCSend( XPSOCKET s, NCBuf* bufs, unsigned int nBufs );
-int NCRecv( XPSOCKET s, NCBuf* bufs, unsigned int nBufs );
+ssize_t NCsend( XPSOCKET s, const void *buf, size_t count );
+ssize_t NCrecv( XPSOCKET s, void *buf, size_t count );
 
 // flag to specify with send/recv for blocking recv, if available.
 extern const int NCBlockingRecvFlag;
