@@ -7,6 +7,7 @@
 #if !defined(__network_h)
 #define __network_h 1
 
+#include "xplat_lightweight/Monitor.h"
 #include "mrnet_lightweight/Types.h"
 #include "mrnet_lightweight/Packet.h"
 
@@ -33,7 +34,18 @@ typedef struct {
     unsigned int stream_iter;
     int recover_from_failures;
     char _was_shutdown;
+    Monitor_t* monitor;
+    Monitor_t* recv_monitor;
+    Monitor_t* parent_sync;
+    int thread_listening;
+    int thread_recovering;
 } Network_t;
+
+/* Condition for recv_monitor */
+enum {
+    THREAD_LISTENING,
+    PARENT_NODE_AVAILABLE
+};
 
 
 /* BEGIN PUBLIC API */
@@ -81,7 +93,8 @@ int Network_is_LocalNodeBackEnd( Network_t* net );
 struct PeerNode_t* Network_get_ParentNode( Network_t* net );
 
 int Network_has_PacketsFromParent( Network_t* net );
-int Network_recv_internal( Network_t* net, bool_t blocking );
+int Network_recv_internal( Network_t* net, struct Stream_t* stream, bool_t blocking );
+Packet_t* Network_recv_stream_check(Network_t* net);
 int Network_recv_PacketsFromParent( Network_t* net, struct vector_t* opacket, bool_t blocking );
 int Network_send_PacketToParent( Network_t* net,  Packet_t* ipacket );
 

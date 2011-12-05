@@ -22,6 +22,7 @@ VPATH = $(SRCDIR)
 
 TARGET    = $(LIBDIR)/libxplat_lightweight.a
 TARGET_SO = $(LIBDIR)/libxplat_lightweight.so
+TARGET_SO_LIBS = @LIBS_LIGHTWEIGHT@
 
 TARGETS = $(TARGET)
 ifeq ($(BUILD_SHARED_LIBS), yes)
@@ -35,6 +36,12 @@ XPLAT_LTWT_SRCS = $(SRCDIR)/Error-unix.c \
                   $(SRCDIR)/NetUtils-unix.c \
                   $(SRCDIR)/PathUtils-unix.c \
                   $(SRCDIR)/Process-unix.c
+
+ifeq ($(WANT_THREADSAFE_LTWT), yes)
+    XPLAT_LTWT_SRCS += $(SRCDIR)/Mutex-pthread.c
+    XPLAT_LTWT_SRCS += $(SRCDIR)/Monitor-pthread.c
+	TARGET_SO_LIBS += -lpthread
+endif
 
 XPLAT_HEADERS = $(wildcard $(xplat_INCDIR)/*.h)
 INSTALL_HEADERS = $(addprefix $(install_INCDIR)/, $(notdir $(XPLAT_HEADERS)))
@@ -53,7 +60,7 @@ $(TARGET): $(XPLAT_LTWT_OBJS)
 
 $(TARGET_SO): $(XPLAT_LTWT_OBJS)
 	@echo Building `basename $@` ...
-	$(CC) $(SOFLAGS) -o $@ $^
+	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LIBS)
 
 install-prep:
 	for dir in $(ILIBDIR) $(install_INCDIR) ; do \

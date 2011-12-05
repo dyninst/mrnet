@@ -27,6 +27,7 @@ void tfilter_TopoUpdate(vector_t * ipackets,
                         TopologyLocalInfo_t * info,
                         int upstream)
 {
+    //printf("tfilter_TopoUpdate\n");
     Network_t * net = TopologyLocalInfo_get_Network(info);
 
     vector_t * itype_arr = new_empty_vector_t();
@@ -176,23 +177,29 @@ void tfilter_TopoUpdate(vector_t * ipackets,
     for (i = 0; i < arr_len; i++) {
         switch(rtype_arr[i]) {
             case TOPO_NEW_BE:
+                //printf("TOPO_NEW_BE\n");
                 NetworkTopology_add_BackEnd(nt, rprank_arr[i], rcrank_arr[i],
                                             rchost_arr[i], rcport_arr[i]);
                 break;
             case TOPO_REMOVE_RANK:
+                //printf("TOPO_REMOVE_RANK\n");
                 NetworkTopology_remove_Node(nt, rcrank_arr[i]);
                 break;
             case TOPO_CHANGE_PARENT:
+                //printf("TOPO_CHANGE_PARENT\n");
                 NetworkTopology_set_Parent(nt, rcrank_arr[i], rprank_arr[i], 0);
                 break;
             case TOPO_CHANGE_PORT:
+                //printf("TOPO_CHANGE_PORT\n");
                 NetworkTopology_change_Port(nt, rcrank_arr[i], rcport_arr[i]);
                 break;
             case TOPO_NEW_CP:
+                //printf("TOPO_NEW_CP\n");
                 NetworkTopology_add_InternalNode(nt, rprank_arr[i], rcrank_arr[i],
                                                  rchost_arr[i], rcport_arr[i]);
                 break;
             default:
+                //printf("TOPO_DO_NOTHING\n");
                 // TODO: report invalid update type and exit
                 break;
         }

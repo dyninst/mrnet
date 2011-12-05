@@ -1668,7 +1668,7 @@ void sfilter_WaitForAll( const vector< PacketPtr >& ipackets,
     }
 
     // if we get here, SYNC CONDITION MET!
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "All child nodes ready!") );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "All child nodes ready!\n") );
 
     //3. All nodes ready! Place output packets
     for( map_iter = state->packets_by_rank.begin();

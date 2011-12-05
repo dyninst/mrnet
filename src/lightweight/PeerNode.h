@@ -6,6 +6,7 @@
 #if !defined(__peernode_h)
 #define __peernode_h 1
 
+#include "xplat_lightweight/Mutex.h"
 #include "mrnet_lightweight/Network.h"
 #include "Message.h"
 #include "mrnet_lightweight/Packet.h"
@@ -13,7 +14,7 @@
 #include "vector.h"
 
 struct PeerNode_t { 
-   Network_t* net;
+  Network_t* net;
   char* hostname;
   Port port;
   Rank rank;
@@ -27,6 +28,8 @@ struct PeerNode_t {
   Message_t msg_out;
   Message_t msg_in;
 
+  Mutex_t* send_mutex;
+  Monitor_t* recv_monitor;
 };
 
 typedef struct PeerNode_t PeerNode_t;

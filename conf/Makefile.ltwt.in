@@ -29,6 +29,8 @@ ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(TARGET_SO)
 endif 
 
+
+
 LTWT_SRCS = $(SRCDIR)/BackEndNode.c \
             $(SRCDIR)/ChildNode.c \
             $(SRCDIR)/DataElement.c \

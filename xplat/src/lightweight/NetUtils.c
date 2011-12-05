@@ -111,6 +111,7 @@ int NetUtils_GetHostName( char* ihostname, char* ohostname )
 {
     char* tok;
     const char* delim = ".";
+    char* saveptr;
     char* fqdn = (char*) malloc((size_t)XPLAT_MAX_HOSTNAME_LEN);
     assert(fqdn);
     if ( NetUtils_FindNetworkName(ihostname, fqdn) == -1 ) {
@@ -122,7 +123,7 @@ int NetUtils_GetHostName( char* ihostname, char* ohostname )
     // find first occurence of "."
     // if substring does not equal the entire string
 
-    tok = strtok(fqdn, delim);
+    tok = strtok_r(fqdn, delim, &saveptr);
     if( ! strcmp(fqdn, tok) )
         strncpy(ohostname, tok, (size_t)XPLAT_MAX_HOSTNAME_LEN);
     else 

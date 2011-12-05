@@ -244,6 +244,7 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
     char* tok;
     char* fmt;
     const char* delim = " \t\n%";
+    char *saveptr;
     DataElement_t* cur_elem = NULL;
     
     mrn_dbg_func_begin();
@@ -251,7 +252,7 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
     fmt = strdup(packet->fmt_str);
     assert(fmt);
 
-    tok = strtok(fmt, delim);
+    tok = strtok_r(fmt, delim, &saveptr);
 
     while (tok != NULL) {
         cur_elem = new_DataElement_t();
@@ -322,7 +323,7 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
         delete_DataElement_t(cur_elem);
         cur_elem = NULL;
 
-        tok = strtok(NULL, delim);
+        tok = strtok_r(NULL, delim, &saveptr);
     }
 
     free(fmt);
@@ -396,6 +397,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
     char* fmt = NULL;
     char* tok;
     const char* delim = " \t\n%";
+    char *saveptr;
     unsigned int i;
     bool_t retval = 0;
 
@@ -411,7 +413,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
     assert(fmt);
 
     i = 0;
-    tok = strtok(fmt, delim);
+    tok = strtok_r(fmt, delim, &saveptr);
 
     while( tok != NULL ) {
 
@@ -549,7 +551,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
             cur_elem = NULL;
         }
 
-        tok = strtok(NULL, delim);
+        tok = strtok_r(NULL, delim, &saveptr);
         i++;
     }
     free(fmt);
@@ -599,6 +601,7 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
     char* fmt = NULL;
     const char* delim = " \t\n%";
     char* tok;
+    char* saveptr;
    
     // variables for data types
     char* cp;
@@ -620,7 +623,7 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
     fmt = strdup(packet->fmt_str);
     assert(fmt != NULL);
 
-    tok = strtok(fmt, delim);
+    tok = strtok_r(fmt, delim, &saveptr);
     while( tok != NULL ) {
         cur_elem = (DataElement_t*)(packet->data_elements->vec[i]);
         assert(cur_elem->type == DataType_Fmt2Type(tok));
@@ -829,7 +832,7 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
         }
         i++;
 
-        tok = strtok(NULL, delim);
+        tok = strtok_r(NULL, delim, &saveptr);
     }
     free(fmt);
 

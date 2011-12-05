@@ -52,7 +52,7 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
 
     parent = Network_new_PeerNode(inetwork, iphostname, ipport, 
                                   iprank, true, true);
-    inetwork->parent = parent;
+    Network_set_ParentNode(inetwork, parent);
 
     inetwork->local_hostname = imyhostname;
     inetwork->local_rank = imyrank;

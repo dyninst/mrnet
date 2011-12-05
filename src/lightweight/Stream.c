@@ -15,7 +15,6 @@
 #endif
 
 #include "mrnet_lightweight/Network.h"
-#include "PeerNode.h"
 #include "Protocol.h"
 #include "mrnet_lightweight/Stream.h"
 #include "mrnet_lightweight/NetworkTopology.h"
@@ -304,23 +303,17 @@ int Stream_recv(Stream_t * stream, int *otag, Packet_t* opacket, bool_t blocking
         return 1;
     }
 
-    if( blocking == false ) {
-        int avail = Network_has_PacketsFromParent(stream->network);
-        if( ! avail )
-            return 0;
-    }
-
     // Try to get packet for this stream
     do {
-        rc = Network_recv_internal(stream->network, blocking);
+        rc = Network_recv_internal(stream->network, stream, blocking);
         if( rc == -1 ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "Network_recv_internal() failed\n"));
             return -1;
         }
-	else if( (blocking == false) && (rc == 0) ) {
+	    else if( (blocking == false) && (rc == 0) ) {
             mrn_dbg_func_end();
             return 0;
-	}
+	    }
     } while (stream->incoming_packet_buffer->size == 0);
 
     // we should have a packet now

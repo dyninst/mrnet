@@ -4,6 +4,7 @@
  ****************************************************************************/
 
 #include <assert.h>
+#include <string.h>
 #include "mrnet_lightweight/Error.h"
 #include "mrnet_lightweight/Network.h"
 #include "PeerNode.h"
@@ -31,7 +32,82 @@ PeerNode_t* new_PeerNode_t(Network_t* inetwork,
   peer_node->is_parent = is_parent;
   peer_node->available = true;
 
+#ifdef MRNET_LTWT_THREADSAFE  
+    peer_node->send_mutex = Mutex_construct();
+    peer_node->recv_monitor = Monitor_construct();
+#else
+    peer_node->send_mutex = NULL;
+    peer_node->recv_monitor = NULL;
+#endif
+
   return peer_node;
+}
+
+inline void PeerNode_send_lock(PeerNode_t* peer)
+{
+#ifdef MRNET_LTWT_THREADSAFE  
+    int retval;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_send_lock %d\n", peer->rank));
+    retval = Mutex_Lock( peer->send_mutex );
+    if( retval != 0 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "PeerNode_send_lock failed to acquire mutex: %s\n",
+                              strerror(retval)));
+    }
+#endif
+}
+
+inline void PeerNode_send_unlock(PeerNode_t* peer)
+{
+#ifdef MRNET_LTWT_THREADSAFE  
+    int retval;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_send_unlock %d\n", peer->rank));
+    retval = Mutex_Unlock( peer->send_mutex );
+    if( retval != 0 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "PeerNode_send_unlock failed to release mutex: %s\n",
+                              strerror(retval)));
+    }
+#endif
+}
+
+inline int PeerNode_recv_lock(PeerNode_t* peer, int blocking)
+{
+#ifdef MRNET_LTWT_THREADSAFE  
+    int retval;
+    int dbg_level;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_recv_lock %d\n", peer->rank));
+    if(blocking) {
+        dbg_level = 1;
+        retval = Monitor_Lock( peer->recv_monitor );
+    } else {
+        dbg_level = 3;
+        retval = Monitor_Trylock( peer->recv_monitor );
+    }
+    if( retval != 0 ) {
+        mrn_dbg(dbg_level, mrn_printf(FLF, stderr, 
+                              "PeerNode_recv_lock failed to acquire mutex(%d): %s\n",
+                              retval, strerror(retval)));
+    }
+    return retval;
+#endif
+    return 0;
+}
+
+inline void PeerNode_recv_unlock(PeerNode_t* peer)
+{
+#ifdef MRNET_LTWT_THREADSAFE  
+    int retval;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_recv_unlock %d\n",
+        peer->rank));
+    retval = Monitor_Unlock( peer->recv_monitor );
+    if( retval != 0 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "PeerNode_recv_unlock failed to release mutex"
+                              "(%d): %s\n",
+                              retval, strerror(retval)));
+    }
+#endif
 }
 
 Rank PeerNode_get_Rank(PeerNode_t* node)
@@ -90,6 +166,7 @@ int PeerNode_sendDirectly (PeerNode_t* peer, /*const*/ Packet_t* ipacket)
     int retval = 0;
 
     mrn_dbg_func_begin();
+    PeerNode_send_lock(peer);
 
     peer->msg_out.packet = ipacket;
 
@@ -100,6 +177,8 @@ int PeerNode_sendDirectly (PeerNode_t* peer, /*const*/ Packet_t* ipacket)
         mrn_dbg(1, mrn_printf(FLF, stderr, "Message_send() failed\n"));
         retval = -1;
     }
+
+    PeerNode_send_unlock(peer);
     mrn_dbg_func_end();
 
     return retval;
@@ -110,6 +189,11 @@ int PeerNode_has_data(PeerNode_t* node)
     struct timeval zeroTimeout;
     fd_set rfds;
     int sret;
+
+    mrn_dbg_func_begin();
+    if(PeerNode_recv_lock(node, 0) != 0) {
+       return false;
+    }
 
     zeroTimeout.tv_sec = 0;
     zeroTimeout.tv_usec = 0;
@@ -122,25 +206,43 @@ int PeerNode_has_data(PeerNode_t* node)
     sret = select(node->data_sock_fd + 1, &rfds, NULL, NULL, &zeroTimeout);
     if (sret == -1) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "select() failed\n"));
+        PeerNode_recv_unlock(node);
+        mrn_dbg_func_end();
         return false;
     }
+
+    PeerNode_recv_unlock(node);
 
     // We only put one descriptor in the read set. Therefore, if the read
     // value from select() is 1, that descriptor has data available.
     if (sret == 1) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "select(): data to be read.\n"));
+        mrn_dbg_func_end();
         return true;
     }
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Leaving PeerNode_has_data(). No data available\n"));
+    mrn_dbg_func_end();
     return false;
 }
 
 int PeerNode_recv(PeerNode_t* node, vector_t* packet_list, bool_t blocking)
 {
-    if( blocking || PeerNode_has_data(node) )
-        return Message_recv(node->data_sock_fd, packet_list, node->rank);
-    return 0;
+    mrn_dbg_func_begin();
+    int msg_ret = 0;
+    if((PeerNode_recv_lock(node, blocking) != 0)) {
+        return msg_ret;
+    }
+    if( blocking || PeerNode_has_data(node) ) {
+
+        msg_ret = Message_recv(node->data_sock_fd, packet_list, node->rank);
+
+    }
+
+    PeerNode_recv_unlock(node);
+
+    mrn_dbg_func_end();
+    return msg_ret;
 }
 
 int PeerNode_flush(PeerNode_t* peer)

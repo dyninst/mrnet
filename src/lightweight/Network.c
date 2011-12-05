@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 #include "mrnet_lightweight/MRNet.h"
 
@@ -54,6 +55,124 @@ void cleanup_local(void)
 #endif
 }
 
+inline void Network_lock(Network_t* net)
+{
+    //printf("outside hello\n");
+#ifdef MRNET_LTWT_THREADSAFE  
+    //printf("hello??\n");
+    int retval;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Network_lock\n"));
+    retval = Monitor_Lock( net->monitor );
+    if( retval != 0 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "Network_lock failed to acquire monitor lock: %s\n",
+                              strerror(retval)));
+
+    }
+#endif
+}
+
+inline void Network_unlock(Network_t* net)
+{
+#ifdef MRNET_LTWT_THREADSAFE  
+    int retval;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Network_unlock\n"));
+    retval = Monitor_Unlock( net->monitor );
+    if( retval != 0 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "Network_unlock failed to release monitor: %s\n",
+                              strerror(retval)));
+    }
+#endif
+}
+
+inline void Network_recv_lock(Network_t* net)
+{
+#ifdef MRNET_LTWT_THREADSAFE  
+    int retval;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv_lock\n"));
+    retval = Monitor_Lock( net->recv_monitor );
+    if( retval != 0 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                            "Network_recv_lock failed to acquire monitor lock: %s\n",
+                            strerror(retval)));
+
+    }
+#endif
+}
+
+inline void Network_recv_unlock(Network_t* net)
+{
+#ifdef MRNET_LTWT_THREADSAFE  
+    int retval;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv_unlock\n"));
+    retval = Monitor_Unlock( net->recv_monitor );
+    if( retval != 0 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "Network_recv_unlock failed to release monitor lock: %s\n",
+                              strerror(retval)));
+    }
+#endif
+}
+
+inline void Network_parent_lock(Network_t* net)
+{
+#ifdef MRNET_LTWT_THREADSAFE  
+    int retval;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Network_parent_lock\n"));
+    retval = Monitor_Lock( net->parent_sync );
+    if( retval != 0 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                            "Network_parent_lock failed to acquire monitor lock: %s\n",
+                            strerror(retval)));
+
+    }
+#endif
+}
+
+inline void Network_parent_unlock(Network_t* net)
+{
+#ifdef MRNET_LTWT_THREADSAFE  
+    int retval;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Network_parent_unlock\n"));
+    retval = Monitor_Unlock( net->parent_sync );
+    if( retval != 0 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                            "Network_parent_unlock failed to acquire monitor lock: %s\n",
+                            strerror(retval)));
+
+    }
+#endif
+}
+
+inline void Network_monitor_wait(Monitor_t* mon, int cv)
+{
+#ifdef MRNET_LTWT_THREADSAFE  
+    int retval;
+    retval = Monitor_WaitOnCondition(mon, cv);
+    if( retval != 0 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+            "Network_monitor_wait failed to wait: %s\n",
+            strerror(retval)));
+
+    }
+#endif
+}
+
+inline void Network_monitor_broadcast(Monitor_t* mon, int cv)
+{
+#ifdef MRNET_LTWT_THREADSAFE  
+    int retval;
+    retval = Monitor_BroadcastCondition(mon, cv);
+    if( retval != 0 ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+            "Network_monitor_broadcast failed to broadcast: %s\n",
+            strerror(retval)));
+
+    }
+#endif
+}
+
 Network_t* new_Network_t()
 {
     Network_t* net = (Network_t*) calloc( (size_t)1, sizeof(Network_t) );
@@ -69,6 +188,24 @@ Network_t* new_Network_t()
     net->recover_from_failures = true;
     net->_was_shutdown = 0;
 
+#ifdef MRNET_LTWT_THREADSAFE  
+    net->monitor = Monitor_construct();
+    net->recv_monitor = Monitor_construct();
+    net->parent_sync = Monitor_construct();
+    if( Monitor_RegisterCondition(net->parent_sync, PARENT_NODE_AVAILABLE) ) {
+        assert(0);
+    }
+    if( Monitor_RegisterCondition(net->recv_monitor, THREAD_LISTENING) ) {
+        assert(0);
+    }
+#else
+    net->monitor = NULL;
+    net->recv_monitor = NULL;
+    net->parent_sync = NULL;
+#endif    
+    net->thread_listening = 0;
+    net->thread_recovering = 0;
+
     init_local();
 
     return net;
@@ -80,6 +217,8 @@ void delete_Network_t(Network_t * net)
     Stream_t * cur_stream;
 
     if( net != NULL ) {
+
+        Network_lock(net);
 
         if( ! net->_was_shutdown ) {
             // detach before shutdown
@@ -110,6 +249,17 @@ void delete_Network_t(Network_t * net)
         }
         delete_map_t(net->streams);
 
+        Network_unlock(net);
+
+#ifdef MRNET_LTWT_THREADSAFE 
+        Monitor_destruct(net->monitor);
+        Monitor_destruct(net->recv_monitor);
+        Monitor_destruct(net->parent_sync);
+        free(net->monitor);
+        free(net->recv_monitor);
+        free(net->parent_sync);
+#endif        
+        
         free(net);
     }
 
@@ -188,7 +338,7 @@ Network_t* Network_init_BackEnd(char* iphostname, Port ipport,
     char* myhostname = NULL;
     Network_t* net = new_Network_t();
     assert( net != NULL );
-  
+
     setrank(imyrank);  
     
     myhostname = (char*) malloc( sizeof(char) * XPLAT_MAX_HOSTNAME_LEN );
@@ -213,53 +363,131 @@ Network_t* Network_init_BackEnd(char* iphostname, Port ipport,
     return net;
 }
 
-int Network_recv_internal(Network_t* net, bool_t blocking)
+int Network_recv_internal(Network_t* net, Stream_t* stream, bool_t blocking)
 {
     vector_t* packet_list;
-    
+    Packet_t* ready_packet = NULL;
+    PeerNode_t* orig_parent;
+    PeerNode_t* recov_parent;
+    int ret_val;
+    int listened = 0;
+    int no_lock = 0;
+
     mrn_dbg_func_begin();
+    Network_recv_lock(net);
 
     packet_list = new_empty_vector_t();
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Calling recv_packets()\n"));
-    if( Network_recv_PacketsFromParent(net, packet_list, blocking) == -1 ) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "recv_packets() failed\n"));
-        if (Network_recover_FromFailures(net)) {
-            Network_recover_FromParentFailure(net);
-            if (Network_recv_PacketsFromParent(net, packet_list, blocking) == -1) {
-                mrn_dbg(3, mrn_printf(FLF, stderr, 
-                                      "recv() failed twice, return -1\n"));
-	        delete_vector_t( packet_list );
-                return -1;
+    /* Once we obtain lock, check if data is available */
+    if(stream != NULL) {
+        ready_packet = Stream_get_IncomingPacket(stream);
+    } else {
+        ready_packet = Network_recv_stream_check(net);
+    }
+
+    /* No packet came for us while we were blocking */
+    orig_parent = Network_get_ParentNode(net);
+    while(ready_packet == NULL) {
+        if(!net->thread_listening) {
+            mrn_dbg(5, mrn_printf(FLF, stderr, "Calling recv_packets()\n"));
+            net->thread_listening++;
+            listened = 1;
+            assert(net->thread_listening == 1);
+            Network_recv_unlock(net);
+            ret_val = Network_recv_PacketsFromParent(net,packet_list,blocking);
+            if( ret_val == -1 ) {
+                mrn_dbg(3, mrn_printf(FLF, stderr, "recv() failed\n"));
+                /* We've noticed a failure on the socket. Check if another  *
+                 * thread hasn't already recovered.                         */
+                if (Network_recover_FromFailures(net)) {
+                    recov_parent = Network_get_ParentNode(net);
+                    /* We are first ones here, recover */
+                    if(recov_parent == orig_parent) {
+                        Network_recover_FromParentFailure(net);
+                    }
+                    /* Try receiving again */
+                    if (Network_recv_PacketsFromParent(net, packet_list,
+                                blocking) == -1) {
+                        mrn_dbg(3, mrn_printf(FLF, stderr, 
+                                    "recv() failed twice, return -1\n"));
+                        no_lock = 1;
+                        goto recv_clean_up;
+                    }
+                }
+                else {
+                    ret_val = -1;
+                    no_lock = 1;
+                    goto recv_clean_up;
+                }
             }
-        } 
-        else {
-	    delete_vector_t( packet_list );
-	    return -1;
-	}
+            Network_recv_lock(net);
+            break;
+        } else {
+            if(!blocking) {
+                mrn_dbg(5, mrn_printf(FLF, stderr, "No packets read!\n"));
+                ret_val = 0;
+                goto recv_clean_up;
+            }
+            // While thread listening down here too?
+            mrn_dbg(5, mrn_printf(FLF, stderr,
+                    "Waiting on condition THREAD_LISTENING.\n"));
+            Network_monitor_wait(net->recv_monitor, THREAD_LISTENING);
+
+            mrn_dbg(5, mrn_printf(FLF, stderr,
+                    "Woke up from waiting on THREAD_LISTENING.\n"));
+
+            /* I've awoken with the lock. Check if I have a packet waiting */
+            if(stream != NULL) {
+                ready_packet = Stream_get_IncomingPacket(stream);
+            } else {
+                ready_packet = Network_recv_stream_check(net);
+            }
+
+        }
+
+    }
+    ret_val = 1;
+
+    if(ready_packet != NULL) {
+        /* Data was ready on thread wake up */
+        pushBackElement(packet_list, ready_packet);
     }
 
     if( packet_list->size == 0 ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "No packets read!\n"));
-	delete_vector_t( packet_list );
-        return 0;
+        ret_val = 0;
+        goto recv_clean_up;
     }
     else {
         mrn_dbg(5, mrn_printf(FLF, stderr, "Calling proc_packets()\n"));
 
         if( ChildNode_proc_PacketsFromParent(net->local_back_end_node, packet_list) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "proc_packets() failed\n"));
-	    delete_vector_t( packet_list );
-            return -1;
+            ret_val = -1;
+            goto recv_clean_up;
         }
     }
-    delete_vector_t( packet_list );
-  
+
     // if we get here, we have found data to return
     mrn_dbg(5, mrn_printf(FLF, stderr, 
                           "Found/processed packets! Returning\n"));
-    
-    return 1;
+
+recv_clean_up:
+    delete_vector_t( packet_list );
+    if(listened) {
+        net->thread_listening--;
+        assert(net->thread_listening == 0);
+        mrn_dbg(5, mrn_printf(FLF, stderr,
+                "Broadcasting condition THREAD_LISTENING.\n"));
+        Network_monitor_broadcast(net->recv_monitor, THREAD_LISTENING);
+    }
+
+    if(!no_lock) {
+        Network_recv_unlock(net);
+    }
+    mrn_dbg_func_end();
+
+    return ret_val;
 }
 
 Packet_t* Network_recv_stream_check(Network_t* net)
@@ -278,6 +506,8 @@ Packet_t* Network_recv_stream_check(Network_t* net)
 
         start_iter = net->stream_iter;
     
+        Network_lock(net);
+
         do {
             // get the Stream associated with the current stream_iter,
             // which is an index into the keys array
@@ -301,6 +531,8 @@ Packet_t* Network_recv_stream_check(Network_t* net)
                                       "wraparound, setting stream_iter to zero\n"));
             }
         } while((start_iter != net->stream_iter) && !packet_found);
+
+        Network_unlock(net);
     }
     
     return cur_packet;
@@ -310,7 +542,9 @@ Packet_t* Network_recv_stream_check(Network_t* net)
 int Network_recv_nonblock(Network_t* net, int *otag, 
                           Packet_t* opacket, Stream_t** ostream)
 {
+    int ret_val;
     Packet_t* cur_packet = NULL;
+get_packet_from_stream_label:
     cur_packet = Network_recv_stream_check(net);
     if( cur_packet != NULL ) {
         *otag = cur_packet->tag;
@@ -325,10 +559,12 @@ int Network_recv_nonblock(Network_t* net, int *otag,
         return 1;
     }
     
-    if( Network_has_PacketsFromParent(net) )
-        return Network_recv(net, otag, opacket, ostream);
+    ret_val = Network_recv_internal(net, NULL, false);
+    if(ret_val == 1) {
+        goto get_packet_from_stream_label;
+    }
 
-    return 0;
+    return ret_val;
 }
 
 int Network_recv(Network_t* net, int *otag, 
@@ -361,7 +597,7 @@ int Network_recv(Network_t* net, int *otag,
     // check whether there is data waiting to be read on our socket
     mrn_dbg(5, mrn_printf(FLF, stderr, 
             "No packets waiting in stream, checking for data on socket\n"));
-    retval = Network_recv_internal(net, true);
+    retval = Network_recv_internal(net, NULL, true);
 
     checked_network = true;
 
@@ -386,12 +622,12 @@ int Network_is_LocalNodeBackEnd(Network_t* net) {
 
 int Network_has_PacketsFromParent(Network_t* net)
 {
-    return PeerNode_has_data(net->parent);
+    return PeerNode_has_data(Network_get_ParentNode(net));
 }
 
 int Network_recv_PacketsFromParent(Network_t* net, vector_t* opackets, bool_t blocking)
 {
-    return PeerNode_recv(net->parent, opackets, blocking);
+    return PeerNode_recv(Network_get_ParentNode(net), opackets, blocking);
 }
 
 void Network_shutdown_Network(Network_t* net)
@@ -400,6 +636,7 @@ void Network_shutdown_Network(Network_t* net)
     Stream_t * cur_stream;
     
     mrn_dbg_func_begin();
+    Network_lock(net);
 
     if( ! net->_was_shutdown ) { 
         net->_was_shutdown = 1;
@@ -414,6 +651,7 @@ void Network_shutdown_Network(Network_t* net)
         }
     }
 
+    Network_unlock(net);
     mrn_dbg_func_end();
 }
 
@@ -459,6 +697,7 @@ Stream_t* Network_new_Stream(Network_t* net,
     Stream_t* stream;
     
     mrn_dbg_func_begin();
+    Network_lock(net);
 
     stream = new_Stream_t(net, iid, ibackends, inum_backends,
                           (unsigned)ius_filter_id, 
@@ -466,6 +705,7 @@ Stream_t* Network_new_Stream(Network_t* net,
                           (unsigned)ids_filter_id);
     insert(net->streams, (int)iid, stream);
 
+    Network_unlock(net);
     mrn_dbg_func_end();
     return stream;
 }
@@ -473,6 +713,7 @@ Stream_t* Network_new_Stream(Network_t* net,
 int Network_remove_Node(Network_t* net, Rank ifailed_rank, int iupdate)
 {
     mrn_dbg_func_begin();
+    Network_lock(net);
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Deleting PeerNode: node[%u] ...\n", ifailed_rank));
     Network_delete_PeerNode(net, ifailed_rank);
@@ -481,6 +722,7 @@ int Network_remove_Node(Network_t* net, Rank ifailed_rank, int iupdate)
                           ifailed_rank));
     NetworkTopology_remove_Node(net->network_topology, ifailed_rank);
 
+    Network_unlock(net);
     mrn_dbg_func_end();
     return true;
 }
@@ -489,10 +731,12 @@ int Network_delete_PeerNode(Network_t* net, Rank irank)
 {
     unsigned int iter;
     Node_t* cur_child;
+    Network_parent_lock(net);
     
     if ( (net->parent != NULL) && (net->parent->rank == irank) ) {
         free( net->parent );
         net->parent = NULL;
+        Network_parent_unlock(net);
         return true;
     }
 
@@ -500,9 +744,12 @@ int Network_delete_PeerNode(Network_t* net, Rank irank)
         cur_child = (Node_t*)(net->children->vec[iter]);
         if (NetworkTopology_Node_get_Rank(cur_child) == irank) {
             net->children = eraseElement(net->children, cur_child);
+            Network_parent_unlock(net);
             return true; 
         }
     } 
+
+    Network_parent_unlock(net);
     return false;
 }
 
@@ -523,15 +770,20 @@ int Network_have_Streams(Network_t* net)
 
 Stream_t* Network_get_Stream(Network_t* net, unsigned int iid)
 {
+    Network_lock(net);
+
     Stream_t* ret = (Stream_t*)get_val(net->streams, (int)iid);
     if (ret == NULL)
         mrn_dbg(5, mrn_printf(FLF, stderr, "ret == NULL\n"));
+
+    Network_unlock(net);
     return ret;
 }
 
 void Network_delete_Stream(Network_t * net, unsigned int iid)
 {
     mrn_dbg_func_begin();
+    Network_lock(net);
 
     /* if we're deleting the iter, set to the next element */
     int key = (int) iid;
@@ -544,6 +796,7 @@ void Network_delete_Stream(Network_t * net, unsigned int iid)
     if( net->stream_iter >= net->streams->size )
         net->stream_iter = 0;
 
+    Network_unlock(net);
     mrn_dbg_func_end();
 }
 
@@ -557,14 +810,22 @@ int Network_is_UserStreamId( unsigned int id )
 int Network_send_PacketToParent(Network_t* net, Packet_t* ipacket)
 {
     mrn_dbg_func_begin();
-    if (PeerNode_sendDirectly(net->parent, ipacket) == -1) {
+    PeerNode_t *send_parent = Network_get_ParentNode(net);
+    PeerNode_t *recov_parent;
+    if (PeerNode_sendDirectly(send_parent, ipacket) == -1) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "upstream.send() failed\n"));
         if (Network_recover_FromFailures(net)) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
                                   "assume parent failure, try one more time\n"));
-            Network_recover_FromParentFailure(net); 
-            if (PeerNode_sendDirectly(net->parent, ipacket) == -1) {
-                mrn_dbg(1, mrn_printf(FLF, stderr, "upstram.send() failed, again\n"));
+            recov_parent = Network_get_ParentNode(net);
+            if(recov_parent == send_parent) {
+                Network_recover_FromParentFailure(net); 
+                send_parent = Network_get_ParentNode(net);
+            } else {
+                send_parent = recov_parent;
+            }
+            if (PeerNode_sendDirectly(send_parent, ipacket) == -1) {
+                mrn_dbg(1, mrn_printf(FLF, stderr, "upstream.send() failed, again\n"));
                 return -1;
             }
         } 
@@ -582,6 +843,7 @@ PeerNode_t* Network_new_PeerNode(Network_t* network,
                                  int is_parent,
                                  int is_internal)
 {
+    /* Assumes we possess network lock */
     PeerNode_t* node = new_PeerNode_t(network, ihostname, iport, 
                                       irank, is_parent, is_internal);
 
@@ -589,11 +851,11 @@ PeerNode_t* Network_new_PeerNode(Network_t* network,
                           node->hostname, node->rank, node));
 
     if (is_parent) {
-        network->parent = node;  
+        //Network_set_ParentNode(network, node);
     } else {
         pushBackElement(network->children, node); 
     }
-    
+
     return node;
 
 }
@@ -615,16 +877,41 @@ void Network_disable_FailureRecovery(Network_t* net)
 
 PeerNode_t* Network_get_ParentNode(Network_t* net)
 {
-    return net->parent;
+    mrn_dbg_func_begin();
+    Network_parent_lock(net);
+    PeerNode_t* ret_parent = NULL;
+    while( net->parent == NULL && (!Network_is_ShutDown(net)) ) {
+        mrn_dbg( 3, mrn_printf(FLF, stderr,
+                    "Waiting on PARENT_NODE_AVAILABLE\n"));
+
+        Network_monitor_wait(net->parent_sync, PARENT_NODE_AVAILABLE);
+
+        if(net->parent != NULL) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr,
+                        "Woke up from waiting on PARENT_NODE_AVAILABLE\n"));
+        }
+    }
+
+    ret_parent = net->parent;
+
+    Network_parent_unlock(net);
+    mrn_dbg_func_end();
+    return ret_parent;
 }
 
 void Network_set_ParentNode(Network_t* net, PeerNode_t* ip) 
 {
+    mrn_dbg_func_begin();
+    Network_parent_lock(net);
     net->parent = ip;
 
     if (net->parent != NULL) {
+        Network_monitor_broadcast(net->parent_sync, PARENT_NODE_AVAILABLE);
         mrn_dbg(3, mrn_printf(FLF, stderr, "Parent node available\n"));
-    } 
+    }
+
+    Network_parent_unlock(net);
+    mrn_dbg_func_end();
 }
 
 int Network_has_ParentFailure(Network_t* net) 
@@ -632,6 +919,8 @@ int Network_has_ParentFailure(Network_t* net)
     struct timeval zeroTimeout;
     fd_set rfds;
     int sret;
+
+    Network_parent_lock(net);
 
     zeroTimeout.tv_sec = 0;
     zeroTimeout.tv_usec = 0;
@@ -652,12 +941,14 @@ int Network_has_ParentFailure(Network_t* net)
         }
     }
    
+    Network_parent_unlock(net);
     return 0;
 }
 
 int Network_recover_FromParentFailure(Network_t* net) 
 {
 
+    
     Timer_t new_parent_timer = new_Timer_t();
     Timer_t cleanup_timer = new_Timer_t();
     Timer_t connection_timer = new_Timer_t();
@@ -665,9 +956,30 @@ int Network_recover_FromParentFailure(Network_t* net)
     Rank failed_rank;
     Node_t* new_parent_node;
     char* new_parent_name;
+    PeerNode_t* old_parent;
     PeerNode_t* new_parent;
+    BackEndNode_t* local_node;
+    Rank new_parent_rank;
 
     mrn_dbg_func_begin();
+    
+    /* Check if someone is already recovering */
+    Network_parent_lock(net);
+    if(!net->thread_recovering) {
+        net->thread_recovering++;
+        assert(net->thread_recovering == 1);
+    } else {
+        while(net->thread_recovering) {
+            Network_monitor_wait(net->parent_sync, PARENT_NODE_AVAILABLE);
+        }
+        Network_parent_unlock(net);
+        /* We assume recovery that made us block executed correctly */
+        return 0;
+    }
+    Network_parent_unlock(net);
+
+    /* No one else is recovering...we can recover */
+    Network_lock(net);
 
     PeerNode_mark_Failed(Network_get_ParentNode(net));
     failed_rank = PeerNode_get_Rank(Network_get_ParentNode(net));
@@ -677,6 +989,8 @@ int Network_recover_FromParentFailure(Network_t* net)
                           failed_rank));
 
     NetworkTopology_print(Network_get_NetworkTopology(net), NULL);
+
+    local_node = Network_get_LocalChildNode(net);
 
     //Step 1: Compute new parent
     Timer_start(overall_timer);
@@ -689,17 +1003,19 @@ int Network_recover_FromParentFailure(Network_t* net)
         exit(-1);
     }
 
+    new_parent_rank = NetworkTopology_Node_get_Rank(new_parent_node);
+
     mrn_dbg(1, mrn_printf(FLF, stderr, "RECOVERY: NEW PARENT: %s:%d:%d\n", 
                           NetworkTopology_Node_get_HostName(new_parent_node),
                           NetworkTopology_Node_get_Port(new_parent_node),
-                          NetworkTopology_Node_get_Rank(new_parent_node)));
+                          new_parent_rank));
 
     new_parent_name = NetworkTopology_Node_get_HostName(new_parent_node);
  
     new_parent = Network_new_PeerNode(net, 
                                       new_parent_name,
                                       NetworkTopology_Node_get_Port(new_parent_node),
-                                      NetworkTopology_Node_get_Rank(new_parent_node),
+                                      new_parent_rank,
                                       true, true);
 
     Timer_stop(new_parent_timer); 
@@ -709,17 +1025,20 @@ int Network_recover_FromParentFailure(Network_t* net)
     mrn_dbg(3, mrn_printf(FLF, stderr, "Establish new data connection ...\n"));
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "local child node rank = %d\n", 
-                          Network_get_LocalChildNode(net)->myrank));
+                          local_node->myrank));
 
-    if (ChildNode_init_newChildDataConnection(Network_get_LocalChildNode(net), 
-                                              new_parent, failed_rank) == -1) {
+    if (ChildNode_init_newChildDataConnection(local_node, new_parent,
+                                              failed_rank) == -1) {
         mrn_dbg(1, mrn_printf(FLF, stderr, 
                               "ChildNode_init_newChildDataConnection() failed\n"));
         return -1;
     }
 
     // Step 3. Establish event detection connnection with new Parent
-    // This step gets skipped
+    if (ChildNode_init_newChildEventConnection(local_node, new_parent) == -1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "ChildNode_init_newChildEventConnection() failed\n"));
+    }
         
     mrn_dbg(3, mrn_printf(FLF, stderr, "New event connection established.\n"));
     Timer_stop(connection_timer);
@@ -732,11 +1051,19 @@ int Network_recover_FromParentFailure(Network_t* net)
     mrn_dbg(3, mrn_printf(FLF, stderr, "Updating local structures ..\n"));
     // remove node, but don't update datastructs since following procedure will
     Network_remove_Node(net, failed_rank, false);
-    Network_change_Parent(net, Network_get_LocalRank(net),
-                          NetworkTopology_Node_get_Rank(new_parent_node));
+    Network_change_Parent(net, Network_get_LocalRank(net), new_parent_rank);
     Timer_stop(cleanup_timer);
     Timer_stop(overall_timer);
+    NetworkTopology_print(Network_get_NetworkTopology(net), NULL);
+    
+    /* Update recovering state and parent node */
+    Network_parent_lock(net);
+    net->thread_recovering--;
+    assert(!net->thread_recovering);
+    Network_set_ParentNode(net, new_parent);
+    Network_parent_unlock(net);
 
+    Network_unlock(net);
     mrn_dbg_func_end();
 
     return 0;
@@ -776,6 +1103,7 @@ void Network_waitfor_ShutDown(Network_t* net)
     int tag = 0;
 
     mrn_dbg_func_begin();
+    Network_lock(net);
 	
     p = (Packet_t*) malloc(sizeof(Packet_t));
     assert(p);
@@ -791,5 +1119,6 @@ void Network_waitfor_ShutDown(Network_t* net)
 
     free(p);
 
+    Network_unlock(net);
     mrn_dbg_func_end();
 }

@@ -55,6 +55,11 @@ AC_ARG_ENABLE(debug,
     [ debug_mode="yes" ],
     [ debug_mode="no" ])
 
+AC_ARG_ENABLE(ltwt-threadsafe,
+    [AS_HELP_STRING([--enable-ltwt-threadsafe],[Enable the thread-safe version of the lightweight backends (default off)])],
+    [ LTWT_THREADSAFE="yes" ],
+    [ LTWT_THREADSAFE="no" ])
+
 AC_ARG_WITH(purify,
     [AS_HELP_STRING([--with-purify],[Use purify for memory debugging])],
     [ if test "${withval}" = yes; then
@@ -369,6 +374,7 @@ AC_SUBST(C_AS_CPLUSPLUS)
 AC_SUBST(LIBS)
 AC_SUBST(LIBS_LIGHTWEIGHT)
 AC_SUBST(EXTRA_LIBS)
+AC_SUBST(LTWT_THREADSAFE)
 
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF(char)

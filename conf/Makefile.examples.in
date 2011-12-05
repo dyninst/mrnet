@@ -110,7 +110,7 @@ export
 
 @VERBOSEMAKE@
 
-TARGETS = backend-attach integer-add perf-data hetero-filter fault-recovery
+TARGETS = backend-attach integer-add perf-data hetero-filter fault-recovery mult-thd-streams
 
 default: all
 
@@ -120,13 +120,15 @@ IA_DIR = $(EX_DIR)/IntegerAddition
 HF_DIR = $(EX_DIR)/HeterogeneousFilters
 PD_DIR = $(EX_DIR)/PerformanceData
 FR_DIR = $(EX_DIR)/FaultRecovery
+MTS_DIR = $(EX_DIR)/MultThdStreams
 
 .PHONY: all clean install \
         backend-attach backend-attach-clean backend-attach-install \
         integer-add integer-add-clean integer-add-install \
         hetero-filter hetero-filter-clean hetero-filter-install \
         perf-data perf-data-clean perf-data-install \
-        fault-recovery fault-recovery-clean fault-recovery-install
+        fault-recovery fault-recovery-clean fault-recovery-install \
+		mult-thd-streams mult-thd-streams-clean mult-thd-streams-install
 
 all: $(TARGETS)
 
@@ -199,11 +201,24 @@ fault-recovery-install:
 	@echo Installing Fault Recovery Example
 	$(MAKE) -C $(FR_DIR) install
 
+# Multi-Thread Streams Example
+mult-thd-streams:
+	@echo Building Multi-Thread Streams Example
+	$(MAKE) -C $(MTS_DIR)
+
+mult-thd-streams-clean:
+	@echo Cleaning Multi-Thread Streams Example
+	$(MAKE) -C $(MTS_DIR) clean
+
+mult-thd-streams-install:
+	@echo Installing Multi-Thread Streams Example
+	$(MAKE) -C $(MTS_DIR) install
+
 # Clean rules
 clean: backend-attach-clean integer-add-clean hetero-filter-clean \
-       perf-data-clean fault-recovery-clean
+       perf-data-clean fault-recovery-clean mult-thd-streams-clean
 
 # Install rules 
 install: backend-attach-install integer-add-install hetero-filter-install \
-         perf-data-install fault-recovery-install
+         perf-data-install fault-recovery-install mult-thd-stream-install
 

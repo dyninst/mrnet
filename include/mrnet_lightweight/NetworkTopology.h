@@ -48,6 +48,7 @@ struct NetworkTopology_t {
     struct vector_t* backend_nodes;
     struct vector_t* parent_nodes;
     struct SerialGraph_t* serial_graph;
+    Monitor_t* sync;
 }; 
 
 typedef struct NetworkTopology_t NetworkTopology_t;
