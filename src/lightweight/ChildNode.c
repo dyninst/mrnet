@@ -59,33 +59,35 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
                             topo_ptr);
   
     mrn_dbg(5, mrn_printf(FLF, stderr, "Send initialization info...\n" ));
-    if( PeerNode_sendDirectly(be->network->parent, packet) == -1 ) {
+    if( PeerNode_sendDirectly(iparent, packet) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "send/flush() failed\n"));
         return -1;
     }
     Packet_set_DestroyData( packet, true );
     delete_Packet_t( packet );
      
-    vector_t* packets = new_empty_vector_t();
-    int ret = PeerNode_recv( be->network->parent, packets, true );
-    if( (ret == -1) || ((ret ==0 ) && (packets->size == 0)) ) {
-        if( ret == -1 ) {
-	    mrn_dbg( 3, mrn_printf(FLF, stderr,
-	             "recv() topo and env failed! \n"));
-            return -1;
+    if(be->incarnation == 1) {
+        vector_t* packets = new_empty_vector_t();
+        int ret = PeerNode_recv( iparent, packets, true );
+        if( (ret == -1) || ((ret ==0 ) && (packets->size == 0)) ) {
+            if( ret == -1 ) {
+                mrn_dbg( 3, mrn_printf(FLF, stderr,
+                            "recv() topo and env failed! \n"));
+                return -1;
+            }
         }
-    }
 
-    if( ChildNode_proc_PacketsFromParent( be, packets ) == -1 )
-        mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromParent() failed\n"));
-    delete_vector_t( packets );
+        if( ChildNode_proc_PacketsFromParent( be, packets ) == -1 )
+            mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromParent() failed\n"));
+        delete_vector_t( packets );
 
-    nettop = Network_get_NetworkTopology(be->network);
-    topo_ptr = NetworkTopology_get_TopologyStringPtr(nettop);
-    if( topo_ptr != NULL ) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "new topology is \"%s\"\n",
-                              topo_ptr));
-        free( topo_ptr );
+        nettop = Network_get_NetworkTopology(be->network);
+        topo_ptr = NetworkTopology_get_TopologyStringPtr(nettop);
+        if( topo_ptr != NULL ) {
+            mrn_dbg(5, mrn_printf(FLF, stderr, "new topology is \"%s\"\n",
+                        topo_ptr));
+            free( topo_ptr );
+        }
     }
 
     mrn_dbg_func_end();
