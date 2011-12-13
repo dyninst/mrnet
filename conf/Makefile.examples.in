@@ -61,6 +61,7 @@ INCDIRS_LIGHTWEIGHT = $(INCDIRS)
 
 HAVE_SYSTEM_BOOST = @HAVE_SYSTEM_BOOST@
 HAVE_USER_BOOST   = @HAVE_USER_BOOST@
+WANT_THREADSAFE_LTWT = @LTWT_THREADSAFE@
 ifeq ($(HAVE_USER_BOOST), yes)
     INCDIRS += -I@BOOST_INCDIR@
 else
@@ -220,5 +221,5 @@ clean: backend-attach-clean integer-add-clean hetero-filter-clean \
 
 # Install rules 
 install: backend-attach-install integer-add-install hetero-filter-install \
-         perf-data-install fault-recovery-install per-thread-stream-install
+         perf-data-install fault-recovery-install per-thread-streams-install
 

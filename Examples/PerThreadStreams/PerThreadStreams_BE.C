@@ -87,7 +87,7 @@ void* MinBEMain(void *arg) {
     Stream *min_stream = (Stream *) arg;
     int tag;
     int i;
-    int retval;
+    int retval = 0;
     PacketPtr p;
     for(i = 0; i < 1; i++) {
         if( min_stream->recv(&tag, p) == -1) {
@@ -140,7 +140,7 @@ void* PctBEMain(void *arg) {
     Stream *pct_stream = (Stream *) arg;
     int tag;
     int i;
-    int retval;
+    int retval = 0;
     unsigned long percent = 0;
     char bits[fr_bins+1];
     PacketPtr p;

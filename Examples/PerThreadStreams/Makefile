@@ -4,7 +4,10 @@
 
 TARGETS = $(BINDIR)/PerThreadStreams_FE \
 		  $(BINDIR)/PerThreadStreams_BE \
-          $(BINDIR)/PerThreadStreams_BE_lightweight
+
+ifeq ($(WANT_THREADSAFE_LTWT), yes)
+    TARGETS += $(BINDIR)/PerThreadStreams_BE_lightweight
+endif
 
 TARGETS_SO = $(LIBDIR)/PerThreadStreamsFilter.so
 
