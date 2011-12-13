@@ -36,12 +36,11 @@ XPLAT_LTWT_SRCS = $(SRCDIR)/Error-unix.c \
                   $(SRCDIR)/NetUtils-unix.c \
                   $(SRCDIR)/PathUtils-unix.c \
                   $(SRCDIR)/Process-unix.c \
-                  $(SRCDIR)/Thread-pthread.c
 
 ifeq ($(WANT_THREADSAFE_LTWT), yes)
     XPLAT_LTWT_SRCS += $(SRCDIR)/Mutex-pthread.c
     XPLAT_LTWT_SRCS += $(SRCDIR)/Monitor-pthread.c
-	TARGET_SO_LIBS += -lpthread
+    XPLAT_LTWT_SRCS += $(SRCDIR)/Thread-pthread.c
 endif
 
 XPLAT_HEADERS = $(wildcard $(xplat_INCDIR)/*.h)
