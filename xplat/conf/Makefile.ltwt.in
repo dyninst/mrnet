@@ -35,7 +35,8 @@ XPLAT_LTWT_SRCS = $(SRCDIR)/Error-unix.c \
                   $(SRCDIR)/NetUtils.c \
                   $(SRCDIR)/NetUtils-unix.c \
                   $(SRCDIR)/PathUtils-unix.c \
-                  $(SRCDIR)/Process-unix.c
+                  $(SRCDIR)/Process-unix.c \
+                  $(SRCDIR)/Thread-pthread.c
 
 ifeq ($(WANT_THREADSAFE_LTWT), yes)
     XPLAT_LTWT_SRCS += $(SRCDIR)/Mutex-pthread.c

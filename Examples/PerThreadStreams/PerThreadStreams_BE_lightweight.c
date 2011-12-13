@@ -4,7 +4,7 @@
  ****************************************************************************/
 
 #include "mrnet_lightweight/MRNet.h"
-#include "MultThdStreams_lightweight.h"
+#include "PerThreadStreams_lightweight.h"
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
@@ -20,59 +20,13 @@ unsigned int min_val=fr_range_max, max_val=0, num_iters=0;
 Rank me;
 char pct[fr_bins];
 unsigned long pct_ul;
-pthread_barrier_t net_barr;
-pthread_barrierattr_t net_barr_attr;
-
-// This test serves two purposes: 
-//  1. To test the lightweight library's ability to have multiple threads
-//     receiving on the same network.
-//
-//  2. Provide a structured use of the fault-tolerant filter as in the
-//     FaultRecovery example so that the user can kill a CP (if running
-//     with a CP) during execution and test the lightweight library's
-//     ability to recover from failure with multiple threads.
-void *WaveChkBEMain(void *arg) {
-    Network_t *recv_net = (Network_t *)arg;
-    int tag, num, i;
-    Packet_t *p = (Packet_t*)malloc(sizeof(Packet_t));
-    Stream_t *stream;
-
-    if ( Network_recv(recv_net, &tag, p, &stream) != 1 ) {
-        fprintf(stderr, "BE: stream::recv() failure\n");
-        return NULL;
-    }
-    
-    Packet_unpack(p, "%d", &num);
-    if(tag != PROT_WAVE_CHECK) {
-        fprintf(stderr, "BE %u: WaveChkBEMain received incorrect packet: %d\n",
-                me, tag);
-        return NULL;
-    }
-
-    // If receiving streams this way, must stop all threads so we don't mix
-    // operations on the stream and the entire network
-    pthread_barrier_wait(&net_barr);
-
-    // Let the multiple threads on the FE check our values over and over.
-    // If the user chooses, she may kill a CP now.
-    for(i = 0; i < num; i++) {
-        printf("BE %u: Sending wave-check %d\n", me, i);
-        if(Stream_send(stream, PROT_WAVE_CHECK, "%uld %ud %ud", pct_ul, max_val, min_val) == -1) {
-            fprintf(stderr, "BE: stream::send() failure\n");
-            return NULL;
-        }
-        sleep(2);
-    }
-
-    return NULL;
-}
 
 // These three thread functions are to test the most common case of
 // multi-threaded usage in MRNet: assigning a thread each to a different stream.
 // The threads ping-pong with the front-end using blocking and non-blocking
 // Stream_recv.
 void* MaxBEMain(void *arg) {
-    printf("BE %d starting MaxBEMain: %d\n", (int)me, (unsigned int)pthread_self());
+    printf("BE %d starting MaxBEMain: %d\n", (int)me, (unsigned int)Thread_GetId());
     Stream_t *max_stream = (Stream_t *) arg;
     int tag;
     int retval = 0;
@@ -94,7 +48,6 @@ void* MaxBEMain(void *arg) {
         fprintf( stdout, "BE %d: Sending max %u (%d)\n", me, max_val, i);
         if( Stream_send(max_stream, tag, "%ud", max_val) == -1 ) {
             fprintf(stderr, "BE: Stream_send(%%d) failure\n");
-            tag = PROT_EXIT;
             return NULL;
         }
         Stream_flush(max_stream);
@@ -116,17 +69,17 @@ void* MaxBEMain(void *arg) {
     fprintf( stdout, "BE %d: Sending max %u (%d)\n", me, max_val, i);
     if( Stream_send(max_stream, tag, "%ud", max_val) == -1 ) {
         fprintf(stderr, "BE: Stream_send(%%d) failure\n");
-        tag = PROT_EXIT;
         return NULL;
     }
-    i++;
-    Stream_flush(max_stream);
+    if(Stream_flush(max_stream) == -1) {
+        fprintf(stderr, "BE: Stream_flush() failure\n");
+    }
 
     return NULL;
 }
 
 void* MinBEMain(void *arg) {
-    printf("BE %d starting MinBEMain: %d\n", (int)me, (unsigned int)pthread_self());
+    printf("BE %d starting MinBEMain: %d\n", (int)me, (unsigned int)Thread_GetId());
     Stream_t *min_stream = (Stream_t *) arg;
     int tag;
     int retval = 0;
@@ -148,7 +101,10 @@ void* MinBEMain(void *arg) {
             tag = PROT_EXIT;
             return NULL;
         }
-        Stream_flush(min_stream);
+        if(Stream_flush(min_stream) == -1) {
+            fprintf(stderr, "BE: Stream_flush() failure\n");
+            return NULL;
+        }
     }
 
     while(retval <= 0) {
@@ -168,14 +124,15 @@ void* MinBEMain(void *arg) {
         tag = PROT_EXIT;
         return NULL;
     }
-    Stream_flush(min_stream);
-    i++;
+    if(Stream_flush(min_stream) == -1) {
+        fprintf(stderr, "BE: Stream_flush() failure\n");
+    }
 
     return NULL;
 }
 
 void* PctBEMain(void *arg) {
-    printf("BE %d starting PctBEMain: %d\n", (int)me, (unsigned int)pthread_self());
+    printf("BE %d starting PctBEMain: %d\n", (int)me, (unsigned int)Thread_GetId());
     Stream_t *pct_stream = (Stream_t *) arg;
     int tag;
     int retval = 0;
@@ -213,10 +170,10 @@ void* PctBEMain(void *arg) {
     // Test nonblocking recvs
     while(retval <= 0) {
         retval = Stream_recv(pct_stream, &tag, p, 0);
-            if( retval == -1) {
-                fprintf(stderr, "BE: Stream_recv failure in PctBEMain\n");
-                return NULL;
-            }
+        if( retval == -1) {
+            fprintf(stderr, "BE: Stream_recv failure in PctBEMain\n");
+            return NULL;
+        }
     }
     if(tag != PROT_CHECK_PCT) {
         fprintf(stderr, "BE: PctBEMain received the wrong packet! %d\n", tag);
@@ -228,8 +185,9 @@ void* PctBEMain(void *arg) {
         tag = PROT_EXIT;
         return NULL;
     }
-    Stream_flush(pct_stream);
-    i++;
+    if(Stream_flush(pct_stream) == -1) {
+        fprintf(stderr, "BE: Stream_flush() failure\n");
+    }
 
     return NULL;
 }
@@ -289,7 +247,6 @@ int main(int argc, char **argv)
             sleep(2); // stagger sends
         }
     } else {
-        //fprintf(stderr, "received %d\n", tag);
         fprintf(stderr, "Did not receive PROT_START to start. Exiting.\n");
         return 1;
     }
@@ -299,23 +256,6 @@ int main(int argc, char **argv)
     for( i = 0; i < fr_bins; i++ ) {
         pct_ul += (pct[i] << i);
     }
-
-    pthread_barrier_init(&net_barr, &net_barr_attr, 3);
-    pthread_t wave_chk_BE0;
-    pthread_t wave_chk_BE1;
-    pthread_t wave_chk_BE2;
-
-    pthread_create(&wave_chk_BE0, NULL, WaveChkBEMain, (void *)net);
-    pthread_create(&wave_chk_BE1, NULL, WaveChkBEMain, (void *)net);
-    pthread_create(&wave_chk_BE2, NULL, WaveChkBEMain, (void *)net);
-    
-	/* Join worker threads */
-    void *chk0_ret;
-    void *chk1_ret;
-    void *chk2_ret;
-    pthread_join(wave_chk_BE0, &chk0_ret);
-    pthread_join(wave_chk_BE1, &chk1_ret);
-    pthread_join(wave_chk_BE2, &chk2_ret);
 
     /* Register streams for threads */
     do {
@@ -367,21 +307,21 @@ int main(int argc, char **argv)
 
     //printf("Sent reg. stream ack to FE\n");
     
-    pthread_t min_BE;
-    pthread_t max_BE;
-    pthread_t pct_BE;
+    Thread_Id min_BE;
+    Thread_Id max_BE;
+    Thread_Id pct_BE;
 
-    pthread_create(&min_BE, NULL, MinBEMain, (void *)min_stream);
-    pthread_create(&max_BE, NULL, MaxBEMain, (void *)max_stream);
-    pthread_create(&pct_BE, NULL, PctBEMain, (void *)pct_stream);
+    Thread_Create(MinBEMain, (void *)min_stream, &min_BE);
+    Thread_Create(MaxBEMain, (void *)max_stream, &max_BE);
+    Thread_Create(PctBEMain, (void *)pct_stream, &pct_BE);
     
 	/* Join worker threads */
     void *min_ret;
     void *max_ret;
     void *pct_ret;
-    pthread_join(min_BE, &min_ret);
-    pthread_join(max_BE, &max_ret);
-    pthread_join(pct_BE, &pct_ret);
+    Thread_Join(min_BE, &min_ret);
+    Thread_Join(max_BE, &max_ret);
+    Thread_Join(pct_BE, &pct_ret);
 
 	/* Acknowledge FE's intent to exit */
 	ret_val = Network_recv(net, &tag, p, &stream);

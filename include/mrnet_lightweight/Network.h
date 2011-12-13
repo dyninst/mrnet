@@ -34,15 +34,22 @@ typedef struct {
     unsigned int stream_iter;
     int recover_from_failures;
     char _was_shutdown;
-    Monitor_t* monitor;
-    Monitor_t* recv_monitor;
+    char thread_listening;
+    char thread_recovering;
+    Monitor_t* net_sync;
+    Monitor_t* recv_sync;
     Monitor_t* parent_sync;
-    int thread_listening;
-    int thread_recovering;
 } Network_t;
 
-/* Condition for recv_monitor */
-enum {
+/* Representation for monitors */
+enum sync_index {
+    NET_SYNC,
+    RECV_SYNC,
+    PARENT_SYNC
+};
+
+/* Condition for recv_sync */
+enum cond_vars {
     THREAD_LISTENING,
     PARENT_NODE_AVAILABLE
 };

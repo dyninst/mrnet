@@ -4,7 +4,7 @@
  ****************************************************************************/
 
 #include "mrnet/MRNet.h"
-#include "MultThdStreams.h"
+#include "PerThreadStreams.h"
 #include "xplat/Thread.h"
 
 #include <iostream>
@@ -16,67 +16,6 @@ using namespace MRN;
 unsigned int min_val=0;
 unsigned int max_val=0;
 unsigned long bits_val;
-
-void* WaveChkMain(void *arg) {
-    int retval, tag, num_iters = 10;
-    PacketPtr p;
-    Stream *wave_chk_strm = (Stream *)arg;
-
-    unsigned long l_bits, tmp_bits;
-    unsigned int l_min, l_max, tmp_min, tmp_max;
-    XPlat::Thread::Id me_thd = XPlat::Thread::GetId();
-
-    if(wave_chk_strm->send(PROT_WAVE_CHECK, "%d", num_iters) == -1) {
-        fprintf(stderr, "stream::send(CHECK_WAVE) failure\n");
-        return NULL;
-    }
-    if(wave_chk_strm->flush() == -1){
-        fprintf( stderr, "stream::flush() failure\n" );
-        return NULL;
-    }
-    for(int i = 0; i < num_iters; i++) {
-        retval = wave_chk_strm->recv(&tag, p);
-        if( retval == -1) {
-            //recv error
-            fprintf( stderr, "stream::recv() failure\n" );
-            return NULL;
-        }
-        if(tag != PROT_WAVE_CHECK) {
-            fprintf(stderr, "FE: WaveChkMain received incorrect packet: %d\n", tag);
-            fprintf(stderr, "thread %lu recv'd: %d, %s\n", me_thd,
-                             tag, p->get_FormatString());
-            return NULL;
-        }
-        p->unpack("%uld %ud %ud", &tmp_bits, &tmp_max, &tmp_min);
-        // Trust the first message we get
-        if(i == 0) {
-            l_bits = tmp_bits;
-            l_max = tmp_max;
-            l_min = tmp_min;
-            printf("FE: Received initial values. All subsequent checks should "
-                   "match: min=%d max=%d bits=%lu.\n", l_min, l_max, l_bits);
-        } else {
-            if(tmp_bits != l_bits) {
-                fprintf(stderr, "bit set %d: %lu != %lu\n",i, tmp_bits, l_bits);
-            } else {
-                printf("FE: bit set %d check successful: %lu\n", i, tmp_bits);
-            }
-            if(tmp_max != l_max) {
-                fprintf(stderr, "max val %d: %u != %u\n", i, tmp_max, l_max);
-            } else {
-                printf("FE: max val %d check successful: %u\n", i, tmp_max);
-            }
-            if(tmp_min != l_min) {
-                fprintf(stderr, "min val %d: %u != %u\n", i, tmp_min, l_min);
-            } else {
-                printf("FE: min val %d check successful: %u\n", i, tmp_min);
-            }
-        }
-    }
-
-    return NULL;
-
-}
 
 void* MaxThdMain(void * arg) {
     int retval, tag;
@@ -321,36 +260,6 @@ int main(int argc, char **argv)
         fflush(stdout);
     }
 
-    // 3 new streams for checking of values (expect user to kill CP)
-    Stream *wave_chk_strm0 = net->new_Stream(comm_BC, filter_id,
-                                             SFILTER_WAITFORALL);
-    
-    Stream *wave_chk_strm1 = net->new_Stream(comm_BC, filter_id,
-                                             SFILTER_WAITFORALL);
-
-    Stream *wave_chk_strm2 = net->new_Stream(comm_BC, filter_id,
-                                             SFILTER_WAITFORALL);
-
-    // Start up threads to test threaded fault recovery/Network_recv
-    printf("****** Double-checking PROT_WAVE values with 3 threads ******\n");
-    XPlat::Thread::Id wcs0;
-    XPlat::Thread::Id wcs1;
-    XPlat::Thread::Id wcs2;
-    void *wcs0_ret;
-    void *wcs1_ret;
-    void *wcs2_ret;
-
-    XPlat::Thread::Create(WaveChkMain, (void *)wave_chk_strm0, &wcs0);
-    XPlat::Thread::Create(WaveChkMain, (void *)wave_chk_strm1, &wcs1);
-    XPlat::Thread::Create(WaveChkMain, (void *)wave_chk_strm2, &wcs2);
-
-    XPlat::Thread::Join(wcs0, &wcs0_ret);
-    XPlat::Thread::Join(wcs1, &wcs1_ret);
-    XPlat::Thread::Join(wcs2, &wcs2_ret);
-
-    delete add_stream;
-
-    
     /* Create and register streams for each thread */
     /* Max stream */
     Stream * max_stream = net->new_Stream( comm_BC, TFILTER_MAX,

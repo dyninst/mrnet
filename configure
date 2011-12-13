@@ -2496,8 +2496,10 @@ fi;
 if test "${enable_ltwt_threadsafe+set}" = set; then
   enableval="$enable_ltwt_threadsafe"
    LTWT_THREADSAFE="yes"
+      ltwt_threadsafe="yes"
 else
    LTWT_THREADSAFE="no"
+      ltwt_threadsafe="no"
 fi;
 
 
@@ -5194,7 +5196,11 @@ _ACEOF
 
 
 LIBS="-lm -lpthread -ldl"
-LIBS_LIGHTWEIGHT="-lm"
+if test $ltwt_threadsafe = "yes" ; then
+    LIBS_LIGHTWEIGHT="-lm -lpthread"
+else
+    LIBS_LIGHTWEIGHT="-lm"
+fi
 EXTRA_LIBS=""
 
 case "$host_os" in

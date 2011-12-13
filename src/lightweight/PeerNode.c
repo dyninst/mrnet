@@ -35,9 +35,6 @@ PeerNode_t* new_PeerNode_t(Network_t* inetwork,
 #ifdef MRNET_LTWT_THREADSAFE  
     peer_node->send_mutex = Mutex_construct();
     peer_node->recv_monitor = Monitor_construct();
-#else
-    peer_node->send_mutex = NULL;
-    peer_node->recv_monitor = NULL;
 #endif
 
   return peer_node;

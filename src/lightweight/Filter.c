@@ -34,7 +34,6 @@ int Filter_push_Packets(Filter_t* filter,
                         TopologyLocalInfo_t * topol_info,
                         int igoing_upstream)
 {
-    //printf("In Filter_push_Packets\n");
     void * filter_state = NULL;
     Packet_t * params = NULL;
     Packet_t * ipacket;
@@ -53,7 +52,6 @@ int Filter_push_Packets(Filter_t* filter,
                            opackets, opackets_reverse, 
                            filter_state, params, topol_info, igoing_upstream); 
     } else {
-        //printf("not tfilter_TopoUpdate\n");
         pushBackElement(opackets, ipacket);
     }
 
