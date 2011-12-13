@@ -9,7 +9,7 @@
 #include "mrnet/Packet.h"
 #include "mrnet/NetworkTopology.h"
 
-#include "MultThdStreams.h"
+#include "PerThreadStreams.h"
 
 #include <cmath>
 #include <cstring>
@@ -45,7 +45,7 @@ void IntegerPercentiles( std::vector< PacketPtr >& packets_in,
     }
 
     fr_bin_set& aggr_bits = state->percentiles;
-    int out_tag;
+    int out_tag = -1;
     
     for( unsigned int i = 0; i < packets_in.size( ); i++ ) {
         PacketPtr cur_packet = packets_in[i];

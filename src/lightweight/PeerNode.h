@@ -27,9 +27,10 @@ struct PeerNode_t {
 
   Message_t msg_out;
   Message_t msg_in;
-
+#ifdef MRNET_LTWT_THREADSAFE
   Mutex_t* send_mutex;
   Monitor_t* recv_monitor;
+#endif
 };
 
 typedef struct PeerNode_t PeerNode_t;

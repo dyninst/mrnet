@@ -127,7 +127,7 @@ void delete_NetworkTopology_t( NetworkTopology_t* net_top )
 {
     size_t i;
     if( net_top != NULL ) {
-    NetworkTopology_lock(net_top);
+        NetworkTopology_lock(net_top);
 
         // delete all Node_t in nodes map, then the map
         for( i = 0; i < net_top->nodes->size; i++ ) {
@@ -135,7 +135,7 @@ void delete_NetworkTopology_t( NetworkTopology_t* net_top )
             delete_Node_t( tmp_node );
         }
         delete_map_t(net_top->nodes);
-	net_top->nodes = NULL;
+        net_top->nodes = NULL;
 
         // delete the vectors
         delete_vector_t(net_top->orphans);
@@ -431,8 +431,6 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
         net_top->backend_nodes = eraseElement(net_top->backend_nodes, inode);
     } else {
         // find appropriate node to delete (necessary b/c of how they are stored)
-        //node_to_delete = (Node_t*)malloc(sizeof(Node_t));
-        //assert(node_to_delete);
         for (i = 0; i < net_top->parent_nodes->size; i++){
             cur_node = (Node_t*)net_top->parent_nodes->vec[i];
             if (cur_node->rank == inode->rank) {
@@ -445,7 +443,6 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
                     "Removed rank %d from parent_nodes list.\n",
                     (int)inode->rank));
 
-        //free(node_to_delete);
     }
 
     // remove me as my children's parent, and set children as oprhans

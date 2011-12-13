@@ -57,8 +57,10 @@ AC_ARG_ENABLE(debug,
 
 AC_ARG_ENABLE(ltwt-threadsafe,
     [AS_HELP_STRING([--enable-ltwt-threadsafe],[Enable the thread-safe version of the lightweight backends (default off)])],
-    [ LTWT_THREADSAFE="yes" ],
-    [ LTWT_THREADSAFE="no" ])
+    [ LTWT_THREADSAFE="yes"
+      ltwt_threadsafe="yes" ],
+    [ LTWT_THREADSAFE="no"
+      ltwt_threadsafe="no" ])
 
 AC_ARG_WITH(purify,
     [AS_HELP_STRING([--with-purify],[Use purify for memory debugging])],
@@ -256,7 +258,11 @@ AC_SUBST(MRNET_VERSION)
 dnl === OS-SPECIFIC COMPILER OPTIONS ===
 
 LIBS="-lm -lpthread -ldl"
-LIBS_LIGHTWEIGHT="-lm"
+if test $ltwt_threadsafe = "yes" ; then
+    LIBS_LIGHTWEIGHT="-lm -lpthread"
+else
+    LIBS_LIGHTWEIGHT="-lm"
+fi
 EXTRA_LIBS=""
 
 case "$host_os" in
