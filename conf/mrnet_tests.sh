@@ -225,7 +225,7 @@ if [ "$local" == "true" ]; then
     if [ "$lightweight" == "true" ]; then
         run_test "test_basic_FE_lightweight" "test_basic_BE_lightweight" "local" "" "lightweight" 
         echo
-        run_test "test_arrays_FE_lightweight" "test_arrays_BE_lightweight" "local" "" "lightweight" 
+        run_test "test_arrays_FE" "test_arrays_BE_lightweight" "local" "" "lightweight" 
         echo
         run_test "test_MultStreams_FE_lightweight" "test_MultStreams_BE_lightweight" "local" "" "lightweight" 
         echo
@@ -260,7 +260,7 @@ if [ "$remote" == "true" ]; then
     if [ "$lightweight" == "true" ]; then
         run_test "test_basic_FE_lightweight" "test_basic_BE_lightweight" "remote" "" "lightweight"
         echo
-        run_test "test_arrays_FE_lightweight" "test_arrays_BE_lightweight" "remote" "" "lightweight"
+        run_test "test_arrays_FE" "test_arrays_BE_lightweight" "remote" "" "lightweight"
         echo
         run_test "test_MultStreams_FE_lightweight" "test_MultStreams_BE_lightweight" "remote" "" "lightweight" 
         echo
