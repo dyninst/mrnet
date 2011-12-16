@@ -19,133 +19,139 @@ int main(int argc, char **argv){
 
     Network * net = Network::CreateNetworkBE( argc, argv );
 
+    Rank my_rank = net->get_LocalRank();
+
     do{
         if ( net->recv(&tag, buf, &stream) != 1){
-            fprintf(stderr, "stream::recv() failure\n");
+            fprintf(stderr, "BE(%d): net::recv() failure\n", my_rank);
         }
 
         recv_array=NULL;
         switch(tag){
         case PROT_CHAR:
-            fprintf( stdout, "Processing PROT_CHAR_ARRAY ...\n");
+            //fprintf(stdout, "BE(%d): Processing PROT_CHAR_ARRAY ...\n", my_rank);
             if( buf->unpack("%ac", &recv_array, &recv_array_len) == -1 ){
-                fprintf(stderr, "stream::unpack(%%ac) failure\n");
+                fprintf(stderr, "BE(%d): stream::unpack(%%ac) failure\n", my_rank);
                 success=false;
             }
             if( stream->send(tag, "%ac", recv_array, recv_array_len) == -1 ){
-                fprintf(stderr, "stream::send(%%ac) failure\n");
+                fprintf(stderr, "BE(%d): stream::send(%%ac) failure\n", my_rank);
                 success=false;
             }
             break;
         case PROT_UCHAR:
-            fprintf( stdout, "Processing PROT_UCHAR_ARRAY ...\n");
+            //fprintf(stdout, "BE(%d): Processing PROT_UCHAR_ARRAY ...\n", my_rank);
             if( buf->unpack( "%auc", &recv_array, &recv_array_len) == -1 ){
-                fprintf(stderr, "stream::unpack(%%auc) failure\n");
+                fprintf(stderr, "BE(%d): stream::unpack(%%auc) failure\n", my_rank);
                 success=false;
             }
             if( stream->send(tag, "%auc", recv_array, recv_array_len) == -1 ){
-                fprintf(stderr, "stream::send(%%auc) failure\n");
+                fprintf(stderr, "BE(%d): stream::send(%%auc) failure\n", my_rank);
                 success=false;
             }
             break;
         case PROT_INT:
-            fprintf( stdout, "Processing PROT_INT_ARRAY ...\n");
+            //fprintf(stdout, "BE(%d): Processing PROT_INT_ARRAY ...\n", my_rank);
             if( buf->unpack( "%ad", &recv_array, &recv_array_len) == -1 ){
-                fprintf(stderr, "stream::unpack(%%ad) failure\n");
+                fprintf(stderr, "BE(%d): stream::unpack(%%ad) failure\n", my_rank);
                 success=false;
             }
             if( stream->send(tag, "%ad", recv_array, recv_array_len) == -1 ){
-                fprintf(stderr, "stream::send(%%ad) failure\n");
+                fprintf(stderr, "BE(%d): stream::send(%%ad) failure\n", my_rank);
                 success=false;
             }
             break;
         case PROT_UINT:
-            fprintf( stdout, "Processing PROT_UINT_ARRAY ...\n");
+            //fprintf(stdout, "BE(%d): Processing PROT_UINT_ARRAY ...\n", my_rank);
             if( buf->unpack( "%aud", &recv_array, &recv_array_len) == -1 ){
-                fprintf(stderr, "stream::unpack(%%aud) failure\n");
+                fprintf(stderr, "BE(%d): stream::unpack(%%aud) failure\n", my_rank);
                 success=false;
             }
             if( stream->send(tag, "%aud", recv_array, recv_array_len) == -1 ){
-                fprintf(stderr, "stream::send(%%aud) failure\n");
+                fprintf(stderr, "BE(%d): stream::send(%%aud) failure\n", my_rank);
                 success=false;
             }
             break;
         case PROT_SHORT:
-            fprintf( stdout, "Processing PROT_SHORT_ARRAY ...\n");
+            //fprintf(stdout, "BE(%d): Processing PROT_SHORT_ARRAY ...\n", my_rank);
             if( buf->unpack( "%ahd", &recv_array, &recv_array_len) == -1 ){
-                fprintf(stderr, "stream::unpack(%%ahd) failure\n");
+                fprintf(stderr, "BE(%d): stream::unpack(%%ahd) failure\n", my_rank);
                 success=false;
             }
             if( stream->send(tag, "%ahd", recv_array, recv_array_len) == -1 ){
-                fprintf(stderr, "stream::send(%%ahd) failure\n");
+                fprintf(stderr, "BE(%d): stream::send(%%ahd) failure\n", my_rank);
                 success=false;
             }
             break;
         case PROT_USHORT:
-            fprintf( stdout, "Processing PROT_USHORT_ARRAY ...\n");
+            //fprintf(stdout, "BE(%d): Processing PROT_USHORT_ARRAY ...\n", my_rank);
             if( buf->unpack( "%auhd", &recv_array, &recv_array_len) == -1 ){
-                fprintf(stderr, "stream::unpack(%%auhd) failure\n");
+                fprintf(stderr, "BE(%d): stream::unpack(%%auhd) failure\n", my_rank);
                 success=false;
             }
             if( stream->send(tag, "%auhd", recv_array, recv_array_len) == -1 ){
-                fprintf(stderr, "stream::send(%%auhd) failure\n");
+                fprintf(stderr, "BE(%d): stream::send(%%auhd) failure\n", my_rank);
                 success=false;
             }
             break;
         case PROT_LONG:
-            fprintf( stdout, "Processing PROT_LONG_ARRAY ...\n");
+            //fprintf(stdout, "BE(%d): Processing PROT_LONG_ARRAY ...\n", my_rank);
             if( buf->unpack( "%ald", &recv_array, &recv_array_len) == -1 ){
-                fprintf(stderr, "stream::unpack(%%ald) failure\n");
+                fprintf(stderr, "BE(%d): stream::unpack(%%ald) failure\n", my_rank);
                 success=false;
             }
             if( stream->send(tag, "%ald", recv_array, recv_array_len) == -1 ){
-                fprintf(stderr, "stream::send(%%ald) failure\n");
+                fprintf(stderr, "BE(%d): stream::send(%%ald) failure\n", my_rank);
                 success=false;
             }
             break;
         case PROT_ULONG:
-            fprintf( stdout, "Processing PROT_ULONG_ARRAY ...\n");
+            //fprintf(stdout, "BE(%d): Processing PROT_ULONG_ARRAY ...\n", my_rank);
             if( buf->unpack( "%auld", &recv_array, &recv_array_len) == -1 ){
-                fprintf(stderr, "stream::unpack(%%auld) failure\n");
+                fprintf(stderr, "BE(%d): stream::unpack(%%auld) failure\n", my_rank);
                 success=false;
             }
             if( stream->send(tag, "%auld", recv_array, recv_array_len) == -1 ){
-                fprintf(stderr, "stream::send(%%auld) failure\n");
+                fprintf(stderr, "BE(%d): stream::send(%%auld) failure\n", my_rank);
                 success=false;
             }
             break;
         case PROT_FLOAT:
-            fprintf( stdout, "Processing PROT_FLOAT_ARRAY ...\n");
+            //fprintf(stdout, "BE(%d): Processing PROT_FLOAT_ARRAY ...\n", my_rank);
             if( buf->unpack( "%af", &recv_array, &recv_array_len) == -1 ){
-                fprintf(stderr, "stream::unpack(%%af) failure\n");
+                fprintf(stderr, "BE(%d): stream::unpack(%%af) failure\n", my_rank);
                 success=false;
             }
             if( stream->send(tag, "%af", recv_array, recv_array_len) == -1 ){
-                fprintf(stderr, "stream::send(%%af) failure\n");
+                fprintf(stderr, "BE(%d): stream::send(%%af) failure\n", my_rank);
                 success=false;
             }
             break;
         case PROT_DOUBLE:
-            fprintf( stdout, "Processing PROT_DOUBLE_ARRAY ...\n");
+            //fprintf(stdout, "BE(%d): Processing PROT_DOUBLE_ARRAY ...\n", my_rank);
             if( buf->unpack( "%alf", &recv_array, &recv_array_len) == -1 ){
-                fprintf(stderr, "stream::unpack(%%alf) failure\n");
+                fprintf(stderr, "BE(%d): stream::unpack(%%alf) failure\n", my_rank);
                 success=false;
             }
             if( stream->send(tag, "%alf", recv_array, recv_array_len) == -1 ){
-                fprintf(stderr, "stream::send(%%alf) failure\n");
+                fprintf(stderr, "BE(%d): stream::send(%%alf) failure\n", my_rank);
                 success=false;
             }
             break;
         case PROT_EXIT:
-            fprintf( stdout, "Processing PROT_EXIT ...\n");
+            //fprintf(stdout, "BE(%d): Processing PROT_EXIT ...\n", my_rank);
             break;
         default:
-            fprintf(stdout, "Unknown Protocol: %d\n", tag);
+            fprintf(stderr, "BE(%d): Unknown Protocol: %d\n", my_rank, tag);
             exit(-1);
         }
-        if(stream->flush() == -1){
-            fprintf(stdout, "stream::flush() failure\n");
-            return -1;
+
+        //fflush( stdout );
+        if( tag != PROT_EXIT ) {
+            if( stream->flush() == -1 ) {
+                fprintf(stderr, "BE(%d): stream::flush() failure\n", my_rank);
+                return -1;
+            }
         }
 
     } while( tag != PROT_EXIT );
