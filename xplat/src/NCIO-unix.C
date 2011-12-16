@@ -22,6 +22,8 @@
 #include <limits.h>
 #endif
 
+#define XPLAT_MAX_WRITEV_BUFSIZE 409600 // 100 pages (assuming page is 4KB)
+
 namespace XPlat
 {
 
@@ -30,82 +32,129 @@ const int NCBlockingRecvFlag = MSG_WAITALL;
 ssize_t
 NCSend( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
 {
-    ssize_t ret = 0;
-    unsigned int i;
-
-    unsigned int nBufsLeftToSend = nBufs;
     NCBuf* currBuf = ncbufs;
-    while( nBufsLeftToSend > 0 ) {
+    ssize_t ret = 0;
+    unsigned int i, currBufNdx = 0;
 
-        // determine how many bufs we will try to send
-        unsigned int nBufsToSend = 
-            ((nBufsLeftToSend > IOV_MAX ) ? IOV_MAX : nBufsLeftToSend);
-        
+    unsigned int currIovLen = ((nBufs > IOV_MAX ) ? IOV_MAX : 8 );
+    struct iovec* currIov = (struct iovec*) calloc( currIovLen, 
+                                                    sizeof(struct iovec) );
+
+    while( currBufNdx < nBufs ) {
+
         // convert our buffer spec to writev's buffer spec
         ssize_t numBytesToSend = 0;
-        struct iovec* currIov = new iovec[nBufsToSend];
-        for( i = 0; i < nBufsToSend; i++ ) {
-            currIov[i].iov_base = currBuf[i].buf;
-            currIov[i].iov_len = currBuf[i].len;
-            numBytesToSend += currBuf[i].len;
+        for( i = 0; (i < currIovLen) && (currBufNdx < nBufs);  ) {
+            size_t len = currBuf[currBufNdx].len;
+            // fprintf(stdout, "XPlat DEBUG: NCSend - currBuf->len = %zd\n", len);
+            if( len <= XPLAT_MAX_WRITEV_BUFSIZE ) {
+                currIov[i].iov_base = currBuf[currBufNdx].buf;
+                currIov[i].iov_len = len;
+                numBytesToSend += len;
+                currBufNdx++;
+                i++;
+            }
+            else {
+                // split big buffer into chunks of size XPLAT_MAX_WRITEV_BUFSIZE
+                size_t offset = 0;
+                for( ; (i < currIovLen) && (len > 0); i++ ) {
+
+                    currIov[i].iov_base = currBuf[currBufNdx].buf + offset;
+
+                    if( len > XPLAT_MAX_WRITEV_BUFSIZE ) {
+                        currIov[i].iov_len = XPLAT_MAX_WRITEV_BUFSIZE;
+                        numBytesToSend += XPLAT_MAX_WRITEV_BUFSIZE;
+                        len -= XPLAT_MAX_WRITEV_BUFSIZE;
+                        offset += XPLAT_MAX_WRITEV_BUFSIZE;
+                    }
+                    else {
+                        currIov[i].iov_len = len;
+                        numBytesToSend += len;
+                        offset += len;
+                        len = 0;
+                    }
+                }
+                if( i == currIovLen ) {
+                    if (offset < currBuf[currBufNdx].len ) {
+                        // update current buffer base/len to account for part that we will send
+                        currBuf[currBufNdx].buf += offset;
+                        currBuf[currBufNdx].len -= offset;
+                    }
+                    else currBufNdx++;
+                }
+                else currBufNdx++;
+            }
         }
 
-        // do the send
-        ssize_t wret = writev( s, currIov, nBufsToSend );
-        int err = XPlat::NetUtils::GetLastError();
+        unsigned int numIovBufs = i;
 
-        delete[] currIov;
+        // do the send
+        // /* DEBUG LOOP */
+//         for( unsigned int u = 0; u < numIovBufs; u++ )
+//             fprintf(stdout, "XPlat DEBUG: NCSend - iov->len = %zd\n", currIov[u].iov_len);
+//         /* END DEBUG LOOP */
+        ssize_t wret = writev( s, currIov, numIovBufs );
+        int err = XPlat::NetUtils::GetLastError();
 
         if( wret < 0 ) {
             if( (err == EINTR) || (err == EAGAIN) || (err == EWOULDBLOCK) )
                 continue;
-
-            perror("XPlat::NCSend - writev()");
+            
+            fprintf(stderr, "Error: XPlat::NCSend - writev() : %s\n", 
+                    strerror(err));
             ret = wret;
-            break;
+            break; // out of while
         }
 
         ret += wret;
 
         if( wret != numBytesToSend ) {
 
-            //fprintf(stdout, "XPlat DEBUG: NCSend - writev wrote %zd of %zd bytes\n", wret, numBytesToSend);
+            // fprintf(stdout, "XPlat DEBUG: NCSend - writev wrote %zd of %zd bytes\n", wret, numBytesToSend);
 
             // find unsent or partial-send buffers
             ssize_t running_total = 0;
-            for( i = 0; i < nBufsToSend; i++ ) {
-                running_total += currBuf[i].len;
+            for( i = 0; i < numIovBufs; i++ ) {
+                running_total += currIov[i].iov_len;
                 if( running_total == wret ) { 
                     // buffers up to current index were sent in full
-                    break;
+                    i++;
+                    break; // out of for
                 }
                 else if( running_total > wret ) {
-                    // current buf was partially sent, send the rest
-                    ssize_t unsent = running_total - wret;
-                    ssize_t sent = currBuf[i].len - unsent;
-                    wret = NCsend( s, currBuf[i].buf + sent, unsent );
+                    // current index was partially sent, send the rest
+                    size_t unsent = running_total - wret;
+                    ssize_t sent = currIov[i].iov_len - unsent;
+                    char* new_base = (char*)currIov[i].iov_base + sent;
+                    wret = NCsend( s, new_base, unsent );
                     if( wret < 0 ) {
+                        free( currIov );
                         fprintf(stderr, "Warning: XPlat::NCSend - wrote %zd of %zd bytes\n", 
                                 ret, numBytesToSend);
 
                         return ret;
                     }
-                    break;
+                    i++;
+                    break; // out of for
                 }
+                // else, running_total < wret
             }
      
-            // send remaining bufs in next while loop iteration
-            i++;
-            nBufsLeftToSend -= i;
-            currBuf += i;
-        }
-        else {
-            // advance through buffers
-            nBufsLeftToSend -= nBufsToSend;
-            currBuf += nBufsToSend;
+            // i is now number fully sent, try to send remaining bufs in currIov
+            if( i < numIovBufs ) {
+                wret = writev( s, currIov + i, numIovBufs - i );
+                err = XPlat::NetUtils::GetLastError();
+                if( wret < 0 ) {
+                    free( currIov );
+                    fprintf(stderr, "Error: XPlat::NCSend - fallback writev() : %s\n", 
+                            strerror(err));
+                    return ret;
+                }
+            }
         }
     }
 
+    free( currIov );
     return ret;
 }
 
