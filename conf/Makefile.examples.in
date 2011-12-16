@@ -129,7 +129,7 @@ PTS_DIR = $(EX_DIR)/PerThreadStreams
         hetero-filter hetero-filter-clean hetero-filter-install \
         perf-data perf-data-clean perf-data-install \
         fault-recovery fault-recovery-clean fault-recovery-install \
-		per-thread-streams per-thread-streams-clean per-thread-streams-install
+        per-thread-streams per-thread-streams-clean per-thread-streams-install
 
 all: $(TARGETS)
 

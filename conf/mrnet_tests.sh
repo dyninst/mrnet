@@ -103,9 +103,6 @@ run_test()
             "test_MultStreams_FE" )
                 $front_end $topology_file 5 $back_end > $outfile 2> $logfile
                 ;;
-            "test_MultStreams_FE_lightweight" )
-                $front_end $topology_file 5 $back_end > $outfile 2> $logfile
-                ;;
             * )
                 $front_end $topology_file $back_end > $outfile 2> $logfile
                 ;;
@@ -223,11 +220,11 @@ if [ "$local" == "true" ]; then
     run_test "microbench_FE" "microbench_BE" "local" "" 
     echo
     if [ "$lightweight" == "true" ]; then
-        run_test "test_basic_FE_lightweight" "test_basic_BE_lightweight" "local" "" "lightweight" 
+        run_test "test_basic_FE" "test_basic_BE_lightweight" "local" "" "lightweight" 
         echo
         run_test "test_arrays_FE" "test_arrays_BE_lightweight" "local" "" "lightweight" 
         echo
-        run_test "test_MultStreams_FE_lightweight" "test_MultStreams_BE_lightweight" "local" "" "lightweight" 
+        run_test "test_MultStreams_FE" "test_MultStreams_BE_lightweight" "local" "" "lightweight" 
         echo
         run_test "test_NativeFilters_FE" "test_NativeFilters_BE_lightweight" "local" "" "lightweight"
         echo
@@ -258,11 +255,11 @@ if [ "$remote" == "true" ]; then
     run_test "microbench_FE" "microbench_BE" "remote" "" ""
     echo
     if [ "$lightweight" == "true" ]; then
-        run_test "test_basic_FE_lightweight" "test_basic_BE_lightweight" "remote" "" "lightweight"
+        run_test "test_basic_FE" "test_basic_BE_lightweight" "remote" "" "lightweight"
         echo
         run_test "test_arrays_FE" "test_arrays_BE_lightweight" "remote" "" "lightweight"
         echo
-        run_test "test_MultStreams_FE_lightweight" "test_MultStreams_BE_lightweight" "remote" "" "lightweight" 
+        run_test "test_MultStreams_FE" "test_MultStreams_BE_lightweight" "remote" "" "lightweight" 
         echo
         run_test "test_NativeFilters_FE" "test_NativeFilters_BE_lightweight" "remote" "" "lightweight" 
         echo

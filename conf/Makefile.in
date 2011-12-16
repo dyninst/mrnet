@@ -195,9 +195,8 @@ STD_TESTS_BE = $(BINDIR)/test_basic_BE  \
                $(BINDIR)/test_DynamicFilters_BE \
                $(BINDIR)/test_MultStreams_BE
 
-STD_TESTS_FE_LIGHTWEIGHT = $(BINDIR)/test_basic_FE_lightweight \
-                           $(BINDIR)/test_arrays_FE_lightweight \
-                           $(BINDIR)/test_MultStreams_FE_lightweight
+# NO LONGER NEEDED
+#STD_TESTS_FE_LIGHTWEIGHT = 
 
 STD_TESTS_BE_LIGHTWEIGHT = $(BINDIR)/test_basic_BE_lightweight \
                            $(BINDIR)/microbench_BE_lightweight \
@@ -472,12 +471,13 @@ $(STD_TESTS_BE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o 
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
-$(STD_TESTS_FE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
-              $(TSTDIR)/test_common.h \
-              $(BINDIR)/mrnet_tests.sh
-	@echo "Linking `basename $*` ..."
-	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+# NO LONGER NEEDED
+#$(STD_TESTS_FE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
+#              $(TSTDIR)/test_common.h \
+#              $(BINDIR)/mrnet_tests.sh
+#	@echo "Linking `basename $*` ..."
+#	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
+#	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
 $(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o \
 				$(BINDIR)/mrnet_tests.sh
