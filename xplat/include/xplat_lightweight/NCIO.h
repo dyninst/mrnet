@@ -17,15 +17,16 @@ typedef int XPSOCKET;
 
 typedef struct
 {
-  unsigned int len;
+  size_t len;
   char* buf;
 } NCBuf_t;
 
-
 NCBuf_t* new_NCBuf_t();
 
-int NCSend( XPSOCKET s, NCBuf_t* bufs, unsigned int nBufs);
+ssize_t XPlat_NCSend(XPSOCKET s, NCBuf_t* bufs, unsigned int nBufs);
+ssize_t XPlat_NCRecv(XPSOCKET s, NCBuf_t* bufs, unsigned int nBufs);
 
-int NCRecv (XPSOCKET s, NCBuf_t* bufs, unsigned int nBufs);
+ssize_t XPlat_NCsend(XPSOCKET s, const void *buf, size_t count);
+ssize_t XPlat_NCrecv(XPSOCKET s, void *buf, size_t count);
 
 #endif /* __ncio_h */

@@ -22,12 +22,17 @@
 #include <limits.h>
 #endif
 
-#define XPLAT_MAX_WRITEV_BUFSIZE 409600 // 100 pages (assuming page is 4KB)
+// uncomment following if large data transfers hang
+//#define XPLAT_NCRECV_NO_BLOCK
 
 namespace XPlat
 {
 
+#ifndef XPLAT_NCRECV_NO_BLOCK
 const int NCBlockingRecvFlag = MSG_WAITALL;
+#else
+const int NCBlockingRecvFlag = 0;
+#endif
 
 ssize_t
 NCSend( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
@@ -36,6 +41,7 @@ NCSend( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
     ssize_t ret = 0;
     unsigned int i, currBufNdx = 0;
 
+    // common case is small number of bufs
     unsigned int currIovLen = ((nBufs > IOV_MAX ) ? IOV_MAX : 8 );
     struct iovec* currIov = (struct iovec*) calloc( currIovLen, 
                                                     sizeof(struct iovec) );
@@ -44,55 +50,18 @@ NCSend( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
 
         // convert our buffer spec to writev's buffer spec
         ssize_t numBytesToSend = 0;
-        for( i = 0; (i < currIovLen) && (currBufNdx < nBufs);  ) {
+        for( i = 0; (i < currIovLen) && (currBufNdx < nBufs); i++ ) {
             size_t len = currBuf[currBufNdx].len;
             // fprintf(stdout, "XPlat DEBUG: NCSend - currBuf->len = %zd\n", len);
-            if( len <= XPLAT_MAX_WRITEV_BUFSIZE ) {
-                currIov[i].iov_base = currBuf[currBufNdx].buf;
-                currIov[i].iov_len = len;
-                numBytesToSend += len;
-                currBufNdx++;
-                i++;
-            }
-            else {
-                // split big buffer into chunks of size XPLAT_MAX_WRITEV_BUFSIZE
-                size_t offset = 0;
-                for( ; (i < currIovLen) && (len > 0); i++ ) {
-
-                    currIov[i].iov_base = currBuf[currBufNdx].buf + offset;
-
-                    if( len > XPLAT_MAX_WRITEV_BUFSIZE ) {
-                        currIov[i].iov_len = XPLAT_MAX_WRITEV_BUFSIZE;
-                        numBytesToSend += XPLAT_MAX_WRITEV_BUFSIZE;
-                        len -= XPLAT_MAX_WRITEV_BUFSIZE;
-                        offset += XPLAT_MAX_WRITEV_BUFSIZE;
-                    }
-                    else {
-                        currIov[i].iov_len = len;
-                        numBytesToSend += len;
-                        offset += len;
-                        len = 0;
-                    }
-                }
-                if( i == currIovLen ) {
-                    if (offset < currBuf[currBufNdx].len ) {
-                        // update current buffer base/len to account for part that we will send
-                        currBuf[currBufNdx].buf += offset;
-                        currBuf[currBufNdx].len -= offset;
-                    }
-                    else currBufNdx++;
-                }
-                else currBufNdx++;
-            }
+            currIov[i].iov_base = currBuf[currBufNdx].buf;
+            currIov[i].iov_len = len;
+            numBytesToSend += len;
+            currBufNdx++;
         }
 
         unsigned int numIovBufs = i;
 
         // do the send
-        // /* DEBUG LOOP */
-//         for( unsigned int u = 0; u < numIovBufs; u++ )
-//             fprintf(stdout, "XPlat DEBUG: NCSend - iov->len = %zd\n", currIov[u].iov_len);
-//         /* END DEBUG LOOP */
         ssize_t wret = writev( s, currIov, numIovBufs );
         int err = XPlat::NetUtils::GetLastError();
 
@@ -134,6 +103,7 @@ NCSend( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
 
                         return ret;
                     }
+                    ret += wret;
                     i++;
                     break; // out of for
                 }
@@ -150,6 +120,7 @@ NCSend( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
                             strerror(err));
                     return ret;
                 }
+                ret += wret;    
             }
         }
     }
@@ -164,6 +135,20 @@ NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
 {
     ssize_t ret = 0;
 
+#if defined(XPLAT_NCRECV_NO_BLOCK)
+
+    // The simple way: one recv per buffer 
+
+    for( unsigned int i = 0; i < nBufs; i++ ) {
+        ssize_t rret = NCrecv( s, ncbufs[i].buf, ncbufs[i].len );
+        if( rret >= 0 )
+            ret += rret;
+    }
+
+#else // !defined(XPLAT_NCRECV_NO_BLOCK)
+
+    // Use blocking recvmsg to get all buffers in one call 
+
     unsigned int nBufsLeftToRecv = nBufs;
     NCBuf* currBuf = ncbufs;
     while( nBufsLeftToRecv > 0 ) {
@@ -172,7 +157,7 @@ NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
         unsigned int nBufsToRecv = 
             ((nBufsLeftToRecv > IOV_MAX ) ? IOV_MAX : nBufsLeftToRecv);
         
-        // convert our buffer spec to recvmsg/readv's buffer spec
+        // convert our buffer spec to recvmsg's buffer spec
         msghdr msg;
         msg.msg_name = NULL;
         msg.msg_namelen = 0;
@@ -220,6 +205,8 @@ NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
         nBufsLeftToRecv -= nBufsToRecv;
         currBuf += nBufsToRecv;
     }
+
+#endif // defined(XPLAT_NCRECV_NO_BLOCK)
 
     return ret;
 }
@@ -288,7 +275,7 @@ ssize_t NCrecv( XPSOCKET s, void *buf, size_t count )
         int err = XPlat::NetUtils::GetLastError();
 
         if( ret == -1 ) {
-            if( err == EINTR ) {
+            if( (err == EINTR) || (err == EAGAIN) ) {
                 continue;
             }
             else {

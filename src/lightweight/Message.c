@@ -19,13 +19,6 @@
 #include "xplat_lightweight/NetUtils.h"
 #include "xplat_lightweight/Types.h"
 
-#ifdef os_windows
-#include <winsock2.h>
-const int NCBlockingRecvFlag = 0;
-#else
-const int NCBlockingRecvFlag = MSG_WAITALL;
-#endif
-
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
 #endif
@@ -42,19 +35,18 @@ Message_t* new_Message_t()
 
 int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
 {
+    int retval;
     unsigned int i;
-    size_t buf_len;
-    uint32_t num_packets=0;
-    uint32_t num_buffers=0;
-    uint32_t *packet_sizes, psz;
-    char *buf = NULL;
+    uint32_t num_packets = 0;
+    uint32_t num_buffers = 0;
     PDR pdrs;
     enum pdr_op op = PDR_DECODE;
-    int retval;
+    size_t psz, buf_len, recv_total, total_bytes = 0;
     ssize_t readRet;
     NCBuf_t* ncbufs;
-    int total_bytes = 0;
     Packet_t* new_packet;
+    uint32_t *packet_sizes;
+    char *buf = NULL;
     
     mrn_dbg_func_begin();
  
@@ -65,16 +57,16 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     //
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Calling sizeof ...\n"));
-    buf_len = pdr_sizeof( (pdrproc_t) (pdr_uint32), &num_packets);
+    buf_len = pdr_sizeof((pdrproc_t)(pdr_uint32), &num_packets);
     assert(buf_len);
-    buf = (char*)malloc(buf_len);
+    buf = (char*) malloc(buf_len);
     assert(buf);
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Reading packet count\n"));
 
-    readRet = MRN_read(sock_fd, buf, buf_len);
+    readRet = MRN_recv(sock_fd, buf, buf_len);
     if( readRet != (ssize_t)buf_len ) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_read() of packet count failed\n"));
+        mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_recv() of packet count failed\n"));
         free(buf);
         return -1;
     }
@@ -123,9 +115,9 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     mrn_dbg(5, mrn_printf(FLF, stderr, 
                           "Calling read(%p, %zd) for %d buffer lengths.\n",
                           buf, buf_len, num_buffers));
-    readRet = MRN_read(sock_fd, buf, buf_len);
+    readRet = MRN_recv(sock_fd, buf, buf_len);
     if( readRet != (ssize_t)buf_len ) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_read() %zd of %zd bytes received\n", readRet, buf_len));
+        mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_recv() %zd of %zd bytes received\n", readRet, buf_len));
         free(buf);
         //free(packet_sizes);
         return -1;
@@ -153,30 +145,30 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     mrn_dbg(5, mrn_printf(FLF, stderr, "Reading %u packets:\n", num_packets));
 
     for( i = 0; i < num_buffers; i++ ) {
-        psz = packet_sizes[i];
-        ncbufs[i].buf = (char*) malloc( (size_t)psz );
+        psz = (size_t) packet_sizes[i];
+        ncbufs[i].buf = (char*) malloc(psz);
         assert(ncbufs[i].buf);
         ncbufs[i].len = psz;
         total_bytes += psz;
-        mrn_dbg(5, mrn_printf(FLF, stderr, "- buffer[%u] has size %u\n", 
+        mrn_dbg(5, mrn_printf(FLF, stderr, "- buffer[%u] has size %zd\n", 
                               i, psz));
     }
 
     mrn_dbg(5, mrn_printf(FLF, stderr, 
                           "Reading num_buffers=%d\n", num_buffers));
-    retval = 0;
+    recv_total = 0;
     for(i = 0; i < num_buffers; i++ ) {
-        readRet = MRN_read( sock_fd, ncbufs[i].buf, (size_t) ncbufs[i].len );
+        readRet = MRN_recv( sock_fd, ncbufs[i].buf, ncbufs[i].len );
         if( readRet < 0 ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
-                                  "MRN_read() failed for packet %u\n", i));
+                                  "MRN_recv() failed for packet %u\n", i));
             break;
         }
-        retval += (int) readRet;
+        recv_total += (int) readRet;
     }
-    if( retval != total_bytes ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "%d of %d received\n", 
-                              retval, total_bytes));
+    if( recv_total != total_bytes ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "%zd of %zd received\n", 
+                              recv_total, total_bytes));
 
         for( i = 0; i < num_buffers; i++ )
             free((void*)(ncbufs[i].buf));
@@ -227,14 +219,16 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
 int Message_send(Message_t* msg_out, int sock_fd)
 {
     uint32_t num_buffers, num_packets;
-    uint32_t *packet_sizes = NULL;
-    char* buf = NULL;
     size_t buf_len;
     PDR pdrs;
     enum pdr_op op = PDR_ENCODE;
-    NCBuf_t* ncbufs;
-    int total_bytes, err, sret, go_away = 0;
-    ssize_t mcwret;
+    int err, go_away = 0;
+    size_t total_bytes;
+    ssize_t sret, mcwret;
+    char* buf = NULL;
+
+    NCBuf_t ncbufs[2];
+    uint32_t packet_sizes[2];
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Sending packets from message %p\n", msg_out));
 
@@ -255,15 +249,12 @@ int Message_send(Message_t* msg_out, int sock_fd)
     num_packets = 1;
     num_buffers = num_packets * 2;
 
-    ncbufs = (NCBuf_t*) calloc( (size_t) num_buffers, sizeof(NCBuf_t) );
     ncbufs[0].buf = msg_out->packet->hdr;
     ncbufs[0].len = msg_out->packet->hdr_len;
     ncbufs[1].buf = msg_out->packet->buf;
     ncbufs[1].len = msg_out->packet->buf_len;
     total_bytes = ncbufs[0].len + ncbufs[1].len;
 
-    packet_sizes = (uint32_t*) malloc( sizeof(uint32_t) * num_buffers );
-    assert(packet_sizes);
     packet_sizes[0] = ncbufs[0].len;
     packet_sizes[1] = ncbufs[1].len;
 
@@ -272,30 +263,26 @@ int Message_send(Message_t* msg_out, int sock_fd)
     // packet count
     //
 
-    buf_len = pdr_sizeof( (pdrproc_t) (pdr_uint32), &num_packets);
+    buf_len = pdr_sizeof((pdrproc_t)(pdr_uint32), &num_packets);
     assert(buf_len);
-    buf = (char*)malloc(buf_len);
+    buf = (char*) malloc(buf_len);
     assert(buf);
     pdrmem_create(&pdrs, buf, (uint32_t)buf_len, op);
 
     if( ! pdr_uint32(&pdrs, &num_packets) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint32() failed\n") );
         free(buf);
-        free(ncbufs);
-        free(packet_sizes);
         return -1;
     }
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "writing packet count\n"));
-    mcwret = MRN_write(sock_fd, buf, buf_len);
+    mcwret = MRN_send(sock_fd, buf, buf_len);
     if( mcwret != (ssize_t)buf_len ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "MRN_write() failed\n"));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "MRN_send() failed\n"));
         free(buf);
-        free(ncbufs);
-        free(packet_sizes);
         return -1;
     }
-    mrn_dbg(5, mrn_printf(FLF, stderr, "MRN_write() succeeded\n"));
+    mrn_dbg(5, mrn_printf(FLF, stderr, "MRN_send() succeeded\n"));
     free(buf);
 
     //
@@ -311,22 +298,17 @@ int Message_send(Message_t* msg_out, int sock_fd)
                      (uint32_t) sizeof(uint32_t), (pdrproc_t) pdr_uint32) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "pdr_vector() failed\n"));
         free(buf);
-        free(ncbufs);
-        free(packet_sizes);
         return -1;
     }
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "write(%p, %d) of size vector\n", 
                           buf, buf_len));
-    mcwret = MRN_write(sock_fd, buf, buf_len);
+    mcwret = MRN_send(sock_fd, buf, buf_len);
     if( mcwret != (ssize_t)buf_len ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "MRN_write failed\n"));
+        mrn_dbg(1, mrn_printf(FLF, stderr, "MRN_send failed\n"));
         free(buf);
-        free(ncbufs);
-        free(packet_sizes);
         return -1;
     }
-    free(packet_sizes);
     free(buf);
 
     //
@@ -337,16 +319,14 @@ int Message_send(Message_t* msg_out, int sock_fd)
                           "Sending %d packets (%d total bytes)\n", 
                           num_packets, total_bytes));
 
-    sret = NCSend(sock_fd, ncbufs, num_buffers);
-    if( sret != total_bytes ) {
+    sret = XPlat_NCSend(sock_fd, ncbufs, num_buffers);
+    if( sret != (ssize_t)total_bytes ) {
         err = NetUtils_GetLastError();
         mrn_dbg(1, mrn_printf(FLF, stderr,
-                "NCSend() returned %d of %d bytes, errno = %d, nbuffers = %d\n", 
+          "XPlat_NCSend() returned %d of %d bytes, errno = %d, nbuffers = %d\n", 
                               sret, total_bytes, err, num_packets));
-        free(ncbufs);
         return -1;
     }
-    free(ncbufs);
 
     if( go_away )
         close(sock_fd);
@@ -360,67 +340,22 @@ int Message_send(Message_t* msg_out, int sock_fd)
  * data types
  ******************************************************************/
 
-ssize_t MRN_write(int ifd, void *ibuf, size_t ibuf_len)
+ssize_t MRN_send(int fd, void *buf, size_t count)
 {
-    ssize_t ret;
-
-    // don't generate SIGPIPE
-    int flags = MSG_NOSIGNAL;
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "%d, %p, %d\n", ifd, ibuf, ibuf_len));
-
-    ret = send(ifd, (char*)ibuf, ibuf_len, flags);
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "send => %zd\n", ret));
-  
-    return ret;
+    ssize_t rc;
+    rc = XPlat_NCsend( fd, buf, count );
+    if( rc < 0 )
+        return -1;
+    else
+        return rc;
 }
 
-ssize_t MRN_read(int fd, void *buf, size_t count)
+ssize_t MRN_recv(int fd, void *buf, size_t count)
 {
-    size_t bytes_recvd = 0;
-    ssize_t retval;
-    int err;
-
-    if( count == 0 )
-        return 0;
-
-    while( bytes_recvd != count ) {
-
-        mrn_dbg(5, mrn_printf(FLF, stderr, "About to call recv\n"));
-        retval = recv( fd, ((char*)buf) + bytes_recvd,
-                       count - bytes_recvd,
-                       NCBlockingRecvFlag );
-        mrn_dbg(5, mrn_printf(FLF, stderr, "recv returned retval=%d\n", retval));
-
-        err = NetUtils_GetLastError();
-        if( retval == -1 ) {
-            if( err == EINTR ) {
-                continue;
-            }
-            else {
-                mrn_dbg(3, mrn_printf(FLF, stderr,
-                                     "premature return from recv(). Got %d of %d" 
-                                     " bytes. error: %s\n", 
-                                      bytes_recvd, count, strerror(err)));
-                return -1;
-            }
-        }
-        else if( retval == 0 ) {
-            // the remote endpoint has gone away
-            return -1;
-        }
-        else {
-            bytes_recvd += retval;
-            if( bytes_recvd < count ) {
-                continue;
-            }
-            else {
-                mrn_dbg(5, mrn_printf(FLF, stderr, "returning %d\n", bytes_recvd));
-                return bytes_recvd;
-            }
-        }
-    }
-    assert(0); // should never get here
-    return -1;
+    ssize_t rc;
+    rc = XPlat_NCrecv( fd, buf, count );
+    if( rc < 0 )
+        return -1;
+    else
+        return rc;
 }
