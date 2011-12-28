@@ -45,6 +45,7 @@ namespace MRN
     extern char* MRN_DEBUG_LOG_DIRECTORY;
     void set_OutputLevel(int l=1);
 
+    void mrn_printf_init( FILE* ifp );
     int mrn_printf( const char *file, int line, const char * func, 
                     FILE * fp, const char *format, ... );
 

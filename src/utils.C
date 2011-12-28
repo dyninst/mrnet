@@ -429,58 +429,65 @@ int getPortFromSocket( int sock, Port *port )
     return 0;
 }
 
-FILE* mrn_printf_setup( int rank, node_type_t type )
+extern char* MRN_DEBUG_LOG_DIRECTORY;
+
+static FILE* mrn_printf_fp = NULL;
+
+void mrn_printf_init( FILE* ifp )
 {
-    FILE* fp = NULL;
-    std::string this_host;
-    struct stat s;
-    char node_type[3];
-    char host[256];
-    char logdir[256];
-    char logfile[512];
-    logfile[0] = '\0';
+    mrn_printf_fp = ifp;
+} 
 
-    switch( type ) {
-    case FE_NODE:
-        sprintf( node_type, "FE" );
-        break;
-    case BE_NODE:
-        sprintf( node_type, "BE" );
-        break;
-    case CP_NODE:
-        sprintf( node_type, "CP" );
-        break;
-    default:
-        return NULL;
-    };
+void mrn_printf_setup( int rank, node_type_t type )
+{
+    if( mrn_printf_fp == NULL ) {
 
-    XPlat::NetUtils::GetLocalHostName(this_host);
-    strncpy( host, this_host.c_str(), 256 );
-    host[255] = '\0';
+        std::string this_host;
+        struct stat s;
+        char node_type[3];
+        char host[256];
+        char logdir[256];
+        char logfile[512];
+        logfile[0] = '\0';
 
-    // find log directory
-    extern char* MRN_DEBUG_LOG_DIRECTORY;
-    const char* varval = MRN_DEBUG_LOG_DIRECTORY;
-    if( varval != NULL ) {
-        if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
-            snprintf( logdir, sizeof(logdir), "%s", varval );
-    }
+        switch( type ) {
+        case FE_NODE:
+            sprintf( node_type, "FE" );
+            break;
+        case BE_NODE:
+            sprintf( node_type, "BE" );
+            break;
+        case CP_NODE:
+            sprintf( node_type, "CP" );
+            break;
+        default:
+            return;
+        };
+
+        XPlat::NetUtils::GetLocalHostName(this_host);
+        strncpy( host, this_host.c_str(), 256 );
+        host[255] = '\0';
+
+        // find log directory
+        const char* varval = MRN_DEBUG_LOG_DIRECTORY;
+        if( varval != NULL ) {
+            if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
+                snprintf( logdir, sizeof(logdir), "%s", varval );
+        }
     
-    // set file name format
-    int pid = XPlat::Process::GetProcessId();
-    snprintf( logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
-              logdir, node_type, host, rank, pid );
+        // set file name format
+        int pid = XPlat::Process::GetProcessId();
+        snprintf( logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
+                  logdir, node_type, host, rank, pid );
 
-    fp = fopen( logfile, "w" );
-    return fp;
+        mrn_printf_fp = fopen( logfile, "w" );
+    }
 }
 
 int mrn_printf( const char *file, int line, const char * func,
                 FILE * ifp, const char *format, ... )
 {
-    extern char* MRN_DEBUG_LOG_DIRECTORY;
     static bool retry = true;
-    static FILE * fp = NULL;
 
     int retval = 1;
     va_list arglist;
@@ -506,16 +513,16 @@ int mrn_printf( const char *file, int line, const char * func,
         net = tsd->network;
     }
 
-    if( (MRN_DEBUG_LOG_DIRECTORY != NULL) && retry ) { 
-       // try to open log file
-       if( (fp == NULL) && 
-           (rank != UnknownRank) &&
-           (node_type != UNKNOWN_NODE) )
-          fp = mrn_printf_setup( rank, node_type );
-   
+    if( mrn_printf_fp == NULL ) {
+        if( (MRN_DEBUG_LOG_DIRECTORY != NULL) && retry ) { 
+            // try to open log file
+            if( (rank != UnknownRank) &&
+                (node_type != UNKNOWN_NODE) )
+                mrn_printf_setup( rank, node_type );
+        }
     }
 
-    FILE *f = fp;
+    FILE *f = mrn_printf_fp;
     if( f == NULL ) {
         f = ifp;
         if( MRN_DEBUG_LOG_DIRECTORY != NULL )
@@ -526,7 +533,7 @@ int mrn_printf( const char *file, int line, const char * func,
     fprintf( f, "%ld.%06ld: %s(0x%lx): ", 
              tv.tv_sec-MRN_RELEASE_DATE_SECS, tv.tv_usec,
              ( thread_name != NULL ) ? thread_name : "UNKNOWN_THREAD",
-             tid );
+             ( tid == -1 ) ? 0 : tid );
 
     if( file ) {
         // print file, function, and line info
