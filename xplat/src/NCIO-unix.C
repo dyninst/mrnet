@@ -149,7 +149,7 @@ NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
 
     // Use blocking recvmsg to get all buffers in one call 
 
-    unsigned int nBufsLeftToRecv = nBufs;
+    unsigned int i, nBufsLeftToRecv = nBufs;
     NCBuf* currBuf = ncbufs;
     while( nBufsLeftToRecv > 0 ) {
 
@@ -173,14 +173,14 @@ NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
 #endif
 
         ssize_t numBytesToRecv = 0;
-        for( unsigned int i = 0; i < nBufsToRecv; i++ ) {
+        for( i = 0; i < nBufsToRecv; i++ ) {
             msg.msg_iov[i].iov_base = currBuf[i].buf;
             msg.msg_iov[i].iov_len = currBuf[i].len;
             numBytesToRecv += currBuf[i].len;
         }
 
         // do the receive
-        ssize_t rret = recvmsg( s, &msg, NCBlockingRecvFlag );
+        ssize_t rret = recvmsg( s, &msg, 0 );
         if( rret < 0 ) {
             perror( "XPlat::NCRecv - recvmsg()");
             ret = rret;
@@ -188,17 +188,55 @@ NCRecv( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
             int err = msg.msg_flags;
             fprintf(stderr, "Warning: XPlat::NCRecv error msg_flags=%x\n", err);
 #endif
-            break;
-        } else {
-            ret += rret;
+            break; // out of while
+        }
 
-            if( rret != numBytesToRecv ) {
-                // this shouldn't happen, because we asked for blocking recvmsg
-                fprintf(stderr, "Warning: XPlat::NCRecv - got %zd of %zd bytes\n", 
-                        rret, numBytesToRecv);
-                return ret;
+        ret += rret;
+
+        if( rret != numBytesToRecv ) {
+
+            // loop to find missing bufs and recv them
+            ssize_t running_total = 0;
+            for( i = 0; i < nBufsToRecv; i++ ) {
+                running_total += msg.msg_iov[i].iov_len;
+                if( running_total == rret ) { 
+                    // buffers up to current index were received in full
+                    i++;
+                    break; // out of for
+                }
+                else if( running_total > rret ) {
+                    // current index was partially received, recv the rest
+                    size_t torecv = running_total - rret;
+                    ssize_t recvd = msg.msg_iov[i].iov_len - torecv;
+                    char* new_base = (char*)msg.msg_iov[i].iov_base + recvd;
+                    rret = NCrecv( s, new_base, torecv );
+                    if( rret < 0 ) {
+                        delete[] msg.msg_iov;
+                        fprintf(stderr, "Warning: XPlat::NCRecv - got %zd of %zd bytes\n", 
+                                ret, numBytesToRecv);
+                            
+                        return ret;
+                    }
+                    ret += rret;
+                    i++;
+                    break; // out of for
+                }
+                // else, running_total < rret
+            }
+     
+            // i is now number fully sent, try to recv remaining bufs in msg_iov
+            for( ; i < nBufsToRecv; i++ ) {
+                rret = NCrecv( s, msg.msg_iov[i].iov_base , msg.msg_iov[i].iov_len  );
+                if( rret < 0 ) {
+                    delete[] msg.msg_iov;
+                    fprintf(stderr, "Warning: XPlat::NCRecv - got %zd of %zd bytes\n", 
+                            ret, numBytesToRecv);
+                    return ret;
+                }
+                ret += rret;    
             }
         }
+
         delete[] msg.msg_iov;
 
         // advance through buffers
