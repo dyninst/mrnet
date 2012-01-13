@@ -363,7 +363,6 @@ int NetworkTopology_add_SubGraph(NetworkTopology_t* net_top, Node_t* inode,
     Node_t *node;
     SerialGraph_t* cur_sg;
     char* host;
-    Rank r;
     
     mrn_dbg_func_begin();
     NetworkTopology_lock(net_top);
@@ -435,13 +434,14 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
             cur_node = (Node_t*)net_top->parent_nodes->vec[i];
             if (cur_node->rank == inode->rank) {
                 node_to_delete = cur_node;
+                net_top->parent_nodes = eraseElement(net_top->parent_nodes,
+                                                     node_to_delete);
+                mrn_dbg(5, mrn_printf(FLF, stderr,
+                            "Removed rank %d from parent_nodes list.\n",
+                            (int)inode->rank));
                 break;
             }
         }
-        net_top->parent_nodes = eraseElement(net_top->parent_nodes, node_to_delete);
-        mrn_dbg(5, mrn_printf(FLF, stderr,
-                    "Removed rank %d from parent_nodes list.\n",
-                    (int)inode->rank));
 
     }
 

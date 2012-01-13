@@ -122,7 +122,7 @@ inline void Network_monitor_wait(Network_t *net, enum sync_index mon, enum cond_
                               "Incorrect enum passed to Network_monitor_wait\n"));
         return;
     }
-    retval = Monitor_WaitOnCondition(tmp_mon, cv);
+    retval = Monitor_WaitOnCondition(tmp_mon, (int)cv);
     if( retval != 0 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, 
             "Network_monitor_wait failed to wait: %s\n",
@@ -148,7 +148,7 @@ inline void Network_monitor_broadcast(Network_t *net, enum sync_index mon, enum 
                               "Incorrect enum passed to Network_monitor_broadcast\n"));
         return;
     }
-    retval = Monitor_BroadcastCondition(tmp_mon, cv);
+    retval = Monitor_BroadcastCondition(tmp_mon, (int)cv);
     if( retval != 0 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, 
             "Network_monitor_broadcast failed to broadcast: %s\n",
@@ -198,7 +198,6 @@ Network_t* new_Network_t()
 
 void delete_Network_t(Network_t * net)
 {
-    unsigned int i;
     Stream_t * cur_stream;
 
     if( net != NULL ) {
@@ -851,11 +850,7 @@ PeerNode_t* Network_new_PeerNode(Network_t* network,
     mrn_dbg(5, mrn_printf(FLF, stderr, "new peer node: %s:%d (%p) \n", 
                           node->hostname, node->rank, node));
 
-    if (is_parent) {
-        //Network_set_ParentNode(network, node);
-    } else {
-        pushBackElement(network->children, node); 
-    }
+    pushBackElement(network->children, node); 
 
     return node;
 
@@ -957,7 +952,6 @@ int Network_recover_FromParentFailure(Network_t* net)
     Rank failed_rank;
     Node_t* new_parent_node;
     char* new_parent_name;
-    PeerNode_t* old_parent;
     PeerNode_t* new_parent;
     BackEndNode_t* local_node;
     Rank new_parent_rank;

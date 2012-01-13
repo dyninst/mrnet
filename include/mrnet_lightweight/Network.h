@@ -121,6 +121,7 @@ struct PeerNode_t* Network_new_PeerNode( Network_t* network,
                                          int iis_parent,
                                          int iss_internal );
 int Network_delete_PeerNode( Network_t* net, Rank irank );
+void Network_set_ParentNode( Network_t* net, struct PeerNode_t* ip );
 
 int Network_have_Streams( Network_t* net );
 int Network_is_UserStreamId( unsigned int id );

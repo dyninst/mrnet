@@ -1344,7 +1344,7 @@ bool NetworkTopology::send_updates_buffer()
             free( crank_arr );
             free( cport_arr );
 
-            for( unsigned u=0; u < vuc_size; u++ )
+            for( int u=0; u < vuc_size; u++ )
                 free( host_arr[u] );
             free( host_arr );
 
@@ -1356,7 +1356,7 @@ bool NetworkTopology::send_updates_buffer()
     
     mrn_dbg_func_end();
     return false;
-}  
+}
 
 void NetworkTopology::insert_updates_buffer( update_contents* uc )
 {

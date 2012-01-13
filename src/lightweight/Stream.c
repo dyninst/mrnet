@@ -15,6 +15,7 @@
 #endif
 
 #include "mrnet_lightweight/Network.h"
+#include "PeerNode.h"
 #include "Protocol.h"
 #include "mrnet_lightweight/Stream.h"
 #include "mrnet_lightweight/NetworkTopology.h"
