@@ -43,7 +43,7 @@ void pdr_free(pdrproc_t proc, char *objp)
     (*proc)(&x, objp);
 }
 
-bool_t pdr_void(PDR *pdrs,  char *cp)
+bool_t pdr_void(PDR * UNUSED(pdrs),  char * UNUSED(cp))
 {
     return (TRUE);
 }

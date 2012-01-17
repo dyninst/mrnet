@@ -131,7 +131,6 @@ void Network_enable_FailureRecovery( Network_t* net );
 void Network_disable_FailureRecovery( Network_t* net );
 int Network_has_ParentFailure( Network_t* net );
 int Network_recover_FromParentFailure( Network_t* net );
-
 char* Network_get_LocalSubTreeStringPtr( Network_t* net );
 
 #endif /* __network_h */

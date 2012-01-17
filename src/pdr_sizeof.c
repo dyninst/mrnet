@@ -28,72 +28,72 @@ extern "C" {
 
 #endif /* defined(__cplusplus) */
 
-static bool_t _putchar(PDR *pdrs, char *c)
+static bool_t _putchar(PDR *pdrs, char * UNUSED(c))
 {
     pdrs->space += SIZEOF_CHAR;
     return TRUE;
 }
-static bool_t _getchar(PDR *prds, char *c)
+static bool_t _getchar(PDR * UNUSED(prds), char * UNUSED(c))
 {
     return FALSE;
 }
 
-static bool_t _putint16(PDR *pdrs, int16_t *i)
+static bool_t _putint16(PDR *pdrs, int16_t * UNUSED(i))
 {
     pdrs->space += SIZEOF_INT16;
     return TRUE;
 }
-static bool_t _getint16(PDR *pdrs, int16_t *i)
+static bool_t _getint16(PDR * UNUSED(pdrs), int16_t * UNUSED(i))
 {
     return FALSE;
 }
 
-static bool_t _putint32(PDR *pdrs, int32_t *i)
+static bool_t _putint32(PDR *pdrs, int32_t * UNUSED(i))
 {
     pdrs->space += SIZEOF_INT32;
     return TRUE;
 }
-static bool_t _getint32(PDR *pdrs, int32_t *i)
+static bool_t _getint32(PDR * UNUSED(pdrs), int32_t * UNUSED(i))
 {
     return FALSE;
 }
 
-static bool_t _putint64(PDR *pdrs, int64_t *i)
+static bool_t _putint64(PDR *pdrs, int64_t * UNUSED(i))
 {
     pdrs->space += SIZEOF_INT64;
     return TRUE;
 }
-static bool_t _getint64(PDR *pdrs, int64_t *i)
+static bool_t _getint64(PDR * UNUSED(pdrs), int64_t * UNUSED(i))
 {
     return FALSE;
 }
 
-static bool_t _putfloat(PDR *pdrs, float *f)
+static bool_t _putfloat(PDR *pdrs, float * UNUSED(f))
 {
     pdrs->space += SIZEOF_FLOAT;
     return TRUE;
 }
-static bool_t _getfloat(PDR *pdrs, float *f)
+static bool_t _getfloat(PDR * UNUSED(pdrs), float * UNUSED(f))
 {
     return FALSE;
 }
 
-static bool_t _putdouble(PDR *pdrs, double *d)
+static bool_t _putdouble(PDR *pdrs, double * UNUSED(d))
 {
     pdrs->space += SIZEOF_DOUBLE;
     return TRUE;
 }
-static bool_t _getdouble(PDR *pdrs, double *d)
+static bool_t _getdouble(PDR * UNUSED(pdrs), double * UNUSED(d))
 {
     return FALSE;
 }
 
-static bool_t _putbytes(PDR *pdrs, char *c, uint32_t len)
+static bool_t _putbytes(PDR *pdrs, char * UNUSED(c), uint32_t len)
 {
     pdrs->space += SIZEOF_CHAR*len;
     return TRUE;
 }
-static bool_t _getbytes(PDR *pdrs, char *c, uint32_t u)
+static bool_t _getbytes(PDR * UNUSED(pdrs), char * UNUSED(c), uint32_t UNUSED(u))
 {
     return FALSE;
 }
@@ -103,7 +103,7 @@ static uint32_t _getpos(PDR *pdrs)
     return pdrs->space;
 }
 
-static bool_t _setpos(PDR *pdrs, uint32_t u)
+static bool_t _setpos(PDR * UNUSED(pdrs), uint32_t UNUSED(u))
 {
     return FALSE;
 }

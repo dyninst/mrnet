@@ -20,9 +20,9 @@
 #include "mrnet_lightweight/Types.h"
 #include "xplat_lightweight/NetUtils.h"
 
+#ifdef MRNET_LTWT_THREADSAFE  
 inline void NetworkTopology_lock(NetworkTopology_t* net_top)
 {
-#ifdef MRNET_LTWT_THREADSAFE  
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "NetworkTopology_lock\n"));
     retval = Monitor_Lock( net_top->sync );
@@ -31,12 +31,10 @@ inline void NetworkTopology_lock(NetworkTopology_t* net_top)
                               "Network_lock failed to acquire sync: %s\n",
                               strerror(retval)));
     }
-#endif
 }
 
 inline void NetworkTopology_unlock(NetworkTopology_t* net_top)
 {
-#ifdef MRNET_LTWT_THREADSAFE  
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "NetworkTopology_unlock\n"));
     retval = Monitor_Unlock( net_top->sync );
@@ -45,9 +43,19 @@ inline void NetworkTopology_unlock(NetworkTopology_t* net_top)
                               "Network_unlock failed to release sync: %s\n",
                               strerror(retval)));
     }
-#endif
+}
+#else
+
+inline void NetworkTopology_unlock(NetworkTopology_t* UNUSED(net_top)) 
+{
+    
 }
 
+inline void NetworkTopology_lock(NetworkTopology_t* UNUSED(net_top))
+{
+
+}
+#endif
 Node_t* new_Node_t(char* ihostname, 
                    Port iport, 
                    Rank irank, 
@@ -548,7 +556,7 @@ void NetworkTopology_remove_SubGraph(NetworkTopology_t* net_top, Node_t* inode)
 }
 
 int NetworkTopology_set_Parent(NetworkTopology_t* net_top, Rank ichild_rank, 
-                               Rank inew_parent_rank, int iupdate)
+                               Rank inew_parent_rank, int UNUSED(iupdate))
 {
     Node_t* child_node;
     Node_t* new_parent_node;

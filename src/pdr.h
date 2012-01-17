@@ -6,6 +6,15 @@
 #ifndef __PDR_HEADER__
 #define __PDR_HEADER__
 
+
+#ifndef UNUSED
+#if defined(__GNUC__)
+#   define UNUSED(x) x __attribute__((unused)) /* UNUSED: x */ 
+#else
+#   define UNUSED(x) x
+#endif
+#endif
+
 #if !defined (__STDC_LIMIT_MACROS)
 #  define __STDC_LIMIT_MACROS
 #endif

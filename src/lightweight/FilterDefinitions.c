@@ -21,9 +21,9 @@ FilterId SFILTER_TIMEOUT=0;
 
 void tfilter_TopoUpdate(vector_t * ipackets,
                         vector_t* opackets,
-                        vector_t* opackets_reverse,
-                        void ** v,
-                        Packet_t* pkt,
+                        vector_t* UNUSED(opackets_reverse),
+                        void ** UNUSED(v),
+                        Packet_t* UNUSED(pkt),
                         TopologyLocalInfo_t * info,
                         int upstream)
 {

@@ -55,9 +55,10 @@ void cleanup_local(void)
 #endif
 }
 
-inline void Network_lock(Network_t *net, enum sync_index mon)
-{
+
 #ifdef MRNET_LTWT_THREADSAFE  
+inline void Network_lock(Network_t * net, enum sync_index mon)
+{
     int retval;
     Monitor_t *tmp_mon;
     if(mon == NET_SYNC) {
@@ -78,12 +79,11 @@ inline void Network_lock(Network_t *net, enum sync_index mon)
                               strerror(retval)));
 
     }
-#endif
 }
+
 
 inline void Network_unlock(Network_t *net, enum sync_index mon)
 {
-#ifdef MRNET_LTWT_THREADSAFE  
     int retval;
     Monitor_t *tmp_mon;
     if(mon == NET_SYNC) {
@@ -103,12 +103,10 @@ inline void Network_unlock(Network_t *net, enum sync_index mon)
                               "Network_unlock failed to release monitor: %s\n",
                               strerror(retval)));
     }
-#endif
 }
 
 inline void Network_monitor_wait(Network_t *net, enum sync_index mon, enum cond_vars cv)
 {
-#ifdef MRNET_LTWT_THREADSAFE  
     int retval;
     Monitor_t *tmp_mon;
     if(mon == NET_SYNC) {
@@ -129,12 +127,11 @@ inline void Network_monitor_wait(Network_t *net, enum sync_index mon, enum cond_
             strerror(retval)));
 
     }
-#endif
 }
+
 
 inline void Network_monitor_broadcast(Network_t *net, enum sync_index mon, enum cond_vars cv)
 {
-#ifdef MRNET_LTWT_THREADSAFE  
     int retval;
     Monitor_t *tmp_mon;
     if(mon == NET_SYNC) {
@@ -155,8 +152,30 @@ inline void Network_monitor_broadcast(Network_t *net, enum sync_index mon, enum 
             strerror(retval)));
 
     }
-#endif
 }
+
+#else
+inline void Network_lock(Network_t * UNUSED(net), enum sync_index UNUSED(mon))
+{
+
+}
+
+inline void Network_unlock(Network_t * UNUSED(net), enum sync_index UNUSED(mon))
+{
+
+}
+
+inline void Network_monitor_wait(Network_t * UNUSED(net), enum sync_index UNUSED(mon), enum cond_vars UNUSED(cv))
+{
+
+}
+
+inline void Network_monitor_broadcast(Network_t * UNUSED(net), enum sync_index UNUSED(mon), enum cond_vars UNUSED(cv))
+{
+
+}
+#endif
+
 
 Network_t* new_Network_t()
 {
@@ -710,7 +729,7 @@ Stream_t* Network_new_Stream(Network_t* net,
     return stream;
 }
 
-int Network_remove_Node(Network_t* net, Rank ifailed_rank, int iupdate)
+int Network_remove_Node(Network_t* net, Rank ifailed_rank, int UNUSED(iupdate))
 {
     mrn_dbg_func_begin();
     Network_lock(net, NET_SYNC);

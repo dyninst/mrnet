@@ -65,7 +65,7 @@ ssize_t XPlat_NCsend(XPSOCKET s, const void *buf, size_t count)
 
     ssize_t bytes_written = 0;
 
-    while( bytes_written != count ) {
+    while( bytes_written !=  (ssize_t) count ) {
 
         ssize_t ret = send( s, ((const char*)buf) + bytes_written,
                             count - bytes_written,
@@ -87,7 +87,7 @@ ssize_t XPlat_NCsend(XPSOCKET s, const void *buf, size_t count)
         }
         else {
             bytes_written += ret;
-            if( bytes_written < count ) {
+            if( bytes_written < (ssize_t) count ) {
                 continue;
             }
             else {
@@ -107,7 +107,7 @@ ssize_t XPlat_NCrecv(XPSOCKET s, void *buf, size_t count)
 
     ssize_t bytes_recvd = 0;
 
-    while( bytes_recvd != count ) {
+    while( bytes_recvd != (ssize_t) count ) {
 
         ssize_t ret = recv( s, ((char*)buf) + bytes_recvd,
                             count - bytes_recvd,
@@ -134,7 +134,7 @@ ssize_t XPlat_NCrecv(XPSOCKET s, void *buf, size_t count)
         }
         else {
             bytes_recvd += ret;
-            if( bytes_recvd < count ) {
+            if( bytes_recvd < (ssize_t) count ) {
                 continue;
             }
             else {

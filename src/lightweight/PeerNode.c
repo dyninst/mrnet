@@ -40,9 +40,9 @@ PeerNode_t* new_PeerNode_t(Network_t* inetwork,
   return peer_node;
 }
 
+#ifdef MRNET_LTWT_THREADSAFE  
 inline void PeerNode_send_lock(PeerNode_t* peer)
 {
-#ifdef MRNET_LTWT_THREADSAFE  
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_send_lock %d\n", peer->rank));
     retval = Mutex_Lock( peer->send_mutex );
@@ -51,12 +51,10 @@ inline void PeerNode_send_lock(PeerNode_t* peer)
                               "PeerNode_send_lock failed to acquire mutex: %s\n",
                               strerror(retval)));
     }
-#endif
 }
 
 inline void PeerNode_send_unlock(PeerNode_t* peer)
 {
-#ifdef MRNET_LTWT_THREADSAFE  
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_send_unlock %d\n", peer->rank));
     retval = Mutex_Unlock( peer->send_mutex );
@@ -65,12 +63,10 @@ inline void PeerNode_send_unlock(PeerNode_t* peer)
                               "PeerNode_send_unlock failed to release mutex: %s\n",
                               strerror(retval)));
     }
-#endif
 }
 
 inline int PeerNode_recv_lock(PeerNode_t* peer, int blocking)
 {
-#ifdef MRNET_LTWT_THREADSAFE  
     int retval;
     int dbg_level;
     mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_recv_lock %d\n", peer->rank));
@@ -87,13 +83,11 @@ inline int PeerNode_recv_lock(PeerNode_t* peer, int blocking)
                               retval, strerror(retval)));
     }
     return retval;
-#endif
-    return 0;
+    //return 0;
 }
 
 inline void PeerNode_recv_unlock(PeerNode_t* peer)
 {
-#ifdef MRNET_LTWT_THREADSAFE  
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_recv_unlock %d\n",
         peer->rank));
@@ -104,8 +98,29 @@ inline void PeerNode_recv_unlock(PeerNode_t* peer)
                               "(%d): %s\n",
                               retval, strerror(retval)));
     }
-#endif
 }
+#else
+
+inline void PeerNode_send_lock(PeerNode_t* UNUSED(peer))
+{
+
+}
+
+inline void PeerNode_send_unlock(PeerNode_t* UNUSED(peer))
+{
+
+}
+
+inline int PeerNode_recv_lock(PeerNode_t* UNUSED(peer), int UNUSED(blocking))
+{
+    return 0;
+}
+
+
+inline void PeerNode_recv_unlock(PeerNode_t* UNUSED(peer))
+{
+}
+#endif
 
 Rank PeerNode_get_Rank(PeerNode_t* node)
 {
@@ -151,7 +166,7 @@ int PeerNode_connect_EventSocket(PeerNode_t* parent)
 }
 
 // don't use this one--intended for non-blocking send
-int PeerNode_send(PeerNode_t* peer, /*const*/ Packet_t* ipacket)
+int PeerNode_send(PeerNode_t* UNUSED(peer), /*const*/ Packet_t* UNUSED(ipacket))
 {
     mrn_dbg(1, mrn_printf(FLF, stderr, 
                           "PeerNode_send is not intended for blocking send\n"));
@@ -242,7 +257,7 @@ int PeerNode_recv(PeerNode_t* node, vector_t* packet_list, bool_t blocking)
     return msg_ret;
 }
 
-int PeerNode_flush(PeerNode_t* peer)
+int PeerNode_flush(PeerNode_t* UNUSED(peer))
 {
     int retval = 0;
     return retval;

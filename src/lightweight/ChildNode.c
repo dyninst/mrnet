@@ -99,7 +99,6 @@ int ChildNode_init_newChildEventConnection(BackEndNode_t* be,
                                            PeerNode_t* iparent) 
 {
     int retval = 0;
-    char *topo_ptr;
     Packet_t* packet;
     const char* fmt_str = "%s %uhd %ud";
 
@@ -550,7 +549,7 @@ int ChildNode_proc_PrintPerfData(BackEndNode_t* be, Packet_t* ipacket)
 }
 
 int ChildNode_proc_PortUpdate(BackEndNode_t * be,
-                              Packet_t* ipacket)
+                              Packet_t* UNUSED(ipacket))
 {
     Stream_t* s;
 

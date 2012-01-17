@@ -249,7 +249,6 @@ inline bool_t pdrmem_getint64_swap(PDR *pdrs, int64_t *p)
  */
 inline bool_t pdrmem_putfloat(PDR *pdrs, float *p)
 {
-    int i;
     if(SIZEOF_FLOAT > pdrs->space){
         return FALSE;
     }
@@ -391,6 +390,8 @@ int32_t * pdrmem_inline(PDR *pdrs, int32_t len)
     return (buf);
 }
 
-void pdrmem_destroy(PDR *pdrs)
+// This should really be changed... We never allocate PDR
+// malloc or new.
+void pdrmem_destroy(PDR * UNUSED(pdrs))
 {
 }

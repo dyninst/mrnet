@@ -40,8 +40,8 @@ const unsigned int USER_STRM_BASE_ID = STREAM_BASE_ID + 10;
 
 Stream_t* new_Stream_t(Network_t* net,
                        unsigned int iid, 
-                       Rank *ibackends,
-                       unsigned int inum_backends,
+                       Rank * UNUSED(ibackends),
+                       unsigned int UNUSED(inum_backends),
                        unsigned int ius_filter_id,
                        unsigned int isync_filter_id,
                        unsigned int ids_filter_id)
@@ -98,7 +98,7 @@ unsigned int Stream_get_Id(Stream_t* stream)
     return stream->id;
 }
 
-int Stream_find_FilterAssignment(char* assignments, Rank me, int filter_id)
+int Stream_find_FilterAssignment(char* UNUSED(assignments), Rank UNUSED(me), int UNUSED(filter_id))
 {
     // THIS IS A STUB
     int stub = 1;
@@ -620,7 +620,7 @@ void Stream_print_PerfData(Stream_t* stream,
     mrn_dbg_func_end();
 }
 
-int Stream_remove_Node(Stream_t* stream, Rank irank)
+int Stream_remove_Node(Stream_t* UNUSED(stream), Rank UNUSED(irank))
 {
     // BEs don't keep track of stream peers
     return 1;

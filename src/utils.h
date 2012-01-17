@@ -16,6 +16,14 @@
 #  define __STDC_FORMAT_MACROS
 #endif
 
+#ifndef UNUSED
+#if defined(__GNUC__)
+#   define UNUSED(x) x __attribute__((unused)) /* UNUSED: x */ 
+#else
+#   define UNUSED(x) x
+#endif
+#endif
+ 
 #include "mrnet/Types.h"
 #include "xplat/Types.h"
 #include "xplat/TLSKey.h"

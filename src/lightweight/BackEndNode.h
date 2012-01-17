@@ -9,6 +9,7 @@
 #include "mrnet_lightweight/Network.h"
 #include "mrnet_lightweight/Types.h"
 #include "PeerNode.h"
+#include <string.h>
 
 /*  definition */
 struct BackEndNode_t {
@@ -56,4 +57,7 @@ int BackEndNode_proc_DataFromParent( BackEndNode_t* be,  Packet_t* ipacket);
 
 int BackEndNode_proc_deleteStream(BackEndNode_t * be, Packet_t * ipacket);
 
+
+// In network... cannot be placed in network.h due to PeerNode_t not being definded
+//void Network_set_ParentNode(Network_t * net, PeerNode_t* ip);
 #endif /* __backendnode_h */

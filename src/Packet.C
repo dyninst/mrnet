@@ -580,8 +580,10 @@ bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
                 cur_elem->val.p = NULL;
             }
             retval =
-                pdr_bytes( pdrs, (char **) &cur_elem->val.p,
-                           &( cur_elem->array_len ), INT32_MAX);
+                pdr_bytes( 
+                pdrs, 
+                reinterpret_cast<char**>(cur_elem->val.p),
+                          &( cur_elem->array_len ), INT32_MAX);
             break;
 
         case INT16_T:

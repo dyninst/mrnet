@@ -16,6 +16,14 @@
 #  define __STDC_FORMAT_MACROS
 #endif
 
+#ifndef UNUSED
+#if defined(__GNUC__)
+#   define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#else
+#   define UNUSED(x) x
+#endif
+#endif
+ 
 #include <stdio.h>
 #include <stdlib.h>
 
