@@ -582,7 +582,7 @@ bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
             retval =
                 pdr_bytes( 
                 pdrs, 
-                reinterpret_cast<char**>(cur_elem->val.p),
+                reinterpret_cast<char**>(&cur_elem->val.p),
                           &( cur_elem->array_len ), INT32_MAX);
             break;
 
