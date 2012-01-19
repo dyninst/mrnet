@@ -106,9 +106,11 @@ class Stream {
                                 perfdata_context_t context, 
                                 int aggr_strm_id );
 
+    bool is_LocalNodeInternal(void);
     //DEPRECATED -- renamed is_ShutDown to is_Closed
     bool is_ShutDown(void) const { return is_Closed(); }
 
+    PerfDataMgr * _perf_data;
  private:
     static bool find_FilterAssignment( const std::string& assignments, 
                                        Rank me, int& filter_id );
@@ -136,6 +138,7 @@ class Stream {
     void signal_BlockedReceivers(void) const;
     int block_ForIncomingPacket(void) const;
 
+    //PerfDataMgr * _perf_data;
     //Static Data Members
     Network * _network;
     unsigned int _id;
@@ -149,7 +152,6 @@ class Stream {
 
     //Dynamic Data Members
     EventPipe * _evt_pipe;
-    PerfDataMgr * _perf_data;
     bool _was_closed;
     std::set< PeerNodePtr > _peers; // child peers in stream
     mutable XPlat::Mutex _peers_sync;

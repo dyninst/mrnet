@@ -16,14 +16,6 @@
 #  define __STDC_FORMAT_MACROS
 #endif
 
-#ifndef UNUSED
-#if defined(__GNUC__)
-#   define UNUSED(x) x __attribute__((unused)) /* UNUSED: x */ 
-#else
-#   define UNUSED(x) x
-#endif
-#endif
- 
 #include "mrnet/Types.h"
 #include "xplat/Types.h"
 #include "xplat/TLSKey.h"
@@ -167,6 +159,7 @@ class Timer{
     void start( void );
     void stop( void );
     void stop( double d );
+    double get_timer ( void );
     double get_latency_secs( void );
     double get_latency_msecs( void );
     double get_latency_usecs( void );

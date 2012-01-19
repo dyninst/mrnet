@@ -2,7 +2,7 @@
  *  Copyright 2003-2011 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
-
+//#define MRNET_FILTER_NOBLOCK 5
 #include <vector>
 
 #include "mrnet/MRNet.h"
@@ -26,8 +26,8 @@ map< unsigned short, Filter::FilterInfo > Filter::Filters;
 int FilterCounter::count=0;
 static FilterCounter fc;
 
-Filter::Filter(unsigned short iid)
-    : _id(iid), _filter_state(NULL), _params(Packet::NullPacket)
+Filter::Filter(unsigned short iid, Stream * strm)
+    : _id(iid), _filter_state(NULL), _strm(strm), _params(Packet::NullPacket)
 {
     FilterInfo& finfo = Filters[iid];
     _filter_func =
@@ -50,7 +50,17 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
                           const TopologyLocalInfo& topol_info )
 {
     mrn_dbg_func_begin();
-
+    if(_strm != NULL && _filter_func != NULL)
+    {
+        if(_strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_FILTER))
+        {
+            for (std::vector<PacketPtr>::iterator i = ipackets.begin();
+                    i != ipackets.end(); i++)
+            {
+                (*i)->start_Timer(PERFDATA_PKT_TIMERS_FILTER);
+            }
+        }
+    }
     _mutex.Lock();
     
     if( _filter_func == NULL ) {  //do nothing
@@ -63,10 +73,29 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
     }
 
     _filter_func( ipackets, opackets, opackets_reverse, &_filter_state, _params, topol_info );
-    ipackets.clear( );
-    
     _mutex.Unlock();
 
+    if(_strm != NULL)
+        if(_strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_FILTER) &&
+           _strm->is_LocalNodeInternal())
+        {
+            for (std::vector<PacketPtr>::iterator i = ipackets.begin();
+                    i != ipackets.end(); i++)
+            {
+                PacketPtr iter = *i;
+                iter->stop_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
+                iter->stop_Timer(PERFDATA_PKT_TIMERS_FILTER);
+                _strm->_perf_data->add_PacketTimers(iter);
+            }
+            for (std::vector<PacketPtr>::iterator i =  opackets.begin(); 
+                 i != opackets.end(); i++)
+            {
+                PacketPtr iter = *i;
+                iter->start_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
+            }
+        }
+    ipackets.clear( );
+    
     mrn_dbg_func_end();
     return 0;
 }

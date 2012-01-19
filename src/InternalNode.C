@@ -96,8 +96,13 @@ int InternalNode::proc_DataFromParent( PacketPtr ipacket ) const
     std::vector< PacketPtr > packets, reverse_packets;
 
     mrn_dbg_func_begin();
-
     unsigned int strm_id = ipacket->get_StreamId();
+
+    Stream * strm = ParentNode::_network->get_Stream( strm_id );
+    if(strm != NULL)
+        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_INT_DATAPAR))
+            ipacket->start_Timer(PERFDATA_PKT_TIMERS_INT_DATAPAR);
+
     if( strm_id < CTL_STRM_ID ) {
         // fast-path for BE specific stream ids
         // TODO: check id less than max BE rank
@@ -128,6 +133,10 @@ int InternalNode::proc_DataFromParent( PacketPtr ipacket ) const
         }
     }
 
+     if(strm != NULL)
+         if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_INT_DATAPAR))
+             ipacket->stop_Timer(PERFDATA_PKT_TIMERS_INT_DATAPAR);
+
     mrn_dbg_func_end();
     return retval;
 }
@@ -141,6 +150,12 @@ int InternalNode::proc_DataFromChildren( PacketPtr ipacket ) const
     std::vector< PacketPtr > packets, reverse_packets;
 
     unsigned int strm_id = ipacket->get_StreamId();
+    Stream * strm = ParentNode::_network->get_Stream( strm_id );
+
+    if(strm != NULL)
+        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_INT_DATACHILD))
+            ipacket->start_Timer(PERFDATA_PKT_TIMERS_INT_DATACHILD);
+
     if( strm_id < CTL_STRM_ID ) {
         // fast-path for BE specific stream ids
         // TODO: check id less than max BE rank
@@ -169,6 +184,10 @@ int InternalNode::proc_DataFromChildren( PacketPtr ipacket ) const
             retval = -1;
         }
     }
+
+    if(strm != NULL)
+        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_INT_DATACHILD))
+            ipacket->stop_Timer(PERFDATA_PKT_TIMERS_INT_DATACHILD);
 
     mrn_dbg_func_end();
     return retval;

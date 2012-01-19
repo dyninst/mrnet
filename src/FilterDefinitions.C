@@ -175,59 +175,60 @@ void tfilter_Sum( const vector< PacketPtr >& ipackets,
         opackets.push_back( new_packet );
     }
     else if( type == FLOAT_T ){
-        float tmp = *((float*)result);
+        float * tmp = reinterpret_cast<float *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == DOUBLE_T ){
-        double tmp = *((double*)result);
+        double * tmp = reinterpret_cast<double *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ));
+                                          format_string.c_str(), *tmp ));
         opackets.push_back( new_packet );
     }
     else if( type == INT16_T ){
-        int16_t tmp = *((int16_t*)result);
+        int16_t * tmp = reinterpret_cast<int16_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == UINT16_T ){
-        uint16_t tmp = *((uint16_t*)result);
+
+        uint16_t * tmp = reinterpret_cast<uint16_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(),*tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == INT32_T ){
-        int32_t tmp = *((int32_t*)result);
+        int32_t * tmp = reinterpret_cast<int32_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == UINT32_T ){
-        uint32_t tmp = *((uint32_t*)result);
+        uint32_t * tmp = reinterpret_cast<uint32_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == INT64_T ){
-        int64_t tmp = *((int64_t*)result);
+        int64_t * tmp = reinterpret_cast<int64_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == UINT64_T ){
-        uint64_t tmp = *((uint64_t*)result);
+        uint64_t * tmp = reinterpret_cast<uint64_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else{
@@ -323,59 +324,60 @@ void tfilter_Max( const vector< PacketPtr >& ipackets,
         opackets.push_back( new_packet );
     }
     else if( type == FLOAT_T ){
-        float tmp = *((float*)result);
+        float * tmp = reinterpret_cast<float *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == DOUBLE_T ){
-        double tmp = *((double*)result);
+        double * tmp = reinterpret_cast<double *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ));
         opackets.push_back( new_packet );
     }
     else if( type == INT16_T ){
-        int16_t tmp = *((int16_t*)result);
+        int16_t * tmp = reinterpret_cast<int16_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == UINT16_T ){
-        uint16_t tmp = *((uint16_t*)result);
+
+        uint16_t * tmp = reinterpret_cast<uint16_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(),*tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == INT32_T ){
-        int32_t tmp = *((int32_t*)result);
+        int32_t * tmp = reinterpret_cast<int32_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == UINT32_T ){
-        uint32_t tmp = *((uint32_t*)result);
+        uint32_t * tmp = reinterpret_cast<uint32_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == INT64_T ){
-        int64_t tmp = *((int64_t*)result);
+        int64_t * tmp = reinterpret_cast<int64_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == UINT64_T ){
-        uint64_t tmp = *((uint64_t*)result);
+        uint64_t * tmp = reinterpret_cast<uint64_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else{
@@ -456,7 +458,7 @@ void tfilter_Min( const vector< PacketPtr >& ipackets,
             mrn_min( result, &((*cur_packet)[0]->val.p), result, type );
         }
     }
-    
+
     if( type == CHAR_T ){
         char tmp = *((char*)result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
@@ -472,65 +474,65 @@ void tfilter_Min( const vector< PacketPtr >& ipackets,
         opackets.push_back( new_packet );
     }
     else if( type == FLOAT_T ){
-        float tmp = *((float*)result);
+        float * tmp = reinterpret_cast<float *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == DOUBLE_T ){
-        double tmp = *((double*)result);
+        double * tmp = reinterpret_cast<double *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ));
         opackets.push_back( new_packet );
     }
     else if( type == INT16_T ){
-        int16_t tmp = *((int16_t*)result);
+        int16_t * tmp = reinterpret_cast<int16_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == UINT16_T ){
-        uint16_t tmp = *((uint16_t*)result);
+
+        uint16_t * tmp = reinterpret_cast<uint16_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(),*tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == INT32_T ){
-        int32_t tmp = *((int32_t*)result);
+        int32_t * tmp = reinterpret_cast<int32_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == UINT32_T ){
-        uint32_t tmp = *((uint32_t*)result);
+        uint32_t * tmp = reinterpret_cast<uint32_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == INT64_T ){
-        int64_t tmp = *((int64_t*)result);
+        int64_t * tmp = reinterpret_cast<int64_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else if( type == UINT64_T ){
-        uint64_t tmp = *((uint64_t*)result);
+        uint64_t * tmp = reinterpret_cast<uint64_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp ) );
+                                          format_string.c_str(), *tmp ) );
         opackets.push_back( new_packet );
     }
     else{
         assert(0);
     }
-
 }
 
 void tfilter_Avg( const vector < PacketPtr >& ipackets,
@@ -609,59 +611,65 @@ void tfilter_Avg( const vector < PacketPtr >& ipackets,
         opackets.push_back( new_packet );
     }
     else if( type == FLOAT_T ){
-        float tmp = *((float*)result);
+
+        float * tmp = reinterpret_cast<float *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp, num_results ) );
+                                          format_string.c_str(), *tmp, num_results ) );
         opackets.push_back( new_packet );
     }
-    else if( type == DOUBLE_T ){
-        double tmp = *((double*)result);
+    else if( type == DOUBLE_T ) {
+        double * tmp = reinterpret_cast<double *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp, num_results ) );
+                                          format_string.c_str(), *tmp, num_results ) );
         opackets.push_back( new_packet );
     }
     else if( type == INT16_T ){
-        int16_t tmp = *((int16_t*)result);
+
+        int16_t * tmp = reinterpret_cast<int16_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp, num_results ));
+                                          format_string.c_str(), *tmp, num_results ));
         opackets.push_back( new_packet );
     }
     else if( type == UINT16_T ){
-        uint16_t tmp = *((uint16_t*)result);
-        PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
+        
+        uint16_t * tmp = reinterpret_cast<uint16_t *>(result);
+	PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp, num_results ));
+                                          format_string.c_str(), *tmp, num_results ));
         opackets.push_back( new_packet );
     }
     else if( type == INT32_T ){
-        int32_t tmp = *((int32_t*)result);
+
+        int32_t * tmp = reinterpret_cast<int32_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp, num_results ));
+                                          format_string.c_str(), *tmp, num_results ));
         opackets.push_back( new_packet );
     }
     else if( type == UINT32_T ){
-        uint32_t tmp = *((uint32_t*)result);
+
+        uint32_t * tmp = reinterpret_cast<uint32_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp, num_results ));
+                                          format_string.c_str(), *tmp, num_results ));
         opackets.push_back( new_packet );
     }
     else if( type == INT64_T ){
-        int64_t tmp = *((int64_t*)result);
+
+        int64_t * tmp = reinterpret_cast<int64_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp, num_results ));
+                                          format_string.c_str(), *tmp, num_results ));
         opackets.push_back( new_packet );
     }
     else if( type == UINT64_T ){
-        uint64_t tmp = *((uint64_t*)result);
+        uint64_t * tmp = reinterpret_cast<uint64_t *>(result);
         PacketPtr new_packet( new Packet( ipackets[0]->get_StreamId( ),
                                           ipackets[0]->get_Tag( ),
-                                          format_string.c_str(), tmp, num_results ));
+                                          format_string.c_str(), *tmp, num_results ));
         opackets.push_back( new_packet );
     }
     else{

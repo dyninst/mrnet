@@ -712,27 +712,25 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
 
     NetworkTopology* nt = _network->get_NetworkTopology();
     std::string topo_str = nt->get_TopologyString();
+
+    PacketPtr pkt( new Packet(CTL_STRM_ID, PROT_NET_SETTINGS, "%s %ad %as", 
+                              strdup( topo_str.c_str() ),
+                              keys, count, 
+                              vals, count) );
+    pkt->set_DestroyData( true );
+    child_node->sendDirectly( pkt );
+    
     Rank my_rank = _network->get_LocalRank();
-
-    if(child_incarnation == 1) {
-        PacketPtr pkt( new Packet(CTL_STRM_ID, PROT_NET_SETTINGS, "%s %ad %as", 
-                    strdup( topo_str.c_str() ),
-                    keys, count, 
-                    vals, count) );
-        pkt->set_DestroyData( true );
-        child_node->sendDirectly( pkt );
-
-        if( NULL == nt->find_Node(child_rank) ) {
-            std::string child_topo(topo_ptr);
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before adding child subgraph %s\n", 
-                        nt->get_TopologyString().c_str(),
-                        child_topo.c_str()) );
-            SerialGraph sg( child_topo );
-            nt->add_SubGraph( my_rank, sg, true );
-        }
-        if( topo_ptr != NULL )
-            free( topo_ptr );
+    if( NULL == nt->find_Node(child_rank) ) {
+        std::string child_topo(topo_ptr);
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before adding child subgraph %s\n", 
+                               nt->get_TopologyString().c_str(),
+                               child_topo.c_str()) );
+        SerialGraph sg( child_topo );
+        nt->add_SubGraph( my_rank, sg, true );
     }
+    if( topo_ptr != NULL )
+        free( topo_ptr );
 
     //Create send/recv threads
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for new child\n") );

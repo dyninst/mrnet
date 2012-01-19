@@ -187,26 +187,23 @@ Node_t* NetworkTopology_get_Root(NetworkTopology_t* net_top)
 }
 
 void NetworkTopology_get_BackEndNodes(NetworkTopology_t* net_top, 
-                                      vector_t* nodes)
+                                      vector_t* UNUSED(nodes))
 {
     NetworkTopology_lock(net_top);
-    nodes = net_top->backend_nodes;
     NetworkTopology_unlock(net_top);
 }
 
 void NetworkTopology_get_ParentNodes(NetworkTopology_t* net_top, 
-                                     vector_t* nodes)
+                                     vector_t* UNUSED(nodes))
 {
     NetworkTopology_lock(net_top);
-    nodes = net_top->parent_nodes;
     NetworkTopology_unlock(net_top);
 }
 
 void NetworkTopology_get_OrphanNodes(NetworkTopology_t* net_top, 
-                                     vector_t* nodes)
+                                     vector_t* UNUSED( nodes))
 {
     NetworkTopology_lock(net_top);
-    nodes = net_top->orphans;
     NetworkTopology_unlock(net_top);
 }
 

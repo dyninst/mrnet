@@ -579,7 +579,6 @@ get_packet_from_stream_label:
 int Network_recv(Network_t* net, int *otag, 
                  Packet_t* opacket, Stream_t** ostream)
 {
-    int checked_network = false; // have we checked sockets for input?
     Packet_t* cur_packet = NULL;
     int retval;
 
@@ -608,7 +607,6 @@ int Network_recv(Network_t* net, int *otag,
             "No packets waiting in stream, checking for data on socket\n"));
     retval = Network_recv_internal(net, NULL, true);
 
-    checked_network = true;
 
     if( retval == -1 ) {
         mrn_dbg(3, mrn_printf(FLF, stderr, "Network_recv_internal() failed\n"));

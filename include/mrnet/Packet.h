@@ -6,20 +6,21 @@
 #if !defined(__packet_h)
 #define __packet_h 1
 
+#include "mrnet/Types.h"
+
 #include <cstdarg>
 #include <set>
 #include <vector>
 
-#include "boost/shared_ptr.hpp"
+#include <boost/shared_ptr.hpp>
 #include "mrnet/DataElement.h"
 #include "mrnet/Error.h"
 #include "xplat/Mutex.h"
 
 struct PDR;
-
 namespace MRN
 {
-
+class Timer;
 class Packet;
 typedef boost::shared_ptr< Packet > PacketPtr;
 
@@ -41,6 +42,8 @@ class Packet: public Error {
     Packet( const char *ifmt, va_list idata, unsigned int istream_id, int itag );
     Packet( unsigned int istream_id, int itag, const void **idata, const char *ifmt );
 
+    void set_IncommingPktCount(int size);
+    void set_OutgoingPktCount(int size);
     int unpack( const char *ifmt, ... );
     int unpack( va_list iarg_list, const char* ifmt, bool );
     const DataElement* operator[]( unsigned int i ) const;
@@ -62,10 +65,20 @@ class Packet: public Error {
 
     void set_DestroyData( bool b );
 
+    //Starts and stops a timer for a specific context
+    void start_Timer (perfdata_pkt_timers_t context);
+    void stop_Timer (perfdata_pkt_timers_t context);
+    
+    //Sets a timer for a specific context to t 
+    // (used in cases where packet class not yet created EX: recv)
+    void set_Timer (perfdata_pkt_timers_t context, Timer t);
+
+    // Get the eleased time in the context timer
+    double get_ElapsedTime (perfdata_pkt_timers_t context);
+
     // END MRNET API
 
     ~Packet();
-
  private:
 
     Packet( Rank isrc, unsigned int istream_id, int itag, 
@@ -75,7 +88,6 @@ class Packet: public Error {
     Packet( unsigned int ihdr_len, char *ihdr, 
             unsigned int ibuf_len, char *ibuf, 
             Rank iinlet_rank );
-
     void encode_pdr_header(void);
     void encode_pdr_data(void);
     void decode_pdr_header(void) const;
@@ -121,6 +133,10 @@ class Packet: public Error {
 
     std::vector< const DataElement * > data_elements;
     mutable XPlat::Mutex data_sync;
+
+    Timer * _perf_data_timer;
+    int _inc_packet_count;
+    int _out_packet_count;
 };
 
 

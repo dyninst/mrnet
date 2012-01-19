@@ -51,6 +51,10 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
 {
     int retval = 0;
     int tag = cur_packet->get_Tag();
+//    Stream * strm = _network->get_Stream( cur_packet->get_StreamId() );
+//    if (strm != NULL) 
+//        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_))
+
 
     if( (tag >= FirstSystemTag) && (tag < PROT_LAST) ) {
 
@@ -504,21 +508,17 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     }
     free( topo_ptr );
 
-    if(_incarnation == 1) {
-        // handle network settings packet
-        std::list< PacketPtr > packet_list;    
-        int rret = iparent->recv( packet_list );
-        if( (rret == -1) || ((rret == 0) && (packet_list.size() == 0)) ) {
-            if( rret == -1 ) {
-                mrn_dbg(3, mrn_printf(FLF, stderr,
-                        "recv() topo and env failed!\n"));
-                return -1;
-            }
+    // handle network settings packet
+    std::list< PacketPtr > packet_list;    
+    int rret = iparent->recv( packet_list );
+    if( (rret == -1) || ((rret == 0) && (packet_list.size() == 0)) ) {
+        if( rret == -1 ) {
+             mrn_dbg(3, mrn_printf(FLF, stderr, "recv() topo and env failed!\n"));
+             return -1;
         }
-        if( proc_PacketsFromParent( packet_list ) == -1 )
-            mrn_dbg(1, mrn_printf(FLF, stderr,
-                    "proc_PacketsFromParent() failed\n"));
     }
+    if( proc_PacketsFromParent( packet_list ) == -1 )
+        mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromParent() failed\n"));
 
     //Create send/recv threads
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for parent\n") );

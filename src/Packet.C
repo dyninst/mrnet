@@ -45,6 +45,16 @@ void Packet::encode_pdr_header(void)
     data_sync.Unlock();
 }
 
+void Packet::set_OutgoingPktCount(int size)
+{
+    _out_packet_count = size;
+}
+
+void Packet::set_IncommingPktCount(int size)
+{
+    _inc_packet_count = size;
+}
+
 void Packet::encode_pdr_data(void)
 {
     data_sync.Lock();
@@ -122,11 +132,14 @@ Packet::Packet( unsigned int istream_id, int itag,
       fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0),
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(false)
-{
+{    
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
     //encode_pdr_header(); 
 
+    _inc_packet_count= 1;
+    _out_packet_count = 1;
+    _perf_data_timer = new Timer[PERFDATA_PKT_TIMERS_MAX];
     if( ifmt_str != NULL ) {
 
         fmt_str = strdup( ifmt_str );
@@ -152,7 +165,10 @@ Packet::Packet( const char *ifmt_str, va_list idata,
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
     //encode_pdr_header();
-
+    _inc_packet_count= 1;
+    _out_packet_count = 1;   
+    _perf_data_timer =  new Timer [PERFDATA_PKT_TIMERS_MAX];
+    
     if( ifmt_str != NULL ) {
 
         fmt_str = strdup( ifmt_str );
@@ -175,7 +191,10 @@ Packet::Packet( unsigned int istream_id, int itag,
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
     //encode_pdr_header();
-
+    _inc_packet_count= 1;
+    _out_packet_count = 1;
+    _perf_data_timer =  new Timer [PERFDATA_PKT_TIMERS_MAX];
+    
     if( ifmt_str != NULL ) {
 
         fmt_str = strdup( ifmt_str );
@@ -200,7 +219,10 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
     //encode_pdr_header();
-
+    _inc_packet_count= 1;
+    _out_packet_count = 1;
+    _perf_data_timer =  new Timer [PERFDATA_PKT_TIMERS_MAX];
+    
     if( ifmt_str != NULL ) {
 
         fmt_str = strdup( ifmt_str );
@@ -223,7 +245,10 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
     //encode_pdr_header();
-
+    _inc_packet_count= 1;
+    _out_packet_count = 1;
+    _perf_data_timer =  new Timer [PERFDATA_PKT_TIMERS_MAX];
+    
     if( ifmt_str != NULL ) {
 
         fmt_str = strdup( ifmt_str );
@@ -244,8 +269,11 @@ Packet::Packet( unsigned int ihdr_len, char *ihdr,
       inlet_rank(iinlet_rank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(true)
 {
+        _inc_packet_count= 1;
+        _out_packet_count = 1;
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Packet(%p): hdr_len=%u buf_len=%u\n",
                            this, hdr_len, buf_len) );
+    _perf_data_timer =  new Timer [PERFDATA_PKT_TIMERS_MAX];
     decode_pdr_header();
     decode_pdr_data();
 }
@@ -253,6 +281,10 @@ Packet::Packet( unsigned int ihdr_len, char *ihdr,
 Packet::~Packet()
 {
     data_sync.Lock();
+    if (_perf_data_timer != NULL)
+    {
+        delete [] _perf_data_timer;
+    }
     if( fmt_str != NULL ){
         free( fmt_str );
         fmt_str = NULL;
@@ -543,7 +575,7 @@ bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
     unsigned int i;
     bool_t retval = 0;
     DataElement* cur_elem = NULL;
-
+    char * tmp_char;
     std::string fmt = fmtstr;
     XPlat::Tokenizer tok( fmt );
     std::string::size_type curLen;
@@ -579,10 +611,11 @@ bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
             if( pdrs->p_op == PDR_DECODE ) {
                 cur_elem->val.p = NULL;
             }
+            tmp_char = (char *)(cur_elem->val.p);
             retval =
                 pdr_bytes( 
                 pdrs, 
-                reinterpret_cast<char**>(&cur_elem->val.p),
+                &tmp_char,
                           &( cur_elem->array_len ), INT32_MAX);
             break;
 
@@ -964,6 +997,7 @@ int Packet::DataElementArray2ArgList( va_list arg_list ) const
         }
 
         case STRING_T: {
+            //MEMORY LEAK HERE
             const char** cpp = ( const char ** ) va_arg( arg_list, const char ** );
             *cpp = strdup( (const char *) cur_elem->val.p );
             assert( *cpp != NULL );
@@ -1347,5 +1381,39 @@ int Packet::DataElementArray2ArgVec( void **odata ) const
     mrn_dbg_func_end();
     return 0;
 }
+#include <time.h>
+void Packet::start_Timer (perfdata_pkt_timers_t context)
+{
+    _perf_data_timer[context].start();
+}
 
+void Packet::stop_Timer (perfdata_pkt_timers_t context)
+{
+    _perf_data_timer[context].stop();
+}
+
+void Packet::set_Timer (perfdata_pkt_timers_t context, Timer  t)
+{
+    _perf_data_timer[context] = t;
+}
+
+double Packet::get_ElapsedTime (perfdata_pkt_timers_t context)
+{
+    if (context == PERFDATA_PKT_TIMERS_RECV)
+        return _perf_data_timer[context].get_latency_secs() / _inc_packet_count;
+    if (context == PERFDATA_PKT_TIMERS_SEND)
+        return _perf_data_timer[context].get_latency_secs() / _out_packet_count;
+    if (context == PERFDATA_PKT_TIMERS_RECV_TO_FILTER)
+        return _perf_data_timer[context].get_latency_secs() +  
+                _perf_data_timer[PERFDATA_PKT_TIMERS_RECV].get_latency_secs() / _inc_packet_count;
+    if (context == PERFDATA_PKT_TIMERS_FILTER_TO_SEND)
+        return _perf_data_timer[context].get_latency_secs() +  
+                _perf_data_timer[PERFDATA_PKT_TIMERS_SEND].get_latency_secs() / _out_packet_count;
+
+    return _perf_data_timer[context].get_latency_secs();
+}
 }                               /* namespace MRN */
+
+
+
+

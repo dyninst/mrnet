@@ -39,7 +39,7 @@ class PeerNode: public CommunicationNode, public Error {
 
     static void * recv_thread_main(void * arg);
     static void * send_thread_main(void * arg);
-
+    ~PeerNode();
     int connect_DataSocket(void);
     int connect_EventSocket(void);
     void set_DataSocketFd( int isock );
@@ -57,8 +57,8 @@ class PeerNode: public CommunicationNode, public Error {
                          std::string &cmd, std::vector <std::string> &args ) const;
 
 
-    void send( const PacketPtr ) const;
-    int sendDirectly( const PacketPtr ipacket ) const;
+    void send( PacketPtr ) const;
+    int sendDirectly( PacketPtr ipacket ) const;
     int flush( bool ignore_threads=false ) const;
     int recv( std::list <PacketPtr> & ) const; //blocking recv
 
@@ -93,9 +93,10 @@ class PeerNode: public CommunicationNode, public Error {
     XPlat::Thread::Id recv_thread_id, send_thread_id;
 
     //Dynamic data members
-    mutable Message _msg_out;
-    mutable Message _msg_in;
+
     bool _available;
+    mutable Message * _msg_out;
+    mutable Message * _msg_in;
     mutable XPlat::Monitor _sync;
     enum{ MRN_FLUSH_COMPLETE, MRN_RECV_THREAD_STARTED, MRN_SEND_THREAD_STARTED };
 };
