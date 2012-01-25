@@ -52,7 +52,7 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
     mrn_dbg_func_begin();
     if(_strm != NULL && _filter_func != NULL)
     {
-        if(_strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_FILTER))
+        if(_strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_FILTER))
         {
             for (std::vector<PacketPtr>::iterator i = ipackets.begin();
                     i != ipackets.end(); i++)
@@ -76,7 +76,7 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
     _mutex.Unlock();
 
     if(_strm != NULL)
-        if(_strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_FILTER) &&
+        if(_strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_FILTER) &&
            _strm->is_LocalNodeInternal())
         {
             for (std::vector<PacketPtr>::iterator i = ipackets.begin();
@@ -85,7 +85,7 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
                 PacketPtr iter = *i;
                 iter->stop_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
                 iter->stop_Timer(PERFDATA_PKT_TIMERS_FILTER);
-                _strm->_perf_data->add_PacketTimers(iter);
+                _strm->get_PerfData()->add_PacketTimers(iter);
             }
             for (std::vector<PacketPtr>::iterator i =  opackets.begin(); 
                  i != opackets.end(); i++)

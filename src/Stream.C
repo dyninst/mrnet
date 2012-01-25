@@ -1335,5 +1335,9 @@ bool Stream::find_FilterAssignment(const std::string& assignments,
 }
 
 
+PerfDataMgr * Stream::get_PerfData(void)
+{
+    return _perf_data;
+}
 
 } // namespace MRN

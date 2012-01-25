@@ -114,17 +114,6 @@ class Network: public Error {
                                   perfdata_context_t context,
                                   int aggr_filter_id = TFILTER_ARRAY_CONCAT );
     void print_PerformanceData( perfdata_metric_t metric, perfdata_context_t context );
-
-    PacketPtr collect_PerfData( perfdata_metric_t metric,
-                                         perfdata_context_t context,
-                                         int aggr_strm_id);
-
-
-
-    bool collect_NetPerformanceData( rank_perfdata_map& results,
-                                     perfdata_metric_t metric, 
-                                     perfdata_context_t context,
-                                     int aggr_filter_id = TFILTER_ARRAY_CONCAT );
     /* Event notification */
     void clear_Events();
     unsigned int num_EventsPending();
@@ -238,6 +227,18 @@ protected:
     
     int get_StartupTimeout(void);
     void set_StartupTimeout( int new_timeout );
+
+
+    PacketPtr collect_PerfData( perfdata_metric_t metric,
+                                         perfdata_context_t context,
+                                         int aggr_strm_id);
+
+
+
+    bool collect_NetPerformanceData( rank_perfdata_map& results,
+                                     perfdata_metric_t metric, 
+                                     perfdata_context_t context,
+                                     int aggr_filter_id = TFILTER_ARRAY_CONCAT );
 
  private:
     friend class Stream;

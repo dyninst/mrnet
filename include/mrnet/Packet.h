@@ -42,8 +42,6 @@ class Packet: public Error {
     Packet( const char *ifmt, va_list idata, unsigned int istream_id, int itag );
     Packet( unsigned int istream_id, int itag, const void **idata, const char *ifmt );
 
-    void set_IncommingPktCount(int size);
-    void set_OutgoingPktCount(int size);
     int unpack( const char *ifmt, ... );
     int unpack( va_list iarg_list, const char* ifmt, bool );
     const DataElement* operator[]( unsigned int i ) const;
@@ -65,6 +63,8 @@ class Packet: public Error {
 
     void set_DestroyData( bool b );
 
+    // END MRNET API
+
     //Starts and stops a timer for a specific context
     void start_Timer (perfdata_pkt_timers_t context);
     void stop_Timer (perfdata_pkt_timers_t context);
@@ -76,8 +76,8 @@ class Packet: public Error {
     // Get the eleased time in the context timer
     double get_ElapsedTime (perfdata_pkt_timers_t context);
 
-    // END MRNET API
-
+    void set_IncommingPktCount(int size);
+    void set_OutgoingPktCount(int size);
     ~Packet();
  private:
 

@@ -110,7 +110,8 @@ class Stream {
     //DEPRECATED -- renamed is_ShutDown to is_Closed
     bool is_ShutDown(void) const { return is_Closed(); }
 
-    PerfDataMgr * _perf_data;
+    PerfDataMgr * get_PerfData(void);
+
  private:
     static bool find_FilterAssignment( const std::string& assignments, 
                                        Rank me, int& filter_id );
@@ -158,6 +159,8 @@ class Stream {
 
     std::list< PacketPtr > _incoming_packet_buffer;
     mutable XPlat::Monitor _incoming_packet_buffer_sync;
+
+    PerfDataMgr * _perf_data;
     enum {PACKET_BUFFER_NONEMPTY};
 };
 

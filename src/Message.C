@@ -64,7 +64,7 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
         Stream * strm =  _net->get_Stream((*i)->get_StreamId());
         if (strm != NULL)
             // Time for packet at this point in time.
-            if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_RECV))
+            if(strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_RECV))
             {
                 (*i)->set_Timer(PERFDATA_PKT_TIMERS_RECV, t1);
                 (*i)->start_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
@@ -423,7 +423,7 @@ int Message::send( XPlat::XPSOCKET sock_fd )
     for(std::list< PacketPtr >::iterator iter = tmp_packets.begin(); iter != tmp_packets.end(); iter++ ) {
         strm =  _net->get_Stream((*iter)->get_StreamId());
         if (strm != NULL)
-            if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_SEND))
+            if(strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_SEND))
             {
                 (*iter)->start_Timer(PERFDATA_PKT_TIMERS_SEND);
                 (*iter)->stop_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
@@ -442,7 +442,7 @@ int Message::send( XPlat::XPSOCKET sock_fd )
             (*iter)->set_OutgoingPktCount(packetLength);
             (*iter)->stop_Timer(PERFDATA_PKT_TIMERS_SEND);
             (*iter)->set_Timer (PERFDATA_PKT_TIMERS_RECV_TO_FILTER, tmp);
-            strm->_perf_data->add_PacketTimers((*iter));
+            strm->get_PerfData()->add_PacketTimers((*iter));
         }
 
     }
