@@ -9,52 +9,95 @@
 
 #include "xplat_lightweight/NCIO.h"
 
-int NCSend(XPSOCKET s, NCBuf_t* ncbuf, unsigned int nBufs)
+// the Winsock version of recv doesn't take an argument to do a blocking
+// receive
+const int XPlat_NCBlockingRecvFlag = 0;
+
+ssize_t XPlat_NCSend(XPSOCKET s, NCBuf_t* ncbufs, unsigned int nBufs)
 {
     int ret = 0;
+    int bytes_remaining = 0;
     DWORD nBytesSent = 0;
-    WSABUF wsaBufs[1];
+    WSABUF *wsaBufs;
     int sret;
+    unsigned int i;
+
+    //Allocate memory based on nBufs
+    wsaBufs = (WSABUF*)malloc(sizeof(WSABUF) * nBufs);
+    assert(wsaBufs);
 
     //convert buffer specifiers
-    wsaBufs[0].buf = ncbuf->buf;
-    wsaBufs[0].len = ncbuf->len;
+    for(i = 0; i < nBufs; i++) {
+        wsaBufs[i].buf = ncbufs[i].buf;
+        wsaBufs[i].len = (ULONG)ncbufs[i].len;
+        bytes_remaining += (int)ncbufs[i].len;
+    }
 
     // do the send
-    sret = WSASend(s, wsaBufs, nBufs, &nBytesSent, 0, NULL, NULL);
-    if (sret != SOCKET_ERROR) {
-        ret = nBytesSent;
-    } else {
-        ret = -1;
+    while(1) {
+        sret = WSASend(s, wsaBufs, nBufs, &nBytesSent, 0, NULL, NULL);
+        if (sret == SOCKET_ERROR || nBytesSent == 0) {
+            ret = -1;
+            break;
+        }
+
+        bytes_remaining -= nBytesSent;
+        ret += nBytesSent;
+        if (bytes_remaining <= 0)
+            break;
+        if (bytes_remaining > 0) {
+            for (i = 0; i < nBufs; i++) {
+                if (!wsaBufs[i].len)
+                    continue;
+                if (!nBytesSent)
+                    break;
+                if (wsaBufs[i].len <= nBytesSent) {
+                    nBytesSent -= wsaBufs[i].len;
+                    wsaBufs[i].len = 0;
+                    continue;
+                } else {
+                    wsaBufs[i].len -= nBytesSent;
+                    wsaBufs[i].buf = ((char*)wsaBufs[i].buf) + nBytesSent;
+                    nBytesSent = 0;
+                }
+            }
+        }
     }
+
+    free(wsaBufs);
+
     return ret;
 }
 
-int NCRecv(XPSOCKET s, NCBuf_t** ncbufs, unsigned int nBufs)
+ssize_t XPlat_NCRecv(XPSOCKET s, NCBuf_t* ncbufs, unsigned int nBufs)
 {
     int ret = 0;
-    signed int bytes_remaining = 0;
+    int bytes_remaining = 0;
     WSABUF* wsaBufs = (WSABUF*)malloc(sizeof(WSABUF)*nBufs);
     unsigned int i;
     DWORD nBytesReceived = 0;
     DWORD dwFlags = 0;
     int rret;
-
-    // convert buffer specifiers
     assert(wsaBufs);
 
+    // convert buffer specifiers
     for (i = 0; i < nBufs; i++) {
-        wsaBufs[i] = *(WSABUF*)ncbufs[i];
+        wsaBufs[i].buf = ncbufs[i].buf;
+        wsaBufs[i].len = (ULONG)ncbufs[i].len;
+        bytes_remaining += (int)ncbufs[i].len;
     }
 
     // do the receive
     while(1) {
         rret = WSARecv(s, wsaBufs, nBufs, &nBytesReceived, &dwFlags, NULL, NULL);
-        if (rret == SOCKET_ERROR || nBytesReceived == 0)
-            return -1;
+        if (rret == SOCKET_ERROR || nBytesReceived == 0) {
+            ret = -1;
+            break;
+        }
 
         bytes_remaining -= nBytesReceived;
         ret += nBytesReceived;
+
         if (bytes_remaining <= 0)
             break;
         if (bytes_remaining > 0) {
@@ -64,8 +107,8 @@ int NCRecv(XPSOCKET s, NCBuf_t** ncbufs, unsigned int nBufs)
                 if (!nBytesReceived)
                     break;
                 if (wsaBufs[i].len <= nBytesReceived) {
-                    wsaBufs[i].len = 0;
                     nBytesReceived -= wsaBufs[i].len;
+                    wsaBufs[i].len = 0;
                     continue;
                 } else {
                     wsaBufs[i].len -= nBytesReceived;
@@ -75,5 +118,27 @@ int NCRecv(XPSOCKET s, NCBuf_t** ncbufs, unsigned int nBufs)
             }
         }   
     }
+
+    free(wsaBufs);
+
     return ret;
 }
+
+ssize_t XPlat_NCsend(XPSOCKET s, const void *buf, size_t count) {
+    NCBuf_t ncbuf[1];
+
+    ncbuf[0].buf = (char *)buf;
+    ncbuf[0].len = count;
+
+    return XPlat_NCSend(s, ncbuf, 1);
+}
+
+ssize_t XPlat_NCrecv(XPSOCKET s, void *buf, size_t count) {
+    NCBuf_t ncbuf[1];
+
+    ncbuf[0].buf = buf;
+    ncbuf[0].len = count;
+
+    return XPlat_NCRecv(s, ncbuf, 1);
+}
+

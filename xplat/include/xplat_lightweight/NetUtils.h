@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #else
 #include <winsock2.h>
+#define strtok_r strtok_s
 #endif
 
 #ifndef XPLAT_MAX_HOSTNAME_LEN

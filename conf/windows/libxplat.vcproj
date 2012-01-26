@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="libxplat"
 	ProjectGUID="{6009C354-8FF4-44B2-9ED6-F3380B8281B0}"
 	RootNamespace="libxplat"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -39,9 +40,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/D_CRT_SECURE_NO_WARNINGS"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 8\VC\include&quot;;xplat/src;xplat/include"
-				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x0500;WIN32;_LIB"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 9.0\VC\include&quot;;../../xplat/src;../../xplat/include"
+				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -49,7 +51,7 @@
 				ObjectFile="$(IntDir)/"
 				ProgramDataBaseFileName=".\./"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -83,9 +85,9 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			OutputDirectory="./lib/i386-unknown-nt4.0"
+			IntermediateDirectory="./obj/i386-unknown-nt4.0"
+			ConfigurationType="4"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -106,9 +108,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				RuntimeLibrary="2"
+				AdditionalOptions="/D_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 9.0\VC\include&quot;;../../xplat/src;../../xplat/include"
+				PreprocessorDefinitions="os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -121,17 +128,11 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				GenerateDebugInformation="true"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/libxplat.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -141,12 +142,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -162,7 +157,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\xplat\src\Error-win.C"
+				RelativePath="..\..\xplat\src\Error-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -172,9 +167,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\Monitor-win.C"
+				RelativePath="..\..\xplat\src\Monitor-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -184,9 +187,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\Mutex-win.C"
+				RelativePath="..\..\xplat\src\Mutex-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -196,9 +207,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\NCIO-win.C"
+				RelativePath="..\..\xplat\src\NCIO-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -208,9 +227,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\NetUtils-win.C"
+				RelativePath="..\..\xplat\src\NetUtils-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -220,9 +247,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\NetUtils.C"
+				RelativePath="..\..\xplat\src\NetUtils.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -232,9 +267,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\Once-win.C"
+				RelativePath="..\..\xplat\src\Once-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -244,9 +287,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\PathUtils-win.C"
+				RelativePath="..\..\xplat\src\PathUtils-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -256,9 +307,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\Process-win.C"
+				RelativePath="..\..\xplat\src\Process-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -268,9 +327,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\Process.C"
+				RelativePath="..\..\xplat\src\Process.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -280,9 +347,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\SharedObject-win.C"
+				RelativePath="..\..\xplat\src\SharedObject-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -292,9 +367,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\SocketUtils-win.C"
+				RelativePath="..\..\xplat\src\SocketUtils-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -304,9 +387,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\Thread-win.C"
+				RelativePath="..\..\xplat\src\Thread-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -316,9 +407,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\TLSKey-win.C"
+				RelativePath="..\..\xplat\src\TLSKey-win.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -328,12 +427,28 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\xplat\src\Tokenizer.C"
+				RelativePath="..\..\xplat\src\Tokenizer.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -348,87 +463,87 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\xplat\include\xplat\Atomic.h"
+				RelativePath="..\..\xplat\include\xplat\Atomic.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\Error.h"
+				RelativePath="..\..\xplat\include\xplat\Error.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\src\Monitor-win.h"
+				RelativePath="..\..\xplat\src\Monitor-win.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\Monitor.h"
+				RelativePath="..\..\xplat\include\xplat\Monitor.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\src\Mutex-win.h"
+				RelativePath="..\..\xplat\src\Mutex-win.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\Mutex.h"
+				RelativePath="..\..\xplat\include\xplat\Mutex.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\NCIO.h"
+				RelativePath="..\..\xplat\include\xplat\NCIO.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\NetUtils.h"
+				RelativePath="..\..\xplat\include\xplat\NetUtils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\src\Once-win.h"
+				RelativePath="..\..\xplat\src\Once-win.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\Once.h"
+				RelativePath="..\..\xplat\include\xplat\Once.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\PathUtils.h"
+				RelativePath="..\..\xplat\include\xplat\PathUtils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\Process.h"
+				RelativePath="..\..\xplat\include\xplat\Process.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\src\SharedObject-win.h"
+				RelativePath="..\..\xplat\src\SharedObject-win.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\SharedObject.h"
+				RelativePath="..\..\xplat\include\xplat\SharedObject.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\SocketUtils.h"
+				RelativePath="..\..\xplat\include\xplat\SocketUtils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\Thread.h"
+				RelativePath="..\..\xplat\include\xplat\Thread.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\src\TLSKey-win.h"
+				RelativePath="..\..\xplat\src\TLSKey-win.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\TLSKey.h"
+				RelativePath="..\..\xplat\include\xplat\TLSKey.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\Tokenizer.h"
+				RelativePath="..\..\xplat\include\xplat\Tokenizer.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\Types-win.h"
+				RelativePath="..\..\xplat\include\xplat\Types-win.h"
 				>
 			</File>
 			<File
-				RelativePath=".\xplat\include\xplat\Types.h"
+				RelativePath="..\..\xplat\include\xplat\Types.h"
 				>
 			</File>
 		</Filter>

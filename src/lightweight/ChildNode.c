@@ -335,14 +335,15 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
 
 int ChildNode_proc_SetTopoEnv( BackEndNode_t* be, Packet_t* ipacket ) 
 {
-    mrn_dbg_func_begin();
-   
     char* sg_byte_array = NULL;
     int* keys = NULL;
     char** vals = NULL ;
     int i, count;
     SerialGraph_t* sg = NULL;
-    NetworkTopology_t* nt = Network_get_NetworkTopology( be->network );
+    NetworkTopology_t* nt;
+    mrn_dbg_func_begin();
+   
+    nt = Network_get_NetworkTopology( be->network );
 
     if( Packet_unpack(ipacket, "%s %ad %as", 
                       &sg_byte_array, 

@@ -31,6 +31,12 @@
 
 #include <sys/types.h>
 
+#if defined(__cplusplus)
+#include "mrnet/Types.h"
+#else
+#include "mrnet_lightweight/Types.h"
+#endif
+
 #ifndef os_windows
 # include "config.h"
 # if HAVE_INTTYPES_H
@@ -40,7 +46,19 @@
 #   include <stdint.h>
 #  endif
 # endif
+#else
+#define inline __inline
 #endif // ifndef os_windows
+
+#if !defined(SIZEOF_CHAR)
+#  define SIZEOF_CHAR sizeof(char)
+#endif
+#if !defined(SIZEOF_FLOAT)
+#  define SIZEOF_FLOAT sizeof(float)
+#endif
+#if !defined(SIZEOF_DOUBLE)
+#  define SIZEOF_DOUBLE sizeof(double)
+#endif
 
 #ifndef bool_t
 # define bool_t int32_t

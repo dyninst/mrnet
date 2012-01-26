@@ -7,8 +7,6 @@
 #include "pdr.h"
 #include "pdr_mem.h"
 
-#include "config.h"
-
 #if defined(__cplusplus)
 
 #ifndef os_windows

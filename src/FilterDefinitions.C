@@ -1204,7 +1204,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
         }
     }
     else {
-        orank_arr[0] = -total_nranks;
+        orank_arr[0] = 0 - (int)total_nranks;
         onelems_arr[0] = aggr_results.size();
         for( unsigned u=0; u < aggr_results.size(); u++ ) {
             switch( typ ) { 

@@ -255,7 +255,7 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
         data_size = sizeof(float);
         send_array = malloc ( ARRAY_LEN * data_size );
         for( i=0; i<ARRAY_LEN; i++){
-            ((float*)send_array)[i] = 123.456789;
+            ((float*)send_array)[i] = (float)123.456789;
         }
         tag = PROT_FLOAT;
         testname = "test_float_array";
@@ -312,14 +312,14 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
     }
 
     if(stream->send(tag, format_string.c_str(), send_array, ARRAY_LEN) == -1){
-        test->print("stream::send() failure\n", testname);
+        test->print("FE: stream::send() failure\n", testname);
         test->end_SubTest(testname, FAILURE);
         free(send_array);
         return -1;
     }
 
     if(stream->flush() == -1){
-        test->print("stream::flush() failure\n", testname);
+        test->print("FE: stream::flush() failure\n", testname);
         test->end_SubTest(testname, FAILURE);
         free(send_array);
         return -1;
@@ -337,7 +337,7 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
 
         if( retval == -1){
             //recv error
-            test->print("recv() failure\n", testname);
+            test->print("FE: recv() failure\n", testname);
             test->end_SubTest(testname, FAILURE);
             free(send_array);
             return -1;

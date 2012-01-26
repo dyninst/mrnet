@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="libxplat_lightweight"
 	ProjectGUID="{35EFAC4F-15EE-4168-8FC8-FDE5C917B770}"
 	RootNamespace="libxplat_lightweight"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -39,15 +40,16 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/D_CRT_SECURE_NO_WARNINGS"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 8\VC\include&quot;;lightweight/xplat/include;lightweight/include;lightweight/src"
-				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x0500;WIN32;_LIB"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 9.0\VC\include&quot;;../../xplat/include;../../xplat/src/lightweight;../../include/mrnet_lightweight;../../src/lightweight"
+				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				ObjectFile="$(IntDir)/"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 				CompileAs="1"
 			/>
@@ -82,9 +84,9 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			OutputDirectory="./lib/i386-unknown-nt4.0/"
+			IntermediateDirectory="./obj/i386-unknown-nt4.0/lightweight"
+			ConfigurationType="4"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -105,9 +107,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				RuntimeLibrary="2"
+				AdditionalOptions="/D_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 9.0\VC\include&quot;;../../xplat/include;../../xplat/src/lightweight;../../include/mrnet_lightweight;../../src/lightweight"
+				PreprocessorDefinitions="os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -120,17 +127,11 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				GenerateDebugInformation="true"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/libxplat_lightweight.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -140,12 +141,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -161,31 +156,35 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\lightweight\xplat\src\Error-win.c"
+				RelativePath="..\..\xplat\src\lightweight\Error-win.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\src\NCIO-win.c"
+				RelativePath="..\..\xplat\src\lightweight\NCIO-win.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\src\NCIO.c"
+				RelativePath="..\..\xplat\src\lightweight\NCIO.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\src\NetUtils-win.c"
+				RelativePath="..\..\xplat\src\lightweight\NetUtils-win.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\src\NetUtils.c"
+				RelativePath="..\..\xplat\src\lightweight\NetUtils.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\src\PathUtils-win.c"
+				RelativePath="..\..\xplat\src\lightweight\PathUtils-win.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\src\Process-win.c"
+				RelativePath="..\..\xplat\src\lightweight\Process-win.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\src\lightweight\SocketUtils-win.c"
 				>
 			</File>
 		</Filter>
@@ -195,31 +194,35 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\lightweight\xplat\include\xplat_lightweight\Error.h"
+				RelativePath="..\..\xplat\include\xplat_lightweight\Error.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\include\xplat_lightweight\NCIO.h"
+				RelativePath="..\..\xplat\include\xplat_lightweight\NCIO.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\include\xplat_lightweight\NetUtils.h"
+				RelativePath="..\..\xplat\include\xplat_lightweight\NetUtils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\include\xplat_lightweight\PathUtils.h"
+				RelativePath="..\..\xplat\include\xplat_lightweight\PathUtils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\include\xplat_lightweight\Process.h"
+				RelativePath="..\..\xplat\include\xplat_lightweight\Process.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\include\xplat_lightweight\Types-win.h"
+				RelativePath="..\..\xplat\include\xplat_lightweight\SocketUtils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\xplat\include\xplat_lightweight\Types.h"
+				RelativePath="..\..\xplat\include\xplat_lightweight\Types-win.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\include\xplat_lightweight\Types.h"
 				>
 			</File>
 		</Filter>

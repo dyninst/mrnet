@@ -18,7 +18,7 @@ const int32_t INT32VAL=-17;
 const uint32_t UINT32VAL=17;
 const int64_t INT64VAL=-17;
 const uint64_t UINT64VAL=17;
-const float FLOATVAL=123.456;
+const float FLOATVAL=(const float)123.456;
 const double DOUBLEVAL=123.456;
 
 #endif /* test_nativefilters_lightweight_h */

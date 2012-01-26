@@ -240,8 +240,9 @@ int PeerNode_has_data(PeerNode_t* node)
 
 int PeerNode_recv(PeerNode_t* node, vector_t* packet_list, bool_t blocking)
 {
-    mrn_dbg_func_begin();
     int msg_ret = 0;
+    mrn_dbg_func_begin();
+
     if((PeerNode_recv_lock(node, blocking) != 0)) {
         return msg_ret;
     }

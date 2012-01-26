@@ -90,6 +90,13 @@ void init_local(void)
     WSADATA data;
     if( WSAStartup(version, &data) != 0 )
         fprintf(stderr, "WSAStartup failed!\n");
+    if( (LOBYTE(data.wVersion) != 2) || (HIBYTE(data.wVersion) != 2) ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr,
+            "Warning: Received Winsock socket version other than requested.\n"
+            "Requested %d.%d, got %d.%d\n",
+            HIBYTE(version), LOBYTE(version), HIBYTE(data.wVersion),
+            LOBYTE(data.wVersion)));
+    }
 #endif
 }
 
@@ -109,7 +116,7 @@ Network::Network(void)
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
-      _edt( new EventDetector(this) ), _evt_mgr( new EventMgr() ),
+      _evt_mgr( new EventMgr() ),
       _next_user_stream_id(USER_STRM_BASE_ID),
       _next_int_stream_id(INTERNAL_STRM_BASE_ID),
       _threaded(true), _recover_from_failures(true),
@@ -120,6 +127,7 @@ Network::Network(void)
     
     init_local();
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
+    _edt = new EventDetector(this);
 }
 
 Network::~Network(void)
@@ -188,8 +196,8 @@ void Network::close_Streams(void)
            increment of miter, we do the erase ourselves in a safe manner. */
         Stream* strm = (*miter).second;
         tmpiter = miter++;
-        _internal_streams.erase( tmpiter );
         mrn_dbg(5, mrn_printf(FLF, stderr, "deleting stream with id=%u\n", tmpiter->first));
+        _internal_streams.erase( tmpiter );
         delete strm;
     }
 

@@ -895,7 +895,7 @@ int test_ulong( Network * net, Stream *stream, bool anonymous, bool block )
 int test_float( Network * net, Stream *stream, bool anonymous, bool block )
 {
     Stream *recv_stream;
-    float send_val = -17.234, recv_val=0;
+    float send_val = (float)-17.234, recv_val=0;
     int num_received=0, num_to_receive=0;
     int tag;
     PacketPtr pkt;
@@ -1078,7 +1078,7 @@ int test_double( Network * net, Stream *stream, bool anonymous, bool block )
                 test->print("stream::unpack() failure\n", testname);
                 success = false;
             }
-            if( ! compare_Float( send_val, recv_val, 3 ) ) {
+            if( !compare_Double( send_val, recv_val, 3 ) ) {
                 sprintf(tmp_buf, "send_val(%lf) != recv_val(%lf) failure.\n",
                         send_val, recv_val);
                 test->print(tmp_buf, testname);
@@ -1350,7 +1350,7 @@ int test_alltypes( Network * net, Stream *stream, bool anonymous, bool block )
     int32_t send_uint=17, recv_uint=0;
     int64_t send_long=-17, recv_long=0;
     int64_t send_ulong=17, recv_ulong=0;
-    float send_float=123.23412, recv_float=0;
+    float send_float=(float)123.23412, recv_float=0;
     double send_double=123.23412, recv_double=0;
     char *send_string=strdup("Test String"), *recv_string=0;
 

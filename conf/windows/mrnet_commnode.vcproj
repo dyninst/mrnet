@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="mrnet_commnode"
 	ProjectGUID="{2DBDAF65-14DC-4E7C-988D-D8FB491F37A0}"
 	RootNamespace="mrnet_commnode"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -16,8 +17,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="./bin/i386-unknown-nt4.0"
-			IntermediateDirectory="./obj/i386-unknown-nt4.0"
+			OutputDirectory="../bin/i386-unknown-nt4.0"
+			IntermediateDirectory="../obj/i386-unknown-nt4.0"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -39,9 +40,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/D_CRT_SECURE_NO_WARNINGS"
 				Optimization="0"
-				AdditionalIncludeDirectories="xplat/include;src;include;&quot;C:\Program Files\Microsoft Visual Studio 8\VC\include&quot;"
-				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x0500;WIN32;_LIB;_CONSOLE"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 9.0\VC\include&quot;;../../external/boost/include;../../xplat/include;../../src;../../include"
+				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -49,7 +51,7 @@
 				ObjectFile="$(OutDir)/"
 				ProgramDataBaseFileName=".\./"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -69,6 +71,8 @@
 				AdditionalLibraryDirectories="../obj/i386-unknown-nt4.0"
 				GenerateDebugInformation="true"
 				SubSystem="1"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -90,16 +94,13 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="../bin/i386-unknown-nt4.0"
+			IntermediateDirectory="../obj/i386-unknown-nt4.0"
 			ConfigurationType="1"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
@@ -121,9 +122,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				RuntimeLibrary="2"
+				AdditionalOptions="/D_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 9.0\VC\include&quot;;../../external/boost/include;../../xplat/include;../../src;../../include"
+				PreprocessorDefinitions="os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB;_CONSOLE"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -137,9 +143,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				GenerateDebugInformation="true"
+				AdditionalDependencies="Iphlpapi.lib Ws2_32.lib shlwapi.lib"
+				OutputFile="$(OutDir)/mrnet_commnode.exe"
+				LinkIncremental="1"
+				AdditionalLibraryDirectories="../obj/i386-unknown-nt4.0"
+				GenerateDebugInformation="false"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -161,9 +173,6 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -177,7 +186,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\src\CommunicationNodeMain.C"
+				RelativePath="..\..\src\CommunicationNodeMain.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -185,6 +194,14 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						MinimalRebuild="false"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 						CompileAs="2"
 					/>
 				</FileConfiguration>

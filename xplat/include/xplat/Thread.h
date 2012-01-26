@@ -14,7 +14,7 @@ class Thread
 {
 public:
     typedef void* (*Func)( void* );
-    typedef long Id;
+    typedef unsigned long Id;
 
     static int Create( Func func, void* data, Id* id );
     static Id GetId( void );

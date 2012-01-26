@@ -15,7 +15,8 @@ int main( int argc, char* argv[] )
     Stream *stream = NULL;
     Stream *grp_stream = NULL;
     Stream *be_stream = NULL;
-    int tag, ival = -1;
+    int tag = -1;
+    unsigned int ival = 0;
     PacketPtr pkt;
 
     // join the MRNet net
@@ -36,14 +37,14 @@ int main( int argc, char* argv[] )
         }
         else if( tag == SC_SINGLE ) {
             be_stream = stream;
-            pkt->unpack( "%d", &ival );
+            pkt->unpack( "%ud", &ival );
             std::cout << "BE: sending val on BE stream" << std::endl;
-            if( (be_stream->send(tag, "%d", ival) == -1) ||
+            if( (be_stream->send(tag, "%ud", ival) == -1) ||
                 (be_stream->flush() == -1) ) {
                 cerr << "BE: val send single failed" << endl;
             }
             std::cout << "BE: sending rank on BE stream" << std::endl;
-            if( (be_stream->send(tag, "%d", (int)be_stream->get_Id()) == -1) ||
+            if( (be_stream->send(tag, "%ud", be_stream->get_Id()) == -1) ||
                 (be_stream->flush() == -1) ) {
                 cerr << "BE: val send single failed" << endl;
             }
@@ -53,13 +54,13 @@ int main( int argc, char* argv[] )
             done = true;
         }
         
-        if( grp_stream && (ival != -1) )
+        if( grp_stream && (ival != 0) )
             done = true;
     }
 
     // send our value for the reduction
     std::cout << "BE: sending val on group stream" << std::endl;
-    if( (grp_stream->send(SC_GROUP, "%d", ival) == -1) ||
+    if( (grp_stream->send(SC_GROUP, "%ud", ival) == -1) ||
         (grp_stream->flush() == -1) ) {
         cerr << "BE: val send group failed" << endl;
     }

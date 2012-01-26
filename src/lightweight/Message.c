@@ -18,6 +18,7 @@
 #include "xplat_lightweight/NCIO.h"
 #include "xplat_lightweight/NetUtils.h"
 #include "xplat_lightweight/Types.h"
+#include "xplat_lightweight/SocketUtils.h"
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
@@ -113,11 +114,11 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     }
 
     mrn_dbg(5, mrn_printf(FLF, stderr, 
-                          "Calling read(%p, %zd) for %d buffer lengths.\n",
+                          "Calling read(%p, %"PRIsszt") for %d buffer lengths.\n",
                           buf, buf_len, num_buffers));
     readRet = MRN_recv(sock_fd, buf, buf_len);
     if( readRet != (ssize_t)buf_len ) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_recv() %zd of %zd bytes received\n", readRet, buf_len));
+        mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_recv() %"PRIsszt" of %"PRIsszt" bytes received\n", readRet, buf_len));
         free(buf);
         //free(packet_sizes);
         return -1;
@@ -150,7 +151,7 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
         assert(ncbufs[i].buf);
         ncbufs[i].len = psz;
         total_bytes += psz;
-        mrn_dbg(5, mrn_printf(FLF, stderr, "- buffer[%u] has size %zd\n", 
+        mrn_dbg(5, mrn_printf(FLF, stderr, "- buffer[%u] has size %"PRIsszt"\n", 
                               i, psz));
     }
 
@@ -167,7 +168,8 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
         recv_total += (int) readRet;
     }
     if( recv_total != total_bytes ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "%zd of %zd received\n", 
+        mrn_dbg(1, mrn_printf(FLF, stderr,
+                              "%"PRIsszt" of %"PRIsszt" received\n", 
                               recv_total, total_bytes));
 
         for( i = 0; i < num_buffers; i++ )
@@ -329,7 +331,7 @@ int Message_send(Message_t* msg_out, int sock_fd)
     }
 
     if( go_away )
-        close(sock_fd);
+        XPlat_SocketUtils_Close(sock_fd);
 
     mrn_dbg_func_end();
     return 0;

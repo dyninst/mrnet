@@ -6,6 +6,8 @@
 #if !defined(__ncio_h)
 #define __ncio_h 1
 
+#include "xplat_lightweight/Types.h"
+
 #if defined(WIN32)
 #include <winsock2.h>
 typedef SOCKET XPSOCKET;

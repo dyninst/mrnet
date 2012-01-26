@@ -175,6 +175,7 @@ int Message::recv_orig( int sock_fd, std::list< PacketPtr > &packets_in,
     XPlat::NCBuf* ncbufs = new XPlat::NCBuf[num_buffers];
 
     ssize_t total_bytes = 0;
+    ssize_t nc_ret = 0;
     for( i = 0; i < num_buffers; i++ ) {
         uint32_t len = packet_sizes[i];
         ncbufs[i].buf = (char*) malloc( len );
@@ -185,10 +186,11 @@ int Message::recv_orig( int sock_fd, std::list< PacketPtr > &packets_in,
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling NCRecv\n") );
-    retval = XPlat::NCRecv( sock_fd, ncbufs, num_buffers );
-    if( retval != total_bytes ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "NCRecv %d of %d bytes received\n", 
-                               retval, total_bytes) );
+    nc_ret = XPlat::NCRecv( sock_fd, ncbufs, num_buffers );
+    if( nc_ret != total_bytes ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr,
+                               "NCRecv %"PRIsszt" of %"PRIsszt" bytes received\n", 
+                               nc_ret, total_bytes) );
 
         for( i = 0; i < num_buffers; i++ )
             free( ncbufs[i].buf );
@@ -197,7 +199,7 @@ int Message::recv_orig( int sock_fd, std::list< PacketPtr > &packets_in,
 
         return -1;
     }
-    MRN_bytes_recv.Add( retval );
+    MRN_bytes_recv.Add( nc_ret );
 
     //
     // post-processing

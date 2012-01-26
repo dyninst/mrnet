@@ -172,16 +172,18 @@ void delete_NetworkTopology_t( NetworkTopology_t* net_top )
 
 unsigned int NetworkTopology_get_NumNodes(NetworkTopology_t* net_top)
 {
+    unsigned int retval;
     NetworkTopology_lock(net_top);
-    unsigned int retval = (unsigned int) net_top->nodes->size;
+    retval = (unsigned int)net_top->nodes->size;
     NetworkTopology_unlock(net_top);
     return retval;
 }
 
 Node_t* NetworkTopology_get_Root(NetworkTopology_t* net_top)
 {
+    Node_t* ret_node;
     NetworkTopology_lock(net_top);
-    Node_t* ret_node = net_top->root;
+    ret_node = net_top->root;
     NetworkTopology_unlock(net_top);
     return ret_node; 
 }
@@ -302,12 +304,12 @@ void NetworkTopology_serialize(NetworkTopology_t* net_top, Node_t* inode)
 
 int NetworkTopology_reset(NetworkTopology_t* net_top, SerialGraph_t* isg)
 {
-    NetworkTopology_lock(net_top);
     SerialGraph_t* cur_sg;
     char *host, *sg_str;
     size_t i;
     Rank rank;
     Port port;
+    NetworkTopology_lock(net_top);
 
     sg_str = SerialGraph_get_ByteArray(isg);
     mrn_dbg(5, mrn_printf(FLF, stderr, "Reseting topology to '%s'\n", sg_str)); 
@@ -447,7 +449,6 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
                 break;
             }
         }
-
     }
 
     // remove me as my children's parent, and set children as oprhans
@@ -471,9 +472,9 @@ int NetworkTopology_remove_Node_2(NetworkTopology_t* net_top, Node_t* inode)
 
 int NetworkTopology_remove_Node(NetworkTopology_t* net_top, Rank irank)
 {
-    NetworkTopology_lock(net_top);
     Node_t* node_to_remove;
     int retval;
+    NetworkTopology_lock(net_top);
     
     mrn_dbg_func_begin();
     
@@ -499,8 +500,9 @@ int NetworkTopology_remove_Node(NetworkTopology_t* net_top, Rank irank)
 
 TopologyLocalInfo_t* new_TopologyLocalInfo_t(NetworkTopology_t* topol, Node_t* node)
 {
+    TopologyLocalInfo_t* new_top;
     NetworkTopology_lock(topol);
-    TopologyLocalInfo_t* new_top = (TopologyLocalInfo_t*) calloc( (size_t)1, sizeof(TopologyLocalInfo_t) );
+    new_top = (TopologyLocalInfo_t*) calloc( (size_t)1, sizeof(TopologyLocalInfo_t) );
     assert(new_top);
     new_top->topol = topol;
     new_top->local_node = node;
@@ -601,9 +603,10 @@ int NetworkTopology_set_Parent(NetworkTopology_t* net_top, Rank ichild_rank,
 
 int NetworkTopology_remove_Orphan(NetworkTopology_t* net_top, Rank r) 
 {
+    Node_t* node;
     NetworkTopology_lock(net_top);
     // find the node associated with r
-    Node_t* node = (Node_t*)(get_val(net_top->nodes, (int)r));
+    node = (Node_t*)(get_val(net_top->nodes, (int)r));
 
     if (!node) {
         NetworkTopology_unlock(net_top);
@@ -667,13 +670,13 @@ Node_t* NetworkTopology_find_NewParent(NetworkTopology_t* net_top,
                                        unsigned int inum_attempts,
                                        ALGORITHM_T ialgorithm)
 {
-    NetworkTopology_lock(net_top);
     vector_t* potential_adopters = new_empty_vector_t(); // vec of Node_t*
     Node_t* adopter = NULL;
     Node_t* orphan = NULL;
     size_t i, j;
     Node_t* cur = NULL;
     Node_t* cur_node = NULL;
+    NetworkTopology_lock(net_top);
 
     mrn_dbg_func_begin();
 
@@ -813,9 +816,9 @@ void NetworkTopology_compute_AdoptionScores(NetworkTopology_t* net_top,
 
 void NetworkTopology_compute_TreeStatistics(NetworkTopology_t* net_top)
 {
-    NetworkTopology_lock(net_top);
     size_t i;
     double diff = 0, sum_of_square = 0;
+    NetworkTopology_lock(net_top);
 
     net_top->max_fanout = 0;
     net_top->depth = 0;
@@ -994,14 +997,18 @@ void NetworkTopology_Node_compute_AdoptionScore(NetworkTopology_t* net_top,
                                                 unsigned int imax_fanout,
                                                 unsigned int idepth)
 {
-    NetworkTopology_lock(net_top);
-    unsigned int depth_increase = NetworkTopology_Node_get_DepthIncrease(adopter, orphan); 
-    unsigned int proximity = NetworkTopology_Node_get_Proximity(adopter, orphan); 
-    unsigned int fanout = adopter->children->size;
-
+    unsigned int depth_increase;
+    unsigned int proximity;
+    unsigned int fanout;
     double fanout_score;
     double depth_increase_score;
     double proximity_score;
+
+    NetworkTopology_lock(net_top);
+
+    depth_increase = NetworkTopology_Node_get_DepthIncrease(adopter, orphan); 
+    proximity = NetworkTopology_Node_get_Proximity(adopter, orphan); 
+    fanout = adopter->children->size;
 
     mrn_dbg(5, mrn_printf(FLF, stderr,
                             "Computing [%s:%d]'s score for adopting [%s:%d] ... \n", 
@@ -1052,8 +1059,9 @@ int NetworkTopology_Node_remove_Child(Node_t* parent, Node_t* child)
 Node_t* NetworkTopology_new_Node(NetworkTopology_t* net_top, char* host_name, 
                                  Port port, Rank rank, int is_backend)
 {
-    NetworkTopology_lock(net_top);
     Node_t * node = NULL;
+    NetworkTopology_lock(net_top);
+
     mrn_dbg(5, mrn_printf(FLF, stderr, "Creating node[%u] %s:%hu\n",
                           rank, host_name, port));
 
@@ -1124,10 +1132,11 @@ void NetworkTopology_add_InternalNode(NetworkTopology_t * net_top,
 void NetworkTopology_change_Port(NetworkTopology_t * net_top,
                                  uint32_t rcrank, uint16_t rcport)
 {
+    Node_t * update_node;
     if( rcport == UnknownPort )
         return;
 
-    Node_t * update_node = NetworkTopology_find_Node(net_top, rcrank);
+    update_node = NetworkTopology_find_Node(net_top, rcrank);
 
     mrn_dbg(5, mrn_printf(FLF, stderr, 
                           "Changing port of node[%u] from %hu to %hu\n",

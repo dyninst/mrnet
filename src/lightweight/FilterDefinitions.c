@@ -106,7 +106,7 @@ void tfilter_TopoUpdate(vector_t * ipackets,
             pushBackElement(icrank_arr, crank_arr);
             pushBackElement(ichost_arr, chost_arr);
             pushBackElement(icport_arr, cport_arr);
-	    arr_len_long = (unsigned long) arr_len;
+            arr_len_long = (unsigned long) arr_len;
             pushBackElement(iarray_lens, (void*)arr_len_long);
             rarray_len += arr_len;
         }
@@ -140,7 +140,7 @@ void tfilter_TopoUpdate(vector_t * ipackets,
     char_pos = 0;
 
     for (i = 0; i < itype_arr->size; i++) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "size of itype_arr %zd\n", itype_arr->size));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "size of itype_arr %"PRIsszt"\n", itype_arr->size));
 	arr_len_long = (unsigned long)(iarray_lens->vec[i]);
         memcpy(rtype_arr + int32_pos,
                (int *)itype_arr->vec[i],

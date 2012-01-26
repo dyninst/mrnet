@@ -110,9 +110,11 @@ int main(int argc, char **argv)
             fprintf(stdout, "Unknown Protocol: %d\n", tag);
             break;
         }
-        if( stream->flush( ) == -1 ){
-            fprintf(stderr, "stream::flush() failure\n");
-            success=false;
+        if( tag != PROT_EXIT ) {
+            if( stream->flush( ) == -1 ){
+                fprintf(stderr, "stream::flush() failure\n");
+                success=false;
+            }
         }
     } while ( tag != PROT_EXIT );
 

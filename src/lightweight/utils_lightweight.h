@@ -50,10 +50,13 @@
 # include <sys/timeb.h>
 # include <winsock2.h>
 
-# define srand48 srand
+# define srand48(x) srand((unsigned int)x)
 # define drand48 (double)rand
 # define snprintf _snprintf
 # define sleep(x) Sleep(1000*(DWORD)x)
+# define inline __inline
+# define strtok_r strtok_s
+# define strdup _strdup
 
 int gettimeofday(struct timeval *tv, struct timezone *tz);
 

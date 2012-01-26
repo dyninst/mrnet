@@ -52,19 +52,19 @@ void Test::SubTest::end(TestStatus s)
     status=s;
     switch(status){
     case SUCCESS:
-        fprintf(fout, "      %s: SUCCESS! (%lf secs)\n\n", name.c_str(),
+        fprintf(fout, "      %s: SUCCESS! (%f secs)\n\n", name.c_str(),
                 timer.duration() );
         break;
     case COMPLETED:
-        fprintf(fout, "      %s: COMPLETED! (%lf secs)\n\n", name.c_str(),
+        fprintf(fout, "      %s: COMPLETED! (%f secs)\n\n", name.c_str(),
                 timer.duration() );
         break;
     case FAILURE:
-        fprintf(fout, "      %s: FAILURE! (%lf secs)\n\n", name.c_str(),
+        fprintf(fout, "      %s: FAILURE! (%f secs)\n\n", name.c_str(),
                 timer.duration() );
         break;
     default:
-        fprintf(fout, "      %s: Unknown test status! (%lf secs)\n\n",
+        fprintf(fout, "      %s: Unknown test status! (%f secs)\n\n",
                 name.c_str(),
                 timer.duration() );
         break;
@@ -76,19 +76,19 @@ void Test::SubTest::print_status()
 {
     switch(status){
     case SUCCESS:
-        fprintf(fout, "%s: SUCCESS! (%lf secs)\n", name.c_str(),
+        fprintf(fout, "%s: SUCCESS! (%f secs)\n", name.c_str(),
                 timer.duration() );
         break;
     case COMPLETED:
-        fprintf(fout, "%s: COMPLETED! (%lf secs)\n", name.c_str(),
+        fprintf(fout, "%s: COMPLETED! (%f secs)\n", name.c_str(),
                 timer.duration() );
         break;
     case FAILURE:
-        fprintf(fout, "%s: FAILURE! (%lf secs)\n", name.c_str(),
+        fprintf(fout, "%s: FAILURE! (%f secs)\n", name.c_str(),
                 timer.duration() );
         break;
     default:
-        fprintf(fout, "%s: Unknown test status! (%lf secs)\n", name.c_str(),
+        fprintf(fout, "%s: Unknown test status! (%f secs)\n", name.c_str(),
                 timer.duration() );
         break;
     }

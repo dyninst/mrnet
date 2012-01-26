@@ -787,9 +787,10 @@ int Network_have_Streams(Network_t* net)
 
 Stream_t* Network_get_Stream(Network_t* net, unsigned int iid)
 {
+    Stream_t* ret;
     Network_lock(net, NET_SYNC);
 
-    Stream_t* ret = (Stream_t*)get_val(net->streams, (int)iid);
+    ret = (Stream_t*)get_val(net->streams, (int)iid);
     if (ret == NULL)
         mrn_dbg(5, mrn_printf(FLF, stderr, "ret == NULL\n"));
 
@@ -799,11 +800,12 @@ Stream_t* Network_get_Stream(Network_t* net, unsigned int iid)
 
 void Network_delete_Stream(Network_t * net, unsigned int iid)
 {
+    int key;
     mrn_dbg_func_begin();
     Network_lock(net, NET_SYNC);
 
     /* if we're deleting the iter, set to the next element */
-    int key = (int) iid;
+    key = (int) iid;
     if( key == net->streams->keys[net->stream_iter] )
         net->stream_iter++;
 
@@ -826,9 +828,10 @@ int Network_is_UserStreamId( unsigned int id )
 
 int Network_send_PacketToParent(Network_t* net, Packet_t* ipacket)
 {
-    mrn_dbg_func_begin();
-    PeerNode_t *send_parent = Network_get_ParentNode(net);
+    PeerNode_t *send_parent;
     PeerNode_t *recov_parent;
+    mrn_dbg_func_begin();
+    send_parent = Network_get_ParentNode(net);
     if (PeerNode_sendDirectly(send_parent, ipacket) == -1) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "upstream.send() failed\n"));
         if (Network_recover_FromFailures(net)) {
@@ -890,9 +893,10 @@ void Network_disable_FailureRecovery(Network_t* net)
 
 PeerNode_t* Network_get_ParentNode(Network_t* net)
 {
+    PeerNode_t* ret_parent;
     mrn_dbg_func_begin();
     Network_lock(net, PARENT_SYNC);
-    PeerNode_t* ret_parent = NULL;
+    ret_parent = NULL;
     while( net->parent == NULL && (!Network_is_ShutDown(net)) ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr,
                     "Waiting on PARENT_NODE_AVAILABLE\n"));

@@ -32,8 +32,8 @@ class Message: public Error{
   public:
    Message( Network * net );
    ~Message();
-   int send( int isock_fd );
-   int recv( int isock_fd, std::list < PacketPtr >&opackets, Rank iinlet_rank );
+   int send( XPlat::XPSOCKET isock_fd );
+   int recv( XPlat::XPSOCKET isock_fd, std::list < PacketPtr >&opackets, Rank iinlet_rank );
    void add_Packet( PacketPtr );
    int size_Packets( void );
    void waitfor_MessagesToSend( void );

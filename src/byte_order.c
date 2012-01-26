@@ -20,7 +20,6 @@
 
 #endif /* ! defined(__cplusplus) */
 
-#include "config.h"
 #include "byte_order.h"
 
 void byte_swap(char * out, char * in, uint32_t nelems, uint32_t elemsize)
