@@ -86,7 +86,7 @@ class Packet: public Error {
     Packet( Rank isrc, unsigned int istream_id, int itag, 
             const void **idata, const char *ifmt );
     Packet( unsigned int ihdr_len, char *ihdr, 
-            unsigned int ibuf_len, char *ibuf, 
+            uint64_t ibuf_len, char *ibuf, 
             Rank iinlet_rank );
     void encode_pdr_header(void);
     void encode_pdr_data(void);
@@ -94,7 +94,7 @@ class Packet: public Error {
     void decode_pdr_data(void) const;
 
     const char *get_Buffer(void) const;
-    unsigned int get_BufferLen(void) const;
+    uint64_t get_BufferLen(void) const;
     const char *get_Header(void) const;
     unsigned int get_HeaderLen(void) const;
 
@@ -124,11 +124,11 @@ class Packet: public Error {
     unsigned int hdr_len;
 
     char *buf;              /* packed data */
-    unsigned int buf_len;
+    uint64_t buf_len;
 
     Rank inlet_rank;
     Rank *dest_arr;
-    unsigned int dest_arr_len;
+    uint64_t dest_arr_len;
     bool destroy_data;
 
     std::vector< const DataElement * > data_elements;

@@ -86,12 +86,12 @@ static bool_t _getdouble(PDR * UNUSED(pdrs), double * UNUSED(d))
     return FALSE;
 }
 
-static bool_t _putbytes(PDR *pdrs, char * UNUSED(c), uint32_t len)
+static bool_t _putbytes(PDR *pdrs, char * UNUSED(c), uint64_t len)
 {
     pdrs->space += SIZEOF_CHAR*len;
     return TRUE;
 }
-static bool_t _getbytes(PDR * UNUSED(pdrs), char * UNUSED(c), uint32_t UNUSED(u))
+static bool_t _getbytes(PDR * UNUSED(pdrs), char * UNUSED(c), uint64_t UNUSED(u))
 {
     return FALSE;
 }

@@ -93,7 +93,7 @@ class DataElement {
 
  private:
     DataType type;
-    uint32_t array_len;
+    uint64_t array_len;
     bool destroy_data;
 };
 

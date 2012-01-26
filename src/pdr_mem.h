@@ -35,8 +35,8 @@ inline bool_t   pdrmem_putdouble(PDR *, double *);
 inline bool_t   pdrmem_getdouble(PDR *, double *);
 inline bool_t   pdrmem_getdouble_swap(PDR *, double *);
 
-inline bool_t   pdrmem_getbytes(PDR *, char *, uint32_t);
-inline bool_t   pdrmem_putbytes(PDR *, char *, uint32_t);
+inline bool_t   pdrmem_getbytes(PDR *, char *, uint64_t);
+inline bool_t   pdrmem_putbytes(PDR *, char *, uint64_t);
 
 bool_t   pdrmem_setpos(PDR *, uint32_t);
 inline uint32_t pdrmem_getpos(PDR *);

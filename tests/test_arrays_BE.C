@@ -13,7 +13,8 @@ using namespace MRN_test;
 int main(int argc, char **argv){
     Stream * stream;
     PacketPtr buf;
-    int tag=0, recv_array_len=0;
+    int tag=0;
+    uint64_t recv_array_len=0;
     void * recv_array=NULL;
     bool success=true;
 

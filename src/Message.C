@@ -54,32 +54,10 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
     Timer t1;
     t1.start();
 
-    ret = recv_orig(sock_fd, packets_in, iinlet_rank);
-    
-    t1.stop();
-    int pkt_size = packets_in.size();
-    for (std::list< PacketPtr >::iterator i = packets_in.begin();
-         i != packets_in.end(); i++)
-    {
-        Stream * strm =  _net->get_Stream((*i)->get_StreamId());
-        if (strm != NULL)
-            // Time for packet at this point in time.
-            if(strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_RECV))
-            {
-                (*i)->set_Timer(PERFDATA_PKT_TIMERS_RECV, t1);
-                (*i)->start_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
-                if (pkt_size / 2 > 1)
-                    (*i)->set_IncommingPktCount(pkt_size / 2);
-            }
-    }
-    return ret;
-}
-int Message::recv_orig( int sock_fd, std::list< PacketPtr > &packets_in,
-                        Rank iinlet_rank )
-{
     unsigned int i, j;
     int32_t buf_len;
-    uint32_t num_packets = 0, num_buffers, *packet_sizes;
+    uint32_t num_packets = 0, num_buffers;
+    uint64_t *packet_sizes;
     char *buf = NULL;
     PDR pdrs;
     enum pdr_op op = PDR_DECODE;
@@ -130,11 +108,11 @@ int Message::recv_orig( int sock_fd, std::list< PacketPtr > &packets_in,
     //
 
     //buf_len's value is hardcode, breaking pdr encapsulation barrier :(
-    buf_len = (sizeof(uint32_t) * num_buffers) + 1;  // 1 byte pdr overhead
+    buf_len = (sizeof(uint64_t) * num_buffers) + 1;  // 1 byte pdr overhead
     buf = (char*) malloc( buf_len );
     assert( buf );
 
-    packet_sizes = (uint32_t*) malloc( sizeof(uint32_t) * num_buffers );
+    packet_sizes = (uint64_t*) malloc( sizeof(uint64_t) * num_buffers );
     if( packet_sizes == NULL ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                     "recv: packet_size malloc is NULL for %d packets\n",
@@ -157,7 +135,7 @@ int Message::recv_orig( int sock_fd, std::list< PacketPtr > &packets_in,
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling pdrmem_create\n" ));
     pdrmem_create( &pdrs, buf, buf_len, op );
     if( ! pdr_vector( &pdrs, (char*)packet_sizes, num_buffers,
-                      sizeof(uint32_t), (pdrproc_t)pdr_uint32 ) ) {
+                      sizeof(uint64_t), (pdrproc_t)pdr_uint64 ) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_vector() failed\n" ));
         free( buf );
         free( packet_sizes );
@@ -233,14 +211,43 @@ int Message::recv_orig( int sock_fd, std::list< PacketPtr > &packets_in,
     free( packet_sizes );
  
     mrn_dbg_func_end();
-    return 0;    
+    t1.stop();
+    int pkt_size = packets_in.size();
+    for (std::list< PacketPtr >::iterator i = packets_in.begin();
+         i != packets_in.end(); i++)
+    {
+        Stream * strm =  _net->get_Stream((*i)->get_StreamId());
+        if (strm != NULL)
+            // Time for packet at this point in time.
+            if(strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_RECV))
+            {
+                (*i)->set_Timer(PERFDATA_PKT_TIMERS_RECV, t1);
+                (*i)->start_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
+                if (pkt_size / 2 > 1)
+                    (*i)->set_IncommingPktCount(pkt_size / 2);
+            }
+    }
+    return 0;
 }
 
-int Message::send_orig( int sock_fd )
+int Message::send( int sock_fd )
 {
+    int ret;
+    Stream * strm;
+    std::list < PacketPtr > tmp_packets = _packets;
+    for(std::list< PacketPtr >::iterator iter = tmp_packets.begin(); iter != tmp_packets.end(); iter++ ) {
+        strm =  _net->get_Stream((*iter)->get_StreamId());
+        if (strm != NULL)
+            if(strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_SEND))
+            {
+                (*iter)->start_Timer(PERFDATA_PKT_TIMERS_SEND);
+                (*iter)->stop_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
+            }
+    }
+
     unsigned int i, j;
     uint32_t num_packets, num_buffers;
-    uint32_t *packet_sizes = NULL;
+    uint64_t *packet_sizes = NULL;
     char *buf = NULL;
     int buf_len;
     ssize_t total_bytes = 0;
@@ -269,7 +276,7 @@ int Message::send_orig( int sock_fd )
                            num_packets ));
 
     XPlat::NCBuf* ncbufs = new XPlat::NCBuf[num_buffers];
-    packet_sizes = (uint32_t*) malloc( sizeof(uint32_t) * num_buffers );
+    packet_sizes = (uint64_t*) malloc( sizeof(uint64_t) * num_buffers );
     assert( packet_sizes );
 
     std::list< PacketPtr >::iterator iter = _packets.begin();
@@ -341,13 +348,13 @@ int Message::send_orig( int sock_fd )
     //
 
     //buf_len's value is hardcode, breaking pdr encapsulation barrier :(
-    buf_len = (num_buffers * sizeof(uint32_t)) + 1;  //1 extra bytes overhead
+    buf_len = (num_buffers * sizeof(uint64_t)) + 1;  //1 extra bytes overhead
     buf = (char*) malloc( buf_len );
     assert( buf );
     pdrmem_create( &pdrs, buf, buf_len, op );
 
     if( ! pdr_vector(&pdrs, (char*)packet_sizes, num_buffers, 
-                     sizeof(uint32_t), (pdrproc_t)pdr_uint32) ) {
+                     sizeof(uint64_t), (pdrproc_t)pdr_uint64) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_vector() failed\n" ));
         free( buf );
         delete[] ncbufs;
@@ -446,7 +453,7 @@ int Message::send( XPlat::XPSOCKET sock_fd )
         }
 
     }
-    return ret;
+    return 0;
 }
 /*********************************************************
  *  Functions used to implement sending and recieving of

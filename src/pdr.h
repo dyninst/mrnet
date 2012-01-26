@@ -126,8 +126,8 @@ struct pdr_ops {
     bool_t  (*getfloat)(PDR *pdrs, float *fp);
     bool_t  (*putdouble)(PDR *pdrs, double *dp);
     bool_t  (*getdouble)(PDR *pdrs, double *dp);
-    bool_t  (*putbytes)(PDR *pdrs, char *, uint32_t);
-    bool_t  (*getbytes)(PDR *pdrs, char *, uint32_t);
+    bool_t  (*putbytes)(PDR *pdrs, char *, uint64_t);
+    bool_t  (*getbytes)(PDR *pdrs, char *, uint64_t);
     bool_t  (*setpos)(PDR *pdrs, uint32_t ip);
     uint32_t (*getpos)(PDR *pdrs);
     int32_t* (*pinline)(PDR *pdrs, int32_t ip);
@@ -173,9 +173,9 @@ extern bool_t   pdr_double(PDR *pdrs, double *ip);
 extern bool_t   pdr_bool(PDR *pdrs, bool_t *bp);
 extern bool_t   pdr_enum(PDR *pdrs, enum_t *bp);
 
-extern bool_t   pdr_opaque(PDR *pdrs, char * cp, uint32_t cnt);
-extern bool_t   pdr_bytes(PDR *pdrs, char **cpp, uint32_t *sizep,
-                          uint32_t maxsize);
+extern bool_t   pdr_opaque(PDR *pdrs, char * cp, uint64_t cnt);
+extern bool_t   pdr_bytes(PDR *pdrs, char **cpp, uint64_t *sizep,
+                          uint64_t maxsize);
 extern bool_t   pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize);
 extern bool_t   pdr_wrapstring(PDR *pdrs, char **cpp);
 extern bool_t   pdr_reference(PDR *pdrs, char * *pp, uint32_t size,
@@ -183,8 +183,8 @@ extern bool_t   pdr_reference(PDR *pdrs, char * *pp, uint32_t size,
 extern bool_t   pdr_pointer(PDR *pdrs, char **objpp, uint32_t obj_size,
                             pdrproc_t pdr_obj);
 
-extern bool_t   pdr_array(PDR *pdrs, void **addrp, uint32_t *sizep,
-                          uint32_t maxsize, uint32_t elsize, pdrproc_t elproc);
+extern bool_t   pdr_array(PDR *pdrs, void **addrp, uint64_t *sizep,
+                          uint64_t maxsize, uint32_t elsize, pdrproc_t elproc);
 extern bool_t   pdr_vector(PDR *pdrs, char *basep, uint32_t nelem,
                           uint32_t elemsize, pdrproc_t pdr_elem);
 

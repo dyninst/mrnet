@@ -262,7 +262,7 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
 }
 
 Packet::Packet( unsigned int ihdr_len, char *ihdr, 
-                unsigned int ibuf_len, char *ibuf, 
+                uint64_t ibuf_len, char *ibuf, 
                 Rank iinlet_rank )
     : stream_id((unsigned int)-1), tag(-1), src_rank(UnknownRank), 
       fmt_str(NULL), hdr(ihdr), hdr_len(ihdr_len), buf(ibuf), buf_len(ibuf_len), 
@@ -416,10 +416,10 @@ const char* Packet::get_Buffer(void) const
     return ret;
 }
 
-unsigned int Packet::get_BufferLen(void) const
+uint64_t Packet::get_BufferLen(void) const
 {
     data_sync.Lock();
-    unsigned int ret = buf_len;
+    uint64_t ret = buf_len;
     data_sync.Unlock();
     return ret;
 }
@@ -551,7 +551,7 @@ int Packet::pdr_packet_header( PDR * pdrs, Packet * pkt )
     }
     Rank** rank_arr = &(pkt->dest_arr);
     if( pdr_array( pdrs, (void**)rank_arr, &( pkt->dest_arr_len ), 
-                   INT32_MAX, sizeof(uint32_t), 
+                   UINT64_MAX, sizeof(uint32_t), 
                    (pdrproc_t) pdr_uint32 ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_array() failed\n" ));
         return FALSE;
@@ -611,12 +611,12 @@ int Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
             if( pdrs->p_op == PDR_DECODE ) {
                 cur_elem->val.p = NULL;
             }
-            tmp_char = (char *)(cur_elem->val.p);
+           // tmp_char = (char *)(cur_elem->val.p);
             retval =
                 pdr_bytes( 
                 pdrs, 
-                &tmp_char,
-                          &( cur_elem->array_len ), INT32_MAX);
+                (char**)&(cur_elem->val.p),
+                          &( cur_elem->array_len ), UINT64_MAX);
             break;
 
         case INT16_T:
@@ -894,7 +894,7 @@ int Packet::ArgVec2DataElementArray( const void **idata )
         case DOUBLE_ARRAY_T:
         case STRING_ARRAY_T:
             cur_elem->val.p = const_cast<void*>( idata[data_ndx++] );
-            cur_elem->array_len = *( uint32_t* )idata[data_ndx];
+            cur_elem->array_len = *( uint64_t* )idata[data_ndx];
             break;
         case STRING_T:
             cur_elem->val.p = const_cast<void*>( idata[data_ndx] );
@@ -920,7 +920,8 @@ int Packet::ArgVec2DataElementArray( const void **idata )
 int Packet::DataElementArray2ArgList( va_list arg_list ) const
 {
     mrn_dbg_func_begin();
-    int i = 0, array_len = 0;
+    int i = 0; 
+    uint64_t array_len = 0;
     const DataElement * cur_elem=NULL;
     void *tmp_ptr, *tmp_array;
 
@@ -1017,9 +1018,9 @@ int Packet::DataElementArray2ArgList( va_list arg_list ) const
             else
                tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 

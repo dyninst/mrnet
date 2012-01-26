@@ -37,10 +37,11 @@ class Message: public Error{
    void add_Packet( PacketPtr );
    int size_Packets( void );
    void waitfor_MessagesToSend( void );
-
+/*
    int recv_orig( int sock_fd, std::list< PacketPtr > &packets_in,
                   Rank iinlet_rank );
    int send_orig( int sock_fd );
+*/
  private:
 
    Network * _net;

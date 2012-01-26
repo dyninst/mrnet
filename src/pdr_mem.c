@@ -325,7 +325,7 @@ inline bool_t pdrmem_getdouble_swap(PDR *pdrs, double *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getbytes(PDR *pdrs, char * addr,  uint32_t len)
+inline bool_t pdrmem_getbytes(PDR *pdrs, char * addr,  uint64_t len)
 {
     if(len > pdrs->space) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "Not enough data left: %u\n",
@@ -337,7 +337,7 @@ inline bool_t pdrmem_getbytes(PDR *pdrs, char * addr,  uint32_t len)
     return (TRUE);
 }
 
-inline bool_t pdrmem_putbytes(PDR *pdrs, char * addr,  uint32_t len)
+inline bool_t pdrmem_putbytes(PDR *pdrs, char * addr,  uint64_t len)
 {
     if(len > pdrs->space) {
         return (FALSE);
