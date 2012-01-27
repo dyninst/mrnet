@@ -22,7 +22,8 @@ namespace MRN {
 
 map< Rank, FailureEvent * > FailureEvent::FailureEventMap;
 
-static void waitFor_FailureRecoveryReports( int ilistening_sock_fd );
+static void waitFor_FailureRecoveryReports( int ilistening_sock_fd,
+                                            Network *net );
 static NetworkTopology::Node * find_NodeToKill( NetworkTopology * );
 static bool ExitFailureManager=false;
 static set<Rank> OrphanRanksToReport;
@@ -142,11 +143,11 @@ void * FailureInjectionThreadMain( void* iarg )
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Injecting failure #%d...\n", nfailures));
         fprintf( stderr, "Injecting failure #%d: node[%d]...\n",
                  nfailures, node_to_kill->get_Rank() );
-        inject_Failure( node_to_kill );
+        inject_Failure( node_to_kill, net );
 
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u recovery reports ...\n",
                                OrphanRanksToReport.size() ));
-        waitFor_FailureRecoveryReports( listening_sock_fd );
+        waitFor_FailureRecoveryReports( listening_sock_fd, net );
     }
 
     sleep( 10 );
@@ -162,7 +163,7 @@ void * FailureInjectionThreadMain( void* iarg )
     return NULL;
 }
 
-int inject_Failure( NetworkTopology::Node * inode )
+int inject_Failure( NetworkTopology::Node * inode, Network *net )
 {
     mrn_dbg_func_begin();
     FailureEvent * failure_event = new FailureEvent( inode->get_Rank() );
@@ -180,7 +181,7 @@ int inject_Failure( NetworkTopology::Node * inode )
     
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_KILL_SELF, NULL) );
 
-    Message msg;
+    Message msg(net);
     msg.add_Packet( packet );
     if( msg.send( sock_fd ) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Message.send failed\n" ));
@@ -197,7 +198,7 @@ int inject_Failure( NetworkTopology::Node * inode )
     return 0;
 }
 
-void waitFor_FailureRecoveryReports( int isock_fd )
+void waitFor_FailureRecoveryReports( int isock_fd, Network *net )
 {
     mrn_dbg_func_begin();
     //Prepare fds for select()
@@ -207,7 +208,7 @@ void waitFor_FailureRecoveryReports( int isock_fd )
 
     //unsigned int num_orphans = OrphanRanksToReport.size();
     list< PacketPtr > packets;
-    Message msg;
+    Message msg(net);
     double max_recovery_timestamp=0;
     do {
         rfds_copy = rfds;

@@ -12,8 +12,8 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <sys/time.h>
 #ifndef os_windows
+#include <sys/time.h>
 #include <inttypes.h> /* integer printf format macros */ 
 #endif
 
