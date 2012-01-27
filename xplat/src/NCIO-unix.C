@@ -23,7 +23,7 @@
 #endif
 
 // uncomment following if large data transfers hang
-//#define XPLAT_NCRECV_NO_BLOCK
+#define XPLAT_NCRECV_NO_BLOCK
 
 namespace XPlat
 {

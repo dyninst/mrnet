@@ -70,12 +70,13 @@ InternalNode::InternalNode( Network * inetwork,
                                               TFILTER_TOPO_UPDATE_DOWNSTREAM );
             int type = NetworkTopology::TOPO_NEW_CP; 
             char *host_arr = strdup( ihostname.c_str() );
+	    
             s->send_internal( PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", 
-                              &type, 1, 
-                              &iprank, 1, 
-                              &irank, 1, 
+                              &type, uint64_t(1), 
+                              &iprank, uint64_t(1), 
+                              &irank, uint64_t(1), 
                               &host_arr, 1, 
-                              &listeningPort, 1 );
+                              &listeningPort, uint64_t(1) );
             free(host_arr);
         } 
         else

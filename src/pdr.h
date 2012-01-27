@@ -140,7 +140,7 @@ struct PDR {
 
     char *   cur;      /* pointer to private data */
     char *   base;     /* private used for position info */
-    uint32_t space;    /* extra private word */
+    uint64_t space;    /* extra private word */
 };
 
 /*
@@ -185,15 +185,15 @@ extern bool_t   pdr_pointer(PDR *pdrs, char **objpp, uint32_t obj_size,
 
 extern bool_t   pdr_array(PDR *pdrs, void **addrp, uint64_t *sizep,
                           uint64_t maxsize, uint32_t elsize, pdrproc_t elproc);
-extern bool_t   pdr_vector(PDR *pdrs, char *basep, uint32_t nelem,
-                          uint32_t elemsize, pdrproc_t pdr_elem);
+extern bool_t   pdr_vector(PDR *pdrs, char *basep, uint64_t nelem,
+                          uint64_t elemsize, pdrproc_t pdr_elem);
 
 
 /*
  * These are the public routines for the various implementations of
  * pdr streams.
  */
-extern void pdrmem_create(PDR *pdrs, char * addr, uint32_t size,
+extern void pdrmem_create(PDR *pdrs, char * addr, uint64_t size,
                           enum pdr_op op);          /* PDR using memory buffers */
 extern void pdr_free(pdrproc_t proc, char *objp);
 
@@ -201,7 +201,7 @@ uint32_t pdr_getpos(PDR *pdrs);
 bool_t   pdr_setpos(PDR *pdrs, uint32_t pos);
 int32_t  pdr_inline(PDR *pdrs, int32_t pos);
 
-extern uint32_t pdr_sizeof (pdrproc_t, void *);
+extern uint64_t pdr_sizeof (pdrproc_t, void *);
 
 #ifdef __cplusplus
 } /* extern C */

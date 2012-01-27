@@ -269,7 +269,8 @@ int ChildNode::proc_SetTopoEnv( PacketPtr ipacket ) const
     char* sg_byte_array = NULL;
     int* keys = NULL;
     char** vals = NULL;
-    int i, count;
+    int i;
+    uint64_t count;
     NetworkTopology* nt = _network->get_NetworkTopology();    
 
     if( ipacket->unpack( "%s %ad %as", &sg_byte_array, 
@@ -663,18 +664,18 @@ int ChildNode::proc_PortUpdate( PacketPtr ipacket ) const
         
         if( _network->is_LocalNodeBackEnd() )
             s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                     &type, 1,
-                     &send_iprank, 1,
-                     &send_myrank, 1,
+                     &type, uint64_t(1),
+                     &send_iprank, uint64_t(1),
+                     &send_myrank, uint64_t(1),
                      &host_arr, 1,
-                     &send_port, 1 );
+                     &send_port, uint64_t(1) );
         else
             s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                              &type, 1,
-                              &send_iprank, 1,
-                              &send_myrank, 1,
+                              &type, uint64_t(1),
+                              &send_iprank, uint64_t(1),
+                              &send_myrank, uint64_t(1),
                               &host_arr, 1,
-                              &send_port, 1 );
+                              &send_port, uint64_t(1) );
         s->flush();
         free(host_arr);
     }

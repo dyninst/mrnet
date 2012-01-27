@@ -429,9 +429,9 @@ bool_t pdr_pointer(PDR *pdrs, char **objpp, uint32_t obj_size, pdrproc_t pdr_obj
 bool_t pdr_array(PDR *pdrs, void **addrp, uint64_t *sizep, uint64_t maxsize,
                  uint32_t elsize, pdrproc_t elproc)
 {
-    uint32_t i;
+    uint64_t i;
     char * target = (char*) *addrp;
-    uint32_t c;  /* the actual element count */
+    uint64_t c;  /* the actual element count */
     bool_t stat = TRUE;
     uint64_t nodesize;
  
@@ -495,10 +495,10 @@ bool_t pdr_array(PDR *pdrs, void **addrp, uint64_t *sizep, uint64_t maxsize,
   * > elemsize: size of each element
   * > pdr_elem: routine to PDR each element
   */
-bool_t pdr_vector(PDR *pdrs, char *basep, uint32_t nelem, uint32_t elemsize,
+bool_t pdr_vector(PDR *pdrs, char *basep, uint64_t nelem, uint64_t elemsize,
                   pdrproc_t pdr_elem)   
 {
-    uint32_t i;
+    uint64_t i;
     char *elptr;
 
     elptr = basep;

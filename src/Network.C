@@ -1278,7 +1278,7 @@ Stream* Network::new_Stream( Communicator* icomm,
     }
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_HETERO_STREAM, "%ud %ad %s %s %s",
-                                 _next_user_stream_id, backends, num_pts,
+                                _next_user_stream_id, backends, uint64_t(num_pts),
                                  us_filters.c_str(), sync_filters.c_str(), 
                                  ds_filters.c_str()) );
     _next_user_stream_id++;
@@ -1319,7 +1319,7 @@ Stream* Network::new_InternalStream( Communicator *icomm,
     }
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_INTERNAL_STREAM, "%ud %ad %d %d %d",
-                                 _next_int_stream_id, backends, num_pts,
+                                 _next_int_stream_id, backends, uint64_t(num_pts),
                                  ius_filter_id, isync_filter_id, ids_filter_id) );
     _next_int_stream_id++;
 
@@ -1728,7 +1728,7 @@ int Network::load_FilterFuncs( const char* so_file,
         PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_FILTER, "%s %as %auhd",
                                      so_copy, 
                                      funcs, success_count, 
-                                     fids, success_count) );
+                                     fids, uint64_t(success_count)) );
         send_PacketToChildren( packet );
         flush();
     }
@@ -2376,7 +2376,7 @@ PacketPtr Network::collect_PerfData( perfdata_metric_t metric,
     _perf_data->collect( metric, context, data );
     iter = data.begin();
     Rank my_rank = get_LocalRank();
-    unsigned num_elems = data.size();
+    uint64_t  num_elems = data.size();
     void* data_arr = NULL;
     const char* fmt = NULL;
     switch( PerfDataMgr::get_MetricType(metric) ) {
@@ -2488,7 +2488,8 @@ bool Network::collect_NetPerformanceData ( rank_perfdata_map& results,
         // unpack data
         int* rank_arr;
         int* nelems_arr;
-        unsigned rank_len, nelems_len, data_len;
+        uint64_t rank_len, nelems_len;
+	int data_len;
         void* data_arr;
         const char* fmt = NULL;
         perfdata_mettype_t mettype = PerfDataMgr::get_MetricType(metric);

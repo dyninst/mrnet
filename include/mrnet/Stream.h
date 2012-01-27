@@ -141,6 +141,8 @@ class Stream {
 
     //PerfDataMgr * _perf_data;
     //Static Data Members
+
+    PerfDataMgr * _perf_data;
     Network * _network;
     unsigned int _id;
     unsigned int _sync_filter_id;
@@ -160,7 +162,6 @@ class Stream {
     std::list< PacketPtr > _incoming_packet_buffer;
     mutable XPlat::Monitor _incoming_packet_buffer_sync;
 
-    PerfDataMgr * _perf_data;
     enum {PACKET_BUFFER_NONEMPTY};
 };
 

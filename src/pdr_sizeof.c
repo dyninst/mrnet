@@ -164,7 +164,7 @@ static struct pdr_ops _ops = {
     _destroy
 };
 
-uint32_t pdr_sizeof(pdrproc_t func, void *data)
+uint64_t pdr_sizeof(pdrproc_t func, void *data)
 {
     PDR pdrs;
     bool_t stat;

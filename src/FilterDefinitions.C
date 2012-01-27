@@ -688,7 +688,7 @@ void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
                           void ** /* client data */, PacketPtr&,
                           const TopologyLocalInfo& )
 {
-    unsigned int result_array_size=0, i, j;
+    uint64_t result_array_size=0, i, j;
     char* result_array=NULL;
     int data_size=0;
     string format_string;
@@ -697,7 +697,7 @@ void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
     vector< void* > iarrays;
     vector< unsigned > iarray_lens;
     void *tmp_arr;
-    unsigned tmp_arr_len;
+    uint64_t tmp_arr_len;
  
     for( i = 0; i < ipackets.size( ); i++ ) {
         PacketPtr cur_packet( ipackets[i] );
@@ -1253,7 +1253,7 @@ void tfilter_TopoUpdate_common( bool upstream,
     Rank *prank_arr, *crank_arr, *rprank_arr, *rcrank_arr;
     char **chost_arr, **rchost_arr;
     Port *cport_arr, *rcport_arr;
-    unsigned i, arr_len, rarr_len = 0;
+    uint64_t i, arr_len, rarr_len = 0;
  
     string format_string;
 

@@ -189,8 +189,8 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
     int retval, err;
     fd_set readfds;
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr,
-                           "waiting on %u fds\n", _num_pollfds) );
+//    mrn_dbg( 5, mrn_printf(FLF, stderr,
+//                           "waiting on %u fds\n", _num_pollfds) );
   
 #ifdef os_windows
     use_poll=false;
@@ -199,8 +199,8 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
 
         retval = poll( _pollfds, _num_pollfds, timeout_ms );
         err = errno;
-        mrn_dbg( 5, mrn_printf(FLF, stderr,
-                               "poll() returned %d\n", retval) );
+//        mrn_dbg( 5, mrn_printf(FLF, stderr,
+//                               "poll() returned %d\n", retval) );
     }
     else { // select
 #endif
@@ -221,8 +221,8 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
 
         retval = select( _max_fd+1, &readfds, NULL, NULL, tvp );
         err = errno;
-        mrn_dbg( 5, mrn_printf(FLF, stderr,
-                               "select() returned %d\n", retval) );
+//        mrn_dbg( 5, mrn_printf(FLF, stderr,
+//                               "select() returned %d\n", retval) );
 #ifndef os_windows
     }
 #endif
@@ -702,11 +702,11 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
             Port dummy_port = UnknownPort;
             char* dummy_host = strdup("NULL"); // ugh, this needs to be fixed
             s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                              &type, 1, 
-                              &my_rank, 1, 
-                              &ifailed_rank, 1, 
+                              &type, uint64_t(1), 
+                              &my_rank, uint64_t(1), 
+                              &ifailed_rank, uint64_t(1), 
                               &dummy_host, 1, 
-                              &dummy_port, 1 );
+                              &dummy_port, uint64_t(1) );
             free( dummy_host );
         }
     }

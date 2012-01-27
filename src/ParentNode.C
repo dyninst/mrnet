@@ -445,7 +445,7 @@ Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
 {
     Stream* stream;
     Rank* backends = NULL;
-    unsigned int num_backends;
+    uint64_t num_backends;
     unsigned int stream_id;
     int tag, ds_filter_id, us_filter_id, sync_id;
 
@@ -597,13 +597,13 @@ int ParentNode::proc_newFilter( PacketPtr ipacket ) const
     char* so_file = NULL;
     char** funcs = NULL;
     unsigned short* fids = NULL;
-
+    uint64_t discard;
     mrn_dbg_func_begin();
 
     retval = ipacket->unpack( "%s %as %auhd",
                               &so_file,
                               &funcs, &nfuncs,
-                              &fids, &nfuncs );
+                              &fids, &discard );
 
     // propagate before local load
     _network->send_PacketToChildren( ipacket );
@@ -715,7 +715,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
 
     PacketPtr pkt( new Packet(CTL_STRM_ID, PROT_NET_SETTINGS, "%s %ad %as", 
                               strdup( topo_str.c_str() ),
-                              keys, count, 
+                              keys, uint64_t(count), 
                               vals, count) );
     pkt->set_DestroyData( true );
     child_node->sendDirectly( pkt );
@@ -761,11 +761,11 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                 Port dummy_port = UnknownPort;
                 char* dummy_host = strdup("NULL"); // ugh, this needs to be fixed
                 s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                                  &type, 1, 
-                                  &my_rank, 1, 
-                                  &child_rank, 1, 
+                                  &type, uint64_t(1), 
+                                  &my_rank, uint64_t(1), 
+                                  &child_rank, uint64_t(1), 
                                   &dummy_host, 1, 
-                                  &dummy_port, 1 );
+                                  &dummy_port, uint64_t(1) );
                 free( dummy_host );
             }
         }

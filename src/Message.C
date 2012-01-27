@@ -47,7 +47,7 @@ Message::~Message()
 }
 
 
-int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
+int Message::recv( int sock_fd, std::list< PacketPtr > &packets_in,
                    Rank iinlet_rank )
 {
     int ret;
@@ -75,7 +75,7 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
     assert( buf );
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Reading packet count\n") );
-    int retval;
+    uint64_t retval;
     if( (retval = MRN_recv(sock_fd, buf, buf_len)) != buf_len ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %d of %d bytes received\n", 
                                retval, buf_len ));
@@ -153,9 +153,8 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
     XPlat::NCBuf* ncbufs = new XPlat::NCBuf[num_buffers];
 
     ssize_t total_bytes = 0;
-    ssize_t nc_ret = 0;
     for( i = 0; i < num_buffers; i++ ) {
-        uint32_t len = packet_sizes[i];
+        uint64_t len = packet_sizes[i];
         ncbufs[i].buf = (char*) malloc( len );
         ncbufs[i].len = len;
         total_bytes += len;
@@ -164,11 +163,11 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling NCRecv\n") );
-    nc_ret = XPlat::NCRecv( sock_fd, ncbufs, num_buffers );
-    if( nc_ret != total_bytes ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "NCRecv %"PRIsszt" of %"PRIsszt" bytes received\n", 
-                               nc_ret, total_bytes) );
+    retval = XPlat::NCRecv( sock_fd, ncbufs, num_buffers );
+
+    if( retval != total_bytes ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "NCRecv %d of %d bytes received\n", 
+                               retval, total_bytes) );
 
         for( i = 0; i < num_buffers; i++ )
             free( ncbufs[i].buf );
@@ -177,7 +176,7 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
 
         return -1;
     }
-    MRN_bytes_recv.Add( nc_ret );
+    MRN_bytes_recv.Add( retval );
 
     //
     // post-processing
@@ -290,7 +289,7 @@ int Message::send( int sock_fd )
             go_away = true;
 
         uint32_t hsz = curPacket->get_HeaderLen();
-        uint32_t dsz = curPacket->get_BufferLen();
+        uint64_t dsz = curPacket->get_BufferLen();
 
         if( hsz == 0 ) {
             /* lazy encoding of packet header */
@@ -307,8 +306,6 @@ int Message::send( int sock_fd )
         packet_sizes[i+1] = dsz;
 
         total_bytes += hsz + dsz;
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "packet %u has size (%u,%u)\n", 
-                               j, hsz, dsz) );
     }
 
     //
@@ -384,11 +381,9 @@ int Message::send( int sock_fd )
     //
 
     /* send the packets */
-    mrn_dbg( 5, mrn_printf(FLF, stderr,
-                "calling XPlat::NCSend(%d buffers, %d total bytes)\n",
-                           num_buffers, total_bytes ));
 
     ssize_t sret = XPlat::NCSend( sock_fd, ncbufs, num_buffers );
+
     if( sret != total_bytes ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                     "XPlat::NCSend() returned %d of %d bytes, nbuffers = %d\n",
@@ -419,25 +414,6 @@ int Message::send( int sock_fd )
     }
 
     mrn_dbg_func_end();
-    return 0;    
-}
-
-int Message::send( XPlat::XPSOCKET sock_fd )
-{
-    int ret;
-    Stream * strm;
-    std::list < PacketPtr > tmp_packets = _packets;
-    for(std::list< PacketPtr >::iterator iter = tmp_packets.begin(); iter != tmp_packets.end(); iter++ ) {
-        strm =  _net->get_Stream((*iter)->get_StreamId());
-        if (strm != NULL)
-            if(strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_SEND))
-            {
-                (*iter)->start_Timer(PERFDATA_PKT_TIMERS_SEND);
-                (*iter)->stop_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
-            }
-    }
-
-    ret = send_orig(sock_fd);
 
     int packetLength = tmp_packets.size();
 

@@ -69,7 +69,7 @@ static struct pdr_ops pdrmem_ops_swap = {
 /*
  * The procedure pdrmem_create initializes a stream descriptor for a memory buffer. 
  */
-void pdrmem_create(PDR *pdrs, char * addr, uint32_t size, enum pdr_op op)
+void pdrmem_create(PDR *pdrs, char * addr, uint64_t size, enum pdr_op op)
 {
 
 #if defined(WORDS_BIGENDIAN)
@@ -328,7 +328,7 @@ inline bool_t pdrmem_getdouble_swap(PDR *pdrs, double *p)
 inline bool_t pdrmem_getbytes(PDR *pdrs, char * addr,  uint64_t len)
 {
     if(len > pdrs->space) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Not enough data left: %u\n",
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Not enough data left: %u\n",
                               pdrs->space ));
         return (FALSE);
     }

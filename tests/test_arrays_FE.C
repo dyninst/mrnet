@@ -9,7 +9,7 @@
 
 #include <string>
 
-const uint64_t ARRAY_LEN=10000;
+const uint64_t ARRAY_LEN=5000;
 using namespace MRN;
 using namespace MRN_test;
 Test * test;
@@ -176,10 +176,6 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
     case CHAR_ARRAY_T:
         data_size = sizeof(char);
         send_array = malloc ( ARRAY_LEN * data_size );
-        for( i=0; i<ARRAY_LEN; i++){
-            ((char*)send_array)[i] = (char) tmp_c2;
-            tmp_c2 = (signed char)i % 127;
-        }
         tag = PROT_CHAR;
         testname = "test_char_array";
         format_string = "%ac";
@@ -187,10 +183,6 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
     case UCHAR_ARRAY_T:
         data_size = sizeof(unsigned char);
         send_array = malloc ( ARRAY_LEN * data_size );
-        for( i=0; i<ARRAY_LEN; i++){
-            ((unsigned char*)send_array)[i] = tmp_c;
-            tmp_c = (unsigned char)i % 255;
-        }
         tag = PROT_UCHAR;
         testname = "test_uchar_array";
         format_string = "%auc";
