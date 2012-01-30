@@ -47,7 +47,7 @@ Message::~Message()
 }
 
 
-int Message::recv( int sock_fd, std::list< PacketPtr > &packets_in,
+int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
                    Rank iinlet_rank )
 {
     int ret;
@@ -229,7 +229,7 @@ int Message::recv( int sock_fd, std::list< PacketPtr > &packets_in,
     return 0;
 }
 
-int Message::send( int sock_fd )
+int Message::send( XPlat::XPSOCKET sock_fd )
 {
     int ret;
     Stream * strm;
