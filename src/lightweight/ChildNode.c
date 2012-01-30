@@ -338,7 +338,7 @@ int ChildNode_proc_SetTopoEnv( BackEndNode_t* be, Packet_t* ipacket )
     char* sg_byte_array = NULL;
     int* keys = NULL;
     char** vals = NULL ;
-    int i, count;
+    uint64_t i, count;
     SerialGraph_t* sg = NULL;
     NetworkTopology_t* nt;
     mrn_dbg_func_begin();
@@ -574,11 +574,11 @@ int ChildNode_proc_PortUpdate(BackEndNode_t * be,
     send_port[0] = Network_get_LocalPort(be->network);
     
     Stream_send(s, PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                type, 1, 
-                send_iprank, 1, 
-                send_myrank, 1, 
+                type, (uint64_t)1, 
+                send_iprank, (uint64_t)1, 
+                send_myrank, (uint64_t)1, 
                 host_arr, 1, 
-                send_port, 1);
+                send_port, (uint64_t)1);
 
     mrn_dbg_func_end();
     return 0;
