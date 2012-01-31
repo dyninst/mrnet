@@ -23,7 +23,7 @@ typedef struct {
   char* hdr;  // the packed header
   unsigned int hdr_len;
   char* buf;  // the packed data payload
-  unsigned int buf_len;
+  uint64_t buf_len;
   Rank inlet_rank;
   struct vector_t* data_elements;
 } Packet_t;
@@ -55,7 +55,7 @@ Packet_t* Packet_construct(Packet_t* packet);
 
 
 Packet_t* new_Packet_t_3(unsigned int ihdr_len, char* ihdr, 
-                         unsigned int ibuf_len, char* ibuf, 
+                         uint64_t ibuf_len, char* ibuf, 
                          Rank iinlet_rank);
 
 void Packet_pushBackElement(Packet_t* packet, DataElement_t* cur_elem);

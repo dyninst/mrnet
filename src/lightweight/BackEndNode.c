@@ -105,7 +105,7 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
                         type, (uint64_t)1, 
                         send_iprank, (uint64_t)1, 
                         send_myrank, (uint64_t)1, 
-                        host_arr, 1, 
+                        host_arr, (uint64_t)1, 
                         send_port, (uint64_t)1);
         } else {
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend already in the topology\n") );

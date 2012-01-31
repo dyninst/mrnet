@@ -577,7 +577,7 @@ int ChildNode_proc_PortUpdate(BackEndNode_t * be,
                 type, (uint64_t)1, 
                 send_iprank, (uint64_t)1, 
                 send_myrank, (uint64_t)1, 
-                host_arr, 1, 
+                host_arr, (uint64_t)1, 
                 send_port, (uint64_t)1);
 
     mrn_dbg_func_end();

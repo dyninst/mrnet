@@ -58,7 +58,7 @@ Packet_t* Packet_construct(Packet_t* packet)
     PDR pdrs;
 
     // header
-    packet->hdr_len = pdr_sizeof((pdrproc_t)(Packet_pdr_packet_header), packet);
+    packet->hdr_len = (unsigned int)pdr_sizeof((pdrproc_t)(Packet_pdr_packet_header), packet);
     assert(packet->hdr_len);
 
     packet->hdr = (char*) malloc((size_t)packet->hdr_len);
@@ -147,7 +147,7 @@ Packet_t* new_Packet_t_2(unsigned int istream_id, int itag,
 }
 
 Packet_t* new_Packet_t_3(unsigned int ihdr_len, char* ihdr, 
-                         unsigned int ibuf_len, char* ibuf, 
+                         uint64_t ibuf_len, char* ibuf, 
                          Rank iinlet_rank)
 {
     PDR pdrs;
@@ -356,7 +356,7 @@ static const char* op2str( PDR* pdrs )
 bool_t Packet_pdr_packet_header( PDR * pdrs, Packet_t * pkt )
 {
     void *vtmp = NULL;
-    unsigned int vlen = 0;    
+    uint64_t vlen = 0;    
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
 
