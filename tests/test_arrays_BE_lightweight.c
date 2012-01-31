@@ -19,7 +19,8 @@ int main(int argc, char **argv)
     Stream_t * stream;
     Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
     Network_t * net;
-    int tag=0, recv_array_len=0;
+    int tag=0;
+    uint64_t recv_array_len=0;
     void * recv_array=NULL;
     int success=1;
     Rank my_rank;
