@@ -1230,7 +1230,7 @@ Stream* Network::new_Stream( Communicator *icomm,
 
     //get array of back-ends from communicator
     Rank* backends = icomm->get_Ranks();
-    unsigned num_pts = icomm->size();
+    uint64_t num_pts = icomm->size();
     if( num_pts == 0 ) {
         if( icomm != _bcast_communicator ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 

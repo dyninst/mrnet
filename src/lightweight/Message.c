@@ -46,7 +46,7 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     ssize_t readRet;
     NCBuf_t* ncbufs;
     Packet_t* new_packet;
-    uint32_t *packet_sizes;
+    uint64_t *packet_sizes;
     char *buf = NULL;
     
     mrn_dbg_func_begin();
@@ -95,7 +95,7 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     //
     
     //buf_len's value is hardcode, breaking pdr encapsulation barrier
-    buf_len = (sizeof(uint32_t) * num_buffers) + 1; // 1 byte pdr overhead
+    buf_len = (sizeof(uint64_t) * num_buffers) + 1; // 1 byte pdr overhead
 
     //mrn_dbg(5, mrn_printf(FLF, stderr, "Calling malloc(%u) ...\n", buf_len));
     buf = (char*) malloc( buf_len );
@@ -106,7 +106,7 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     }
 
     //mrn_dbg(5, mrn_printf(FLF, stderr, "Calling malloc ...\n"));
-    packet_sizes = (uint32_t*) malloc( sizeof(uint32_t) * (size_t)num_buffers );
+    packet_sizes = (uint64_t*) malloc( sizeof(uint64_t) * (size_t)num_buffers );
     if( packet_sizes == NULL ) {
         mrn_dbg(1, mrn_printf(FLF, stderr,
                               "malloc failed for packet_sizes\n"));
@@ -124,9 +124,9 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
         return -1;
     }
 
-    pdrmem_create(&pdrs, buf, (uint32_t)buf_len, op);
+    pdrmem_create(&pdrs, buf, (uint64_t)buf_len, op);
     if( ! pdr_vector(&pdrs, (char*)packet_sizes, num_buffers,
-                     (uint32_t) sizeof(uint32_t), (pdrproc_t)pdr_uint32) ) {
+                     (uint64_t) sizeof(uint64_t), (pdrproc_t)pdr_uint64) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "pdr_vector() failed\n"));
         error(ERR_PACKING, iinlet_rank, "pdr_uint32() failed\n");
         free(buf);
@@ -230,7 +230,7 @@ int Message_send(Message_t* msg_out, int sock_fd)
     char* buf = NULL;
 
     NCBuf_t ncbufs[2];
-    uint32_t packet_sizes[2];
+    uint64_t packet_sizes[2];
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Sending packets from message %p\n", msg_out));
 
@@ -291,13 +291,13 @@ int Message_send(Message_t* msg_out, int sock_fd)
     // packet size vector
     //
 
-    buf_len = (num_buffers * sizeof(uint32_t)) + 1; // 1 extra bytes overhead
+    buf_len = (num_buffers * sizeof(uint64_t)) + 1; // 1 extra bytes overhead
     buf = (char*) malloc( buf_len );
     assert(buf);
-    pdrmem_create(&pdrs, buf, (uint32_t)buf_len, op);
+    pdrmem_create(&pdrs, buf, (uint64_t)buf_len, op);
 
     if( ! pdr_vector(&pdrs, (char*)(packet_sizes), num_buffers, 
-                     (uint32_t) sizeof(uint32_t), (pdrproc_t) pdr_uint32) ) {
+                     (uint64_t) sizeof(uint64_t), (pdrproc_t) pdr_uint64) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "pdr_vector() failed\n"));
         free(buf);
         return -1;

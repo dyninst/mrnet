@@ -305,7 +305,7 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
         case STRING_ARRAY_T:
             cur_elem->val.p = va_arg( arg_list, char * );
             cur_elem->array_len =
-                ( uint32_t )va_arg( arg_list, uint32_t );
+                ( uint64_t )va_arg( arg_list, uint64_t );
             break;
         case STRING_T:
             cur_elem->val.p = va_arg( arg_list, char * );
@@ -441,7 +441,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
             }
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
-                           &( cur_elem->array_len ), INT32_MAX,
+                           &( cur_elem->array_len ), INT64_MAX,
                            (uint32_t) sizeof( uchar_t ), ( pdrproc_t ) pdr_uchar );
             break;
 
@@ -457,7 +457,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
             }
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
-                           &( cur_elem->array_len ), INT32_MAX,
+                           &( cur_elem->array_len ), INT64_MAX,
                            (uint32_t) sizeof( uint16_t ), ( pdrproc_t ) pdr_uint16 );
             break;
 
@@ -473,7 +473,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
             }
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
-                           &( cur_elem->array_len ), INT32_MAX,
+                           &( cur_elem->array_len ), INT64_MAX,
                            (uint32_t) sizeof( uint32_t ), ( pdrproc_t ) pdr_uint32 );
             break;
 
@@ -488,7 +488,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
                 cur_elem->val.p = NULL;
             }
             retval = pdr_array( pdrs, &cur_elem->val.p,
-                                &( cur_elem->array_len ), INT32_MAX,
+                                &( cur_elem->array_len ), INT64_MAX,
                                 (uint32_t) sizeof( uint64_t ), ( pdrproc_t ) pdr_uint64 );
             break;
 
@@ -505,7 +505,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
             }
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
-                           &( cur_elem->array_len ), INT32_MAX,
+                           &( cur_elem->array_len ), INT64_MAX,
                            (uint32_t) sizeof( float ), ( pdrproc_t ) pdr_float );
             break;
         case DOUBLE_ARRAY_T:
@@ -514,7 +514,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
             }
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
-                           &( cur_elem->array_len ), INT32_MAX,
+                           &( cur_elem->array_len ), INT64_MAX,
                            (uint32_t) sizeof( double ), ( pdrproc_t ) pdr_double );
             break;
         case STRING_ARRAY_T:
@@ -522,7 +522,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
                 cur_elem->val.p = NULL;
             }
             retval = pdr_array( pdrs, &cur_elem->val.p,
-                                &(cur_elem->array_len), INT32_MAX,
+                                &(cur_elem->array_len), INT64_MAX,
                                 (uint32_t) sizeof(char*),
                                 (pdrproc_t)pdr_wrapstring );
             break;
@@ -707,9 +707,9 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
             else
                 tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
@@ -726,9 +726,9 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
             else
                 tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
@@ -745,9 +745,9 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
             else
                 tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
@@ -764,9 +764,9 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
             else
                 tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list,uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
@@ -782,9 +782,9 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
             else
                 tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
@@ -800,9 +800,9 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
             else
                 tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
