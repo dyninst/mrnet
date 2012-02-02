@@ -36,6 +36,10 @@ using namespace XPlat;
 
 static XPlat::Mutex mrn_printf_mutex;
 
+
+extern char* MRN_DEBUG_LOG_DIRECTORY;
+static FILE* mrn_printf_fp = NULL;
+
 namespace MRN
 {
 
@@ -473,6 +477,11 @@ int getPortFromSocket( int sock, Port *port )
     *port = ntohs( local_addr.sin_port );
     return 0;
 }
+
+void mrn_printf_init( FILE* ifp )
+{
+    mrn_printf_fp = ifp;
+} 
 
 FILE* mrn_printf_setup( int rank, node_type_t type )
 {
