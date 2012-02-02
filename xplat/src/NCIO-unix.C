@@ -112,15 +112,17 @@ NCSend( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
      
             // i is now number fully sent, try to send remaining bufs in currIov
             if( i < numIovBufs ) {
-                 
-		wret = NCsend( s, currIov[i].iov_base, currIov[i].iov_len  );
-                if( wret < 0 ) {
-                    free( currIov );
-                    fprintf(stderr, "Error: XPlat::NCSend - fallback writev() : %s\n", 
-                            strerror(err));
-                    return ret;
+                for (;i < numIovBufs; i++)
+                { 
+                    wret = NCsend( s, currIov[i].iov_base, currIov[i].iov_len  );
+                    if( wret < 0 ) {
+                        free( currIov );
+                        fprintf(stderr, "Error: XPlat::NCSend - fallback writev() : %s\n", 
+                                strerror(err));
+                        return ret;
+                    }   
+                    ret += wret; 
                 }
-                ret += wret;    
             }
         }
     }
