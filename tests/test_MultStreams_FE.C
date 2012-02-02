@@ -97,7 +97,7 @@ int test_alltypes( Network * net, std::vector< Stream * > streams, bool anonymou
     int32_t send_uint=17, recv_uint=0;
     int64_t send_long=-17, recv_long=0;
     int64_t send_ulong=17, recv_ulong=0;
-    float send_float=123.23412, recv_float=0;
+    float send_float=(float)123.23412, recv_float=0;
     double send_double=123.23412, recv_double=0;
     char *send_string=strdup("Test String"), *recv_string=0;
 

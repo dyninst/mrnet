@@ -12,8 +12,8 @@
 #include <map>
 #include <string>
 #include <vector>
-
 #ifndef os_windows
+#include <sys/time.h>
 #include <inttypes.h> /* integer printf format macros */ 
 #endif
 
@@ -48,6 +48,8 @@ class PerfDataMgr {
     perfdata_t get_DataValue( perfdata_metric_t, perfdata_context_t );
     void get_MemData(perfdata_metric_t);
 
+    void add_PacketTimers ( PacketPtr pkt);
+    
  private:
     // bitfield of enabled metrics per context
     char active_metrics[PERFDATA_MAX_CTX];

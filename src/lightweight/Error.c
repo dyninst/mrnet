@@ -20,7 +20,7 @@ ErrorDef errors[] = {
     { ERR_SYSTEM, ERR_ERR, ERR_ABORT, "System/library call failure"}
 };
 
-void error(ErrorCode e, Rank r, const char* fmt, ... )
+void error(ErrorCode e, Rank UNUSED(r), const char* fmt, ... )
 {
     static char buf[1024];
 

@@ -6,6 +6,15 @@
 #ifndef __PDR_HEADER__
 #define __PDR_HEADER__
 
+
+#ifndef UNUSED
+#if defined(__GNUC__)
+#   define UNUSED(x) x __attribute__((unused)) /* UNUSED: x */ 
+#else
+#   define UNUSED(x) x
+#endif
+#endif
+
 #if !defined (__STDC_LIMIT_MACROS)
 #  define __STDC_LIMIT_MACROS
 #endif
@@ -22,6 +31,12 @@
 
 #include <sys/types.h>
 
+#if defined(__cplusplus)
+#include "mrnet/Types.h"
+#else
+#include "mrnet_lightweight/Types.h"
+#endif
+
 #ifndef os_windows
 # include "config.h"
 # if HAVE_INTTYPES_H
@@ -31,7 +46,19 @@
 #   include <stdint.h>
 #  endif
 # endif
+#else
+#define inline __inline
 #endif // ifndef os_windows
+
+#if !defined(SIZEOF_CHAR)
+#  define SIZEOF_CHAR sizeof(char)
+#endif
+#if !defined(SIZEOF_FLOAT)
+#  define SIZEOF_FLOAT sizeof(float)
+#endif
+#if !defined(SIZEOF_DOUBLE)
+#  define SIZEOF_DOUBLE sizeof(double)
+#endif
 
 #ifndef bool_t
 # define bool_t int32_t
@@ -99,8 +126,8 @@ struct pdr_ops {
     bool_t  (*getfloat)(PDR *pdrs, float *fp);
     bool_t  (*putdouble)(PDR *pdrs, double *dp);
     bool_t  (*getdouble)(PDR *pdrs, double *dp);
-    bool_t  (*putbytes)(PDR *pdrs, char *, uint32_t);
-    bool_t  (*getbytes)(PDR *pdrs, char *, uint32_t);
+    bool_t  (*putbytes)(PDR *pdrs, char *, uint64_t);
+    bool_t  (*getbytes)(PDR *pdrs, char *, uint64_t);
     bool_t  (*setpos)(PDR *pdrs, uint32_t ip);
     uint32_t (*getpos)(PDR *pdrs);
     int32_t* (*pinline)(PDR *pdrs, int32_t ip);
@@ -113,7 +140,7 @@ struct PDR {
 
     char *   cur;      /* pointer to private data */
     char *   base;     /* private used for position info */
-    uint32_t space;    /* extra private word */
+    uint64_t space;    /* extra private word */
 };
 
 /*
@@ -146,9 +173,9 @@ extern bool_t   pdr_double(PDR *pdrs, double *ip);
 extern bool_t   pdr_bool(PDR *pdrs, bool_t *bp);
 extern bool_t   pdr_enum(PDR *pdrs, enum_t *bp);
 
-extern bool_t   pdr_opaque(PDR *pdrs, char * cp, uint32_t cnt);
-extern bool_t   pdr_bytes(PDR *pdrs, char **cpp, uint32_t *sizep,
-                          uint32_t maxsize);
+extern bool_t   pdr_opaque(PDR *pdrs, char * cp, uint64_t cnt);
+extern bool_t   pdr_bytes(PDR *pdrs, char **cpp, uint64_t *sizep,
+                          uint64_t maxsize);
 extern bool_t   pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize);
 extern bool_t   pdr_wrapstring(PDR *pdrs, char **cpp);
 extern bool_t   pdr_reference(PDR *pdrs, char * *pp, uint32_t size,
@@ -156,17 +183,17 @@ extern bool_t   pdr_reference(PDR *pdrs, char * *pp, uint32_t size,
 extern bool_t   pdr_pointer(PDR *pdrs, char **objpp, uint32_t obj_size,
                             pdrproc_t pdr_obj);
 
-extern bool_t   pdr_array(PDR *pdrs, void **addrp, uint32_t *sizep,
-                          uint32_t maxsize, uint32_t elsize, pdrproc_t elproc);
-extern bool_t   pdr_vector(PDR *pdrs, char *basep, uint32_t nelem,
-                          uint32_t elemsize, pdrproc_t pdr_elem);
+extern bool_t   pdr_array(PDR *pdrs, void **addrp, uint64_t *sizep,
+                          uint64_t maxsize, uint32_t elsize, pdrproc_t elproc);
+extern bool_t   pdr_vector(PDR *pdrs, char *basep, uint64_t nelem,
+                          uint64_t elemsize, pdrproc_t pdr_elem);
 
 
 /*
  * These are the public routines for the various implementations of
  * pdr streams.
  */
-extern void pdrmem_create(PDR *pdrs, char * addr, uint32_t size,
+extern void pdrmem_create(PDR *pdrs, char * addr, uint64_t size,
                           enum pdr_op op);          /* PDR using memory buffers */
 extern void pdr_free(pdrproc_t proc, char *objp);
 
@@ -174,7 +201,7 @@ uint32_t pdr_getpos(PDR *pdrs);
 bool_t   pdr_setpos(PDR *pdrs, uint32_t pos);
 int32_t  pdr_inline(PDR *pdrs, int32_t pos);
 
-extern uint32_t pdr_sizeof (pdrproc_t, void *);
+extern uint64_t pdr_sizeof (pdrproc_t, void *);
 
 #ifdef __cplusplus
 } /* extern C */

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="libmrnet"
 	ProjectGUID="{87F3491E-E79B-450B-AD1B-AB68D2594AAB}"
 	RootNamespace="libmrnet"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -24,12 +25,12 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description="Copying config.h into src/"
-				CommandLine="cd&#x0D;&#x0A;copy conf\config.h src"
+				CommandLine=""
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="cp ./conf/config.h src/"
+				Description=""
+				CommandLine=""
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -42,9 +43,11 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/D_CRT_SECURE_NO_WARNINGS"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;/lib/i386-unknown-nt4.0&quot;;.;&quot;C:\Program Files\Microsoft Visual Studio 8\VC\include&quot;;xplat/include;src;include"
-				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x0500;WIN32;_LIB"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 9.0\VC\include&quot;;&quot;/lib/i386-unknown-nt4.0&quot;;.;../../xplat/include;../../src;../../include;../../external/boost/include"
+				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB"
+				GeneratePreprocessedFile="0"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -52,7 +55,7 @@
 				ObjectFile="$(IntDir)/"
 				ProgramDataBaseFileName=".\./"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -86,9 +89,9 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			OutputDirectory="./lib/i386-unknown-nt4.0"
+			IntermediateDirectory="./obj/i386-unknown-nt4.0"
+			ConfigurationType="4"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -109,9 +112,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				RuntimeLibrary="2"
+				AdditionalOptions="/D_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 9.0\VC\include&quot;;&quot;/lib/i386-unknown-nt4.0&quot;;.;../../xplat/include;../../src;../../include;../../external/boost/include"
+				PreprocessorDefinitions="os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -124,17 +132,11 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				GenerateDebugInformation="true"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/libmrnet.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -144,12 +146,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -165,7 +161,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\src\BackEndNode.C"
+				RelativePath="..\..\src\BackEndNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -175,9 +171,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\byte_order.c"
+				RelativePath="..\..\src\byte_order.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -187,9 +191,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\ChildNode.C"
+				RelativePath="..\..\src\ChildNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -199,9 +211,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\CommunicationNode.C"
+				RelativePath="..\..\src\CommunicationNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -211,9 +231,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\CommunicationNodeMain.C"
+				RelativePath="..\..\src\CommunicationNodeMain.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -223,9 +251,38 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\Communicator.C"
+				RelativePath="..\..\src\Communicator.C"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						GeneratePreprocessedFile="0"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\src\DataElement.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -235,9 +292,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\DataElement.C"
+				RelativePath="..\..\src\Error.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -247,9 +312,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\Error.C"
+				RelativePath="..\..\src\Event.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -259,12 +332,8 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\src\Event.C"
-				>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -273,7 +342,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\EventDetector.C"
+				RelativePath="..\..\src\EventDetector.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -284,9 +353,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\FailureManagement.C"
+				RelativePath="..\..\src\FailureManagement.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -297,9 +374,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\Filter.C"
+				RelativePath="..\..\src\Filter.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -309,9 +394,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\FilterDefinitions.C"
+				RelativePath="..\..\src\FilterDefinitions.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -321,9 +414,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\FrontEndNode.C"
+				RelativePath="..\..\src\FrontEndNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -333,9 +434,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\InternalNode.C"
+				RelativePath="..\..\src\InternalNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -345,9 +454,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\Message.C"
+				RelativePath="..\..\src\Message.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -357,9 +474,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\Network.C"
+				RelativePath="..\..\src\Network.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -369,9 +494,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\NetworkTopology.C"
+				RelativePath="..\..\src\NetworkTopology.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -381,9 +514,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\Packet.C"
+				RelativePath="..\..\src\Packet.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -393,9 +534,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\ParadynFilterDefinitions.C"
+				RelativePath="..\..\src\ParadynFilterDefinitions.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -405,9 +554,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\ParentNode.C"
+				RelativePath="..\..\src\ParentNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -417,9 +574,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\ParsedGraph.C"
+				RelativePath="..\..\src\ParsedGraph.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -429,9 +594,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\parser.tab.C"
+				RelativePath="..\..\src\parser.tab.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -441,9 +614,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\pdr.c"
+				RelativePath="..\..\src\pdr.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -453,9 +634,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\pdr_mem.c"
+				RelativePath="..\..\src\pdr_mem.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -465,9 +654,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\pdr_sizeof.c"
+				RelativePath="..\..\src\pdr_sizeof.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -477,9 +674,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\PeerNode.C"
+				RelativePath="..\..\src\PeerNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -489,9 +694,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\PerfDataEvent.C"
+				RelativePath="..\..\src\PerfDataEvent.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -501,9 +714,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\PerfDataSysEvent_none.C"
+				RelativePath="..\..\src\PerfDataSysEvent_none.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -513,9 +734,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\Router.C"
+				RelativePath="..\..\src\Router.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -525,9 +754,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\RSHBackEndNode.C"
+				RelativePath="..\..\src\RSHBackEndNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -537,9 +774,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\RSHChildNode.C"
+				RelativePath="..\..\src\RSHChildNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -549,9 +794,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\RSHFrontEndNode.C"
+				RelativePath="..\..\src\RSHFrontEndNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -561,9 +814,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\RSHInternalNode.C"
+				RelativePath="..\..\src\RSHInternalNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -573,9 +834,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\RSHNetwork.C"
+				RelativePath="..\..\src\RSHNetwork.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -585,9 +854,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\RSHParentNode.C"
+				RelativePath="..\..\src\RSHParentNode.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -597,9 +874,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\scanner.C"
+				RelativePath="..\..\src\scanner.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -609,9 +894,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\SerialGraph.C"
+				RelativePath="..\..\src\SerialGraph.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -621,9 +914,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\Stream.C"
+				RelativePath="..\..\src\Stream.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -633,9 +934,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\TimeKeeper.C"
+				RelativePath="..\..\src\TimeKeeper.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -645,9 +954,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\Tree.C"
+				RelativePath="..\..\src\Tree.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -657,9 +974,17 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\utils.C"
+				RelativePath="..\..\src\utils.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -667,6 +992,14 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalIncludeDirectories="xplat/include"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 						CompileAs="2"
 					/>
 				</FileConfiguration>
@@ -678,187 +1011,187 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\src\BackEndNode.h"
+				RelativePath="..\..\src\BackEndNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\byte_order.h"
+				RelativePath="..\..\src\byte_order.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\ChildNode.h"
+				RelativePath="..\..\src\ChildNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\CommunicationNode.h"
+				RelativePath="..\..\include\mrnet\CommunicationNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\Communicator.h"
+				RelativePath="..\..\include\mrnet\Communicator.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\config.h"
+				RelativePath="..\..\src\config.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\DataElement.h"
+				RelativePath="..\..\include\mrnet\DataElement.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\Error.h"
+				RelativePath="..\..\include\mrnet\Error.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\Event.h"
+				RelativePath="..\..\include\mrnet\Event.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\EventDetector.h"
+				RelativePath="..\..\src\EventDetector.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\FailureManagement.h"
+				RelativePath="..\..\src\FailureManagement.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Filter.h"
+				RelativePath="..\..\src\Filter.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\FilterDefinitions.h"
+				RelativePath="..\..\src\FilterDefinitions.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\FilterIds.h"
+				RelativePath="..\..\include\mrnet\FilterIds.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\FrontEndNode.h"
+				RelativePath="..\..\src\FrontEndNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\InternalNode.h"
+				RelativePath="..\..\src\InternalNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Message.h"
+				RelativePath="..\..\src\Message.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\MRNet.h"
+				RelativePath="..\..\include\mrnet\MRNet.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\Network.h"
+				RelativePath="..\..\include\mrnet\Network.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\NetworkGraph.h"
+				RelativePath="..\..\src\NetworkGraph.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\NetworkTopology.h"
+				RelativePath="..\..\include\mrnet\NetworkTopology.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\Packet.h"
+				RelativePath="..\..\include\mrnet\Packet.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\ParadynFilterDefinitions.h"
+				RelativePath="..\..\src\ParadynFilterDefinitions.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\ParadynFilterIds.h"
+				RelativePath="..\..\include\mrnet\ParadynFilterIds.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\ParentNode.h"
+				RelativePath="..\..\src\ParentNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\ParsedGraph.h"
+				RelativePath="..\..\src\ParsedGraph.h"
 				>
 			</File>
 			<File
-				RelativePath=".\obj\i386-unknown-nt4.0\parser.tab.h"
+				RelativePath="..\..\src\parser.tab.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\pdr.h"
+				RelativePath="..\..\src\pdr.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\pdr_mem.h"
+				RelativePath="..\..\src\pdr_mem.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\PeerNode.h"
+				RelativePath="..\..\src\PeerNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\PerfDataEvent.h"
+				RelativePath="..\..\src\PerfDataEvent.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\PerfDataSysEvent.h"
+				RelativePath="..\..\src\PerfDataSysEvent.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Protocol.h"
+				RelativePath="..\..\src\Protocol.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Router.h"
+				RelativePath="..\..\src\Router.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\RSHBackEndNode.h"
+				RelativePath="..\..\src\RSHBackEndNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\RSHChildNode.h"
+				RelativePath="..\..\src\RSHChildNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\RSHFrontEndNode.h"
+				RelativePath="..\..\src\RSHFrontEndNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\RSHInternalNode.h"
+				RelativePath="..\..\src\RSHInternalNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\RSHNetwork.h"
+				RelativePath="..\..\src\RSHNetwork.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\RSHParentNode.h"
+				RelativePath="..\..\src\RSHParentNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\SerialGraph.h"
+				RelativePath="..\..\src\SerialGraph.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\Stream.h"
+				RelativePath="..\..\include\mrnet\Stream.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\TimeKeeper.h"
+				RelativePath="..\..\src\TimeKeeper.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\Tree.h"
+				RelativePath="..\..\include\mrnet\Tree.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\mrnet\Types.h"
+				RelativePath="..\..\include\mrnet\Types.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\utils.h"
+				RelativePath="..\..\src\utils.h"
 				>
 			</File>
 		</Filter>

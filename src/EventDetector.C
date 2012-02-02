@@ -40,9 +40,8 @@ bool EventDetector::stop( )
             // send KILL_SELF message to EDT on listening port
             int edt_port, sock_fd=0;
             string edt_host;
-            Message msg;
+            Message msg(_network);
             PacketPtr packet( new Packet(CTL_STRM_ID, PROT_KILL_SELF, NULL) );
-
             edt_host = _network->get_LocalHostName();
             edt_port = _network->get_LocalPort();
             mrn_dbg(3, mrn_printf( FLF, stderr, "Telling EDT(%s:%d) to go away\n",
@@ -155,7 +154,7 @@ bool EventDetector::add_FD( int ifd )
 
 bool EventDetector::remove_FD( int ifd )
 {
-    int new_max = -1;
+    XPlat::XPSOCKET new_max = -1;
     unsigned int i, j;
 
     mrn_dbg_func_begin();
@@ -190,8 +189,8 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
     int retval, err;
     fd_set readfds;
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr,
-                           "waiting on %u fds\n", _num_pollfds) );
+//    mrn_dbg( 5, mrn_printf(FLF, stderr,
+//                           "waiting on %u fds\n", _num_pollfds) );
   
 #ifdef os_windows
     use_poll=false;
@@ -200,8 +199,8 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
 
         retval = poll( _pollfds, _num_pollfds, timeout_ms );
         err = errno;
-        mrn_dbg( 5, mrn_printf(FLF, stderr,
-                               "poll() returned %d\n", retval) );
+//        mrn_dbg( 5, mrn_printf(FLF, stderr,
+//                               "poll() returned %d\n", retval) );
     }
     else { // select
 #endif
@@ -222,8 +221,8 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
 
         retval = select( _max_fd+1, &readfds, NULL, NULL, tvp );
         err = errno;
-        mrn_dbg( 5, mrn_printf(FLF, stderr,
-                               "select() returned %d\n", retval) );
+//        mrn_dbg( 5, mrn_printf(FLF, stderr,
+//                               "select() returned %d\n", retval) );
 #ifndef os_windows
     }
 #endif
@@ -398,7 +397,7 @@ void * EventDetector::main( void* iarg )
     //   - PROT_NEW_CHILD_DATA_CONNECTION (a new child peer for data)
     //   - socket failures
     ParentNode* p;
-    Message msg;
+    Message msg(net);
     list< PacketPtr > packets;
     mrn_dbg( 5, mrn_printf(FLF, stderr, "starting main loop\n"));
     while( true ) {
@@ -649,7 +648,7 @@ int EventDetector::init_NewChildFDConnection( PeerNodePtr iparent_node )
 
     PacketPtr packet( new Packet( CTL_STRM_ID, PROT_NEW_CHILD_FD_CONNECTION, "%s %uhd %ud",
                                   lhostname.c_str(), lport, lrank ) );
-    Message msg;
+    Message msg(_network);
     msg.add_Packet( packet );
     if( msg.send( iparent_node->get_EventSocketFd() ) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Message.send failed\n" ));
@@ -703,11 +702,11 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
             Port dummy_port = UnknownPort;
             char* dummy_host = strdup("NULL"); // ugh, this needs to be fixed
             s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                              &type, 1, 
-                              &my_rank, 1, 
-                              &ifailed_rank, 1, 
+                              &type, uint64_t(1), 
+                              &my_rank, uint64_t(1), 
+                              &ifailed_rank, uint64_t(1), 
                               &dummy_host, 1, 
-                              &dummy_port, 1 );
+                              &dummy_port, uint64_t(1) );
             free( dummy_host );
         }
     }
@@ -863,6 +862,7 @@ int EventDetector::recover_FromParentFailure( int& new_parent_sock )
     }
     
     Message msg;
+    msg.setNetwork(_network);
     msg.add_Packet( packet );
     if( msg.send( sock_fd ) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Message.send failed\n" ));

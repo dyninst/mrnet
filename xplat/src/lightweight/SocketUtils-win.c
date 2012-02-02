@@ -3,16 +3,13 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-// $Id: Types-unix.h,v 1.5 2008/10/09 19:53:56 mjbrim Exp $
-#ifndef XPLAT_TYPES_UNIX_H
-#define XPLAT_TYPES_UNIX_H
+// $Id: SocketUtils-win.c,v 3.1 2012/01/20 17:41:41 samanas Exp $
+#include <winsock2.h>
+#include "xplat_lightweight/SocketUtils.h"
 
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
 
-// Printf macro for size_t types
-#define PRIszt "zu"
-#define PRIsszt "zd"
+int XPlat_SocketUtils_Close( int sock )
+{
+    return closesocket( (SOCKET)sock );
+}
 
-#endif // XPLAT_TYPES_UNIX_H

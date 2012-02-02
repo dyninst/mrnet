@@ -45,6 +45,16 @@ void Packet::encode_pdr_header(void)
     data_sync.Unlock();
 }
 
+void Packet::set_OutgoingPktCount(int size)
+{
+    _out_packet_count = size;
+}
+
+void Packet::set_IncommingPktCount(int size)
+{
+    _inc_packet_count = size;
+}
+
 void Packet::encode_pdr_data(void)
 {
     data_sync.Lock();
@@ -105,7 +115,7 @@ void Packet::decode_pdr_data(void) const
     pdrmem_create( &pdrs, buf, buf_len, PDR_DECODE );
 
     if( ! Packet::pdr_packet_data(&pdrs, me) ) {
-        error( ERR_PACKING, UnknownRank, "pdr_packet_data() failed" );
+        error( ERR_PACKING, UnknownRank, "pdr_packet_data() decode failed" );
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
@@ -122,11 +132,14 @@ Packet::Packet( unsigned int istream_id, int itag,
       fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0),
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(false)
-{
+{    
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
     //encode_pdr_header(); 
 
+    _inc_packet_count= 1;
+    _out_packet_count = 1;
+    _perf_data_timer = new Timer[PERFDATA_PKT_TIMERS_MAX];
     if( ifmt_str != NULL ) {
 
         fmt_str = strdup( ifmt_str );
@@ -152,7 +165,10 @@ Packet::Packet( const char *ifmt_str, va_list idata,
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
     //encode_pdr_header();
-
+    _inc_packet_count= 1;
+    _out_packet_count = 1;   
+    _perf_data_timer =  new Timer [PERFDATA_PKT_TIMERS_MAX];
+    
     if( ifmt_str != NULL ) {
 
         fmt_str = strdup( ifmt_str );
@@ -175,7 +191,10 @@ Packet::Packet( unsigned int istream_id, int itag,
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
     //encode_pdr_header();
-
+    _inc_packet_count= 1;
+    _out_packet_count = 1;
+    _perf_data_timer =  new Timer [PERFDATA_PKT_TIMERS_MAX];
+    
     if( ifmt_str != NULL ) {
 
         fmt_str = strdup( ifmt_str );
@@ -200,7 +219,10 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
     //encode_pdr_header();
-
+    _inc_packet_count= 1;
+    _out_packet_count = 1;
+    _perf_data_timer =  new Timer [PERFDATA_PKT_TIMERS_MAX];
+    
     if( ifmt_str != NULL ) {
 
         fmt_str = strdup( ifmt_str );
@@ -223,7 +245,10 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
     //encode_pdr_header();
-
+    _inc_packet_count= 1;
+    _out_packet_count = 1;
+    _perf_data_timer =  new Timer [PERFDATA_PKT_TIMERS_MAX];
+    
     if( ifmt_str != NULL ) {
 
         fmt_str = strdup( ifmt_str );
@@ -237,15 +262,18 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
 }
 
 Packet::Packet( unsigned int ihdr_len, char *ihdr, 
-                unsigned int ibuf_len, char *ibuf, 
+                uint64_t ibuf_len, char *ibuf, 
                 Rank iinlet_rank )
     : stream_id((unsigned int)-1), tag(-1), src_rank(UnknownRank), 
       fmt_str(NULL), hdr(ihdr), hdr_len(ihdr_len), buf(ibuf), buf_len(ibuf_len), 
       inlet_rank(iinlet_rank), dest_arr(NULL), dest_arr_len(0), 
       destroy_data(true)
 {
+        _inc_packet_count= 1;
+        _out_packet_count = 1;
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Packet(%p): hdr_len=%u buf_len=%u\n",
                            this, hdr_len, buf_len) );
+    _perf_data_timer =  new Timer [PERFDATA_PKT_TIMERS_MAX];
     decode_pdr_header();
     decode_pdr_data();
 }
@@ -253,6 +281,10 @@ Packet::Packet( unsigned int ihdr_len, char *ihdr,
 Packet::~Packet()
 {
     data_sync.Lock();
+    if (_perf_data_timer != NULL)
+    {
+        delete [] _perf_data_timer;
+    }
     if( fmt_str != NULL ){
         free( fmt_str );
         fmt_str = NULL;
@@ -384,10 +416,10 @@ const char* Packet::get_Buffer(void) const
     return ret;
 }
 
-unsigned int Packet::get_BufferLen(void) const
+uint64_t Packet::get_BufferLen(void) const
 {
     data_sync.Lock();
-    unsigned int ret = buf_len;
+    uint64_t ret = buf_len;
     data_sync.Unlock();
     return ret;
 }
@@ -495,7 +527,7 @@ static const char* op2str( PDR* pdrs )
     return NULL;
 } 
 
-bool Packet::pdr_packet_header( PDR * pdrs, Packet * pkt )
+int Packet::pdr_packet_header( PDR * pdrs, Packet * pkt )
 {
     mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
 
@@ -503,33 +535,33 @@ bool Packet::pdr_packet_header( PDR * pdrs, Packet * pkt )
 
     if( pdr_uint32( pdrs, &( pkt->stream_id ) ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint16() failed\n" ));
-        return false;
+        return FALSE;
     }
     if( pdr_int32( pdrs, &( pkt->tag ) ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_int32() failed\n" ));
-        return false;
+        return FALSE;
     }
     if( pdr_uint32( pdrs, &( pkt->src_rank ) ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint32() failed\n" ));
-        return false;
+        return FALSE;
     }
     if( pdr_wrapstring( pdrs, &( pkt->fmt_str ) ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_wrapstring() failed\n" ));
-        return false;
+        return FALSE;
     }
     Rank** rank_arr = &(pkt->dest_arr);
     if( pdr_array( pdrs, (void**)rank_arr, &( pkt->dest_arr_len ), 
-                   INT32_MAX, sizeof(uint32_t), 
+                   UINT64_MAX, sizeof(uint32_t), 
                    (pdrproc_t) pdr_uint32 ) == FALSE ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_array() failed\n" ));
-        return false;
+        return FALSE;
     }
 
     mrn_dbg_func_end();
-    return true;
+    return TRUE;
 }
 
-bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
+int Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
 {
     mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
 
@@ -537,13 +569,12 @@ bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
     if( fmtstr == NULL ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr,
                     "No data in message. just header info\n" ));
-        return true;
+        return TRUE;
     }
 
     unsigned int i;
     bool_t retval = 0;
     DataElement* cur_elem = NULL;
-
     std::string fmt = fmtstr;
     XPlat::Tokenizer tok( fmt );
     std::string::size_type curLen;
@@ -579,10 +610,12 @@ bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
             if( pdrs->p_op == PDR_DECODE ) {
                 cur_elem->val.p = NULL;
             }
+           // tmp_char = (char *)(cur_elem->val.p);
             retval =
-                pdr_array( pdrs, &cur_elem->val.p,
-                           &( cur_elem->array_len ), INT32_MAX,
-                           sizeof(uchar_t), (pdrproc_t) pdr_uchar );
+                pdr_bytes( 
+                pdrs, 
+                (char**)&(cur_elem->val.p),
+                          &( cur_elem->array_len ), UINT64_MAX);
             break;
 
         case INT16_T:
@@ -613,7 +646,7 @@ bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
             }
             retval =
                 pdr_array( pdrs, &cur_elem->val.p,
-                           &( cur_elem->array_len ), INT32_MAX,
+                           &( cur_elem->array_len ), UINT64_MAX,
                            sizeof(uint32_t), (pdrproc_t) pdr_uint32 );
             break;
 
@@ -684,7 +717,7 @@ bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
             mrn_dbg( 1, mrn_printf(FLF, stderr,
                         "pdr_xxx() failed for elem[%d] of type %d\n", 
                                    i, cur_elem->type) );
-            return false;
+            return FALSE;
         }
         if( pdrs->p_op == PDR_DECODE ) {
             pkt->data_elements.push_back( cur_elem );
@@ -695,7 +728,7 @@ bool Packet::pdr_packet_data( PDR * pdrs, Packet * pkt )
     }
 
     mrn_dbg_func_end();
-    return true;
+    return TRUE;
 }
 
 int Packet::ArgList2DataElementArray( va_list arg_list )
@@ -755,20 +788,25 @@ int Packet::ArgList2DataElementArray( va_list arg_list )
             cur_elem->val.lf = ( double )va_arg( arg_list, double );
             break;
 
-        case CHAR_ARRAY_T:
-        case UCHAR_ARRAY_T:
-        case INT32_ARRAY_T:
-        case UINT32_ARRAY_T:
-        case INT16_ARRAY_T:
-        case UINT16_ARRAY_T:
-        case INT64_ARRAY_T:
-        case UINT64_ARRAY_T:
-        case FLOAT_ARRAY_T:
-        case DOUBLE_ARRAY_T:
         case STRING_ARRAY_T:
             cur_elem->val.p = va_arg( arg_list, char * );
             cur_elem->array_len =
                 ( uint32_t )va_arg( arg_list, uint32_t );
+            break;
+
+        case INT16_ARRAY_T:
+        case UINT16_ARRAY_T:
+        case INT32_ARRAY_T:
+        case UINT32_ARRAY_T:
+        case INT64_ARRAY_T:
+        case UINT64_ARRAY_T:
+        case CHAR_ARRAY_T:
+        case UCHAR_ARRAY_T:
+        case FLOAT_ARRAY_T:
+        case DOUBLE_ARRAY_T:
+            cur_elem->val.p = va_arg( arg_list, char * );
+            cur_elem->array_len =
+                ( uint64_t )va_arg( arg_list, uint64_t );
             break;
         case STRING_T:
             cur_elem->val.p = va_arg( arg_list, char * );
@@ -860,7 +898,7 @@ int Packet::ArgVec2DataElementArray( const void **idata )
         case DOUBLE_ARRAY_T:
         case STRING_ARRAY_T:
             cur_elem->val.p = const_cast<void*>( idata[data_ndx++] );
-            cur_elem->array_len = *( uint32_t* )idata[data_ndx];
+            cur_elem->array_len = *( uint64_t* )idata[data_ndx];
             break;
         case STRING_T:
             cur_elem->val.p = const_cast<void*>( idata[data_ndx] );
@@ -886,7 +924,8 @@ int Packet::ArgVec2DataElementArray( const void **idata )
 int Packet::DataElementArray2ArgList( va_list arg_list ) const
 {
     mrn_dbg_func_begin();
-    int i = 0, array_len = 0;
+    int i = 0; 
+    uint64_t array_len = 0;
     const DataElement * cur_elem=NULL;
     void *tmp_ptr, *tmp_array;
 
@@ -963,6 +1002,7 @@ int Packet::DataElementArray2ArgList( va_list arg_list ) const
         }
 
         case STRING_T: {
+            //MEMORY LEAK HERE
             const char** cpp = ( const char ** ) va_arg( arg_list, const char ** );
             *cpp = strdup( (const char *) cur_elem->val.p );
             assert( *cpp != NULL );
@@ -982,9 +1022,9 @@ int Packet::DataElementArray2ArgList( va_list arg_list ) const
             else
                tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
@@ -1001,9 +1041,9 @@ int Packet::DataElementArray2ArgList( va_list arg_list ) const
             else
                tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
@@ -1020,9 +1060,9 @@ int Packet::DataElementArray2ArgList( va_list arg_list ) const
             else
                tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
@@ -1039,9 +1079,9 @@ int Packet::DataElementArray2ArgList( va_list arg_list ) const
             else
                tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
@@ -1057,9 +1097,9 @@ int Packet::DataElementArray2ArgList( va_list arg_list ) const
             else
                tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
@@ -1075,9 +1115,9 @@ int Packet::DataElementArray2ArgList( va_list arg_list ) const
             else
                tmp_array = NULL;
             *( ( const void ** )tmp_ptr ) = tmp_array;
-            tmp_ptr = ( void * )va_arg( arg_list, int * );
+            tmp_ptr = ( void * )va_arg( arg_list, uint64_t * );
             assert( tmp_ptr != NULL );
-            *( ( int * )tmp_ptr ) = cur_elem->array_len;
+            *( ( uint64_t * )tmp_ptr ) = cur_elem->array_len;
             break;
         }
 
@@ -1346,5 +1386,39 @@ int Packet::DataElementArray2ArgVec( void **odata ) const
     mrn_dbg_func_end();
     return 0;
 }
+#include <time.h>
+void Packet::start_Timer (perfdata_pkt_timers_t context)
+{
+    _perf_data_timer[context].start();
+}
 
+void Packet::stop_Timer (perfdata_pkt_timers_t context)
+{
+    _perf_data_timer[context].stop();
+}
+
+void Packet::set_Timer (perfdata_pkt_timers_t context, Timer  t)
+{
+    _perf_data_timer[context] = t;
+}
+
+double Packet::get_ElapsedTime (perfdata_pkt_timers_t context)
+{
+    if (context == PERFDATA_PKT_TIMERS_RECV)
+        return _perf_data_timer[context].get_latency_secs() / _inc_packet_count;
+    if (context == PERFDATA_PKT_TIMERS_SEND)
+        return _perf_data_timer[context].get_latency_secs() / _out_packet_count;
+    if (context == PERFDATA_PKT_TIMERS_RECV_TO_FILTER)
+        return _perf_data_timer[context].get_latency_secs() +  
+                _perf_data_timer[PERFDATA_PKT_TIMERS_RECV].get_latency_secs() / _inc_packet_count;
+    if (context == PERFDATA_PKT_TIMERS_FILTER_TO_SEND)
+        return _perf_data_timer[context].get_latency_secs() +  
+                _perf_data_timer[PERFDATA_PKT_TIMERS_SEND].get_latency_secs() / _out_packet_count;
+
+    return _perf_data_timer[context].get_latency_secs();
+}
 }                               /* namespace MRN */
+
+
+
+

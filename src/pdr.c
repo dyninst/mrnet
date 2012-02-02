@@ -43,7 +43,7 @@ void pdr_free(pdrproc_t proc, char *objp)
     (*proc)(&x, objp);
 }
 
-bool_t pdr_void(PDR *pdrs,  char *cp)
+bool_t pdr_void(PDR * UNUSED(pdrs),  char * UNUSED(cp))
 {
     return (TRUE);
 }
@@ -201,7 +201,7 @@ bool_t pdr_enum(PDR *pdrs, enum_t *ep)
  * Allows the specification of a fixed size sequence of opaque bytes.
  * cp points to the opaque object and cnt gives the byte length.
  */
-bool_t pdr_opaque(PDR *pdrs, char * cp, uint32_t cnt)
+bool_t pdr_opaque(PDR *pdrs, char * cp, uint64_t cnt)
 {
     /* if no data we are done */
     if (cnt == 0) {
@@ -226,15 +226,15 @@ bool_t pdr_opaque(PDR *pdrs, char * cp, uint32_t cnt)
  * *cpp is a pointer to the bytes, *sizep is the count.
  * If *cpp is NULL maxsize bytes are allocated
  */
-bool_t pdr_bytes(PDR *pdrs, char **cpp, uint32_t *sizep, uint32_t maxsize)
+bool_t pdr_bytes(PDR *pdrs, char **cpp, uint64_t *sizep, uint64_t maxsize)
 {
     char *sp = *cpp;  /* sp is the actual string pointer */
-    uint32_t nodesize;
+    uint64_t nodesize;
 
     /*
      * first deal with the length since pdr bytes are counted
      */
-    if (!pdr_uint32(pdrs, sizep)) {
+    if (!pdr_uint64(pdrs, sizep)) {
         return FALSE;
     }
     nodesize = *sizep;
@@ -426,17 +426,17 @@ bool_t pdr_pointer(PDR *pdrs, char **objpp, uint32_t obj_size, pdrproc_t pdr_obj
  * elsize is the size (in bytes) of each element, and elproc is the
  * pdr procedure to call to handle each element of the array.
  */
-bool_t pdr_array(PDR *pdrs, void **addrp, uint32_t *sizep, uint32_t maxsize,
+bool_t pdr_array(PDR *pdrs, void **addrp, uint64_t *sizep, uint64_t maxsize,
                  uint32_t elsize, pdrproc_t elproc)
 {
-    uint32_t i;
+    uint64_t i;
     char * target = (char*) *addrp;
-    uint32_t c;  /* the actual element count */
+    uint64_t c;  /* the actual element count */
     bool_t stat = TRUE;
-    size_t nodesize;
+    uint64_t nodesize;
  
     /* like strings, arrays are really counted arrays */
-    if (! pdr_uint32(pdrs, sizep)) {
+    if (! pdr_uint64(pdrs, sizep)) {
         return (FALSE);
     }
     c = *sizep;
@@ -495,10 +495,10 @@ bool_t pdr_array(PDR *pdrs, void **addrp, uint32_t *sizep, uint32_t maxsize,
   * > elemsize: size of each element
   * > pdr_elem: routine to PDR each element
   */
-bool_t pdr_vector(PDR *pdrs, char *basep, uint32_t nelem, uint32_t elemsize,
+bool_t pdr_vector(PDR *pdrs, char *basep, uint64_t nelem, uint64_t elemsize,
                   pdrproc_t pdr_elem)   
 {
-    uint32_t i;
+    uint64_t i;
     char *elptr;
 
     elptr = basep;

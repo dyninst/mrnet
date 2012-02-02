@@ -101,25 +101,47 @@ namespace MRN
         PERFDATA_CTX_RECV     = 1,
         PERFDATA_CTX_FILT_IN  = 2,
         PERFDATA_CTX_FILT_OUT = 3,
-	PERFDATA_CTX_NONE     = 4,
-        PERFDATA_MAX_CTX      = 5
+        PERFDATA_CTX_NONE     = 4,
+        PERFDATA_PKT_RECV     = 5,
+        PERFDATA_PKT_SEND     = 6,
+        PERFDATA_PKT_NET_SENDCHILD = 7,
+        PERFDATA_PKT_NET_SENDPAR = 8,
+        PERFDATA_PKT_INT_DATAPAR = 9,
+        PERFDATA_PKT_INT_DATACHILD = 10,
+        PERFDATA_PKT_FILTER = 11,
+        PERFDATA_PKT_RECV_TO_FILTER = 12,
+        PERFDATA_PKT_FILTER_TO_SEND = 13,
+        PERFDATA_MAX_CTX    = 14
     } perfdata_context_t;
-    
+
+    typedef enum PerfData_PacketTimers {
+        PERFDATA_PKT_TIMERS_RECV     = 1,
+        PERFDATA_PKT_TIMERS_SEND     = 2,
+        PERFDATA_PKT_TIMERS_NET_SENDCHILD = 3,
+        PERFDATA_PKT_TIMERS_NET_SENDPAR = 4,
+        PERFDATA_PKT_TIMERS_INT_DATAPAR = 5,
+        PERFDATA_PKT_TIMERS_INT_DATACHILD = 6,
+        PERFDATA_PKT_TIMERS_FILTER = 7,
+        PERFDATA_PKT_TIMERS_RECV_TO_FILTER = 8,
+        PERFDATA_PKT_TIMERS_FILTER_TO_SEND = 9,
+        PERFDATA_PKT_TIMERS_MAX = 10
+    } perfdata_pkt_timers_t;
+
     typedef enum NetworkSettings {
         MRNET_DEBUG_LEVEL         = 0,
-	MRNET_DEBUG_LOG_DIRECTORY = 1,
-	MRNET_COMMNODE_PATH       = 2, 
-	MRNET_FAILURE_RECOVERY    = 3,
-	MRNET_STARTUP_TIMEOUT     = 4,
-	MRNET_PORT_BASE           = 5,
-	XPLAT_RSH                 = 6, 
-	XPLAT_RSH_ARGS            = 7,
-	XPLAT_REMCMD              = 8,
+        MRNET_DEBUG_LOG_DIRECTORY = 1,
+        MRNET_COMMNODE_PATH       = 2, 
+        MRNET_FAILURE_RECOVERY    = 3,
+        MRNET_STARTUP_TIMEOUT     = 4,
+        MRNET_PORT_BASE           = 5,
+        XPLAT_RSH                 = 6, 
+        XPLAT_RSH_ARGS            = 7,
+        XPLAT_REMCMD              = 8,
         CRAY_ALPS_APID            = 9,
         CRAY_ALPS_APRUN_PID       = 10,
         CRAY_ALPS_STAGE_FILES     = 11
-    } net_settings_key_t;	
-    
+    } net_settings_key_t;   
+
 } /* namespace MRN */
 
 #endif /* !defined(Types_h) */

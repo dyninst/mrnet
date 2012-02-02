@@ -20,7 +20,7 @@ int stop_FailureManager( void );
 void set_NumFailures( unsigned int infailures );
 void set_FailureFrequency( unsigned int ifailure_frequency );
 int waitFor_FailureManager( void );
-int inject_Failure( NetworkTopology::Node * );
+int inject_Failure( NetworkTopology::Node *, Network * );
 
 class FailureEvent{
  public:

@@ -121,6 +121,7 @@ struct PeerNode_t* Network_new_PeerNode( Network_t* network,
                                          int iis_parent,
                                          int iss_internal );
 int Network_delete_PeerNode( Network_t* net, Rank irank );
+void Network_set_ParentNode( Network_t* net, struct PeerNode_t* ip );
 
 int Network_have_Streams( Network_t* net );
 int Network_is_UserStreamId( unsigned int id );
@@ -130,7 +131,6 @@ void Network_enable_FailureRecovery( Network_t* net );
 void Network_disable_FailureRecovery( Network_t* net );
 int Network_has_ParentFailure( Network_t* net );
 int Network_recover_FromParentFailure( Network_t* net );
-
 char* Network_get_LocalSubTreeStringPtr( Network_t* net );
 
 #endif /* __network_h */

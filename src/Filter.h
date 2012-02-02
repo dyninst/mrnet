@@ -10,6 +10,9 @@
 #include <string>
 #include <vector>
 
+#include "mrnet/Stream.h"
+
+#include "mrnet/Types.h"
 #include "mrnet/Error.h"
 #include "mrnet/NetworkTopology.h"
 #include "xplat/Mutex.h"
@@ -52,7 +55,7 @@ class Filter: public Error {
     };
 
  public:
-    Filter( unsigned short iid );
+    Filter( unsigned short iid, Stream * strm );
     ~Filter( void );
 
     int push_Packets( std::vector < PacketPtr > &ipackets,
@@ -74,17 +77,18 @@ class Filter: public Error {
     static void free_static_stuff( );
 
     static std::map< unsigned short, FilterInfo > Filters;
-
     unsigned short _id;
     void * _filter_state;
     XPlat::Mutex _mutex;
-    PacketPtr _params;
     std::string _fmt_str;
     void ( *_filter_func )( const std::vector < PacketPtr >&,
                             std::vector < PacketPtr >&, 
                             std::vector < PacketPtr >&, 
                             void **, PacketPtr&, const TopologyLocalInfo& );
     PacketPtr ( *_get_state_func )( void ** ifilter_state, int istream_id );
+
+    Stream * _strm;
+    PacketPtr _params;
 };
 
 inline void Filter::initialize_static_stuff( )

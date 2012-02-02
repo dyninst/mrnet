@@ -77,25 +77,25 @@ void delete_PerfDataMgr_t( PerfDataMgr_t* mgr )
     }
 }
 
-const char* PerfDataMgr_get_MetricName(PerfDataMgr_t* perf_data,
+const char* PerfDataMgr_get_MetricName(PerfDataMgr_t* UNUSED(perf_data),
                                        perfdata_metric_t met)
 {
     return perfdata_metric_info[(unsigned)met].name;
 }
 
-const char* PerfDataMgr_get_MetricUnits(PerfDataMgr_t* perf_data,
+const char* PerfDataMgr_get_MetricUnits(PerfDataMgr_t* UNUSED(perf_data),
                                    perfdata_metric_t met)
 {
     return perfdata_metric_info[(unsigned)met].units;
 }
 
-const char* PerfDataMgr_get_MetricDescription(PerfDataMgr_t* perf_data,
+const char* PerfDataMgr_get_MetricDescription(PerfDataMgr_t* UNUSED(perf_data),
                                          perfdata_metric_t met)
 {
     return perfdata_metric_info[(unsigned)met].description;
 }
 
-perfdata_mettype_t PerfDataMgr_get_MetricType(PerfDataMgr_t* perf_data,
+perfdata_mettype_t PerfDataMgr_get_MetricType(PerfDataMgr_t* UNUSED(perf_data),
                                               perfdata_metric_t met)
 {
     return perfdata_metric_info[(unsigned)met].type;

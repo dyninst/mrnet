@@ -42,6 +42,19 @@ typedef unsigned __int64 uint64_t;
 #  define UINT64_MAX _UI64_MAX
 #endif // !defined(INT64_MAX)
 
+// ssize_t
+#if !defined(ssize_t)
+# ifdef SSIZE_T
+#  define ssize_t SSIZE_T
+# else
+#  define ssize_t int64_t
+# endif // SSIZE_T
+#endif // !defined(ssize_t)
+
+// Printf macro for size_t types
+#define PRIszt "Iu"
+#define PRIsszt "Id"
+
 // "address" type
 typedef char* caddr_t;
 
@@ -52,6 +65,5 @@ typedef int socklen_t;
 typedef uint32_t in_addr_t;
 
 // different error codes
-#define EINTR WSAEINTR
 
 #endif // XPLAT_TYPES_WIN_H

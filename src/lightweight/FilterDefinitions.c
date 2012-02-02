@@ -21,9 +21,9 @@ FilterId SFILTER_TIMEOUT=0;
 
 void tfilter_TopoUpdate(vector_t * ipackets,
                         vector_t* opackets,
-                        vector_t* opackets_reverse,
-                        void ** v,
-                        Packet_t* pkt,
+                        vector_t* UNUSED(opackets_reverse),
+                        void ** UNUSED(v),
+                        Packet_t* UNUSED(pkt),
                         TopologyLocalInfo_t * info,
                         int upstream)
 {
@@ -41,14 +41,14 @@ void tfilter_TopoUpdate(vector_t * ipackets,
     uint32_t * rcrank_arr = NULL;
     char ** rchost_arr = NULL;
     uint16_t * rcport_arr = NULL;
-    size_t rarray_len = 0;
+    uint64_t rarray_len = 0;
 
     int * type_arr = NULL;
     uint32_t * prank_arr = NULL;
     uint32_t * crank_arr = NULL;
     char ** chost_arr = NULL;
     uint16_t * cport_arr = NULL;
-    unsigned arr_len = 0;
+    uint64_t arr_len = 0;
     unsigned long arr_len_long = 0;
 
     char * format_string = NULL;
@@ -106,7 +106,7 @@ void tfilter_TopoUpdate(vector_t * ipackets,
             pushBackElement(icrank_arr, crank_arr);
             pushBackElement(ichost_arr, chost_arr);
             pushBackElement(icport_arr, cport_arr);
-	    arr_len_long = (unsigned long) arr_len;
+            arr_len_long = (unsigned long) arr_len;
             pushBackElement(iarray_lens, (void*)arr_len_long);
             rarray_len += arr_len;
         }
@@ -140,7 +140,7 @@ void tfilter_TopoUpdate(vector_t * ipackets,
     char_pos = 0;
 
     for (i = 0; i < itype_arr->size; i++) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "size of itype_arr %zd\n", itype_arr->size));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "size of itype_arr %"PRIsszt"\n", itype_arr->size));
 	arr_len_long = (unsigned long)(iarray_lens->vec[i]);
         memcpy(rtype_arr + int32_pos,
                (int *)itype_arr->vec[i],

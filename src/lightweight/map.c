@@ -168,6 +168,10 @@ mrn_map_t* erase(mrn_map_t* map, int key)
 {
     unsigned int i;
     int hashed_key = hash_key( key );
+    map_node_t* parent = NULL;
+    map_node_t* target = NULL;
+    map_node_t* tmp = NULL;
+    char found = 0;
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "map %p erase(key=%d)\n", map, key));
 
@@ -186,12 +190,8 @@ mrn_map_t* erase(mrn_map_t* map, int key)
     print(new_map);
     return new_map;
 #else
-    map_node_t* parent = NULL;
-    map_node_t* target = NULL;
-    map_node_t* tmp = NULL;
-    char found = 0;
 
-    /* mrn_dbg(5, mrn_printf(FLF, stderr, "erasing map node with key %d, map->size=%zd\n", key, map->size)); */
+    /* mrn_dbg(5, mrn_printf(FLF, stderr, "erasing map node with key %d, map->size=%"PRIsszt"\n", key, map->size)); */
 
     // remove from keys
     for( i = 0; i < map->size; i++ ) {
@@ -274,7 +274,7 @@ mrn_map_t* erase(mrn_map_t* map, int key)
         free(tmp);
     }
 
-    /* mrn_dbg(5, mrn_printf(FLF, stderr, "after erasing map node with key %d, map->size=%zd\n", key, map->size)); */
+    /* mrn_dbg(5, mrn_printf(FLF, stderr, "after erasing map node with key %d, map->size=%"PRIsszt"\n", key, map->size)); */
         
     print(map);
     return map;

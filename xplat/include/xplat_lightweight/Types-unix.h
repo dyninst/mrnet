@@ -10,4 +10,8 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
+// Printf macro for size_t types
+#define PRIszt "zu"
+#define PRIsszt "zd"
+
 #endif // XPLAT_TYPES_UNIX_H

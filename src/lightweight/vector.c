@@ -26,7 +26,7 @@ vector_t* new_empty_vector_t()
 
 /*     mrn_dbg(5, mrn_printf(FLF, stderr, */
 /*                           "new_vector_t() = %p, vec->vec = %p\n", new_vector, new_vector->vec)); */
-    
+
     return new_vector;
 }
 

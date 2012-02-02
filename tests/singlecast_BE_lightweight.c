@@ -19,7 +19,7 @@ int main( int argc, char* argv[] )
     Network_t* net;
     int done;
     int rret;
-    int ival = -1;
+    unsigned int ival = 0;
 
     assert(pkt);
     
@@ -41,14 +41,14 @@ int main( int argc, char* argv[] )
         }
         else if( tag == SC_SINGLE ) {
             be_stream = stream;
-            Packet_unpack(pkt,  "%d", &ival );
+            Packet_unpack(pkt,  "%ud", &ival );
             fprintf(stdout, "BE: sending val on BE stream\n");
-            if( (Stream_send(be_stream,  tag, "%d", ival ) == -1) ||
+            if( (Stream_send(be_stream,  tag, "%ud", ival ) == -1) ||
                 (Stream_flush(be_stream) == -1) ) {
                 fprintf(stderr, "BE: val send single failed\n");
             }
             fprintf(stdout, "BE: sending rank on BE stream\n");
-            if( (Stream_send(be_stream,  tag, "%d", (int)Stream_get_Id(be_stream) ) == -1) ||
+            if( (Stream_send(be_stream,  tag, "%ud", Stream_get_Id(be_stream) ) == -1) ||
                 (Stream_flush(be_stream) == -1) ) {
                 fprintf(stderr, "BE: val send single failed\n");
             }
@@ -59,13 +59,13 @@ int main( int argc, char* argv[] )
             fprintf(stderr, "BE: unexpected tag %d\n", tag);
         }
 
-        if( grp_stream && (ival != -1) )
+        if( grp_stream && (ival != 0) )
             done = 1;
     }
 
     // send our value for the reduction
     fprintf(stdout, "BE: sending val on group stream\n");
-    if( (Stream_send(grp_stream,  SC_GROUP, "%d", ival ) == -1) ||
+    if( (Stream_send(grp_stream,  SC_GROUP, "%ud", ival ) == -1) ||
         (Stream_flush(grp_stream) == -1) ) {
         fprintf(stderr, "BE: val send group failed\n");
     }

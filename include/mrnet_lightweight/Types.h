@@ -96,15 +96,34 @@ int mrn_printf( const char *file, int line, const char* func,
         const char* description;
         perfdata_mettype_t type;
     } perfdata_metinfo_t;
-
+    
     typedef enum PerfData_Context {
         PERFDATA_CTX_SEND     = 0,
         PERFDATA_CTX_RECV     = 1,
         PERFDATA_CTX_FILT_IN  = 2,
         PERFDATA_CTX_FILT_OUT = 3,
         PERFDATA_CTX_NONE     = 4,
-        PERFDATA_MAX_CTX      = 5
+        PERFDATA_PKT_RECV     = 5,
+        PERFDATA_PKT_SEND     = 6,
+        PERFDATA_PKT_NET_SENDCHILD = 7,
+        PERFDATA_PKT_NET_SENDPAR = 8,
+        PERFDATA_PKT_INT_DATAPAR = 9,
+        PERFDATA_PKT_INT_DATACHILD = 10,
+        PERFDATA_PKT_FILTER = 11,
+        PERFDATA_MAX_CTX    = 12
     } perfdata_context_t;
+
+
+    typedef enum PerfData_PacketTimers {
+        PERFDATA_PKT_TIMERS_RECV     = 1,
+        PERFDATA_PKT_TIMERS_SEND     = 2,
+        PERFDATA_PKT_TIMERS_NET_SENDCHILD = 3,
+        PERFDATA_PKT_TIMERS_NET_SENDPAR = 4,
+        PERFDATA_PKT_TIMERS_INT_DATAPAR = 5,
+        PERFDATA_PKT_TIMERS_INT_DATACHILD = 6,
+        PERFDATA_PKT_TIMERS_FILTER = 7,
+        PERFDATA_PKT_TIMERS_MAX = 8
+    } perfdata_pkt_timers_t;
 
     typedef enum update_type {
         TOPO_NEW_BE        = 0,
@@ -133,5 +152,10 @@ int mrn_printf( const char *file, int line, const char* func,
     } net_settings_key_t;
 
 
+    typedef enum NodeType {
+        NODE_TYPE_FRONTEND = 0,
+        NODE_TYPE_BACKEND = 1,
+        NODE_TYPE_INTERNALNODE = 2
+    } node_type_t;
 
 #endif /* __types_h */

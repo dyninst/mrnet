@@ -51,6 +51,10 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
 {
     int retval = 0;
     int tag = cur_packet->get_Tag();
+//    Stream * strm = _network->get_Stream( cur_packet->get_StreamId() );
+//    if (strm != NULL) 
+//        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_))
+
 
     if( (tag >= FirstSystemTag) && (tag < PROT_LAST) ) {
 
@@ -265,7 +269,8 @@ int ChildNode::proc_SetTopoEnv( PacketPtr ipacket ) const
     char* sg_byte_array = NULL;
     int* keys = NULL;
     char** vals = NULL;
-    int i, count;
+    int i;
+    uint64_t count;
     NetworkTopology* nt = _network->get_NetworkTopology();    
 
     if( ipacket->unpack( "%s %ad %as", &sg_byte_array, 
@@ -504,21 +509,17 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     }
     free( topo_ptr );
 
-    if(_incarnation == 1) {
-        // handle network settings packet
-        std::list< PacketPtr > packet_list;    
-        int rret = iparent->recv( packet_list );
-        if( (rret == -1) || ((rret == 0) && (packet_list.size() == 0)) ) {
-            if( rret == -1 ) {
-                mrn_dbg(3, mrn_printf(FLF, stderr,
-                        "recv() topo and env failed!\n"));
-                return -1;
-            }
+    // handle network settings packet
+    std::list< PacketPtr > packet_list;    
+    int rret = iparent->recv( packet_list );
+    if( (rret == -1) || ((rret == 0) && (packet_list.size() == 0)) ) {
+        if( rret == -1 ) {
+             mrn_dbg(3, mrn_printf(FLF, stderr, "recv() topo and env failed!\n"));
+             return -1;
         }
-        if( proc_PacketsFromParent( packet_list ) == -1 )
-            mrn_dbg(1, mrn_printf(FLF, stderr,
-                    "proc_PacketsFromParent() failed\n"));
     }
+    if( proc_PacketsFromParent( packet_list ) == -1 )
+        mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromParent() failed\n"));
 
     //Create send/recv threads
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for parent\n") );
@@ -663,18 +664,18 @@ int ChildNode::proc_PortUpdate( PacketPtr ipacket ) const
         
         if( _network->is_LocalNodeBackEnd() )
             s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                     &type, 1,
-                     &send_iprank, 1,
-                     &send_myrank, 1,
+                     &type, uint64_t(1),
+                     &send_iprank, uint64_t(1),
+                     &send_myrank, uint64_t(1),
                      &host_arr, 1,
-                     &send_port, 1 );
+                     &send_port, uint64_t(1) );
         else
             s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                              &type, 1,
-                              &send_iprank, 1,
-                              &send_myrank, 1,
+                              &type, uint64_t(1),
+                              &send_iprank, uint64_t(1),
+                              &send_myrank, uint64_t(1),
                               &host_arr, 1,
-                              &send_port, 1 );
+                              &send_port, uint64_t(1) );
         s->flush();
         free(host_arr);
     }

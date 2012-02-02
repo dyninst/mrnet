@@ -16,6 +16,14 @@
 #  define __STDC_FORMAT_MACROS
 #endif
 
+#ifndef UNUSED
+#if defined(__GNUC__)
+#   define UNUSED(x) x __attribute__((unused)) /* UNUSED: x */ 
+#else
+#   define UNUSED(x) x
+#endif
+#endif
+ 
 #include "mrnet/Types.h"
 #include "xplat/Types.h"
 #include "xplat/TLSKey.h"
@@ -54,18 +62,23 @@
 # include <io.h>
 # include <sys/timeb.h>
 
-# define srand48 srand
+# define srand48(x) srand((unsigned int)x)
 # define drand48 (double)rand
 # define snprintf _snprintf
 # define sleep(x) Sleep(1000*(DWORD)x)
 # define EWOULDBLOCK WSAEWOULDBLOCK
+# define strdup _strdup
 
-inline int gettimeofday( struct timeval *tv, struct timezone *tz )
+inline int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
-    struct _timeb now;
-    _ftime( &now );
-    if( tv != NULL ) {
-        tv->tv_sec = now.time;
+    int ret_val;
+    struct __timeb64 now;
+    ret_val = _ftime64_s(&now);
+    if(ret_val) {
+        return ret_val;
+    }
+    if (tv != NULL) {
+        tv->tv_sec = (long)now.time;
         tv->tv_usec = now.millitm * 1000;
     }
     return 0;
@@ -159,6 +172,7 @@ class Timer{
     void start( void );
     void stop( void );
     void stop( double d );
+    double get_timer ( void );
     double get_latency_secs( void );
     double get_latency_msecs( void );
     double get_latency_usecs( void );

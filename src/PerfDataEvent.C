@@ -30,7 +30,16 @@ const char* PerfDataMgr::perfdata_context_names[PERFDATA_MAX_CTX] =
     "Recv",
     "FilterIn",
     "FilterOut",
-    "NoContext"
+    "NoContext",
+    "Time_Packet_Recv",
+    "Time_Packet_Send",
+    "Time_Packet_Network_SendChild",
+    "Time_Packet_Network_SentParent",
+    "Time_Packet_Internal_DataParent",
+    "Time_Packet_Internal_DataChild",
+    "Time_Packet_Filter",
+    "Time_Packet_Recv_To_Filter",
+    "Time_Packet_Filter_To_Send"
 };
 
 PerfDataMgr::PerfDataMgr( void )
@@ -237,5 +246,19 @@ void PerfDataMgr::get_MemData(perfdata_metric_t metric)
     mrn_dbg_func_end();
 }
 
+void PerfDataMgr::add_PacketTimers ( PacketPtr pkt)
+{
+
+    for (int i = 1; i < PERFDATA_PKT_TIMERS_MAX; i++)
+    {
+        perfdata_t tmp;
+        tmp.d = pkt->get_ElapsedTime((perfdata_pkt_timers_t)i);
+        if (tmp.d > 0.0001 && tmp.d < 5000.0)
+        {
+            add_DataInstance( PERFDATA_MET_ELAPSED_SEC,(perfdata_context_t) 
+                              (PERFDATA_CTX_NONE + i),tmp);
+        }
+    }
+}
 
 } /* namespace MRN */

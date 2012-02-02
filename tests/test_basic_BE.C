@@ -30,7 +30,7 @@ int main(int argc, char **argv){
                 argv[0]);
         exit( -1 );
     }
-   
+
     Network * net = Network::CreateNetworkBE( argc, argv );
 
     do {

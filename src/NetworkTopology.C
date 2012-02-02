@@ -1329,11 +1329,11 @@ bool NetworkTopology::send_updates_buffer()
             //broadcast all topology updates
             mrn_dbg( 5, mrn_printf(FLF, stderr, "sending %d updates\n", vuc_size) );
             s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                     type_arr, vuc_size, 
-                     prank_arr, vuc_size, 
-                     crank_arr, vuc_size, 
+                     type_arr, uint64_t(vuc_size), 
+                     prank_arr, uint64_t(vuc_size), 
+                     crank_arr, uint64_t(vuc_size), 
                      host_arr, vuc_size, 
-                     cport_arr, vuc_size );
+                     cport_arr, uint64_t(vuc_size ));
             s->flush();
 
             _updates_buffer.clear();
@@ -1344,7 +1344,7 @@ bool NetworkTopology::send_updates_buffer()
             free( crank_arr );
             free( cport_arr );
 
-            for( unsigned u=0; u < vuc_size; u++ )
+            for( int u=0; u < vuc_size; u++ )
                 free( host_arr[u] );
             free( host_arr );
 
@@ -1356,7 +1356,7 @@ bool NetworkTopology::send_updates_buffer()
     
     mrn_dbg_func_end();
     return false;
-}  
+}
 
 void NetworkTopology::insert_updates_buffer( update_contents* uc )
 {

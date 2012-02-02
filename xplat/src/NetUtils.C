@@ -119,7 +119,7 @@ bool NetUtils::IsIPAddressStr( std::string& iaddr )
 
             // get next segment
             beg = sep + 1;
-            if( (beg - str) > len )
+            if( (size_t)(beg - str) > len )
                 break;
             nseg++;
             sep = strchr(beg, (int)'.');
@@ -162,7 +162,7 @@ bool NetUtils::IsIPAddressStr( std::string& iaddr )
 
             // get next segment
             beg = sep + 1;
-            if( (beg - str) > len )
+            if( (size_t)(beg - str) > len )
                 break;
             if( *beg == ':' )
                 beg++;
@@ -375,8 +375,7 @@ int NetUtils::GetLocalNetworkInterfaces( std::vector<NetUtils::NetworkAddress> &
 
 int NetUtils::FindNetworkAddress( std::string ihostname, NetUtils::NetworkAddress &oaddr )
 {
-    struct addrinfo *addrs, *addrs_iter, hints;
-    int error;
+    struct addrinfo *addrs, *addrs_iter;
 
     if( ihostname == "" )
         return -1;

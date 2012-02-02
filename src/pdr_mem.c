@@ -69,7 +69,7 @@ static struct pdr_ops pdrmem_ops_swap = {
 /*
  * The procedure pdrmem_create initializes a stream descriptor for a memory buffer. 
  */
-void pdrmem_create(PDR *pdrs, char * addr, uint32_t size, enum pdr_op op)
+void pdrmem_create(PDR *pdrs, char * addr, uint64_t size, enum pdr_op op)
 {
 
 #if defined(WORDS_BIGENDIAN)
@@ -103,7 +103,7 @@ void pdrmem_create(PDR *pdrs, char * addr, uint32_t size, enum pdr_op op)
 /*
  *  pdrmem_xxxchar(): Procedures for putting/getting 1 byte CHARS.
  */
-bool_t pdrmem_putchar(PDR *pdrs, char *p)
+inline bool_t pdrmem_putchar(PDR *pdrs, char *p)
 {
     if(SIZEOF_CHAR > pdrs->space){
         return FALSE;
@@ -112,7 +112,7 @@ bool_t pdrmem_putchar(PDR *pdrs, char *p)
     pdrs->cur += SIZEOF_CHAR;
     return TRUE;
 }
-bool_t pdrmem_getchar(PDR *pdrs, char *p)
+inline bool_t pdrmem_getchar(PDR *pdrs, char *p)
 {
     if(SIZEOF_CHAR > pdrs->space){
         return FALSE;
@@ -125,40 +125,33 @@ bool_t pdrmem_getchar(PDR *pdrs, char *p)
 /*
  *  pdrmem_xxxint16(): Procedures for puting/getting 16 bit INTS.
  */
-bool_t pdrmem_putint16(PDR *pdrs, int16_t *p)
+inline bool_t pdrmem_putint16(PDR *pdrs, int16_t *p)
 {
-    int i;
     if(SIZEOF_INT16 > pdrs->space){
         return FALSE;
     }
     assert(pdrs->p_op == PDR_ENCODE);
+    
+    *((int16_t *)pdrs->cur) = *p;
 
-    for(i = 0 ; i < SIZEOF_INT16 ; i++)
-        *(((int8_t *)(pdrs->cur))+i)= (int8_t)*(((int8_t *)p)+i);
-
-    //*((int16_t *)(pdrs->cur)) = *p;
     pdrs->cur += SIZEOF_INT16;
 
     return TRUE;
 }
 
-bool_t pdrmem_getint16(PDR *pdrs, int16_t *p)
+inline bool_t pdrmem_getint16(PDR *pdrs, int16_t *p)
 {
-    int i;
     if(SIZEOF_INT16 > pdrs->space){
         return FALSE;
     }
     assert(pdrs->p_op == PDR_DECODE);
 
-    for(i = 0 ; i < SIZEOF_INT16 ; i++)
-        *(((int8_t *)p)+i) = *(((int8_t *)(pdrs->cur))+i);
-
-    //*p = *((int16_t *)(pdrs->cur));
+    *p = *((int16_t *)(pdrs->cur));
     pdrs->cur += SIZEOF_INT16;
     return TRUE;
 }
 
-bool_t pdrmem_getint16_swap(PDR *pdrs, int16_t *p)
+inline bool_t pdrmem_getint16_swap(PDR *pdrs, int16_t *p)
 {
     if(SIZEOF_INT16 > pdrs->space){
         return FALSE;
@@ -172,39 +165,33 @@ bool_t pdrmem_getint16_swap(PDR *pdrs, int16_t *p)
 /*
  *  pdrmem_xxxint32(): Procedures for puting/getting 32 bit INTS.
  */
-bool_t pdrmem_putint32(PDR *pdrs, int32_t *p)
+inline bool_t pdrmem_putint32(PDR *pdrs, int32_t *p)
 {
-    int i;
     if(SIZEOF_INT32 > pdrs->space){
         return FALSE;
     }
 
     assert(pdrs->p_op == PDR_ENCODE);
-
-    for(i = 0 ; i < SIZEOF_INT32 ; i++)
-        *(((int8_t *)(pdrs->cur))+i)= (int8_t)*(((int8_t *)p)+i);
+    *((int32_t *) pdrs->cur) = *p;
 
     pdrs->cur += SIZEOF_INT32;
 
     return TRUE;
 }
 
-bool_t pdrmem_getint32(PDR *pdrs, int32_t *p)
+inline bool_t pdrmem_getint32(PDR *pdrs, int32_t *p)
 {
-    int i;
     if(SIZEOF_INT32 > pdrs->space){
         return FALSE;
     }
     assert(pdrs->p_op == PDR_DECODE);
-
-    for(i = 0 ; i < SIZEOF_INT32 ; i++)
-        *(((int8_t *)p)+i) = *(((int8_t *)(pdrs->cur))+i);
+    *p = *((int32_t *)pdrs->cur);
 
     pdrs->cur += SIZEOF_INT32;
     return TRUE;
 }
 
-bool_t pdrmem_getint32_swap(PDR *pdrs, int32_t *p)
+inline bool_t pdrmem_getint32_swap(PDR *pdrs, int32_t *p)
 {
     if(SIZEOF_INT32 > pdrs->space){
         return FALSE;
@@ -218,39 +205,34 @@ bool_t pdrmem_getint32_swap(PDR *pdrs, int32_t *p)
 /*
  *  pdrmem_xxxint64(): Procedures for puting/getting 64 bit INTS.
  */
-bool_t pdrmem_putint64(PDR *pdrs, int64_t *p)
+inline bool_t pdrmem_putint64(PDR *pdrs, int64_t *p)
 {
-    int i;
     if(SIZEOF_INT64 > pdrs->space){
         return FALSE;
     }
 
     assert(pdrs->p_op == PDR_ENCODE);
-    for(i = 0 ; i < SIZEOF_INT64 ; i++)
-        *(((int8_t *)(pdrs->cur))+i)= (int8_t)*(((int8_t *)p)+i);
 
+    *((int64_t*)pdrs->cur) = *p;
     pdrs->cur += SIZEOF_INT64;
 
     return TRUE;
 }
 
-bool_t pdrmem_getint64(PDR *pdrs, int64_t *p)
+inline bool_t pdrmem_getint64(PDR *pdrs, int64_t *p)
 {
-    int i;
     if(SIZEOF_INT64 > pdrs->space){
         return FALSE;
     }
     assert(pdrs->p_op == PDR_DECODE);
 
-    for(i = 0 ; i < SIZEOF_INT64 ; i++)
-        *(((int8_t *)p)+i) = *(((int8_t *)(pdrs->cur))+i);
-
+    *p = *((int64_t*)pdrs->cur);
     pdrs->cur += SIZEOF_INT64;
 
     return TRUE;
 }
 
-bool_t pdrmem_getint64_swap(PDR *pdrs, int64_t *p)
+inline bool_t pdrmem_getint64_swap(PDR *pdrs, int64_t *p)
 {
 
     if(SIZEOF_INT64 > pdrs->space){
@@ -265,37 +247,34 @@ bool_t pdrmem_getint64_swap(PDR *pdrs, int64_t *p)
 /*
  *  pdrmem_xxxfloat(): Procedures for puting/getting 32 bit FLOATS.
  */
-bool_t pdrmem_putfloat(PDR *pdrs, float *p)
+inline bool_t pdrmem_putfloat(PDR *pdrs, float *p)
 {
-    int i;
     if(SIZEOF_FLOAT > pdrs->space){
         return FALSE;
     }
 
     assert(pdrs->p_op == PDR_ENCODE);
-    for(i = 0 ; i < SIZEOF_FLOAT ; i++)
-        *(((int8_t *)(pdrs->cur))+i)= (int8_t)*(((int8_t *)p)+i);
+    *((float *)pdrs->cur) = *p;
 
     pdrs->cur += SIZEOF_FLOAT;
 
     return TRUE;
 }
 
-bool_t pdrmem_getfloat(PDR *pdrs, float *p)
+inline bool_t pdrmem_getfloat(PDR *pdrs, float *p)
 {
-    int i;
     if(SIZEOF_FLOAT > pdrs->space){
         return FALSE;
     }
     assert(pdrs->p_op == PDR_DECODE);
-    for(i = 0 ; i < SIZEOF_FLOAT ; i++)
-        *(((int8_t *)p)+i) = *(((int8_t *)(pdrs->cur))+i);
+
+    *p = *((float *)pdrs->cur);
 
     pdrs->cur += SIZEOF_FLOAT;
     return TRUE;
 }
 
-bool_t pdrmem_getfloat_swap(PDR *pdrs, float *p)
+inline bool_t pdrmem_getfloat_swap(PDR *pdrs, float *p)
 {
     if(SIZEOF_FLOAT > pdrs->space){
         return FALSE;
@@ -309,37 +288,33 @@ bool_t pdrmem_getfloat_swap(PDR *pdrs, float *p)
 /*
  *  pdrmem_xxxdouble(): Procedures for puting/getting 16 bit INTS.
  */
-bool_t pdrmem_putdouble(PDR *pdrs, double *p)
+inline bool_t pdrmem_putdouble(PDR *pdrs, double *p)
 {
-    int i;
     if(SIZEOF_DOUBLE > pdrs->space){
         return FALSE;
     }
 
     assert(pdrs->p_op == PDR_ENCODE);
-    for(i = 0 ; i < SIZEOF_DOUBLE ; i++)
-        *(((int8_t *)(pdrs->cur))+i)= (int8_t)*(((int8_t *)p)+i);
 
+    *((double *)pdrs->cur) = *p;
     pdrs->cur += SIZEOF_DOUBLE;
 
     return TRUE;
 }
 
-bool_t pdrmem_getdouble(PDR *pdrs, double *p)
+inline bool_t pdrmem_getdouble(PDR *pdrs, double *p)
 {
-    int i;
     if(SIZEOF_DOUBLE > pdrs->space){
         return FALSE;
     }
     assert(pdrs->p_op == PDR_DECODE);
-    for(i = 0 ; i < SIZEOF_DOUBLE ; i++)
-        *(((int8_t *)p)+i) = *(((int8_t *)(pdrs->cur))+i);
 
+    *p = *((double *)pdrs->cur);
     pdrs->cur += SIZEOF_DOUBLE;
     return TRUE;
 }
 
-bool_t pdrmem_getdouble_swap(PDR *pdrs, double *p)
+inline bool_t pdrmem_getdouble_swap(PDR *pdrs, double *p)
 {
     if(SIZEOF_DOUBLE > pdrs->space){
         return FALSE;
@@ -350,10 +325,10 @@ bool_t pdrmem_getdouble_swap(PDR *pdrs, double *p)
     return TRUE;
 }
 
-bool_t pdrmem_getbytes(PDR *pdrs, char * addr,  uint32_t len)
+inline bool_t pdrmem_getbytes(PDR *pdrs, char * addr,  uint64_t len)
 {
     if(len > pdrs->space) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Not enough data left: %u\n",
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Not enough data left: %u\n",
                               pdrs->space ));
         return (FALSE);
     }
@@ -362,7 +337,7 @@ bool_t pdrmem_getbytes(PDR *pdrs, char * addr,  uint32_t len)
     return (TRUE);
 }
 
-bool_t pdrmem_putbytes(PDR *pdrs, char * addr,  uint32_t len)
+inline bool_t pdrmem_putbytes(PDR *pdrs, char * addr,  uint64_t len)
 {
     if(len > pdrs->space) {
         return (FALSE);
@@ -377,7 +352,7 @@ bool_t pdrmem_putbytes(PDR *pdrs, char * addr,  uint32_t len)
 #endif
 
 /* TODO: is the return size right, given 64-bit pointers? */
-uint32_t pdrmem_getpos( PDR *pdrs )
+inline uint32_t pdrmem_getpos( PDR *pdrs )
 {
 	unsigned long difference = ((unsigned long)pdrs->cur) - ((unsigned long)pdrs->base);
 	assert( difference < UINT32_MAX );
@@ -415,6 +390,8 @@ int32_t * pdrmem_inline(PDR *pdrs, int32_t len)
     return (buf);
 }
 
-void pdrmem_destroy(PDR *pdrs)
+// This should really be changed... We never allocate PDR
+// malloc or new.
+void pdrmem_destroy(PDR * UNUSED(pdrs))
 {
 }

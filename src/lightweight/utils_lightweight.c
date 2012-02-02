@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "config.h"
 #include "utils_lightweight.h"
 
 #include "mrnet_lightweight/Network.h"
@@ -47,10 +46,14 @@ Rank myrank = (Rank)-1;
 #ifdef os_windows
 int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
-    struct _timeb now;
-    _ftime(&now);
+    int ret_val;
+    struct __timeb64 now;
+    ret_val = _ftime64_s(&now);
+    if(ret_val) {
+        return ret_val;
+    }
     if (tv != NULL) {
-        tv->tv_sec = now.time;
+        tv->tv_sec = (long)now.time;
         tv->tv_usec = now.millitm * 1000;
     }
     return 0;
@@ -233,7 +236,9 @@ int mrn_printf( const char *file, int line, const char * func,
                  base_file,
                  line,
                  func );
+#ifndef os_windows
         free(base_file);
+#endif
     }
 
     va_start(arglist, format);

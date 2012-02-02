@@ -227,7 +227,7 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
         localnode->set_Port( get_LocalPort() );
     }   
 
-    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_LAUNCH_SUBTREE, "%s %s %s %as", 
+    PacketPtr packet( new MRN::Packet(CTL_STRM_ID, PROT_LAUNCH_SUBTREE, "%s %s %s %as", 
                                  sg.c_str(), mrn_commnode_path, 
                                  backend_exe, backend_args, backend_argc) );
     

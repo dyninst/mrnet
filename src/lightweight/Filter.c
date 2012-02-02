@@ -17,17 +17,17 @@
  * nodes, so these functions are in place only as placeholders
  * if we choose to implement the functionality at a later time. */
 
-Filter_t* new_Filter_t(unsigned int iid)
+Filter_t* new_Filter_t(unsigned int UNUSED(iid))
 {
     return NULL;
 }
 
-void delete_Filter_t(Filter_t* filter)
+void delete_Filter_t(Filter_t* UNUSED(filter))
 {
     
 }
 
-int Filter_push_Packets(Filter_t* filter, 
+int Filter_push_Packets(Filter_t* UNUSED(filter), 
                         vector_t* ipackets, 
                         vector_t* opackets,
                         vector_t* opackets_reverse,
@@ -60,7 +60,7 @@ int Filter_push_Packets(Filter_t* filter,
     return 0;
 }
 
-void Filter_set_FilterParams(Filter_t* filter, Packet_t* iparams)
+void Filter_set_FilterParams(Filter_t* UNUSED(filter), Packet_t* UNUSED(iparams))
 {
 
 }   

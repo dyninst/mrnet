@@ -15,6 +15,7 @@
 #endif
 
 #include "mrnet_lightweight/Network.h"
+#include "PeerNode.h"
 #include "Protocol.h"
 #include "mrnet_lightweight/Stream.h"
 #include "mrnet_lightweight/NetworkTopology.h"
@@ -39,8 +40,8 @@ const unsigned int USER_STRM_BASE_ID = STREAM_BASE_ID + 10;
 
 Stream_t* new_Stream_t(Network_t* net,
                        unsigned int iid, 
-                       Rank *ibackends,
-                       unsigned int inum_backends,
+                       Rank * UNUSED(ibackends),
+                       unsigned int UNUSED(inum_backends),
                        unsigned int ius_filter_id,
                        unsigned int isync_filter_id,
                        unsigned int ids_filter_id)
@@ -97,7 +98,7 @@ unsigned int Stream_get_Id(Stream_t* stream)
     return stream->id;
 }
 
-int Stream_find_FilterAssignment(char* assignments, Rank me, int filter_id)
+int Stream_find_FilterAssignment(char* UNUSED(assignments), Rank UNUSED(me), int UNUSED(filter_id))
 {
     // THIS IS A STUB
     int stub = 1;
@@ -509,7 +510,7 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
     vector_t* data = new_empty_vector_t();
     unsigned int u, iter = 0;
     Rank my_rank;
-    unsigned num_elems;
+    uint64_t num_elems;
     void* data_arr;
     const char* fmt;
     uint64_t* u64_arr;
@@ -527,7 +528,7 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
     PerfDataMgr_collect(stream->perf_data, metric, context, data);
 
     my_rank = stream->network->local_rank;
-    num_elems = data->size;
+    num_elems = (uint64_t)data->size;
     data_arr = NULL;
     fmt = NULL;
 
@@ -589,8 +590,8 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
     *rank_arr = my_rank;
     *nelems_arr = num_elems;
     packet = new_Packet_t_2(aggr_strm_id, PROT_COLLECT_PERFDATA,
-                            fmt, rank_arr, 1, 
-                            nelems_arr, 1, data_arr,
+                            fmt, rank_arr, (uint64_t)1, 
+                            nelems_arr, (uint64_t)1, data_arr,
                             num_elems);
     if (packet == NULL) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));
@@ -619,7 +620,7 @@ void Stream_print_PerfData(Stream_t* stream,
     mrn_dbg_func_end();
 }
 
-int Stream_remove_Node(Stream_t* stream, Rank irank)
+int Stream_remove_Node(Stream_t* UNUSED(stream), Rank UNUSED(irank))
 {
     // BEs don't keep track of stream peers
     return 1;

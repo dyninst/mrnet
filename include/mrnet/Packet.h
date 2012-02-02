@@ -6,20 +6,21 @@
 #if !defined(__packet_h)
 #define __packet_h 1
 
+#include "mrnet/Types.h"
+
 #include <cstdarg>
 #include <set>
 #include <vector>
 
-#include "boost/shared_ptr.hpp"
+#include <boost/shared_ptr.hpp>
 #include "mrnet/DataElement.h"
 #include "mrnet/Error.h"
 #include "xplat/Mutex.h"
 
 struct PDR;
-
 namespace MRN
 {
-
+class Timer;
 class Packet;
 typedef boost::shared_ptr< Packet > PacketPtr;
 
@@ -64,8 +65,20 @@ class Packet: public Error {
 
     // END MRNET API
 
-    ~Packet();
+    //Starts and stops a timer for a specific context
+    void start_Timer (perfdata_pkt_timers_t context);
+    void stop_Timer (perfdata_pkt_timers_t context);
+    
+    //Sets a timer for a specific context to t 
+    // (used in cases where packet class not yet created EX: recv)
+    void set_Timer (perfdata_pkt_timers_t context, Timer t);
 
+    // Get the eleased time in the context timer
+    double get_ElapsedTime (perfdata_pkt_timers_t context);
+
+    void set_IncommingPktCount(int size);
+    void set_OutgoingPktCount(int size);
+    ~Packet();
  private:
 
     Packet( Rank isrc, unsigned int istream_id, int itag, 
@@ -73,16 +86,15 @@ class Packet: public Error {
     Packet( Rank isrc, unsigned int istream_id, int itag, 
             const void **idata, const char *ifmt );
     Packet( unsigned int ihdr_len, char *ihdr, 
-            unsigned int ibuf_len, char *ibuf, 
+            uint64_t ibuf_len, char *ibuf, 
             Rank iinlet_rank );
-
     void encode_pdr_header(void);
     void encode_pdr_data(void);
     void decode_pdr_header(void) const;
     void decode_pdr_data(void) const;
 
     const char *get_Buffer(void) const;
-    unsigned int get_BufferLen(void) const;
+    uint64_t get_BufferLen(void) const;
     const char *get_Header(void) const;
     unsigned int get_HeaderLen(void) const;
 
@@ -99,8 +111,8 @@ class Packet: public Error {
     int ArgVec2DataElementArray( const void **data );
     int DataElementArray2ArgVec( void **data ) const;
 
-    static bool pdr_packet_data( struct PDR *, Packet * );
-    static bool pdr_packet_header( struct PDR *, Packet * );
+    static int pdr_packet_data( struct PDR *, Packet * );
+    static int pdr_packet_header( struct PDR *, Packet * );
 
     //Data Members
     uint32_t stream_id;
@@ -112,15 +124,19 @@ class Packet: public Error {
     unsigned int hdr_len;
 
     char *buf;              /* packed data */
-    unsigned int buf_len;
+    uint64_t buf_len;
 
     Rank inlet_rank;
     Rank *dest_arr;
-    unsigned int dest_arr_len;
+    uint64_t dest_arr_len;
     bool destroy_data;
 
     std::vector< const DataElement * > data_elements;
     mutable XPlat::Mutex data_sync;
+
+    Timer * _perf_data_timer;
+    int _inc_packet_count;
+    int _out_packet_count;
 };
 
 

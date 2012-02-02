@@ -42,7 +42,7 @@ typedef enum {
 typedef struct{
     DataValue val;
     DataType type;
-    uint32_t array_len;
+    uint64_t array_len;
     int destroy_data;
 } DataElement_t;
 

@@ -43,13 +43,13 @@ class Timer{
         d_end = ( (double(tv_end.tv_sec))
                     + ((double)tv_end.tv_usec)/1000000.0 );
     }
-    float get_start( ){
+    double get_start( ){
         return d_start;
     }
-    float get_end( ){
+    double get_end( ){
         return d_end;
     }
-    float duration( ){
+    double duration( ){
         return d_end - d_start;
     }
 };

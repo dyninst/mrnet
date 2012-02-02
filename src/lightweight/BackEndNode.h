@@ -9,6 +9,7 @@
 #include "mrnet_lightweight/Network.h"
 #include "mrnet_lightweight/Types.h"
 #include "PeerNode.h"
+#include <string.h>
 
 /*  definition */
 struct BackEndNode_t {

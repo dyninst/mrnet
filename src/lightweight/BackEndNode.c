@@ -18,6 +18,7 @@
 #include "mrnet_lightweight/Stream.h"
 #include "mrnet_lightweight/Types.h"
 #include "xplat_lightweight/NetUtils.h"
+#include "xplat_lightweight/SocketUtils.h"
 
 Port defaultTopoPort = 26500;
 
@@ -50,8 +51,13 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
     be->prank = iprank;
     be->incarnation = 0;
 
-    parent = Network_new_PeerNode(inetwork, iphostname, ipport, 
-                                  iprank, true, true);
+    parent = Network_new_PeerNode(inetwork, 
+                                  iphostname,
+                                  ipport, 
+                                  iprank, 
+                                  true, 
+                                  true);
+
     Network_set_ParentNode(inetwork, parent);
 
     inetwork->local_hostname = imyhostname;
@@ -59,7 +65,7 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
     inetwork->local_back_end_node = be;
 
     nt = new_NetworkTopology_t(inetwork, imyhostname, 
-                               UnknownPort, imyrank, true);
+                               (Port)UnknownPort, imyrank, true);
     inetwork->network_topology = nt;
 
     // establish data connection with parent
@@ -96,11 +102,11 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
             send_port[0] = UnknownPort;
 
             Stream_send(s, PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                        type, 1, 
-                        send_iprank, 1, 
-                        send_myrank, 1, 
-                        host_arr, 1, 
-                        send_port, 1);
+                        type, (uint64_t)1, 
+                        send_iprank, (uint64_t)1, 
+                        send_myrank, (uint64_t)1, 
+                        host_arr, (uint64_t)1, 
+                        send_port, (uint64_t)1);
         } else {
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend already in the topology\n") );
         }
@@ -145,8 +151,9 @@ BackEndNode_t* CreateBackEndNode( Network_t* inetwork,
     return be;
 }
 
-int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
+int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* UNUSED(packet) )
 {
+    (void) packet;
     mrn_dbg_func_begin();
 
     // processes will be exiting -- disable failure recovery
@@ -159,7 +166,7 @@ int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
     
     // close event connection
     if( be->network->parent->event_sock_fd != 0 )
-        close(be->network->parent->event_sock_fd);
+        XPlat_SocketUtils_Close(be->network->parent->event_sock_fd);
   
     // kill topology  
     Network_shutdown_Network(be->network);
@@ -170,10 +177,12 @@ int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* packet)
 
 int BackEndNode_proc_newStream(BackEndNode_t* be, Packet_t* packet)
 {
-    unsigned int num_backends;
+    uint64_t num_backends;
     Rank *backends;
     unsigned int stream_id;
-    int tag, ds_filter_id, us_filter_id, sync_id;
+    int tag;
+    /* Safe since filters are not used in lightweight */
+    int ds_filter_id = 0, us_filter_id = 0, sync_id = 0;
     char* us_filters;
     char* sync_filters;
     char* ds_filters;
@@ -240,14 +249,14 @@ int BackEndNode_proc_newStream(BackEndNode_t* be, Packet_t* packet)
     return 0;
 }
 
-int BackEndNode_proc_UpstreamFilterParams(BackEndNode_t* be, 
-                                          Packet_t* ipacket)
+int BackEndNode_proc_UpstreamFilterParams(BackEndNode_t* UNUSED(be), 
+                                          Packet_t* UNUSED(ipacket))
 {
     // no filter support in lightweight BE, nothing to do
     return 0;  
 }
 
-int BackEndNode_proc_DownstreamFilterParams(BackEndNode_t* be, Packet_t* ipacket)
+int BackEndNode_proc_DownstreamFilterParams(BackEndNode_t* UNUSED(be), Packet_t* UNUSED(ipacket))
 {
     // no filter support in lightweight BE, nothing to do
     return 0;
@@ -284,7 +293,7 @@ int BackEndNode_proc_deleteStream(BackEndNode_t* be, Packet_t* ipacket)
     return 0;
 }
 
-int BackEndNode_proc_newFilter(BackEndNode_t* be, Packet_t* ipacket)
+int BackEndNode_proc_newFilter(BackEndNode_t* UNUSED(be), Packet_t* UNUSED(ipacket))
 {
     // no filter support in lightweight BE, nothing to do
     return 0;

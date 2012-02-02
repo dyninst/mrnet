@@ -55,15 +55,15 @@ int main( int argc, char* argv[] )
 
     PacketPtr pkt;
     int rret, tag = 0;
-    int val, send_val = 1;
+    unsigned int val, send_val = 1;
     
 
     set< CommunicationNode* >::const_iterator iter = bes.begin();
     for( ; iter != bes.end() ; iter++ ) {
         Rank be_rank = (*iter)->get_Rank();
-        if( (-1 == net->send( be_rank, SC_SINGLE, "%d", send_val )) ||
+        if( (-1 == net->send( be_rank, SC_SINGLE, "%ud", send_val )) ||
             (-1 == net->flush()) ) {
-            std::cerr << "FE: recv() failed" << std::endl;
+            std::cerr << "FE: send() failed" << std::endl;
             return -1;
         }
         
@@ -74,7 +74,7 @@ int main( int argc, char* argv[] )
             return -1;
         }
         if( tag == SC_SINGLE ) {
-            pkt->unpack( "%d", &val );
+            pkt->unpack( "%ud", &val );
             if( val != send_val ) {
                 std::cerr << "FE: expected BE to send value " << send_val 
                       << ", got " << val << std::endl;
@@ -91,7 +91,7 @@ int main( int argc, char* argv[] )
             return -1;
         }
         if( tag == SC_SINGLE ) {
-            pkt->unpack( "%d", &val );
+            pkt->unpack( "%ud", &val );
             if( val != be_rank ) {
                 std::cerr << "FE: expected BE to send value " << be_rank 
                       << ", got " << val << std::endl;
@@ -112,9 +112,9 @@ int main( int argc, char* argv[] )
         return -1;
     }
     if( tag == SC_GROUP ) {
-        int sum;
-        pkt->unpack( "%d", &sum );
-        if( sum != (int)nBackends ) {
+        unsigned int sum;
+        pkt->unpack( "%ud", &sum );
+        if( sum != nBackends ) {
             std::cerr << "FE: unexpected reduction value " << sum 
                       << " seen, expected " << nBackends << std::endl;
         }

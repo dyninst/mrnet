@@ -229,6 +229,11 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
 #endif
     }
 
+    struct sockaddr_in local_addr;
+    memset( &local_addr, 0, sizeof( local_addr ) );
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_addr.s_addr = htonl( INADDR_ANY );
+
     if( port != 0 ) {
 
 #ifndef os_windows
@@ -246,11 +251,6 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
         }
 #endif
 
-        struct sockaddr_in local_addr;
-        memset( &local_addr, 0, sizeof( local_addr ) );
-        local_addr.sin_family = AF_INET;
-        local_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-
         // try to bind and listen using the supplied port
         local_addr.sin_port = htons( port );
         if( bind(sock, (sockaddr*)&local_addr, sizeof(local_addr)) == -1 ) {
@@ -261,11 +261,13 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
             return -1;
         }
     }
+
+#ifndef os_windows
     // else, the system will assign a port for us in listen
 
     if( listen(sock, 128) == -1 ) {
         err = XPlat::NetUtils::GetLastError();
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed(%d): %s\n", err,
                                XPlat::Error::GetErrorString(err).c_str() ) );
         XPlat::SocketUtils::Close( sock );
         return -1;
@@ -281,6 +283,48 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
         XPlat::SocketUtils::Close( sock );
         return -1;
     }
+#else
+          // let the system assign a port, start from 1st dynamic port
+    port = 49152;
+    bool success = false;
+ 
+    do {
+        local_addr.sin_port = htons( port );
+        if( bind(sock, (sockaddr*)&local_addr, sizeof(local_addr)) != 0/*== -1*/ ) {
+            err = XPlat::NetUtils::GetLastError();
+            if( XPlat::Error::EAddrInUse( err ) ) {
+                ++port;
+                continue;
+            }
+            else {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to dynamic port %d failed: %s\n",
+                                       port, XPlat::Error::GetErrorString( err ).c_str() ) );
+                XPlat::SocketUtils::Close( sock );
+                return -1;
+            }
+        }
+        else {
+            if( listen(sock, 64) == -1 ) {
+                err = XPlat::NetUtils::GetLastError();
+                if( XPlat::Error::EAddrInUse( err ) ) {
+                    ++port;
+                    continue;
+                }
+                else {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
+                                           XPlat::Error::GetErrorString( err ).c_str() ) );
+                    XPlat::SocketUtils::Close( sock );
+                    return -1;
+                }
+            }
+            success = true;
+        }
+    } while( ! success );
+
+    *sock_in = sock;
+    *port_in = port;
+
+#endif
     
 
 #if defined(TCP_NODELAY)
@@ -306,7 +350,7 @@ int getSocketConnection( int bound_socket , int& inout_errno,
                          int timeout_sec /*=0*/ , bool nonblock /*=false*/ )
 {
     int connected_socket;
-    int fdflag, fret;
+    int fdflag;
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "In get_connection(sock:%d).\n",
                 bound_socket ) );
@@ -359,6 +403,7 @@ int getSocketConnection( int bound_socket , int& inout_errno,
     mrn_dbg( 5, mrn_printf(FLF, stderr, 
                            "Setting accepted connection socket to blocking\n") );
 #ifndef os_windows
+    int fret;
     fdflag = fcntl(connected_socket, F_GETFL );
     if( fdflag == -1 ) {
         // failed to retrieve the socket status flags
@@ -429,65 +474,58 @@ int getPortFromSocket( int sock, Port *port )
     return 0;
 }
 
-extern char* MRN_DEBUG_LOG_DIRECTORY;
-
-static FILE* mrn_printf_fp = NULL;
-
-void mrn_printf_init( FILE* ifp )
+FILE* mrn_printf_setup( int rank, node_type_t type )
 {
-    mrn_printf_fp = ifp;
-} 
+    FILE* fp = NULL;
+    std::string this_host;
+    struct stat s;
+    char node_type[3];
+    char host[256];
+    char logdir[256];
+    char logfile[512];
+    logfile[0] = '\0';
 
-void mrn_printf_setup( int rank, node_type_t type )
-{
-    if( mrn_printf_fp == NULL ) {
+    switch( type ) {
+    case FE_NODE:
+        sprintf( node_type, "FE" );
+        break;
+    case BE_NODE:
+        sprintf( node_type, "BE" );
+        break;
+    case CP_NODE:
+        sprintf( node_type, "CP" );
+        break;
+    default:
+        return NULL;
+    };
 
-        std::string this_host;
-        struct stat s;
-        char node_type[3];
-        char host[256];
-        char logdir[256];
-        char logfile[512];
-        logfile[0] = '\0';
+    XPlat::NetUtils::GetLocalHostName(this_host);
+    strncpy( host, this_host.c_str(), 256 );
+    host[255] = '\0';
 
-        switch( type ) {
-        case FE_NODE:
-            sprintf( node_type, "FE" );
-            break;
-        case BE_NODE:
-            sprintf( node_type, "BE" );
-            break;
-        case CP_NODE:
-            sprintf( node_type, "CP" );
-            break;
-        default:
-            return;
-        };
-
-        XPlat::NetUtils::GetLocalHostName(this_host);
-        strncpy( host, this_host.c_str(), 256 );
-        host[255] = '\0';
-
-        // find log directory
-        const char* varval = MRN_DEBUG_LOG_DIRECTORY;
-        if( varval != NULL ) {
-            if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
-                snprintf( logdir, sizeof(logdir), "%s", varval );
-        }
-    
-        // set file name format
-        int pid = XPlat::Process::GetProcessId();
-        snprintf( logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
-                  logdir, node_type, host, rank, pid );
-
-        mrn_printf_fp = fopen( logfile, "w" );
+    // find log directory
+    extern char* MRN_DEBUG_LOG_DIRECTORY;
+    const char* varval = MRN_DEBUG_LOG_DIRECTORY;
+    if( varval != NULL ) {
+        if( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) )
+            snprintf( logdir, sizeof(logdir), "%s", varval );
     }
+    
+    // set file name format
+    int pid = XPlat::Process::GetProcessId();
+    snprintf( logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
+              logdir, node_type, host, rank, pid );
+
+    fp = fopen( logfile, "w" );
+    return fp;
 }
 
 int mrn_printf( const char *file, int line, const char * func,
                 FILE * ifp, const char *format, ... )
 {
+    extern char* MRN_DEBUG_LOG_DIRECTORY;
     static bool retry = true;
+    static FILE * fp = NULL;
 
     int retval = 1;
     va_list arglist;
@@ -498,11 +536,10 @@ int mrn_printf( const char *file, int line, const char * func,
     mrn_printf_mutex.Lock();
 
     // get thread info
-    XPlat::Thread::Id tid = -1;
+    XPlat::Thread::Id tid = 0;
     const char* thread_name = NULL;
     Rank rank = UnknownRank;
     node_type_t node_type = UNKNOWN_NODE;
-    Network* net = NULL;
     
     tsd_t *tsd = (tsd_t*) tsd_key.Get();
     if( tsd != NULL ) {
@@ -510,19 +547,18 @@ int mrn_printf( const char *file, int line, const char * func,
         thread_name = tsd->thread_name;
         rank = tsd->process_rank;
         node_type = tsd->node_type;
-        net = tsd->network;
     }
 
-    if( mrn_printf_fp == NULL ) {
-        if( (MRN_DEBUG_LOG_DIRECTORY != NULL) && retry ) { 
-            // try to open log file
-            if( (rank != UnknownRank) &&
-                (node_type != UNKNOWN_NODE) )
-                mrn_printf_setup( rank, node_type );
-        }
+    if( (MRN_DEBUG_LOG_DIRECTORY != NULL) && retry ) { 
+       // try to open log file
+       if( (fp == NULL) && 
+           (rank != UnknownRank) &&
+           (node_type != UNKNOWN_NODE) )
+          fp = mrn_printf_setup( rank, node_type );
+   
     }
 
-    FILE *f = mrn_printf_fp;
+    FILE *f = fp;
     if( f == NULL ) {
         f = ifp;
         if( MRN_DEBUG_LOG_DIRECTORY != NULL )
@@ -533,7 +569,7 @@ int mrn_printf( const char *file, int line, const char * func,
     fprintf( f, "%ld.%06ld: %s(0x%lx): ", 
              tv.tv_sec-MRN_RELEASE_DATE_SECS, tv.tv_usec,
              ( thread_name != NULL ) ? thread_name : "UNKNOWN_THREAD",
-             ( tid == -1 ) ? 0 : tid );
+             tid );
 
     if( file ) {
         // print file, function, and line info
@@ -570,6 +606,13 @@ struct timeval dbl2tv(double d)
   return tv;
 }
 
+double Timer::get_timer (void)
+{
+    struct timeval timevalcur; 
+    while(gettimeofday(&timevalcur, NULL) == -1) {}
+    //fprintf(stderr, "offset: %lf secs\n", offset/1000.0 );
+    return tv2dbl( timevalcur ) + ( offset / 1000.0 );
+}
 void Timer::start( void ){
     while(gettimeofday(&_start_tv, NULL) == -1) {}
     //fprintf(stderr, "offset: %lf secs\n", offset/1000.0 );
@@ -602,7 +645,8 @@ double Timer::get_latency_usecs( ) {
 }
 
 Timer::Timer( void ) {
-
+    _stop_d = 0;
+    _start_d = 0;
 #ifdef USE_NTPQ_TIMER_INIT
     if( !first_time ) {
         return;

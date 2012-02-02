@@ -37,11 +37,17 @@ PeerNode::PeerNode( Network * inetwork, std::string const& ihostname, Port iport
       _is_internal_node(iis_internal), _is_parent(iis_parent), 
       _recv_thread_started(false), _send_thread_started(false),
       recv_thread_id(0), send_thread_id(0), 
-      _available(true)
+      _available(true), _msg_out( new Message(inetwork)), _msg_in(new Message(inetwork))
 {
     _sync.RegisterCondition( MRN_FLUSH_COMPLETE );
     _sync.RegisterCondition( MRN_RECV_THREAD_STARTED );
     _sync.RegisterCondition( MRN_SEND_THREAD_STARTED );
+}
+
+PeerNode::~PeerNode()
+{
+    delete _msg_out;
+    delete _msg_in;
 }
 
 int PeerNode::connect_DataSocket(void)
@@ -173,21 +179,19 @@ void PeerNode::waitfor_CommunicationThreads(void) const
     _sync.Unlock();
 }
 
-void PeerNode::send( const PacketPtr ipacket ) const
+void PeerNode::send(PacketPtr ipacket ) const
 {
     mrn_dbg(5, mrn_printf(FLF, stderr,
-                          "msg(%p).add_Packet()\n", &_msg_out));
+                          "msg(%p).add_Packet()\n", _msg_out));
 
-    _msg_out.add_Packet( ipacket );
+    _msg_out->add_Packet( ipacket );
 }
 
-int PeerNode::sendDirectly( const PacketPtr ipacket ) const
+int PeerNode::sendDirectly( PacketPtr ipacket ) const
 {
     int retval = 0;
-
     send( ipacket );
-
-    if( _msg_out.send(_data_sock_fd) == -1 ) {
+    if( _msg_out->send(_data_sock_fd) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "msg.send() failed\n") );
         retval = -1;
     }
@@ -232,7 +236,7 @@ int PeerNode::flush( bool ignore_threads /*=false*/ ) const
 
     if( ignore_threads ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Calling msg.send()\n") );
-        if( _msg_out.send( _data_sock_fd ) == -1){
+        if( _msg_out->send( _data_sock_fd ) == -1){
             mrn_dbg( 1, mrn_printf(FLF, stderr, "msg.send() failed\n") );
             retval = -1;
         }
@@ -358,13 +362,13 @@ void * PeerNode::send_thread_main( void* iargs )
 
     while(true) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Blocking for packets to send ...\n") );
-        peer_node->_msg_out.waitfor_MessagesToSend( );
+        peer_node->_msg_out->waitfor_MessagesToSend( );
 
         if( peer_node->has_Failed() )
             break;
 
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Sending packets ...\n") );
-        if( peer_node->_msg_out.send(peer_node->_data_sock_fd) == -1 ) {
+        if( peer_node->_msg_out->send(peer_node->_data_sock_fd) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "msg.send() failed! Thread Exiting\n") );
             peer_node->mark_Failed();
             peer_node->signal_FlushComplete();
@@ -387,7 +391,7 @@ void * PeerNode::send_thread_main( void* iargs )
 
 int PeerNode::recv(std::list <PacketPtr> &packet_list) const
 {
-    return _msg_in.recv( _data_sock_fd, packet_list, _rank );
+    return _msg_in->recv( _data_sock_fd, packet_list, _rank );
 }
 
 int PeerNode::waitfor_FlushCompletion(void) const
@@ -395,7 +399,7 @@ int PeerNode::waitfor_FlushCompletion(void) const
     int retval = 0;
     _sync.Lock();
 
-    while( _msg_out.size_Packets() > 0 && _available ) {
+    while( _msg_out->size_Packets() > 0 && _available ) {
         _sync.WaitOnCondition( MRN_FLUSH_COMPLETE );
     }
     if( ! _available ) {
@@ -430,7 +434,7 @@ void PeerNode::mark_Failed(void)
         if( my_id != get_SendThrId() ) {
             // shutdown packet send will fail, but that's expected
             PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, NULL) );
-            _msg_out.add_Packet( packet );
+            _msg_out->add_Packet( packet );
         }
 
         close_Sockets();

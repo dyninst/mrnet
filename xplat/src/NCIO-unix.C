@@ -23,7 +23,7 @@
 #endif
 
 // uncomment following if large data transfers hang
-//#define XPLAT_NCRECV_NO_BLOCK
+#define XPLAT_NCRECV_NO_BLOCK
 
 namespace XPlat
 {
@@ -112,8 +112,8 @@ NCSend( XPSOCKET s, NCBuf* ncbufs, unsigned int nBufs )
      
             // i is now number fully sent, try to send remaining bufs in currIov
             if( i < numIovBufs ) {
-                wret = writev( s, currIov + i, numIovBufs - i );
-                err = XPlat::NetUtils::GetLastError();
+                 
+		wret = NCsend( s, currIov[i].iov_base, currIov[i].iov_len  );
                 if( wret < 0 ) {
                     free( currIov );
                     fprintf(stderr, "Error: XPlat::NCSend - fallback writev() : %s\n", 

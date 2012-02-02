@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="libmrnet_lightweight"
 	ProjectGUID="{2BDE360C-ACD2-4BC0-B9CC-9AA9513702BD}"
 	RootNamespace="libmrnet_lightweight"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -24,8 +25,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description="Lightweight: Copying config.h into src/"
-				CommandLine="cd&#x0D;&#x0A;copy conf\config.h src&#x0D;&#x0A;"
+				CommandLine=""
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -41,15 +41,16 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/D_CRT_SECURE_NO_WARNINGS"
 				Optimization="0"
-				AdditionalIncludeDirectories="lightweight/xplat/include;lightweight/src;lightweight/include;&quot;C:\Program Files\Microsoft Visual Studio 8\VC\include&quot;;src"
-				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x0500;WIN32;_LIB"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 9.0\VC\include&quot;;../../xplat/include;../../src/lightweight;../../include;../../src"
+				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				ObjectFile="$(IntDir)/"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 				CompileAs="1"
 				ShowIncludes="false"
@@ -85,9 +86,9 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			OutputDirectory="./lib/i386-unknown-nt4.0"
+			IntermediateDirectory="./obj/i386-unknown-nt4.0/lightweight"
+			ConfigurationType="4"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -108,9 +109,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				RuntimeLibrary="2"
+				AdditionalOptions="/D_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Visual Studio 9.0\VC\include&quot;;../../xplat/include;../../src/lightweight;../../include;../../src"
+				PreprocessorDefinitions="os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -123,17 +129,11 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				GenerateDebugInformation="true"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/libmrnet_lightweight.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -143,12 +143,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -164,59 +158,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\lightweight\src\BackEndNode.c"
+				RelativePath="..\..\src\lightweight\BackEndNode.c"
 				>
 			</File>
 			<File
-				RelativePath=".\src\byte_order.c"
+				RelativePath="..\..\src\byte_order.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\ChildNode.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories="src"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\lightweight\src\DataElement.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lightweight\src\Error.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lightweight\src\Filter.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lightweight\src\FilterDefinitions.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lightweight\src\map.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lightweight\src\Message.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lightweight\src\Network.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lightweight\src\NetworkTopology.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lightweight\src\Packet.c"
+				RelativePath="..\..\src\lightweight\ChildNode.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -228,7 +178,51 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\pdr.c"
+				RelativePath="..\..\src\lightweight\DataElement.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\lightweight\Error.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\lightweight\Filter.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\lightweight\FilterDefinitions.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\lightweight\map.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\lightweight\Message.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\lightweight\Network.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\lightweight\NetworkTopology.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\lightweight\Packet.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories="src"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\src\pdr.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -244,7 +238,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\pdr_mem.c"
+				RelativePath="..\..\src\pdr_mem.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -256,7 +250,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\pdr_sizeof.c"
+				RelativePath="..\..\src\pdr_sizeof.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -268,35 +262,35 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\PeerNode.c"
+				RelativePath="..\..\src\lightweight\PeerNode.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\PerfDataEvent.c"
+				RelativePath="..\..\src\lightweight\PerfDataEvent.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\PerfDataSysEvent_none.c"
+				RelativePath="..\..\src\lightweight\PerfDataSysEvent_none.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\PerfDataSysEvent_win.c"
+				RelativePath="..\..\src\lightweight\PerfDataSysEvent_win.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\SerialGraph.c"
+				RelativePath="..\..\src\lightweight\SerialGraph.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\Stream.c"
+				RelativePath="..\..\src\lightweight\Stream.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\utils_lightweight.c"
+				RelativePath="..\..\src\lightweight\utils_lightweight.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\vector.c"
+				RelativePath="..\..\src\lightweight\vector.c"
 				>
 			</File>
 		</Filter>
@@ -306,111 +300,107 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\lightweight\src\BackEndNode.h"
+				RelativePath="..\..\src\lightweight\BackEndNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\byte_order.h"
+				RelativePath="..\..\src\byte_order.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\ChildNode.h"
+				RelativePath="..\..\src\lightweight\ChildNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\include\mrnet_lightweight\DataElement.h"
+				RelativePath="..\..\include\mrnet_lightweight\DataElement.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\include\mrnet_lightweight\Error.h"
+				RelativePath="..\..\include\mrnet_lightweight\Error.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\Filter.h"
+				RelativePath="..\..\src\lightweight\Filter.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\FilterDefinitions.h"
+				RelativePath="..\..\src\lightweight\FilterDefinitions.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\include\mrnet_lightweight\FilterIds.h"
+				RelativePath="..\..\include\mrnet_lightweight\FilterIds.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\FilterIds.h"
+				RelativePath="..\..\src\lightweight\map.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\map.h"
+				RelativePath="..\..\src\lightweight\Message.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\Message.h"
+				RelativePath="..\..\include\mrnet_lightweight\mrnet_lightweight\MRNet.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\include\mrnet_lightweight\MRNet.h"
+				RelativePath="..\..\include\mrnet_lightweight\Network.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\include\mrnet_lightweight\Network.h"
+				RelativePath="..\..\include\mrnet_lightweight\NetworkTopology.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\include\mrnet_lightweight\NetworkTopology.h"
+				RelativePath="..\..\include\mrnet_lightweight\Packet.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\include\mrnet_lightweight\Packet.h"
+				RelativePath="..\..\src\pdr.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\pdr.h"
+				RelativePath="..\..\src\pdr_mem.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\pdr_mem.h"
+				RelativePath="..\..\src\lightweight\PeerNode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\PeerNode.h"
+				RelativePath="..\..\src\lightweight\PerfDataEvent.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\PerfDataEvent.h"
+				RelativePath="..\..\src\lightweight\PerfDataSysEvent.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\PerfDataSysEvent.h"
+				RelativePath="..\..\src\Protocol.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Protocol.h"
+				RelativePath="..\..\src\Router.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\Router.h"
+				RelativePath="..\..\src\lightweight\SerialGraph.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\SerialGraph.h"
+				RelativePath="..\..\include\mrnet_lightweight\Stream.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\include\mrnet_lightweight\Stream.h"
+				RelativePath="..\..\include\mrnet_lightweight\Types.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\include\mrnet_lightweight\Types.h"
+				RelativePath="..\..\src\lightweight\utils_lightweight.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lightweight\src\utils_lightweight.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lightweight\src\vector.h"
+				RelativePath="..\..\src\lightweight\vector.h"
 				>
 			</File>
 		</Filter>

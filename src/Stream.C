@@ -46,16 +46,16 @@ Stream::Stream( Network * inetwork, unsigned int iid,
                 unsigned int ius_filter_id,
                 unsigned int isync_filter_id,
                 unsigned int ids_filter_id )
-  : _network( inetwork ),
+  : _perf_data( new PerfDataMgr() ),
+     _network( inetwork ),
     _id( iid ),
     _sync_filter_id( isync_filter_id ),
-    _sync_filter( new Filter( isync_filter_id ) ),
+    _sync_filter( new Filter( isync_filter_id, this ) ),
     _us_filter_id( ius_filter_id ),
-    _us_filter( new Filter( ius_filter_id ) ),
+    _us_filter( new Filter( ius_filter_id, this ) ),
     _ds_filter_id( ids_filter_id ),
-    _ds_filter( new Filter( ids_filter_id ) ),
+    _ds_filter( new Filter( ids_filter_id, this ) ),
     _evt_pipe(NULL),
-    _perf_data( new PerfDataMgr() ),
     _was_closed(false)
 {
 
@@ -249,6 +249,11 @@ int Stream::send_internal( int itag, const char *iformat_str, ... )
 
     mrn_dbg_func_end();
     return status;
+}
+
+bool Stream::is_LocalNodeInternal(void)
+{
+    return _network->is_LocalNodeInternal();
 }
 
 int Stream::send_aux( PacketPtr &ipacket, bool upstream, 
@@ -984,7 +989,7 @@ PacketPtr Stream::collect_PerfData( perfdata_metric_t metric,
     iter = data.begin();
 
     Rank my_rank = _network->get_LocalRank();
-    unsigned num_elems = data.size();
+    uint64_t num_elems = data.size();
     void* data_arr = NULL;
     const char* fmt = NULL;
 
@@ -1101,15 +1106,14 @@ bool Stream::collect_PerformanceData( rank_perfdata_map& results,
         // unpack data
 	int* rank_arr;
 	int* nelems_arr;
-        unsigned rank_len, nelems_len, data_len;
-        unsigned data_elem_sz;
+        uint64_t rank_len, nelems_len;
+	int data_len;
         void* data_arr;
         const char* fmt = NULL;
         perfdata_mettype_t mettype = PerfDataMgr::get_MetricType(metric);
         switch( mettype ) {
          case PERFDATA_TYPE_UINT: {
              fmt = "%ad %ad %auld";
-             data_elem_sz = sizeof(uint64_t);
              uint64_t* u64_arr;
 	     resp_packet->unpack( fmt, &rank_arr, &rank_len, 
                                   &nelems_arr, &nelems_len,
@@ -1119,7 +1123,6 @@ bool Stream::collect_PerformanceData( rank_perfdata_map& results,
          }
          case PERFDATA_TYPE_INT: {
              fmt = "%ad %ad %ald"; 
-             data_elem_sz = sizeof(int64_t);
              int64_t* i64_arr;
 	     resp_packet->unpack( fmt, &rank_arr, &rank_len, 
                                   &nelems_arr, &nelems_len,
@@ -1129,7 +1132,6 @@ bool Stream::collect_PerformanceData( rank_perfdata_map& results,
          }
          case PERFDATA_TYPE_FLOAT: {
              fmt = "%ad %ad %alf"; 
-             data_elem_sz = sizeof(double);
              double* dbl_arr;
 	     resp_packet->unpack( fmt, &rank_arr, &rank_len, 
                                   &nelems_arr, &nelems_len,
@@ -1334,5 +1336,9 @@ bool Stream::find_FilterAssignment(const std::string& assignments,
 }
 
 
+PerfDataMgr * Stream::get_PerfData(void)
+{
+    return _perf_data;
+}
 
 } // namespace MRN

@@ -22,7 +22,6 @@
 #include "xplat/Monitor.h"
 
 #include <boost/shared_ptr.hpp>
-
 namespace MRN
 {
 
@@ -37,7 +36,7 @@ class ParsedGraph;
 class TimeKeeper;
 class EventDetector;
 class Stream;
-
+class PerfDataMgr;
 class PeerNode;
 typedef boost::shared_ptr< PeerNode > PeerNodePtr; 
 
@@ -115,7 +114,6 @@ class Network: public Error {
                                   perfdata_context_t context,
                                   int aggr_filter_id = TFILTER_ARRAY_CONCAT );
     void print_PerformanceData( perfdata_metric_t metric, perfdata_context_t context );
-
     /* Event notification */
     void clear_Events();
     unsigned int num_EventsPending();
@@ -229,6 +227,18 @@ protected:
     
     int get_StartupTimeout(void);
     void set_StartupTimeout( int new_timeout );
+
+
+    PacketPtr collect_PerfData( perfdata_metric_t metric,
+                                         perfdata_context_t context,
+                                         int aggr_strm_id);
+
+
+
+    bool collect_NetPerformanceData( rank_perfdata_map& results,
+                                     perfdata_metric_t metric, 
+                                     perfdata_context_t context,
+                                     int aggr_filter_id = TFILTER_ARRAY_CONCAT );
 
  private:
     friend class Stream;
@@ -375,7 +385,6 @@ protected:
     bool _was_shutdown, _shutting_down;
 
     int _startup_timeout;
-
     /* EventPipe notifications */
     std::map< EventClass, EventPipe* > _evt_pipes;
 
@@ -384,6 +393,11 @@ protected:
     mutable XPlat::Mutex _children_mutex;
     mutable XPlat::Mutex _endpoints_mutex;
     mutable XPlat::Monitor _shutdown_sync;
+
+    // Pointer to performance data class (this is requried since performance
+    // data includes cannot be included in this header)
+    PerfDataMgr * _perf_data;
+
 };
 
 } /* MRN namespace */

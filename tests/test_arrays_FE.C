@@ -9,7 +9,7 @@
 
 #include <string>
 
-const unsigned int ARRAY_LEN=1000;
+const uint64_t ARRAY_LEN=5000;
 using namespace MRN;
 using namespace MRN_test;
 Test * test;
@@ -163,20 +163,19 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
 {
     Stream *recv_stream;
     void *send_array=NULL, *recv_array=NULL;
-    unsigned int i, recv_array_len=0;
+    unsigned int i;
+    uint64_t recv_array_len=0;
     int num_received=0, num_to_receive=0, data_size=0;
     int tag=0;
     PacketPtr buf;
     bool success = true;
     std::string testname, format_string;
-
+    signed char tmp_c2 = (signed char)0;
+    unsigned char tmp_c = (unsigned char)0;
     switch(type){
     case CHAR_ARRAY_T:
         data_size = sizeof(char);
         send_array = malloc ( ARRAY_LEN * data_size );
-        for( i=0; i<ARRAY_LEN; i++){
-            ((char*)send_array)[i] = 'a';
-        }
         tag = PROT_CHAR;
         testname = "test_char_array";
         format_string = "%ac";
@@ -184,9 +183,6 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
     case UCHAR_ARRAY_T:
         data_size = sizeof(unsigned char);
         send_array = malloc ( ARRAY_LEN * data_size );
-        for( i=0; i<ARRAY_LEN; i++){
-            ((unsigned char*)send_array)[i] = 'a';
-        }
         tag = PROT_UCHAR;
         testname = "test_uchar_array";
         format_string = "%auc";
@@ -255,7 +251,7 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
         data_size = sizeof(float);
         send_array = malloc ( ARRAY_LEN * data_size );
         for( i=0; i<ARRAY_LEN; i++){
-            ((float*)send_array)[i] = 123.456789;
+            ((float*)send_array)[i] = (float)123.456789;
         }
         tag = PROT_FLOAT;
         testname = "test_float_array";
@@ -312,14 +308,14 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
     }
 
     if(stream->send(tag, format_string.c_str(), send_array, ARRAY_LEN) == -1){
-        test->print("stream::send() failure\n", testname);
+        test->print("FE: stream::send() failure\n", testname);
         test->end_SubTest(testname, FAILURE);
         free(send_array);
         return -1;
     }
 
     if(stream->flush() == -1){
-        test->print("stream::flush() failure\n", testname);
+        test->print("FE: stream::flush() failure\n", testname);
         test->end_SubTest(testname, FAILURE);
         free(send_array);
         return -1;
@@ -337,7 +333,7 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
 
         if( retval == -1){
             //recv error
-            test->print("recv() failure\n", testname);
+            test->print("FE: recv() failure\n", testname);
             test->end_SubTest(testname, FAILURE);
             free(send_array);
             return -1;

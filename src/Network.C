@@ -32,6 +32,8 @@
 #include "xplat/Thread.h"
 #include "xplat/Process.h"
 #include "xplat/Error.h"
+#include "PerfDataEvent.h"
+#include "PerfDataSysEvent.h"
 
 using namespace XPlat;
 
@@ -69,7 +71,7 @@ void init_local(void)
         if( fdflag == -1 )
         {
             // failed to retrive the fd  flags
-	    fprintf(stderr, "F_GETFD failed!\n");
+        fprintf(stderr, "F_GETFD failed!\n");
         }
         int fret = fcntl( fd, F_SETFD, fdflag | FD_CLOEXEC );
         if( fret == -1 )
@@ -88,6 +90,13 @@ void init_local(void)
     WSADATA data;
     if( WSAStartup(version, &data) != 0 )
         fprintf(stderr, "WSAStartup failed!\n");
+    if( (LOBYTE(data.wVersion) != 2) || (HIBYTE(data.wVersion) != 2) ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr,
+            "Warning: Received Winsock socket version other than requested.\n"
+            "Requested %d.%d, got %d.%d\n",
+            HIBYTE(version), LOBYTE(version), HIBYTE(data.wVersion),
+            LOBYTE(data.wVersion)));
+    }
 #endif
 }
 
@@ -107,15 +116,18 @@ Network::Network(void)
       _failure_manager(NULL), _bcast_communicator(NULL), 
       _local_front_end_node(NULL), _local_back_end_node(NULL), 
       _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
-      _edt( new EventDetector(this) ), _evt_mgr( new EventMgr() ),
+      _evt_mgr( new EventMgr() ),
       _next_user_stream_id(USER_STRM_BASE_ID),
       _next_int_stream_id(INTERNAL_STRM_BASE_ID),
-      _threaded(true), _recover_from_failures(true), 
+      _threaded(true), _recover_from_failures(true),
       _was_shutdown(false), _shutting_down(false),
-      _startup_timeout(120)
+      _startup_timeout(120),
+      _perf_data(new PerfDataMgr())
 {
+    
     init_local();
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
+    _edt = new EventDetector(this);
 }
 
 Network::~Network(void)
@@ -123,6 +135,10 @@ Network::~Network(void)
     shutdown_Network( );
     clear_EndPoints();
 
+    if (_perf_data != NULL)
+    {
+        delete _perf_data;
+    }
     if( parsed_graph != NULL ) {
         delete parsed_graph;
         parsed_graph = NULL;
@@ -180,8 +196,8 @@ void Network::close_Streams(void)
            increment of miter, we do the erase ourselves in a safe manner. */
         Stream* strm = (*miter).second;
         tmpiter = miter++;
-        _internal_streams.erase( tmpiter );
         mrn_dbg(5, mrn_printf(FLF, stderr, "deleting stream with id=%u\n", tmpiter->first));
+        _internal_streams.erase( tmpiter );
         delete strm;
     }
 
@@ -235,7 +251,7 @@ void Network::shutdown_Network(void)
                 if( recv_tid && (recv_tid != my_id) ) {
 
                     mrn_dbg( 5, mrn_printf(FLF, stderr, 
-		                           "about to cancel parent recv thread\n") );
+                                   "about to cancel parent recv thread\n") );
 
                     // turn off debug output to prevent mrn_printf deadlock
                     MRN::set_OutputLevel( -1 );
@@ -276,15 +292,15 @@ void Network::shutdown_Network(void)
         // wait for parent recv thread to finish
         if( _parent != PeerNode::NullPeerNode ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr, 
-	                           "waiting for parent recv thread to finish\n") );
+                               "waiting for parent recv thread to finish\n") );
             XPlat::Thread::Id recv_id = _parent->get_RecvThrId();
             if( recv_id )
                 XPlat::Thread::Join( recv_id, (void**)NULL );
-	}
+    }
 
-	// this is ugly, but we need to ensure that CPs don't exit too quickly
-	// on Cray XTs so ALPS won't kill other CPs that haven't completed shutdown
-	sleep( 10 );
+    // this is ugly, but we need to ensure that CPs don't exit too quickly
+    // on Cray XTs so ALPS won't kill other CPs that haven't completed shutdown
+    sleep( 10 );
     }
 }
 
@@ -628,8 +644,8 @@ void Network::init_FrontEnd( const char * itopology,
     rootHost = parsed_graph->get_Root()->get_HostName();
     XPlat::NetUtils::GetHostName( rootHost, prettyHost );
     if( ! XPlat::NetUtils::IsLocalHost( prettyHost ) ) {
-	string lhost;
-	XPlat::NetUtils::GetLocalHostName(lhost);
+    string lhost;
+    XPlat::NetUtils::GetLocalHostName(lhost);
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
                                "WARNING: Topology Root (%s) is not local host (%s)\n",
                                prettyHost.c_str(), lhost.c_str()) );
@@ -823,7 +839,23 @@ int Network::send_PacketsToParent( std::vector< PacketPtr > &ipackets )
 int Network::send_PacketToParent( PacketPtr ipacket )
 {
     mrn_dbg_func_begin();
+    
+    
+    
+    unsigned int strm_id = ipacket->get_StreamId();
+    Stream * strm = get_Stream( strm_id );
+    if (strm != NULL)
+        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_NET_SENDPAR))
+            ipacket->start_Timer(PERFDATA_PKT_TIMERS_NET_SENDPAR);
+ 
     get_ParentNode()->send( ipacket );
+
+    if(strm != NULL)
+        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_NET_SENDPAR))
+            ipacket->stop_Timer(PERFDATA_PKT_TIMERS_NET_SENDPAR);
+
+
+
     return 0;
 }
 
@@ -850,6 +882,12 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
     mrn_dbg_func_begin();
 
     unsigned int strm_id = ipacket->get_StreamId();
+
+
+    Stream * strm = get_Stream( strm_id );
+    if(strm != NULL)
+        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_NET_SENDCHILD))
+            ipacket->start_Timer(PERFDATA_PKT_TIMERS_NET_SENDCHILD);
 
     if( strm_id == CTL_STRM_ID ) { // control stream message
 
@@ -913,6 +951,12 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
             stream->send_to_children( ipacket );
         }
     }
+
+    if(strm != NULL)
+        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_NET_SENDCHILD))
+            ipacket->stop_Timer(PERFDATA_PKT_TIMERS_NET_SENDCHILD);
+
+
 
     mrn_dbg_func_end();
     return 0;
@@ -1035,7 +1079,7 @@ get_packet_from_stream_label:
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "packets %s on stream[%d]\n",
                                    (packet_found ? "found" : "not found"),
-				   cur_stream->get_Id()) );
+                   cur_stream->get_Id()) );
 
             _streams_sync.Lock();
             _stream_iter++;
@@ -1186,7 +1230,7 @@ Stream* Network::new_Stream( Communicator *icomm,
 
     //get array of back-ends from communicator
     Rank* backends = icomm->get_Ranks();
-    unsigned num_pts = icomm->size();
+    uint64_t num_pts = icomm->size();
     if( num_pts == 0 ) {
         if( icomm != _bcast_communicator ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
@@ -1234,7 +1278,7 @@ Stream* Network::new_Stream( Communicator* icomm,
     }
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_HETERO_STREAM, "%ud %ad %s %s %s",
-                                 _next_user_stream_id, backends, num_pts,
+                                _next_user_stream_id, backends, uint64_t(num_pts),
                                  us_filters.c_str(), sync_filters.c_str(), 
                                  ds_filters.c_str()) );
     _next_user_stream_id++;
@@ -1275,7 +1319,7 @@ Stream* Network::new_InternalStream( Communicator *icomm,
     }
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_INTERNAL_STREAM, "%ud %ad %d %d %d",
-                                 _next_int_stream_id, backends, num_pts,
+                                 _next_int_stream_id, backends, uint64_t(num_pts),
                                  ius_filter_id, isync_filter_id, ids_filter_id) );
     _next_int_stream_id++;
 
@@ -1684,7 +1728,7 @@ int Network::load_FilterFuncs( const char* so_file,
         PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_FILTER, "%s %as %auhd",
                                      so_copy, 
                                      funcs, success_count, 
-                                     fids, success_count) );
+                                     fids, uint64_t(success_count)) );
         send_PacketToChildren( packet );
         flush();
     }
@@ -2149,7 +2193,7 @@ PeerNodePtr Network::new_PeerNode( string const& ihostname, Port iport,
     }
     else {
         _children_mutex.Lock();
-	 mrn_dbg( 5, mrn_printf(FLF, stderr, "inserted into children\n") );
+     mrn_dbg( 5, mrn_printf(FLF, stderr, "inserted into children\n") );
         _children.insert( node );
         _children_mutex.Unlock();
     }
@@ -2205,10 +2249,10 @@ PeerNodePtr Network::get_PeerNode( Rank irank )
 
     if( peer == PeerNode::NullPeerNode ) {
         _children_mutex.Lock();
-	if( _children.empty() )
-	   mrn_dbg( 5, mrn_printf(FLF, stderr, "children is empty\n") );
+    if( _children.empty() )
+       mrn_dbg( 5, mrn_printf(FLF, stderr, "children is empty\n") );
         for( iter = _children.begin(); iter != _children.end(); iter++ ) {
-	    mrn_dbg( 5, mrn_printf(FLF, stderr, "rank is %d, irank is %d\n", 
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "rank is %d, irank is %d\n", 
                                    (*iter)->get_Rank(), irank) ); 
             if( (*iter)->get_Rank() == irank ) {
                 peer = *iter;
@@ -2286,17 +2330,17 @@ bool Network::set_FailureRecovery( bool enable_recovery )
 
     if( is_LocalNodeFrontEnd() ) {
 
-	if( enable_recovery ) {
+    if( enable_recovery ) {
             tag = PROT_ENABLE_RECOVERY;
             enable_FailureRecovery();
-	}
-	else {
+    }
+    else {
             tag = PROT_DISABLE_RECOVERY;
             disable_FailureRecovery();
-	}
-	
+    }
+    
         PacketPtr packet( new Packet(CTL_STRM_ID, tag, "%d", (int)enable_recovery) );
-	if( packet->has_Error() ) {
+    if( packet->has_Error() ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() fail\n") );
             return false;
         }
@@ -2308,7 +2352,7 @@ bool Network::set_FailureRecovery( bool enable_recovery )
     }
     else {
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
-			       "set_FailureRecovery() can only be used by Network front-end\n") ); 
+                   "set_FailureRecovery() can only be used by Network front-end\n") ); 
         return false;
     }
 
@@ -2316,4 +2360,218 @@ bool Network::set_FailureRecovery( bool enable_recovery )
     return true;
 }
 
+// network performance section starts
+
+PacketPtr Network::collect_PerfData( perfdata_metric_t metric,
+                                     perfdata_context_t context,
+                                     int aggr_strm_id )
+{
+    vector< perfdata_t > data;
+    vector< perfdata_t >::iterator iter;
+
+    //PerfDataMgr * _perf_data = boost::any_cast<PerfDataMgr *>(_perf_data_store); 
+    if (metric == PERFDATA_MET_MEM_VIRT_KB || metric == PERFDATA_MET_MEM_PHYS_KB) {
+        _perf_data->get_MemData(metric);
+    }
+    _perf_data->collect( metric, context, data );
+    iter = data.begin();
+    Rank my_rank = get_LocalRank();
+    uint64_t  num_elems = data.size();
+    void* data_arr = NULL;
+    const char* fmt = NULL;
+    switch( PerfDataMgr::get_MetricType(metric) ) {
+     case PERFDATA_TYPE_UINT: {
+         fmt = "%ad %ad %auld";
+         if( num_elems ) {
+             uint64_t* u64_arr = (uint64_t*)malloc(sizeof(uint64_t) * num_elems);
+             if( u64_arr == NULL ) {
+                 mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() data array failed\n"));
+                 return Packet::NullPacket;
+             }
+             for( unsigned u=0; iter != data.end(); u++, iter++ )
+                 u64_arr[u] = (*iter).u;
+             data_arr = u64_arr;
+         }
+         break;
+     }
+     case PERFDATA_TYPE_INT: {
+         fmt = "%ad %ad %ald";
+         if( num_elems ) {
+             int64_t* i64_arr = (int64_t*)malloc(sizeof(int64_t) * num_elems);
+             if( i64_arr == NULL ) {
+                 mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() data array failed\n"));
+                 return Packet::NullPacket;
+             }
+             for( unsigned u=0; iter != data.end(); u++, iter++ )
+                 i64_arr[u] = (*iter).i;
+             data_arr = i64_arr;
+         }
+         break;
+     }
+     case PERFDATA_TYPE_FLOAT: {
+         fmt = "%ad %ad %alf";
+         if( num_elems ) {
+             double* dbl_arr = (double*)malloc(sizeof(double) * num_elems);
+             if( dbl_arr == NULL ) {
+                 mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() data array failed\n"));
+                 return Packet::NullPacket;
+             }
+             for( unsigned u=0; iter != data.end(); u++, iter++)
+                 dbl_arr[u] = (*iter).d;
+             data_arr = dbl_arr;
+         }
+         break;
+     }
+     default:
+         mrn_dbg(1, mrn_printf(FLF, stderr, "bad metric type\n"));
+         return Packet::NullPacket;
+    }
+    // create output packet
+    int* rank_arr = (int*) malloc( sizeof(int) );
+    int* nelems_arr = (int*) malloc( sizeof(int) );
+    *rank_arr = my_rank;
+    *nelems_arr = num_elems;
+    PacketPtr packet( new Packet( aggr_strm_id, PROT_COLLECT_PERFDATA, fmt,
+                                  rank_arr, 1, nelems_arr, 1, data_arr, num_elems ) );
+    if( packet->has_Error() ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+        return Packet::NullPacket;
+    }
+    packet->set_DestroyData(true); // free arrays when Packet no longer in use
+    return packet;
+}
+
+
+bool Network::collect_NetPerformanceData ( rank_perfdata_map& results,
+                                           perfdata_metric_t metric,
+                                           perfdata_context_t context,
+                                           int aggr_filter_id /*=TFILTER_ARRAY_CONCAT*/)
+{
+    //PerfDataMgr * _perf_data = boost::any_cast<PerfDataMgr *>(_perf_data_store); 
+    mrn_dbg_func_begin();
+    if( metric >= PERFDATA_MAX_MET )
+        return false;
+    if( context >= PERFDATA_MAX_CTX )
+        return false;
+
+    // create stream to aggregate performance data
+    //Communicator* comm = new Communicator( this,_end_points);
+    Stream* aggr_strm = this->new_Stream( _bcast_communicator, TFILTER_PERFDATA );
+    aggr_strm->set_FilterParameters( FILTER_UPSTREAM_TRANS, "%d %d %ud %ud",
+                                     (int)metric, (int)context,
+                                     aggr_filter_id,0);
+    int aggr_strm_id = aggr_strm->get_Id();
+
+    if( this->is_LocalNodeFrontEnd() ) {
+
+        // send collect request
+        int tag = PROT_COLLECT_PERFDATA;
+        PacketPtr packet( new Packet( aggr_strm_id, tag, "%d %d %ud",
+                    (int)metric, (int)context, aggr_strm_id ) );
+        if( packet->has_Error() ) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() fail\n"));
+            return false;
+        }
+
+        if( this->is_LocalNodeParent() ) {
+            if( this->send_PacketToChildren( packet ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
+                return false;
+            }
+        }
+
+        // receive data
+        int rtag;
+        PacketPtr resp_packet;
+        aggr_strm->recv( &rtag, resp_packet );
+
+        // unpack data
+        int* rank_arr;
+        int* nelems_arr;
+        uint64_t rank_len, nelems_len;
+	int data_len;
+        void* data_arr;
+        const char* fmt = NULL;
+        perfdata_mettype_t mettype = PerfDataMgr::get_MetricType(metric);
+        switch( mettype ) {
+         case PERFDATA_TYPE_UINT: {
+             fmt = "%ad %ad %auld";
+             uint64_t* u64_arr;
+         resp_packet->unpack( fmt, &rank_arr, &rank_len,
+                                  &nelems_arr, &nelems_len,
+                                  &u64_arr, &data_len );
+             data_arr = u64_arr;
+             break;
+         }
+         case PERFDATA_TYPE_INT: {
+             fmt = "%ad %ad %ald";
+             int64_t* i64_arr;
+         resp_packet->unpack( fmt, &rank_arr, &rank_len,
+                                  &nelems_arr, &nelems_len,
+                                  &i64_arr, &data_len );
+             data_arr = i64_arr;
+             break;
+         }
+         case PERFDATA_TYPE_FLOAT: {
+             fmt = "%ad %ad %alf";
+             double* dbl_arr;
+         resp_packet->unpack( fmt, &rank_arr, &rank_len,
+                                  &nelems_arr, &nelems_len,
+                                  &dbl_arr, &data_len );
+             data_arr = dbl_arr;
+             break;
+         }
+         default:
+             mrn_dbg(1, mrn_printf(FLF, stderr, "bad metric type\n"));
+             return Packet::NullPacket;
+        }
+        // add data to result map
+        unsigned data_ndx = 0;
+        for( unsigned u=0; u < rank_len ; u++ ) {
+            unsigned nelems = nelems_arr[u];
+            int rank = rank_arr[u];
+            vector<perfdata_t>& rank_data = results[ rank ];
+            rank_data.clear();
+            rank_data.reserve( nelems );
+            perfdata_t datum;
+            switch( mettype ) {
+             case PERFDATA_TYPE_UINT: {
+                 uint64_t* u64_arr = (uint64_t*)data_arr + data_ndx;
+                 for( unsigned v=0; v < nelems; v++ ) {
+                     datum.u = u64_arr[v];
+                     rank_data.push_back( datum );
+                 }
+                 break;
+             }
+             case PERFDATA_TYPE_INT: {
+                 int64_t* i64_arr = (int64_t*)data_arr +  data_ndx;
+                 for( unsigned v=0; v < nelems; v++ ) {
+                     datum.i = i64_arr[v];
+                     rank_data.push_back( datum );
+                 }
+                 break;
+             }
+             case PERFDATA_TYPE_FLOAT: {
+                 double* dbl_arr = (double*)data_arr + data_ndx;
+                 for( unsigned v=0; v < nelems; v++ ) {
+                     datum.d = dbl_arr[v];
+                     rank_data.push_back( datum );
+                 }
+                 break;
+             }
+            }
+            data_ndx += nelems;
+        }
+        if( rank_arr != NULL ) free( rank_arr );
+        if( nelems_arr != NULL ) free( nelems_arr );
+        if( data_arr != NULL ) free( data_arr );
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr,
+                 "collect_PerformanceData() can only be used by Network front-end\n" ));
+        return false;
+    }
+    mrn_dbg_func_end();
+    return true;
+}
 }  // namespace MRN
