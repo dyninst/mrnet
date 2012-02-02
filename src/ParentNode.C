@@ -615,6 +615,7 @@ int ParentNode::proc_newFilter( PacketPtr ipacket ) const
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
                                        "Filter::load_FilterFunc(%s,%s) failed.\n",
                                        so_file, funcs[u]) );
+                // TODO: notify FE of failure to load
             }
             free( funcs[u] );
         }

@@ -1670,6 +1670,8 @@ int Network::load_FilterFunc( const char* so_file, const char* func_name )
     int rc = load_FilterFuncs( so_file, funcs, fids );
     if( rc == 1 )
         rc = fids[0];
+    else
+        rc = -1;
 
     if( func != NULL )
         free( func );
