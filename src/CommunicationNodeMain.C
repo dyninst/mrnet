@@ -46,20 +46,22 @@ int main(int argc, char **argv)
         // build our object allowing access to the MRNet network
 
         net = Network::CreateNetworkIN( argc, argv );
-        if( (net == NULL) || net->has_Error() )
-            return 1;
-        
-        // handle events
-        net->waitfor_ShutDown();
+        if( (net == NULL) || net->has_Error() ) {
+            fprintf( stderr, "Network::CreateNetworkIN() failed, check args\n" );
+            ret = 1;
+        }
+        else {
+            // handle events
+            net->waitfor_ShutDown();
+            delete net;
+            net = NULL;
+        }
     }
     catch( std::exception& e )
     {
         mrn_dbg( 1, mrn_printf( FLF, stderr, e.what() ) );
         ret = 1;
     }
-
-    delete net;
-    net = NULL;
 
     return ret;
 }

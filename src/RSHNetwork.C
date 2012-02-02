@@ -68,15 +68,21 @@ Network*
 Network::CreateNetworkIN( int argc, char* argv[] )
 {
     // parse arguments
-    assert( argc >= 5 );
-    const char* phostname = argv[0];
-    Port pport = (Port)strtoul( argv[1], NULL, 10 );
-    Rank prank = (Rank)strtoul( argv[2], NULL, 10 );
-    const char* myhostname = argv[3];
-    Rank myrank = (Rank)strtoul( argv[4], NULL, 10 );
+    if( argc >= 5 ) {
+        const char* phostname = argv[0];
+        Port pport = (Port)strtoul( argv[1], NULL, 10 );
+        Rank prank = (Rank)strtoul( argv[2], NULL, 10 );
+        const char* myhostname = argv[3];
+        Rank myrank = (Rank)strtoul( argv[4], NULL, 10 );
 
-    return new RSHNetwork( phostname, pport, prank,
-                           myhostname, myrank, true );
+        return new RSHNetwork( phostname, pport, prank,
+                               myhostname, myrank, true );
+    }
+    else {
+        mrn_dbg(1, mrn_printf(FLF, stderr, 
+                              "Not enough args, please provide parent/local info\n"));
+        return NULL;
+    }
 }
 
 
