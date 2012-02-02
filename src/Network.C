@@ -1729,7 +1729,7 @@ int Network::load_FilterFuncs( const char* so_file,
         mrn_dbg( 3, mrn_printf(FLF, stderr, "sending PROT_NEW_FILTER\n") );
         PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_FILTER, "%s %as %auhd",
                                      so_copy, 
-                                     funcs, success_count, 
+                                     funcs, uint64_t(success_count), 
                                      fids, uint64_t(success_count)) );
         send_PacketToChildren( packet );
         flush();

@@ -668,14 +668,14 @@ int ChildNode::proc_PortUpdate( PacketPtr ipacket ) const
                      &type, uint64_t(1),
                      &send_iprank, uint64_t(1),
                      &send_myrank, uint64_t(1),
-                     &host_arr, 1,
+                     &host_arr, uint64_t(1),
                      &send_port, uint64_t(1) );
         else
             s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
                               &type, uint64_t(1),
                               &send_iprank, uint64_t(1),
                               &send_myrank, uint64_t(1),
-                              &host_arr, 1,
+                              &host_arr, uint64_t(1),
                               &send_port, uint64_t(1) );
         s->flush();
         free(host_arr);

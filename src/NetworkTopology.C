@@ -1332,7 +1332,7 @@ bool NetworkTopology::send_updates_buffer()
                      type_arr, uint64_t(vuc_size), 
                      prank_arr, uint64_t(vuc_size), 
                      crank_arr, uint64_t(vuc_size), 
-                     host_arr, vuc_size, 
+                     host_arr, uint64_t(vuc_size), 
                      cport_arr, uint64_t(vuc_size ));
             s->flush();
 

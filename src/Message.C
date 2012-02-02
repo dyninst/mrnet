@@ -145,7 +145,7 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
 
     XPlat::NCBuf* ncbufs = new XPlat::NCBuf[num_buffers];
 
-    ssize_t total_bytes = 0;
+    uint64_t total_bytes = 0;
     for( i = 0; i < num_buffers; i++ ) {
         uint64_t len = packet_sizes[i];
         ncbufs[i].buf = (char*) malloc( len );

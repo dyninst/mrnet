@@ -67,7 +67,7 @@ BackEndNode::BackEndNode( Network * inetwork,
 
           s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
                    &type, uint64_t(1), &send_iprank, uint64_t(1), &send_myrank, uint64_t(1), 
-                   &host_arr, 1, &send_port, uint64_t(1) );
+                   &host_arr, uint64_t(1), &send_port, uint64_t(1) );
 
           free(host_arr);
       }	

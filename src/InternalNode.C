@@ -75,7 +75,7 @@ InternalNode::InternalNode( Network * inetwork,
                               &type, uint64_t(1), 
                               &iprank, uint64_t(1), 
                               &irank, uint64_t(1), 
-                              &host_arr, 1, 
+                              &host_arr, uint64_t(1), 
                               &listeningPort, uint64_t(1) );
             free(host_arr);
         } 

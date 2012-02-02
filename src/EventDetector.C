@@ -705,7 +705,7 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
                               &type, uint64_t(1), 
                               &my_rank, uint64_t(1), 
                               &ifailed_rank, uint64_t(1), 
-                              &dummy_host, 1, 
+                              &dummy_host, uint64_t(1), 
                               &dummy_port, uint64_t(1) );
             free( dummy_host );
         }

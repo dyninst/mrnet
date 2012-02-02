@@ -593,17 +593,16 @@ int ParentNode::proc_deleteStream( PacketPtr ipacket ) const
 int ParentNode::proc_newFilter( PacketPtr ipacket ) const
 {
     int retval = 0;
-    unsigned nfuncs = 0;
+    uint64_t nfuncs = 0;
     char* so_file = NULL;
     char** funcs = NULL;
     unsigned short* fids = NULL;
-    uint64_t discard;
     mrn_dbg_func_begin();
 
     retval = ipacket->unpack( "%s %as %auhd",
                               &so_file,
                               &funcs, &nfuncs,
-                              &fids, &discard );
+                              &fids, &nfuncs );
 
     // propagate before local load
     _network->send_PacketToChildren( ipacket );
@@ -720,7 +719,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
         PacketPtr pkt( new Packet(CTL_STRM_ID, PROT_NET_SETTINGS, "%s %ad %as", 
                                   topo_dup,
                                   keys, uint64_t(count), 
-                                  vals, count) );
+                                  vals, uint64_t(count)) );
         pkt->set_DestroyData( true );
         child_node->sendDirectly( pkt );
     }
@@ -769,7 +768,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                                   &type, uint64_t(1), 
                                   &my_rank, uint64_t(1), 
                                   &child_rank, uint64_t(1), 
-                                  &dummy_host, 1, 
+                                  &dummy_host, uint64_t(1), 
                                   &dummy_port, uint64_t(1) );
                 free( dummy_host );
             }
