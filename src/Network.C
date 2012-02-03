@@ -292,15 +292,15 @@ void Network::shutdown_Network(void)
         // wait for parent recv thread to finish
         if( _parent != PeerNode::NullPeerNode ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                               "waiting for parent recv thread to finish\n") );
+                                   "waiting for parent recv thread to finish\n") );
             XPlat::Thread::Id recv_id = _parent->get_RecvThrId();
             if( recv_id )
                 XPlat::Thread::Join( recv_id, (void**)NULL );
-    }
+        }
 
-    // this is ugly, but we need to ensure that CPs don't exit too quickly
-    // on Cray XTs so ALPS won't kill other CPs that haven't completed shutdown
-    sleep( 10 );
+        // this is ugly, but we need to ensure that CPs don't exit too quickly
+        // on Cray XTs so ALPS won't kill other CPs that haven't completed shutdown
+        sleep( 10 );
     }
 }
 
@@ -644,8 +644,8 @@ void Network::init_FrontEnd( const char * itopology,
     rootHost = parsed_graph->get_Root()->get_HostName();
     XPlat::NetUtils::GetHostName( rootHost, prettyHost );
     if( ! XPlat::NetUtils::IsLocalHost( prettyHost ) ) {
-    string lhost;
-    XPlat::NetUtils::GetLocalHostName(lhost);
+        string lhost;
+        XPlat::NetUtils::GetLocalHostName(lhost);
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
                                "WARNING: Topology Root (%s) is not local host (%s)\n",
                                prettyHost.c_str(), lhost.c_str()) );
@@ -1079,7 +1079,7 @@ get_packet_from_stream_label:
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "packets %s on stream[%d]\n",
                                    (packet_found ? "found" : "not found"),
-                   cur_stream->get_Id()) );
+                                   cur_stream->get_Id()) );
 
             _streams_sync.Lock();
             _stream_iter++;
@@ -2195,7 +2195,7 @@ PeerNodePtr Network::new_PeerNode( string const& ihostname, Port iport,
     }
     else {
         _children_mutex.Lock();
-     mrn_dbg( 5, mrn_printf(FLF, stderr, "inserted into children\n") );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "inserted into children\n") );
         _children.insert( node );
         _children_mutex.Unlock();
     }
@@ -2252,9 +2252,9 @@ PeerNodePtr Network::get_PeerNode( Rank irank )
     if( peer == PeerNode::NullPeerNode ) {
         _children_mutex.Lock();
     if( _children.empty() )
-       mrn_dbg( 5, mrn_printf(FLF, stderr, "children is empty\n") );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "children is empty\n") );
         for( iter = _children.begin(); iter != _children.end(); iter++ ) {
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "rank is %d, irank is %d\n", 
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "rank is %d, irank is %d\n", 
                                    (*iter)->get_Rank(), irank) ); 
             if( (*iter)->get_Rank() == irank ) {
                 peer = *iter;
@@ -2332,17 +2332,17 @@ bool Network::set_FailureRecovery( bool enable_recovery )
 
     if( is_LocalNodeFrontEnd() ) {
 
-    if( enable_recovery ) {
+        if( enable_recovery ) {
             tag = PROT_ENABLE_RECOVERY;
             enable_FailureRecovery();
-    }
-    else {
+        }
+        else {
             tag = PROT_DISABLE_RECOVERY;
             disable_FailureRecovery();
-    }
+        }
     
         PacketPtr packet( new Packet(CTL_STRM_ID, tag, "%d", (int)enable_recovery) );
-    if( packet->has_Error() ) {
+        if( packet->has_Error() ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() fail\n") );
             return false;
         }
@@ -2354,7 +2354,7 @@ bool Network::set_FailureRecovery( bool enable_recovery )
     }
     else {
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                   "set_FailureRecovery() can only be used by Network front-end\n") ); 
+                               "Network::set_FailureRecovery() can only be used by front-end\n") ); 
         return false;
     }
 
