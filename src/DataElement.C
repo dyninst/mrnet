@@ -166,13 +166,13 @@ void DataElement::set_string( const char *p )
     val.p = const_cast<void*>((const void*)p); type = STRING_T;
 }
 
-const void * DataElement::get_array( DataType *t, uint32_t *len ) const
+const void * DataElement::get_array( DataType *t, uint64_t *len ) const
 { 
     *t = type; 
     *len = array_len; 
     return val.p;
 }
-void DataElement::set_array( const void *p, DataType t, uint32_t len )
+void DataElement::set_array( const void *p, DataType t, uint64_t len )
 { 
     val.p = const_cast<void*>(p); 
     type = t; 

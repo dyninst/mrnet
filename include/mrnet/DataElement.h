@@ -82,8 +82,8 @@ class DataElement {
     const char * get_string( void ) const;
     void set_string( const char *p );
 
-    const void * get_array( DataType *t, uint32_t *len ) const;
-    void set_array( const void *p, DataType t, uint32_t len );
+    const void * get_array( DataType *t, uint64_t *len ) const;
+    void set_array( const void *p, DataType t, uint64_t len );
 
     // END MRNET API
 

@@ -818,7 +818,7 @@ void tfilter_IntEqClass( const vector< PacketPtr >& ipackets,
                          const TopologyLocalInfo& )
 {
     DataType type;
-    uint32_t array_len0, array_len1, array_len2;
+    uint64_t array_len0, array_len1, array_len2;
     map< unsigned int, vector < unsigned int > > classes;
     unsigned int i;
 
@@ -969,7 +969,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     const int* rank_arr;
     const int* nelems_arr;
     const void* data_arr;
-    unsigned rank_len, nelems_len, data_len;
+    uint64_t rank_len, nelems_len, data_len;
     
     // aggregate input packets
     int i = 0;
@@ -1137,7 +1137,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     int* orank_arr = NULL;
     int* onelems_arr = NULL;
     void* odata_arr = NULL;
-    unsigned orank_len=0, onelems_len=0, odata_len=0;
+    uint64_t orank_len=0, onelems_len=0, odata_len=0;
     if( aggr_id == (int)TFILTER_ARRAY_CONCAT ) {
         orank_len = onelems_len = total_nranks;
         odata_len = total_ndatums;

@@ -4,9 +4,7 @@
 
 
 TARGETS = $(BINDIR)/HeteroFilters_FE \
-          $(BINDIR)/HeteroFilters_BE \
-          $(BINDIR)/HeteroFilters_FE_lightweight \
-          $(BINDIR)/HeteroFilters_BE_lightweight
+          $(BINDIR)/HeteroFilters_BE
 
 TARGETS_SO = $(LIBDIR)/HeteroFilters.so
 
@@ -19,14 +17,8 @@ all: $(TARGETS) $(TARGETS_SO)
 $(BINDIR)/HeteroFilters_FE: HeteroFilters_FE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ HeteroFilters_FE.C $(LIBS)
 
-$(BINDIR)/HeteroFilters_FE_lightweight: HeteroFilters_FE_lightweight.C
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ HeteroFilters_FE_lightweight.C $(LIBS)
-
 $(BINDIR)/HeteroFilters_BE: HeteroFilters_BE.C file_util.h
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ HeteroFilters_BE.C $(LIBS)
-
-$(BINDIR)/HeteroFilters_BE_lightweight: HeteroFilters_BE_lightweight.c file_util_lightweight.h
-	$(CC) $(CCFLAGS) $(LDFLAGS) -o $@ HeteroFilters_BE_lightweight.c $(LIBS_LIGHTWEIGHT)
 
 $(LIBDIR)/HeteroFilters.so: HeteroFilters.C
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ HeteroFilters.C
