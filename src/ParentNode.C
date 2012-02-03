@@ -664,6 +664,9 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
     uint16_t child_incarnation;
     char is_internal_char;
 
+    Rank my_rank = _network->get_LocalRank();
+    NetworkTopology* nt = _network->get_NetworkTopology();
+
     ipacket->unpack( "%s %uhd %ud %uhd %ud %c %s",
                      &child_hostname_ptr,
                      &child_port,
@@ -692,36 +695,36 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
     if( child_hostname_ptr != NULL )
         free( child_hostname_ptr );
 
-    // propagate initial network settings
-    const std::map< net_settings_key_t, std::string >& envMap = _network->get_SettingsMap();
-    int* keys = (int*) calloc( envMap.size() + 1, sizeof(int) );
-    char** vals = (char**) calloc( envMap.size() + 1, sizeof(char*) ); 
+    if( child_incarnation == 1 ) {
+        // propagate initial network settings
+        const std::map< net_settings_key_t, std::string >& envMap = _network->get_SettingsMap();
+        int* keys = (int*) calloc( envMap.size() + 1, sizeof(int) );
+        char** vals = (char**) calloc( envMap.size() + 1, sizeof(char*) ); 
    
-    unsigned int count = 0;
-    std::map< net_settings_key_t, std::string >::const_iterator env_it = envMap.begin();
-    for( ; env_it != envMap.end(); env_it++, count++ ) {
-        keys[count] = env_it->first;
-        vals[count] = strdup( (env_it->second).c_str() );
+        unsigned int count = 0;
+        std::map< net_settings_key_t, std::string >::const_iterator env_it = envMap.begin();
+        for( ; env_it != envMap.end(); env_it++, count++ ) {
+            keys[count] = env_it->first;
+            vals[count] = strdup( (env_it->second).c_str() );
+        }
+
+        keys[ count ] = MRNET_FAILURE_RECOVERY;
+        if( _network->_recover_from_failures )
+            vals[ count ] = strdup( "1" );
+        else 
+            vals[ count ] = strdup( "0" );
+        count++;
+
+        std::string topo_str = nt->get_TopologyString();
+        char* topo_dup = strdup( topo_str.c_str() );
+        PacketPtr pkt( new Packet(CTL_STRM_ID, PROT_NET_SETTINGS, "%s %ad %as", 
+                                  topo_dup,
+                                  keys, uint64_t(count), 
+                                  vals, count) );
+        pkt->set_DestroyData( true );
+        child_node->sendDirectly( pkt );
     }
-
-    keys[ count ] = MRNET_FAILURE_RECOVERY;
-    if( _network->_recover_from_failures )
-        vals[ count ] = strdup( "1" );
-    else 
-        vals[ count ] = strdup( "0" );
-    count++;
-
-    NetworkTopology* nt = _network->get_NetworkTopology();
-    std::string topo_str = nt->get_TopologyString();
-
-    PacketPtr pkt( new Packet(CTL_STRM_ID, PROT_NET_SETTINGS, "%s %ad %as", 
-                              strdup( topo_str.c_str() ),
-                              keys, uint64_t(count), 
-                              vals, count) );
-    pkt->set_DestroyData( true );
-    child_node->sendDirectly( pkt );
     
-    Rank my_rank = _network->get_LocalRank();
     if( NULL == nt->find_Node(child_rank) ) {
         std::string child_topo(topo_ptr);
         mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before adding child subgraph %s\n", 
@@ -730,6 +733,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
         SerialGraph sg( child_topo );
         nt->add_SubGraph( my_rank, sg, true );
     }
+
     if( topo_ptr != NULL )
         free( topo_ptr );
 

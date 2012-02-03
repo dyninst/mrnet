@@ -269,8 +269,7 @@ int ChildNode::proc_SetTopoEnv( PacketPtr ipacket ) const
     char* sg_byte_array = NULL;
     int* keys = NULL;
     char** vals = NULL;
-    int i;
-    uint64_t count;
+    uint64_t i, count;
     NetworkTopology* nt = _network->get_NetworkTopology();    
 
     if( ipacket->unpack( "%s %ad %as", &sg_byte_array, 
@@ -509,22 +508,24 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     }
     free( topo_ptr );
 
-    // handle network settings packet
-    std::list< PacketPtr > packet_list;    
-    int rret = iparent->recv( packet_list );
-    if( (rret == -1) || ((rret == 0) && (packet_list.size() == 0)) ) {
-        if( rret == -1 ) {
-             mrn_dbg(3, mrn_printf(FLF, stderr, "recv() topo and env failed!\n"));
-             return -1;
+    if( _incarnation == 1 ) {
+        // handle network settings packet
+        std::list< PacketPtr > packet_list;    
+        int rret = iparent->recv( packet_list );
+        if( (rret == -1) || ((rret == 0) && (packet_list.size() == 0)) ) {
+            if( rret == -1 ) {
+                mrn_dbg(3, mrn_printf(FLF, stderr, "recv() topo and env failed!\n"));
+                return -1;
+            }
         }
+        if( proc_PacketsFromParent( packet_list ) == -1 )
+            mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromParent() failed\n"));
     }
-    if( proc_PacketsFromParent( packet_list ) == -1 )
-        mrn_dbg(1, mrn_printf(FLF, stderr, "proc_PacketsFromParent() failed\n"));
 
     //Create send/recv threads
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for parent\n") );
     iparent->start_CommunicationThreads();
-
+        
     mrn_dbg_func_end();
 
     return 0;
