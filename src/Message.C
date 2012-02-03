@@ -70,7 +70,7 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Reading packet count\n") );
     ssize_t retval;
     if( (retval = MRN_recv(sock_fd, buf, buf_len)) != buf_len ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %zd of %zd bytes received\n", 
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() " PRIszt " of " PRIszt " bytes received\n", 
                                retval, buf_len ));
         free( buf );
         return -1;
@@ -113,11 +113,11 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
         return -1;
     }
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling MRN_recv(%d, %p, %zd)\n",
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling MRN_recv(%d, %p, " PRIszt ")\n",
                            sock_fd, buf, buf_len) );
     retval = MRN_recv( sock_fd, buf, buf_len );
     if( retval != buf_len ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %zd of %zd bytes received\n", 
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() " PRIszt " of " PRIszt " bytes received\n", 
                                retval, buf_len ));
         free( buf );
         free( packet_sizes );
@@ -151,7 +151,7 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
         ncbufs[i].buf = (char*) malloc( len );
         ncbufs[i].len = len;
         total_bytes += len;
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "buffer %u has size %zd\n", 
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "buffer %u has size " PRIszt "\n", 
                                i, len) );
     }
 
@@ -159,7 +159,7 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
     retval = XPlat::NCRecv( sock_fd, ncbufs, num_buffers );
 
     if( retval != total_bytes ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "NCRecv %zd of %zd bytes received\n", 
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "NCRecv " PRIszt " of " PRIszt " bytes received\n", 
                                retval, total_bytes) );
 
         for( i = 0; i < num_buffers; i++ )
@@ -356,7 +356,7 @@ int Message::send( XPlat::XPSOCKET sock_fd )
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                           "calling MRN_send() for packet-size vec of len %zd\n", 
+                           "calling MRN_send() for packet-size vec of len " PRIszt "\n", 
                            buf_len) );
     if( MRN_send(sock_fd, buf, buf_len) != buf_len ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "MRN_send() failed\n" ));

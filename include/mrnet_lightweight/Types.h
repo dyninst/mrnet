@@ -9,12 +9,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-/* need the fixed bit-width integer types */
-#ifndef os_windows
-# include <stdint.h>
-#else
-# include "xplat_lightweight/Types.h"
-#endif
+#include "xplat_lightweight/Types.h"
 
 #ifndef true
 #define true (1)

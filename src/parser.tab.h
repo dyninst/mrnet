@@ -60,7 +60,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 45 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
+#line 46 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
 {
     unsigned int uval;
     char * hostname;

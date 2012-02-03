@@ -13,6 +13,10 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
+#include "mrnet/MRNet.h"
+#include "xplat/Process.h"
+#include "xplat/SocketUtils.h"
+
 #include "config.h"
 #include "utils.h"
 #include "Message.h"
@@ -21,10 +25,6 @@
 #include "XTFrontEndNode.h"
 #include "XTBackEndNode.h"
 #include "XTInternalNode.h"
-
-#include "mrnet/MRNet.h"
-#include "xplat/Process.h"
-#include "xplat/SocketUtils.h"
 
 extern "C"
 {
@@ -1502,7 +1502,7 @@ XTNetwork::FindAppNodes( int nPlaces,
         }
     }
     mrn_dbg(5, mrn_printf(FLF, stderr, 
-                         "Found %zd app nodes\n", hosts.size()));
+                         "Found " PRIszt " app nodes\n", hosts.size()));
 }
 
 void
