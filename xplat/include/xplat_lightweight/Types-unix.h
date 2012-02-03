@@ -9,9 +9,13 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+
+#include <stdint.h>
+#include <inttypes.h>
 
 // Printf macro for size_t types
-#define PRIszt "zu"
+#define PRIszt  "zu"
 #define PRIsszt "zd"
 
 #endif // XPLAT_TYPES_UNIX_H
