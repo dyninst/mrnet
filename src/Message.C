@@ -31,11 +31,6 @@ uint64_t get_TotalBytesSend(void) { return MRN_bytes_send.Get(); }
 uint64_t get_TotalBytesRecv(void) { return MRN_bytes_recv.Get(); }
 
 
-
-
-int read( int fd, void *buf, int size );
-int write( int fd, const void *buf, int size );
-
 Message::Message(Network * net):
     _net(net)
 {
@@ -46,16 +41,14 @@ Message::~Message()
 {
 }
 
-
 int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
                    Rank iinlet_rank )
 {
-    int ret;
     Timer t1;
     t1.start();
 
     unsigned int i, j;
-    int32_t buf_len;
+    ssize_t buf_len;
     uint32_t num_packets = 0, num_buffers;
     uint64_t *packet_sizes;
     char *buf = NULL;
@@ -75,14 +68,14 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
     assert( buf );
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Reading packet count\n") );
-    uint64_t retval;
+    ssize_t retval;
     if( (retval = MRN_recv(sock_fd, buf, buf_len)) != buf_len ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %d of %d bytes received\n", 
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %zd of %zd bytes received\n", 
                                retval, buf_len ));
         free( buf );
         return -1;
     }
-    MRN_bytes_recv.Add( retval );
+    MRN_bytes_recv.Add( (uint64_t)retval );
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling pdrmem_create()\n" ));
     pdrmem_create( &pdrs, buf, buf_len, op );
@@ -120,17 +113,17 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
         return -1;
     }
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling MRN_recv(%d, %p, %d)\n",
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling MRN_recv(%d, %p, %zd)\n",
                            sock_fd, buf, buf_len) );
-    int readRet = MRN_recv( sock_fd, buf, buf_len );
-    if( readRet != buf_len ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %d of %d bytes received\n", 
-                               readRet, buf_len ));
+    retval = MRN_recv( sock_fd, buf, buf_len );
+    if( retval != buf_len ) {
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %zd of %zd bytes received\n", 
+                               retval, buf_len ));
         free( buf );
         free( packet_sizes );
         return -1;
     }
-    MRN_bytes_recv.Add( readRet );
+    MRN_bytes_recv.Add( (uint64_t)retval );
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling pdrmem_create\n" ));
     pdrmem_create( &pdrs, buf, buf_len, op );
@@ -158,15 +151,15 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
         ncbufs[i].buf = (char*) malloc( len );
         ncbufs[i].len = len;
         total_bytes += len;
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "buffer %u has size %d\n", 
-                               i, packet_sizes[i]) );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "buffer %u has size %zd\n", 
+                               i, len) );
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Calling NCRecv\n") );
     retval = XPlat::NCRecv( sock_fd, ncbufs, num_buffers );
 
     if( retval != total_bytes ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "NCRecv %d of %d bytes received\n", 
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "NCRecv %zd of %zd bytes received\n", 
                                retval, total_bytes) );
 
         for( i = 0; i < num_buffers; i++ )
@@ -176,7 +169,7 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
 
         return -1;
     }
-    MRN_bytes_recv.Add( retval );
+    MRN_bytes_recv.Add( (uint64_t)retval );
 
     //
     // post-processing
@@ -209,46 +202,48 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
     delete[] ncbufs;
     free( packet_sizes );
  
-    mrn_dbg_func_end();
     t1.stop();
-    int pkt_size = packets_in.size();
-    for (std::list< PacketPtr >::iterator i = packets_in.begin();
-         i != packets_in.end(); i++)
-    {
-        Stream * strm =  _net->get_Stream((*i)->get_StreamId());
-        if (strm != NULL)
+    int pkt_size = (int) packets_in.size();
+    std::list< PacketPtr >::iterator piter = packets_in.begin();
+    for( ; piter != packets_in.end(); piter++ ) {
+        PacketPtr& pkt = *piter;
+        Stream* strm =  _net->get_Stream( pkt->get_StreamId() );
+        if( strm != NULL ) {
             // Time for packet at this point in time.
-            if(strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_RECV))
-            {
-                (*i)->set_Timer(PERFDATA_PKT_TIMERS_RECV, t1);
-                (*i)->start_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
-                if (pkt_size / 2 > 1)
-                    (*i)->set_IncommingPktCount(pkt_size / 2);
+            if( strm->get_PerfData()->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
+                                                 PERFDATA_PKT_RECV) ) {
+                pkt->set_Timer(PERFDATA_PKT_TIMERS_RECV, t1);
+                pkt->start_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
+                pkt->set_IncomingPktCount(pkt_size);
             }
+        }
     }
+
+    mrn_dbg_func_end();
     return 0;
 }
 
 int Message::send( XPlat::XPSOCKET sock_fd )
 {
-    int ret;
     Stream * strm;
-    std::list < PacketPtr > tmp_packets = _packets;
-    for(std::list< PacketPtr >::iterator iter = tmp_packets.begin(); iter != tmp_packets.end(); iter++ ) {
-        strm =  _net->get_Stream((*iter)->get_StreamId());
-        if (strm != NULL)
-            if(strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_SEND))
-            {
-                (*iter)->start_Timer(PERFDATA_PKT_TIMERS_SEND);
-                (*iter)->stop_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
+    std::list< PacketPtr > tmp_packets = _packets;
+    std::list< PacketPtr >::iterator piter = tmp_packets.begin();
+    for( ; piter != tmp_packets.end(); piter++ ) {
+        PacketPtr& pkt = *piter;
+        strm =  _net->get_Stream(pkt->get_StreamId());
+        if (strm != NULL) {
+            if(strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_SEND)) {
+                pkt->start_Timer(PERFDATA_PKT_TIMERS_SEND);
+                pkt->stop_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
             }
+        }
     }
 
     unsigned int i, j;
     uint32_t num_packets, num_buffers;
     uint64_t *packet_sizes = NULL;
     char *buf = NULL;
-    int buf_len;
+    ssize_t buf_len;
     ssize_t total_bytes = 0;
     PDR pdrs;
     enum pdr_op op = PDR_ENCODE;
@@ -278,30 +273,30 @@ int Message::send( XPlat::XPSOCKET sock_fd )
     packet_sizes = (uint64_t*) malloc( sizeof(uint64_t) * num_buffers );
     assert( packet_sizes );
 
-    std::list< PacketPtr >::iterator iter = _packets.begin();
-    for( i = 0, j = 0; iter != _packets.end(); iter++, i += 2, j++ ) {
+    piter = _packets.begin();
+    for( i = 0, j = 0; piter != _packets.end(); piter++, i += 2, j++ ) {
 
-        PacketPtr curPacket( *iter );
+        PacketPtr& pkt = *piter;
         
         /* check for final packet */
-        int tag = curPacket->get_Tag();
+        int tag = pkt->get_Tag();
         if( (tag == PROT_SHUTDOWN) || (tag == PROT_SHUTDOWN_ACK) )
             go_away = true;
 
-        uint32_t hsz = curPacket->get_HeaderLen();
-        uint64_t dsz = curPacket->get_BufferLen();
+        uint32_t hsz = pkt->get_HeaderLen();
+        uint64_t dsz = pkt->get_BufferLen();
 
         if( hsz == 0 ) {
             /* lazy encoding of packet header */
-            curPacket->encode_pdr_header();
-            hsz = curPacket->get_HeaderLen();
+            pkt->encode_pdr_header();
+            hsz = pkt->get_HeaderLen();
         }
 
-        ncbufs[i].buf = const_cast< char* >( curPacket->get_Header() );
+        ncbufs[i].buf = const_cast< char* >( pkt->get_Header() );
         ncbufs[i].len = hsz;
         packet_sizes[i] = hsz;
 
-        ncbufs[i+1].buf = const_cast< char* >( curPacket->get_Buffer() );
+        ncbufs[i+1].buf = const_cast< char* >( pkt->get_Buffer() );
         ncbufs[i+1].len = dsz;
         packet_sizes[i+1] = dsz;
 
@@ -328,7 +323,7 @@ int Message::send( XPlat::XPSOCKET sock_fd )
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "calling MRN_send() for number of packets\n" ));
-    if( MRN_send( sock_fd, buf, buf_len ) != buf_len ) {
+    if( MRN_send(sock_fd, buf, buf_len) != buf_len ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "MRN_send() failed\n" ));
         free( buf );
         delete[] ncbufs;
@@ -361,10 +356,9 @@ int Message::send( XPlat::XPSOCKET sock_fd )
     }
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                           "calling MRN_send() for packet-size vec of len %d\n", 
+                           "calling MRN_send() for packet-size vec of len %zd\n", 
                            buf_len) );
-    int mcwret = MRN_send( sock_fd, buf, buf_len );
-    if( mcwret != buf_len ) {
+    if( MRN_send(sock_fd, buf, buf_len) != buf_len ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "MRN_send() failed\n" ));
         free( buf );
         delete[] ncbufs;
@@ -372,7 +366,7 @@ int Message::send( XPlat::XPSOCKET sock_fd )
         _packet_sync.Unlock();
         return -1;
     }
-    MRN_bytes_send.Add( mcwret );
+    MRN_bytes_send.Add( buf_len );
     free( packet_sizes );
     free( buf );
 
@@ -415,100 +409,20 @@ int Message::send( XPlat::XPSOCKET sock_fd )
 
     mrn_dbg_func_end();
 
-    int packetLength = tmp_packets.size();
-
-    for(std::list< PacketPtr >::iterator  iter = tmp_packets.begin(); iter != tmp_packets.end(); iter++ ) {
-        strm =  _net->get_Stream((*iter)->get_StreamId());
-        if (strm != NULL)
-        {
+    int packetLength = (int) tmp_packets.size();
+    piter = tmp_packets.begin();
+    for( ; piter != tmp_packets.end(); piter++ ) {
+        PacketPtr& pkt = *piter;
+        strm = _net->get_Stream( pkt->get_StreamId() );
+        if (strm != NULL) {
             Timer tmp;
-            (*iter)->set_OutgoingPktCount(packetLength);
-            (*iter)->stop_Timer(PERFDATA_PKT_TIMERS_SEND);
-            (*iter)->set_Timer (PERFDATA_PKT_TIMERS_RECV_TO_FILTER, tmp);
-            strm->get_PerfData()->add_PacketTimers((*iter));
+            pkt->set_OutgoingPktCount(packetLength);
+            pkt->stop_Timer(PERFDATA_PKT_TIMERS_SEND);
+            pkt->set_Timer (PERFDATA_PKT_TIMERS_RECV_TO_FILTER, tmp);
+            strm->get_PerfData()->add_PacketTimers(pkt);
         }
-
     }
     return 0;
-}
-/*********************************************************
- *  Functions used to implement sending and recieving of
- *  some basic data types
- *********************************************************/
-
-int write( int ifd, const void *ibuf, int ibuf_len )
-{
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "%d, %p, %d\n", ifd, ibuf, ibuf_len ));
-
-    // don't generate SIGPIPE
-    int flags = MSG_NOSIGNAL;
-
-    int ret = ::send( ifd, (const char*)ibuf, ibuf_len, flags );
-    if( ret == -1 ) {
-        int err = XPlat::NetUtils::GetLastError();
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "send() failed with error '%s'\n", 
-                               XPlat::Error::GetErrorString( err ).c_str()) );
-    }
-    else mrn_dbg( 5, mrn_printf(FLF, stderr, "send => %d\n", ret ));
-    return ret;
-}
-
-int read( int fd, void *buf, int count )
-{
-    int bytes_recvd = 0, retval, err;
-    if( count == 0 )
-        return 0;
-
-    while( bytes_recvd != count ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Reading Bytes %d\n", count));
-        retval = ::recv( fd, ( ( char * )buf ) + bytes_recvd,
-                       count - bytes_recvd,
-                       XPlat::NCBlockingRecvFlag );
-        mrn_dbg(1, mrn_printf(FLF, stderr, "Read %d bytes\n", retval));
-
-        err = XPlat::NetUtils::GetLastError();
-
-        if( retval == -1 ) {
-            if( err == EINTR ) {
-                continue;
-            }
-            else {
-                std::string errstr = XPlat::Error::GetErrorString( err );
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "premature return from recv(). Got %d of %d "
-                                       " bytes. error '%s'\n", bytes_recvd, count,
-                                       errstr.c_str()) );
-                return -1;
-            }
-        }
-        else if( retval == 0 ) {
-            // the remote endpoint has gone away
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "recv() returned 0 (peer likely gone)\n") );
-            return -1;
-        }
-        else {
-            bytes_recvd += retval;
-            if( bytes_recvd < count ) {
-                continue;
-            }
-            else {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "returning %d\n", bytes_recvd) );
-                return bytes_recvd;
-            }
-        }
-    }
-    assert( 0 );
-    return -1;
-}
-int MRN_send( XPlat::XPSOCKET fd, const char *buf, int count )
-{    
-    ssize_t rc;
-    size_t nbytes = (size_t) count;
-    rc = XPlat::NCsend( fd, buf, nbytes );
-    if( rc < 0 )
-        return -1;
-    else
-        return (int) rc;
 }
 
 void Message::add_Packet( const PacketPtr packet )
@@ -545,15 +459,23 @@ void Message::waitfor_MessagesToSend( void )
  *  some basic data types
  *********************************************************/
 
-
-int MRN_recv( XPlat::XPSOCKET fd, char *buf, int count )
-{
+ssize_t MRN_send( XPlat::XPSOCKET fd, const char *buf, size_t count )
+{    
     ssize_t rc;
-    size_t nbytes = (size_t) count;
-    rc = XPlat::NCrecv( fd, buf, nbytes );
+    rc = XPlat::NCsend( fd, buf, count );
     if( rc < 0 )
         return -1;
     else
-        return (int) rc;
+        return rc;
+}
+
+ssize_t MRN_recv( XPlat::XPSOCKET fd, char *buf, size_t count )
+{
+    ssize_t rc;
+    rc = XPlat::NCrecv( fd, buf, count );
+    if( rc < 0 )
+        return -1;
+    else
+        return rc;
 }
 } // namespace MRN
