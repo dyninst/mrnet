@@ -84,7 +84,7 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
     const char *backend_exe = NULL;
     const char *commnode_path = NULL;
     const char **backend_argv;
-    uint64_t backend_argc;
+    uint32_t backend_argc;
     int rc;
   
     DataType dt;

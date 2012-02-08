@@ -989,7 +989,7 @@ PacketPtr Stream::collect_PerfData( perfdata_metric_t metric,
     iter = data.begin();
 
     Rank my_rank = _network->get_LocalRank();
-    uint64_t num_elems = data.size();
+    uint32_t num_elems = data.size();
     void* data_arr = NULL;
     const char* fmt = NULL;
 
@@ -1106,7 +1106,7 @@ bool Stream::collect_PerformanceData( rank_perfdata_map& results,
         // unpack data
 	int* rank_arr;
 	int* nelems_arr;
-        uint64_t rank_len, nelems_len;
+        uint32_t rank_len, nelems_len;
 	int data_len;
         void* data_arr;
         const char* fmt = NULL;

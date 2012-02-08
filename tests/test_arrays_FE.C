@@ -9,7 +9,7 @@
 
 #include <string>
 
-const uint64_t ARRAY_LEN=5000;
+const uint32_t ARRAY_LEN=5000;
 using namespace MRN;
 using namespace MRN_test;
 Test * test;

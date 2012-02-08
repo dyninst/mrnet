@@ -1230,7 +1230,7 @@ Stream* Network::new_Stream( Communicator *icomm,
 
     //get array of back-ends from communicator
     Rank* backends = icomm->get_Ranks();
-    uint64_t num_pts = icomm->size();
+    uint32_t num_pts = icomm->size();
     if( num_pts == 0 ) {
         if( icomm != _bcast_communicator ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
@@ -1278,7 +1278,7 @@ Stream* Network::new_Stream( Communicator* icomm,
     }
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_HETERO_STREAM, "%ud %ad %s %s %s",
-                                _next_user_stream_id, backends, uint64_t(num_pts),
+                                _next_user_stream_id, backends, num_pts,
                                  us_filters.c_str(), sync_filters.c_str(), 
                                  ds_filters.c_str()) );
     _next_user_stream_id++;
@@ -1319,7 +1319,7 @@ Stream* Network::new_InternalStream( Communicator *icomm,
     }
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_INTERNAL_STREAM, "%ud %ad %d %d %d",
-                                 _next_int_stream_id, backends, uint64_t(num_pts),
+                                 _next_int_stream_id, backends, num_pts,
                                  ius_filter_id, isync_filter_id, ids_filter_id) );
     _next_int_stream_id++;
 
@@ -1729,8 +1729,8 @@ int Network::load_FilterFuncs( const char* so_file,
         mrn_dbg( 3, mrn_printf(FLF, stderr, "sending PROT_NEW_FILTER\n") );
         PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_FILTER, "%s %as %auhd",
                                      so_copy, 
-                                     funcs, uint64_t(success_count), 
-                                     fids, uint64_t(success_count)) );
+                                     funcs, success_count, 
+                                     fids, success_count) );
         send_PacketToChildren( packet );
         flush();
     }
@@ -2378,7 +2378,7 @@ PacketPtr Network::collect_PerfData( perfdata_metric_t metric,
     _perf_data->collect( metric, context, data );
     iter = data.begin();
     Rank my_rank = get_LocalRank();
-    uint64_t  num_elems = data.size();
+    uint32_t  num_elems = data.size();
     void* data_arr = NULL;
     const char* fmt = NULL;
     switch( PerfDataMgr::get_MetricType(metric) ) {

@@ -66,8 +66,8 @@ BackEndNode::BackEndNode( Network * inetwork,
           uint16_t send_port = _port;
 
           s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                   &type, uint64_t(1), &send_iprank, uint64_t(1), &send_myrank, uint64_t(1), 
-                   &host_arr, uint64_t(1), &send_port, uint64_t(1) );
+                   &type, 1, &send_iprank, 1, &send_myrank, 1, 
+                   &host_arr, 1, &send_port, 1 );
 
           free(host_arr);
       }	
@@ -113,7 +113,7 @@ int BackEndNode::proc_DataFromParent(PacketPtr ipacket) const
 
 int BackEndNode::proc_newStream( PacketPtr ipacket ) const
 {
-    uint64_t num_backends;
+    uint32_t num_backends;
     unsigned int stream_id;
     Rank *backends;
     int tag, ds_filter_id, us_filter_id, sync_id;
@@ -259,17 +259,16 @@ int BackEndNode::proc_DeleteSubTree( PacketPtr ) const
 int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
 {
     int retval = 0;
-    unsigned nfuncs = 0;
+    uint32_t nfuncs = 0;
     char* so_file = NULL;
     char** funcs = NULL;
     unsigned short* fids = NULL; 
-    uint64_t discard;
     mrn_dbg_func_begin();
 
     retval = ipacket->unpack( "%s %as %auhd",
                               &so_file,
                               &funcs, &nfuncs,
-                              &fids, &discard );
+                              &fids, &nfuncs );
     if( retval == 0 ) {
         for( unsigned u=0; u < nfuncs; u++ ) {
             int rc = Filter::load_FilterFunc( fids[u], so_file, funcs[u] );

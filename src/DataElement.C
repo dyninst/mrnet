@@ -31,10 +31,21 @@ DataElement::~DataElement()
     case UINT64_ARRAY_T:
     case FLOAT_ARRAY_T:
     case DOUBLE_ARRAY_T:
+    case CHAR_LRG_ARRAY_T:
+    case UCHAR_LRG_ARRAY_T:
+    case INT16_LRG_ARRAY_T:
+    case UINT16_LRG_ARRAY_T:
+    case INT32_LRG_ARRAY_T:
+    case UINT32_LRG_ARRAY_T:
+    case INT64_LRG_ARRAY_T:
+    case UINT64_LRG_ARRAY_T:
+    case FLOAT_LRG_ARRAY_T:
+    case DOUBLE_LRG_ARRAY_T:
         if( val.p != NULL )
             free( val.p );
         break;
     case STRING_ARRAY_T:
+    case STRING_LRG_ARRAY_T:
         if( val.p != NULL ) {
             char** arr = ( char** ) val.p;
             for( unsigned i=0; i < array_len; i++ ) {
@@ -179,6 +190,18 @@ void DataElement::set_array( const void *p, DataType t, uint64_t len )
     array_len = len;
 }
 
+const void * DataElement::get_array( DataType *t, uint32_t *len ) const
+{ 
+    *t = type; 
+    *len = array_len; 
+    return val.p;
+}
+void DataElement::set_array( const void *p, DataType t, uint32_t len )
+{ 
+    val.p = const_cast<void*>(p); 
+    type = t; 
+    array_len = len;
+}
 DataType Fmt2Type(const char * cur_fmt)
 {
     switch( cur_fmt[0] ) {
@@ -205,6 +228,31 @@ DataType Fmt2Type(const char * cur_fmt)
             return DOUBLE_ARRAY_T;
         else if( ! strcmp(cur_fmt, "as") )
             return STRING_ARRAY_T;
+        break;
+
+    case 'A':
+        if( ! strcmp(cur_fmt, "Ac") )
+            return CHAR_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Auc") )
+            return UCHAR_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Ad") )
+            return INT32_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Aud") )
+            return UINT32_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Ahd") )
+            return INT16_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Auhd") )
+            return UINT16_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Ald") )
+            return INT64_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Auld") )
+            return UINT64_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Af") )
+            return FLOAT_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Alf") )
+            return DOUBLE_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "As") )
+            return STRING_LRG_ARRAY_T;
         break;
     case 'c':
         if( ! strcmp(cur_fmt, "c") )

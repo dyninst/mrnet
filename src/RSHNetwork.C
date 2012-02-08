@@ -229,7 +229,7 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
 
     PacketPtr packet( new MRN::Packet(CTL_STRM_ID, PROT_LAUNCH_SUBTREE, "%s %s %s %as", 
                                  sg.c_str(), mrn_commnode_path, 
-                                 backend_exe, backend_args,uint64_t( backend_argc)) );
+                                 backend_exe, backend_args, backend_argc) );
     
     RSHFrontEndNode* fe = dynamic_cast<RSHFrontEndNode*>( get_LocalFrontEndNode() );
     if( fe == NULL ) {
