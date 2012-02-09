@@ -692,7 +692,7 @@ int Packet_ExtractVaList(Packet_t* packet, const char* fmt, va_list arg_list)
 void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
 {
     int i = 0;
-    size_t array_len = 0;
+    uint64_t array_len = 0;
     DataElement_t* cur_elem;
     void *tmp_ptr;
     void *tmp_array;

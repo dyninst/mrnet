@@ -58,6 +58,7 @@ typedef unsigned __int64 uint64_t;
 #define PRIu32  "I32u"
 #define PRId64  "I64d"
 #define PRIu64  "I64u"
+#define PRIi64  PRId64
 
 // "address" type
 typedef char* caddr_t;

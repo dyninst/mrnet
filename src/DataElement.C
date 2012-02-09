@@ -193,7 +193,7 @@ void DataElement::set_array( const void *p, DataType t, uint64_t len )
 const void * DataElement::get_array( DataType *t, uint32_t *len ) const
 { 
     *t = type; 
-    *len = array_len; 
+    *len = (uint32_t)array_len; 
     return val.p;
 }
 void DataElement::set_array( const void *p, DataType t, uint32_t len )

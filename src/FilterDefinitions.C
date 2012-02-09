@@ -688,7 +688,7 @@ void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
                           void ** /* client data */, PacketPtr&,
                           const TopologyLocalInfo& )
 {
-    uint64_t result_array_size=0, i, j;
+    unsigned int result_array_size=0, i, j;
     char* result_array=NULL;
     int data_size=0;
     string format_string;
@@ -697,7 +697,7 @@ void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
     vector< void* > iarrays;
     vector< unsigned > iarray_lens;
     void *tmp_arr;
-    uint64_t tmp_arr_len;
+    unsigned int tmp_arr_len;
  
     for( i = 0; i < ipackets.size( ); i++ ) {
         PacketPtr cur_packet( ipackets[i] );
@@ -1016,7 +1016,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     const int* rank_arr;
     const int* nelems_arr;
     const void* data_arr;
-    uint64_t rank_len, nelems_len, data_len;
+    unsigned int rank_len, nelems_len, data_len;
     
     // aggregate input packets
     int i = 0;
@@ -1184,7 +1184,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     int* orank_arr = NULL;
     int* onelems_arr = NULL;
     void* odata_arr = NULL;
-    uint64_t orank_len=0, onelems_len=0, odata_len=0;
+    unsigned int orank_len=0, onelems_len=0, odata_len=0;
     if( aggr_id == (int)TFILTER_ARRAY_CONCAT ) {
         orank_len = onelems_len = total_nranks;
         odata_len = total_ndatums;

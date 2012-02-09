@@ -41,30 +41,30 @@ void tfilter_TopoUpdate(vector_t * ipackets,
     uint32_t * rcrank_arr = NULL;
     char ** rchost_arr = NULL;
     uint16_t * rcport_arr = NULL;
-    uint64_t rarray_len = 0;
+    uint32_t rarray_len = 0;
 
     int * type_arr = NULL;
     uint32_t * prank_arr = NULL;
     uint32_t * crank_arr = NULL;
     char ** chost_arr = NULL;
     uint16_t * cport_arr = NULL;
-    uint64_t arr_len = 0;
+    uint32_t arr_len = 0;
     unsigned long arr_len_long = 0;
 
     char * format_string = NULL;
     
     unsigned i, z;
-    uint64_t u;
+    uint32_t u;
     
     size_t data_size;
     size_t uhd_size;
     size_t ud_size;
     size_t charptr_size;
 
-    uint64_t int32_pos;
-    uint64_t uint32_pos;
-    uint64_t uint16_pos;
-    uint64_t char_pos;
+    uint32_t int32_pos;
+    uint32_t uint32_pos;
+    uint32_t uint16_pos;
+    uint32_t char_pos;
 
     Packet_t * cur_packet = NULL;
 
