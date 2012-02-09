@@ -229,6 +229,12 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
 #endif
     }
 
+
+    struct sockaddr_in local_addr;
+    memset( &local_addr, 0, sizeof( local_addr ) );
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_addr.s_addr = htonl( INADDR_ANY );
+
     if( port != 0 ) {
 
 #ifndef os_windows
@@ -245,12 +251,6 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
                                    XPlat::Error::GetErrorString(err).c_str() ) );
         }
 #endif
-
-        struct sockaddr_in local_addr;
-        memset( &local_addr, 0, sizeof( local_addr ) );
-        local_addr.sin_family = AF_INET;
-        local_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-
         // try to bind and listen using the supplied port
         local_addr.sin_port = htons( port );
         if( bind(sock, (sockaddr*)&local_addr, sizeof(local_addr)) == -1 ) {
@@ -263,6 +263,7 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
     }
     // else, the system will assign a port for us in listen
 
+#ifndef os_windows
     if( listen(sock, 128) == -1 ) {
         err = XPlat::NetUtils::GetLastError();
         mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
@@ -281,7 +282,49 @@ int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
         XPlat::SocketUtils::Close( sock );
         return -1;
     }
-    
+#else
+    // let the system assign a port, start from 1st dynamic port
+    port = 49152;
+    bool success = false;
+
+    do {
+        local_addr.sin_port = htons( port );
+        if( bind(sock, (sockaddr*)&local_addr, sizeof(local_addr)) != 0/*== -1*/ ) {
+            err = XPlat::NetUtils::GetLastError();
+            if( XPlat::Error::EAddrInUse( err ) ) {
+                ++port;
+                continue;
+            }
+            else {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to dynamic port %d failed: %s\n",
+                            port, XPlat::Error::GetErrorString( err ).c_str() ) );
+                XPlat::SocketUtils::Close( sock );
+                return -1;
+            }
+        }
+        else {
+            if( listen(sock, 64) == -1 ) {
+                err = XPlat::NetUtils::GetLastError();
+                if( XPlat::Error::EAddrInUse( err ) ) {
+                    ++port;
+                    continue;
+                }
+                else {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
+                                XPlat::Error::GetErrorString( err ).c_str() ) );
+                    XPlat::SocketUtils::Close( sock );
+                    return -1;
+                }
+            }
+            success = true;
+        }
+    } while( ! success );
+
+    *sock_in = sock;
+    *port_in = port;
+#endif
+
+
 
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
@@ -306,7 +349,7 @@ int getSocketConnection( int bound_socket , int& inout_errno,
                          int timeout_sec /*=0*/ , bool nonblock /*=false*/ )
 {
     int connected_socket;
-    int fdflag, fret;
+    int fdflag;
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "In get_connection(sock:%d).\n",
                 bound_socket ) );
@@ -359,6 +402,7 @@ int getSocketConnection( int bound_socket , int& inout_errno,
     mrn_dbg( 5, mrn_printf(FLF, stderr, 
                            "Setting accepted connection socket to blocking\n") );
 #ifndef os_windows
+    int fret;
     fdflag = fcntl(connected_socket, F_GETFL );
     if( fdflag == -1 ) {
         // failed to retrieve the socket status flags
@@ -498,7 +542,7 @@ int mrn_printf( const char *file, int line, const char * func,
     mrn_printf_mutex.Lock();
 
     // get thread info
-    XPlat::Thread::Id tid = -1;
+    XPlat::Thread::Id tid = 0;
     const char* thread_name = NULL;
     Rank rank = UnknownRank;
     node_type_t node_type = UNKNOWN_NODE;
