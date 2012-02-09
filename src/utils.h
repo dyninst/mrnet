@@ -64,6 +64,8 @@
 
 # define srand48(x) srand((unsigned int)x)
 # define drand48 (double)rand
+# define srandom(x) srand(x)
+# define random rand
 # define snprintf _snprintf
 # define sleep(x) Sleep(1000*(DWORD)x)
 # define EWOULDBLOCK WSAEWOULDBLOCK

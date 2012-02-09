@@ -11,6 +11,14 @@
 
 #define fr_range_max 1000
 #define fr_bins 20
+#if defined(os_windows)
+# define srandom(x) srand(x)
+# define random rand
+# define sleep(x) Sleep(1000*(DWORD)x)
+# define PTS_API __declspec(dllexport)
+#else
+# define PTS_API
+#endif
 
 typedef std::bitset<fr_bins> fr_bin_set;
 

@@ -53,17 +53,18 @@ void tfilter_TopoUpdate(vector_t * ipackets,
 
     char * format_string = NULL;
     
-    unsigned i, u, z;
+    unsigned i, z;
+    uint64_t u;
     
     size_t data_size;
     size_t uhd_size;
     size_t ud_size;
     size_t charptr_size;
 
-    unsigned int32_pos;
-    unsigned uint32_pos;
-    unsigned uint16_pos;
-    unsigned char_pos;
+    uint64_t int32_pos;
+    uint64_t uint32_pos;
+    uint64_t uint16_pos;
+    uint64_t char_pos;
 
     Packet_t * cur_packet = NULL;
 

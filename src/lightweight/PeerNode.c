@@ -83,7 +83,6 @@ inline int PeerNode_recv_lock(PeerNode_t* peer, int blocking)
                               retval, strerror(retval)));
     }
     return retval;
-    //return 0;
 }
 
 inline void PeerNode_recv_unlock(PeerNode_t* peer)

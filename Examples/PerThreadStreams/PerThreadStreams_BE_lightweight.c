@@ -19,20 +19,22 @@
 unsigned int min_val=fr_range_max, max_val=0, num_iters=0;
 Rank me;
 char pct[fr_bins];
-unsigned long pct_ul;
+uint64_t pct_ul;
 
 // These three thread functions are to test the most common case of
 // multi-threaded usage in MRNet: assigning a thread each to a different stream.
 // The threads ping-pong with the front-end using blocking and non-blocking
 // Stream_recv.
 void* MaxBEMain(void *arg) {
-    printf("BE %d starting MaxBEMain: %d\n", (int)me, (unsigned int)Thread_GetId());
     Stream_t *max_stream = (Stream_t *) arg;
+    int i;
     int tag;
     int retval = 0;
     Packet_t *p = (Packet_t*)malloc(sizeof(Packet_t));
 	assert(p);
-    int i;
+
+    printf("BE %d starting MaxBEMain: %d\n", (int)me, (unsigned int)Thread_GetId());
+
     /* Test blocking recv exchange. For loop is if this test is desired to be
      * repeated.
      */
@@ -79,13 +81,14 @@ void* MaxBEMain(void *arg) {
 }
 
 void* MinBEMain(void *arg) {
-    printf("BE %d starting MinBEMain: %d\n", (int)me, (unsigned int)Thread_GetId());
     Stream_t *min_stream = (Stream_t *) arg;
     int tag;
+    int i;
     int retval = 0;
     Packet_t *p = (Packet_t*)malloc(sizeof(Packet_t));
 	assert(p);
-    int i;
+    printf("BE %d starting MinBEMain: %d\n", (int)me, (unsigned int)Thread_GetId());
+
     for(i = 0; i < 1; i++) {
         if(Stream_recv(min_stream, &tag, p, 1) == -1) {
             fprintf(stderr, "BE: Stream_recv failure in MinBEMain\n");
@@ -132,15 +135,18 @@ void* MinBEMain(void *arg) {
 }
 
 void* PctBEMain(void *arg) {
-    printf("BE %d starting PctBEMain: %d\n", (int)me, (unsigned int)Thread_GetId());
+
     Stream_t *pct_stream = (Stream_t *) arg;
     int tag;
     int retval = 0;
 	Packet_t *p = (Packet_t*)malloc(sizeof(Packet_t));
-	assert(p);
     unsigned int u;
     char bits[fr_bins+1];
     int i;
+
+    assert(p);
+    printf("BE %d starting PctBEMain: %d\n", (int)me, (unsigned int)Thread_GetId());
+
     for(i = 0; i < 1; i++) {
         if( Stream_recv(pct_stream, &tag, p, 1) == -1) {
             fprintf(stderr, "BE: Stream_recv failure in PctBEMain\n");
@@ -198,18 +204,28 @@ int main(int argc, char **argv)
     Stream_t *max_stream = NULL, *min_stream = NULL, *pct_stream = NULL;
     Packet_t *p = (Packet_t*)malloc(sizeof(Packet_t));
     Network_t * net;
-    assert(p);
+    int j;
     int tag=0;
 	int ret_val;
     int regd_streams = 0;
+    unsigned int seed, now;
+    Thread_Id min_BE;
+    Thread_Id max_BE;
+    Thread_Id pct_BE;
+    void *min_ret;
+    void *max_ret;
+    void *pct_ret;
+
+    assert(p);
 
     memset( (void*)pct, 0, (size_t)fr_bins );
-    
+
     net = Network_CreateNetworkBE(argc, argv);
     assert(net);
 
     me = Network_get_LocalRank(net);
-    unsigned int seed = me, now = time(NULL);
+    seed = me;
+    now = time(NULL);
     seed += (seed * 1000) + (now % 100);
     srandom( seed );
 
@@ -220,18 +236,20 @@ int main(int argc, char **argv)
     }
 
     if(tag == PROT_START) {
+        unsigned int i, val, ndx;
+        long int randval;
+        double tile;
         Packet_unpack(p, "%ud", &num_iters );
 
         /* Send num_iters waves of integers */
-        unsigned int i;
         for( i=0; i < num_iters; i++ ) {
 
-            long int randval = random();
-            unsigned int val = randval % fr_range_max;
+            randval = random();
+            val = randval % fr_range_max;
             if( val < min_val ) min_val = val;
             if( val > max_val ) max_val = val;
-            double tile = floor( (double)val / (fr_range_max / fr_bins) );
-            unsigned int ndx = (unsigned int) tile;
+            tile = floor( (double)val / (fr_range_max / fr_bins) );
+            ndx = (unsigned int) tile;
             assert( ndx < fr_bins );
             pct[ndx] = 1;
 
@@ -252,9 +270,8 @@ int main(int argc, char **argv)
     }
 
     // Convert bit value to unsigned long (global var) for WaveChkBEMain
-    int i;
-    for( i = 0; i < fr_bins; i++ ) {
-        pct_ul += (pct[i] << i);
+    for( j = 0; j < fr_bins; j++ ) {
+        pct_ul += (pct[j] << j);
     }
 
     /* Register streams for threads */
@@ -306,19 +323,12 @@ int main(int argc, char **argv)
     }
 
     //printf("Sent reg. stream ack to FE\n");
-    
-    Thread_Id min_BE;
-    Thread_Id max_BE;
-    Thread_Id pct_BE;
 
     Thread_Create(MinBEMain, (void *)min_stream, &min_BE);
     Thread_Create(MaxBEMain, (void *)max_stream, &max_BE);
     Thread_Create(PctBEMain, (void *)pct_stream, &pct_BE);
     
 	/* Join worker threads */
-    void *min_ret;
-    void *max_ret;
-    void *pct_ret;
     Thread_Join(min_BE, &min_ret);
     Thread_Join(max_BE, &max_ret);
     Thread_Join(pct_BE, &pct_ret);

@@ -1688,7 +1688,7 @@ int Network::load_FilterFuncs( const char* so_file,
 
     unsigned nfuncs = functions.size();
     if( filter_ids.size() != nfuncs )
-        filter_ids.reserve( nfuncs );
+        filter_ids.resize( nfuncs );
 
     unsigned short* fids = (unsigned short*) calloc( nfuncs, sizeof(unsigned short) );
     char** funcs = (char**) calloc( nfuncs, sizeof(char*) );

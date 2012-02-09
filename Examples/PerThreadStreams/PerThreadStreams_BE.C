@@ -28,8 +28,6 @@ char pct[fr_bins];
 // The threads ping-pong with the front-end using blocking and non-blocking
 // Stream_recv.
 void* MaxBEMain(void *arg) {
-    printf("BE %d starting MaxBEMain: %d\n", (int)me,
-           (unsigned int)pthread_self());
     Stream *max_stream = (Stream *) arg;
     int tag;
     int i;
@@ -82,8 +80,6 @@ void* MaxBEMain(void *arg) {
 }
 
 void* MinBEMain(void *arg) {
-    printf("BE %d starting MinBEMain: %d\n", (int)me,
-           (unsigned int)pthread_self());
     Stream *min_stream = (Stream *) arg;
     int tag;
     int i;
@@ -135,13 +131,11 @@ void* MinBEMain(void *arg) {
 }
 
 void* PctBEMain(void *arg) {
-    printf("BE %d starting PctBEMain: %d\n", (int)me,
-           (unsigned int)pthread_self());
     Stream *pct_stream = (Stream *) arg;
     int tag;
     int i;
     int retval = 0;
-    unsigned long percent = 0;
+    uint64_t percent = 0;
     char bits[fr_bins+1];
     PacketPtr p;
     for(i = 0; i < 1; i++) {

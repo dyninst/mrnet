@@ -28,14 +28,15 @@ struct IP_state {
     fr_bin_set percentiles;
 };
 
-const char * IntegerPercentiles_format_string = ""; // no format, can recv multiple types
-void IntegerPercentiles( std::vector< PacketPtr >& packets_in,
+PTS_API const char * IntegerPercentiles_format_string = ""; // no format, can recv multiple types
+PTS_API void IntegerPercentiles( std::vector< PacketPtr >& packets_in,
                          std::vector< PacketPtr >& packets_out,
-                         std::vector< PacketPtr >& /* packets_out_reverse */,
+                         std::vector< PacketPtr >& packets_out_reverse,
                          void ** filter_state,
-                         PacketPtr& /* params */,
-                         const TopologyLocalInfo& )
+                         PacketPtr& params,
+                         const TopologyLocalInfo& topol_info)
 {
+
     struct IP_state* state = (struct IP_state*)*filter_state;
     if( *filter_state == NULL ) {
         state = new IP_state;
@@ -46,7 +47,7 @@ void IntegerPercentiles( std::vector< PacketPtr >& packets_in,
 
     fr_bin_set& aggr_bits = state->percentiles;
     int out_tag = -1;
-    
+
     for( unsigned int i = 0; i < packets_in.size( ); i++ ) {
         PacketPtr cur_packet = packets_in[i];
         // Naively send tag of last packet. Better than previously hard-coded
@@ -55,7 +56,7 @@ void IntegerPercentiles( std::vector< PacketPtr >& packets_in,
 
         unsigned int cur_min=0;
         unsigned int cur_max=0;
-        unsigned long cbits_long=0;
+        uint64_t cbits_long=0;
         fr_bin_set cbits;
  
         const char* cur_fmt = cur_packet->get_FormatString();
@@ -89,14 +90,15 @@ void IntegerPercentiles( std::vector< PacketPtr >& packets_in,
             state->max = cur_max;
     }
 
-    unsigned long ulbits = aggr_bits.to_ulong();
+    uint64_t ulbits = (uint64_t)aggr_bits.to_ulong();
     PacketPtr new_packet ( new Packet( packets_in[0]->get_StreamId(),
                                        out_tag, "%uld %ud %ud",
                                        ulbits, state->max, state->min ) );
+    new_packet->set_DestroyData(true);
     packets_out.push_back( new_packet );
 }
 
-PacketPtr IntegerPercentiles_get_state( void ** ifilter_state, int istream_id )
+PTS_API PacketPtr IntegerPercentiles_get_state( void ** ifilter_state, int istream_id )
 {
     PacketPtr packet;
     struct IP_state* state = (struct IP_state*)*ifilter_state;
@@ -116,17 +118,19 @@ PacketPtr IntegerPercentiles_get_state( void ** ifilter_state, int istream_id )
     return packet;
 }
 
-const char * BitsetOr_format_string = "%uld";
-void BitsetOr( std::vector< PacketPtr >& packets_in,
+PTS_API const char * BitsetOr_format_string = "%uld";
+PTS_API void BitsetOr( std::vector< PacketPtr >& packets_in,
                std::vector< PacketPtr >& packets_out,
-               std::vector< PacketPtr >&, void **, PacketPtr&,
-               const TopologyLocalInfo& )
+               std::vector< PacketPtr >& packets_out_reverse,
+               void ** filter_state,
+               PacketPtr& params,
+               const TopologyLocalInfo& topol_info)
 {
-    unsigned long aggr_val = 0;
+    uint64_t aggr_val = 0;
 
     for( unsigned int i = 0; i < packets_in.size( ); i++ ) {
         PacketPtr cur_packet = packets_in[i];
-        unsigned long cval;
+        uint64_t cval;
         cur_packet->unpack("%uld", &cval);
         aggr_val |= cval;
     }

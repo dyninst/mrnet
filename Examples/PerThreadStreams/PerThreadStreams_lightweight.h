@@ -11,6 +11,12 @@
 
 #define fr_range_max 1000
 #define fr_bins 20
+#if defined(os_windows)
+# include <windows.h>
+# define srandom(x) srand(x)
+# define random rand
+# define sleep(x) Sleep(1000*(DWORD)x)
+#endif
 
 typedef enum { PROT_EXIT=FirstApplicationTag, 
                PROT_START,

@@ -46,7 +46,7 @@
 				PreprocessorDefinitions="_DEBUG;os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				ObjectFile="$(IntDir)/"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
@@ -112,7 +112,7 @@
 				PreprocessorDefinitions="os_windows;_WIN32_WINNT=0x05000100;WIN32;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
@@ -160,6 +160,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xplat\src\lightweight\Monitor-win.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\src\lightweight\Mutex-win.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xplat\src\lightweight\NCIO-win.c"
 				>
 			</File>
@@ -187,6 +195,10 @@
 				RelativePath="..\..\xplat\src\lightweight\SocketUtils-win.c"
 				>
 			</File>
+			<File
+				RelativePath="..\..\xplat\src\lightweight\Thread-win.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -195,6 +207,22 @@
 			>
 			<File
 				RelativePath="..\..\xplat\include\xplat_lightweight\Error.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\src\lightweight\Monitor-win.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\include\xplat_lightweight\Monitor.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\src\lightweight\Mutex-win.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\include\xplat_lightweight\Mutex.h"
 				>
 			</File>
 			<File
@@ -215,6 +243,10 @@
 			</File>
 			<File
 				RelativePath="..\..\xplat\include\xplat_lightweight\SocketUtils.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\include\xplat_lightweight\Thread.h"
 				>
 			</File>
 			<File

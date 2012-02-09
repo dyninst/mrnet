@@ -15,7 +15,7 @@ using namespace MRN;
 
 unsigned int min_val=0;
 unsigned int max_val=0;
-unsigned long bits_val;
+uint64_t bits_val;
 
 void* MaxThdMain(void * arg) {
     int retval, tag;
@@ -115,7 +115,7 @@ void* PctThdMain(void * arg) {
         if(tag != PROT_CHECK_PCT) {
             fprintf(stderr, "FE: PctThdMain received incorrect packet: %d\n", tag);
         }
-        unsigned long good_pct;
+        uint64_t good_pct;
         p->unpack("%uld", &good_pct);
 #ifdef compiler_sun
         string bits = fr_bin_set(bits_val).to_string();
@@ -197,12 +197,14 @@ int main(int argc, char **argv)
     }
 
     NetworkTopology* nettop = net->get_NetworkTopology();
+    /*
     if( nettop->get_Root()->find_SubTreeHeight() < 2 ) {
         fprintf( stderr, "Please use a topology with depth >= 2.\n"
                  "There needs to be at least one mrnet_commnode process to kill.\n" );
         delete net;
         return -1;
     }
+    */
 
     // Make sure path to "so_file" is in LD_LIBRARY_PATH
     int filter_id = net->load_FilterFunc( so_file, "IntegerPercentiles" );
