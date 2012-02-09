@@ -32,29 +32,26 @@ class Message: public Error{
   public:
    Message( Network * net );
    ~Message();
+
    int send( XPlat::XPSOCKET isock_fd );
    int recv( XPlat::XPSOCKET isock_fd, std::list < PacketPtr >&opackets, Rank iinlet_rank );
+
    void add_Packet( PacketPtr );
    int size_Packets( void );
+   
    void waitfor_MessagesToSend( void );
-/*
-   int recv_orig( int sock_fd, std::list< PacketPtr > &packets_in,
-                  Rank iinlet_rank );
-   int send_orig( int sock_fd );
-*/
+
  private:
 
    Network * _net;
    enum {MRN_QUEUE_NONEMPTY};
-   std::list < PacketPtr > _packets;
+
+   std::list< PacketPtr > _packets;
    XPlat::Monitor _packet_sync;
 };
-int MRN_send( XPlat::XPSOCKET fd, const char *buf, int count );
-int MRN_recv( XPlat::XPSOCKET fd, char *buf, int count );
-#if READY
-int read( int fd, void *buf, int size );
-int write( int fd, const void *buf, int size );
-#endif // READY
+
+ssize_t MRN_send( XPlat::XPSOCKET fd, const char *buf, size_t count );
+ssize_t MRN_recv( XPlat::XPSOCKET fd, char *buf, size_t count );
 
 }                               // namespace MRN
 

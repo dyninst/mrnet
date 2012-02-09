@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #endif
 
+#include "mrnet/Types.h"
 #include "ParsedGraph.h"
 #include <list>
 
@@ -59,7 +60,7 @@ config: line config
 | line
 {
     if(potential_root.size() != 1){
-        fprintf(stderr, "graph is not connected, found %zd potential roots\n",
+        fprintf(stderr, "graph is not connected, found " PRIszt " potential roots\n",
                 potential_root.size());
         YYABORT;
     }

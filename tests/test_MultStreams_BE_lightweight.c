@@ -209,7 +209,7 @@ int main(int argc, char **argv)
         pkt = NULL;
 
         if( success ) {
-            if( Stream_flush(stream) == -1){
+            if( Stream_flush(stream) == -1 ){
                 fprintf(stderr, "stream_flush() failure\n");
                 return -1;
             }

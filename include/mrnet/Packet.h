@@ -56,6 +56,7 @@ class Packet: public Error {
     Rank get_InletNodeRank(void) const;
     Rank get_SourceRank(void) const;
 
+    bool get_Destinations( unsigned& num_dest, Rank** dests );
     bool set_Destinations( const Rank* bes, unsigned int num_bes );
 
     bool operator==( const Packet & ) const;
@@ -76,9 +77,11 @@ class Packet: public Error {
     // Get the eleased time in the context timer
     double get_ElapsedTime (perfdata_pkt_timers_t context);
 
-    void set_IncommingPktCount(int size);
+    void set_IncomingPktCount(int size);
     void set_OutgoingPktCount(int size);
+
     ~Packet();
+
  private:
 
     Packet( Rank isrc, unsigned int istream_id, int itag, 
@@ -97,8 +100,6 @@ class Packet: public Error {
     uint64_t get_BufferLen(void) const;
     const char *get_Header(void) const;
     unsigned int get_HeaderLen(void) const;
-
-    bool get_Destinations( unsigned& num_dest, Rank** dests );
 
     void set_SourceRank( Rank r ) { src_rank = r; }
 
@@ -135,7 +136,7 @@ class Packet: public Error {
     mutable XPlat::Mutex data_sync;
 
     Timer * _perf_data_timer;
-    int _inc_packet_count;
+    int _in_packet_count;
     int _out_packet_count;
 };
 

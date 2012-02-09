@@ -168,6 +168,5 @@ int main( int argc, char ** argv )
     delete exit_stream;
     delete net;
 
-
     return 0;
 }

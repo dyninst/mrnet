@@ -292,15 +292,15 @@ void Network::shutdown_Network(void)
         // wait for parent recv thread to finish
         if( _parent != PeerNode::NullPeerNode ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                               "waiting for parent recv thread to finish\n") );
+                                   "waiting for parent recv thread to finish\n") );
             XPlat::Thread::Id recv_id = _parent->get_RecvThrId();
             if( recv_id )
                 XPlat::Thread::Join( recv_id, (void**)NULL );
-    }
+        }
 
-    // this is ugly, but we need to ensure that CPs don't exit too quickly
-    // on Cray XTs so ALPS won't kill other CPs that haven't completed shutdown
-    sleep( 10 );
+        // this is ugly, but we need to ensure that CPs don't exit too quickly
+        // on Cray XTs so ALPS won't kill other CPs that haven't completed shutdown
+        sleep( 10 );
     }
 }
 
@@ -644,8 +644,8 @@ void Network::init_FrontEnd( const char * itopology,
     rootHost = parsed_graph->get_Root()->get_HostName();
     XPlat::NetUtils::GetHostName( rootHost, prettyHost );
     if( ! XPlat::NetUtils::IsLocalHost( prettyHost ) ) {
-    string lhost;
-    XPlat::NetUtils::GetLocalHostName(lhost);
+        string lhost;
+        XPlat::NetUtils::GetLocalHostName(lhost);
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
                                "WARNING: Topology Root (%s) is not local host (%s)\n",
                                prettyHost.c_str(), lhost.c_str()) );
@@ -1079,7 +1079,7 @@ get_packet_from_stream_label:
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "packets %s on stream[%d]\n",
                                    (packet_found ? "found" : "not found"),
-                   cur_stream->get_Id()) );
+                                   cur_stream->get_Id()) );
 
             _streams_sync.Lock();
             _stream_iter++;
@@ -1230,7 +1230,7 @@ Stream* Network::new_Stream( Communicator *icomm,
 
     //get array of back-ends from communicator
     Rank* backends = icomm->get_Ranks();
-    uint64_t num_pts = icomm->size();
+    uint32_t num_pts = icomm->size();
     if( num_pts == 0 ) {
         if( icomm != _bcast_communicator ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
@@ -1278,7 +1278,7 @@ Stream* Network::new_Stream( Communicator* icomm,
     }
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_HETERO_STREAM, "%ud %ad %s %s %s",
-                                _next_user_stream_id, backends, uint64_t(num_pts),
+                                _next_user_stream_id, backends, num_pts,
                                  us_filters.c_str(), sync_filters.c_str(), 
                                  ds_filters.c_str()) );
     _next_user_stream_id++;
@@ -1319,7 +1319,7 @@ Stream* Network::new_InternalStream( Communicator *icomm,
     }
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_INTERNAL_STREAM, "%ud %ad %d %d %d",
-                                 _next_int_stream_id, backends, uint64_t(num_pts),
+                                 _next_int_stream_id, backends, num_pts,
                                  ius_filter_id, isync_filter_id, ids_filter_id) );
     _next_int_stream_id++;
 
@@ -1670,6 +1670,8 @@ int Network::load_FilterFunc( const char* so_file, const char* func_name )
     int rc = load_FilterFuncs( so_file, funcs, fids );
     if( rc == 1 )
         rc = fids[0];
+    else
+        rc = -1;
 
     if( func != NULL )
         free( func );
@@ -1728,7 +1730,7 @@ int Network::load_FilterFuncs( const char* so_file,
         PacketPtr packet( new Packet(CTL_STRM_ID, PROT_NEW_FILTER, "%s %as %auhd",
                                      so_copy, 
                                      funcs, success_count, 
-                                     fids, uint64_t(success_count)) );
+                                     fids, success_count) );
         send_PacketToChildren( packet );
         flush();
     }
@@ -2193,7 +2195,7 @@ PeerNodePtr Network::new_PeerNode( string const& ihostname, Port iport,
     }
     else {
         _children_mutex.Lock();
-     mrn_dbg( 5, mrn_printf(FLF, stderr, "inserted into children\n") );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "inserted into children\n") );
         _children.insert( node );
         _children_mutex.Unlock();
     }
@@ -2250,9 +2252,9 @@ PeerNodePtr Network::get_PeerNode( Rank irank )
     if( peer == PeerNode::NullPeerNode ) {
         _children_mutex.Lock();
     if( _children.empty() )
-       mrn_dbg( 5, mrn_printf(FLF, stderr, "children is empty\n") );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "children is empty\n") );
         for( iter = _children.begin(); iter != _children.end(); iter++ ) {
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "rank is %d, irank is %d\n", 
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "rank is %d, irank is %d\n", 
                                    (*iter)->get_Rank(), irank) ); 
             if( (*iter)->get_Rank() == irank ) {
                 peer = *iter;
@@ -2330,17 +2332,17 @@ bool Network::set_FailureRecovery( bool enable_recovery )
 
     if( is_LocalNodeFrontEnd() ) {
 
-    if( enable_recovery ) {
+        if( enable_recovery ) {
             tag = PROT_ENABLE_RECOVERY;
             enable_FailureRecovery();
-    }
-    else {
+        }
+        else {
             tag = PROT_DISABLE_RECOVERY;
             disable_FailureRecovery();
-    }
+        }
     
         PacketPtr packet( new Packet(CTL_STRM_ID, tag, "%d", (int)enable_recovery) );
-    if( packet->has_Error() ) {
+        if( packet->has_Error() ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() fail\n") );
             return false;
         }
@@ -2352,7 +2354,7 @@ bool Network::set_FailureRecovery( bool enable_recovery )
     }
     else {
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                   "set_FailureRecovery() can only be used by Network front-end\n") ); 
+                               "Network::set_FailureRecovery() can only be used by front-end\n") ); 
         return false;
     }
 
@@ -2376,7 +2378,7 @@ PacketPtr Network::collect_PerfData( perfdata_metric_t metric,
     _perf_data->collect( metric, context, data );
     iter = data.begin();
     Rank my_rank = get_LocalRank();
-    uint64_t  num_elems = data.size();
+    uint32_t  num_elems = data.size();
     void* data_arr = NULL;
     const char* fmt = NULL;
     switch( PerfDataMgr::get_MetricType(metric) ) {

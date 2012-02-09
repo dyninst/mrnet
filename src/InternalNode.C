@@ -72,11 +72,11 @@ InternalNode::InternalNode( Network * inetwork,
             char *host_arr = strdup( ihostname.c_str() );
 	    
             s->send_internal( PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", 
-                              &type, uint64_t(1), 
-                              &iprank, uint64_t(1), 
-                              &irank, uint64_t(1), 
+                              &type, 1, 
+                              &iprank,1, 
+                              &irank, 1, 
                               &host_arr, 1, 
-                              &listeningPort, uint64_t(1) );
+                              &listeningPort, 1 );
             free(host_arr);
         } 
         else

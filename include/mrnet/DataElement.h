@@ -35,7 +35,13 @@ typedef enum {
     INT64_T, UINT64_T,
     INT64_ARRAY_T, UINT64_ARRAY_T,
     FLOAT_T, DOUBLE_T,
-    FLOAT_ARRAY_T, DOUBLE_ARRAY_T
+    FLOAT_ARRAY_T, DOUBLE_ARRAY_T,
+    CHAR_LRG_ARRAY_T, UCHAR_LRG_ARRAY_T,
+    STRING_LRG_ARRAY_T,
+    INT16_LRG_ARRAY_T, UINT16_LRG_ARRAY_T,
+    INT32_LRG_ARRAY_T, UINT32_LRG_ARRAY_T,
+    INT64_LRG_ARRAY_T, UINT64_LRG_ARRAY_T,
+    FLOAT_LRG_ARRAY_T, DOUBLE_LRG_ARRAY_T
 } DataType;
 
 class DataElement {
@@ -82,9 +88,13 @@ class DataElement {
     const char * get_string( void ) const;
     void set_string( const char *p );
 
-    const void * get_array( DataType *t, uint32_t *len ) const;
-    void set_array( const void *p, DataType t, uint32_t len );
+    const void * get_array( DataType *t, uint64_t *len ) const;
 
+    const void * get_array( DataType *t, uint32_t *len ) const;
+
+    void set_array( const void *p, DataType t, uint64_t len );
+
+    void set_array( const void *p, DataType t, uint32_t len );
     // END MRNET API
 
     DataValue val;

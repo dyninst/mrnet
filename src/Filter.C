@@ -140,7 +140,7 @@ int Filter::load_FilterFunc( unsigned short iid, const char *iso_file, const cha
         return -1;
     }
 
-    //find where the filter function is loaded
+    // find where the filter function is loaded
     filter_func_ptr = (void(*)())so_handle->GetSymbol( ifunc_name );
     if( filter_func_ptr == NULL ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
@@ -151,11 +151,11 @@ int Filter::load_FilterFunc( unsigned short iid, const char *iso_file, const cha
         return -1;
     }
 
-    //find where the filter state function is loaded
-    //we don't test filter state function ptr because it doesn't have to exist
+    // find where the filter state function is loaded
     state_func_ptr = (void(*)())so_handle->GetSymbol( state_func_name.c_str() );
+    // we don't test the ptr because it doesn't have to exist
 
-    //find where the filter state format string is loaded
+    // find where the filter state format string is loaded
     fmt_str_ptr = ( const char ** )so_handle->GetSymbol( func_fmt_str.c_str() );
     if( fmt_str_ptr == NULL ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,

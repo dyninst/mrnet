@@ -702,11 +702,11 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
             Port dummy_port = UnknownPort;
             char* dummy_host = strdup("NULL"); // ugh, this needs to be fixed
             s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                              &type, uint64_t(1), 
-                              &my_rank, uint64_t(1), 
-                              &ifailed_rank, uint64_t(1), 
+                              &type, 1, 
+                              &my_rank,1, 
+                              &ifailed_rank, 1, 
                               &dummy_host, 1, 
-                              &dummy_port, uint64_t(1) );
+                              &dummy_port, 1 );
             free( dummy_host );
         }
     }

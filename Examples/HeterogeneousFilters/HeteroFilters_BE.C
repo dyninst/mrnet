@@ -69,7 +69,7 @@ int main(int argc, char **argv)
                     offset = s.st_size;
                 }
                 else {
-                    stream->send(tag, "%ac", contents + offset, blocksz);
+                    stream->send(tag, "%ac", contents + offset, (uint64_t)blocksz);
                     offset += blocksz;
                 }
                 stream->flush();

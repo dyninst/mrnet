@@ -107,6 +107,7 @@
 #include <stdlib.h>
 #endif
 
+#include "mrnet/Types.h"
 #include "ParsedGraph.h"
 #include <list>
 
@@ -159,14 +160,14 @@ int mrnparse();
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 45 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
+#line 46 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
 {
     unsigned int uval;
     char * hostname;
     MRN::ParsedGraph::Node * node_ptr;
 }
 /* Line 193 of yacc.c.  */
-#line 170 "y.tab.c"
+#line 171 "y.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -179,7 +180,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 183 "y.tab.c"
+#line 184 "y.tab.c"
 
 #ifdef short
 # undef short
@@ -464,8 +465,8 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    58,    58,    59,    72,    84,    85,    92,    96,   103,
-     120
+       0,    59,    59,    60,    73,    85,    86,    93,    97,   104,
+     121
 };
 #endif
 
@@ -1371,10 +1372,10 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-#line 60 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
+#line 61 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
     {
     if(potential_root.size() != 1){
-        fprintf(stderr, "graph is not connected, found %zd potential roots\n",
+        fprintf(stderr, "graph is not connected, found " PRIszt " potential roots\n",
                 potential_root.size());
         YYABORT;
     }
@@ -1385,7 +1386,7 @@ yyreduce:
     break;
 
   case 4:
-#line 73 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
+#line 74 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
     {
     std::list<ParsedGraph::Node *>::iterator iter = hostlist.begin();
     for(; iter != hostlist.end(); iter++){
@@ -1400,7 +1401,7 @@ yyreduce:
     break;
 
   case 6:
-#line 86 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
+#line 87 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
     {
     fprintf(stderr, "line parse error on line %d\n", lineNum-1);
     YYABORT;
@@ -1408,21 +1409,21 @@ yyreduce:
     break;
 
   case 7:
-#line 93 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
+#line 94 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
     {
     hostlist.push_back((yyvsp[(2) - (2)].node_ptr));
 }
     break;
 
   case 8:
-#line 97 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
+#line 98 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
     {
     hostlist.push_back((yyvsp[(1) - (1)].node_ptr));
 }
     break;
 
   case 9:
-#line 104 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
+#line 105 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
     {
     if( !parsed_graph ){
         hostlist.clear(); 
@@ -1442,7 +1443,7 @@ yyreduce:
     break;
 
   case 10:
-#line 121 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
+#line 122 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
     {
     fprintf(stderr, "host parse error on line %d\n", lineNum);
     YYABORT;
@@ -1451,7 +1452,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1455 "y.tab.c"
+#line 1456 "y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1665,7 +1666,7 @@ yyreturn:
 }
 
 
-#line 127 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
+#line 128 "/u/m/j/mjbrim/research/MRNet/git-repo/mrnet/src/parser.y"
 
 
 void yyerror(const char * /* s */)

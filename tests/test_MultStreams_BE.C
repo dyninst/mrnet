@@ -199,7 +199,7 @@ int main(int argc, char **argv){
             fprintf(stderr, "Unknown Protocol: %d\n", tag);
             exit(-1);
         }
-        if( stream->flush() == -1){
+        if((tag != PROT_EXIT) && (stream->flush() == -1)){
             fprintf(stderr, "stream::flush() failure\n");
             return -1;
         }

@@ -84,7 +84,7 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
     const char *backend_exe = NULL;
     const char *commnode_path = NULL;
     const char **backend_argv;
-    unsigned int backend_argc;
+    uint32_t backend_argc;
     int rc;
   
     DataType dt;
@@ -105,8 +105,8 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
     std::string new_topo = sg.get_ByteArray();
 
     PacketPtr packet( new MRN::Packet(CTL_STRM_ID, PROT_LAUNCH_SUBTREE, "%s %s %s %as", 
-                                 new_topo.c_str(), commnode_path, 
-                                 backend_exe, backend_argv, backend_argc) );  
+                                      new_topo.c_str(), commnode_path, 
+                                      backend_exe, backend_argv, backend_argc) );  
 
     _initial_subtree_packet = packet;
     
@@ -145,7 +145,7 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
                 mrn_dbg( 5, mrn_printf(FLF, stderr, "launching backend_exe: \"%s\"\n",
                                        backend_exe_str.c_str()) ); 
                 std::vector < std::string > args;
-                for( unsigned int i=0; i < backend_argc; i++ ) {
+                for( uint64_t i=0; i < backend_argc; i++ ) {
                     args.push_back( backend_argv[i] );
                 }
                 rc = launch_Application( cur_node_hostname, cur_node_rank,

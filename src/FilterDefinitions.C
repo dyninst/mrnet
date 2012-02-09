@@ -751,6 +751,53 @@ void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
                 data_size = sizeof(char*);
                 format_string="%as";
                 break;
+            
+            case CHAR_LRG_ARRAY_T:
+                data_size = sizeof(char);
+                format_string="%Ac";
+                break;
+            case UCHAR_LRG_ARRAY_T:
+                data_size = sizeof(unsigned char);
+                format_string="%Auc";
+                break;
+            case INT16_LRG_ARRAY_T:
+                data_size = sizeof(int16_t);
+                format_string="%Ahd";
+                break;
+            case UINT16_LRG_ARRAY_T:
+                data_size = sizeof(uint16_t);
+                format_string="%Auhd";
+                break;
+            case INT32_LRG_ARRAY_T:
+                data_size = sizeof(int32_t);
+                format_string="%Ad";
+                break;
+            case UINT32_LRG_ARRAY_T:
+                data_size = sizeof(uint32_t);
+                format_string="%Aud";
+                break;
+            case INT64_LRG_ARRAY_T:
+                data_size = sizeof(int64_t);
+                format_string="%Ald";
+                break;
+            case UINT64_LRG_ARRAY_T:
+                data_size = sizeof(uint64_t);
+                format_string="%Auld";
+                break;
+            case FLOAT_LRG_ARRAY_T:
+                data_size = sizeof(float);
+                format_string="%Af";
+                break;
+            case DOUBLE_LRG_ARRAY_T:
+                data_size = sizeof(double);
+                format_string="%Alf";
+                break;
+            case STRING_LRG_ARRAY_T:
+                data_size = sizeof(char*);
+                format_string="%As";
+                break;
+            
+            
             case CHAR_T:
             case UCHAR_T:
             case INT16_T:
@@ -818,7 +865,7 @@ void tfilter_IntEqClass( const vector< PacketPtr >& ipackets,
                          const TopologyLocalInfo& )
 {
     DataType type;
-    uint32_t array_len0, array_len1, array_len2;
+    uint64_t array_len0, array_len1, array_len2;
     map< unsigned int, vector < unsigned int > > classes;
     unsigned int i;
 
@@ -969,7 +1016,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     const int* rank_arr;
     const int* nelems_arr;
     const void* data_arr;
-    unsigned rank_len, nelems_len, data_len;
+    uint64_t rank_len, nelems_len, data_len;
     
     // aggregate input packets
     int i = 0;
@@ -1137,7 +1184,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     int* orank_arr = NULL;
     int* onelems_arr = NULL;
     void* odata_arr = NULL;
-    unsigned orank_len=0, onelems_len=0, odata_len=0;
+    uint64_t orank_len=0, onelems_len=0, odata_len=0;
     if( aggr_id == (int)TFILTER_ARRAY_CONCAT ) {
         orank_len = onelems_len = total_nranks;
         odata_len = total_ndatums;
@@ -1253,7 +1300,7 @@ void tfilter_TopoUpdate_common( bool upstream,
     Rank *prank_arr, *crank_arr, *rprank_arr, *rcrank_arr;
     char **chost_arr, **rchost_arr;
     Port *cport_arr, *rcport_arr;
-    uint64_t i, arr_len, rarr_len = 0;
+    uint32_t i, arr_len, rarr_len = 0;
  
     string format_string;
 
@@ -1969,6 +2016,18 @@ static inline void sum(const void *in1, const void *in2, void* out, DataType typ
   case DOUBLE_ARRAY_T:
   case STRING_T:
   case STRING_ARRAY_T:
+
+  case CHAR_LRG_ARRAY_T:
+  case UCHAR_LRG_ARRAY_T:
+  case INT16_LRG_ARRAY_T:
+  case UINT16_LRG_ARRAY_T:
+  case INT32_LRG_ARRAY_T:
+  case UINT32_LRG_ARRAY_T:
+  case INT64_LRG_ARRAY_T:
+  case UINT64_LRG_ARRAY_T:
+  case FLOAT_LRG_ARRAY_T:
+  case DOUBLE_LRG_ARRAY_T:
+  case STRING_LRG_ARRAY_T:
   case UNKNOWN_T:
     assert(0);
   }
@@ -2019,6 +2078,18 @@ static inline void mult(const void *in1, int in2, void* out, DataType type)
   case DOUBLE_ARRAY_T:
   case STRING_T:
   case STRING_ARRAY_T:
+
+  case CHAR_LRG_ARRAY_T:
+  case UCHAR_LRG_ARRAY_T:
+  case INT16_LRG_ARRAY_T:
+  case UINT16_LRG_ARRAY_T:
+  case INT32_LRG_ARRAY_T:
+  case UINT32_LRG_ARRAY_T:
+  case INT64_LRG_ARRAY_T:
+  case UINT64_LRG_ARRAY_T:
+  case FLOAT_LRG_ARRAY_T:
+  case DOUBLE_LRG_ARRAY_T:
+  case STRING_LRG_ARRAY_T:
   case UNKNOWN_T:
     assert(0);
   }
@@ -2069,6 +2140,19 @@ static inline void div(const void *in1, int in2, void* out, DataType type)
   case DOUBLE_ARRAY_T:
   case STRING_T:
   case STRING_ARRAY_T:
+  
+  case CHAR_LRG_ARRAY_T:
+  case UCHAR_LRG_ARRAY_T:
+  case INT16_LRG_ARRAY_T:
+  case UINT16_LRG_ARRAY_T:
+  case INT32_LRG_ARRAY_T:
+  case UINT32_LRG_ARRAY_T:
+  case INT64_LRG_ARRAY_T:
+  case UINT64_LRG_ARRAY_T:
+  case FLOAT_LRG_ARRAY_T:
+  case DOUBLE_LRG_ARRAY_T:
+  case STRING_LRG_ARRAY_T:
+  
   case UNKNOWN_T:
     assert(0);
   }
@@ -2129,6 +2213,18 @@ static inline void mrn_min(const void *in1, const void *in2, void* out, DataType
     case DOUBLE_ARRAY_T:
     case STRING_T:
     case STRING_ARRAY_T:
+  
+    case CHAR_LRG_ARRAY_T:
+    case UCHAR_LRG_ARRAY_T:
+    case INT16_LRG_ARRAY_T:
+    case UINT16_LRG_ARRAY_T:
+    case INT32_LRG_ARRAY_T:
+    case UINT32_LRG_ARRAY_T:
+    case INT64_LRG_ARRAY_T:
+    case UINT64_LRG_ARRAY_T:
+    case FLOAT_LRG_ARRAY_T:
+    case DOUBLE_LRG_ARRAY_T:
+    case STRING_LRG_ARRAY_T:
     case UNKNOWN_T:
         assert(0);
     }
@@ -2189,6 +2285,18 @@ static inline void mrn_max(const void *in1, const void *in2, void* out, DataType
     case DOUBLE_ARRAY_T:
     case STRING_T:
     case STRING_ARRAY_T:
+
+    case CHAR_LRG_ARRAY_T:
+    case UCHAR_LRG_ARRAY_T:
+    case INT16_LRG_ARRAY_T:
+    case UINT16_LRG_ARRAY_T:
+    case INT32_LRG_ARRAY_T:
+    case UINT32_LRG_ARRAY_T:
+    case INT64_LRG_ARRAY_T:
+    case UINT64_LRG_ARRAY_T:
+    case FLOAT_LRG_ARRAY_T:
+    case DOUBLE_LRG_ARRAY_T:
+    case STRING_LRG_ARRAY_T:
     case UNKNOWN_T:
         assert(0);
     }

@@ -43,7 +43,7 @@ void HF_BE_scan( std::vector< PacketPtr >& pin,
     for( unsigned i = 0; i < pin.size( ); i++ ) {
         PacketPtr cur_packet = pin[i];
         char* data;
-        unsigned dataLen;
+        uint64_t dataLen;
         cur_packet->unpack( "%ac", &data, &dataLen );
         if( ! dataLen ) continue;
 

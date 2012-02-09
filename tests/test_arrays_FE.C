@@ -9,7 +9,7 @@
 
 #include <string>
 
-const uint64_t ARRAY_LEN=5000;
+const uint32_t ARRAY_LEN=5000;
 using namespace MRN;
 using namespace MRN_test;
 Test * test;
@@ -170,8 +170,6 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
     PacketPtr buf;
     bool success = true;
     std::string testname, format_string;
-    signed char tmp_c2 = (signed char)0;
-    unsigned char tmp_c = (unsigned char)0;
     switch(type){
     case CHAR_ARRAY_T:
         data_size = sizeof(char);

@@ -51,9 +51,13 @@ typedef unsigned __int64 uint64_t;
 # endif // SSIZE_T
 #endif // !defined(ssize_t)
 
-// Printf macro for size_t types
-#define PRIszt "Iu"
+// Printf macros for size_t and bit-width types
+#define PRIszt  "Iu"
 #define PRIsszt "Id"
+#define PRId32  "I32d"
+#define PRIu32  "I32u"
+#define PRId64  "I64d"
+#define PRIu64  "I64u"
 
 // "address" type
 typedef char* caddr_t;

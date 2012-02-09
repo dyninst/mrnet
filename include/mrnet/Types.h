@@ -6,14 +6,7 @@
 #if !defined(Types_h)
 #define Types_h
 
-#include <sys/types.h>
-
-/* need the fixed bit-width integer types */
-#ifndef os_windows
-# include <stdint.h>
-#else
-# include "xplat/Types.h"
-#endif
+#include "xplat/Types.h"
 
 #include <cstdio>
 #include <map>
