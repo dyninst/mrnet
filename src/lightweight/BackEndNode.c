@@ -102,11 +102,11 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
             send_port[0] = UnknownPort;
 
             Stream_send(s, PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                        type, (uint64_t)1, 
-                        send_iprank, (uint64_t)1, 
-                        send_myrank, (uint64_t)1, 
-                        host_arr, (uint64_t)1, 
-                        send_port, (uint64_t)1);
+                        type, 1, 
+                        send_iprank, 1, 
+                        send_myrank, 1, 
+                        host_arr, 1, 
+                        send_port, 1);
         } else {
             mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend already in the topology\n") );
         }
@@ -177,7 +177,7 @@ int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* UNUSED(packet) )
 
 int BackEndNode_proc_newStream(BackEndNode_t* be, Packet_t* packet)
 {
-    uint64_t num_backends;
+    uint32_t num_backends;
     Rank *backends;
     unsigned int stream_id;
     int tag;

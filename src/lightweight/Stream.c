@@ -510,7 +510,7 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
     vector_t* data = new_empty_vector_t();
     unsigned int u, iter = 0;
     Rank my_rank;
-    uint64_t num_elems;
+    uint32_t num_elems;
     void* data_arr;
     const char* fmt;
     uint64_t* u64_arr;
@@ -590,8 +590,8 @@ Packet_t* Stream_collect_PerfData(Stream_t* stream,
     *rank_arr = my_rank;
     *nelems_arr = num_elems;
     packet = new_Packet_t_2(aggr_strm_id, PROT_COLLECT_PERFDATA,
-                            fmt, rank_arr, (uint64_t)1, 
-                            nelems_arr, (uint64_t)1, data_arr,
+                            fmt, rank_arr, 1, 
+                            nelems_arr, 1, data_arr,
                             num_elems);
     if (packet == NULL) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "new packet() failed\n"));

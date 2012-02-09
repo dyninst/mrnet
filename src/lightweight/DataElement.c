@@ -39,10 +39,21 @@ void delete_DataElement_t( DataElement_t* de )
          case UINT64_ARRAY_T:
          case FLOAT_ARRAY_T:
          case DOUBLE_ARRAY_T:
+         case CHAR_LRG_ARRAY_T:
+         case UCHAR_LRG_ARRAY_T:
+         case INT16_LRG_ARRAY_T:
+         case UINT16_LRG_ARRAY_T:
+         case INT32_LRG_ARRAY_T:
+         case UINT32_LRG_ARRAY_T:
+         case INT64_LRG_ARRAY_T:
+         case UINT64_LRG_ARRAY_T:
+         case FLOAT_LRG_ARRAY_T:
+         case DOUBLE_LRG_ARRAY_T:
              if( de->val.p != NULL ) {
                  free( de->val.p );
              }
              break;
+         case STRING_LRG_ARRAY_T:
          case STRING_ARRAY_T:
              if( de->val.p != NULL ) {
                  str_arr = (char**)(de->val.p);
@@ -86,7 +97,32 @@ DataType DataType_Fmt2Type (char* cur_fmt)
             return DOUBLE_ARRAY_T;
         else if( ! strcmp(cur_fmt, "as") )
             return STRING_ARRAY_T;
+        break; 
+    case 'A':
+        if( ! strcmp(cur_fmt, "Ac") )
+            return CHAR_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Auc") )
+            return UCHAR_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Ad") )
+            return INT32_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Aud") )
+            return UINT32_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Ahd") )
+            return INT16_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Auhd") )
+            return UINT16_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Ald") )
+            return INT64_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Auld") )
+            return UINT64_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Af") )
+            return FLOAT_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "Alf") )
+            return DOUBLE_LRG_ARRAY_T;
+        else if( ! strcmp(cur_fmt, "As") )
+            return STRING_LRG_ARRAY_T;
         break;
+    
     case 'c':
         if( ! strcmp(cur_fmt, "c") )
             return CHAR_T;
