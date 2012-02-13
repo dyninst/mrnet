@@ -21,12 +21,25 @@ install_INCDIR = $(IINCDIR)/mrnet_lightweight
 VPATH = $(SRCDIR) $(ROOTDIR)/src
 
 TARGET    = $(LIBDIR)/libmrnet_lightweight.a
+TARGET_LOWFAT = $(LIBDIR)/libmrnet_lightweight_r.a
 TARGET_SO = $(LIBDIR)/libmrnet_lightweight.so
+TARGET_SO_LOWFAT = $(LIBDIR)/libmrnet_lightweight_r.so
 TARGET_SO_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight
+TARGET_SO_LOWFAT_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight_r
 
 TARGETS = $(TARGET)
+SO_LIST = $(TARGET_SO)
+
+ifeq ($(WANT_THREADSAFE_LTWT), yes)
+    TARGETS += $(TARGET_LOWFAT)
+endif
+
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(TARGET_SO)
+    ifeq ($(WANT_THREADSAFE_LTWT), yes)
+        TARGETS += $(TARGET_SO_LOWFAT)
+        SO_LIST += $(TARGET_SO_LOWFAT)
+    endif
 endif 
 
 
@@ -63,13 +76,19 @@ LIBMRNET_HEADERS = $(wildcard $(mrnet_INCDIR)/*.h)
 INSTALL_HEADERS = $(addprefix $(install_INCDIR)/, $(notdir $(LIBMRNET_HEADERS)))
 
 LTWT_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o,$(notdir $(LTWT_SRCS))))
+LOWFAT_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.c,%_r.o,$(notdir $(LTWT_SRCS))))
 LTWT_DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.c,%.d,$(notdir $(LTWT_SRCS))))
 
 all: $(TARGETS)
 
-sharedobj: $(TARGET_SO)
+sharedobj: $(SO_LIST)
 
 $(TARGET): $(LTWT_OBJS)
+	@echo Archiving `basename $@` ...
+	$(AR) $(ARFLAGS) $@ $^
+	$(RANLIB) $@
+
+$(TARGET_LOWFAT): $(LOWFAT_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
@@ -77,6 +96,10 @@ $(TARGET): $(LTWT_OBJS)
 $(TARGET_SO): $(LTWT_OBJS)
 	@echo Building `basename $@` ...
 	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_DEPLIBS)
+
+$(TARGET_SO_LOWFAT): $(LOWFAT_OBJS)
+	@echo Building `basename $@` ...
+	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LOWFAT_DEPLIBS)
 
 install-prep:
 	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
@@ -93,12 +116,18 @@ $(INSTALL_HEADERS): $(install_INCDIR)/%: $(mrnet_INCDIR)/%
 install: all install-prep $(INSTALL_HEADERS)
 	@echo Installing MRNet lightweight libraries
 	$(INSTALL) -m 755 $(TARGET) $(ILIBDIR)/
+	if [ -f $(TARGET_LOWFAT) ] ; then \
+            $(INSTALL) -m 755 $(TARGET_LOWFAT) $(ILIBDIR)/ ; \
+        fi
 	if [ -f $(TARGET_SO) ] ; then \
             $(INSTALL) -m 755 $(TARGET_SO) $(ILIBDIR)/ ; \
         fi
+	if [ -f $(TARGET_SO_LOWFAT) ] ; then \
+            $(INSTALL) -m 755 $(TARGET_SO_LOWFAT) $(ILIBDIR)/ ; \
+        fi
 
 clean:
-	for file in $(LTWT_DEPS) $(LTWT_OBJS) $(TARGETS) ; do \
+	for file in $(LTWT_DEPS) $(LTWT_OBJS) $(LOWFAT_OBJS) $(TARGETS) ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
 
@@ -120,6 +149,10 @@ $(OBJDIR)/%.o: %.c
 	@echo Compiling `basename $@` ...
 	$(CC) $(CCFLAGS) -o $@ -c $<
 
+$(OBJDIR)/%_r.o: %.c
+	@echo Compiling `basename $@` ...
+	$(CC) $(CCFLAGS) -DMRNET_LTWT_THREADSAFE -o $@ -c $<
+
 $(DEPDIR)/%.d: $(ROOTDIR)/src/%.c
 	@echo Building depends file `basename $@` ...
 	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCLUDES_LIGHTWEIGHT)
@@ -127,6 +160,10 @@ $(DEPDIR)/%.d: $(ROOTDIR)/src/%.c
 $(OBJDIR)/%.o: $(ROOTDIR)/src/%.c
 	@echo Compiling `basename $@` ...
 	$(CC) $(CCFLAGS) -o $@ -c $<
+
+$(OBJDIR)/%_r.o: $(ROOTDIR)/src/%.c
+	@echo Compiling `basename $@` ...
+	$(CC) $(CCFLAGS) -DMRNET_LTWT_THREADSAFE -o $@ -c $<
 
 # make sure file dependencies are determiend and used
 -include $(LTWT_DEPS)

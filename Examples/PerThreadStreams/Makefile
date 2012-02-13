@@ -24,7 +24,7 @@ $(BINDIR)/PerThreadStreams_BE: PerThreadStreams_BE.C
 	$(CXX) -g $(CXXFLAGS) $(LDFLAGS) -o $@ PerThreadStreams_BE.C $(LIBS)
 
 $(BINDIR)/PerThreadStreams_BE_lightweight: PerThreadStreams_BE_lightweight.c
-	$(CC) -g $(CCFLAGS) $(LDFLAGS) -o $@ PerThreadStreams_BE_lightweight.c $(LIBS_LIGHTWEIGHT) -lpthread
+	$(CC) -g $(CCFLAGS) $(LDFLAGS) -o $@ PerThreadStreams_BE_lightweight.c $(LIBS_LOWFAT)
 
 $(LIBDIR)/PerThreadStreamsFilter.so: PerThreadStreamsFilter.C
 	$(CXX) -g $(CXXFLAGS) $(SOFLAGS) -o $@ PerThreadStreamsFilter.C

@@ -22,12 +22,25 @@ VPATH = $(SRCDIR)
 
 TARGET    = $(LIBDIR)/libxplat_lightweight.a
 TARGET_SO = $(LIBDIR)/libxplat_lightweight.so
-TARGET_SO_LIBS = @LIBS_LIGHTWEIGHT@
+TARGET_LOWFAT    = $(LIBDIR)/libxplat_lightweight_r.a
+TARGET_SO_LOWFAT = $(LIBDIR)/libxplat_lightweight_r.so
+TARGET_SO_LIBS   = @LIBS_LIGHTWEIGHT@
+TARGET_SO_LOWFAT_LIBS = @LIBS_LOWFAT@
 
 TARGETS = $(TARGET)
+SO_LIST = $(TARGET_SO)
+
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(TARGET_SO)
+    ifeq ($(WANT_THREADSAFE_LTWT), yes)
+        TARGETS += $(TARGET_SO_LOWFAT)
+        SO_LIST += $(TARGET_SO_LOWFAT)
+    endif
 endif 
+
+ifeq ($(WANT_THREADSAFE_LTWT), yes)
+    TARGETS += $(TARGET_LOWFAT)
+endif
 
 XPLAT_LTWT_SRCS = $(SRCDIR)/Error-unix.c \
                   $(SRCDIR)/NCIO.c \
@@ -38,23 +51,29 @@ XPLAT_LTWT_SRCS = $(SRCDIR)/Error-unix.c \
                   $(SRCDIR)/Process-unix.c \
                   $(SRCDIR)/SocketUtils-unix.c \
 
-ifeq ($(WANT_THREADSAFE_LTWT), yes)
-    XPLAT_LTWT_SRCS += $(SRCDIR)/Mutex-pthread.c
-    XPLAT_LTWT_SRCS += $(SRCDIR)/Monitor-pthread.c
-    XPLAT_LTWT_SRCS += $(SRCDIR)/Thread-pthread.c
-endif
+XPLAT_LOWFAT_SRCS = $(XPLAT_LTWT_SRCS)
+XPLAT_LOWFAT_SRCS += $(SRCDIR)/Mutex-pthread.c
+XPLAT_LOWFAT_SRCS += $(SRCDIR)/Monitor-pthread.c
+XPLAT_LOWFAT_SRCS += $(SRCDIR)/Thread-pthread.c
 
 XPLAT_HEADERS = $(wildcard $(xplat_INCDIR)/*.h)
 INSTALL_HEADERS = $(addprefix $(install_INCDIR)/, $(notdir $(XPLAT_HEADERS)))
 
 XPLAT_LTWT_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.c,%.o,$(notdir $(XPLAT_LTWT_SRCS))))
+XPLAT_LOWFAT_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.c,%_r.o,$(notdir $(XPLAT_LOWFAT_SRCS))))
 XPLAT_LTWT_DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.c,%.d,$(notdir $(XPLAT_LTWT_SRCS))))
+XPLAT_LOWFAT_DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.c,%_r.d,$(notdir $(XPLAT_LOWFAT_SRCS))))
 
 all: $(TARGETS)
 
-sharedobj: $(TARGET_SO)
+sharedobj: $(SO_LIST)
 
 $(TARGET): $(XPLAT_LTWT_OBJS)
+	@echo Archiving `basename $@` ...
+	$(AR) $(ARFLAGS) $@ $^
+	$(RANLIB) $@
+
+$(TARGET_LOWFAT): $(XPLAT_LOWFAT_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
@@ -62,6 +81,10 @@ $(TARGET): $(XPLAT_LTWT_OBJS)
 $(TARGET_SO): $(XPLAT_LTWT_OBJS)
 	@echo Building `basename $@` ...
 	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LIBS)
+
+$(TARGET_SO_LOWFAT): $(XPLAT_LOWFAT_OBJS)
+	@echo Building `basename $@` ...
+	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LOWFAT_LIBS)
 
 install-prep:
 	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
@@ -78,12 +101,19 @@ $(INSTALL_HEADERS): $(install_INCDIR)/%: $(xplat_INCDIR)/%
 install: $(TARGETS) install-prep $(INSTALL_HEADERS)
 	@echo Installing XPlat lightweight libraries
 	$(INSTALL) -m 755 $(TARGET) $(ILIBDIR)/
+	if [ -f $(TARGET_LOWFAT) ] ; then \
+            $(INSTALL) -m 755 $(TARGET_LOWFAT) $(ILIBDIR)/ ; \
+        fi
 	if [ -f $(TARGET_SO) ] ; then \
             $(INSTALL) -m 755 $(TARGET_SO) $(ILIBDIR)/ ; \
         fi
+	if [ -f $(TARGET_SO_LOWFAT) ] ; then \
+            $(INSTALL) -m 755 $(TARGET_SO_LOWFAT) $(ILIBDIR)/ ; \
+        fi
 
 clean:
-	for file in $(XPLAT_LTWT_DEPS) $(XPLAT_LTWT_OBJS) $(TARGETS) ; do \
+	for file in $(XPLAT_LTWT_DEPS) $(XPLAT_LTWT_OBJS) \
+		$(XPLAT_LOWFAT_DEPS) $(XPLAT_LOWFAT_OBJS) $(TARGETS) ; do \
 	    if [ -f $$file ] ; then $(RM) $$file ; fi \
 	done
 
@@ -101,9 +131,18 @@ $(DEPDIR)/%.d: %.c
 	@echo Building depends file `basename $@` ...
 	$(MAKEDEPENDS)  $< $*.o $@ $(INCLUDES_LIGHTWEIGHT)
 
+$(DEPDIR)/%_r.d: %.c
+	@echo Building depends file `basename $@` ...
+	$(MAKEDEPENDS)  $< $*.o $@ $(INCLUDES_LIGHTWEIGHT)
+
 $(OBJDIR)/%.o: %.c
+	@echo Compiling `basename $@` ...
+	$(CC) $(CCFLAGS) -o $@ -c $<
+
+$(OBJDIR)/%_r.o: %.c
 	@echo Compiling `basename $@` ...
 	$(CC) $(CCFLAGS) -o $@ -c $<
 
 # make sure file dependencies are determiend and used
 -include $(XPLAT_LTWT_DEPS)
+-include $(XPLAT_LOWFAT_DEPS)

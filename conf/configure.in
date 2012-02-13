@@ -258,11 +258,8 @@ AC_SUBST(MRNET_VERSION)
 dnl === OS-SPECIFIC COMPILER OPTIONS ===
 
 LIBS="-lm -lpthread -ldl"
-if test $ltwt_threadsafe = "yes" ; then
-    LIBS_LIGHTWEIGHT="-lm -lpthread"
-else
-    LIBS_LIGHTWEIGHT="-lm"
-fi
+LIBS_LIGHTWEIGHT="-lm"
+LIBS_LOWFAT="-lm -lpthread"
 EXTRA_LIBS=""
 
 case "$host_os" in
@@ -379,6 +376,7 @@ AC_SUBST(SOFLAGS)
 AC_SUBST(C_AS_CPLUSPLUS)
 AC_SUBST(LIBS)
 AC_SUBST(LIBS_LIGHTWEIGHT)
+AC_SUBST(LIBS_LOWFAT)
 AC_SUBST(EXTRA_LIBS)
 AC_SUBST(LTWT_THREADSAFE)
 

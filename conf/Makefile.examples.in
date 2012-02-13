@@ -49,9 +49,12 @@ endif
 LIBMRNET             = -lmrnet
 LIBXPLAT             = -lxplat
 LIBMRNET_LIGHTWEIGHT = -lmrnet_lightweight
+LIBMRNET_LOWFAT      = -lmrnet_lightweight_r
 LIBXPLAT_LIGHTWEIGHT = -lxplat_lightweight
+LIBXPLAT_LOWFAT      = -lxplat_lightweight_r
 LIBS                 = -L$(LIBDIR) $(LIBMRNET) $(LIBXPLAT) @LIBS@ @EXTRA_LIBS@
 LIBS_LIGHTWEIGHT     = -L$(LIBDIR) $(LIBMRNET_LIGHTWEIGHT) $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS@
+LIBS_LOWFAT          = -L$(LIBDIR) $(LIBMRNET_LOWFAT) $(LIBXPLAT_LOWFAT) @LIBS_LOWFAT@ @EXTRA_LIBS@
 
 LDFLAGS = @LDFLAGS@
 SOFLAGS = @SOFLAGS@

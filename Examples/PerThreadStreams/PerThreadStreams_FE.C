@@ -196,8 +196,8 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    NetworkTopology* nettop = net->get_NetworkTopology();
     /*
+    NetworkTopology* nettop = net->get_NetworkTopology();
     if( nettop->get_Root()->find_SubTreeHeight() < 2 ) {
         fprintf( stderr, "Please use a topology with depth >= 2.\n"
                  "There needs to be at least one mrnet_commnode process to kill.\n" );
