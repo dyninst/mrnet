@@ -48,6 +48,14 @@ class Message: public Error{
 
    std::list< PacketPtr > _packets;
    XPlat::Monitor _packet_sync;
+
+   int _packet_count_header;
+   char * _packet_count_buf;
+   int _packet_vector_sizes_size;
+   char * _packet_vector_sizes_buf;
+   uint64_t _packet_sizes[10];
+   XPlat::NCBuf _ncbuf[10];
+   uint32_t _ncbuf_count;
 };
 
 ssize_t MRN_send( XPlat::XPSOCKET fd, const char *buf, size_t count );
