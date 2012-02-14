@@ -577,7 +577,7 @@ int mrn_printf( const char *file, int line, const char * func,
     fprintf( f, "%ld.%06ld: %s(0x%lx): ", 
              tv.tv_sec-MRN_RELEASE_DATE_SECS, tv.tv_usec,
              ( thread_name != NULL ) ? thread_name : "UNKNOWN_THREAD",
-             ( tid == -1 ) ? 0 : tid );
+             tid );
 
     if( file ) {
         // print file, function, and line info
