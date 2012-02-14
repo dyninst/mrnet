@@ -46,6 +46,10 @@ void Packet::encode_pdr_header(void)
 
 void Packet::encode_pdr_data(void)
 {
+    if (_decoded == false)
+    {
+        return;
+    }
     data_sync.Lock();
 
     buf_len = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_data), this );
@@ -120,7 +124,7 @@ Packet::Packet( unsigned int istream_id, int itag,
     : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
       fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0),
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
-      destroy_data(false)
+      destroy_data(false), _decoded(true)
 {    
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
@@ -150,7 +154,7 @@ Packet::Packet( const char *ifmt_str, va_list idata,
     : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
       fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0),
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
-      destroy_data(false)
+      destroy_data(false), _decoded(true)
 {
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
@@ -177,7 +181,7 @@ Packet::Packet( unsigned int istream_id, int itag,
     : stream_id(istream_id), tag(itag), src_rank(UnknownRank),
       fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0), 
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
-      destroy_data(false)
+      destroy_data(false), _decoded(true)
 {
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
@@ -206,7 +210,7 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
     : stream_id(istream_id), tag(itag), src_rank(isrc),
       fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0),
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
-      destroy_data(false)
+      destroy_data(false), _decoded(true)
 {
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
@@ -233,7 +237,7 @@ Packet::Packet( Rank isrc, unsigned int istream_id, int itag,
     : stream_id(istream_id), tag(itag), src_rank(isrc),
       fmt_str(NULL), hdr(NULL), hdr_len(0), buf(NULL), buf_len(0), 
       inlet_rank(UnknownRank), dest_arr(NULL), dest_arr_len(0), 
-      destroy_data(false)
+      destroy_data(false), _decoded(true)
 {
     // NOTE: we do lazy encoding for the header at the time the packet
     //       is really sent (see Message::send())
@@ -261,7 +265,7 @@ Packet::Packet( unsigned int ihdr_len, char *ihdr,
     : stream_id((unsigned int)-1), tag(-1), src_rank(UnknownRank), 
       fmt_str(NULL), hdr(ihdr), hdr_len(ihdr_len), buf(ibuf), buf_len(ibuf_len), 
       inlet_rank(iinlet_rank), dest_arr(NULL), dest_arr_len(0), 
-      destroy_data(true)
+      destroy_data(true), _decoded(false)
 {
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Packet(%p): hdr_len=%u buf_len=%u\n",
                            this, hdr_len, buf_len) );
@@ -306,6 +310,11 @@ Packet::~Packet()
 
 int Packet::unpack( const char *ifmt_str, ... )
 {
+    if (_decoded == false )
+    {
+        decode_pdr_data();
+        _decoded = true;
+    }
     int ret = -1;
     if( ifmt_str != NULL ) {
         va_list arg_list;
@@ -319,6 +328,11 @@ int Packet::unpack( const char *ifmt_str, ... )
 int Packet::unpack( va_list iarg_list, const char* ifmt_str, 
                     bool /*dummy parameter to make sure signatures differ*/ )
 {
+    if (_decoded == false )
+    {
+        decode_pdr_data();
+        _decoded = true;
+    }
     int ret = -1;
     if( ifmt_str != NULL ) {
         ret = ExtractVaList( ifmt_str, iarg_list );
@@ -331,6 +345,11 @@ const DataElement * Packet::operator[]( unsigned int i ) const
     const DataElement * ret = NULL;
     size_t num_elems = 0;
 
+    if (_decoded == false)
+    {
+        decode_pdr_data();
+        _decoded = true;
+    }
     data_sync.Lock();
     num_elems = data_elements.size();
     if( i < num_elems )

@@ -138,6 +138,7 @@ class Packet: public Error {
     Timer * _perf_data_timer;
     int _in_packet_count;
     int _out_packet_count;
+    mutable bool _decoded;
 };
 
 
