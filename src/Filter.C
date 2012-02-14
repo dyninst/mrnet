@@ -76,8 +76,7 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
     _mutex.Unlock();
 
     if(_strm != NULL)
-        if(_strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_FILTER) &&
-           _strm->is_LocalNodeInternal())
+        if(_strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_FILTER))
         {
             for (std::vector<PacketPtr>::iterator i = ipackets.begin();
                     i != ipackets.end(); i++)
