@@ -14,7 +14,7 @@ int main(int argc, char **argv){
     Stream * stream;
     PacketPtr buf;
     int tag=0;
-    uint64_t recv_array_len=0;
+    uint32_t recv_array_len=0;
     void * recv_array=NULL;
     bool success=true;
 
@@ -23,8 +23,10 @@ int main(int argc, char **argv){
     Rank my_rank = net->get_LocalRank();
 
     do{
-        if ( net->recv(&tag, buf, &stream) != 1){
+        if( net->recv(&tag, buf, &stream) == -1 ) {
             fprintf(stderr, "BE(%d): net::recv() failure\n", my_rank);
+            tag = PROT_EXIT;
+            break;
         }
 
         recv_array=NULL;

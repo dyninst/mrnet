@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 {
     Stream * stream_BC;
 
-    if( argc !=3 ) {
+    if( argc != 3 ) {
         fprintf(stderr, 
                 "Usage: %s <topology file> <backend_exe>\n", argv[0]);
         return -1;
@@ -164,7 +164,7 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
     Stream *recv_stream;
     void *send_array=NULL, *recv_array=NULL;
     unsigned int i;
-    uint64_t recv_array_len=0;
+    uint32_t recv_array_len=0;
     int num_received=0, num_to_receive=0, data_size=0;
     int tag=0;
     PacketPtr buf;
