@@ -354,7 +354,7 @@ int Message::send( XPlat::XPSOCKET sock_fd )
     return 0;
 }
 
-void Message::add_Packet( const PacketPtr packet )
+void Message::add_Packet( PacketPtr packet )
 {
     _packet_sync.Lock();
     if( packet != Packet::NullPacket )
