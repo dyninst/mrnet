@@ -20,7 +20,7 @@
 #include "PerfDataSysEvent.h"
 
 
-
+#define MESSAGE_PREALLOC_LEN 10
 
 namespace MRN
 {
@@ -29,33 +29,31 @@ uint64_t get_TotalBytesSend(void);
 uint64_t get_TotalBytesRecv(void);
 
 class Message: public Error{
-  public:
-   Message( Network * net );
-   ~Message();
+ public:
+    Message( Network * net );
+    ~Message();
 
-   int send( XPlat::XPSOCKET isock_fd );
-   int recv( XPlat::XPSOCKET isock_fd, std::list < PacketPtr >&opackets, Rank iinlet_rank );
+    int send( XPlat::XPSOCKET isock_fd );
+    int recv( XPlat::XPSOCKET isock_fd, std::list < PacketPtr >&opackets, Rank iinlet_rank );
 
-   void add_Packet( PacketPtr );
-   int size_Packets( void );
+    void add_Packet( PacketPtr );
+    int size_Packets( void );
    
-   void waitfor_MessagesToSend( void );
+    void waitfor_MessagesToSend( void );
 
  private:
 
-   Network * _net;
-   enum {MRN_QUEUE_NONEMPTY};
+    Network * _net;
+    enum {MRN_QUEUE_NONEMPTY};
 
-   std::list< PacketPtr > _packets;
-   XPlat::Monitor _packet_sync;
+    std::list< PacketPtr > _packets;
+    XPlat::Monitor _packet_sync;
 
-   int _packet_count_header;
-   char * _packet_count_buf;
-   int _packet_vector_sizes_size;
-   char * _packet_vector_sizes_buf;
-   uint64_t _packet_sizes[10];
-   XPlat::NCBuf _ncbuf[10];
-   uint32_t _ncbuf_count;
+    char *_packet_count_buf, *_packet_sizes_buf;
+    size_t _packet_count_buf_len, _packet_sizes_buf_len, _ncbuf_len;
+
+    uint64_t _packet_sizes[MESSAGE_PREALLOC_LEN];
+    XPlat::NCBuf _ncbuf[MESSAGE_PREALLOC_LEN];
 };
 
 ssize_t MRN_send( XPlat::XPSOCKET fd, const char *buf, size_t count );
