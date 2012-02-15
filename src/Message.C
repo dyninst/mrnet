@@ -208,9 +208,10 @@ int Message::send( XPlat::XPSOCKET sock_fd )
     piter = send_packets.begin();
     for( ; piter != send_packets.end(); piter++ ) {
         PacketPtr& pkt = *piter;
-        strm =  _net->get_Stream(pkt->get_StreamId());
-        if (strm != NULL) {
-            if(strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_SEND)) {
+        strm = _net->get_Stream(pkt->get_StreamId());
+        if( strm != NULL ) {
+            if( strm->get_PerfData()->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
+                                                 PERFDATA_PKT_SEND) ) {
                 pkt->start_Timer(PERFDATA_PKT_TIMERS_SEND);
                 pkt->stop_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
             }
@@ -309,11 +310,14 @@ int Message::send( XPlat::XPSOCKET sock_fd )
     for( ; piter != send_packets.end(); piter++ ) {
         PacketPtr& pkt = *piter;
         strm = _net->get_Stream( pkt->get_StreamId() );
-        if (strm != NULL) {
+        if( strm != NULL ) {
             Timer tmp;
-            pkt->set_OutgoingPktCount(packetLength);
-            pkt->stop_Timer(PERFDATA_PKT_TIMERS_SEND);
             pkt->set_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER, tmp);
+            if( strm->get_PerfData()->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
+                                                 PERFDATA_PKT_SEND) ) {
+                pkt->set_OutgoingPktCount(packetLength);
+                pkt->stop_Timer(PERFDATA_PKT_TIMERS_SEND);
+            }
             strm->get_PerfData()->add_PacketTimers(pkt);
         }
     }
