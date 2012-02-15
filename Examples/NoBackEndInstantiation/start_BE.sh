@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 REM_SHELL=${XPLAT_RSH:-"ssh"}
 
@@ -17,14 +17,8 @@ declare -a BE_CONN
 export BE_CONN=( `cat $3` )
 NC=`expr ${#BE_CONN[*]} / 4`
 
-
-if [ $NBE -ne $NC ]; then
-    echo Number of backends $NBE from $2 not equal to number of connections $NC from $3
-    exit 1
-fi
-
 export ITER=0
-while [ $ITER -lt $NBE ]; do
+while [ $ITER -lt $NC ]; do
     # start BE on each host using parent info in BE_MAP
     CITER=`expr $ITER \* 4`
     chost=${BE_CONN[$CITER]}
@@ -32,10 +26,12 @@ while [ $ITER -lt $NBE ]; do
     cport=${BE_CONN[$CITER]}
     CITER=`expr $CITER + 1`
     crank=${BE_CONN[$CITER]}
-    if [ "${BE_HOSTS[$ITER]}" = "localhost" -o "${BE_HOSTS[$ITER]}" = "$thishost" ] ; then
-        $1 $chost $cport $crank ${BE_HOSTS[$ITER]} `expr $ITER + 10000` &
+    bendx=`expr $ITER \% $NBE`
+    be=${BE_HOSTS[$bendx]}
+    if [ "$be" = "localhost" -o "$be" = "$thishost" ] ; then
+        $1 $chost $cport $crank $be `expr $ITER + 1000` &
     else
-        $REM_SHELL -n ${BE_HOSTS[$ITER]} $1 $chost $cport $crank ${BE_HOSTS[$ITER]} `expr $ITER + 10000` &
+        $REM_SHELL -n $be $1 $chost $cport $crank $be `expr $ITER + 1000` &
     fi 
     sleep 1
     ITER=`expr $ITER + 1`
