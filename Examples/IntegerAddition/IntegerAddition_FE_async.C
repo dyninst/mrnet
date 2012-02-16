@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     Stream * add_stream = net->new_Stream( comm_BC, filter_id,
                                            SFILTER_WAITFORALL );
 
-    int num_backends = comm_BC->get_EndPoints().size();
+    int num_backends = int(comm_BC->get_EndPoints().size());
 
     tag = PROT_SUM;
     unsigned int num_iters=5;

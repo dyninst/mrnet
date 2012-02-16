@@ -162,7 +162,7 @@ inline void get_lines(const char* data, unsigned data_len, vector<unsigned>& lin
 {
     const char* line = data;
     while( line < (data + data_len) ) {
-        unsigned curr_offset = line - data;
+        unsigned curr_offset = unsigned(line - data);
         if( *line != '\0' )
             line_offsets.push_back(curr_offset);
         const char* found = (const char*) memchr(line, '\n', data_len - curr_offset);

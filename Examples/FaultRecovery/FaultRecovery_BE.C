@@ -26,8 +26,9 @@ int main(int argc, char **argv)
     Network * net = Network::CreateNetworkBE( argc, argv );
 
     Rank me = net->get_LocalRank();
-    unsigned int seed = me, now = time(NULL);
-    seed += (seed * 1000) + (now % 100);
+    unsigned int seed = me;
+    time_t now = time(NULL);
+    seed += (seed * 1000) + (unsigned int)(now % 100);
     srandom( seed );
 
     do {
@@ -48,7 +49,7 @@ int main(int argc, char **argv)
             for( unsigned int i=0; i < num_iters; i++ ) {
 
                 long int randval = random();
-                unsigned int val = randval % fr_range_max;
+                unsigned int val = (unsigned int)(randval % fr_range_max);
                 if( val < min_val ) min_val = val;
                 if( val > max_val ) max_val = val;
                 double tile = floor( (double)val / (fr_range_max / fr_bins) );

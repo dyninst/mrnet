@@ -40,17 +40,17 @@ void HF_BE_scan( std::vector< PacketPtr >& pin,
     //fflush(stdout);
 
     vector<string> matches;
-    for( unsigned i = 0; i < pin.size( ); i++ ) {
+    for( size_t i = 0; i < pin.size( ); i++ ) {
         PacketPtr cur_packet = pin[i];
         char* data;
-        uint64_t dataLen;
+        unsigned dataLen;
         cur_packet->unpack( "%ac", &data, &dataLen );
         if( ! dataLen ) continue;
 
         unsigned nlines;
         vector<unsigned> line_offsets;
         get_lines(data, dataLen, line_offsets);
-        nlines = line_offsets.size();
+        nlines = unsigned(line_offsets.size());
 
         for( ; i < nlines; i++ ) {
 

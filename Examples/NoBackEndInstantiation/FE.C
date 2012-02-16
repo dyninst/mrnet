@@ -53,7 +53,7 @@ void write_be_connections(vector< NetworkTopology::Node * >& leaves, unsigned nu
       exit(-1);
    }
 
-   unsigned num_leaves = leaves.size();
+   unsigned num_leaves = unsigned(leaves.size());
    unsigned be_per_leaf = num_be / num_leaves;
    unsigned curr_leaf = 0;
    for(unsigned i=0; (i < num_be) && (curr_leaf < num_leaves); i++) {

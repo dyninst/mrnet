@@ -81,7 +81,7 @@ int main(int argc, char **argv)
         Stream * add_stream = net->new_Stream( comm_BC, filter_id,
                                                SFILTER_WAITFORALL );
         
-        int num_backends = comm_BC->get_EndPoints().size();
+        int num_backends = int(comm_BC->get_EndPoints().size());
 
         // Broadcast a control message to back-ends to send us "num_iters"
         // waves of integers

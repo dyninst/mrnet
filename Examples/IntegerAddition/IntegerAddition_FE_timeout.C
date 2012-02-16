@@ -58,7 +58,7 @@ int main(int argc, char **argv)
                                                SFILTER_TIMEOUT );
 	add_stream->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
 
-        int num_backends = comm_BC->get_EndPoints().size();
+        int num_backends = int(comm_BC->get_EndPoints().size());
 
         // Broadcast a control message to back-ends to send us "num_iters"
         // waves of integers

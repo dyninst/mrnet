@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     PacketPtr buf;
     int tag;
 
-    srandom( time(NULL) ); //arbitrary seed to random()
+    srandom( unsigned(time(NULL)) ); //arbitrary seed to random()
 
     Network * net = Network::CreateNetworkBE( argc, argv );
 

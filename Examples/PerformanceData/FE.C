@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     stream->enable_PerformanceData( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_OUT );
     stream->enable_PerformanceData( PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_FILT_OUT );
 
-    int num_backends = comm_BC->get_EndPoints().size();
+    int num_backends = int(comm_BC->get_EndPoints().size());
 
     tag = PROT_SUM;
     int send_val=10;
@@ -108,12 +108,12 @@ int main(int argc, char **argv)
                                      TFILTER_AVG );
     rank_perfdata_map::iterator mi = data.begin();
     for( ; mi != data.end() ; mi++ ) {
-        unsigned sz = mi->second.size();
+        size_t sz = mi->second.size();
         printf("Average of %d ranks :\n", 0-(int)mi->first);
-        for(unsigned u=0; u < sz; u++ ) {
+        for(size_t u=0; u < sz; u++ ) {
             // NOTE: for unsigned integer data use - printf(" %" PRIu64, mi->second[u].u);
             // NOTE: for signed integer data use - printf(" %" PRIi64, mi->second[u].i);
-            printf("  filter execution %d time: %.6lf\n", u, mi->second[u].d);
+            printf("  filter execution %zu time: %.6lf\n", u, mi->second[u].d);
         }
     }
 
