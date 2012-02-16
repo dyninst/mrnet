@@ -44,7 +44,7 @@ int main( int argc, char* argv[] )
     assert( stream != NULL );
 
     const set< CommunicationNode* >& bes = bcComm->get_EndPoints();
-    unsigned int nBackends = bes.size();
+    unsigned int nBackends = (unsigned int)bes.size();
     cout << "FE: broadcast communicator has " 
          << nBackends << " backends" << endl;
 

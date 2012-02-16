@@ -21,7 +21,8 @@ void Packet::encode_pdr_header(void)
 {
     data_sync.Lock();
 
-    hdr_len = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_header), this );
+    hdr_len = (unsigned int)
+                pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_header), this );
     assert( hdr_len );
 
     hdr = (char*) malloc( hdr_len );
@@ -454,10 +455,10 @@ Rank Packet::get_SourceRank(void) const
     return ret;
 }
 
-unsigned int Packet::get_NumDataElements(void) const
+size_t Packet::get_NumDataElements(void) const
 {
     data_sync.Lock();
-    unsigned int ret = data_elements.size();
+    size_t ret = data_elements.size();
     data_sync.Unlock();
     return ret;
 }
@@ -1426,7 +1427,8 @@ int Packet::DataElementArray2ArgList( va_list arg_list ) const
 int Packet::DataElementArray2ArgVec( void **odata ) const
 {
     mrn_dbg_func_begin();
-    int i = 0, array_len = 0;
+    int i = 0;
+    uint64_t array_len = 0;
     unsigned data_ndx = 0;
     const DataElement * cur_elem=NULL;
     void *tmp_ptr, *tmp_array;

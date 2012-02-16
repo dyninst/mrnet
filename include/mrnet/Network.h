@@ -272,9 +272,9 @@ protected:
     Stream * new_Stream( unsigned int iid,
                          Rank* ibackends,
                          unsigned int inum_backends,
-                         int ius_filter_id,
-                         int isync_filter_id,
-                         int ids_filter_id);
+                         unsigned short ius_filter_id,
+                         unsigned short isync_filter_id,
+                         unsigned short ids_filter_id);
     void delete_Stream( unsigned int );
     bool have_Streams(void);
     bool update_Streams(void);

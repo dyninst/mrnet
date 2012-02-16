@@ -38,7 +38,8 @@ bool EventDetector::stop( )
 
         if( _network->is_LocalNodeParent() ) {
             // send KILL_SELF message to EDT on listening port
-            int edt_port, sock_fd=0;
+            Port edt_port;
+            int sock_fd=0;
             string edt_host;
             Message msg(_network);
             PacketPtr packet( new Packet(CTL_STRM_ID, PROT_KILL_SELF, NULL) );

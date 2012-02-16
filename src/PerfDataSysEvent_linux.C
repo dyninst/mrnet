@@ -34,21 +34,21 @@ int PerfDataSysMgr::get_ThreadTime(long &user, long &sys)
 
 
     static int gettid_not_valid = 0;
-    int tid;
+    long int tid;
 
     if (gettid_not_valid)
         return -1;
 
-    tid = syscall((long int) SYS_gettid);
+    tid = syscall(SYS_gettid);
     if (tid == -1 && errno == ENOSYS) {
         gettid_not_valid = 1;
         return -1;
     }
 
-    sprintf( procFilename, "/proc/%d/task/%d/stat", pid, tid );
+    sprintf( procFilename, "/proc/%d/task/%ld/stat", pid, tid );
 	
     FILE *fd;
-    int num_read ;
+    size_t num_read ;
     fd = fopen(procFilename, "r");
     if ( fd == NULL) {
         ::perror("fopen()");
@@ -108,8 +108,8 @@ int PerfDataSysMgr::get_MemUsage(double &vsize, double &psize)
         return -1;
     } else {
         fclose(fd);
-        vsize = vpages * pageKB;
-        psize = ppages * pageKB;
+        vsize = (double)vpages * pageKB;
+        psize = (double)ppages * pageKB;
         mrn_dbg( 5, mrn_printf(FLF, stderr, 
                                "file=%s : vpages=%ld ppages=%ld pagesize=%lf vsize=%lf psize=%lf\n", 
                                procFilename, vpages, ppages, pageKB, vsize, psize));

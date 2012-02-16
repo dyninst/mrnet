@@ -632,7 +632,7 @@ bool KnomialTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
     
 
     _depth = max_depth;
-    _num_leaves = _num_nodes - tree.size();
+    _num_leaves = _num_nodes - (unsigned int)tree.size();
 
     // Connect tree
     map< string, vector< string > >::iterator parent = tree.begin();
@@ -715,7 +715,7 @@ bool KnomialTree::initialize_Tree( list< pair<string,unsigned> > & hosts )
     }
 
     _depth = max_depth;
-    _num_leaves = _num_nodes - tree.size();
+    _num_leaves = _num_nodes - (unsigned int)tree.size();
 
     // Connect tree
     map< string, vector< string > >::iterator parent = tree.begin();
@@ -888,7 +888,7 @@ bool GenericTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
     next_level_nodes.push_back( get_Node(cur_host) );
     
     // at each internal level, add proper number of children to each parent node
-    unsigned num_levels = _children_by_level.size();
+    unsigned num_levels = (unsigned int)_children_by_level.size();
     list< string >::iterator avail_iter = int_hostids.begin();
     for( unsigned u=0; u < (num_levels - 1); u++ ) {
 

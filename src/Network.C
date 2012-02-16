@@ -427,10 +427,12 @@ int Network::get_NetSettingKey( const std::string & s )
 void Network::convert_SettingsMap( const std::map< std::string, std::string > * iattrs )
 {
     std::map<std::string, std::string>::const_iterator it;
+    int key_ret;
     if( iattrs != NULL ) {
         for( it = iattrs->begin(); it != iattrs->end(); it++ ) {
-            net_settings_key_t key = (net_settings_key_t) Network::get_NetSettingKey( it->first );
-            if( key != -1 )
+            key_ret = Network::get_NetSettingKey( it->first );
+            net_settings_key_t key = (net_settings_key_t)key_ret;
+            if( key_ret != -1 )
                 _network_settings[ key ] = it->second;
         }
     }
@@ -761,7 +763,9 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
         error( ERR_SYSTEM, imyrank, "Failed to initialize via CreateBackEndNode()" );
 
     // create the BE-specific stream
-    new_Stream(imyrank, &imyrank, 1, TFILTER_NULL, SFILTER_DONTWAIT, TFILTER_NULL);   
+    new_Stream(imyrank, &imyrank, 1, (unsigned short)TFILTER_NULL, 
+                                     (unsigned short)SFILTER_DONTWAIT,
+                                     (unsigned short)TFILTER_NULL);   
 }
 
 void Network::init_InternalNode( const char* iphostname,
@@ -1340,9 +1344,9 @@ bool Network::is_UserStreamId( unsigned int id )
 Stream* Network::new_Stream( unsigned int iid,
                              Rank* ibackends,
                              unsigned int inum_backends,
-                             int ius_filter_id,
-                             int isync_filter_id,
-                             int ids_filter_id )
+                             unsigned short ius_filter_id,
+                             unsigned short isync_filter_id,
+                             unsigned short ids_filter_id )
 {
     mrn_dbg_func_begin();
 
@@ -1393,9 +1397,9 @@ Stream* Network::get_Stream( unsigned int iid ) const
         if( be != NULL ) {
             Network* me = const_cast< Network* >( this );
             ret = me->new_Stream( r, &r, 1, 
-                                  TFILTER_NULL, 
-                                  SFILTER_DONTWAIT, 
-                                  TFILTER_NULL );
+                                  (unsigned short)TFILTER_NULL, 
+                                  (unsigned short)SFILTER_DONTWAIT, 
+                                  (unsigned short)TFILTER_NULL );
         }
     }
 
@@ -1688,7 +1692,7 @@ int Network::load_FilterFuncs( const char* so_file,
 
     mrn_dbg_func_begin();
 
-    unsigned nfuncs = functions.size();
+    size_t nfuncs = functions.size();
     if( filter_ids.size() != nfuncs )
         filter_ids.resize( nfuncs );
 
@@ -1702,7 +1706,7 @@ int Network::load_FilterFuncs( const char* so_file,
     char* so_copy = strdup(so_file);
 
     unsigned int success_count = 0;
-    for( unsigned u=0; u < nfuncs; u++ ) {
+    for( size_t u=0; u < nfuncs; u++ ) {
 
         unsigned short cur_filter_id = next_filter_id;
         const char* func_name = functions[u];
@@ -2378,7 +2382,7 @@ PacketPtr Network::collect_PerfData( perfdata_metric_t metric,
     _perf_data->collect( metric, context, data );
     iter = data.begin();
     Rank my_rank = get_LocalRank();
-    uint32_t  num_elems = data.size();
+    uint32_t num_elems = (uint32_t)data.size();
     void* data_arr = NULL;
     const char* fmt = NULL;
     switch( PerfDataMgr::get_MetricType(metric) ) {

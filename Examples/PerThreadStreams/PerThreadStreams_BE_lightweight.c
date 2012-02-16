@@ -204,11 +204,12 @@ int main(int argc, char **argv)
     Stream_t *max_stream = NULL, *min_stream = NULL, *pct_stream = NULL;
     Packet_t *p = (Packet_t*)malloc(sizeof(Packet_t));
     Network_t * net;
-    int j;
+    unsigned int j;
     int tag=0;
 	int ret_val;
     int regd_streams = 0;
-    unsigned int seed, now;
+    unsigned int seed;
+    time_t now;
     Thread_Id min_BE;
     Thread_Id max_BE;
     Thread_Id pct_BE;
@@ -226,7 +227,7 @@ int main(int argc, char **argv)
     me = Network_get_LocalRank(net);
     seed = me;
     now = time(NULL);
-    seed += (seed * 1000) + (now % 100);
+    seed += (seed * 1000) + (unsigned int)(now % 100);
     srandom( seed );
 
     /* Receive PROT_START and establish values for test */
@@ -245,7 +246,7 @@ int main(int argc, char **argv)
         for( i=0; i < num_iters; i++ ) {
 
             randval = random();
-            val = randval % fr_range_max;
+            val = (unsigned int)(randval % fr_range_max);
             if( val < min_val ) min_val = val;
             if( val > max_val ) max_val = val;
             tile = floor( (double)val / (fr_range_max / fr_bins) );
@@ -271,7 +272,7 @@ int main(int argc, char **argv)
 
     // Convert bit value to unsigned long (global var) for WaveChkBEMain
     for( j = 0; j < fr_bins; j++ ) {
-        pct_ul += (pct[j] << j);
+        pct_ul += (uint64_t)(pct[j] << j);
     }
 
     /* Register streams for threads */

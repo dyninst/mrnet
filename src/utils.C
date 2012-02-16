@@ -67,7 +67,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
     struct sockaddr_in server_addr;
     const char* host = hostname.c_str();
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "In connectHost(%s:%d) sock:%d ...\n",
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "In connectHost(%s:%hu) sock:%d ...\n",
                            host, port, sock ) );
 
     if( sock <= 0 ) {
@@ -103,7 +103,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
         if( cret == -1 ) {
             err = XPlat::NetUtils::GetLastError();
             if( ! ( XPlat::Error::ETimedOut(err) || XPlat::Error::EConnRefused(err) ) ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n",
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%hu failed: %s\n",
                                        host, port,
                                        XPlat::Error::GetErrorString( err ).c_str()) );
                 XPlat::SocketUtils::Close( sock );
@@ -111,7 +111,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
             }
 
 	    nConnectTries++;
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "connect() to %s:%d timed out %d times\n",
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "connect() to %s:%hu timed out %d times\n",
                                    host, port, nConnectTries) );
 	    if( (num_retry > 0) && (nConnectTries >= num_retry) )
                 break;
@@ -122,7 +122,7 @@ int connectHost( int *sock_in, const std::string & hostname, Port port,
     } while( cret == -1 );
 
     if( cret == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%d failed with '%s' after %d tries\n",
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%hu failed with '%s' after %d tries\n",
                                host, port,
 			       XPlat::Error::GetErrorString(err).c_str(),
                                nConnectTries) );

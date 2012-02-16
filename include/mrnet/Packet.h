@@ -103,7 +103,7 @@ class Packet: public Error {
 
     void set_SourceRank( Rank r ) { src_rank = r; }
 
-    unsigned int get_NumDataElements(void) const;
+    size_t get_NumDataElements(void) const;
     const DataElement * get_DataElement( unsigned int i ) const;
 
     int ExtractVaList( const char *fmt, va_list arg_list ) const;

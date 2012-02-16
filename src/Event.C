@@ -65,7 +65,7 @@ void EventPipe::signal(void)
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "writing pipefd\n" ));
     char c = '!';
-    int ret = write( get_WriteFd(), &c, sizeof(char) );
+    ssize_t ret = write( get_WriteFd(), &c, sizeof(char) );
     if( ret == -1 )
         mrn_dbg(1, mrn_printf(FLF, stderr, "write() failed - %s", strerror(errno)));
     else {
@@ -88,7 +88,7 @@ void EventPipe::clear(void)
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "clearing pipefd\n" ));
     char c;
-    int ret = read( get_ReadFd(), &c, sizeof(char) );
+    ssize_t ret = read( get_ReadFd(), &c, sizeof(char) );
     if( ret == -1 )
         mrn_dbg(1, mrn_printf(FLF, stderr, "read() failed - %s", strerror(errno)));
     else {
@@ -175,7 +175,7 @@ unsigned int EventMgr::get_NumEvents() const
 {
     unsigned int rc;
     data_sync.Lock();
-    rc = _evts.size();
+    rc = (unsigned int)_evts.size();
     data_sync.Unlock();
     return rc;
 }
@@ -396,7 +396,7 @@ bool EventMgr::execute_Callbacks( Event* ievt )
         else {
             evt_cb_list& elist = mapi->second;
             evt_cb_list::iterator li, tmp;
-            unsigned u, count;
+            size_t u, count;
             li = elist.begin();
             count = elist.size();
             for( u = 0; u < count; u++ ) {

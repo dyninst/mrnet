@@ -502,9 +502,26 @@ Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
         }
     }
 
+    // Check the range of the filter ids, since they are stored as
+    // an unsigned short int
+    if(us_filter_id > UINT16_MAX || us_filter_id < 0) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Filter ID too large\n"));
+        return NULL;
+    }
+    if(sync_id > UINT16_MAX || sync_id < 0) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Filter ID too large\n"));
+        return NULL;
+    }
+    if(ds_filter_id > UINT16_MAX || ds_filter_id < 0) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Filter ID too large\n"));
+        return NULL;
+    }
+
     // register new stream w/ network
     stream = _network->new_Stream( stream_id, backends, num_backends, 
-                                   us_filter_id, sync_id, ds_filter_id );
+                                   (unsigned short)us_filter_id,
+                                   (unsigned short)sync_id,
+                                   (unsigned short)ds_filter_id );
 
     if( backends != NULL )
         free( backends );

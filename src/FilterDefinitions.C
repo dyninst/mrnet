@@ -906,7 +906,7 @@ void tfilter_IntEqClass( const vector< PacketPtr >& ipackets,
 	      vector< unsigned int > >::iterator iter = classes.begin(  );
 	 iter != classes.end(  ); iter++ ) {
         values[curIdx] = iter->first;
-	memcnts[curIdx] = ( iter->second ).size(  );
+	memcnts[curIdx] = (unsigned int)( iter->second ).size(  );
 	nMems += memcnts[curIdx];
 	curIdx++;
     }
@@ -1069,7 +1069,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
                 nrank = 1;
             }
             
-            unsigned sz = aggr_results.size();
+            unsigned sz = (unsigned)aggr_results.size();
             if( sz < data_len )
                 aggr_results.insert( aggr_results.end(), data_len - sz, init );            
 
@@ -1191,7 +1191,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     }
     else {
         orank_len = onelems_len = 1;
-        odata_len = aggr_results.size();
+        odata_len = (unsigned int)aggr_results.size();
     }
 
     if( orank_len ) {
@@ -1252,7 +1252,7 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
     }
     else {
         orank_arr[0] = 0 - (int)total_nranks;
-        onelems_arr[0] = aggr_results.size();
+        onelems_arr[0] = (unsigned int)aggr_results.size();
         for( unsigned u=0; u < aggr_results.size(); u++ ) {
             switch( typ ) { 
              case UINT64_T:
@@ -1975,16 +1975,19 @@ static inline void sum(const void *in1, const void *in2, void* out, DataType typ
 {
   switch (type){
   case CHAR_T:
-    *( (char*) out ) = *((const char*)in1) + *((const char*)in2);
+    *( (char*) out ) = (char)(*((const char*)in1) + *((const char*)in2));
     break;
   case UCHAR_T:
-    *( (uchar_t*) out ) = *((const uchar_t*)in1) + *((const uchar_t*)in2);
+    *( (uchar_t*) out ) = (uchar_t)
+                            (*((const uchar_t*)in1) + *((const uchar_t*)in2));
     break;
   case INT16_T:
-    *( (int16_t*) out ) = *((const int16_t*)in1) + *((const int16_t*)in2);
+    *( (int16_t*) out ) = (int16_t)
+                            (*((const int16_t*)in1) + *((const int16_t*)in2));
     break;
   case UINT16_T:
-    *( (uint16_t*) out ) = *((const uint16_t*)in1) + *((const uint16_t*)in2);
+    *( (uint16_t*) out ) = (uint16_t)
+                            (*((const uint16_t*)in1) + *((const uint16_t*)in2));
     break;
   case INT32_T:
     *( (int32_t*) out ) = *((const int32_t*)in1) + *((const int32_t*)in2);
@@ -2037,16 +2040,16 @@ static inline void mult(const void *in1, int in2, void* out, DataType type)
 {
   switch (type){
   case CHAR_T:
-    *( (char*) out ) = *((const char*)in1) * in2;
+    *( (char*) out ) = (char)(*((const char*)in1) * in2);
     break;
   case UCHAR_T:
-    *( (uchar_t*) out ) = *((const uchar_t*)in1) * in2;
+    *( (uchar_t*) out ) = (uchar_t)(*((const uchar_t*)in1) * in2);
     break;
   case INT16_T:
-    *( (int16_t*) out ) = *((const int16_t*)in1) * in2;
+    *( (int16_t*) out ) = (int16_t)(*((const int16_t*)in1) * in2);
     break;
   case UINT16_T:
-    *( (uint16_t*) out ) = *((const uint16_t*)in1) * in2;
+    *( (uint16_t*) out ) = (uint16_t)(*((const uint16_t*)in1) * in2);
     break;
   case INT32_T:
     *( (int32_t*) out ) = *((const int32_t*)in1) * in2;	
@@ -2099,16 +2102,16 @@ static inline void div(const void *in1, int in2, void* out, DataType type)
 {
   switch (type){
   case CHAR_T:
-    *( (char*) out ) = *((const char*)in1) / in2;
+    *( (char*) out ) = (char)(*((const char*)in1) / in2);
     break;
   case UCHAR_T:
-    *( (uchar_t*) out ) = *((const uchar_t*)in1) / in2;
+    *( (uchar_t*) out ) = (uchar_t)(*((const uchar_t*)in1) / in2);
     break;
   case INT16_T:
-    *( (int16_t*) out ) = *((const int16_t*)in1) / in2;
+    *( (int16_t*) out ) = (int16_t)(*((const int16_t*)in1) / in2);
     break;
   case UINT16_T:
-    *( (uint16_t*) out ) = *((const uint16_t*)in1) / in2;
+    *( (uint16_t*) out ) = (uint16_t)(*((const uint16_t*)in1) / in2);
     break;
   case INT32_T:
     *( (int32_t*) out ) = *((const int32_t*)in1) / in2;

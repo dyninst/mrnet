@@ -280,7 +280,8 @@ bool_t pdr_bytes(PDR *pdrs, char **cpp, uint64_t *sizep, uint64_t maxsize)
 bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
 {
     char *sp = *cpp;  /* sp is the actual string pointer */
-    uint32_t nodesize = 0;
+    size_t nodesize = 0;
+    uint32_t nodesize_uint;
 
     /* mrn_dbg_func_begin(); */
 
@@ -297,29 +298,31 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
             return FALSE;
         }
         nodesize = strlen(sp) + 1; /* add 1-byte null terminator */
-        mrn_dbg(5, mrn_printf(FLF, stderr, "encoding - string size+1: %u\n", nodesize ));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "encoding - string size+1: %"PRIszt"\n", nodesize ));
         break;
     case PDR_DECODE:
         break;
     }
 	
-    if (!pdr_uint32(pdrs, &nodesize)) {
-        return FALSE;
-    }
-
+    /* Will detect too large size on 64-bit platforms, but not 32 */
     if (nodesize > maxsize) {
         return FALSE;
     }
 		
+    nodesize_uint = (uint32_t)nodesize;
+    if (!pdr_uint32(pdrs, &nodesize_uint)) {
+        return FALSE;
+    }
+
     /*  now deal with the actual bytes */
     switch (pdrs->p_op) {
     case PDR_FREE:  /* Already handled above, but silences compiler warning */
         return TRUE;
     case PDR_DECODE:
-        mrn_dbg(5, mrn_printf(FLF, stderr, "decoding - string size+1: %u\n", nodesize ));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "decoding - string size+1: %u\n", nodesize_uint ));
         if (sp == NULL) {
             mrn_dbg(5, mrn_printf(FLF, stderr, "Allocating memory ...\n" ));
-            sp = (char*) malloc((size_t)nodesize);
+            sp = (char*) malloc((size_t)nodesize_uint);
             *cpp = sp;
         }
         if (sp == NULL) {
@@ -331,7 +334,7 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
 				
     case PDR_ENCODE:
         mrn_dbg(5, mrn_printf(FLF, stderr, "Calling pdr_opaque ...\n" ));
-        return pdr_opaque(pdrs, sp, nodesize);
+        return pdr_opaque(pdrs, sp, nodesize_uint);
     }
 
     mrn_dbg(1, mrn_printf(FLF, stderr, "Bad PDR op\n" ));

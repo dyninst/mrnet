@@ -8,6 +8,7 @@
 
 #include "mrnet/Types.h"
 #include <bitset>
+#include <cstring>
 
 #define fr_range_max 1000
 #define fr_bins 20

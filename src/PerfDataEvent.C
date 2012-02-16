@@ -81,7 +81,7 @@ void PerfDataMgr::disable( perfdata_metric_t met, perfdata_context_t ctx )
     int ndx = ctx;
     if( ndx < PERFDATA_MAX_CTX ) {
         if( met < PERFDATA_MAX_MET ) {
-            active_metrics[ndx] &= ~(PERFDATA_MET_FLAG(met));
+            active_metrics[ndx] &= (char)~(PERFDATA_MET_FLAG(met));
         }
     }
 }

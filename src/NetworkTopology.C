@@ -75,7 +75,7 @@ NetworkTopology::Node::get_Children(void) const
 
 unsigned int NetworkTopology::Node::get_NumChildren(void) const
 {
-    return _children.size();
+    return (unsigned int)_children.size();
 }
         
 void NetworkTopology::Node::set_Parent( Node * p )
@@ -255,7 +255,7 @@ void NetworkTopology::Node::compute_AdoptionScore( Node * iorphan,
     
     unsigned int depth_increase = get_DepthIncrease( iorphan );
     unsigned int proximity = get_Proximity( iorphan );
-    unsigned int fanout = _children.size();
+    unsigned int fanout = (unsigned int)_children.size();
 
     double fanout_score;
 
@@ -1134,20 +1134,20 @@ void NetworkTopology::compute_TreeStatistics(void)
     set< Node * > ::const_iterator iter;
     for( iter=_parent_nodes.begin(); iter!=_parent_nodes.end(); iter++ ) {
         _max_fanout = ( (*iter)->_children.size() > _max_fanout ?
-                        (*iter)->_children.size() : _max_fanout );
+                        (unsigned int)(*iter)->_children.size() : _max_fanout );
         _min_fanout = ( (*iter)->_children.size() < _min_fanout ?
-                        (*iter)->_children.size() : _min_fanout );
+                        (unsigned int)(*iter)->_children.size() : _min_fanout );
     }
 
     _avg_fanout = ( (double)(_nodes.size()-1) ) / ( (double)_parent_nodes.size() );
 
     double diff=0,sum_of_square=0;
     for( iter=_parent_nodes.begin(); iter!=_parent_nodes.end(); iter++ ) {
-        diff = _avg_fanout - (*iter)->_children.size();
+        diff = _avg_fanout - (double)(*iter)->_children.size();
         sum_of_square += (diff*diff);
     }
 
-    _var_fanout = sum_of_square / _parent_nodes.size();    
+    _var_fanout = sum_of_square / (double)_parent_nodes.size();    
     _stddev_fanout = sqrt( _var_fanout );
 
     _sync.Unlock();
@@ -1164,7 +1164,7 @@ void NetworkTopology::get_TreeStatistics( unsigned int &onum_nodes,
 
     _sync.Lock();
 
-    onum_nodes = _nodes.size();
+    onum_nodes = (unsigned int)_nodes.size();
     odepth = _depth;
     omax_fanout = _max_fanout;
     omin_fanout = _min_fanout;
@@ -1178,7 +1178,7 @@ unsigned int NetworkTopology::get_NumNodes() const
 {
     _sync.Lock();
 
-    unsigned int curr_size = _nodes.size();
+    unsigned int curr_size = (unsigned int)_nodes.size();
 
     _sync.Unlock();
 
@@ -1236,7 +1236,7 @@ unsigned int TopologyLocalInfo::get_NumDescendants() const
     if( (local_node != NULL) && (topol != NULL) ) {
         std::vector<NetworkTopology::Node*> descendants;
         topol->get_Descendants( local_node, descendants );
-        return descendants.size();
+        return (unsigned int)descendants.size();
     }
     return 0;
 }
@@ -1246,7 +1246,7 @@ unsigned int TopologyLocalInfo::get_NumLeafDescendants() const
     if( (local_node != NULL) && (topol != NULL) ) {
         std::vector<NetworkTopology::Node*> descendants;
         topol->get_LeafDescendants( local_node, descendants );
-        return descendants.size();
+        return (unsigned int)descendants.size();
     }
     return 0;
 }
@@ -1302,7 +1302,7 @@ bool NetworkTopology::send_updates_buffer()
     }
 
     _sync.Lock();
-    int vuc_size = _updates_buffer.size();
+    unsigned int vuc_size = (unsigned int)_updates_buffer.size();
   
     if( vuc_size ) {
          
@@ -1344,7 +1344,7 @@ bool NetworkTopology::send_updates_buffer()
             free( crank_arr );
             free( cport_arr );
 
-            for( int u=0; u < vuc_size; u++ )
+            for( unsigned int u=0; u < vuc_size; u++ )
                 free( host_arr[u] );
             free( host_arr );
 

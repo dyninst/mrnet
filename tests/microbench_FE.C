@@ -25,10 +25,10 @@ const unsigned int kMaxRecvTries = 1000000;
 Network * BuildNetwork( std::string cfgfile, std::string backend_exe );
 
 int DoRoundtripLatencyExp( Stream* stream,
-                           unsigned int nIters,
+                           unsigned long nIters,
                            unsigned int nBackends );
 int DoReductionThroughputExp( Stream* stream,
-                              unsigned int nIters,
+                              unsigned long nIters,
                               unsigned int nBackends );
 
 
@@ -61,7 +61,7 @@ main( int argc, char* argv[] )
     Stream* stream = net->new_Stream( bcComm, TFILTER_SUM );
     assert( bcComm != NULL );
     assert( stream != NULL );
-    unsigned int nBackends = bcComm->get_EndPoints().size();
+    unsigned int nBackends = (unsigned int)bcComm->get_EndPoints().size();
     std::cout << "FE: broadcast communicator has " 
               << nBackends << " backends" 
               << std::endl;
@@ -128,7 +128,7 @@ BuildNetwork( std::string cfgfile, std::string backend_exe )
 
 int
 DoRoundtripLatencyExp( Stream* stream,
-                       unsigned int nIters,
+                       unsigned long nIters,
                        unsigned int nBackends )
 {
     mb_time startTime;
@@ -139,7 +139,7 @@ DoRoundtripLatencyExp( Stream* stream,
 
     std::cout << "FE: roundtrip latency: " << std::flush;
     startTime.set_time();
-    for( unsigned int i = 0; i < nIters; i++ ) {
+    for( unsigned long i = 0; i < nIters; i++ ) {
         // broadcast
         sret = stream->send( MB_ROUNDTRIP_LATENCY, "%d", 1 );
         if( sret != -1 ) {
@@ -181,7 +181,7 @@ DoRoundtripLatencyExp( Stream* stream,
 
     // dump broadcast/reduction roundtrip latency
     double totalLatency = (endTime - startTime).get_double_time();
-    double avgLatency = totalLatency / nIters;
+    double avgLatency = totalLatency / (double)nIters;
     std::cout << "total(sec): " << totalLatency
               << ", nIters: " << nIters
               << ", avg(sec): " << avgLatency
@@ -192,7 +192,7 @@ DoRoundtripLatencyExp( Stream* stream,
 
 int
 DoReductionThroughputExp( Stream* stream,
-                          unsigned int nIters,
+                          unsigned long nIters,
                           unsigned int nBackends )
 {
     mb_time startTime;
@@ -209,7 +209,7 @@ DoReductionThroughputExp( Stream* stream,
 
     // do the experiment
     startTime.set_time();
-    for( unsigned int i = 0; i < nIters; i++ ) {
+    for( unsigned long i = 0; i < nIters; i++ ) {
 
         // receive reduced value
         int tag = 0;

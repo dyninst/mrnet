@@ -68,14 +68,19 @@ std::string SerialGraph::get_RootHostName()
 Port SerialGraph::get_RootPort()
 {
     size_t begin, end;
-    Port retval;
+    Port retval = (Port)-1;
+    int ret_atoi;
 
     begin = _byte_array.find(':', 2);
     assert( begin != std::string::npos );
     begin++;
     end = _byte_array.find(':', begin);
     std::string port_string = _byte_array.substr(begin, end-begin);
-    retval = atoi(port_string.c_str());
+    ret_atoi = atoi(port_string.c_str());
+
+    if( (ret_atoi <= UINT16_MAX) && (ret_atoi >= 0) ) {
+        retval = (Port)ret_atoi;
+    }
 
     return retval;
 }

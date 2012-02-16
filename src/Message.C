@@ -355,10 +355,10 @@ void Message::add_Packet( PacketPtr packet )
     _packet_sync.Unlock();
 }
 
-int Message::size_Packets( void )
+size_t Message::size_Packets( void )
 {
     _packet_sync.Lock();
-    int size = _packets.size( );
+    size_t size = _packets.size( );
     _packet_sync.Unlock();
 
     return size;

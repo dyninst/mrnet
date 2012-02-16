@@ -43,9 +43,9 @@ const unsigned int USER_STRM_BASE_ID = STREAM_BASE_ID + 10;
 
 Stream::Stream( Network * inetwork, unsigned int iid,
                 Rank *ibackends, unsigned int inum_backends,
-                unsigned int ius_filter_id,
-                unsigned int isync_filter_id,
-                unsigned int ids_filter_id )
+                unsigned short ius_filter_id,
+                unsigned short isync_filter_id,
+                unsigned short ids_filter_id )
   : _perf_data( new PerfDataMgr() ),
      _network( inetwork ),
     _id( iid ),
@@ -61,7 +61,7 @@ Stream::Stream( Network * inetwork, unsigned int iid,
 
     set< PeerNodePtr > node_set;
     mrn_dbg( 3, mrn_printf(FLF, stderr,
-                           "id:%u, us_filter:%u, sync_id:%u, ds_filter:%u\n",
+                           "id:%u, us_filter:%hu, sync_id:%hu, ds_filter:%hu\n",
                            _id, _us_filter_id , _sync_filter_id, _ds_filter_id));
 
     _incoming_packet_buffer_sync.RegisterCondition( PACKET_BUFFER_NONEMPTY );
@@ -587,14 +587,14 @@ int Stream::push_Packet( PacketPtr ipacket,
             }
             if( _perf_data->is_Enabled( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT ) ) {
                 perfdata_t val;
-                double diff = (user_after  - user_before) ;   
+                double diff = (double)(user_after  - user_before) ;   
                 val.d = ( diff / tagg.get_latency_msecs() ) * 100.0;
                 _perf_data->add_DataInstance( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT,
                                               val );
             }
             if( _perf_data->is_Enabled( PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT ) ) {
                 perfdata_t val;
-                double diff = (sys_after  - sys_before) ;   
+                double diff = (double)(sys_after  - sys_before) ;   
                 val.d = ( diff / tagg.get_latency_msecs() ) * 100.0;
                 _perf_data->add_DataInstance( PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT,
                                               val );
@@ -657,7 +657,7 @@ void Stream::add_IncomingPacket( PacketPtr ipacket )
 
 unsigned int Stream::size(void) const
 {
-    return _end_points.size();
+    return (unsigned int)_end_points.size();
 }
 
 unsigned int Stream::get_Id(void) const 

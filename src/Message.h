@@ -37,7 +37,7 @@ class Message: public Error{
     int recv( XPlat::XPSOCKET isock_fd, std::list < PacketPtr >&opackets, Rank iinlet_rank );
 
     void add_Packet( PacketPtr );
-    int size_Packets( void );
+    size_t size_Packets( void );
    
     void waitfor_MessagesToSend( void );
 

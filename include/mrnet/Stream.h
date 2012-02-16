@@ -88,9 +88,9 @@ class Stream {
 
     Stream( Network *inetwork, unsigned int iid, 
             Rank *ibackends, unsigned int inum_backends,
-            unsigned int ius_filter_id, 
-            unsigned int isync_filter_id, 
-            unsigned int ids_filter_id );
+            unsigned short ius_filter_id, 
+            unsigned short isync_filter_id, 
+            unsigned short ids_filter_id );
 
     ~Stream();
 
