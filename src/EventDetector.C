@@ -894,4 +894,4 @@ void EventDetector::set_ThrId( XPlat::Thread::Id tid )
     _sync.Unlock();
 }
 
-};
+}

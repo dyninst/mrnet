@@ -357,7 +357,7 @@ bool EventMgr::remove_Callback( evt_cb_func ifunc, EventClass iclass, EventType 
             return rc;
         }
     }
-    // shouldn't get here
+    // shouldn't get here  
     data_sync.Unlock();
     return false;
 }

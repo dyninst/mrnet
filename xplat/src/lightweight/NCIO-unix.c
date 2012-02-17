@@ -14,6 +14,9 @@
 
 #include "xplat_lightweight/NCIO.h"
 
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
 // uncomment following if large data transfers hang
 //#define XPLAT_NCRECV_NO_BLOCK
 

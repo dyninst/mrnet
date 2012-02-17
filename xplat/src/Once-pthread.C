@@ -17,7 +17,7 @@ Once::Once( void )
 
 
 int
-PthreadOnceData::DoOnce( void (*func)( void ) )
+PthreadOnceData::DoOnce( OnceFunc func  )
 {
     return pthread_once( &latch, func );
 }
