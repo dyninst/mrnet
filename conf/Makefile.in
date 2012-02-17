@@ -355,7 +355,7 @@ install-boost:
 	        $(MKDIR_P) $(IINCDIR)/boost ; \
 	        chmod 755 $(IINCDIR)/boost ; \
 	        echo Installing Boost headers ; \
-	        $(CP) -a $(EXTDIR)/boost/include/boost/* $(IINCDIR)/boost/ ; \
+	        $(CP) -r $(EXTDIR)/boost/include/boost/* $(IINCDIR)/boost/ ; \
 	    else \
 	        echo NOTE: install directory $(IINCDIR)/boost exists, not overwriting files ; \
             fi ; \
