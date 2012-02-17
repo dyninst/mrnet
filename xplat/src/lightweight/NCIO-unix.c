@@ -60,8 +60,11 @@ ssize_t XPlat_NCsend(XPSOCKET s, const void *buf, size_t count)
 
     //fprintf(stderr, "XPlat DEBUG: NCsend - writing %zd bytes to fd=%d)\n", count, s);
 
+    int flags = 0;
+#if defined(os_linux)
     // don't generate SIGPIPE
-    int flags = MSG_NOSIGNAL;
+    flags = MSG_NOSIGNAL;
+#endif
 
     ssize_t bytes_written = 0;
 
