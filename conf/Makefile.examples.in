@@ -98,7 +98,7 @@ ifeq ($(COMPILER_TYPE), intel)
 endif # Intel options
 
 ifeq ($(COMPILER_TYPE), forte)
-    WARNFLAGS = +w +w2
+    WARNFLAGS = 
 endif # Sun Forte options
 
 CXX = @CXX@

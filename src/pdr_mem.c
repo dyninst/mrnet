@@ -352,7 +352,7 @@ bool_t pdrmem_putbytes(PDR *pdrs, char * addr,  uint64_t len)
 #endif
 
 /* TODO: is the return size right, given 64-bit pointers? */
-uint32_t pdrmem_getpos( PDR *pdrs )
+uint64_t pdrmem_getpos( PDR *pdrs )
 {
     unsigned long difference = ((unsigned long)pdrs->cur) - ((unsigned long)pdrs->base);
     assert( difference < UINT32_MAX );
@@ -360,7 +360,7 @@ uint32_t pdrmem_getpos( PDR *pdrs )
 }
 
 /* TODO: is the parameter size right, given 64-bit pointers? */
-bool_t pdrmem_setpos( PDR *pdrs, uint32_t pos )
+bool_t pdrmem_setpos( PDR *pdrs, uint64_t pos )
 {
     unsigned long difference;
 	char * newaddr = pdrs->base + pos;

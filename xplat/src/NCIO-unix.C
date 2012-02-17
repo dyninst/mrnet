@@ -20,6 +20,11 @@
 #ifdef compiler_sun
 #include <stdio.h>
 #include <limits.h>
+
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
+
 #endif
 
 // uncomment following if large data transfers hang

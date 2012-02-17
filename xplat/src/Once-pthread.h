@@ -9,7 +9,6 @@
 
 #include <pthread.h>
 #include "xplat/Once.h"
-
 namespace XPlat
 {
 
@@ -32,7 +31,7 @@ public:
         pthread_once_t latchval = PTHREAD_ONCE_INIT;
         latch = latchval;
     }
-    virtual int DoOnce( void (*func)( void ) );
+    virtual int DoOnce(OnceFunc func );
 };
 
 } // namespace XPlat

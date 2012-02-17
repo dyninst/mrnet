@@ -11,7 +11,10 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#ifndef compiler_sun 
 #include <stdint.h>
+#endif
+
 #include <inttypes.h>
 
 // Printf macro for size_t types

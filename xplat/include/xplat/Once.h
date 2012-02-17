@@ -7,6 +7,9 @@
 #ifndef XPLAT_ONCE_H
 #define XPLAT_ONCE_H
 
+extern "C" {
+     typedef void (*OnceFunc)(void);
+}
 namespace XPlat
 {
 
@@ -17,7 +20,7 @@ public:
     {
     public:
         virtual ~Data( void ) { }
-        virtual int DoOnce( void (*func)( void ) ) = 0;
+        virtual int DoOnce( OnceFunc func ) = 0;
     };
 
 private:
@@ -27,7 +30,7 @@ public:
     Once( void );
     virtual ~Once( void )                       { delete data; }
 
-    virtual int DoOnce( void (*func)( void ) )  { return data->DoOnce( func ); }
+    virtual int DoOnce( OnceFunc func )  { return data->DoOnce( func ); }
 };
 
 } // namespace XPlat
