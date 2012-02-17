@@ -120,7 +120,8 @@ ifeq ($(COMPILER_TYPE), gnu)
                 -Wwrite-strings \
                 -Wsign-compare \
                 -Wredundant-decls \
-                -Wlong-long 
+                -Wlong-long  \
+                -Wno-conversion	
    endif # SILENCE_WARNINGS
 endif #GNU options
 
@@ -133,7 +134,7 @@ endif #Forte (Sun) compiler warnings
 CXX = @CXX@
 CC = @CC@
 CXXFLAGS = @CXXFLAGS@ $(INCLUDES) $(WARNFLAGS) 
-CCFLAGS = @CFLAGS@ $(INCLUDES_LIGHTWEIGHT) $(WARNFLAGS_LIGHTWEIGHT) -Wno-conversion
+CCFLAGS = @CFLAGS@ $(INCLUDES_LIGHTWEIGHT) $(WARNFLAGS_LIGHTWEIGHT)
 
 TEST_CXXFLAGS := $(CXXFLAGS)
 TEST_CCFLAGS := $(CCFLAGS)
