@@ -22,7 +22,7 @@
 
 #ifdef MRNET_LTWT_THREADSAFE  
 
-inline void _NetworkTopology_lock(NetworkTopology_t* net_top)
+void _NetworkTopology_lock(NetworkTopology_t* net_top)
 {
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "NetworkTopology_lock\n"));
@@ -34,7 +34,7 @@ inline void _NetworkTopology_lock(NetworkTopology_t* net_top)
     }
 }
 
-inline void _NetworkTopology_unlock(NetworkTopology_t* net_top)
+void _NetworkTopology_unlock(NetworkTopology_t* net_top)
 {
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "NetworkTopology_unlock\n"));

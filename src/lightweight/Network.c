@@ -58,7 +58,7 @@ void cleanup_local(void)
 
 #ifdef MRNET_LTWT_THREADSAFE
 
-inline void _Network_lock(Network_t * net, enum sync_index mon)
+void _Network_lock(Network_t * net, enum sync_index mon)
 {
     int retval;
     Monitor_t *tmp_mon;
@@ -82,7 +82,7 @@ inline void _Network_lock(Network_t * net, enum sync_index mon)
     }
 }
 
-inline void _Network_unlock(Network_t *net, enum sync_index mon)
+void _Network_unlock(Network_t *net, enum sync_index mon)
 {
     int retval;
     Monitor_t *tmp_mon;
@@ -105,9 +105,9 @@ inline void _Network_unlock(Network_t *net, enum sync_index mon)
     }
 }
 
-inline void _Network_monitor_wait(Network_t *net, 
-                                  enum sync_index mon, 
-                                  enum cond_vars cv)
+void _Network_monitor_wait(Network_t *net, 
+                           enum sync_index mon, 
+                           enum cond_vars cv)
 {
     int retval;
     Monitor_t *tmp_mon;
@@ -131,9 +131,9 @@ inline void _Network_monitor_wait(Network_t *net,
     }
 }
 
-inline void _Network_monitor_broadcast(Network_t *net, 
-                                       enum sync_index mon, 
-                                       enum cond_vars cv)
+void _Network_monitor_broadcast(Network_t *net, 
+                                enum sync_index mon, 
+                                enum cond_vars cv)
 {
     int retval;
     Monitor_t *tmp_mon;

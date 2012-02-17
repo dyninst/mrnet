@@ -42,7 +42,7 @@ PeerNode_t* new_PeerNode_t(Network_t* inetwork,
 
 #ifdef MRNET_LTWT_THREADSAFE  
 
-inline void _PeerNode_send_lock(PeerNode_t* peer)
+void _PeerNode_send_lock(PeerNode_t* peer)
 {
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_send_lock %d\n", peer->rank));
@@ -54,7 +54,7 @@ inline void _PeerNode_send_lock(PeerNode_t* peer)
     }
 }
 
-inline void _PeerNode_send_unlock(PeerNode_t* peer)
+void _PeerNode_send_unlock(PeerNode_t* peer)
 {
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_send_unlock %d\n", peer->rank));
@@ -66,7 +66,7 @@ inline void _PeerNode_send_unlock(PeerNode_t* peer)
     }
 }
 
-inline int _PeerNode_recv_lock(PeerNode_t* peer, int blocking)
+int _PeerNode_recv_lock(PeerNode_t* peer, int blocking)
 {
     int retval;
     int dbg_level;
@@ -86,7 +86,7 @@ inline int _PeerNode_recv_lock(PeerNode_t* peer, int blocking)
     return retval;
 }
 
-inline void _PeerNode_recv_unlock(PeerNode_t* peer)
+void _PeerNode_recv_unlock(PeerNode_t* peer)
 {
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_recv_unlock %d\n",
