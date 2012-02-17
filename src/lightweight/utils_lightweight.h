@@ -137,5 +137,5 @@ int isBigEndian();
 
 /* void endianTest(); */
 
-#endif /* __utils_h */
+#endif /* __utils_lightweight_h */
 

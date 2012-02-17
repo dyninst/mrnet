@@ -13,7 +13,7 @@
 #include "Message.h"
 #include "Protocol.h"
 #include "utils_lightweight.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 #include "xplat_lightweight/NCIO.h"
 #include "xplat_lightweight/NetUtils.h"

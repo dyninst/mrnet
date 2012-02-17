@@ -7,7 +7,7 @@
 #define __perfdataevent 1
 
 #include "mrnet_lightweight/Types.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 struct PerfDataMgr_t {
     // bitfield of enabled metrics per context

@@ -12,8 +12,8 @@
 #include <unistd.h>
 #endif
 
-#include "map.h"
-#include "utils_lightweight.h"
+#include "xplat_lightweight/map.h"
+#include "xplat_dbg.h"
 
 int hash_key(int key)
 {
@@ -32,7 +32,7 @@ mrn_map_t* new_map_t()
     new_map->keys = (int*) calloc( new_map->alloc_size, sizeof(int) );
     assert( new_map->keys != NULL );
     
-/*     mrn_dbg(5, mrn_printf(FLF, stderr,  */
+/*     xplat_dbg(5, fprintf(stderr,  */
 /*                           "new_map_t() = %p, map->keys = %p\n", new_map, new_map->keys)); */
     return new_map;
 }
@@ -52,7 +52,7 @@ void delete_map_t(mrn_map_t* map)
 {
     if( map == NULL ) return;
 
-/*     mrn_dbg(5, mrn_printf(FLF, stderr,  */
+/*     xplat_dbg(5, fprintf(stderr,  */
 /*                           "delete_map_t() = %p, map->root = %p, map->keys = %p\n", map, map->root, map->keys)); */
 
     delete_map_nodes(map->root);
@@ -75,7 +75,7 @@ map_node_t* insert_recursive(map_node_t* root, int key, int hashed_key, void* va
 {
     map_node_t* new_node;
 
-    mrn_dbg_func_begin();
+    xplat_dbg(3, fprintf(stderr, "insert_recursive() Function start ...\n"));
 
     if (root == NULL) { // empty subtree, we've found place for new node
  
@@ -88,13 +88,13 @@ map_node_t* insert_recursive(map_node_t* root, int key, int hashed_key, void* va
         new_node->left = NULL;
         new_node->right = NULL;
 
-        mrn_dbg(5, mrn_printf(FLF, stderr, "created new node\n"));
+        xplat_dbg(5, fprintf(stderr, "created new node\n"));
         return new_node;
     }
     else { // check if we need to insert into left subtree or right subtree
 
         if (hashed_key == root->hashed_key) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, 
+            xplat_dbg(1, fprintf(stderr, 
                                   "Cannot have multiple map entries with same key %d\n", key));
             return NULL;
         }
@@ -106,8 +106,8 @@ map_node_t* insert_recursive(map_node_t* root, int key, int hashed_key, void* va
         }
     }
 
-     mrn_dbg_func_end();
-     return root;
+    xplat_dbg(3, fprintf(stderr, "insert_recursive() Function exit\n"));
+    return root;
 }
 
 void insert(mrn_map_t* map, int key, void* val)
@@ -133,7 +133,7 @@ void insert(mrn_map_t* map, int key, void* val)
 
 map_node_t* find_node_recursive(map_node_t* root, int hashed_key, map_node_t** parent)
 {
-    mrn_dbg_func_begin();
+    xplat_dbg(3, fprintf(stderr, "find_node_recursive() Function start ...\n"));
 
     if (root == NULL)
         return NULL;
@@ -173,7 +173,7 @@ mrn_map_t* erase(mrn_map_t* map, int key)
     map_node_t* tmp = NULL;
     char found = 0;
 
-    mrn_dbg(5, mrn_printf(FLF, stderr, "map %p erase(key=%d)\n", map, key));
+    xplat_dbg(5, fprintf(stderr, "map %p erase(key=%d)\n", map, key));
 
 #ifdef OLD_ERASE_BY_NEW_MAP_INSERT
     mrn_map_t* new_map = new_map_t();
@@ -191,7 +191,7 @@ mrn_map_t* erase(mrn_map_t* map, int key)
     return new_map;
 #else
 
-    /* mrn_dbg(5, mrn_printf(FLF, stderr, "erasing map node with key %d, map->size=%"PRIsszt"\n", key, map->size)); */
+    /* xplat_dbg(5, fprintf(stderr, "erasing map node with key %d, map->size=%"PRIsszt"\n", key, map->size)); */
 
     // remove from keys
     for( i = 0; i < map->size; i++ ) {
@@ -206,7 +206,7 @@ mrn_map_t* erase(mrn_map_t* map, int key)
     }
     
     if( found == 0 ) { // not found, we're done
-        mrn_dbg(3, mrn_printf(FLF, stderr, "map node with key %d not found\n", key));
+        xplat_dbg(3, fprintf(stderr, "map node with key %d not found\n", key));
         return map;
     }
 
@@ -241,15 +241,15 @@ mrn_map_t* erase(mrn_map_t* map, int key)
                 parent = tmp;
                 tmp = tmp->right;
             }
-            /* mrn_dbg(5, mrn_printf(FLF, stderr, "replacing erased map node with rightmost descendant of left subtree whose key=%d\n", tmp->key)); */
+            /* xplat_dbg(5, fprintf(stderr, "replacing erased map node with rightmost descendant of left subtree whose key=%d\n", tmp->key)); */
             
             if( parent->left == tmp ) {
                 parent->left = tmp->left;
-                /* mrn_dbg(5, mrn_printf(FLF, stderr, "moving tmp->left to parent->left\n")); */
+                /* xplat_dbg(5, fprintf(stderr, "moving tmp->left to parent->left\n")); */
             }
             else {
                 parent->right = tmp->left;
-                /* mrn_dbg(5, mrn_printf(FLF, stderr, "moving tmp->left to parent->right\n")); */
+                /* xplat_dbg(5, fprintf(stderr, "moving tmp->left to parent->right\n")); */
             }            
         }   
         // Case 3: has left subtree, promote it
@@ -257,24 +257,24 @@ mrn_map_t* erase(mrn_map_t* map, int key)
             tmp = target->left;
             target->left = tmp->left;
             target->right = tmp->right;
-            /* mrn_dbg(5, mrn_printf(FLF, stderr, "replacing erased map node with left subtree\n")); */
+            /* xplat_dbg(5, fprintf(stderr, "replacing erased map node with left subtree\n")); */
         }
         // Case 4: has right subtree, promote it
         else if( target->right != NULL ) {
             tmp = target->right;
             target->left = tmp->left;
             target->right = tmp->right;
-            /* mrn_dbg(5, mrn_printf(FLF, stderr, "replacing erased map node with right subtree\n")); */
+            /* xplat_dbg(5, fprintf(stderr, "replacing erased map node with right subtree\n")); */
         }
         // move tmp data to target, free tmp
-        mrn_dbg(5, mrn_printf(FLF, stderr, "replacing erased map node with key %d with map node with key %d\n", target->key, tmp->key));
+        xplat_dbg(5, fprintf(stderr, "replacing erased map node with key %d with map node with key %d\n", target->key, tmp->key));
         target->key = tmp->key;
         target->hashed_key = tmp->hashed_key;
         target->val = tmp->val;
         free(tmp);
     }
 
-    /* mrn_dbg(5, mrn_printf(FLF, stderr, "after erasing map node with key %d, map->size=%"PRIsszt"\n", key, map->size)); */
+    /* xplat_dbg(5, fprintf(stderr, "after erasing map node with key %d, map->size=%"PRIsszt"\n", key, map->size)); */
         
     print(map);
     return map;
@@ -285,14 +285,14 @@ void print_recursive(map_node_t* node)
 {
     if( node != NULL ) {
         print_recursive(node->left);
-        mrn_dbg(5, mrn_printf(0,0,0, stderr, "\t%d\n", node->key));
+        xplat_dbg(5, fprintf(stderr, "\t%d\n", node->key));
         print_recursive(node->right);
     }
 }
 
 void print(mrn_map_t* map)
 {
-    mrn_dbg(5, mrn_printf(0,0,0, stderr, "printing map:\n"));
+    xplat_dbg(5, fprintf(stderr, "printing map:\n"));
     print_recursive(map->root);
 }   
 

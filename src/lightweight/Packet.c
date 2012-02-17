@@ -20,7 +20,7 @@
 #include "mrnet_lightweight/Packet.h"
 #include "mrnet_lightweight/Types.h"
 #include "utils_lightweight.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 void delete_Packet_t(Packet_t* packet)
 {

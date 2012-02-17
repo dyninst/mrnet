@@ -160,6 +160,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\xplat\src\lightweight\map.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\xplat\src\lightweight\Monitor-win.c"
 				>
 			</File>
@@ -199,6 +203,10 @@
 				RelativePath="..\..\xplat\src\lightweight\Thread-win.c"
 				>
 			</File>
+			<File
+				RelativePath="..\..\xplat\src\lightweight\vector.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -207,6 +215,10 @@
 			>
 			<File
 				RelativePath="..\..\xplat\include\xplat_lightweight\Error.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\include\xplat_lightweight\map.h"
 				>
 			</File>
 			<File
@@ -255,6 +267,10 @@
 			</File>
 			<File
 				RelativePath="..\..\xplat\include\xplat_lightweight\Types.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\include\xplat_lightweight\vector.h"
 				>
 			</File>
 		</Filter>

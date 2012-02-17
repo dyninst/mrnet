@@ -12,7 +12,7 @@
 #include "mrnet_lightweight/Network.h"
 #include "mrnet_lightweight/Packet.h"
 #include "pdr.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 #ifndef os_windows
 #include <sys/uio.h>

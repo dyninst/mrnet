@@ -16,9 +16,9 @@
 #include "Protocol.h"
 #include "PeerNode.h"
 #include "SerialGraph.h"
-#include "map.h"
+#include "xplat_lightweight/map.h"
 #include "utils_lightweight.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 // from xplat
 #include "xplat_lightweight/NetUtils.h"

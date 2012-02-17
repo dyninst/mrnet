@@ -194,10 +194,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\lightweight\map.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\lightweight\Message.c"
 				>
 			</File>
@@ -289,10 +285,6 @@
 				RelativePath="..\..\src\lightweight\utils_lightweight.c"
 				>
 			</File>
-			<File
-				RelativePath="..\..\src\lightweight\vector.c"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -329,10 +321,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\mrnet_lightweight\FilterIds.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\lightweight\map.h"
 				>
 			</File>
 			<File
@@ -397,10 +385,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\lightweight\utils_lightweight.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\lightweight\vector.h"
 				>
 			</File>
 		</Filter>

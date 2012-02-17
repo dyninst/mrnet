@@ -12,7 +12,7 @@
 #endif
 #include <pthread.h>
 #include "xplat_lightweight/Monitor.h"
-#include "map.h"
+#include "xplat_lightweight/map.h"
 
 struct PthreadMonitorData
 {

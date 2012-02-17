@@ -9,7 +9,7 @@
 #include "mrnet_lightweight/Network.h"
 #include "PeerNode.h"
 #include "utils_lightweight.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 PeerNode_t* new_PeerNode_t(Network_t* inetwork, 
                             char* ihostname,

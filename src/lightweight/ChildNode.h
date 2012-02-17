@@ -9,7 +9,7 @@
 #include "BackEndNode.h"
 #include "PeerNode.h"
 #include "mrnet_lightweight/Network.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 int ChildNode_init_newChildDataConnection (BackEndNode_t* be, 
                                            PeerNode_t* iparent,

@@ -11,8 +11,8 @@
 #include <time.h>
 
 #include "utils_lightweight.h"
-#include "map.h"
-#include "vector.h"
+#include "xplat_lightweight/map.h"
+#include "xplat_lightweight/vector.h"
 #include "SerialGraph.h"
 
 #include "mrnet_lightweight/NetworkTopology.h"

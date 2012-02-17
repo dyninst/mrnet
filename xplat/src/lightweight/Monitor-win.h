@@ -17,7 +17,7 @@
 #define XPLAT_WINMONITOR_H
 
 #include <windows.h>
-#include "map.h"
+#include "xplat_lightweight/map.h"
 #include "xplat_lightweight/Monitor.h"
 
 typedef struct WinConditionVariable {

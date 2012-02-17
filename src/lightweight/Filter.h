@@ -8,7 +8,7 @@
 
 #include "mrnet_lightweight/NetworkTopology.h"
 #include "mrnet_lightweight/Packet.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 struct Filter_t {
     void* filter_state;

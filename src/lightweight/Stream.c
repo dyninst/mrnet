@@ -22,8 +22,8 @@
 #include "utils_lightweight.h"
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
-#include "map.h"
-#include "vector.h"
+#include "xplat_lightweight/map.h"
+#include "xplat_lightweight/vector.h"
 #include "Filter.h"
 
 #define STREAM_BASE_ID (1 << 30)
