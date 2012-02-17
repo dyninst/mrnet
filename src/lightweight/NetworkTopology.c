@@ -21,7 +21,8 @@
 #include "xplat_lightweight/NetUtils.h"
 
 #ifdef MRNET_LTWT_THREADSAFE  
-inline void NetworkTopology_lock(NetworkTopology_t* net_top)
+
+inline void _NetworkTopology_lock(NetworkTopology_t* net_top)
 {
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "NetworkTopology_lock\n"));
@@ -33,7 +34,7 @@ inline void NetworkTopology_lock(NetworkTopology_t* net_top)
     }
 }
 
-inline void NetworkTopology_unlock(NetworkTopology_t* net_top)
+inline void _NetworkTopology_unlock(NetworkTopology_t* net_top)
 {
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "NetworkTopology_unlock\n"));
@@ -44,18 +45,15 @@ inline void NetworkTopology_unlock(NetworkTopology_t* net_top)
                               strerror(retval)));
     }
 }
-#else
 
-inline void NetworkTopology_unlock(NetworkTopology_t* UNUSED(net_top)) 
-{
-    
-}
+# define NetworkTopology_lock(nt) _NetworkTopology_lock(nt)
+# define NetworkTopology_unlock(nt) _NetworkTopology_unlock(nt)
 
-inline void NetworkTopology_lock(NetworkTopology_t* UNUSED(net_top))
-{
-
-}
+#else // !def MRNET_LTWT_THREADSAFE  
+# define NetworkTopology_lock(nt) do{}while(0)
+# define NetworkTopology_unlock(nt) do{}while(0)
 #endif
+
 Node_t* new_Node_t(char* ihostname, 
                    Port iport, 
                    Rank irank, 

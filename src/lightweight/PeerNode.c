@@ -41,7 +41,8 @@ PeerNode_t* new_PeerNode_t(Network_t* inetwork,
 }
 
 #ifdef MRNET_LTWT_THREADSAFE  
-inline void PeerNode_send_lock(PeerNode_t* peer)
+
+inline void _PeerNode_send_lock(PeerNode_t* peer)
 {
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_send_lock %d\n", peer->rank));
@@ -53,7 +54,7 @@ inline void PeerNode_send_lock(PeerNode_t* peer)
     }
 }
 
-inline void PeerNode_send_unlock(PeerNode_t* peer)
+inline void _PeerNode_send_unlock(PeerNode_t* peer)
 {
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_send_unlock %d\n", peer->rank));
@@ -65,7 +66,7 @@ inline void PeerNode_send_unlock(PeerNode_t* peer)
     }
 }
 
-inline int PeerNode_recv_lock(PeerNode_t* peer, int blocking)
+inline int _PeerNode_recv_lock(PeerNode_t* peer, int blocking)
 {
     int retval;
     int dbg_level;
@@ -85,11 +86,11 @@ inline int PeerNode_recv_lock(PeerNode_t* peer, int blocking)
     return retval;
 }
 
-inline void PeerNode_recv_unlock(PeerNode_t* peer)
+inline void _PeerNode_recv_unlock(PeerNode_t* peer)
 {
     int retval;
     mrn_dbg(3, mrn_printf(FLF, stderr, "PeerNode_recv_unlock %d\n",
-        peer->rank));
+                          peer->rank));
     retval = Monitor_Unlock( peer->recv_monitor );
     if( retval != 0 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, 
@@ -98,27 +99,19 @@ inline void PeerNode_recv_unlock(PeerNode_t* peer)
                               retval, strerror(retval)));
     }
 }
-#else
 
-inline void PeerNode_send_lock(PeerNode_t* UNUSED(peer))
-{
+# define PeerNode_send_lock(p) _PeerNode_send_lock(p)
+# define PeerNode_send_unlock(p) _PeerNode_send_unlock(p)
+# define PeerNode_recv_lock(p,b) _PeerNode_recv_lock(p,b)
+# define PeerNode_recv_unlock(p) _PeerNode_recv_unlock(p)
 
-}
+#else // !def MRNET_LTWT_THREADSAFE  
 
-inline void PeerNode_send_unlock(PeerNode_t* UNUSED(peer))
-{
+# define PeerNode_send_lock(p) do{}while(0)
+# define PeerNode_send_unlock(p) do{}while(0)
+# define PeerNode_recv_lock(p,b) 0
+# define PeerNode_recv_unlock(p) do{}while(0)
 
-}
-
-inline int PeerNode_recv_lock(PeerNode_t* UNUSED(peer), int UNUSED(blocking))
-{
-    return 0;
-}
-
-
-inline void PeerNode_recv_unlock(PeerNode_t* UNUSED(peer))
-{
-}
 #endif
 
 Rank PeerNode_get_Rank(PeerNode_t* node)

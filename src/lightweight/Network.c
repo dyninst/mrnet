@@ -56,8 +56,9 @@ void cleanup_local(void)
 }
 
 
-#ifdef MRNET_LTWT_THREADSAFE  
-inline void Network_lock(Network_t * net, enum sync_index mon)
+#ifdef MRNET_LTWT_THREADSAFE
+
+inline void _Network_lock(Network_t * net, enum sync_index mon)
 {
     int retval;
     Monitor_t *tmp_mon;
@@ -81,8 +82,7 @@ inline void Network_lock(Network_t * net, enum sync_index mon)
     }
 }
 
-
-inline void Network_unlock(Network_t *net, enum sync_index mon)
+inline void _Network_unlock(Network_t *net, enum sync_index mon)
 {
     int retval;
     Monitor_t *tmp_mon;
@@ -105,7 +105,9 @@ inline void Network_unlock(Network_t *net, enum sync_index mon)
     }
 }
 
-inline void Network_monitor_wait(Network_t *net, enum sync_index mon, enum cond_vars cv)
+inline void _Network_monitor_wait(Network_t *net, 
+                                  enum sync_index mon, 
+                                  enum cond_vars cv)
 {
     int retval;
     Monitor_t *tmp_mon;
@@ -129,8 +131,9 @@ inline void Network_monitor_wait(Network_t *net, enum sync_index mon, enum cond_
     }
 }
 
-
-inline void Network_monitor_broadcast(Network_t *net, enum sync_index mon, enum cond_vars cv)
+inline void _Network_monitor_broadcast(Network_t *net, 
+                                       enum sync_index mon, 
+                                       enum cond_vars cv)
 {
     int retval;
     Monitor_t *tmp_mon;
@@ -154,26 +157,18 @@ inline void Network_monitor_broadcast(Network_t *net, enum sync_index mon, enum 
     }
 }
 
-#else
-inline void Network_lock(Network_t * UNUSED(net), enum sync_index UNUSED(mon))
-{
+# define Network_lock(net,mon) _Network_lock(net,mon)
+# define Network_unlock(net,mon) _Network_unlock(net,mon)
+# define Network_monitor_wait(net,mon,cv) _Network_monitor_wait(net,mon,cv)
+# define Network_monitor_broadcast(net,mon,cv) _Network_monitor_broadcast(net,mon,cv)
 
-}
+#else // !def MRNET_LTWT_THREADSAFE  
 
-inline void Network_unlock(Network_t * UNUSED(net), enum sync_index UNUSED(mon))
-{
+# define Network_lock(net,mon) do{}while(0)
+# define Network_unlock(net,mon) do{}while(0)
+# define Network_monitor_wait(net,mon,cv) do{}while(0)
+# define Network_monitor_broadcast(net,mon,cv) do{}while(0)
 
-}
-
-inline void Network_monitor_wait(Network_t * UNUSED(net), enum sync_index UNUSED(mon), enum cond_vars UNUSED(cv))
-{
-
-}
-
-inline void Network_monitor_broadcast(Network_t * UNUSED(net), enum sync_index UNUSED(mon), enum cond_vars UNUSED(cv))
-{
-
-}
 #endif
 
 

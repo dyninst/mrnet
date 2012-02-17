@@ -103,7 +103,7 @@ void pdrmem_create(PDR *pdrs, char * addr, uint64_t size, enum pdr_op op)
 /*
  *  pdrmem_xxxchar(): Procedures for putting/getting 1 byte CHARS.
  */
-inline bool_t pdrmem_putchar(PDR *pdrs, char *p)
+bool_t pdrmem_putchar(PDR *pdrs, char *p)
 {
     if(SIZEOF_CHAR > pdrs->space){
         return FALSE;
@@ -112,7 +112,7 @@ inline bool_t pdrmem_putchar(PDR *pdrs, char *p)
     pdrs->cur += SIZEOF_CHAR;
     return TRUE;
 }
-inline bool_t pdrmem_getchar(PDR *pdrs, char *p)
+bool_t pdrmem_getchar(PDR *pdrs, char *p)
 {
     if(SIZEOF_CHAR > pdrs->space){
         return FALSE;
@@ -125,7 +125,7 @@ inline bool_t pdrmem_getchar(PDR *pdrs, char *p)
 /*
  *  pdrmem_xxxint16(): Procedures for puting/getting 16 bit INTS.
  */
-inline bool_t pdrmem_putint16(PDR *pdrs, int16_t *p)
+bool_t pdrmem_putint16(PDR *pdrs, int16_t *p)
 {
     if(SIZEOF_INT16 > pdrs->space){
         return FALSE;
@@ -139,7 +139,7 @@ inline bool_t pdrmem_putint16(PDR *pdrs, int16_t *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getint16(PDR *pdrs, int16_t *p)
+bool_t pdrmem_getint16(PDR *pdrs, int16_t *p)
 {
     if(SIZEOF_INT16 > pdrs->space){
         return FALSE;
@@ -151,7 +151,7 @@ inline bool_t pdrmem_getint16(PDR *pdrs, int16_t *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getint16_swap(PDR *pdrs, int16_t *p)
+bool_t pdrmem_getint16_swap(PDR *pdrs, int16_t *p)
 {
     if(SIZEOF_INT16 > pdrs->space){
         return FALSE;
@@ -165,7 +165,7 @@ inline bool_t pdrmem_getint16_swap(PDR *pdrs, int16_t *p)
 /*
  *  pdrmem_xxxint32(): Procedures for puting/getting 32 bit INTS.
  */
-inline bool_t pdrmem_putint32(PDR *pdrs, int32_t *p)
+bool_t pdrmem_putint32(PDR *pdrs, int32_t *p)
 {
     if(SIZEOF_INT32 > pdrs->space){
         return FALSE;
@@ -179,7 +179,7 @@ inline bool_t pdrmem_putint32(PDR *pdrs, int32_t *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getint32(PDR *pdrs, int32_t *p)
+bool_t pdrmem_getint32(PDR *pdrs, int32_t *p)
 {
     if(SIZEOF_INT32 > pdrs->space){
         return FALSE;
@@ -191,7 +191,7 @@ inline bool_t pdrmem_getint32(PDR *pdrs, int32_t *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getint32_swap(PDR *pdrs, int32_t *p)
+bool_t pdrmem_getint32_swap(PDR *pdrs, int32_t *p)
 {
     if(SIZEOF_INT32 > pdrs->space){
         return FALSE;
@@ -205,7 +205,7 @@ inline bool_t pdrmem_getint32_swap(PDR *pdrs, int32_t *p)
 /*
  *  pdrmem_xxxint64(): Procedures for puting/getting 64 bit INTS.
  */
-inline bool_t pdrmem_putint64(PDR *pdrs, int64_t *p)
+bool_t pdrmem_putint64(PDR *pdrs, int64_t *p)
 {
     if(SIZEOF_INT64 > pdrs->space){
         return FALSE;
@@ -219,7 +219,7 @@ inline bool_t pdrmem_putint64(PDR *pdrs, int64_t *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getint64(PDR *pdrs, int64_t *p)
+bool_t pdrmem_getint64(PDR *pdrs, int64_t *p)
 {
     if(SIZEOF_INT64 > pdrs->space){
         return FALSE;
@@ -232,7 +232,7 @@ inline bool_t pdrmem_getint64(PDR *pdrs, int64_t *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getint64_swap(PDR *pdrs, int64_t *p)
+bool_t pdrmem_getint64_swap(PDR *pdrs, int64_t *p)
 {
 
     if(SIZEOF_INT64 > pdrs->space){
@@ -247,7 +247,7 @@ inline bool_t pdrmem_getint64_swap(PDR *pdrs, int64_t *p)
 /*
  *  pdrmem_xxxfloat(): Procedures for puting/getting 32 bit FLOATS.
  */
-inline bool_t pdrmem_putfloat(PDR *pdrs, float *p)
+bool_t pdrmem_putfloat(PDR *pdrs, float *p)
 {
     if(SIZEOF_FLOAT > pdrs->space){
         return FALSE;
@@ -261,7 +261,7 @@ inline bool_t pdrmem_putfloat(PDR *pdrs, float *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getfloat(PDR *pdrs, float *p)
+bool_t pdrmem_getfloat(PDR *pdrs, float *p)
 {
     if(SIZEOF_FLOAT > pdrs->space){
         return FALSE;
@@ -274,7 +274,7 @@ inline bool_t pdrmem_getfloat(PDR *pdrs, float *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getfloat_swap(PDR *pdrs, float *p)
+bool_t pdrmem_getfloat_swap(PDR *pdrs, float *p)
 {
     if(SIZEOF_FLOAT > pdrs->space){
         return FALSE;
@@ -288,7 +288,7 @@ inline bool_t pdrmem_getfloat_swap(PDR *pdrs, float *p)
 /*
  *  pdrmem_xxxdouble(): Procedures for puting/getting 16 bit INTS.
  */
-inline bool_t pdrmem_putdouble(PDR *pdrs, double *p)
+bool_t pdrmem_putdouble(PDR *pdrs, double *p)
 {
     if(SIZEOF_DOUBLE > pdrs->space){
         return FALSE;
@@ -302,7 +302,7 @@ inline bool_t pdrmem_putdouble(PDR *pdrs, double *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getdouble(PDR *pdrs, double *p)
+bool_t pdrmem_getdouble(PDR *pdrs, double *p)
 {
     if(SIZEOF_DOUBLE > pdrs->space){
         return FALSE;
@@ -314,7 +314,7 @@ inline bool_t pdrmem_getdouble(PDR *pdrs, double *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getdouble_swap(PDR *pdrs, double *p)
+bool_t pdrmem_getdouble_swap(PDR *pdrs, double *p)
 {
     if(SIZEOF_DOUBLE > pdrs->space){
         return FALSE;
@@ -325,7 +325,7 @@ inline bool_t pdrmem_getdouble_swap(PDR *pdrs, double *p)
     return TRUE;
 }
 
-inline bool_t pdrmem_getbytes(PDR *pdrs, char * addr,  uint64_t len)
+bool_t pdrmem_getbytes(PDR *pdrs, char * addr,  uint64_t len)
 {
     if(len > pdrs->space) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Not enough data left: %u\n",
@@ -337,7 +337,7 @@ inline bool_t pdrmem_getbytes(PDR *pdrs, char * addr,  uint64_t len)
     return (TRUE);
 }
 
-inline bool_t pdrmem_putbytes(PDR *pdrs, char * addr,  uint64_t len)
+bool_t pdrmem_putbytes(PDR *pdrs, char * addr,  uint64_t len)
 {
     if(len > pdrs->space) {
         return (FALSE);
@@ -352,11 +352,11 @@ inline bool_t pdrmem_putbytes(PDR *pdrs, char * addr,  uint64_t len)
 #endif
 
 /* TODO: is the return size right, given 64-bit pointers? */
-inline uint32_t pdrmem_getpos( PDR *pdrs )
+uint32_t pdrmem_getpos( PDR *pdrs )
 {
-	unsigned long difference = ((unsigned long)pdrs->cur) - ((unsigned long)pdrs->base);
-	assert( difference < UINT32_MAX );
-	return (uint32_t) difference;
+    unsigned long difference = ((unsigned long)pdrs->cur) - ((unsigned long)pdrs->base);
+    assert( difference < UINT32_MAX );
+    return (uint32_t) difference;
 }
 
 /* TODO: is the parameter size right, given 64-bit pointers? */
