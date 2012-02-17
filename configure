@@ -5197,7 +5197,6 @@ _ACEOF
 
 LIBS="-lm -lpthread -ldl"
 LIBS_LIGHTWEIGHT="-lm"
-LIBS_LOWFAT="-lm -lpthread"
 EXTRA_LIBS=""
 
 case "$host_os" in
@@ -5249,6 +5248,9 @@ case "$host_os" in
   *)
     ;;
 esac
+
+LIBS_LOWFAT="$LIBS_LIGHTWEIGHT -lpthread"
+
 
 if test $MRNET_STARTUP_METHOD = "ssh" ; then
     echo "$as_me:$LINENO: checking for /proc/cray_xt/nid" >&5
