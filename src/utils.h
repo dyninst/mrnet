@@ -25,7 +25,6 @@
 #endif
  
 #include "mrnet/Types.h"
-#include "xplat/Types.h"
 #include "xplat/TLSKey.h"
 #include "xplat/Thread.h"
 
@@ -41,7 +40,7 @@
 
 #ifndef os_windows // unix
 
-# include "config.h"
+# include "mrnet_config.h"
 
 # if HAVE_FCNTL_H
 #  include <fcntl.h>

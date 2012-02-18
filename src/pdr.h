@@ -38,7 +38,7 @@
 #endif
 
 #ifndef os_windows
-# include "config.h"
+# include "mrnet_config.h"
 # if HAVE_INTTYPES_H
 #  include <inttypes.h>
 # else

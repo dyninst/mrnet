@@ -3,8 +3,9 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined(__ncio_h)
-#define __ncio_h 1
+// NCIO: Network Communication I/O
+#if !defined(__xplat_ncio_h)
+#define __xplat_ncio_h 1
 
 #include "xplat_lightweight/Types.h"
 
@@ -31,4 +32,4 @@ ssize_t XPlat_NCRecv(XPSOCKET s, NCBuf_t* bufs, unsigned int nBufs);
 ssize_t XPlat_NCsend(XPSOCKET s, const void *buf, size_t count);
 ssize_t XPlat_NCrecv(XPSOCKET s, void *buf, size_t count);
 
-#endif /* __ncio_h */
+#endif /* __xplat_ncio_h */

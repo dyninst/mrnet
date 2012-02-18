@@ -6,13 +6,27 @@
 #ifndef XPLAT_TYPES_UNIX_H
 #define XPLAT_TYPES_UNIX_H
 
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <sys/types.h>
+#include "xplat_config.h"
 
-#include <stdint.h>
-#include <inttypes.h>
+#if HAVE_NETDB_H
+# include <netdb.h>
+#endif
+
+#if HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif
+
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
+#if HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
 
 // Printf macro for size_t types
 #define PRIszt  "zu"

@@ -3,7 +3,9 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.     *
  **********************************************************************/
 
-/* $Id: config.h.in,v 1.2 2004/03/23 01:12:22 eli Exp $ */
+#ifndef __xplat_config_h_
+#define __xplat_config_h_ 1
+
 /* config.h.in.  Generated from configure.in by autoheader.  */
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
@@ -116,3 +118,5 @@
 
 /* Define as `fork' if `vfork' does not work. */
 #undef vfork
+
+#endif /* __xplat_config_h_ */

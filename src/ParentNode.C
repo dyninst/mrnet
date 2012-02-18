@@ -5,7 +5,7 @@
 
 #include <set>
 
-#include "config.h"
+#include "mrnet_config.h"
 #include "ChildNode.h"
 #include "EventDetector.h"
 #include "Filter.h"

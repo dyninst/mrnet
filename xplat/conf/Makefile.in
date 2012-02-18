@@ -136,6 +136,7 @@ $(INSTALL_HEADERS): $(install_INCDIR)/%: $(xplat_INCDIR)/%
 
 install: $(TARGETS) install-prep $(INSTALL_HEADERS)
 	@echo Installing XPlat libraries
+	$(INSTALL) -m 644 $(PLATDIR)/xplat_config.h $(ILIBDIR)/
 	$(INSTALL) -m 755 $(TARGET) $(ILIBDIR)/
 	if [ -f $(TARGET_SO) ] ; then \
             $(INSTALL) -m 755 $(TARGET_SO) $(ILIBDIR)/ ; \

@@ -13,7 +13,7 @@
 #include <sys/socket.h>
 #endif
 
-#include "config.h"
+#include "mrnet_config.h"
 #include "utils.h"
 #include "BackEndNode.h"
 #include "ChildNode.h"

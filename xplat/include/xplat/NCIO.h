@@ -3,7 +3,7 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-// $Id: NCIO.h,v 1.3 2007/01/24 19:33:45 darnold Exp $
+// NCIO : Network Communication I/O
 #ifndef XPLAT_NCIO_H
 #define XPLAT_NCIO_H
 

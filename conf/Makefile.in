@@ -75,6 +75,7 @@ SOFLAGS = @SOFLAGS@
 
 LIBS = @LIBS@ @EXTRA_LIBS@
 LIBS_LIGHTWEIGHT = @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS@
+LIBS_LOWFAT = @LIBS_LOWFAT@ @EXTRA_LIBS@
 
 COMMON_INCLUDES = -I$(INCDIR) -I$(XPLATDIR)/include -I$(TSTDIR) -I$(PLATDIR) -I$(SRCDIR) 
 INCLUDES = $(COMMON_INCLUDES)
@@ -158,15 +159,13 @@ TOPGEN      = $(BINDIR)/mrnet_topgen
 
 LIBMRNET    = $(LIBDIR)/libmrnet.a
 LIBMRNET_SO = $(LIBDIR)/libmrnet.so
-LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat $(LIBS)
-
 LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a
 LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so
-LIBMRNET_LIGHTWEIGHT_SO_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight $(LIBS_LIGHTWEIGHT)
+
+LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat $(LIBS)
 
 LIBXPLAT    = $(LIBDIR)/libxplat.a
 LIBXPLAT_SO = $(LIBDIR)/libxplat.so
-
 LIBXPLAT_LIGHTWEIGHT    = $(LIBDIR)/libxplat_lightweight.a
 LIBXPLAT_LIGHTWEIGHT_SO = $(LIBDIR)/libxplat_lightweight.so
 
@@ -192,9 +191,6 @@ STD_TESTS_BE = $(BINDIR)/test_basic_BE  \
                $(BINDIR)/test_NativeFilters_BE \
                $(BINDIR)/test_DynamicFilters_BE \
                $(BINDIR)/test_MultStreams_BE
-
-# NO LONGER NEEDED
-#STD_TESTS_FE_LIGHTWEIGHT = 
 
 STD_TESTS_BE_LIGHTWEIGHT = $(BINDIR)/test_basic_BE_lightweight \
                            $(BINDIR)/microbench_BE_lightweight \
@@ -342,6 +338,7 @@ install-local: all $(INSTALL_HEADERS) install-boost
 	@echo Installing MRNet binaries
 	$(INSTALL) -m 755 $(COMMNODE) $(BINDIR)/mrnet_topgen $(IBINDIR)/
 	@echo Installing MRNet libraries
+	$(INSTALL) -m 644 $(PLATDIR)/mrnet_config.h $(ILIBDIR)/
 	$(INSTALL) -m 755 $(LIBMRNET) $(ILIBDIR)/
 	if [ -f $(LIBMRNET_SO) ] ; then \
             $(INSTALL) -m 755 $(LIBMRNET_SO) $(ILIBDIR)/ ; \
@@ -469,14 +466,6 @@ $(STD_TESTS_BE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o 
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
-# NO LONGER NEEDED
-#$(STD_TESTS_FE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
-#              $(TSTDIR)/test_common.h \
-#              $(BINDIR)/mrnet_tests.sh
-#	@echo "Linking `basename $*` ..."
-#	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-#	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
-
 $(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o \
 				$(BINDIR)/mrnet_tests.sh
 	@echo "Linking `basename $*` ..."
@@ -489,7 +478,7 @@ $(BINDIR)/mrnet_tests.sh: $(BASEDIR)/conf/mrnet_tests.sh
 
 $(LIBDIR)/test_DynamicFilters.so: $(TSTDIR)/test_DynamicFilters.C
 	@echo "Building `basename $@` ..."
-	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(TSTDIR)/test_DynamicFilters.C
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(TSTDIR)/test_DynamicFilters.C -L$(LIBDIR) -lmrnet
 
 $(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(LIBMRNET) \
                             $(OBJDIR)/%.o \

@@ -17,7 +17,7 @@
 #include "xplat/Process.h"
 #include "xplat/SocketUtils.h"
 
-#include "config.h"
+#include "mrnet_config.h"
 #include "utils.h"
 #include "Message.h"
 #include "SerialGraph.h"

@@ -6,7 +6,6 @@
 #if !defined(__types_h)
 #define __types_h 1
 
-#include <sys/types.h>
 #include <stdio.h>
 
 #include "xplat_lightweight/Types.h"

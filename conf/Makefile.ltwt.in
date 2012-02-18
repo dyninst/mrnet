@@ -24,8 +24,8 @@ TARGET    = $(LIBDIR)/libmrnet_lightweight.a
 TARGET_LOWFAT = $(LIBDIR)/libmrnet_lightweight_r.a
 TARGET_SO = $(LIBDIR)/libmrnet_lightweight.so
 TARGET_SO_LOWFAT = $(LIBDIR)/libmrnet_lightweight_r.so
-TARGET_SO_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight
-TARGET_SO_LOWFAT_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight_r
+TARGET_SO_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight $(LIBS_LIGHTWEIGHT)
+TARGET_SO_LOWFAT_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight_r $(LIBS_LOWFAT)
 
 TARGETS = $(TARGET)
 SO_LIST = $(TARGET_SO)

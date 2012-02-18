@@ -8,9 +8,9 @@
 #define XPLAT_TYPES_H
 
 #if defined(os_windows)
-#include "xplat/Types-win.h"
+# include "xplat/Types-win.h"
 #else
-#include "xplat/Types-unix.h"
-#endif // defined(WIN32)
+# include "xplat/Types-unix.h"
+#endif // defined(os_windows)
 
 #endif // XPLAT_TYPES_H

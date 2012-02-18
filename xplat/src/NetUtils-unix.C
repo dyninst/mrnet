@@ -16,7 +16,7 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 
-#include "config.h"
+#include "xplat_config.h"
 #include "xplat/NetUtils.h"
 
 #include <fstream>

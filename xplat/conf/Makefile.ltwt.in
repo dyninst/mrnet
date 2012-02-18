@@ -24,6 +24,7 @@ TARGET    = $(LIBDIR)/libxplat_lightweight.a
 TARGET_SO = $(LIBDIR)/libxplat_lightweight.so
 TARGET_LOWFAT    = $(LIBDIR)/libxplat_lightweight_r.a
 TARGET_SO_LOWFAT = $(LIBDIR)/libxplat_lightweight_r.so
+
 TARGET_SO_LIBS   = @LIBS_LIGHTWEIGHT@
 TARGET_SO_LOWFAT_LIBS = @LIBS_LOWFAT@
 

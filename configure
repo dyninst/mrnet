@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY CXXCPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX HAVE_SYSTEM_BOOST HAVE_USER_BOOST BOOST_INCDIR COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT LIBS_LOWFAT EXTRA_LIBS LTWT_THREADSAFE PLATFORM_BUILD LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY CXXCPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX HAVE_SYSTEM_BOOST HAVE_USER_BOOST BOOST_INCDIR build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT LIBS_LOWFAT EXTRA_LIBS LTWT_THREADSAFE PLATFORM_BUILD LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -4432,7 +4432,6 @@ echo "${ECHO_T}no" >&6
 fi
 
 
-
 # Extract the first word of "rm", so it can be a program name with args.
 set dummy rm; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -4500,7 +4499,7 @@ do
 done
 done
 
-  test -z "$ac_cv_path_FLEX" && ac_cv_path_FLEX="notfound"
+  test -z "$ac_cv_path_FLEX" && ac_cv_path_FLEX="flex_not_found"
   ;;
 esac
 fi
@@ -4514,10 +4513,9 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-if test "$FLEX" = "notfound" ; then
-    { { echo "$as_me:$LINENO: error: flex not found in \$PATH, is it installed?" >&5
-echo "$as_me: error: flex not found in \$PATH, is it installed?" >&2;}
-   { (exit 1); exit 1; }; }
+if test "$FLEX" = "flex_not_found" ; then
+    { echo "$as_me:$LINENO: WARNING: flex not found in \$PATH, is it installed?" >&5
+echo "$as_me: WARNING: flex not found in \$PATH, is it installed?" >&2;}
 fi
 
 
@@ -4703,6 +4701,82 @@ CFLAGS=`echo $CFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
 
 
 
+# Make sure we can run config.sub.
+$ac_config_sub sun4 >/dev/null 2>&1 ||
+  { { echo "$as_me:$LINENO: error: cannot run $ac_config_sub" >&5
+echo "$as_me: error: cannot run $ac_config_sub" >&2;}
+   { (exit 1); exit 1; }; }
+
+echo "$as_me:$LINENO: checking build system type" >&5
+echo $ECHO_N "checking build system type... $ECHO_C" >&6
+if test "${ac_cv_build+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_build_alias=$build_alias
+test -z "$ac_cv_build_alias" &&
+  ac_cv_build_alias=`$ac_config_guess`
+test -z "$ac_cv_build_alias" &&
+  { { echo "$as_me:$LINENO: error: cannot guess build type; you must specify one" >&5
+echo "$as_me: error: cannot guess build type; you must specify one" >&2;}
+   { (exit 1); exit 1; }; }
+ac_cv_build=`$ac_config_sub $ac_cv_build_alias` ||
+  { { echo "$as_me:$LINENO: error: $ac_config_sub $ac_cv_build_alias failed" >&5
+echo "$as_me: error: $ac_config_sub $ac_cv_build_alias failed" >&2;}
+   { (exit 1); exit 1; }; }
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_build" >&5
+echo "${ECHO_T}$ac_cv_build" >&6
+build=$ac_cv_build
+build_cpu=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+build_vendor=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+build_os=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
+
+
+echo "$as_me:$LINENO: checking host system type" >&5
+echo $ECHO_N "checking host system type... $ECHO_C" >&6
+if test "${ac_cv_host+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_host_alias=$host_alias
+test -z "$ac_cv_host_alias" &&
+  ac_cv_host_alias=$ac_cv_build_alias
+ac_cv_host=`$ac_config_sub $ac_cv_host_alias` ||
+  { { echo "$as_me:$LINENO: error: $ac_config_sub $ac_cv_host_alias failed" >&5
+echo "$as_me: error: $ac_config_sub $ac_cv_host_alias failed" >&2;}
+   { (exit 1); exit 1; }; }
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_host" >&5
+echo "${ECHO_T}$ac_cv_host" >&6
+host=$ac_cv_host
+host_cpu=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+host_vendor=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
+
+
+MRNET_ARCH=`echo $host | sed 's/[-|.]/_/g'`
+MRNET_CPU=$host_cpu
+MRNET_OS=`echo $host_os | sed 's/[-0-9].*//'`
+MRNET_OSVER=`echo $host_os | sed 's/[-|.]/_/g'`
+MRNET_ROOT=$abs_srcdir
+MRNET_VERSION='`cat "$(srcdir)"/VERSION`'
+
+
+cat >>confdefs.h <<\_ACEOF
+#define COMMNODE_EXE "mrnet_commnode"
+_ACEOF
+
+
+
+
+
+
+CXXFLAGS="$CXXFLAGS -Darch_$MRNET_CPU"
+CFLAGS="$CFLAGS -Darch_$MRNET_CPU"
+
+
+
   echo "$as_me:$LINENO: checking for compiler type" >&5
 echo $ECHO_N "checking for compiler type... $ECHO_C" >&6
 
@@ -4797,7 +4871,10 @@ if test $COMPILER_TYPE = "gnu" ; then
     CXXFLAGS="$CXXFLAGS -Dcompiler_gnu -fno-default-inline -fPIC"
     CFLAGS="$CFLAGS -Dcompiler_gnu -fPIC"
 
-    SOFLAGS="$SOFLAGS -fPIC -shared -rdynamic"
+    SOFLAGS="$SOFLAGS -fPIC -shared"
+    if test $MRNET_OS = "linux" ; then
+        SOFLAGS="$SOFLAGS -rdynamic"
+    fi
 
     C_AS_CPLUSPLUS="-x c++"
 
@@ -5123,80 +5200,9 @@ else
 fi
 
 
-
-# Make sure we can run config.sub.
-$ac_config_sub sun4 >/dev/null 2>&1 ||
-  { { echo "$as_me:$LINENO: error: cannot run $ac_config_sub" >&5
-echo "$as_me: error: cannot run $ac_config_sub" >&2;}
-   { (exit 1); exit 1; }; }
-
-echo "$as_me:$LINENO: checking build system type" >&5
-echo $ECHO_N "checking build system type... $ECHO_C" >&6
-if test "${ac_cv_build+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_build_alias=$build_alias
-test -z "$ac_cv_build_alias" &&
-  ac_cv_build_alias=`$ac_config_guess`
-test -z "$ac_cv_build_alias" &&
-  { { echo "$as_me:$LINENO: error: cannot guess build type; you must specify one" >&5
-echo "$as_me: error: cannot guess build type; you must specify one" >&2;}
-   { (exit 1); exit 1; }; }
-ac_cv_build=`$ac_config_sub $ac_cv_build_alias` ||
-  { { echo "$as_me:$LINENO: error: $ac_config_sub $ac_cv_build_alias failed" >&5
-echo "$as_me: error: $ac_config_sub $ac_cv_build_alias failed" >&2;}
-   { (exit 1); exit 1; }; }
-
-fi
-echo "$as_me:$LINENO: result: $ac_cv_build" >&5
-echo "${ECHO_T}$ac_cv_build" >&6
-build=$ac_cv_build
-build_cpu=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
-build_vendor=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
-build_os=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
-
-
-echo "$as_me:$LINENO: checking host system type" >&5
-echo $ECHO_N "checking host system type... $ECHO_C" >&6
-if test "${ac_cv_host+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_host_alias=$host_alias
-test -z "$ac_cv_host_alias" &&
-  ac_cv_host_alias=$ac_cv_build_alias
-ac_cv_host=`$ac_config_sub $ac_cv_host_alias` ||
-  { { echo "$as_me:$LINENO: error: $ac_config_sub $ac_cv_host_alias failed" >&5
-echo "$as_me: error: $ac_config_sub $ac_cv_host_alias failed" >&2;}
-   { (exit 1); exit 1; }; }
-
-fi
-echo "$as_me:$LINENO: result: $ac_cv_host" >&5
-echo "${ECHO_T}$ac_cv_host" >&6
-host=$ac_cv_host
-host_cpu=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
-host_vendor=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
-host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
-
-
-MRNET_ARCH=`echo $host | sed 's/[-|.]/_/g'`
-MRNET_OS=`echo $host_os | sed 's/[-0-9].*//'`
-MRNET_OSVER=`echo $host_os | sed 's/[-|.]/_/g'`
-MRNET_ROOT=$abs_srcdir
-MRNET_VERSION='`cat "$(srcdir)"/VERSION`'
-
-
-cat >>confdefs.h <<\_ACEOF
-#define COMMNODE_EXE "mrnet_commnode"
-_ACEOF
-
-
-
-
-
-
-
 LIBS="-lm -lpthread -ldl"
 LIBS_LIGHTWEIGHT="-lm"
+LIBS_LOWFAT=""
 EXTRA_LIBS=""
 
 case "$host_os" in
@@ -5219,31 +5225,15 @@ case "$host_os" in
         ;;
     esac
     ;;
-  *aix4*)
-    CXXFLAGS="$CXXFLAGS -Dos_aix=4"
-    CFLAGS="$CFLAGS -Dos_aix=4"
+  *aix*)
+    CXXFLAGS="$CXXFLAGS -Dos_aix"
+    CFLAGS="$CFLAGS -Dos_aix"
     ;;
-  *aix5*)
-    CXXFLAGS="$CXXFLAGS -Dos_aix=5"
-    CFLAGS="$CFLAGS -Dos_aix=5"
-    ;;
-  *solaris2.8*)
+  *solaris*)
     LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
     LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
-    CXXFLAGS="$CXXFLAGS -Dos_solaris=8"
-    CFLAGS="$CFLAGS -Dos_solaris=8"
-    ;;
-  *solaris2.9*)
-    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
-    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
-    CXXFLAGS="$CXXFLAGS -Dos_solaris=9"
-    CFLAGS="$CFLAGS -Dos_solaris=9"
-    ;;
-  *sunos*)
-    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
-    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
-    CXXFLAGS="$CXXFLAGS -Dos_sunos"
-    CFLAGS="$CFLAGS -Dos_sunos"
+    CXXFLAGS="$CXXFLAGS -Dos_solaris"
+    CFLAGS="$CFLAGS -Dos_solaris"
     ;;
   *)
     ;;
@@ -5505,7 +5495,7 @@ fi
 
 done
 
-    if test $HAVE_SYSTEM_LIBALPS == "no" ; then
+    if test $HAVE_SYSTEM_LIBALPS = "no" ; then
       if test "$CRAYXT_ATH_INCDIR" != "" ; then
         CXXFLAGS="$CXXFLAGS -I$CRAYXT_ATH_INCDIR"
 
@@ -8598,7 +8588,9 @@ echo "$as_me: error: cannot create directory ${PLATFORM_BUILD}/obj/xplat/ltwt" >
    { (exit 1); exit 1; }; }; }
 
 
-          ac_config_headers="$ac_config_headers ${PLATFORM_BUILD}/config.h:conf/config.h.in"
+          ac_config_headers="$ac_config_headers ${PLATFORM_BUILD}/mrnet_config.h:conf/config.h.in"
+
+          ac_config_headers="$ac_config_headers ${PLATFORM_BUILD}/xplat_config.h:xplat/conf/config.h.in"
 
                                                   ac_config_files="$ac_config_files ${PLATFORM_BUILD}/Makefile:conf/Makefile.in ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in"
 
@@ -9133,7 +9125,8 @@ do
   "${PLATFORM_BUILD}/Makefile.xplat" ) CONFIG_FILES="$CONFIG_FILES ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in" ;;
   "${PLATFORM_BUILD}/Makefile.xplat_ltwt" ) CONFIG_FILES="$CONFIG_FILES ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in" ;;
   "${PLATFORM_BUILD}/Makefile.examples" ) CONFIG_FILES="$CONFIG_FILES ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in" ;;
-  "${PLATFORM_BUILD}/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS ${PLATFORM_BUILD}/config.h:conf/config.h.in" ;;
+  "${PLATFORM_BUILD}/mrnet_config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS ${PLATFORM_BUILD}/mrnet_config.h:conf/config.h.in" ;;
+  "${PLATFORM_BUILD}/xplat_config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS ${PLATFORM_BUILD}/xplat_config.h:xplat/conf/config.h.in" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -9247,10 +9240,6 @@ s,@FLEX@,$FLEX,;t t
 s,@HAVE_SYSTEM_BOOST@,$HAVE_SYSTEM_BOOST,;t t
 s,@HAVE_USER_BOOST@,$HAVE_USER_BOOST,;t t
 s,@BOOST_INCDIR@,$BOOST_INCDIR,;t t
-s,@COMPILER_TYPE@,$COMPILER_TYPE,;t t
-s,@AR@,$AR,;t t
-s,@ARFLAGS@,$ARFLAGS,;t t
-s,@PGI_OLD_TEMPLATES@,$PGI_OLD_TEMPLATES,;t t
 s,@build@,$build,;t t
 s,@build_cpu@,$build_cpu,;t t
 s,@build_vendor@,$build_vendor,;t t
@@ -9263,6 +9252,10 @@ s,@MRNET_ARCH@,$MRNET_ARCH,;t t
 s,@MRNET_OS@,$MRNET_OS,;t t
 s,@MRNET_ROOT@,$MRNET_ROOT,;t t
 s,@MRNET_VERSION@,$MRNET_VERSION,;t t
+s,@COMPILER_TYPE@,$COMPILER_TYPE,;t t
+s,@AR@,$AR,;t t
+s,@ARFLAGS@,$ARFLAGS,;t t
+s,@PGI_OLD_TEMPLATES@,$PGI_OLD_TEMPLATES,;t t
 s,@MRNET_STARTUP_METHOD@,$MRNET_STARTUP_METHOD,;t t
 s,@CN_LDFLAGS@,$CN_LDFLAGS,;t t
 s,@SOFLAGS@,$SOFLAGS,;t t

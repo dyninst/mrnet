@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(MRNet,[],[paradyn@cs.wisc.edu],[mrnet],[http://www.paradyn.org/mrnet/])
+AC_INIT(MRNet,[],[mrnet@cs.wisc.edu],[mrnet],[http://www.paradyn.org/mrnet/])
 AC_CONFIG_SRCDIR(src/Network.C)
 AC_CONFIG_AUX_DIR(conf)
 
@@ -96,13 +96,12 @@ AC_PATH_PROG(GREP, grep)
 AC_SUBST(GREP)
 AC_PATH_PROG(CP, cp)
 AC_SUBST(CP)
-
 AC_PATH_PROG(RM, rm)
 AC_SUBST(RM)
 
-AC_PATH_PROG(FLEX, flex, notfound)
-if test "$FLEX" = "notfound" ; then
-    AC_MSG_ERROR([flex not found in \$PATH, is it installed?])
+AC_PATH_PROG(FLEX, flex, flex_not_found)
+if test "$FLEX" = "flex_not_found" ; then
+    AC_MSG_WARN([flex not found in \$PATH, is it installed?])
 fi
 AC_SUBST(FLEX)
 
@@ -127,6 +126,32 @@ dnl === Ignore user-requested debug/optimization levels
 CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
 CFLAGS=`echo $CFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
 
+dnl === SETTING MRNET PLATFORM VARIABLES ===
+
+dnl MRNET_ARCH is host returned by config.guess with
+dnl all `-` and `.` characters replaced by `_` so that a
+dnl -DMRNET_ARCH can be passed to the compiler
+dnl without it complaining
+
+AC_CANONICAL_HOST
+changequote(<<, >>)dnl
+MRNET_ARCH=`echo $host | sed 's/[-|.]/_/g'`
+MRNET_CPU=$host_cpu
+MRNET_OS=`echo $host_os | sed 's/[-0-9].*//'`
+MRNET_OSVER=`echo $host_os | sed 's/[-|.]/_/g'`
+MRNET_ROOT=$abs_srcdir
+MRNET_VERSION='`cat "$(srcdir)"/VERSION`'
+changequote([, ])dnl
+
+AC_DEFINE([COMMNODE_EXE], "mrnet_commnode", [Set to default path of mrnet_commnode executable.])
+AC_SUBST(MRNET_ARCH)
+AC_SUBST(MRNET_OS)
+AC_SUBST(MRNET_ROOT)
+AC_SUBST(MRNET_VERSION)
+
+CXXFLAGS="$CXXFLAGS -Darch_$MRNET_CPU"
+CFLAGS="$CFLAGS -Darch_$MRNET_CPU"
+
 dnl === COMPILER-SPECIFIC OPTIONS ===
 
 PD_COMPILER_TYPE
@@ -142,7 +167,10 @@ if test $COMPILER_TYPE = "gnu" ; then
     CXXFLAGS="$CXXFLAGS -Dcompiler_gnu -fno-default-inline -fPIC"
     CFLAGS="$CFLAGS -Dcompiler_gnu -fPIC"
 
-    SOFLAGS="$SOFLAGS -fPIC -shared -rdynamic"
+    SOFLAGS="$SOFLAGS -fPIC -shared"
+    if test $MRNET_OS = "linux" ; then
+        SOFLAGS="$SOFLAGS -rdynamic"
+    fi
 
     C_AS_CPLUSPLUS="-x c++"
 
@@ -233,32 +261,11 @@ else
     CFLAGS="$COPTFLAGS $CFLAGS"
 fi
 
-dnl === SETTING MRNET PLATFORM VARIABLES ===
-
-dnl MRNET_ARCH is host returned by config.guess with
-dnl all `-` and `.` characters replaced by `_` so that a
-dnl -D MRNET_ARCH can be passed to the compiler
-dnl without it complaining
-
-AC_CANONICAL_HOST
-changequote(<<, >>)dnl
-MRNET_ARCH=`echo $host | sed 's/[-|.]/_/g'`
-MRNET_OS=`echo $host_os | sed 's/[-0-9].*//'`
-MRNET_OSVER=`echo $host_os | sed 's/[-|.]/_/g'`
-MRNET_ROOT=$abs_srcdir
-MRNET_VERSION='`cat "$(srcdir)"/VERSION`'
-changequote([, ])dnl
-
-AC_DEFINE([COMMNODE_EXE], "mrnet_commnode", [Set to default path of mrnet_commnode executable.])
-AC_SUBST(MRNET_ARCH)
-AC_SUBST(MRNET_OS)
-AC_SUBST(MRNET_ROOT)
-AC_SUBST(MRNET_VERSION)
-
 dnl === OS-SPECIFIC COMPILER OPTIONS ===
 
 LIBS="-lm -lpthread -ldl"
 LIBS_LIGHTWEIGHT="-lm"
+LIBS_LOWFAT=""
 EXTRA_LIBS=""
 
 case "$host_os" in
@@ -281,31 +288,15 @@ case "$host_os" in
         ;;
     esac
     ;;
-  *aix4*)
-    CXXFLAGS="$CXXFLAGS -Dos_aix=4"
-    CFLAGS="$CFLAGS -Dos_aix=4"
+  *aix*)
+    CXXFLAGS="$CXXFLAGS -Dos_aix"
+    CFLAGS="$CFLAGS -Dos_aix"
     ;;
-  *aix5*)
-    CXXFLAGS="$CXXFLAGS -Dos_aix=5"
-    CFLAGS="$CFLAGS -Dos_aix=5"
-    ;;
-  *solaris2.8*)
+  *solaris*)
     LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
     LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
-    CXXFLAGS="$CXXFLAGS -Dos_solaris=8"
-    CFLAGS="$CFLAGS -Dos_solaris=8"
-    ;;
-  *solaris2.9*)
-    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
-    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
-    CXXFLAGS="$CXXFLAGS -Dos_solaris=9"
-    CFLAGS="$CFLAGS -Dos_solaris=9"
-    ;;
-  *sunos*)
-    LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
-    LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
-    CXXFLAGS="$CXXFLAGS -Dos_sunos"
-    CFLAGS="$CFLAGS -Dos_sunos"
+    CXXFLAGS="$CXXFLAGS -Dos_solaris"
+    CFLAGS="$CFLAGS -Dos_solaris"
     ;;
   *)
     ;;
@@ -335,7 +326,7 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 # include <alps/apInfo.h> 
 #endif]
                     )
-    if test $HAVE_SYSTEM_LIBALPS == "no" ; then
+    if test $HAVE_SYSTEM_LIBALPS = "no" ; then
       if test "$CRAYXT_ATH_INCDIR" != "" ; then
         CXXFLAGS="$CXXFLAGS -I$CRAYXT_ATH_INCDIR"
         AC_CHECK_HEADERS([libalps.h], [], 
@@ -400,7 +391,8 @@ AS_MKDIR_P([${PLATFORM_BUILD}/lib])
 AS_MKDIR_P([${PLATFORM_BUILD}/obj/ltwt])
 AS_MKDIR_P([${PLATFORM_BUILD}/obj/xplat/ltwt])
 
-AC_CONFIG_HEADER([${PLATFORM_BUILD}/config.h:conf/config.h.in])
+AC_CONFIG_HEADER([${PLATFORM_BUILD}/mrnet_config.h:conf/config.h.in])
+AC_CONFIG_HEADER([${PLATFORM_BUILD}/xplat_config.h:xplat/conf/config.h.in])
 AC_CONFIG_FILES([${PLATFORM_BUILD}/Makefile:conf/Makefile.in ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in])
 
 AC_OUTPUT

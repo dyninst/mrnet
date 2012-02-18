@@ -3,8 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#ifndef __config_h
-#define __config_h 1
+#ifndef __mrnet_config_h
+#define __mrnet_config_h 1
 
 /* conf/config.h.in.  Generated from ./conf/configure.in by autoheader.  */
 
@@ -165,4 +165,4 @@
 /* Define as `fork' if `vfork' does not work. */
 #undef vfork
 
-#endif /* __config_h */
+#endif /* __mrnet_config_h */

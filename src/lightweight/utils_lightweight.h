@@ -32,7 +32,7 @@
 
 #ifndef os_windows // unix
 
-# include "config.h"
+# include "mrnet_config.h"
 
 # ifdef HAVE_SIGNAL_H
 #  include <signal.h>

@@ -7,7 +7,7 @@
 #include "pdr_mem.h"
 
 #ifndef os_windows // unix
-#include "config.h"
+#include "mrnet_config.h"
 #endif
 
 #if defined(__cplusplus)

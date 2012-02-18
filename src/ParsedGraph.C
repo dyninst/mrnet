@@ -5,7 +5,7 @@
 
 #include <sstream>
 
-#include "config.h"
+#include "mrnet_config.h"
 #include "ParsedGraph.h"
 #include "Protocol.h"
 #include "utils.h"
