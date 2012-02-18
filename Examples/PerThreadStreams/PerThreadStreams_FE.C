@@ -257,7 +257,7 @@ int main(int argc, char **argv)
             fprintf( stderr, "stream::unpack() failure\n" );
             return -1;
         }
-        fprintf( stdout, "FE: min %u max %u bits %lu\n", 
+        fprintf( stdout, "FE: min %u max %u bits %"PRIu64"\n", 
                  min_val, max_val, bits_val );
         fflush(stdout);
     }
