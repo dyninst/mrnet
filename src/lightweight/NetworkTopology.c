@@ -11,8 +11,8 @@
 #include <time.h>
 
 #include "utils_lightweight.h"
-#include "map.h"
-#include "vector.h"
+#include "xplat_lightweight/map.h"
+#include "xplat_lightweight/vector.h"
 #include "SerialGraph.h"
 
 #include "mrnet_lightweight/NetworkTopology.h"
@@ -186,25 +186,19 @@ Node_t* NetworkTopology_get_Root(NetworkTopology_t* net_top)
     return ret_node; 
 }
 
-void NetworkTopology_get_BackEndNodes(NetworkTopology_t* net_top, 
+void NetworkTopology_get_BackEndNodes(NetworkTopology_t* UNUSED(net_top), 
                                       vector_t* UNUSED(nodes))
 {
-    NetworkTopology_lock(net_top);
-    NetworkTopology_unlock(net_top);
 }
 
-void NetworkTopology_get_ParentNodes(NetworkTopology_t* net_top, 
+void NetworkTopology_get_ParentNodes(NetworkTopology_t* UNUSED(net_top), 
                                      vector_t* UNUSED(nodes))
 {
-    NetworkTopology_lock(net_top);
-    NetworkTopology_unlock(net_top);
 }
 
-void NetworkTopology_get_OrphanNodes(NetworkTopology_t* net_top, 
+void NetworkTopology_get_OrphanNodes(NetworkTopology_t* UNUSED(net_top), 
                                      vector_t* UNUSED( nodes))
 {
-    NetworkTopology_lock(net_top);
-    NetworkTopology_unlock(net_top);
 }
 
 int NetworkTopology_isInTopology(NetworkTopology_t* net_top,
@@ -799,14 +793,20 @@ void NetworkTopology_compute_AdoptionScores(NetworkTopology_t* net_top,
                                             Node_t* orphan)
 {
     size_t i;
+    NetworkTopology_lock(net_top);
     
     NetworkTopology_compute_TreeStatistics(net_top);
 
     for (i = 0; i < iadopters->size; i++) {
-        NetworkTopology_Node_compute_AdoptionScore(net_top, (Node_t*)(iadopters->vec[i]), 
-	                                           orphan, net_top->min_fanout, net_top->max_fanout, 
-						   net_top->depth); 
+        NetworkTopology_Node_compute_AdoptionScore(net_top, 
+                                                  (Node_t*)(iadopters->vec[i]), 
+                                                   orphan,
+                                                   net_top->min_fanout,
+                                                   net_top->max_fanout, 
+                                                   net_top->depth); 
     } 
+    
+    NetworkTopology_unlock(net_top);
 }
 
 
@@ -816,7 +816,6 @@ void NetworkTopology_compute_TreeStatistics(NetworkTopology_t* net_top)
 {
     size_t i;
     double diff = 0, sum_of_square = 0;
-    NetworkTopology_lock(net_top);
 
     net_top->max_fanout = 0;
     net_top->depth = 0;
@@ -844,8 +843,6 @@ void NetworkTopology_compute_TreeStatistics(NetworkTopology_t* net_top)
     net_top->stddev_fanout = sqrt(net_top->var_fanout);
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "min_fanout=%d, max_fanout=%d, depth=%d\n", net_top->min_fanout, net_top->max_fanout, net_top->depth));
-
-    NetworkTopology_unlock(net_top);
 
 }
 
@@ -988,7 +985,8 @@ unsigned int NetworkTopology_Node_get_DepthIncrease(Node_t* adopter,
 const float WFANOUT=1.0;
 const float WDEPTH=1.0;
 const float WPROXIMITY=0.5;
-void NetworkTopology_Node_compute_AdoptionScore(NetworkTopology_t* net_top,
+void NetworkTopology_Node_compute_AdoptionScore(NetworkTopology_t* 
+                                                    UNUSED(net_top),
                                                 Node_t* adopter,
                                                 Node_t* orphan,
                                                 unsigned int imin_fanout,
@@ -1001,8 +999,6 @@ void NetworkTopology_Node_compute_AdoptionScore(NetworkTopology_t* net_top,
     double fanout_score;
     double depth_increase_score;
     double proximity_score;
-
-    NetworkTopology_lock(net_top);
 
     depth_increase = NetworkTopology_Node_get_DepthIncrease(adopter, orphan); 
     proximity = NetworkTopology_Node_get_Proximity(adopter, orphan); 
@@ -1036,7 +1032,6 @@ void NetworkTopology_Node_compute_AdoptionScore(NetworkTopology_t* net_top,
         (WPROXIMITY * proximity_score);
 
     adopter->wrs_key = pow(drand48(), 1/adopter->adoption_score);
-    NetworkTopology_unlock(net_top);
 }
 
 void NetworkTopology_Node_add_Child(Node_t* parent, Node_t* child)

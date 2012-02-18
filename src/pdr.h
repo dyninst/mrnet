@@ -128,8 +128,8 @@ struct pdr_ops {
     bool_t  (*getdouble)(PDR *pdrs, double *dp);
     bool_t  (*putbytes)(PDR *pdrs, char *, uint64_t);
     bool_t  (*getbytes)(PDR *pdrs, char *, uint64_t);
-    bool_t  (*setpos)(PDR *pdrs, uint32_t ip);
-    uint32_t (*getpos)(PDR *pdrs);
+    bool_t  (*setpos)(PDR *pdrs, uint64_t ip);
+    uint64_t (*getpos)(PDR *pdrs);
     int32_t* (*pinline)(PDR *pdrs, int32_t ip);
     void    (*destroy)(PDR *pdrs);
 };

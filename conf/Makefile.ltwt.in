@@ -50,7 +50,6 @@ LTWT_SRCS = $(SRCDIR)/BackEndNode.c \
             $(SRCDIR)/Error.c \
             $(SRCDIR)/Filter.c \
 	    $(SRCDIR)/FilterDefinitions.c \
-            $(SRCDIR)/map.c \
             $(SRCDIR)/Message.c \
             $(SRCDIR)/Network.c \
             $(SRCDIR)/NetworkTopology.c \
@@ -60,7 +59,6 @@ LTWT_SRCS = $(SRCDIR)/BackEndNode.c \
             $(SRCDIR)/SerialGraph.c \
             $(SRCDIR)/Stream.c \
             $(SRCDIR)/utils_lightweight.c \
-            $(SRCDIR)/vector.c \
             $(ROOTDIR)/src/byte_order.c \
             $(ROOTDIR)/src/pdr.c \
             $(ROOTDIR)/src/pdr_mem.c \

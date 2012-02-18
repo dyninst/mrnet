@@ -128,7 +128,8 @@ endif #GNU options
 
 ifeq ($(COMPILER_TYPE), forte)
     ifndef SILENCE_WARNINGS
-        WARNFLAGS = +w +w2
+#        WARNFLAGS = +w +w2 -D_REENTRANT -errtags=yes  -erroff=inllargeuse,reftotemp,hidef,inllargeint
+#        WARNFLAGS_LIGHTWEIGHT = +w +w2 -D_REENTRANT -errtags=yes 
     endif # SILENCE_WARNINGS
 endif #Forte (Sun) compiler warnings
 

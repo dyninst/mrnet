@@ -11,7 +11,7 @@
 #include "Message.h"
 #include "mrnet_lightweight/Packet.h"
 #include "mrnet_lightweight/Types.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 struct PeerNode_t { 
   Network_t* net;

@@ -11,7 +11,7 @@
 #include "mrnet_lightweight/NetworkTopology.h"
 #include "mrnet_lightweight/Packet.h"
 #include "utils_lightweight.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 FilterId TFILTER_NULL = 0;
 FilterId SFILTER_WAITFORALL=0;

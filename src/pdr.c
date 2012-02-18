@@ -457,7 +457,7 @@ bool_t pdr_array(PDR *pdrs, void **addrp, uint64_t *sizep, uint64_t maxsize,
         case PDR_DECODE:
             if (c == 0)
                 return (TRUE);
-            *addrp = calloc(nodesize, sizeof(char));
+            *addrp = calloc((size_t)nodesize, sizeof(char));
             target = (char*) *addrp;
             if (target == NULL) {
                 return (FALSE);

@@ -96,12 +96,12 @@ static bool_t _getbytes(PDR * UNUSED(pdrs), char * UNUSED(c), uint64_t UNUSED(u)
     return FALSE;
 }
 
-static uint32_t _getpos(PDR *pdrs)
+static uint64_t _getpos(PDR *pdrs)
 {
     return pdrs->space;
 }
 
-static bool_t _setpos(PDR * UNUSED(pdrs), uint32_t UNUSED(u))
+static bool_t _setpos(PDR * UNUSED(pdrs), uint64_t UNUSED(u))
 {
     return FALSE;
 }

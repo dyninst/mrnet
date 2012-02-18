@@ -14,10 +14,10 @@
 
 #include "PerfDataEvent.h" 
 #include "PerfDataSysEvent.h"
-#include "map.h"
+#include "xplat_lightweight/map.h"
 #include "mrnet_lightweight/Types.h"
 #include "utils_lightweight.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 
 perfdata_metinfo_t perfdata_metric_info[PERFDATA_MAX_MET] = 

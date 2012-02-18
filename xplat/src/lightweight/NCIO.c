@@ -9,6 +9,9 @@
 
 #include "xplat_lightweight/NCIO.h"
 
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
 NCBuf_t* new_NCBuf_t()
 {
   NCBuf_t* new_NCBuf = (NCBuf_t*)malloc(sizeof(NCBuf_t));

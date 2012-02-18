@@ -67,7 +67,7 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
     uint64_t len;
     unsigned int i, j;
     int rc = 0;
-    int total_bytes = 0;
+    ssize_t total_bytes = 0;
     uint32_t num_packets = 0, num_buffers;
     PDR pdrs;
     enum pdr_op op = PDR_DECODE;
@@ -127,9 +127,9 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
 
     for( i = 0; i < num_buffers; i++ ) {
         len = packet_sizes[i];
-        ncbufs[i].buf = (char*) malloc( len );
-        ncbufs[i].len = len;
-        total_bytes += len;
+        ncbufs[i].buf = (char*) malloc( size_t(len) );
+        ncbufs[i].len = size_t(len);
+        total_bytes += size_t(len);
     }
 
     retval = XPlat::NCRecv( sock_fd, ncbufs, num_buffers );
@@ -267,7 +267,7 @@ int Message::send( XPlat::XPSOCKET sock_fd )
         packet_sizes[i] = (uint64_t)hsz;
 
         ncbufs[j+1].buf = const_cast< char* >( curPacket->get_Buffer() );
-        ncbufs[j+1].len = dsz;
+        ncbufs[j+1].len = size_t(dsz);
         packet_sizes[i+1] = (uint64_t)dsz;
 
         total_bytes += (size_t)hsz + (size_t)dsz;

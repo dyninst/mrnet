@@ -9,7 +9,7 @@
 #include "mrnet_lightweight/FilterIds.h"
 #include "mrnet_lightweight/Packet.h"
 #include "mrnet_lightweight/NetworkTopology.h"
-#include "vector.h"
+#include "xplat_lightweight/vector.h"
 
 extern FilterId TFILTER_NULL;
 
