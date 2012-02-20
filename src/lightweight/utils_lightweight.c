@@ -3,62 +3,16 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#include <stdarg.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
 #include "utils_lightweight.h"
-
 #include "mrnet_lightweight/Network.h"
-
-#include "xplat_lightweight/NetUtils.h"
 #include "xplat_lightweight/Error.h"
+#include "xplat_lightweight/NetUtils.h"
 #include "xplat_lightweight/PathUtils.h"
 #include "xplat_lightweight/Process.h"
 
-#if !defined(os_windows)
-#include <sys/time.h>
-#include <net/if.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <fcntl.h>
-#else 
-#define sleep(x) Sleep(1000*(DWORD)x)
-#include <winsock2.h>
-#endif // defined(os_windows)
-
-#if defined(os_solaris)
-#include <sys/sockio.h> // only for solaris
-#endif //defined(os_solaris)
+#include <stdarg.h>
 
 Rank myrank = (Rank)-1;
-
-#ifdef os_windows
-int gettimeofday(struct timeval *tv, struct timezone *tz)
-{
-    int ret_val;
-    struct __timeb64 now;
-    ret_val = _ftime64_s(&now);
-    if(ret_val) {
-        return ret_val;
-    }
-    if (tv != NULL) {
-        tv->tv_sec = (long)now.time;
-        tv->tv_usec = now.millitm * 1000;
-    }
-    return 0;
-}
-#endif
 
 void get_Version( int* major,
                   int* minor,
@@ -72,107 +26,29 @@ void get_Version( int* major,
         *revision = MRNET_VERSION_REV;
 }
 
-int connectHost( int *sock_in, char* hostname, 
-                 Port port, int num_retry )
+int connectHost( XPlat_Socket  *sock_in, char* hostname, 
+                 XPlat_Port port, int num_retry )
 {
-    int err, sock = *sock_in;
-    struct sockaddr_in server_addr;
-    struct hostent *server_hostent = NULL;
-    const char* host = hostname;
-    int nConnectTries = 0;
-    int cret = -1;
-    int optVal;
-    int ssoret;
-    int fdflag, fret;
+    XPlat_Socket sock = *sock_in;
 
-    mrn_dbg(3, mrn_printf(FLF, stderr, "In connectHost(%s:%d) sock:%d..\n",
-                          host, port, sock));
+    unsigned nretry = 0;
+    if( num_retry > 0 ) 
+        nretry = (unsigned) num_retry;
 
-    if (sock <= 0) {
-        sock = socket ( AF_INET, SOCK_STREAM, 0 );
-        if ( sock == -1 ) {
-            err = NetUtils_GetLastError();
-            perror( "socket()" );
-            mrn_dbg(1, mrn_printf(FLF, stderr, "socket() failed, errno=%d\n", err));
-            return -1;
-        }
-        mrn_dbg(5, mrn_printf(FLF, stderr, "socket() => %d\n", sock));
+    bool rc = XPlat_SocketUtils_Connect( hostname, port, 
+                                         sock, nretry );
+    if( rc ) {
+        *sock_in = (int) sock;
+        return 0;
     }
-
-    server_hostent = gethostbyname( host ); 
-    if ( server_hostent == NULL ) {
-        perror ( "gethostbyname()" );
-        return -1;
-    } 
-
-    memset( &server_addr, 0, sizeof(server_addr) );
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-    memcpy( &server_addr.sin_addr, server_hostent->h_addr_list[0],
-            sizeof(struct in_addr) );
-
-    do {
-        cret = connect(sock, (struct sockaddr *) &server_addr, (socklen_t) sizeof(server_addr));
-        if (cret == -1 ) {
-            err = NetUtils_GetLastError(); 
-            mrn_dbg(5, mrn_printf(FLF, stderr, "connectHost: connect() failed, err=%d\n", err));
-            if (!(Error_ETimedOut(err) || Error_EConnRefused(err))) {
-                mrn_dbg(1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n", 
-                                      host, port, Error_GetErrorString(err)));
-                return -1;
-            }
-
-            nConnectTries++;
-            mrn_dbg(3, mrn_printf(FLF, stderr, "connect() to %s:%d timed out %d times\n", 
-                                  host, port, nConnectTries));
-            if ((num_retry > 0 ) && (nConnectTries >= num_retry ))
-                break;
-
-            // delay before trying again
-            sleep((unsigned)nConnectTries);
-        }
-    } while ( cret == -1 );
-
-    if (cret == -1) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "connect() to %s:%d failed: %s\n", 
-                              host, port, Error_GetErrorString(err)));
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to connect to %s:%hu\n",
+                               hostname, port) );
         return -1;
     }
-
-    mrn_dbg(5, mrn_printf(FLF, stderr, "connectHost: connected!\n"));
-
-#ifndef os_windows
-    // Close socket on exec
-    fdflag = fcntl(sock, F_GETFD );
-    if( fdflag == -1 ) {
-        // failed to retrieve the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );
-    }
-    fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
-    if( fret == -1 ) {
-        // we failed to set the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD close-on-exec failed\n") );
-    }
-#endif
-
-#if defined(TCP_NODELAY)
-    // turn of Nagle algorithm for coalescing packets
-    optVal = 1;
-    ssoret = setsockopt(sock,
-                        IPPROTO_TCP,
-                        TCP_NODELAY,
-                        (const char*)&optVal,
-                        (socklen_t) sizeof(optVal));
-    if (ssoret == -1 ) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "failed to set TCP_NODELAY\n"));
-    }
-#endif
-
-    mrn_dbg(3, mrn_printf(FLF, stderr, "Leaving connectHost(). Returning sock: %d\n", sock));
-
-    *sock_in = sock;
-    return 0;
 }
+
+/*************** Debug Utilities ***************/
 
 extern char* MRN_DEBUG_LOG_DIRECTORY;
 
@@ -205,7 +81,7 @@ int mrn_printf( const char *file, int line, const char * func,
         if ( (fp == NULL) && (rank != UnknownRank) ) {
             logfile[0] = '\0';
 
-            NetUtils_GetLocalHostName(host);
+            XPlat_NetUtils_GetLocalHostName(host);
             host[XPLAT_MAX_HOSTNAME_LEN-1] = '\0';
 
             // find log directory
@@ -248,6 +124,8 @@ int mrn_printf( const char *file, int line, const char * func,
    
     return retval;
 }
+
+/*************** Timing Utilities ***************/
 
 Timer_t new_Timer_t()
 {
@@ -302,11 +180,10 @@ double Timer_get_latency_msecs(Timer_t time)
     return 1000 * Timer_get_latency_secs(time);
 }
 
-Rank getrank() {return myrank;}
+/*************** MISC ***************/
 
-void setrank(Rank ir) {
-    myrank=ir;
-}
+Rank getrank() { return myrank; }
+void setrank(Rank ir) { myrank = ir; }
 
 int isBigEndian() {
     unsigned int one = 1;

@@ -6,7 +6,7 @@
 #ifndef __mrnet_config_h
 #define __mrnet_config_h 1
 
-/* conf/config.h.in.  Generated from ./conf/configure.in by autoheader.  */
+/* conf/config.h.in.  Generated from conf/configure.in by autoheader.  */
 
 /* Set to default path of mrnet_commnode executable. */
 #undef COMMNODE_EXE
@@ -25,6 +25,12 @@
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
+
+/* Define to 1 if you have the <assert.h> header file. */
+#undef HAVE_ASSERT_H
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
@@ -62,8 +68,14 @@
 /* Define to 1 if stdbool.h conforms to C99. */
 #undef HAVE_STDBOOL_H
 
+/* Define to 1 if you have the <stddef.h> header file. */
+#undef HAVE_STDDEF_H
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H

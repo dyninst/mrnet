@@ -155,7 +155,7 @@ bool EventDetector::add_FD( int ifd )
 
 bool EventDetector::remove_FD( int ifd )
 {
-    XPlat::XPSOCKET new_max = -1;
+    XPlat_Socket new_max = -1;
     unsigned int i, j;
 
     mrn_dbg_func_begin();

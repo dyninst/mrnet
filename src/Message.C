@@ -14,13 +14,9 @@
 #include "mrnet/Packet.h"
 #include "xplat/Atomic.h"
 #include "xplat/Error.h"
-#include "xplat/NCIO.h"
 #include "xplat/NetUtils.h"
+#include "xplat/SocketUtils.h"
 #include "xplat/Types.h"
-
-#ifndef MSG_NOSIGNAL
-#define MSG_NOSIGNAL 0
-#endif
 
 namespace MRN
 {
@@ -53,7 +49,7 @@ Message::~Message()
         free(_packet_sizes_buf);
 }
 
-int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
+int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
                    Rank iinlet_rank )
 {
     Timer t1;
@@ -63,7 +59,7 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
     size_t buf_len;
     uint64_t *packet_sizes;
     char *buf = NULL;
-    XPlat::NCBuf* ncbufs;
+    XPlat::SocketUtils::NCBuf* ncbufs;
     uint64_t len;
     unsigned int i, j;
     int rc = 0;
@@ -105,7 +101,7 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
         using_prealloc = false;
         buf = (char*) malloc( buf_len );
         packet_sizes = (uint64_t*) malloc( sizeof(uint64_t) * num_buffers );
-        ncbufs = new XPlat::NCBuf[num_buffers];
+        ncbufs = new XPlat::SocketUtils::NCBuf[num_buffers];
     }
 
     retval = MRN_recv( sock_fd, buf, buf_len );
@@ -132,9 +128,9 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
         total_bytes += size_t(len);
     }
 
-    retval = XPlat::NCRecv( sock_fd, ncbufs, num_buffers );
+    retval = XPlat::SocketUtils::Recv( sock_fd, ncbufs, num_buffers );
     if( retval != total_bytes ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "NCRecv %"PRIsszt" of %"PRIsszt" bytes received\n", 
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "SocketUtils::Recv %"PRIsszt" of %"PRIsszt" bytes received\n", 
                                retval, total_bytes) );
         rc = -1;
         goto recv_cleanup_return;
@@ -176,14 +172,14 @@ int Message::recv( XPlat::XPSOCKET sock_fd, std::list< PacketPtr > &packets_in,
     return rc;
 }
 
-int Message::send( XPlat::XPSOCKET sock_fd )
+int Message::send( XPlat_Socket sock_fd )
 {
     ssize_t sret;
     size_t buf_len, total_bytes = 0;
     Stream * strm;
     uint64_t *packet_sizes = NULL;
     char *buf = NULL;
-    XPlat::NCBuf* ncbufs;
+    XPlat::SocketUtils::NCBuf* ncbufs;
     unsigned int i, j;
     int packetLength, rc = 0;
     uint32_t num_packets, num_buffers, num_ncbufs;
@@ -233,7 +229,7 @@ int Message::send( XPlat::XPSOCKET sock_fd )
     else {
         using_prealloc = false;
         buf = (char*) malloc( buf_len );
-        ncbufs = new XPlat::NCBuf[ num_ncbufs ];
+        ncbufs = new XPlat::SocketUtils::NCBuf[ num_ncbufs ];
         packet_sizes = (uint64_t*) malloc( sizeof(uint64_t) * num_buffers );
     }
 
@@ -281,7 +277,6 @@ int Message::send( XPlat::XPSOCKET sock_fd )
     ncbufs[0].buf = _packet_count_buf;
     ncbufs[0].len = _packet_count_buf_len;
 
-
     //
     // packet sizes
     //
@@ -296,10 +291,11 @@ int Message::send( XPlat::XPSOCKET sock_fd )
     ncbufs[1].len = buf_len;
 
     // Send it all
-    sret = XPlat::NCSend( sock_fd, ncbufs, num_ncbufs );
+    sret = XPlat::SocketUtils::Send( sock_fd, ncbufs, num_ncbufs );
     if( sret < (ssize_t)(total_bytes + _packet_count_buf_len + buf_len) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
-                    "XPlat::NCSend() returned %"PRIsszt" of %"PRIszt" bytes, nbuffers = %u\n",
+                               "XPlat::SocketUtils::Send() returned %"PRIsszt
+		               " of %"PRIszt" bytes, nbuffers = %u\n",
                                sret, total_bytes, num_buffers ));
         rc = -1;
         goto send_cleanup_return;
@@ -380,23 +376,24 @@ void Message::waitfor_MessagesToSend( void )
  *  some basic data types
  *********************************************************/
 
-ssize_t MRN_send( XPlat::XPSOCKET fd, const char *buf, size_t count )
+ssize_t MRN_send( XPlat_Socket fd, const char *buf, size_t count )
 {    
     ssize_t rc;
-    rc = XPlat::NCsend( fd, buf, count );
+    rc = XPlat::SocketUtils::send( fd, buf, count );
     if( rc < 0 )
         return -1;
     else
         return rc;
 }
 
-ssize_t MRN_recv( XPlat::XPSOCKET fd, char *buf, size_t count )
+ssize_t MRN_recv( XPlat_Socket fd, char *buf, size_t count )
 {
     ssize_t rc;
-    rc = XPlat::NCrecv( fd, buf, count );
+    rc = XPlat::SocketUtils::recv( fd, buf, count );
     if( rc < 0 )
         return -1;
     else
         return rc;
 }
+
 } // namespace MRN

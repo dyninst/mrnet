@@ -3,11 +3,10 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <winsock2.h>
-
 #include "xplat_lightweight/Error.h"
+#include "xplat_lightweight/Types.h"
 
-char* Error_GetErrorString(int code)
+char* XPlat_Error_GetErrorString(int code)
 {
     char msgbuf[1024];
     DWORD dwErr = (DWORD)code;
@@ -24,17 +23,17 @@ char* Error_GetErrorString(int code)
     return ((dwRet != 0) ? msgbuf : "");
 }
 
-int Error_ETimedOut(int code)
+int XPlat_Error_ETimedOut(int code)
 {
     return (code == WSAETIMEDOUT);
 }
 
-int Error_EAddrInUse(int code)
+int XPlat_Error_EAddrInUse(int code)
 {
     return (code == WSAEADDRINUSE);
 }
 
-int Error_EConnRefused(int code)
+int XPlat_Error_EConnRefused(int code)
 {
     return (code == WSAECONNREFUSED);
 }

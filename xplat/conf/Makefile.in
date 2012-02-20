@@ -78,7 +78,6 @@ XPLAT_SRCS = $(SRCDIR)/Monitor-pthread.C \
              $(SRCDIR)/TLSKey-pthread.C \
              $(SRCDIR)/Once-pthread.C \
              $(SRCDIR)/SharedObject-unix.C \
-             $(SRCDIR)/NCIO-unix.C \
              $(SRCDIR)/Process.C \
              $(SRCDIR)/Process-unix.C \
              $(SRCDIR)/Thread-pthread.C \
@@ -86,6 +85,7 @@ XPLAT_SRCS = $(SRCDIR)/Monitor-pthread.C \
              $(SRCDIR)/NetUtils.C \
              $(SRCDIR)/NetUtils-unix.C \
              $(SRCDIR)/PathUtils-unix.C \
+             $(SRCDIR)/SocketUtils.C \
              $(SRCDIR)/SocketUtils-unix.C \
              $(SRCDIR)/Error-unix.C
 

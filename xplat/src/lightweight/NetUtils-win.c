@@ -9,12 +9,12 @@
 
 #include "xplat_lightweight/NetUtils.h"
 
-int NetUtils_GetLastError()
+int XPlat_NetUtils_GetLastError()
 {
-  return WSAGetLastError();
+    return WSAGetLastError();
 }
 
-int NetUtils_GetLocalHostName(char* this_host) 
+int XPlat_NetUtils_GetLocalHostName(char* this_host) 
 {
     char host[256];
     gethostname(host,256);

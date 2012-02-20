@@ -3,73 +3,38 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined(__utils_lightweight_h)
+#ifndef __utils_lightweight_h
 #define __utils_lightweight_h 1
 
-#if !defined (__STDC_LIMIT_MACROS)
-#  define __STDC_LIMIT_MACROS
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS
 #endif
-#if !defined (__STDC_CONSTANT_MACROS)
-#  define __STDC_CONSTANT_MACROS
+#ifndef __STDC_CONSTANT_MACROS
+#define __STDC_CONSTANT_MACROS
 #endif
-#if !defined (__STDC_FORMAT_MACROS)
-#  define __STDC_FORMAT_MACROS
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
 #endif
 
 #ifndef UNUSED
-#if defined(__GNUC__)
+# if defined(__GNUC__)
 #   define UNUSED(x) UNUSED_ ## x __attribute__((unused))
-#else
+# else
 #   define UNUSED(x) x
-#endif
+# endif
 #endif
  
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mrnet_lightweight/Types.h"
-#include "xplat_lightweight/Types.h"
-
-#ifndef os_windows // unix
-
-# include "mrnet_config.h"
-
-# ifdef HAVE_SIGNAL_H
-#  include <signal.h>
-# endif
-# ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-# endif
-# ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# endif
-
-#else // windows
-
-# include <io.h>
-# include <sys/timeb.h>
-# include <winsock2.h>
-
-# define srand48(x) srand((unsigned int)x)
-# define drand48 (double)rand
-# define snprintf _snprintf
-# define sleep(x) Sleep(1000*(DWORD)x)
-# define inline __inline
-# define strtok_r strtok_s
-# define strdup _strdup
-
-int gettimeofday(struct timeval *tv, struct timezone *tz);
-
-#endif // ifndef os_windows
 
 #define MRN_RELEASE_DATE_SECS 1308200400
 
-struct hostent *copy_hostent (struct hostent *in);
-void delete_hostent(struct hostent *in);
-struct hostent * mrnet_gethostbyname(const char* name);
+#define NULL_STRING ""
 
+/*************** Socket Utilities ***************/
 int connectHost ( int *sock_in, char* hostname, 
                   Port port, int num_retry);
+
+/*************** Debug Utilities ***************/
 
 #if defined(DEBUG_MRNET)
 # define _fprintf(X) fprintf X;
@@ -78,7 +43,6 @@ int connectHost ( int *sock_in, char* hostname,
 # define _fprintf(X) ;
 # define _perror(X) ;
 #endif
-                        // defined(DEBUG_MRNET)
 
 extern int CUR_OUTPUT_LEVEL;
 #define mrn_dbg( x, y) \
@@ -88,7 +52,6 @@ do{ \
     }                                 \
 }while(0);
 
-#define NULL_STRING ""
 
 // FLF is used to call mrn_printf(FLF, ...)
 #if !defined( __GNUC__)
@@ -108,6 +71,7 @@ do { \
 }while(0);
 
 
+/*************** Timing Utilities ***************/
 typedef struct {  
     struct timeval start_tv;
     struct timeval stop_tv;
@@ -118,24 +82,19 @@ typedef struct {
 Timer_t new_Timer_t();
 
 double tv2dbl(struct timeval tv);
-
 struct timeval dbl2tv(double d);
 
 void Timer_start(Timer_t time); 
-
 void Timer_stop(Timer_t time);
 
-double Timer_get_latency_secs(Timer_t time); 
-
+double Timer_get_latency_secs(Timer_t time);
 double Timer_get_latency_msecs(Timer_t time);
 
+/*************** MISC ***************/
 Rank getrank();
-
 void setrank(Rank ir);
 
 int isBigEndian();
-
-/* void endianTest(); */
 
 #endif /* __utils_lightweight_h */
 

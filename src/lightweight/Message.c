@@ -15,14 +15,8 @@
 #include "utils_lightweight.h"
 #include "xplat_lightweight/vector.h"
 
-#include "xplat_lightweight/NCIO.h"
 #include "xplat_lightweight/NetUtils.h"
-#include "xplat_lightweight/Types.h"
 #include "xplat_lightweight/SocketUtils.h"
-
-#ifndef MSG_NOSIGNAL
-#define MSG_NOSIGNAL 0
-#endif
 
 Message_t* new_Message_t()
 {
@@ -34,7 +28,7 @@ Message_t* new_Message_t()
     return new_message;
 }
 
-int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
+int Message_recv(XPlat_Socket sock_fd, vector_t* packets_in, Rank iinlet_rank)
 {
     int retval;
     unsigned int i;
@@ -44,7 +38,7 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     enum pdr_op op = PDR_DECODE;
     size_t psz, buf_len, recv_total, total_bytes = 0;
     ssize_t readRet;
-    NCBuf_t* ncbufs;
+    XPlat_NCBuf_t* ncbufs;
     Packet_t* new_packet;
     uint64_t *packet_sizes;
     char *buf = NULL;
@@ -140,7 +134,7 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     //
     
     /* recv packet buffers */
-    ncbufs = (NCBuf_t*) malloc( sizeof(NCBuf_t) * (size_t)num_buffers );
+    ncbufs = (XPlat_NCBuf_t*) malloc( sizeof(XPlat_NCBuf_t) * (size_t)num_buffers );
     assert(ncbufs);
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Reading %u packets:\n", num_packets));
@@ -218,7 +212,7 @@ int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank)
     return retval;
 }
 
-int Message_send(Message_t* msg_out, int sock_fd)
+int Message_send(Message_t* msg_out, XPlat_Socket sock_fd)
 {
     uint32_t num_buffers, num_packets;
     size_t buf_len;
@@ -229,7 +223,7 @@ int Message_send(Message_t* msg_out, int sock_fd)
     ssize_t sret, mcwret;
     char* buf = NULL;
 
-    NCBuf_t ncbufs[2];
+    XPlat_NCBuf_t ncbufs[2];
     uint64_t packet_sizes[2];
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Sending packets from message %p\n", msg_out));
@@ -321,11 +315,12 @@ int Message_send(Message_t* msg_out, int sock_fd)
                           "Sending %d packets (%d total bytes)\n", 
                           num_packets, total_bytes));
 
-    sret = XPlat_NCSend(sock_fd, ncbufs, num_buffers);
+    sret = XPlat_SocketUtils_Send(sock_fd, ncbufs, num_buffers);
     if( sret != (ssize_t)total_bytes ) {
-        err = NetUtils_GetLastError();
+        err = XPlat_NetUtils_GetLastError();
         mrn_dbg(1, mrn_printf(FLF, stderr,
-          "XPlat_NCSend() returned %d of %d bytes, errno = %d, nbuffers = %d\n", 
+                              "XPlat_SocketUtils_Send() returned %d of %d bytes,"
+                              " errno = %d, nbuffers = %d\n", 
                               sret, total_bytes, err, num_packets));
         return -1;
     }
@@ -342,22 +337,24 @@ int Message_send(Message_t* msg_out, int sock_fd)
  * data types
  ******************************************************************/
 
-ssize_t MRN_send(int fd, void *buf, size_t count)
+ssize_t MRN_send(XPlat_Socket sock_fd, void *buf, size_t count)
 {
     ssize_t rc;
-    rc = XPlat_NCsend( fd, buf, count );
-    if( rc < 0 )
+    rc = XPlat_SocketUtils_send( sock_fd, buf, count );
+    if( rc < 0 ) {
         return -1;
+    }
     else
         return rc;
 }
 
-ssize_t MRN_recv(int fd, void *buf, size_t count)
+ssize_t MRN_recv(XPlat_Socket sock_fd, void *buf, size_t count)
 {
     ssize_t rc;
-    rc = XPlat_NCrecv( fd, buf, count );
-    if( rc < 0 )
+    rc = XPlat_SocketUtils_recv( sock_fd, buf, count );
+    if( rc < 0 ) {
         return -1;
+    }
     else
         return rc;
 }

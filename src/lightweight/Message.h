@@ -25,10 +25,10 @@ typedef struct {
 
 Message_t* new_Message_t();
 
-int Message_recv(int sock_fd, vector_t* packets_in, Rank iinlet_rank);
-int Message_send(Message_t* msg_out, int sock_fd);
+int Message_recv(XPlat_Socket sock_fd, vector_t* packets_in, Rank iinlet_rank);
+int Message_send(Message_t* msg_out, XPlat_Socket sock_fd);
 
-ssize_t MRN_send(int ifd, void *ibuf, size_t ibuf_len);
-ssize_t MRN_recv(int fd, void *buf, size_t count);
+ssize_t MRN_send(XPlat_Socket sock_fd, void *buf, size_t buf_len);
+ssize_t MRN_recv(XPlat_Socket sock_fd, void *buf, size_t count);
 
 #endif /* __message_h */

@@ -3,21 +3,15 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdlib.h>
-#include <assert.h>
-#include <stdio.h>
-#include <errno.h>
-#include <unistd.h>
-#include <string.h>
-
 #include "xplat_lightweight/NetUtils.h"
+#include "xplat_lightweight/Types.h"
 
-int NetUtils_GetLastError()
+int XPlat_NetUtils_GetLastError()
 {
-  return errno;
+    return errno;
 }
 
-int NetUtils_GetLocalHostName(char* this_host) 
+int XPlat_NetUtils_GetLocalHostName(char* this_host) 
 {
 #if defined(arch_crayxt)
     // on the XT, the node number is available in /proc/cray_xt/nid
@@ -46,5 +40,5 @@ int NetUtils_GetLocalHostName(char* this_host)
     strncpy(this_host, host, (size_t)XPLAT_MAX_HOSTNAME_LEN);
 #endif
 
-  return 0;
+    return 0;
 }

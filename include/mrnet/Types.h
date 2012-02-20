@@ -43,7 +43,7 @@ namespace MRN
                     FILE * fp, const char *format, ... );
 
     /* pretty names for MRNet port and rank types. */
-    typedef uint16_t Port;
+    typedef XPlat_Port Port;
     typedef uint32_t Rank;
     extern const Port UnknownPort;
     extern const Rank UnknownRank;

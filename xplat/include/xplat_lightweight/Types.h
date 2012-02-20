@@ -3,8 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined (__xplat_types_h)
-#define xplat_types_h
+#ifndef __xplat_types_h
+#define __xplat_types_h
 
 #if defined(os_windows)
 # include "xplat_lightweight/Types-win.h"
@@ -12,4 +12,16 @@
 # include "xplat_lightweight/Types-unix.h"
 #endif // defined(os_windows)
 
-#endif // xplat_types_h
+#ifndef true
+# define true (1)
+#endif
+
+#ifndef false
+# define false (0)
+#endif
+
+#ifndef bool_t
+# define bool_t int
+#endif
+
+#endif // __xplat_types_h

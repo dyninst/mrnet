@@ -3,8 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#ifndef utils_h
-#define utils_h 1
+#ifndef MRNET_UTILS_H
+#define MRNET_UTILS_H 1
 
 #if !defined (__STDC_LIMIT_MACROS)
 #  define __STDC_LIMIT_MACROS
@@ -28,64 +28,10 @@
 #include "xplat/TLSKey.h"
 #include "xplat/Thread.h"
 
-#include <cassert>
 #include <cctype>
 #include <cerrno>
-#include <climits>
 #include <cmath>
 #include <cstdarg>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-
-#ifndef os_windows // unix
-
-# include "mrnet_config.h"
-
-# if HAVE_FCNTL_H
-#  include <fcntl.h>
-# endif
-# if HAVE_SIGNAL_H
-#  include <signal.h>
-# endif
-# if HAVE_UNISTD_H
-#  include <unistd.h>
-# endif
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# endif
-
-#else // windows
-
-# include <fcntl.h>
-# include <io.h>
-# include <sys/timeb.h>
-
-# define srand48(x) srand((unsigned int)x)
-# define drand48 (double)rand
-# define srandom(x) srand(x)
-# define random rand
-# define snprintf _snprintf
-# define sleep(x) Sleep(1000*(DWORD)x)
-# define EWOULDBLOCK WSAEWOULDBLOCK
-# define strdup _strdup
-
-inline int gettimeofday(struct timeval *tv, struct timezone *tz)
-{
-    int ret_val;
-    struct __timeb64 now;
-    ret_val = _ftime64_s(&now);
-    if(ret_val) {
-        return ret_val;
-    }
-    if (tv != NULL) {
-        tv->tv_sec = (long)now.time;
-        tv->tv_usec = now.millitm * 1000;
-    }
-    return 0;
-}
-
-#endif // ifndef os_windows
 
 #include <vector>
 #include <string>
@@ -97,22 +43,24 @@ inline int gettimeofday(struct timeval *tv, struct timezone *tz)
 namespace MRN
 {
 
-int connectHost( int *sock_in, const std::string & hostname, Port port,
-                 int num_retry = -1 );
-
-int bindPort( int *sock_in, Port *port_in, bool nonblock=false );
-int getSocketConnection( int bound_socket, int& inout_errno,
+/*************** Socket Utilities ***************/
+int connectHost( XPlat_Socket *sock_in, const std::string & hostname, 
+                 XPlat_Port port, int num_retry = -1 );
+int bindPort( XPlat_Socket *sock_in, XPlat_Port *port_in, 
+              bool nonblock=false );
+int getSocketConnection( XPlat_Socket bound_socket, int& inout_errno,
                          int timeout_sec=0, bool nonblock=false );
-int getPortFromSocket( int sock, Port *port );
+int getPortFromSocket( XPlat_Socket sock, XPlat_Port *port );
 
 struct ltstr
 {
-    bool operator(  ) ( std::string s1, std::string s2 ) const
+    bool operator() ( std::string s1, std::string s2 ) const
     {
         return ( s1 < s2 );
     }
 };
 
+/*************** Thread-level Storage ***************/
 extern XPlat::TLSKey tsd_key;
 
 class Network;
@@ -125,6 +73,9 @@ class tsd_t {
     node_type_t node_type;
     Network* network;
 };
+
+
+/*************** Debug Utilities ***************/
 
 #if defined(DEBUG_MRNET)
 #  define _fprintf(X) fprintf X ;
@@ -160,7 +111,7 @@ do { \
 } while(0)
 
 
-/* struct timeval/double conversion */
+/*************** Timing Utilities ***************/
 double tv2dbl( struct timeval tv);
 struct timeval dbl2tv(double d) ;
 
@@ -184,11 +135,9 @@ class Timer{
     static bool first_time;
 };
 
+/*************** MISC ***************/
 bool isBigEndian();
-void endianTest();
 
-}// namespace MRN
+} // namespace MRN
 
-
-
-#endif                          /* utils_h */
+#endif /* MRNET_UTILS_H */

@@ -3,20 +3,14 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+#include "xplat_lightweight/NetUtils.h"
+#include "xplat_lightweight/Types.h"
+
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
-#include "xplat_lightweight/NetUtils.h"
-
-#if defined(os_windows)
-#include <ws2tcpip.h>
-#else
-#include <sys/socket.h>
-#include <netdb.h>
-#endif /* os_windows */
 
 static int checked_resolve_env = 0;
 static int use_resolve = 1;
@@ -24,7 +18,7 @@ static int use_canonical = 0;
 
 #define XPLAT_MAX_HOSTNAME_LEN 256
 
-void get_resolve_env()
+static void get_resolve_env()
 {
     const char* varval;
 
@@ -49,7 +43,7 @@ void get_resolve_env()
     }
 }
 
-int NetUtils_FindNetworkName( char* ihostname, char* ohostname)
+int XPlat_NetUtils_FindNetworkName( char* ihostname, char* ohostname)
 {
     struct addrinfo *addrs, hints;
     int error;
@@ -107,14 +101,14 @@ int NetUtils_FindNetworkName( char* ihostname, char* ohostname)
     return 0; 
 }
 
-int NetUtils_GetHostName( char* ihostname, char* ohostname )
+int XPlat_NetUtils_GetHostName( char* ihostname, char* ohostname )
 {
     char* tok;
     const char* delim = ".";
     char* saveptr;
     char* fqdn = (char*) malloc((size_t)XPLAT_MAX_HOSTNAME_LEN);
     assert(fqdn);
-    if ( NetUtils_FindNetworkName(ihostname, fqdn) == -1 ) {
+    if ( XPlat_NetUtils_FindNetworkName(ihostname, fqdn) == -1 ) {
         free(fqdn);
         return -1;
     }

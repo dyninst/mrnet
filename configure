@@ -3049,7 +3049,14 @@ done
 
 
 
-for ac_header in arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h signal.h sys/ioctl.h sys/socket.h sys/sockio.h sys/time.h
+
+
+
+
+
+
+
+for ac_header in assert.h errno.h fcntl.h limits.h netdb.h signal.h stddef.h stdlib.h stdio.h string.h unistd.h arpa/inet.h netinet/in.h sys/ioctl.h sys/socket.h sys/sockio.h sys/time.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -3197,7 +3204,6 @@ _ACEOF
 fi
 
 done
-
 
 echo "$as_me:$LINENO: checking for stdbool.h that conforms to C99" >&5
 echo $ECHO_N "checking for stdbool.h that conforms to C99... $ECHO_C" >&6
@@ -3356,6 +3362,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 fi
+
 
 echo "$as_me:$LINENO: checking for an ANSI C-conforming const" >&5
 echo $ECHO_N "checking for an ANSI C-conforming const... $ECHO_C" >&6
@@ -4120,7 +4127,6 @@ _ACEOF
 
 fi
 done
-
 
 
 echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5

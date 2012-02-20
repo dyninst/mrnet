@@ -13,4 +13,8 @@
 # include "xplat/Types-unix.h"
 #endif // defined(os_windows)
 
+#ifndef bool_t
+# define bool_t int32_t
+#endif
+
 #endif // XPLAT_TYPES_H

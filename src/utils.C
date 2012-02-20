@@ -14,25 +14,8 @@
 #include "xplat/Process.h"
 using namespace XPlat;
 
-#include <sys/stat.h>
-
 #include <string>
 #include <map>
-
-#if !defined(os_windows)
-# include <sys/time.h>
-# include <net/if.h>
-# include <netdb.h>
-# include <netinet/in.h>
-# include <netinet/tcp.h>
-#else
-#define sleep(x) Sleep(1000*(DWORD)x)
-#include <fcntl.h>
-#endif // defined(os_windows)
-
-#if defined(os_solaris)
-# include <sys/sockio.h>         //only for solaris
-#endif // defined(os_solaris)
 
 static XPlat::Mutex mrn_printf_mutex;
 
@@ -59,418 +42,78 @@ void get_Version( int& major,
     revision = MRNET_VERSION_REV;
 }
 
-int connectHost( int *sock_in, const std::string & hostname, Port port, 
-                 int num_retry /*=-1*/ )
+int connectHost( XPlat_Socket *sock_in, const std::string & hostname, 
+                 XPlat_Port port, int num_retry /*=-1*/ )
 {
+    XPlat_Socket sock = *sock_in;
 
-    int err, sock = *sock_in;
-    struct sockaddr_in server_addr;
-    const char* host = hostname.c_str();
+    unsigned nretry = 0;
+    if( num_retry > 0 ) 
+        nretry = (unsigned) num_retry;
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "In connectHost(%s:%hu) sock:%d ...\n",
-                           host, port, sock ) );
-
-    if( sock <= 0 ) {
-        sock = socket( AF_INET, SOCK_STREAM, 0 );
-        if( sock == -1 ) {
-            err = XPlat::NetUtils::GetLastError();
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "socket() failed, errno=%d\n", err) );
-            return -1;
-        }
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "socket() => %d\n", sock ));
-    }
-
-    memset( &server_addr, 0, sizeof( server_addr ) );
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons( port );
-
-    XPlat::NetUtils::NetworkAddress naddr;
-    int rc = XPlat::NetUtils::GetNetworkAddress( hostname, naddr );
-    if( rc == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                               "failed to convert name %s to network address\n",
-                               host) );
-        return -1;
-    }
-
-    in_addr_t addr = naddr.GetInAddr();
-    memcpy( &server_addr.sin_addr, &addr, sizeof(addr) );
-
-    int nConnectTries = 0;
-    int cret = -1;
-    do {
-        cret = connect( sock, (sockaddr *) & server_addr, sizeof( server_addr ) );
-        if( cret == -1 ) {
-            err = XPlat::NetUtils::GetLastError();
-            if( ! ( XPlat::Error::ETimedOut(err) || XPlat::Error::EConnRefused(err) ) ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%hu failed: %s\n",
-                                       host, port,
-                                       XPlat::Error::GetErrorString( err ).c_str()) );
-                XPlat::SocketUtils::Close( sock );
-                return -1;
-            }
-
-	    nConnectTries++;
-            mrn_dbg( 3, mrn_printf(FLF, stderr, "connect() to %s:%hu timed out %d times\n",
-                                   host, port, nConnectTries) );
-	    if( (num_retry > 0) && (nConnectTries >= num_retry) )
-                break;
-
-	    // delay before trying again (more each time)
-	    sleep( nConnectTries );
-        }
-    } while( cret == -1 );
-
-    if( cret == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "connect() to %s:%hu failed with '%s' after %d tries\n",
-                               host, port,
-			       XPlat::Error::GetErrorString(err).c_str(),
-                               nConnectTries) );
-        XPlat::SocketUtils::Close( sock );
-        return -1;
-    }
-
-#ifndef os_windows
-    // Close socket on exec
-    int fdflag = fcntl(sock, F_GETFD );
-    if( fdflag == -1 ) {
-        // failed to retrieve the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );
-    }
-    int fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
-    if( fret == -1 ) {
-        // we failed to set the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD close-on-exec failed\n") );
-    }
-#endif
-
-#if defined(TCP_NODELAY)
-    // turn off Nagle algorithm for coalescing packets
-    int optVal = 1;
-    int ssoret = setsockopt( sock,
-                             IPPROTO_TCP,
-                             TCP_NODELAY,
-                             (const char*)&optVal,
-                             sizeof( optVal ) );
-    if( ssoret == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to set TCP_NODELAY\n" ) );
-    }
-#endif
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr,
-                "Leaving Connect_to_host(). Returning sock: %d\n", sock ) );
-    *sock_in = sock;
-    return 0;
-}
-
-int bindPort( int *sock_in, Port *port_in, bool nonblock /*=false*/ )
-{
-    int err, sock;
-    Port port = *port_in;
-
-    if( port == UnknownPort )
-        port = 0;
-
-    sock = socket( AF_INET, SOCK_STREAM, 0 );
-    if( sock == -1 ) {
-        err = XPlat::NetUtils::GetLastError();
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "socket() failed: %s\n",
-                               XPlat::Error::GetErrorString(err).c_str() ) );
-        return -1;
-    }
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "In bindPort(sock:%d, port:%d)\n",
-                           sock, port) );
-
-    // Close socket on exec
-#ifndef os_windows
-    int fdflag, fret;
-    fdflag = fcntl(sock, F_GETFD );
-    if( fdflag == -1 ) {
-        // failed to retrieve the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );     
+    bool rc = XPlat::SocketUtils::Connect( hostname, port, 
+                                           sock, nretry );
+    if( rc ) {
+        *sock_in = (int) sock;
+        return 0;
     }
     else {
-        fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
-        if( fret == -1 ) {
-            // failed to set the socket descriptor flags
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD close-on-exec failed\n") );
-        }
-    }
-#endif
-
-    // Set listening socket to non-blocking if requested
-    if( nonblock ) {
-
-        mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                               "Setting listening socket to non blocking\n") );
-
-#ifndef os_windows
-        fdflag = fcntl(sock, F_GETFL );
-        if( fdflag == -1 ) {
-            // failed to retrieve the socket status flags
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFL failed\n") );
-        }
-        else {
-            fret = fcntl( sock, F_SETFL, fdflag | O_NONBLOCK );
-            if( fret == -1 ) {
-                // failed to set the socket status flags
-                mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                        "failed to set listening socket to non blocking\n") );
-            }
-        }
-#else
-        unsigned long mode = 1; // 0 is blocking, !0 is non-blocking
-        if( ioctlsocket(sock, FIONBIO, &mode) != 0 ) {
-            // failed to set the socket flags
-            mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                                   "failed to set listening socket to non blocking\n") );
-        }
-#endif
-    }
-
-
-    struct sockaddr_in local_addr;
-    memset( &local_addr, 0, sizeof( local_addr ) );
-    local_addr.sin_family = AF_INET;
-    local_addr.sin_addr.s_addr = htonl( INADDR_ANY );
-
-    if( port != 0 ) {
-
-#ifndef os_windows
-        // set the socket so that it does not hold onto its port after
-        // the process exits (needed because on at least some platforms we
-        // use well-known ports when connecting sockets)
-        int soVal = 1;
-        int soRet = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, 
-                                (const char*)&soVal, sizeof(soVal) );
-        
-        if( soRet < 0 ) {
-            err = XPlat::NetUtils::GetLastError();
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "setsockopt() failed: %s\n",
-                                   XPlat::Error::GetErrorString(err).c_str() ) );
-        }
-#endif
-        // try to bind and listen using the supplied port
-        local_addr.sin_port = htons( port );
-        if( bind(sock, (sockaddr*)&local_addr, sizeof(local_addr)) == -1 ) {
-            err = XPlat::NetUtils::GetLastError();
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to static port %d failed: %s\n",
-                                   port, XPlat::Error::GetErrorString(err).c_str() ) );
-            XPlat::SocketUtils::Close( sock );
-            return -1;
-        }
-    }
-    // else, the system will assign a port for us in listen
-
-#ifndef os_windows
-    if( listen(sock, 128) == -1 ) {
-        err = XPlat::NetUtils::GetLastError();
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
-                               XPlat::Error::GetErrorString(err).c_str() ) );
-        XPlat::SocketUtils::Close( sock );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to connect to %s:%hu\n",
+                               hostname.c_str(), port) );
         return -1;
     }
-
-    // we have a listening socket
-    *sock_in = sock;
-
-    // determine which port we were actually assigned to
-    if( getPortFromSocket( sock, port_in ) != 0 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
-            "failed to obtain port from socket\n" ) );
-        XPlat::SocketUtils::Close( sock );
-        return -1;
-    }
-#else
-    // let the system assign a port, start from 1st dynamic port
-    port = 49152;
-    bool success = false;
-
-    do {
-        local_addr.sin_port = htons( port );
-        if( bind(sock, (sockaddr*)&local_addr, sizeof(local_addr)) != 0/*== -1*/ ) {
-            err = XPlat::NetUtils::GetLastError();
-            if( XPlat::Error::EAddrInUse( err ) ) {
-                ++port;
-                continue;
-            }
-            else {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "bind() to dynamic port %d failed: %s\n",
-                            port, XPlat::Error::GetErrorString( err ).c_str() ) );
-                XPlat::SocketUtils::Close( sock );
-                return -1;
-            }
-        }
-        else {
-            if( listen(sock, 64) == -1 ) {
-                err = XPlat::NetUtils::GetLastError();
-                if( XPlat::Error::EAddrInUse( err ) ) {
-                    ++port;
-                    continue;
-                }
-                else {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "listen() failed: %s\n",
-                                XPlat::Error::GetErrorString( err ).c_str() ) );
-                    XPlat::SocketUtils::Close( sock );
-                    return -1;
-                }
-            }
-            success = true;
-        }
-    } while( ! success );
-
-    *sock_in = sock;
-    *port_in = port;
-#endif
-
-
-
-#if defined(TCP_NODELAY)
-    // turn off Nagle algorithm for coalescing packets
-    int optVal = 1;
-    int ssoret = setsockopt( sock,
-                             IPPROTO_TCP,
-                             TCP_NODELAY,
-                             (const char*)&optVal,
-                             sizeof( optVal ) );
-    if( ssoret == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to set TCP_NODELAY\n" ) );
-    }
-#endif // defined(TCP_NODELAY)
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr,
-                           "Leaving bindPort(). Returning sock:%d, port:%d\n",
-                           sock, *port_in ) );
-    return 0;
 }
 
-int getSocketConnection( int bound_socket , int& inout_errno,
+int bindPort( XPlat_Socket *sock_in, XPlat_Port *port_in, 
+              bool nonblock /*=false*/ )
+{
+    XPlat_Socket sock = *sock_in;
+    XPlat_Port port = *port_in;
+    bool rc = XPlat::SocketUtils::CreateListening( sock, 
+                                                   port, 
+                                                   nonblock );
+    if( rc ) {
+        *sock_in = sock;
+        *port_in = port;
+        return 0;
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to bind port=%hu\n",
+                               *port_in) );
+        return -1;
+    }
+
+}
+
+int getSocketConnection( XPlat_Socket bound_socket , int& inout_errno,
                          int timeout_sec /*=0*/ , bool nonblock /*=false*/ )
 {
-    int connected_socket;
-    int fdflag;
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "In get_connection(sock:%d).\n",
-                bound_socket ) );
-
-    if( nonblock && (timeout_sec == 0) )
-        timeout_sec = 5;
-
-    do {
-        if( timeout_sec > 0 ) {
-            // use select with timeout
-            fd_set readfds;
-            FD_ZERO( &readfds );
-            FD_SET( bound_socket, &readfds );
-            
-            struct timeval tv = {timeout_sec, 0};
-        
-            int maxfd = bound_socket + 1;
-            int retval = select( maxfd, &readfds, NULL, NULL, &tv );
-            inout_errno = XPlat::NetUtils::GetLastError();
-            if( retval == 0 ) { // timed-out
-                if( ! nonblock )
-                    return -1; // let our caller decide what's next
-
-                continue;
-            }
-            else if( retval < 0 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "select() failed with '%s'\n", 
-		                       strerror(inout_errno)) );
-                return -1;
-            }
-        }
-        connected_socket = accept( bound_socket, NULL, NULL );
-        if( connected_socket == -1 ) {
-            inout_errno = XPlat::NetUtils::GetLastError();
-            if( nonblock && (inout_errno == EWOULDBLOCK) )
-                continue;
-	    if( inout_errno != EWOULDBLOCK ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "accept() failed with '%s'\n", 
-		                       strerror(inout_errno)) );
-	    } 
-            if( inout_errno != EINTR )
-                return -1;
-        }
-    } while( (connected_socket == -1) && (inout_errno == EINTR) );
-
-    if( -1 == connected_socket )
-        return -1;
-
-    // Set the socket to be blocking
-    mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                           "Setting accepted connection socket to blocking\n") );
-#ifndef os_windows
-    int fret;
-    fdflag = fcntl(connected_socket, F_GETFL );
-    if( fdflag == -1 ) {
-        // failed to retrieve the socket status flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFL failed\n") );
-    }
-    else if( fdflag & O_NONBLOCK ) {
-        fret = fcntl( connected_socket, F_SETFL, fdflag & ~O_NONBLOCK );
-        if(fret == -1 ) {
-            // failed to set the socket status flags
-            mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                                   "Setting socket connection to blocking failed\n") );
-        }
-    }
-#else
-    unsigned long mode = 0; // 0 is blocking, !0 is non-blocking
-    if (ioctlsocket(connected_socket, FIONBIO, &mode) != 0) {
-        // failed to set the socket flags
+    XPlat_Socket connection = XPlat::SocketUtils::InvalidSocket;
+    bool rc = XPlat::SocketUtils::AcceptConnection( bound_socket,
+                                                    connection,
+                                                    timeout_sec,
+                                                    nonblock );
+    if( rc )
+        return connection;
+    else {
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                               "Setting socket connection to blocking failed\n") );
-    }
-#endif
-
-#ifndef os_windows
-    // Close socket on exec
-    fdflag = fcntl( connected_socket, F_GETFD );
-    if( fdflag == -1 ) {
-        // failed to retrieve the socket descriptor flags 
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_GETFD failed\n") );    
-    }
-    fret = fcntl( connected_socket, F_SETFD, fdflag | FD_CLOEXEC );
-    if( fret == -1 ) {
-        // we failed to set the socket descriptor flags
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "F_SETFD close-on-exec failed\n") );
-    }
-#endif
-
-#if defined(TCP_NODELAY)
-    // turn off Nagle algorithm for coalescing packets
-    int optVal = 1;
-    int ssoret = setsockopt( connected_socket,
-                             IPPROTO_TCP,
-                             TCP_NODELAY,
-                             (const char*)&optVal,
-                             sizeof( optVal ) );
-    if( ssoret == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to set TCP_NODELAY\n") );
-    }
-#endif
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr,
-                           "Leaving get_connection(). Returning sock:%d\n",
-                           connected_socket) );
-    return connected_socket;
+                               "failed to get connection on socket=%d\n",
+                               bound_socket) );
+        return -1;
+    }   
 }
 
 
-int getPortFromSocket( int sock, Port *port )
+int getPortFromSocket( XPlat_Socket sock, XPlat_Port *port )
 {
-    struct sockaddr_in local_addr;
-    socklen_t sockaddr_len = sizeof( local_addr );
-
-    if( getsockname( sock, (sockaddr*) & local_addr, &sockaddr_len ) == -1 ) {
-        perror( "getsockname" );
-        return -1;
+    XPlat_Port p;
+    XPlat_Socket s = sock;
+    bool rc = XPlat::SocketUtils::GetPort( s, p );
+    if( rc ) {
+        *port = p;
+        return 0;
     }
-
-    *port = ntohs( local_addr.sin_port );
-    return 0;
+    return -1;
 }
 
 extern char* MRN_DEBUG_LOG_DIRECTORY;
@@ -686,9 +329,10 @@ Timer::Timer( void ) {
 
 }
 
-bool isBigEndian() {
+bool isBigEndian()
+{
     unsigned int one = 1;
-    unsigned char * arr = (unsigned char *)&one;
+    unsigned char* arr = (unsigned char *)&one;
 
     if (!arr[0])
         return true;

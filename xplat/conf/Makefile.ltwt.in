@@ -44,15 +44,14 @@ ifeq ($(WANT_THREADSAFE_LTWT), yes)
 endif
 
 XPLAT_LTWT_SRCS = $(SRCDIR)/Error-unix.c \
-                  $(SRCDIR)/NCIO.c \
-                  $(SRCDIR)/NCIO-unix.c \
                   $(SRCDIR)/NetUtils.c \
                   $(SRCDIR)/NetUtils-unix.c \
                   $(SRCDIR)/PathUtils-unix.c \
                   $(SRCDIR)/Process-unix.c \
+                  $(SRCDIR)/SocketUtils.c \
                   $(SRCDIR)/SocketUtils-unix.c \
-				  $(SRCDIR)/map.c \
-				  $(SRCDIR)/vector.c \
+                  $(SRCDIR)/map.c \
+                  $(SRCDIR)/vector.c
 
 XPLAT_LOWFAT_SRCS = $(XPLAT_LTWT_SRCS)
 XPLAT_LOWFAT_SRCS += $(SRCDIR)/Mutex-pthread.c

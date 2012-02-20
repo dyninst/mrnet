@@ -3,12 +3,24 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-// $Id: Types-win.h,v 1.7 2008/10/09 19:53:57 mjbrim Exp $
 #ifndef XPLAT_TYPES_WIN_H
 #define XPLAT_TYPES_WIN_H
 
+// first, get the standard C headers
 #include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <cassert>
+
+// next, the windows headers
+#include <fcntl.h>
+#include <io.h>
+#include <stdbool.h>
+#include <sys/timeb.h>
+#include <windows.h>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 
 // Microsoft's compiler does not provide typedefs for specific-sized integers
 // in <stdint.h>, or any other header.
@@ -69,6 +81,96 @@ typedef int socklen_t;
 // IPv4 address type
 typedef uint32_t in_addr_t;
 
-// different error codes
+// socket type
+typedef SOCKET XPlat_Socket;
+typedef uint16_t XPlat_Port;
+
+// error defs
+#ifndef EADDRINUSE
+# define EADDRINUSE WSAEADDRINUSE
+#endif
+
+#ifndef EBADF 
+# define EBADF WSAEBADF
+#endif
+
+#ifndef ECONNREFUSED
+# define ECONNREFUSED WSAECONNREFUSED
+#endif
+
+#ifndef EINPROGRESS
+# define EINPROGRESS WSAEINPROGRESS
+#endif
+
+#ifndef EINTR
+# define EINTR WSAEINTR
+#endif
+
+#ifndef EINVAL
+# define EINVAL WSAEINVAL
+#endif
+
+#ifndef EFAULT
+# define EFAULT WSAEFAULT
+#endif
+
+#ifndef ENOTSOCK
+# define ENOTSOCK WSAENOTSOCK
+#endif
+
+#ifndef ETIMEDOUT
+# define ETIMEDOUT WSAETIMEDOUT
+#endif
+
+#ifndef EWOULDBLOCK 
+# define EWOULDBLOCK WSAEWOULDBLOCK
+#endif
+
+
+// some limits we use
+#ifndef XPLAT_MAX_HOSTNAME_LEN
+# define XPLAT_MAX_HOSTNAME_LEN (256)
+#endif
+
+#ifndef XPLAT_PATH_MAX_LEN
+# define XPLAT_PATH_MAX_LEN (256)
+#endif
+
+// sleep
+#define sleep(x) Sleep(1000*(DWORD)x)
+
+// gettimeofday
+inline int gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+    int ret_val;
+    struct __timeb64 now;
+    ret_val = _ftime64_s(&now);
+    if(ret_val) {
+        return ret_val;
+    }
+    if (tv != NULL) {
+        tv->tv_sec = (long)now.time;
+        tv->tv_usec = now.millitm * 1000;
+    }
+    return 0;
+}
+
+// random numbers
+#define srand48(x) srand((unsigned int)x)
+#define drand48() (double)rand()
+
+// misc functions
+#ifndef snprintf 
+# define snprintf _snprintf
+#endif
+
+#ifndef strdup 
+# define strdup _strdup
+#endif
+
+#ifndef strtok_r 
+# define strtok_r strtok_s
+#endif
+
 
 #endif // XPLAT_TYPES_WIN_H

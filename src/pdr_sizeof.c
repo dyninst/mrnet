@@ -167,7 +167,7 @@ static struct pdr_ops _ops = {
 uint64_t pdr_sizeof(pdrproc_t func, void *data)
 {
     PDR pdrs;
-    bool_t stat;
+    bool_t rc;
 
     pdrs.p_op = PDR_ENCODE;
     pdrs.p_ops = &_ops;
@@ -175,11 +175,11 @@ uint64_t pdr_sizeof(pdrproc_t func, void *data)
     pdrs.cur = (caddr_t) NULL;
     pdrs.base = (caddr_t) 0;
 
-    stat = func (&pdrs, data);
+    rc = func (&pdrs, data);
     if (pdrs.cur)
         free (pdrs.cur);
 
-    return stat == TRUE ? pdrs.space : 0;
+    return (rc == TRUE ? pdrs.space : 0);
 }
 
 #if defined(__cplusplus)

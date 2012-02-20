@@ -17,14 +17,12 @@
 #define XPLAT_MAX_HOSTNAME_LEN 256
 #endif
 
-void get_resolve_env();
+int XPlat_NetUtils_FindNetworkName(char* ihostname, char* ohostname);
 
-int NetUtils_FindNetworkName(char* ihostname, char* ohostname);
+int XPlat_NetUtils_GetHostName(char* ihostname, char* ohostname);
 
-int NetUtils_GetHostName(char* ihostname, char* ohostname);
+int XPlat_NetUtils_GetLocalHostName(char* this_host);
 
-// has -unix and -win versions
-int NetUtils_GetLastError();
-int NetUtils_GetLocalHostName(char* this_host);
+int XPlat_NetUtils_GetLastError();
 
 #endif /* __netutils_h */

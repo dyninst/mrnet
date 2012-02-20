@@ -14,7 +14,7 @@
 #include "mrnet/Packet.h"
 #include "xplat/Monitor.h"
 #include "mrnet/Network.h"
-#include "xplat/NCIO.h"
+#include "xplat/SocketUtils.h"
 
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
@@ -33,8 +33,9 @@ class Message: public Error{
     Message( Network * net );
     ~Message();
 
-    int send( XPlat::XPSOCKET isock_fd );
-    int recv( XPlat::XPSOCKET isock_fd, std::list < PacketPtr >&opackets, Rank iinlet_rank );
+    int send( XPlat_Socket isock_fd );
+    int recv( XPlat_Socket isock_fd, 
+              std::list < PacketPtr >&opackets, Rank iinlet_rank );
 
     void add_Packet( PacketPtr );
     size_t size_Packets( void );
@@ -53,12 +54,12 @@ class Message: public Error{
     size_t _packet_count_buf_len, _packet_sizes_buf_len, _ncbuf_len;
 
     uint64_t _packet_sizes[MESSAGE_PREALLOC_LEN];
-    XPlat::NCBuf _ncbuf[MESSAGE_PREALLOC_LEN];
+    XPlat::SocketUtils::NCBuf _ncbuf[MESSAGE_PREALLOC_LEN];
 };
 
-ssize_t MRN_send( XPlat::XPSOCKET fd, const char *buf, size_t count );
-ssize_t MRN_recv( XPlat::XPSOCKET fd, char *buf, size_t count );
+ssize_t MRN_send( XPlat_Socket fd, const char *buf, size_t count );
+ssize_t MRN_recv( XPlat_Socket fd, char *buf, size_t count );
 
-}                               // namespace MRN
+} // namespace MRN
 
-#endif                          /* Message_h */
+#endif /* Message_h */

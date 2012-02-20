@@ -3,8 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined(__xplat_dbg_lightweight_h)
-#define __xplat_dbg_lightweight_h 1
+#ifndef XPLAT_DBG_H
+#define XPLAT_DBG_H
 
 #define XPLAT_OUTPUT_LEVEL 1
 
@@ -13,4 +13,4 @@ do{ \
   if(XPLAT_OUTPUT_LEVEL >= x) y; \
 }while(0)
 
-#endif /* __xplat_dbg_lightweight_h */
+#endif /* XPLAT_DBG_H */

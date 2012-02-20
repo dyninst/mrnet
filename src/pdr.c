@@ -361,7 +361,7 @@ bool_t pdr_wrapstring(PDR *pdrs, char **cpp)
 bool_t pdr_reference(PDR *pdrs, char **pp, uint32_t size, pdrproc_t proc)
 {
     char * loc = *pp;
-    bool_t stat;
+    bool_t rc;
 
     if (loc == NULL){
         switch (pdrs->p_op) {
@@ -380,13 +380,13 @@ bool_t pdr_reference(PDR *pdrs, char **pp, uint32_t size, pdrproc_t proc)
         }
     }
 
-    stat = (*proc)(pdrs, loc, LASTUNSIGNED);
+    rc = (*proc)(pdrs, loc, LASTUNSIGNED);
 
     if (pdrs->p_op == PDR_FREE) {
         free(loc);
         *pp = NULL;
     }
-    return (stat);
+    return (rc);
 }
 
 
@@ -435,7 +435,7 @@ bool_t pdr_array(PDR *pdrs, void **addrp, uint64_t *sizep, uint64_t maxsize,
     uint64_t i;
     char * target = (char*) *addrp;
     uint64_t c;  /* the actual element count */
-    bool_t stat = TRUE;
+    bool_t rc = TRUE;
     uint64_t nodesize;
  
     /* like strings, arrays are really counted arrays */
@@ -473,8 +473,8 @@ bool_t pdr_array(PDR *pdrs, void **addrp, uint64_t *sizep, uint64_t maxsize,
     /*
      * now we pdr each element of array
      */
-    for (i = 0; (i < c) && stat; i++) {
-        stat = (*elproc)(pdrs, target);
+    for (i = 0; (i < c) && rc; i++) {
+        rc = (*elproc)(pdrs, target);
         target += elsize;
     }
 
@@ -485,7 +485,7 @@ bool_t pdr_array(PDR *pdrs, void **addrp, uint64_t *sizep, uint64_t maxsize,
         free(*addrp);
         *addrp = NULL;
     }
-    return (stat);
+    return (rc);
 }
 
  /*
