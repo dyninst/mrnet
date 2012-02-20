@@ -755,17 +755,17 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
     //TLS: setup thread local storage for backend
     init_ThreadState( BE_NODE );
 
+    // create the BE-specific stream
+    new_Stream(imyrank, &imyrank, 1, (unsigned short)TFILTER_NULL, 
+                                     (unsigned short)SFILTER_DONTWAIT,
+                                     (unsigned short)TFILTER_NULL);   
+
     string myhostname(imyhostname);
     BackEndNode* ben = CreateBackEndNode( this, myhostname, imyrank,
                                          iphostname, ipport, iprank );
     assert( ben != NULL );
     if( ben->has_Error() ) 
         error( ERR_SYSTEM, imyrank, "Failed to initialize via CreateBackEndNode()" );
-
-    // create the BE-specific stream
-    new_Stream(imyrank, &imyrank, 1, (unsigned short)TFILTER_NULL, 
-                                     (unsigned short)SFILTER_DONTWAIT,
-                                     (unsigned short)TFILTER_NULL);   
 }
 
 void Network::init_InternalNode( const char* iphostname,
