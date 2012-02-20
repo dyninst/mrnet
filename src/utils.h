@@ -6,6 +6,10 @@
 #ifndef utils_h
 #define utils_h 1
 
+#ifdef USE_BOOST_TIMER
+#   include <boost/timer/timer.hpp>
+#endif
+
 #if !defined (__STDC_LIMIT_MACROS)
 #  define __STDC_LIMIT_MACROS
 #endif
@@ -61,6 +65,9 @@
 # include <io.h>
 # include <sys/timeb.h>
 
+// Some versions of boost have this in a timer 
+// subfolder. 
+#include <boost/timer.hpp>
 # define srand48(x) srand((unsigned int)x)
 # define drand48 (double)rand
 # define srandom(x) srand(x)
@@ -168,18 +175,20 @@ class Timer{
  public:
     struct timeval _start_tv, _stop_tv;
     double  _start_d, _stop_d;
-    
     Timer( void );
     void start( void );
     void stop( void );
-    void stop( double d );
-    double get_timer ( void );
     double get_latency_secs( void );
     double get_latency_msecs( void );
     double get_latency_usecs( void );
     double get_offset_msecs( void );
 
  private:
+
+#ifdef USE_BOOST_TIMER
+    boost::timer::cpu_timer  _b_timer;
+#endif 
+
     static double offset;
     static bool first_time;
 };
