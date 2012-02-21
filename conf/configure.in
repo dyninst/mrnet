@@ -1,5 +1,4 @@
 dnl Process this file with autoconf to produce a configure script.
-
 AC_PREREQ(2.59)
 AC_INIT(MRNet,[],[mrnet@cs.wisc.edu],[mrnet],[http://www.paradyn.org/mrnet/])
 AC_CONFIG_SRCDIR(src/Network.C)
@@ -106,14 +105,21 @@ AC_SUBST(FLEX)
 dnl === Check for Boost C++ shared-ptr ===
 HAVE_SYSTEM_BOOST="no"
 HAVE_USER_BOOST="no"
+HAVE_BOOST_TIMER="no"
 if test "$BOOST_INCDIR" = "" ; then
     AC_CHECK_HEADER([boost/shared_ptr.hpp],[HAVE_SYSTEM_BOOST="yes"])
+    AC_CHECK_HEADER([boost/timer/timer.hpp], [HAVE_BOOST_TIMER="yes"])
 else
     AC_CHECK_FILE([$BOOST_INCDIR/boost/shared_ptr.hpp],[HAVE_USER_BOOST="yes"])
+    CXXFLAGS="$CXXFLAGS -I$BOOST_INCDIR"
+    AC_CHECK_HEADER([boost/timer/timer.hpp], [HAVE_BOOST_TIMER="yes"]) 
 fi
 AC_SUBST(HAVE_SYSTEM_BOOST)
 AC_SUBST(HAVE_USER_BOOST)
 AC_SUBST(BOOST_INCDIR)
+if test "$HAVE_BOOST_TIMER" = "yes" ; then
+    CXXFLAGS="$CXXFLAGS -DUSE_BOOST_TIMER"
+fi
 
 dnl === Get necessary macros
 STDCFLAGS="-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS"

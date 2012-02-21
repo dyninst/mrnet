@@ -29,6 +29,9 @@
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
 
+/* Define to 1 if you have the <boost/timer/timer.hpp> header file. */
+#undef HAVE_BOOST_TIMER_TIMER_HPP
+
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
 
