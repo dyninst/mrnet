@@ -83,7 +83,6 @@ void init_local(void)
         if( fd == -1 ) break;
     } 
     if( fd > 2 ) XPlat::SocketUtils::Close(fd);
-
 #else
     // init Winsock
     WORD version = MAKEWORD(2, 2); /* socket version 2.2 supported by all modern Windows */
@@ -755,17 +754,17 @@ void Network::init_BackEnd(const char *iphostname, Port ipport, Rank iprank,
     //TLS: setup thread local storage for backend
     init_ThreadState( BE_NODE );
 
+    // create the BE-specific stream
+    new_Stream(imyrank, &imyrank, 1, (unsigned short)TFILTER_NULL, 
+                                     (unsigned short)SFILTER_DONTWAIT,
+                                     (unsigned short)TFILTER_NULL);   
+
     string myhostname(imyhostname);
     BackEndNode* ben = CreateBackEndNode( this, myhostname, imyrank,
                                          iphostname, ipport, iprank );
     assert( ben != NULL );
     if( ben->has_Error() ) 
         error( ERR_SYSTEM, imyrank, "Failed to initialize via CreateBackEndNode()" );
-
-    // create the BE-specific stream
-    new_Stream(imyrank, &imyrank, 1, (unsigned short)TFILTER_NULL, 
-                                     (unsigned short)SFILTER_DONTWAIT,
-                                     (unsigned short)TFILTER_NULL);   
 }
 
 void Network::init_InternalNode( const char* iphostname,
@@ -1373,10 +1372,11 @@ Stream* Network::new_Stream( unsigned int iid,
 Stream* Network::get_Stream( unsigned int iid ) const
 {
     Stream* ret = NULL;
-    map< unsigned int, Stream* >::const_iterator iter; 
+    if( CTL_STRM_ID == iid ) return ret;
 
     _streams_sync.Lock();
 
+    map< unsigned int, Stream* >::const_iterator iter; 
     if( is_UserStreamId(iid) ) {
         iter = _streams.find( iid );
         if( iter != _streams.end() )
