@@ -20,11 +20,12 @@ install_INCDIR = $(IINCDIR)/mrnet_lightweight
 
 VPATH = $(SRCDIR) $(ROOTDIR)/src
 
-TARGET    = $(LIBDIR)/libmrnet_lightweight.a
-TARGET_LOWFAT = $(LIBDIR)/libmrnet_lightweight_r.a
-TARGET_SO = $(LIBDIR)/libmrnet_lightweight.so
+TARGET           = $(LIBDIR)/libmrnet_lightweight.a
+TARGET_LOWFAT    = $(LIBDIR)/libmrnet_lightweight_r.a
+TARGET_SO        = $(LIBDIR)/libmrnet_lightweight.so
 TARGET_SO_LOWFAT = $(LIBDIR)/libmrnet_lightweight_r.so
-TARGET_SO_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight $(LIBS_LIGHTWEIGHT)
+
+TARGET_SO_DEPLIBS        = -L$(LIBDIR) -lxplat_lightweight $(LIBS_LIGHTWEIGHT)
 TARGET_SO_LOWFAT_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight_r $(LIBS_LOWFAT)
 
 TARGETS = $(TARGET)
@@ -41,8 +42,6 @@ ifeq ($(BUILD_SHARED_LIBS), yes)
         SO_LIST += $(TARGET_SO_LOWFAT)
     endif
 endif 
-
-
 
 LTWT_SRCS = $(SRCDIR)/BackEndNode.c \
             $(SRCDIR)/ChildNode.c \

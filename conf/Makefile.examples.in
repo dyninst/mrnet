@@ -46,31 +46,31 @@ endif
 #### General Definitions ####
 #############################
 
+WANT_THREADSAFE_LTWT = @LTWT_THREADSAFE@
+
+# libs
 LIBMRNET             = -lmrnet
 LIBXPLAT             = -lxplat
 LIBMRNET_LIGHTWEIGHT = -lmrnet_lightweight
 LIBMRNET_LOWFAT      = -lmrnet_lightweight_r
 LIBXPLAT_LIGHTWEIGHT = -lxplat_lightweight
 LIBXPLAT_LOWFAT      = -lxplat_lightweight_r
-LIBS                 = -L$(LIBDIR) $(LIBMRNET) $(LIBXPLAT) @LIBS@ @EXTRA_LIBS@
-LIBS_LIGHTWEIGHT     = -L$(LIBDIR) $(LIBMRNET_LIGHTWEIGHT) $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS@
-LIBS_LOWFAT          = -L$(LIBDIR) $(LIBMRNET_LOWFAT) $(LIBXPLAT_LOWFAT) @LIBS_LOWFAT@ @EXTRA_LIBS@
 
 LDFLAGS = @LDFLAGS@
 SOFLAGS = @SOFLAGS@
 
+LIBS                 = -L$(LIBDIR) $(LIBMRNET) $(LIBXPLAT) @LIBS@ @EXTRA_LIBS@
+LIBS_LIGHTWEIGHT     = -L$(LIBDIR) $(LIBMRNET_LIGHTWEIGHT) $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS@
+LIBS_LOWFAT          = -L$(LIBDIR) $(LIBMRNET_LOWFAT) $(LIBXPLAT_LOWFAT) @LIBS_LOWFAT@ @EXTRA_LIBS@
+
+# includes
 INCDIRS = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include -I$(PLATDIR)
 INCDIRS_LIGHTWEIGHT = $(INCDIRS)
 
-HAVE_SYSTEM_BOOST = @HAVE_SYSTEM_BOOST@
-HAVE_USER_BOOST   = @HAVE_USER_BOOST@
-WANT_THREADSAFE_LTWT = @LTWT_THREADSAFE@
-ifeq ($(HAVE_USER_BOOST), yes)
-    INCDIRS += -I@BOOST_INCDIR@
-else
-    ifeq ($(HAVE_SYSTEM_BOOST), no)
-        INCDIRS += -I$(EXTDIR)/boost/include
-    endif
+# Boost
+HAVE_BOOST = @HAVE_BOOST@
+ifeq ($(HAVE_BOOST), no)
+    INCDIRS += -I$(EXTDIR)/boost/include
 endif
 
 #####################################

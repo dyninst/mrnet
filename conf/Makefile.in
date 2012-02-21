@@ -55,11 +55,8 @@ MKDIR_P = mkdir -p
 # General Definitions
 #####################
 
-BUILD_SHARED_LIBS = @BUILDSHARED@
 
 WANT_THREADSAFE_LTWT = @LTWT_THREADSAFE@
-
-COMPILER_TYPE = @COMPILER_TYPE@
 
 MRNET_OS = @MRNET_OS@
 
@@ -69,28 +66,33 @@ MAKEDEPENDS = $(BASEDIR)/conf/makedepends.sh
 
 VPATH = $(SRCDIR):$(TSTDIR):$(TSTDIR)/test_Recovery
 
+# libs
+BUILD_SHARED_LIBS = @BUILDSHARED@
+SOFLAGS = @SOFLAGS@
+
 LDFLAGS = @LDFLAGS@
 COMMNODE_LDFLAGS = @CN_LDFLAGS@
-SOFLAGS = @SOFLAGS@
 
 LIBS = @LIBS@ @EXTRA_LIBS@
 LIBS_LIGHTWEIGHT = @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS@
 LIBS_LOWFAT = @LIBS_LOWFAT@ @EXTRA_LIBS@
 
+# includes
 COMMON_INCLUDES = -I$(INCDIR) -I$(XPLATDIR)/include -I$(TSTDIR) -I$(PLATDIR) -I$(SRCDIR) 
 INCLUDES = $(COMMON_INCLUDES)
+INCLUDES_LIGHTWEIGHT = $(COMMON_INCLUDES) -I$(SRCDIR)/lightweight
 
-HAVE_SYSTEM_BOOST = @HAVE_SYSTEM_BOOST@
-HAVE_USER_BOOST   = @HAVE_USER_BOOST@
-ifeq ($(HAVE_USER_BOOST), yes)
-    INCLUDES += -I@BOOST_INCDIR@
-else
-    ifeq ($(HAVE_SYSTEM_BOOST), no)
-        INCLUDES += -I$(EXTDIR)/boost/include
-    endif
+# Boost
+HAVE_BOOST = @HAVE_BOOST@
+ifeq ($(HAVE_BOOST), no)
+    INCLUDES += -I$(EXTDIR)/boost/include
 endif
 
-INCLUDES_LIGHTWEIGHT = $(COMMON_INCLUDES) -I$(SRCDIR)/lightweight
+################################
+# Compiler Specific Definitions
+################################
+
+COMPILER_TYPE = @COMPILER_TYPE@
 
 ifeq ($(COMPILER_TYPE), gnu)
     ifndef SILENCE_WARNINGS
@@ -346,7 +348,7 @@ install-local: all $(INSTALL_HEADERS) install-boost
 	fi
 
 install-boost:
-	@if [ "$(HAVE_SYSTEM_BOOST)" = "no" -a "$(HAVE_USER_BOOST)" = "no" ]; then \
+	@if [ "$(HAVE_BOOST)" = "no" ]; then \
 	    echo "Boost not found on system - installing" ; \
 	    if [ ! -d $(IINCDIR)/boost ] ; then \
 	        echo Creating Boost install directory $(IINCDIR)/boost ; \
@@ -450,7 +452,7 @@ $(COMMNODE): $(COMMNODE_OBJS) $(LIBMRNET) $(LIBXPLAT)
 
 $(TOPGEN): $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
 	@echo "Linking `basename $@` ..."
-	$(PURIFY) $(CXX) $(CXXFLAGS) -o $@ $(OBJDIR)/config_generator.o \
+	$(PURIFY) $(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/config_generator.o \
            $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
 $(STD_TESTS_FE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \

@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY CXXCPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX HAVE_SYSTEM_BOOST HAVE_USER_BOOST BOOST_INCDIR build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT LIBS_LOWFAT EXTRA_LIBS LTWT_THREADSAFE PLATFORM_BUILD LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY CXXCPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX HAVE_BOOST build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT LIBS_LOWFAT EXTRA_LIBS LTWT_THREADSAFE PLATFORM_BUILD LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -874,7 +874,7 @@ Optional Packages:
                           libalps.h
   --with-boost=PATH       Absolute path to installation of Boost C++ libraries
                           (note: specify the path to the directory containing
-                          the "boost" directory)
+                          "include" and "lib" sub-directories)
   --with-purify           Use purify for memory debugging
 
 Some influential environment variables:
@@ -2461,9 +2461,9 @@ fi;
 # Check whether --with-boost or --without-boost was given.
 if test "${with_boost+set}" = set; then
   withval="$with_boost"
-  BOOST_INCDIR="${withval}"
+  BOOST_INSTALL_DIR="${withval}"
 else
-  BOOST_INCDIR=""
+  BOOST_INSTALL_DIR=""
 fi;
 
 # Check whether --enable-shared or --disable-shared was given.
@@ -4525,22 +4525,33 @@ echo "$as_me: WARNING: flex not found in \$PATH, is it installed?" >&2;}
 fi
 
 
-HAVE_SYSTEM_BOOST="no"
+LIBS="-lm -lpthread -ldl"
+LIBS_LIGHTWEIGHT="-lm"
+LIBS_LOWFAT=""
+EXTRA_LIBS=""
+
+HAVE_BOOST="no"
 HAVE_USER_BOOST="no"
 HAVE_BOOST_TIMER="no"
-if test "$BOOST_INCDIR" = "" ; then
-    if test "${ac_cv_header_boost_shared_ptr_hpp+set}" = set; then
-  echo "$as_me:$LINENO: checking for boost/shared_ptr.hpp" >&5
-echo $ECHO_N "checking for boost/shared_ptr.hpp... $ECHO_C" >&6
-if test "${ac_cv_header_boost_shared_ptr_hpp+set}" = set; then
+BOOST_INC=""
+BOOST_LIB=""
+if test "$BOOST_INSTALL_DIR" = "" ; then
+
+for ac_header in boost/shared_ptr.hpp
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 fi
-echo "$as_me:$LINENO: result: $ac_cv_header_boost_shared_ptr_hpp" >&5
-echo "${ECHO_T}$ac_cv_header_boost_shared_ptr_hpp" >&6
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
 else
   # Is the header compilable?
-echo "$as_me:$LINENO: checking boost/shared_ptr.hpp usability" >&5
-echo $ECHO_N "checking boost/shared_ptr.hpp usability... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -4548,7 +4559,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
-#include <boost/shared_ptr.hpp>
+#include <$ac_header>
 _ACEOF
 rm -f conftest.$ac_objext
 if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
@@ -4584,15 +4595,15 @@ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
 echo "${ECHO_T}$ac_header_compiler" >&6
 
 # Is the header present?
-echo "$as_me:$LINENO: checking boost/shared_ptr.hpp presence" >&5
-echo $ECHO_N "checking boost/shared_ptr.hpp presence... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <boost/shared_ptr.hpp>
+#include <$ac_header>
 _ACEOF
 if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
@@ -4626,25 +4637,25 @@ echo "${ECHO_T}$ac_header_preproc" >&6
 # So?  What about this header?
 case $ac_header_compiler:$ac_header_preproc:$ac_cxx_preproc_warn_flag in
   yes:no: )
-    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: boost/shared_ptr.hpp: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: boost/shared_ptr.hpp: proceeding with the compiler's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
     ac_header_preproc=yes
     ;;
   no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: present but cannot be compiled" >&5
-echo "$as_me: WARNING: boost/shared_ptr.hpp: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: boost/shared_ptr.hpp:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: boost/shared_ptr.hpp: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: boost/shared_ptr.hpp:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: boost/shared_ptr.hpp: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/shared_ptr.hpp: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: boost/shared_ptr.hpp: in the future, the compiler will take precedence" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
     (
       cat <<\_ASBOX
 ## ------------------------------------------ ##
@@ -4655,34 +4666,42 @@ _ASBOX
       sed "s/^/$as_me: WARNING:     /" >&2
     ;;
 esac
-echo "$as_me:$LINENO: checking for boost/shared_ptr.hpp" >&5
-echo $ECHO_N "checking for boost/shared_ptr.hpp... $ECHO_C" >&6
-if test "${ac_cv_header_boost_shared_ptr_hpp+set}" = set; then
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_cv_header_boost_shared_ptr_hpp=$ac_header_preproc
+  eval "$as_ac_Header=\$ac_header_preproc"
 fi
-echo "$as_me:$LINENO: result: $ac_cv_header_boost_shared_ptr_hpp" >&5
-echo "${ECHO_T}$ac_cv_header_boost_shared_ptr_hpp" >&6
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
 
 fi
-if test $ac_cv_header_boost_shared_ptr_hpp = yes; then
-  HAVE_SYSTEM_BOOST="yes"
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ HAVE_BOOST="yes"
 fi
 
+done
 
-    if test "${ac_cv_header_boost_timer_timer_hpp+set}" = set; then
-  echo "$as_me:$LINENO: checking for boost/timer/timer.hpp" >&5
-echo $ECHO_N "checking for boost/timer/timer.hpp... $ECHO_C" >&6
-if test "${ac_cv_header_boost_timer_timer_hpp+set}" = set; then
+
+for ac_header in boost/timer/timer.hpp
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 fi
-echo "$as_me:$LINENO: result: $ac_cv_header_boost_timer_timer_hpp" >&5
-echo "${ECHO_T}$ac_cv_header_boost_timer_timer_hpp" >&6
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
 else
   # Is the header compilable?
-echo "$as_me:$LINENO: checking boost/timer/timer.hpp usability" >&5
-echo $ECHO_N "checking boost/timer/timer.hpp usability... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -4690,7 +4709,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
-#include <boost/timer/timer.hpp>
+#include <$ac_header>
 _ACEOF
 rm -f conftest.$ac_objext
 if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
@@ -4726,15 +4745,15 @@ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
 echo "${ECHO_T}$ac_header_compiler" >&6
 
 # Is the header present?
-echo "$as_me:$LINENO: checking boost/timer/timer.hpp presence" >&5
-echo $ECHO_N "checking boost/timer/timer.hpp presence... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <boost/timer/timer.hpp>
+#include <$ac_header>
 _ACEOF
 if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
@@ -4768,25 +4787,25 @@ echo "${ECHO_T}$ac_header_preproc" >&6
 # So?  What about this header?
 case $ac_header_compiler:$ac_header_preproc:$ac_cxx_preproc_warn_flag in
   yes:no: )
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: proceeding with the compiler's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
     ac_header_preproc=yes
     ;;
   no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: present but cannot be compiled" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: in the future, the compiler will take precedence" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
     (
       cat <<\_ASBOX
 ## ------------------------------------------ ##
@@ -4797,58 +4816,47 @@ _ASBOX
       sed "s/^/$as_me: WARNING:     /" >&2
     ;;
 esac
-echo "$as_me:$LINENO: checking for boost/timer/timer.hpp" >&5
-echo $ECHO_N "checking for boost/timer/timer.hpp... $ECHO_C" >&6
-if test "${ac_cv_header_boost_timer_timer_hpp+set}" = set; then
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_cv_header_boost_timer_timer_hpp=$ac_header_preproc
+  eval "$as_ac_Header=\$ac_header_preproc"
 fi
-echo "$as_me:$LINENO: result: $ac_cv_header_boost_timer_timer_hpp" >&5
-echo "${ECHO_T}$ac_cv_header_boost_timer_timer_hpp" >&6
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
 
 fi
-if test $ac_cv_header_boost_timer_timer_hpp = yes; then
-  HAVE_BOOST_TIMER="yes"
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ HAVE_BOOST_TIMER="yes"
 fi
 
+done
 
 else
-    as_ac_File=`echo "ac_cv_file_$BOOST_INCDIR/boost/shared_ptr.hpp" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $BOOST_INCDIR/boost/shared_ptr.hpp" >&5
-echo $ECHO_N "checking for $BOOST_INCDIR/boost/shared_ptr.hpp... $ECHO_C" >&6
-if eval "test \"\${$as_ac_File+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$BOOST_INCDIR/boost/shared_ptr.hpp"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
-if test `eval echo '${'$as_ac_File'}'` = yes; then
-  HAVE_USER_BOOST="yes"
-fi
+    BOOST_INC="-I$BOOST_INSTALL_DIR/include"
+    BOOST_LIB="-L$BOOST_INSTALL_DIR/lib"
+    SAVE_CXXFLAGS="$CXXFLAGS"
+    CXXFLAGS="$CXXFLAGS $BOOST_INC"
 
-    CXXFLAGS="$CXXFLAGS -I$BOOST_INCDIR"
-    if test "${ac_cv_header_boost_timer_timer_hpp+set}" = set; then
-  echo "$as_me:$LINENO: checking for boost/timer/timer.hpp" >&5
-echo $ECHO_N "checking for boost/timer/timer.hpp... $ECHO_C" >&6
-if test "${ac_cv_header_boost_timer_timer_hpp+set}" = set; then
+for ac_header in boost/shared_ptr.hpp
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 fi
-echo "$as_me:$LINENO: result: $ac_cv_header_boost_timer_timer_hpp" >&5
-echo "${ECHO_T}$ac_cv_header_boost_timer_timer_hpp" >&6
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
 else
   # Is the header compilable?
-echo "$as_me:$LINENO: checking boost/timer/timer.hpp usability" >&5
-echo $ECHO_N "checking boost/timer/timer.hpp usability... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -4856,7 +4864,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
-#include <boost/timer/timer.hpp>
+#include <$ac_header>
 _ACEOF
 rm -f conftest.$ac_objext
 if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
@@ -4892,15 +4900,15 @@ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
 echo "${ECHO_T}$ac_header_compiler" >&6
 
 # Is the header present?
-echo "$as_me:$LINENO: checking boost/timer/timer.hpp presence" >&5
-echo $ECHO_N "checking boost/timer/timer.hpp presence... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <boost/timer/timer.hpp>
+#include <$ac_header>
 _ACEOF
 if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
@@ -4934,25 +4942,25 @@ echo "${ECHO_T}$ac_header_preproc" >&6
 # So?  What about this header?
 case $ac_header_compiler:$ac_header_preproc:$ac_cxx_preproc_warn_flag in
   yes:no: )
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: proceeding with the compiler's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
     ac_header_preproc=yes
     ;;
   no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: present but cannot be compiled" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: boost/timer/timer.hpp: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: boost/timer/timer.hpp: in the future, the compiler will take precedence" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
     (
       cat <<\_ASBOX
 ## ------------------------------------------ ##
@@ -4963,29 +4971,194 @@ _ASBOX
       sed "s/^/$as_me: WARNING:     /" >&2
     ;;
 esac
-echo "$as_me:$LINENO: checking for boost/timer/timer.hpp" >&5
-echo $ECHO_N "checking for boost/timer/timer.hpp... $ECHO_C" >&6
-if test "${ac_cv_header_boost_timer_timer_hpp+set}" = set; then
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_cv_header_boost_timer_timer_hpp=$ac_header_preproc
+  eval "$as_ac_Header=\$ac_header_preproc"
 fi
-echo "$as_me:$LINENO: result: $ac_cv_header_boost_timer_timer_hpp" >&5
-echo "${ECHO_T}$ac_cv_header_boost_timer_timer_hpp" >&6
-
-fi
-if test $ac_cv_header_boost_timer_timer_hpp = yes; then
-  HAVE_BOOST_TIMER="yes"
-fi
-
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
 
 fi
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ HAVE_USER_BOOST="yes"
+fi
+
+done
 
 
+for ac_header in boost/timer/timer.hpp
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <$ac_header>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_cxx_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_cxx_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_cxx_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------------ ##
+## Report this to the AC_PACKAGE_NAME lists.  ##
+## ------------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  eval "$as_ac_Header=\$ac_header_preproc"
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+
+fi
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ HAVE_BOOST_TIMER="yes"
+fi
+
+done
+
+    CXXFLAGS="$SAVE_CXXFLAGS"
+fi
+
+if test "$HAVE_USER_BOOST" = "yes" ; then
+    CXXFLAGS="$CXXFLAGS $BOOST_INC"
+    LIBS="$LIBS $BOOST_LIB"
+    HAVE_BOOST="yes"
+fi
 
 if test "$HAVE_BOOST_TIMER" = "yes" ; then
     CXXFLAGS="$CXXFLAGS -DUSE_BOOST_TIMER"
+    LIBS="$LIBS -lboost_system -lboost_timer"
 fi
+
+
+
+
+
 
 STDCFLAGS="-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS"
 CXXFLAGS="$CXXFLAGS $STDCFLAGS"
@@ -5493,12 +5666,6 @@ else
     CXXFLAGS="$CXXOPTFLAGS $CXXFLAGS"
     CFLAGS="$COPTFLAGS $CFLAGS"
 fi
-
-
-LIBS="-lm -lpthread -ldl"
-LIBS_LIGHTWEIGHT="-lm"
-LIBS_LOWFAT=""
-EXTRA_LIBS=""
 
 case "$host_os" in
   *linux*)
@@ -9532,9 +9699,7 @@ s,@GREP@,$GREP,;t t
 s,@CP@,$CP,;t t
 s,@RM@,$RM,;t t
 s,@FLEX@,$FLEX,;t t
-s,@HAVE_SYSTEM_BOOST@,$HAVE_SYSTEM_BOOST,;t t
-s,@HAVE_USER_BOOST@,$HAVE_USER_BOOST,;t t
-s,@BOOST_INCDIR@,$BOOST_INCDIR,;t t
+s,@HAVE_BOOST@,$HAVE_BOOST,;t t
 s,@build@,$build,;t t
 s,@build_cpu@,$build_cpu,;t t
 s,@build_vendor@,$build_vendor,;t t
