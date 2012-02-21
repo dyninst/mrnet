@@ -60,6 +60,7 @@ int main( int argc, char* argv[] )
 
     set< CommunicationNode* >::const_iterator iter = bes.begin();
     for( ; iter != bes.end() ; iter++ ) {
+
         Rank be_rank = (*iter)->get_Rank();
         if( (-1 == net->send( be_rank, SC_SINGLE, "%ud", send_val )) ||
             (-1 == net->flush()) ) {
@@ -67,24 +68,8 @@ int main( int argc, char* argv[] )
             return -1;
         }
         
-        Stream *be_strm = NULL;
-        rret = net->recv( &tag, pkt, &be_strm );
-        if( rret == -1 ) {
-            std::cerr << "FE: recv() failed" << std::endl;
-            return -1;
-        }
-        if( tag == SC_SINGLE ) {
-            pkt->unpack( "%ud", &val );
-            if( val != send_val ) {
-                std::cerr << "FE: expected BE to send value " << send_val 
-                      << ", got " << val << std::endl;
-            }
-        }
-        else {
-            std::cerr << "FE: unexpected tag " << tag 
-                      << " received instead of SC_SINGLE\n";
-        }
-
+        Stream *be_strm = net->get_Stream( be_rank );
+        
         rret = be_strm->recv( &tag, pkt );
         if( rret == -1 ) {
             std::cerr << "FE: be_stream recv() failed" << std::endl;
@@ -99,7 +84,7 @@ int main( int argc, char* argv[] )
         }
         else {
             std::cerr << "FE: unexpected tag " << tag 
-                      << " received instead of SC_SINGLE\n";
+                      << " received on BE stream instead of SC_SINGLE\n";
         }
 
         cout << "FE: successfully received value and rank on BE stream " 
@@ -121,7 +106,7 @@ int main( int argc, char* argv[] )
     }
     else {
         std::cerr << "FE: unexpected tag " << tag 
-                  << " received instead of SC_GROUP\n";
+                  << " received on group stream instead of SC_GROUP\n";
     }
 
     // tell back-ends to go away

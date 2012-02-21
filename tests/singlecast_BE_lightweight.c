@@ -47,11 +47,6 @@ int main( int argc, char* argv[] )
                 (Stream_flush(be_stream) == -1) ) {
                 fprintf(stderr, "BE: val send single failed\n");
             }
-            fprintf(stdout, "BE: sending rank on BE stream\n");
-            if( (Stream_send(be_stream,  tag, "%ud", Stream_get_Id(be_stream) ) == -1) ||
-                (Stream_flush(be_stream) == -1) ) {
-                fprintf(stderr, "BE: val send single failed\n");
-            }
             fflush(stdout);
         }
         else {
