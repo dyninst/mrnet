@@ -82,14 +82,19 @@ INCLUDES = $(COMMON_INCLUDES)
 
 HAVE_SYSTEM_BOOST = @HAVE_SYSTEM_BOOST@
 HAVE_USER_BOOST   = @HAVE_USER_BOOST@
+HAVE_BOOST_TIMER = @HAVE_BOOST_TIMER@
+BOOST_SYSDIR = @BOOST_SYSDIR@
 ifeq ($(HAVE_USER_BOOST), yes)
-    INCLUDES += -I@BOOST_INCDIR@
+    INCLUDES += -I@BOOST_INCDIR@ 
 else
     ifeq ($(HAVE_SYSTEM_BOOST), no)
         INCLUDES += -I$(EXTDIR)/boost/include
     endif
 endif
-
+ifeq ($(HAVE_BOOST_TIMER), yes)
+    LDFLAGS += -L$(BOOST_SYSDIR)/lib/ -lboost_system -lboost_timer
+    COMMNODE_LDFLAGS += -L$(BOOST_SYSDIR)/lib/ -lboost_system -lboost_timer
+endif
 INCLUDES_LIGHTWEIGHT = $(COMMON_INCLUDES) -I$(SRCDIR)/lightweight
 
 ifeq ($(COMPILER_TYPE), gnu)
@@ -450,7 +455,7 @@ $(COMMNODE): $(COMMNODE_OBJS) $(LIBMRNET) $(LIBXPLAT)
 
 $(TOPGEN): $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
 	@echo "Linking `basename $@` ..."
-	$(PURIFY) $(CXX) $(CXXFLAGS) -o $@ $(OBJDIR)/config_generator.o \
+	$(PURIFY) $(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/config_generator.o \
            $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
 $(STD_TESTS_FE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \

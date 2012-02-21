@@ -73,6 +73,13 @@ else
     endif
 endif
 
+HAVE_BOOST_TIMER = @HAVE_BOOST_TIMER@
+BOOST_SYSDIR = @BOOST_SYSDIR@
+ifeq ($(HAVE_BOOST_TIMER), yes)
+    LDFLAGS += -L$(BOOST_SYSDIR)/lib/ -lboost_system -lboost_timer
+    COMMNODE_LDFLAGS += -L$(BOOST_SYSDIR)/lib/ -lboost_system -lboost_timer
+endif
+
 #####################################
 #### System Specific Definitions ####
 #####################################
