@@ -26,7 +26,7 @@ void get_Version( int* major,
         *revision = MRNET_VERSION_REV;
 }
 
-int connectHost( XPlat_Socket  *sock_in, char* hostname, 
+int connectHost( XPlat_Socket *sock_in, char* hostname, 
                  XPlat_Port port, int num_retry )
 {
     XPlat_Socket sock = *sock_in;
@@ -36,9 +36,9 @@ int connectHost( XPlat_Socket  *sock_in, char* hostname,
         nretry = (unsigned) num_retry;
 
     bool rc = XPlat_SocketUtils_Connect( hostname, port, 
-                                         sock, nretry );
+                                         &sock, nretry );
     if( rc ) {
-        *sock_in = (int) sock;
+        *sock_in = sock;
         return 0;
     }
     else {

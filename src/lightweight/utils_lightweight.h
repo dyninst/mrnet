@@ -31,8 +31,8 @@
 #define NULL_STRING ""
 
 /*************** Socket Utilities ***************/
-int connectHost ( int *sock_in, char* hostname, 
-                  Port port, int num_retry);
+int connectHost(XPlat_Socket *sock_in, char* hostname, 
+                XPlat_Port port, int num_retry);
 
 /*************** Debug Utilities ***************/
 

@@ -219,12 +219,9 @@ void waitFor_FailureRecoveryReports( int isock_fd, Network *net )
 
         //Activity on our local listening sock, accept connection
         mrn_dbg( 5, mrn_printf(FLF, stderr, "Activity on listening socket ...\n"));
-        int inout_errno;
-	int connected_sock = getSocketConnection( isock_fd , inout_errno);
-	
+	int connected_sock = getSocketConnection( isock_fd );
         if( connected_sock == -1 ){
             mrn_dbg( 1, mrn_printf(FLF, stderr, "getSocketConnection() failed\n"));
-            perror("getSocketConnection()");
             continue;
         }
 

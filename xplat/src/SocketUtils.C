@@ -324,8 +324,10 @@ bool AcceptConnection( const XPlat_Socket listen_sock,
     xplat_dbg( 3, fprintf(stderr, "XPlat::SocketUtils::AcceptConnection - "
                           "listening on socket=%d\n", listen_sock) );
 
+    connected_sock = InvalidSocket;
+
     if( nonblock && (0 == timeout_sec) )
-        timeout_sec = 5;
+        timeout_sec = 1;
 
     do {
         if( timeout_sec > 0 ) {
@@ -340,9 +342,7 @@ bool AcceptConnection( const XPlat_Socket listen_sock,
             int retval = select( maxfd, &readfds, NULL, NULL, &tv );
             err = XPlat::NetUtils::GetLastError();
             if( retval == 0 ) { // timed-out
-                if( ! nonblock )
-                    return false; // let our caller decide what's next
-                continue;
+                return false; // let our caller decide what's next
             }
             else if( retval < 0 ) {
                 err_str = XPlat::Error::GetErrorString( err );
@@ -358,7 +358,7 @@ bool AcceptConnection( const XPlat_Socket listen_sock,
         if( -1 == connection ) {
             err = XPlat::NetUtils::GetLastError();
             if( nonblock && (EWOULDBLOCK == err) )
-                continue;
+                return false; // let our caller decide what's next
 	    if( EWOULDBLOCK != err ) {
                 err_str = XPlat::Error::GetErrorString( err );
                 xplat_dbg( 1, fprintf(stderr, "XPlat::SocketUtils::AcceptConnection - "
@@ -368,10 +368,7 @@ bool AcceptConnection( const XPlat_Socket listen_sock,
             if( EINTR != err )
                 return false;
         }
-    } while( (-1 == connection) && (EINTR == err) );
-
-    if( -1 == connection )
-        return false;
+    } while( -1 == connection );
 
     // Set the socket to be blocking
     if( ! SetBlockingMode(connection, true) )

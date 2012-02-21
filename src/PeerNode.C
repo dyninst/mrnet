@@ -108,14 +108,14 @@ void PeerNode::close_Sockets(void)
                           _rank));
     _sync.Lock();
     if( _data_sock_fd != -1 ) {
-        if( XPlat::SocketUtils::Close(_data_sock_fd) == -1 ) {
+        if( ! XPlat::SocketUtils::Close(_data_sock_fd) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
                                   "error on close(data_sock_fd) for peer %d\n", _rank));
         }
         _data_sock_fd = -1;
     }
     if( _event_sock_fd != -1 ) {
-        if( XPlat::SocketUtils::Close(_event_sock_fd) == -1 ) {
+        if( ! XPlat::SocketUtils::Close(_event_sock_fd) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
                                   "error on close(event_sock_fd) for peer %d\n", _rank));
         }

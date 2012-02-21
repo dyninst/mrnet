@@ -139,9 +139,7 @@ class Stream {
     void signal_BlockedReceivers(void) const;
     int block_ForIncomingPacket(void) const;
 
-    //PerfDataMgr * _perf_data;
     //Static Data Members
-
     PerfDataMgr * _perf_data;
     Network * _network;
     unsigned int _id;

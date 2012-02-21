@@ -336,9 +336,9 @@ void EventDetector::handle_Timeout( TimeKeeper* tk, int elapsed_ms )
 
 void * EventDetector::main( void* iarg )
 {
-    list< int > watch_list; //list of sockets to detect events on
-    int parent_sock=0;
-    int local_sock=0;
+    list< XPlat_Socket > watch_list; //list of sockets to detect events on
+    XPlat_Socket parent_sock = XPlat::SocketUtils::InvalidSocket;
+    XPlat_Socket local_sock = XPlat::SocketUtils::InvalidSocket;
 
     EventDetector* edt = (EventDetector*) iarg;
     Network* net = edt->_network;;
@@ -380,11 +380,10 @@ void * EventDetector::main( void* iarg )
     }
     else mrn_dbg(5, mrn_printf(FLF, stderr, "not a child\n"));
 
-
     if( net->is_LocalNodeParent() ) {
         //(2) Add local socket to event list
         local_sock = net->get_ListeningSocket();
-        if( local_sock != -1 ){
+        if( local_sock != XPlat::SocketUtils::InvalidSocket ) {
             edt->add_FD(local_sock);
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "Monitoring local socket:%d.\n", local_sock));
@@ -446,22 +445,16 @@ void * EventDetector::main( void* iarg )
 
                 while(true) { // keep accepting until no more connections
 
-                    int inout_errno;
-                    int connected_sock = getSocketConnection( local_sock, 
-                                                              inout_errno );
-                    if( connected_sock == -1 ) {
-                        if( inout_errno != EWOULDBLOCK ) { 
-                            mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                                                   "getSocketConnection() failed with '%s'\n",
-                                                   strerror(inout_errno)) );
-                        }
+                    XPlat_Socket connected_sock;
+		    if( ! XPlat::SocketUtils::AcceptConnection(local_sock, 
+                                                               connected_sock, 
+                                                               0, true /*non-blocking*/) )
                         break;
-                    }    
 		 
                     packets.clear();
                     msg.recv( connected_sock, packets, UnknownRank );
                     list< PacketPtr >::iterator packet_list_iter;
-                    list< int >::iterator iter;
+                    list< XPlat_Socket >::iterator iter;
 
                     for( packet_list_iter = packets.begin();
                          packet_list_iter != packets.end();
@@ -483,12 +476,12 @@ void * EventDetector::main( void* iarg )
                                                        *iter) );
                                 mrn_dbg( 5, mrn_printf(FLF, stderr, "... writing \n") );
                                 char c = 1;
-                                if( ::send(*iter, &c, 1, 0) == -1 ) {
-                                    perror("write(event_fd)");
+                                if( XPlat::SocketUtils::send(*iter, &c, 1) == (ssize_t)-1 ) {
+                                    mrn_dbg( 1, mrn_printf(FLF, stderr, ("send(event_fd) failed")) );
                                 }
                                 mrn_dbg( 5, mrn_printf(FLF, stderr, "... closing\n"));
-                                if( XPlat::SocketUtils::Close(*iter) == -1 ) {
-                                    perror("close(event_fd)");
+                                if( ! XPlat::SocketUtils::Close(*iter) ) {
+                                    mrn_dbg( 1, mrn_printf(FLF, stderr, ("close(event_fd) failed")) );
                                 }
                             }
                             edt->set_ThrId( 0 );
