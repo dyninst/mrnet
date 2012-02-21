@@ -12,10 +12,11 @@
 #include <sstream>
 using namespace MRN;
 using namespace MRN_test;
+
+
+int test_alltypes( Network *, std::vector<Stream*>, bool block );
+
 Test * test;
-
-int test_alltypes( Network *, std::vector<Stream*> , bool anonymous=false, bool block=true );
-
 
 int main(int argc, char **argv)
 {
@@ -50,13 +51,11 @@ int main(int argc, char **argv)
         streams.push_back(stream_BC);
     }
 
-    /* For all the following tests, the 1st bool param indicates *
-     * whether the recv() call should be stream-anonymous or not *
-     * and the 2nd bool param indicates whether the recv should block *
-     * or not */
+    /* For all the following tests, the bool param indicates *
+     * whether the recv should block or not */
 
-    if (test_alltypes(net, streams, false, false) == -1) {}
-    if (test_alltypes(net, streams, false, true) == -1) {}
+    if (test_alltypes(net, streams, false) == -1) {}
+    if (test_alltypes(net, streams, true) == -1) {}
 
     std::vector<Stream *>::iterator stream_iter;
     stream_iter = streams.begin();    
@@ -82,7 +81,7 @@ int main(int argc, char **argv)
  *    bcast a packet containing data of all types to all endpoints in stream.
  *    recv  a packet containing data of all types from every endpoint
  */
-int test_alltypes( Network * net, std::vector< Stream * > streams, bool anonymous, bool block )
+int test_alltypes( Network * net, std::vector< Stream * > streams, bool block )
 {
     int num_received=0, num_to_receive=0;
     int tag;
@@ -102,13 +101,6 @@ int test_alltypes( Network * net, std::vector< Stream * > streams, bool anonymou
     char *send_string=strdup("Test String"), *recv_string=0;
 
     std::string testname( "test_all(" );
-
-    if( ! anonymous ) {
-        testname += "stream_specific, ";
-    }
-    else {
-        testname += "stream_anonymous, ";
-    }
 
     if( block ) {
         testname += "blocking_recv, ";
@@ -166,15 +158,9 @@ int test_alltypes( Network * net, std::vector< Stream * > streams, bool anonymou
             int retval;
 
             //In non-blocking mode we sleep b/n recv attempts
-            if( ! block ) sleep(2);
+            if( ! block ) sleep(1);
 
-            if( ! anonymous ) {
-                retval = (*stream_iter)->recv( &tag, pkt, block );
-            }
-            else {
-                retval = net->recv( &tag, pkt, &recv_stream, block );
-            }
-
+            retval = (*stream_iter)->recv( &tag, pkt, block );
             if( retval == -1 ) {
                 //recv error
                 test->print("stream::recv() failure\n", testname);
