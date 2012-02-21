@@ -351,6 +351,9 @@ Network_t* Network_init_BackEnd(char* iphostname, Port ipport,
 
     net->local_rank = imyrank;
 
+    // create the BE-specific stream
+    Network_new_Stream(net, imyrank, NULL, 0, 0, 0, 0);
+
     // create the new node
     be = CreateBackEndNode( net, myhostname, imyrank,
                             iphostname, ipport, iprank );
@@ -360,9 +363,6 @@ Network_t* Network_init_BackEnd(char* iphostname, Port ipport,
     // update the network struct
     mrn_dbg(5, mrn_printf(FLF, stderr, "Setting network's local BE\n"));
     net->local_back_end_node = be;
-
-    // create the BE-specific stream
-    Network_new_Stream(net, imyrank, NULL, 0, 0, 0, 0);
 
     return net;
 }
