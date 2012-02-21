@@ -24,6 +24,7 @@
 #endif
 #endif
  
+#include "mrnet_config.h"
 #include "mrnet/Types.h"
 #include "xplat/TLSKey.h"
 #include "xplat/Thread.h"
@@ -32,9 +33,12 @@
 #include <cerrno>
 #include <cmath>
 #include <cstdarg>
-
 #include <vector>
 #include <string>
+
+#if USE_BOOST_TIMER
+# include <boost/timer/timer.hpp>
+#endif // USE_BOOST_TIMER
 
 #define MRN_RELEASE_DATE_SECS 1308200400
 
@@ -48,7 +52,7 @@ int connectHost( XPlat_Socket *sock_in, const std::string & hostname,
                  XPlat_Port port, int num_retry = -1 );
 int bindPort( XPlat_Socket *sock_in, XPlat_Port *port_in, 
               bool nonblock=false );
-int getSocketConnection( XPlat_Socket bound_socket, int& inout_errno,
+int getSocketConnection( XPlat_Socket bound_socket, 
                          int timeout_sec=0, bool nonblock=false );
 int getPortFromSocket( XPlat_Socket sock, XPlat_Port *port );
 
@@ -119,20 +123,17 @@ class Timer{
  public:
     struct timeval _start_tv, _stop_tv;
     double  _start_d, _stop_d;
-    
     Timer( void );
     void start( void );
     void stop( void );
-    void stop( double d );
-    double get_timer ( void );
     double get_latency_secs( void );
     double get_latency_msecs( void );
     double get_latency_usecs( void );
-    double get_offset_msecs( void );
 
  private:
-    static double offset;
-    static bool first_time;
+#if USE_BOOST_TIMER
+    boost::timer::cpu_timer  _b_timer;
+#endif 
 };
 
 /*************** MISC ***************/

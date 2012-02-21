@@ -14,9 +14,6 @@
 #include "xplat/Process.h"
 using namespace XPlat;
 
-#include <string>
-#include <map>
-
 static XPlat::Mutex mrn_printf_mutex;
 
 namespace MRN
@@ -28,8 +25,6 @@ std::string LocalNetworkName = NULL_STRING;
 std::string LocalNetworkAddr = NULL_STRING;
 
 Port LocalPort = 0;
-double Timer::offset = 0;
-bool Timer::first_time = true;
 
 XPlat::TLSKey tsd_key;
 
@@ -85,7 +80,7 @@ int bindPort( XPlat_Socket *sock_in, XPlat_Port *port_in,
 
 }
 
-int getSocketConnection( XPlat_Socket bound_socket , int& inout_errno,
+int getSocketConnection( XPlat_Socket bound_socket,
                          int timeout_sec /*=0*/ , bool nonblock /*=false*/ )
 {
     XPlat_Socket connection = XPlat::SocketUtils::InvalidSocket;
@@ -93,8 +88,9 @@ int getSocketConnection( XPlat_Socket bound_socket , int& inout_errno,
                                                     connection,
                                                     timeout_sec,
                                                     nonblock );
-    if( rc )
+    if( rc ) {
         return connection;
+    }
     else {
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
                                "failed to get connection on socket=%d\n",
@@ -257,76 +253,55 @@ struct timeval dbl2tv(double d)
   return tv;
 }
 
-void Timer::start( void ){
-    while(gettimeofday(&_start_tv, NULL) == -1) {}
-    //fprintf(stderr, "offset: %lf secs\n", offset/1000.0 );
-    _start_d = tv2dbl( _start_tv ) + ( offset / 1000.0 );
-    _start_tv = dbl2tv( _start_d );
-}
-    
-void Timer::stop( void ){
-    while(gettimeofday(&_stop_tv, NULL) == -1) {}
-    //fprintf(stderr, "offset: %lf secs\n", offset/1000.0 );
-    _stop_d = tv2dbl( _stop_tv ) + ( offset / 1000.0 );
-    _stop_tv = dbl2tv( _stop_d );
+Timer::Timer(void)
+{
+#ifndef USE_BOOST_TIMER
+    _stop_d = 0.0;
+    _start_d = 0.0;
+#endif
 }
 
-void Timer::stop( double d ){
-    _stop_d = d;
-    _stop_tv = dbl2tv( _stop_d );
+void Timer::start( void )
+{
+#ifdef USE_BOOST_TIMER 
+    _b_timer.start();
+#else
+    while(gettimeofday(&_start_tv, NULL) == -1) {}
+    _start_d = tv2dbl( _start_tv );
+#endif
 }
     
-double Timer::get_latency_secs( ) {
+void Timer::stop(void)
+{
+#ifdef USE_BOOST_TIMER
+    _b_timer.stop();
+#else 
+    while(gettimeofday(&_stop_tv, NULL) == -1) {}
+    _stop_d = tv2dbl( _stop_tv );
+#endif
+}
+
+double Timer::get_latency_secs(void)
+{
+#ifdef USE_BOOST_TIMER
+    // No need to check if timer is started, boost does that for us.
+    double elapsed = (double) _b_timer.elapsed().user;
+    return (elapsed / 1000000000.0);
+#else
+    if( _start_d > _stop_d )
+        return 0.0;
     return _stop_d - _start_d;
+#endif
 }
     
-double Timer::get_latency_msecs( ) {
+double Timer::get_latency_msecs(void)
+{
     return 1000 * get_latency_secs();
 }
 
-double Timer::get_latency_usecs( ) {
-    return 1000000 * get_latency_secs();
-}
-
- 
-double Timer::get_timer (void)
+double Timer::get_latency_usecs(void)
 {
-    struct timeval timevalcur; 
-    while(gettimeofday(&timevalcur, NULL) == -1) {}
-    //fprintf(stderr, "offset: %lf secs\n", offset/1000.0 );
-    return tv2dbl( timevalcur ) + ( offset / 1000.0 );
-}
-Timer::Timer( void ) {
-
-    _stop_d = 0;
-    _start_d = 0;
-#ifdef USE_NTPQ_TIMER_INIT
-    if( !first_time ) {
-        return;
-    }
-    first_time=false;
-
-    char cmd[]="/usr/sbin/ntpq -c rv | grep offset | awk '{print $1}'";
-    //char cmd[]="/usr/sbin/ntpq -c rv | grep offset | awk '{print $3}'";
-    char line[512];
-    int line_len = 512;
-    
-    FILE * cmd_out_fp = popen( cmd, "r" );
-    if( cmd_out_fp == NULL ) {
-        perror( cmd );
-        return;
-    }
-    if( fgets(line, line_len, cmd_out_fp ) == NULL ) {
-        perror("fgets()");
-        return;
-    }
-    if( sscanf( line, "offset=%lf,", &offset ) == 0 ) {
-        perror("sscanf()");
-        offset=0;
-        return;
-    }
-#endif
-
+    return 1000000 * get_latency_secs();
 }
 
 bool isBigEndian()
