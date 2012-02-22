@@ -253,7 +253,7 @@ void PerfDataMgr::add_PacketTimers ( PacketPtr pkt)
     {
         perfdata_t tmp;
         tmp.d = pkt->get_ElapsedTime((perfdata_pkt_timers_t)i);
-        if (tmp.d > 0.0001 && tmp.d < 5000.0)
+        if (tmp.d > 0.00000001 && tmp.d < 50000.00)
         {
             add_DataInstance( PERFDATA_MET_ELAPSED_SEC,(perfdata_context_t) 
                               (PERFDATA_CTX_NONE + i),tmp);

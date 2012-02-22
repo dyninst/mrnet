@@ -54,7 +54,6 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
 {
     Timer t1;
     t1.start();
-
     ssize_t retval;
     size_t buf_len;
     uint64_t *packet_sizes;
@@ -68,6 +67,10 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
     PDR pdrs;
     enum pdr_op op = PDR_DECODE;
     bool using_prealloc = true;
+    int pkt_size;
+    PacketPtr pkt; 
+    Stream * strm;
+    std::list< PacketPtr >::iterator piter;
 
     retval = MRN_recv( sock_fd, _packet_count_buf, _packet_count_buf_len );
     if( retval != (ssize_t)_packet_count_buf_len ) {
@@ -155,6 +158,22 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
         packets_in.push_back( new_packet );
     }
 
+    t1.stop();
+    pkt_size = (int) packets_in.size();
+    piter = packets_in.begin();
+    for( ; piter != packets_in.end(); piter++ ) {
+        pkt = *piter;
+        strm =  _net->get_Stream( pkt->get_StreamId() );
+        if( strm != NULL ) {
+            // Time for packet at this point in time.
+            if( strm->get_PerfData()->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
+                        PERFDATA_PKT_RECV) ) {
+                pkt->set_Timer(PERFDATA_PKT_TIMERS_RECV, t1);
+            }
+            pkt->start_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
+            pkt->set_IncomingPktCount(pkt_size);
+        }
+    }
  recv_cleanup_return:
 
     if( rc == -1 ) {
