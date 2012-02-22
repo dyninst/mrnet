@@ -344,10 +344,8 @@ Network_t* Network_init_BackEnd(char* iphostname, Port ipport,
     assert( net != NULL );
 
     setrank(imyrank);  
-    
-    myhostname = (char*) malloc( sizeof(char) * XPLAT_MAX_HOSTNAME_LEN );
-    assert( myhostname != NULL );
-    XPlat_NetUtils_FindNetworkName( imyhostname, myhostname );
+
+    myhostname = strdup(imyhostname);
 
     net->local_rank = imyrank;
 
