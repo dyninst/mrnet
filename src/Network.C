@@ -843,21 +843,25 @@ int Network::send_PacketToParent( PacketPtr ipacket )
 {
     mrn_dbg_func_begin();
     
-    
-    
     unsigned int strm_id = ipacket->get_StreamId();
     Stream * strm = get_Stream( strm_id );
-    if (strm != NULL)
-        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_NET_SENDPAR))
+    PerfDataMgr* pdm = NULL;
+    if( NULL != strm )
+        pdm = strm->get_PerfData();
+
+    if( NULL != pdm ) {
+        if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
+                            PERFDATA_CTX_PKT_NET_SENDPAR) )
             ipacket->start_Timer(PERFDATA_PKT_TIMERS_NET_SENDPAR);
+    }
  
     get_ParentNode()->send( ipacket );
 
-    if(strm != NULL)
-        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_NET_SENDPAR))
+    if( NULL != pdm ) {
+        if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
+                            PERFDATA_CTX_PKT_NET_SENDPAR) )
             ipacket->stop_Timer(PERFDATA_PKT_TIMERS_NET_SENDPAR);
-
-
+    }
 
     return 0;
 }
@@ -885,12 +889,16 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
     mrn_dbg_func_begin();
 
     unsigned int strm_id = ipacket->get_StreamId();
+    Stream* strm = get_Stream( strm_id );
+    PerfDataMgr* pdm = NULL;
+    if( NULL != strm )
+        pdm = strm->get_PerfData();
 
-
-    Stream * strm = get_Stream( strm_id );
-    if(strm != NULL)
-        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_NET_SENDCHILD))
+    if( NULL != pdm ) {
+        if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
+                            PERFDATA_CTX_PKT_NET_SENDCHILD) )
             ipacket->start_Timer(PERFDATA_PKT_TIMERS_NET_SENDCHILD);
+    }
 
     if( strm_id == CTL_STRM_ID ) { // control stream message
 
@@ -901,7 +909,7 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
                                                 iend = _children.end();
         for( ; iter != iend; iter++ ) {
             cur_node = *iter;
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "node \"%s:%d:%d\": %s, %s\n",
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "node \"%s:%u:%hu\": %s, %s\n",
                                    cur_node->get_HostName().c_str(),
                                    cur_node->get_Rank(),
                                    cur_node->get_Port(),
@@ -946,20 +954,20 @@ int Network::send_PacketToChildren( PacketPtr ipacket,
         }
         else {
             // all peers in stream
-            Stream* stream = get_Stream( strm_id );   
-            if( stream == NULL ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", strm_id));
+            if( NULL == strm ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                       "stream %u lookup failed\n", strm_id));
                 return -1;
             }
-            stream->send_to_children( ipacket );
+            strm->send_to_children( ipacket );
         }
     }
 
-    if(strm != NULL)
-        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_NET_SENDCHILD))
+    if( NULL != pdm ) {
+        if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
+                            PERFDATA_CTX_PKT_NET_SENDCHILD) )
             ipacket->stop_Timer(PERFDATA_PKT_TIMERS_NET_SENDCHILD);
-
-
+    }
 
     mrn_dbg_func_end();
     return 0;

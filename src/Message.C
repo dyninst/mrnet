@@ -167,7 +167,7 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
         if( strm != NULL ) {
             // Time for packet at this point in time.
             if( strm->get_PerfData()->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
-                        PERFDATA_PKT_RECV) ) {
+                        PERFDATA_CTX_PKT_RECV) ) {
                 pkt->set_Timer(PERFDATA_PKT_TIMERS_RECV, t1);
             }
             pkt->start_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
@@ -195,10 +195,12 @@ int Message::send( XPlat_Socket sock_fd )
 {
     ssize_t sret;
     size_t buf_len, total_bytes = 0;
-    Stream * strm;
+    Stream* strm;
+    PerfDataMgr* pdm = NULL;
     uint64_t *packet_sizes = NULL;
     char *buf = NULL;
     XPlat::SocketUtils::NCBuf* ncbufs;
+    Timer tmp;
     unsigned int i, j;
     int packetLength, rc = 0;
     uint32_t num_packets, num_buffers, num_ncbufs;
@@ -223,16 +225,18 @@ int Message::send( XPlat_Socket sock_fd )
     piter = send_packets.begin();
     for( ; piter != send_packets.end(); piter++ ) {
         PacketPtr& pkt = *piter;
-        strm = _net->get_Stream(pkt->get_StreamId());
-        if( strm != NULL ) {
-            if( strm->get_PerfData()->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
-                                                 PERFDATA_PKT_SEND) ) {
-                pkt->start_Timer(PERFDATA_PKT_TIMERS_SEND);
-                pkt->stop_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
+        strm = _net->get_Stream( pkt->get_StreamId() );
+        if( NULL != strm ) {
+            pdm = strm->get_PerfData();
+            if( NULL != pdm ) {
+                if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
+                                    PERFDATA_CTX_PKT_SEND) ) {
+                    pkt->start_Timer(PERFDATA_PKT_TIMERS_SEND);
+                    pkt->stop_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
+                }
             }
         }
     }
-
 
     // Allocation (if required)
     num_packets = send_packets.size();
@@ -326,14 +330,16 @@ int Message::send( XPlat_Socket sock_fd )
         PacketPtr& pkt = *piter;
         strm = _net->get_Stream( pkt->get_StreamId() );
         if( strm != NULL ) {
-            Timer tmp;
-            pkt->set_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER, tmp);
-            if( strm->get_PerfData()->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
-                                                 PERFDATA_PKT_SEND) ) {
-                pkt->set_OutgoingPktCount(packetLength);
-                pkt->stop_Timer(PERFDATA_PKT_TIMERS_SEND);
+            pdm = strm->get_PerfData();
+            if( NULL != pdm ) {
+                pkt->set_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER, tmp);
+                if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
+                                    PERFDATA_CTX_PKT_SEND) ) {
+                    pkt->set_OutgoingPktCount(packetLength);
+                    pkt->stop_Timer(PERFDATA_PKT_TIMERS_SEND);
+                }
+                pdm->add_PacketTimers(pkt);
             }
-            strm->get_PerfData()->add_PacketTimers(pkt);
         }
     }
 

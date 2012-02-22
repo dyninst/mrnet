@@ -285,7 +285,7 @@ double Timer::get_latency_secs(void)
 {
 #ifdef USE_BOOST_TIMER
     // No need to check if timer is started, boost does that for us.
-    double elapsed = (double) _b_timer.elapsed().user;
+    double elapsed = (double) _b_timer.elapsed().wall;
     return (elapsed / 1000000000.0);
 #else
     if( _start_d > _stop_d )

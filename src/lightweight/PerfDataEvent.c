@@ -33,11 +33,22 @@ perfdata_metinfo_t perfdata_metric_info[PERFDATA_MAX_MET] =
 
 const char* perfdata_context_names[PERFDATA_MAX_CTX] = 
 {
+    "NoContext",
     "Send",
     "Recv",
-    "FilterIn",
-    "FilterOut",
-    "NoContext"
+    "TransFilter_In",
+    "TransFilter_Out",
+    "SyncFilter_In",
+    "SyncFilter_Out",
+    "Time_Packet_Recv",
+    "Time_Packet_Send",
+    "Time_Packet_Network_SendChild",
+    "Time_Packet_Network_SentParent",
+    "Time_Packet_Internal_DataParent",
+    "Time_Packet_Internal_DataChild",
+    "Time_Packet_Filter",
+    "Time_Packet_Recv_To_Filter",
+    "Time_Packet_Filter_To_Send"
 };
 
 #define PERFDATA_MET_FLAG(x) ((char)(1 << x))

@@ -9,6 +9,7 @@
 #include "xplat_lightweight/NetUtils.h"
 #include "xplat_lightweight/PathUtils.h"
 #include "xplat_lightweight/Process.h"
+#include "xplat_lightweight/SocketUtils.h"
 
 #include <stdarg.h>
 

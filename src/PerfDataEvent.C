@@ -26,11 +26,13 @@ perfdata_metinfo_t PerfDataMgr::perfdata_metric_info[PERFDATA_MAX_MET] =
  
 const char* PerfDataMgr::perfdata_context_names[PERFDATA_MAX_CTX] =
 {
+    "No_Context",
     "Send",
     "Recv",
-    "FilterIn",
-    "FilterOut",
-    "NoContext",
+    "TransFilter_In",
+    "TransFilter_Out",
+    "SyncFilter_In",
+    "SyncFilter_Out",
     "Time_Packet_Recv",
     "Time_Packet_Send",
     "Time_Packet_Network_SendChild",

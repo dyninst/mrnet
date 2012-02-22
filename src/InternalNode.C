@@ -24,10 +24,9 @@ InternalNode::InternalNode( Network * inetwork,
     ParentNode( inetwork, ihostname, irank, listeningSocket, listeningPort ),
     ChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank )
 {
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Local[%u]: %s:%u, parent[%u]: %s:%u\n",
-                           ParentNode::_rank, ParentNode::_hostname.c_str(),
-                           ParentNode::_port,
-                           iprank, iphostname.c_str(), ipport ));
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "me[%u]: %s:%hu, parent[%u]: %s:%hu\n",
+                           irank, ihostname.c_str(), ParentNode::_port,
+                           iprank, iphostname.c_str(), ipport) );
 
     ParentNode::_network->set_LocalHostName( ParentNode::_hostname  );
     ParentNode::_network->set_LocalPort( ParentNode::_port );
@@ -41,17 +40,21 @@ InternalNode::InternalNode( Network * inetwork,
 								   ParentNode::_rank) );
    
     //establish data connection w/ parent
-    if( init_newChildDataConnection( ParentNode::_network->get_ParentNode() ) == -1 ) {
+    PeerNodePtr parent = ParentNode::_network->get_ParentNode();
+    if( init_newChildDataConnection(parent) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "init_newChildDataConnection() failed\n" ));
+                               "init_newChildDataConnection() failed\n") );
         return;
     }
      
     //start event detection thread
     if( EventDetector::start( ParentNode::_network ) == false ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "start_EventDetectionThread() failed\n" ));
-        ParentNode::error( ERR_INTERNAL, ParentNode::_rank, "start_EventDetectionThread failed\n" );
-        ChildNode::error( ERR_INTERNAL, ParentNode::_rank, "start_EventDetectionThread failed\n" );
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                               "start_EventDetectionThread() failed\n") );
+        ParentNode::error( ERR_INTERNAL, ParentNode::_rank, 
+                           "start_EventDetectionThread failed\n" );
+        ChildNode::error( ERR_INTERNAL, ParentNode::_rank, 
+                          "start_EventDetectionThread failed\n" );
         return;
     }
      
@@ -71,7 +74,7 @@ InternalNode::InternalNode( Network * inetwork,
             int type = NetworkTopology::TOPO_NEW_CP; 
             char *host_arr = strdup( ihostname.c_str() );
 	    
-            s->send_internal( PROT_TOPO_UPDATE,"%ad %aud %aud %as %auhd", 
+            s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
                               &type, 1, 
                               &iprank,1, 
                               &irank, 1, 
@@ -93,50 +96,54 @@ InternalNode::~InternalNode( void )
 
 int InternalNode::proc_DataFromParent( PacketPtr ipacket ) const
 {
-    int retval = 0;
     std::vector< PacketPtr > packets, reverse_packets;
+    int retval = 0;
 
     mrn_dbg_func_begin();
+
     unsigned int strm_id = ipacket->get_StreamId();
-
     Stream * strm = ParentNode::_network->get_Stream( strm_id );
-    if(strm != NULL)
-        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_INT_DATAPAR))
-            ipacket->start_Timer(PERFDATA_PKT_TIMERS_INT_DATAPAR);
+    if( NULL != strm ) {
+        PerfDataMgr* pdm = strm->get_PerfData();
+        if( NULL != pdm ) {
+            if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_INT_DATAPAR) )
+                ipacket->start_Timer(PERFDATA_PKT_TIMERS_INT_DATAPAR);
+        }
 
-    if( strm_id < CTL_STRM_ID ) {
-        // fast-path for BE specific stream ids
-        // TODO: check id less than max BE rank
-        packets.push_back( ipacket );
+        if( strm_id < CTL_STRM_ID ) {
+            // fast-path for BE specific stream ids
+            // TODO: check id less than max BE rank
+            packets.push_back( ipacket );
+        }
+        else
+            strm->push_Packet( ipacket, packets, reverse_packets, false );
+
+        if( ! packets.empty() ) {
+            // deliver all packets to all child nodes
+            if( ParentNode::_network->send_PacketsToChildren( packets ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                       "send_PacketToChildren() failed\n") );
+                retval = -1;
+            }
+        }
+        if( ! reverse_packets.empty() ) {
+            if( ParentNode::_network->send_PacketsToParent( packets ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                   "parent.send() failed()\n") );
+                retval = -1;
+            }
+        }
+
+        if( NULL != pdm ) {
+            if( pdm->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_INT_DATAPAR))
+                ipacket->stop_Timer(PERFDATA_PKT_TIMERS_INT_DATAPAR);
+        }
     }
     else {
-
-        Stream *stream = ParentNode::_network->get_Stream( strm_id );
-        if( stream == NULL ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", strm_id));
-            return -1;
-        }
-
-        stream->push_Packet( ipacket, packets, reverse_packets, false );
+        retval = -1;
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                               "stream %u lookup failed\n", strm_id) );
     }
-
-    if( ! packets.empty() ) {
-        // deliver all packets to all child nodes
-        if( ParentNode::_network->send_PacketsToChildren( packets ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
-            retval = -1;
-        }
-    }
-    if( ! reverse_packets.empty() ) {
-        if( ParentNode::_network->send_PacketsToParent( packets ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send() failed()\n" ));
-            retval = -1;
-        }
-    }
-
-     if(strm != NULL)
-         if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_INT_DATAPAR))
-             ipacket->stop_Timer(PERFDATA_PKT_TIMERS_INT_DATAPAR);
 
     mrn_dbg_func_end();
     return retval;
@@ -144,51 +151,51 @@ int InternalNode::proc_DataFromParent( PacketPtr ipacket ) const
 
 int InternalNode::proc_DataFromChildren( PacketPtr ipacket ) const
 {
+    std::vector< PacketPtr > packets, reverse_packets;
     int retval = 0;
 
     mrn_dbg_func_begin();
 
-    std::vector< PacketPtr > packets, reverse_packets;
-
     unsigned int strm_id = ipacket->get_StreamId();
-    Stream * strm = ParentNode::_network->get_Stream( strm_id );
+    Stream* strm = ParentNode::_network->get_Stream( strm_id );
+    if( NULL != strm ) {
+        PerfDataMgr* pdm = strm->get_PerfData();
+        if( NULL != pdm ) {
+            if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_INT_DATACHILD) )
+                ipacket->start_Timer( PERFDATA_PKT_TIMERS_INT_DATACHILD );
+        }
 
-    if(strm != NULL)
-        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_INT_DATACHILD))
-            ipacket->start_Timer(PERFDATA_PKT_TIMERS_INT_DATACHILD);
+        if( strm_id < CTL_STRM_ID ) {
+            // fast-path for BE specific stream ids
+            // TODO: check id less than max BE rank
+            packets.push_back( ipacket );
+        }
+        else
+            strm->push_Packet( ipacket, packets, reverse_packets, true );
 
-    if( strm_id < CTL_STRM_ID ) {
-        // fast-path for BE specific stream ids
-        // TODO: check id less than max BE rank
-        packets.push_back( ipacket );
+        if( ! packets.empty() ) {
+            if( ParentNode::_network->send_PacketsToParent( packets ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send() failed()\n" ));
+                retval = -1;
+            }
+        }
+        if( ! reverse_packets.empty() ) {
+            if( ParentNode::_network->send_PacketsToChildren( reverse_packets ) == -1 ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketsToChildren() failed\n" ));
+                retval = -1;
+            }
+        }
+
+        if( NULL != pdm ) {
+            if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_INT_DATACHILD) )
+                ipacket->stop_Timer(PERFDATA_PKT_TIMERS_INT_DATACHILD);
+        }
     }
     else {
-
-        Stream *stream = ParentNode::_network->get_Stream( strm_id );
-        if( stream == NULL ){
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %d lookup failed\n", strm_id));
-            return -1;
-        }
-
-        stream->push_Packet( ipacket, packets, reverse_packets, true );
+        retval = -1;
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                               "stream %u lookup failed\n", strm_id) );
     }
-
-    if( ! packets.empty() ) {
-        if( ParentNode::_network->send_PacketsToParent( packets ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "parent.send() failed()\n" ));
-            retval = -1;
-        }
-    }
-    if( ! reverse_packets.empty() ) {
-        if( ParentNode::_network->send_PacketsToChildren( reverse_packets ) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketsToChildren() failed\n" ));
-            retval = -1;
-        }
-    }
-
-    if(strm != NULL)
-        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_INT_DATACHILD))
-            ipacket->stop_Timer(PERFDATA_PKT_TIMERS_INT_DATACHILD);
 
     mrn_dbg_func_end();
     return retval;
