@@ -26,6 +26,7 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
     Packet_t* packet;
     NetworkTopology_t* nettop;
     const char* fmt_str = "%s %uhd %ud %uhd %ud %c %s";
+    int num_retry = 15;
 
     mrn_dbg_func_begin();
 
@@ -35,7 +36,7 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
                           iparent->port, ifailed_rank));
 
     // establish data detection connect with new parent
-    if( PeerNode_connect_DataSocket(iparent) == -1 ) {
+    if( PeerNode_connect_DataSocket(iparent, num_retry) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, 
                               "PeerNode_connect_data_socket() failed\n"));
         return -1;
@@ -101,11 +102,12 @@ int ChildNode_init_newChildEventConnection(BackEndNode_t* be,
     int retval = 0;
     Packet_t* packet;
     const char* fmt_str = "%s %uhd %ud";
+    int num_retry = 5;
 
     mrn_dbg_func_begin();
 
     // establish data detection connect with new parent
-    if( PeerNode_connect_EventSocket(iparent) == -1 ) {
+    if( PeerNode_connect_EventSocket(iparent, num_retry) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, 
                               "PeerNode_connect_data_socket() failed\n"));
         return -1;

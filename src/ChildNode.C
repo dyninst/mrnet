@@ -51,11 +51,6 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
 {
     int retval = 0;
     int tag = cur_packet->get_Tag();
-//    Stream * strm = _network->get_Stream( cur_packet->get_StreamId() );
-//    if (strm != NULL) 
-//        if(strm->_perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_))
-
-
     if( (tag >= FirstSystemTag) && (tag < PROT_LAST) ) {
 
         switch ( tag ) {
@@ -470,7 +465,8 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     mrn_dbg_func_begin();
 
     // Establish data detection connection w/ new Parent
-    if( iparent->connect_DataSocket() == -1 ) {
+    int num_retry = 15;
+    if( iparent->connect_DataSocket(num_retry) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "connect_DataSocket() failed\n") );
         return -1;
     }

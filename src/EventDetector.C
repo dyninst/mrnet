@@ -634,7 +634,8 @@ int EventDetector::init_NewChildFDConnection( PeerNodePtr iparent_node )
     Rank lrank = _network->get_LocalRank();
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Initializing new Child FD Connection ...\n"));
-    if( iparent_node->connect_EventSocket() == -1 ){
+    int num_retry = 5;
+    if( iparent_node->connect_EventSocket(num_retry) == -1 ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "connect_EventSocket( %s:%u ) failed\n",
                                iparent_node->get_HostName().c_str(),
                                iparent_node->get_Port() ) );

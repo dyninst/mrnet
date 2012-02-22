@@ -39,23 +39,16 @@ class PeerNode: public CommunicationNode, public Error {
 
     static void * recv_thread_main(void * arg);
     static void * send_thread_main(void * arg);
+
     ~PeerNode();
-    int connect_DataSocket(void);
-    int connect_EventSocket(void);
-    void set_DataSocketFd( int isock );
-    void set_EventSocketFd( int isock );
-    int get_DataSocketFd(void) const { return _data_sock_fd; }
-    int get_EventSocketFd(void) const { return _event_sock_fd; }
+
+    int connect_DataSocket(int num_retry=0);
+    int connect_EventSocket(int num_retry=0);
+    XPlat_Socket get_DataSocketFd(void) const { return _data_sock_fd; }
+    XPlat_Socket get_EventSocketFd(void) const { return _event_sock_fd; }
+    void set_DataSocketFd( XPlat_Socket isock );
+    void set_EventSocketFd( XPlat_Socket isock );
     void close_Sockets(void);
-
-    int new_InternalNode( int listening_sock_fd,
-                          std::string parent_hostname, Port parent_port,
-                          std::string commnode ) const;
-    int new_Application( int listening_sock_fd,
-                         std::string parent_hostname, Port parent_port,
-                         Rank be_rank,
-                         std::string &cmd, std::vector <std::string> &args ) const;
-
 
     void send( PacketPtr ) const;
     int sendDirectly( PacketPtr ipacket ) const;
@@ -85,8 +78,8 @@ class PeerNode: public CommunicationNode, public Error {
 
     //Static data members
     Network * _network;
-    int _data_sock_fd;
-    int _event_sock_fd;
+    XPlat_Socket _data_sock_fd;
+    XPlat_Socket _event_sock_fd;
     bool _is_internal_node;
     bool _is_parent;
     bool _recv_thread_started, _send_thread_started;
