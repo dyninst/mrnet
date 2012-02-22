@@ -44,8 +44,13 @@ const char* PerfDataMgr::perfdata_context_names[PERFDATA_MAX_CTX] =
     "Time_Packet_Filter_To_Send"
 };
 
-PerfDataMgr::PerfDataMgr( void )
+PerfDataMgr::PerfDataMgr(void)
     : the_data(PERFDATA_MAX_CTX)
+{
+    memset(active_metrics, 0, PERFDATA_MAX_CTX);
+}
+
+PerfDataMgr::~PerfDataMgr(void)
 {
     memset(active_metrics, 0, PERFDATA_MAX_CTX);
 }
@@ -248,18 +253,15 @@ void PerfDataMgr::get_MemData(perfdata_metric_t metric)
     mrn_dbg_func_end();
 }
 
-void PerfDataMgr::add_PacketTimers ( PacketPtr pkt)
+void PerfDataMgr::add_PacketTimers( PacketPtr pkt )
 {
-
-    for (int i = 1; i < PERFDATA_PKT_TIMERS_MAX; i++)
-    {
+    for( int i = 0; i < PERFDATA_PKT_TIMERS_MAX; i++ ) {
         perfdata_t tmp;
-        tmp.d = pkt->get_ElapsedTime((perfdata_pkt_timers_t)i);
-        if (tmp.d > 0.00000001 && tmp.d < 50000.00)
-        {
-            add_DataInstance( PERFDATA_MET_ELAPSED_SEC,(perfdata_context_t) 
-                              (PERFDATA_CTX_NONE + i),tmp);
-        }
+        perfdata_context_t ctx = (perfdata_context_t)(i + PERFDATA_CTX_PKT_RECV); /* ugh */
+
+        tmp.d = pkt->get_ElapsedTime( (perfdata_pkt_timers_t)i );
+        if( (tmp.d > 0.00000001) && (tmp.d < 50000.0) )
+            add_DataInstance( PERFDATA_MET_ELAPSED_SEC, ctx, tmp );
     }
 }
 

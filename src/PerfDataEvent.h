@@ -26,8 +26,8 @@ class PerfDataMgr {
     static const char* perfdata_context_names[PERFDATA_MAX_CTX];
 
  public:
-    PerfDataMgr( void );
-    ~PerfDataMgr( void ) {}
+    PerfDataMgr(void);
+    ~PerfDataMgr(void);
 
     void enable( perfdata_metric_t, perfdata_context_t );
     void disable( perfdata_metric_t, perfdata_context_t );

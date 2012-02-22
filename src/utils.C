@@ -255,7 +255,21 @@ struct timeval dbl2tv(double d)
 
 Timer::Timer(void)
 {
-#ifndef USE_BOOST_TIMER
+#ifdef USE_BOOST_TIMER
+    _b_timer = NULL;
+#else
+    _stop_d = 0.0;
+    _start_d = 0.0;
+#endif
+}
+
+Timer::~Timer(void)
+{
+#ifdef USE_BOOST_TIMER
+    if( NULL == _b_timer )
+        delete _b_timer;
+    _b_timer = NULL;
+#else
     _stop_d = 0.0;
     _start_d = 0.0;
 #endif
@@ -263,8 +277,10 @@ Timer::Timer(void)
 
 void Timer::start( void )
 {
-#ifdef USE_BOOST_TIMER 
-    _b_timer.start();
+#ifdef USE_BOOST_TIMER
+    if( NULL != _b_timer )
+        delete _b_timer;
+    _b_timer = new boost::timer::cpu_timer;
 #else
     while(gettimeofday(&_start_tv, NULL) == -1) {}
     _start_d = tv2dbl( _start_tv );
@@ -274,7 +290,8 @@ void Timer::start( void )
 void Timer::stop(void)
 {
 #ifdef USE_BOOST_TIMER
-    _b_timer.stop();
+    if( NULL != _b_timer )
+        _b_timer->stop();
 #else 
     while(gettimeofday(&_stop_tv, NULL) == -1) {}
     _stop_d = tv2dbl( _stop_tv );
@@ -285,8 +302,10 @@ double Timer::get_latency_secs(void)
 {
 #ifdef USE_BOOST_TIMER
     // No need to check if timer is started, boost does that for us.
-    double elapsed = (double) _b_timer.elapsed().wall;
-    return (elapsed / 1000000000.0);
+    double elapsed = 0.0;
+    if( NULL != _b_timer )
+        elapsed = (double) _b_timer->elapsed().wall / 1000000000.0 ;
+    return elapsed;
 #else
     if( _start_d > _stop_d )
         return 0.0;

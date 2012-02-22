@@ -265,7 +265,7 @@ int Message::send( XPlat_Socket sock_fd )
         /* j accounts for skipping first two ncbufs that hold pkt count and sizes */
         j = i + 2;
 
-        PacketPtr curPacket( *piter );
+        PacketPtr& curPacket = *piter;
         
         /* check for final packet */
         int tag = curPacket->get_Tag();
@@ -329,16 +329,16 @@ int Message::send( XPlat_Socket sock_fd )
     for( ; piter != send_packets.end(); piter++ ) {
         PacketPtr& pkt = *piter;
         strm = _net->get_Stream( pkt->get_StreamId() );
-        if( strm != NULL ) {
+        if( NULL != strm ) {
             pdm = strm->get_PerfData();
             if( NULL != pdm ) {
-                pkt->set_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER, tmp);
+                pkt->set_Timer( PERFDATA_PKT_TIMERS_RECV_TO_FILTER, tmp );
                 if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, 
                                     PERFDATA_CTX_PKT_SEND) ) {
-                    pkt->set_OutgoingPktCount(packetLength);
-                    pkt->stop_Timer(PERFDATA_PKT_TIMERS_SEND);
+                    pkt->set_OutgoingPktCount( packetLength );
+                    pkt->stop_Timer( PERFDATA_PKT_TIMERS_SEND );
                 }
-                pdm->add_PacketTimers(pkt);
+                pdm->add_PacketTimers( pkt );
             }
         }
     }
@@ -355,7 +355,7 @@ int Message::send( XPlat_Socket sock_fd )
         // exit send thread
         mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));
         tsd_t* tsd = (tsd_t*)tsd_key.Get();
-        if( tsd != NULL ) {
+        if( NULL != tsd ) {
             tsd_key.Set( NULL );
             free( const_cast<char*>( tsd->thread_name ) );
             delete tsd;

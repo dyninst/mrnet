@@ -123,16 +123,17 @@ class Timer{
  public:
     struct timeval _start_tv, _stop_tv;
     double  _start_d, _stop_d;
-    Timer( void );
-    void start( void );
-    void stop( void );
-    double get_latency_secs( void );
-    double get_latency_msecs( void );
-    double get_latency_usecs( void );
+    Timer(void);
+    ~Timer(void);
+    void start(void);
+    void stop(void);
+    double get_latency_secs(void);
+    double get_latency_msecs(void);
+    double get_latency_usecs(void);
 
  private:
 #if USE_BOOST_TIMER
-    boost::timer::cpu_timer  _b_timer;
+    boost::timer::cpu_timer * _b_timer;
 #endif 
 };
 
