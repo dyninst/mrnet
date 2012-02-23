@@ -87,7 +87,6 @@ bool NetUtils::IsIPAddressStr( std::string& iaddr )
 {
     const char* addrstr = iaddr.c_str();
     size_t len = iaddr.length();
-    size_t ndx = 0;
 
     char* str = const_cast<char*>( addrstr );
     char* sep;

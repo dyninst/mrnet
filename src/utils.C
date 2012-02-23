@@ -185,7 +185,7 @@ int mrn_printf( const char *file, int line, const char * func,
     const char* thread_name = NULL;
     Rank rank = UnknownRank;
     node_type_t node_type = UNKNOWN_NODE;
-    Network* net = NULL;
+    //Network* net = NULL;
     
     tsd_t *tsd = (tsd_t*) tsd_key.Get();
     if( tsd != NULL ) {
@@ -193,7 +193,7 @@ int mrn_printf( const char *file, int line, const char * func,
         thread_name = tsd->thread_name;
         rank = tsd->process_rank;
         node_type = tsd->node_type;
-        net = tsd->network;
+        //net = tsd->network;
     }
 
     if( mrn_printf_fp == NULL ) {
