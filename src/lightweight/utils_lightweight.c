@@ -36,8 +36,8 @@ int connectHost( XPlat_Socket *sock_in, char* hostname,
     if( num_retry > 0 ) 
         nretry = (unsigned) num_retry;
 
-    bool rc = XPlat_SocketUtils_Connect( hostname, port, 
-                                         &sock, nretry );
+    bool_t rc = XPlat_SocketUtils_Connect( hostname, port, 
+                                           &sock, nretry );
     if( rc ) {
         *sock_in = sock;
         return 0;
