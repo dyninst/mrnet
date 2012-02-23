@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY CXXCPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX HAVE_BOOST build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT LIBS_LOWFAT EXTRA_LIBS LTWT_THREADSAFE PLATFORM_BUILD LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY CXXCPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC GREP CP RM FLEX HAVE_BOOST build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT LIBS_LOWFAT EXTRA_LIBS EXTRA_LIBS_LIGHTWEIGHT EXTRA_LIBS_LOWFAT LTWT_THREADSAFE PLATFORM_BUILD LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2443,18 +2443,18 @@ fi;
 # Check whether --with-alpstoolhelp-lib or --without-alpstoolhelp-lib was given.
 if test "${with_alpstoolhelp_lib+set}" = set; then
   withval="$with_alpstoolhelp_lib"
-  CRAYXT_ATH_LIBDIR="${withval}"
+  CRAY_ATH_LIBDIR="${withval}"
 else
-  CRAYXT_ATH_LIBDIR=""
+  CRAY_ATH_LIBDIR=""
 fi;
 
 
 # Check whether --with-alpstoolhelp-inc or --without-alpstoolhelp-inc was given.
 if test "${with_alpstoolhelp_inc+set}" = set; then
   withval="$with_alpstoolhelp_inc"
-  CRAYXT_ATH_INCDIR="${withval}"
+  CRAY_ATH_INCDIR="${withval}"
 else
-  CRAYXT_ATH_INCDIR=""
+  CRAY_ATH_INCDIR=""
 fi;
 
 
@@ -4528,7 +4528,10 @@ fi
 LIBS="-lm -lpthread -ldl"
 LIBS_LIGHTWEIGHT="-lm"
 LIBS_LOWFAT=""
+
 EXTRA_LIBS=""
+EXTRA_LIBS_LIGHTWEIGHT=""
+EXTRA_LIBS_LOWFAT=""
 
 HAVE_BOOST="no"
 HAVE_USER_BOOST="no"
@@ -5727,6 +5730,7 @@ if test $ac_cv_file__proc_cray_xt_nid = yes; then
 fi
 
 fi
+
 if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 
     CXXFLAGS="$CXXFLAGS -Darch_crayxt"
@@ -5889,162 +5893,106 @@ fi
 done
 
 
-    HAVE_SYSTEM_LIBALPS="no"
-
-for ac_header in alps/libalps.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#if HAVE_ALPS_ALPS_TOOLASSIST_H
-# include <alps/alps_toolAssist.h>
-#endif
-#if HAVE_ALPS_APINFO_H
-# include <alps/apInfo.h>
-#endif
-
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_cxx_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
- HAVE_SYSTEM_LIBALPS="yes"
-fi
-
-done
-
-    if test $HAVE_SYSTEM_LIBALPS = "no" ; then
-      if test "$CRAYXT_ATH_INCDIR" != "" ; then
-        CXXFLAGS="$CXXFLAGS -I$CRAYXT_ATH_INCDIR"
-
-for ac_header in libalps.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#if HAVE_ALPS_ALPS_TOOLASSIST_H
-# include <alps/alps_toolAssist.h>
-#endif
-#if HAVE_ALPS_APINFO_H
-# include <alps/apInfo.h>
-#endif
-
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_cxx_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  { { echo "$as_me:$LINENO: error: Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc" >&5
-echo "$as_me: error: Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-done
-
-      fi
+    HAVE_LIBALPS="no"
+    if test "$CRAY_ATH_INCDIR" != "" ; then
+        CXXFLAGS="$CXXFLAGS -I$CRAY_ATH_INCDIR"
     fi
 
-    CRAYXT_ATH_LIBS="-lalps -lxmlrpc"
-    if test "$CRAYXT_ATH_LIBDIR" != "" ; then
+
+for ac_header in alps/libalps.h libalps.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#if HAVE_ALPS_ALPS_TOOLASSIST_H
+# include <alps/alps_toolAssist.h>
+#endif
+#if HAVE_ALPS_APINFO_H
+# include <alps/apInfo.h>
+#endif
+
+
+
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_Header=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_Header=no"
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ HAVE_LIBALPS="yes"; break
+fi
+
+done
+
+    if test $HAVE_LIBALPS = "no" ; then
+        if test "$CRAY_ATH_INCDIR" != "" ; then
+            { { echo "$as_me:$LINENO: error: Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc" >&5
+echo "$as_me: error: Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc" >&2;}
+   { (exit 1); exit 1; }; }
+        fi
+    fi
+
+    if test $HAVE_LIBALPS = "yes" ; then
+
+        HAVE_ATH_LIBS="no"
         LIBS_HOLD=$LIBS
-	LIBS="-L$CRAYXT_ATH_LIBDIR $CRAYXT_ATH_LIBS $LIBS_HOLD"
+
+        CRAYXT_ATH_LIBS="-lalps -lxmlrpc"
+        CRAYXE_ATH_LIBS="-lalps -lxmlrpc-epi -lexpat"
+
+        if test "$CRAY_ATH_LIBDIR" != "" ; then
+            LIBS="$LIBS -L$CRAY_ATH_LIBDIR"
+        fi
+
         echo "$as_me:$LINENO: checking for alps_launch_tool_helper in -lalps" >&5
 echo $ECHO_N "checking for alps_launch_tool_helper in -lalps... $ECHO_C" >&6
 if test "${ac_cv_lib_alps_alps_launch_tool_helper+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lalps -lxmlrpc $LIBS"
+LIBS="-lalps -lxmlrpc  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -6103,13 +6051,94 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_alps_alps_launch_tool_helper" >&5
 echo "${ECHO_T}$ac_cv_lib_alps_alps_launch_tool_helper" >&6
 if test $ac_cv_lib_alps_alps_launch_tool_helper = yes; then
-  LIBS="$LIBS_HOLD"; EXTRA_LIBS="-L$CRAYXT_ATH_LIBDIR $CRAYXT_ATH_LIBS $EXTRA_LIBS"
-else
-  { { echo "$as_me:$LINENO: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&5
-echo "$as_me: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&2;}
-   { (exit 1); exit 1; }; }
+  HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXT_ATH_LIBS $EXTRA_LIBS"
 fi
 
+
+        if test "$HAVE_ATH_LIBS" = "no" ; then
+            unset ac_cv_lib_alps_alps_launch_tool_helper
+            LIBS="$LIBS_HOLD"
+            echo "$as_me:$LINENO: checking for alps_launch_tool_helper in -lalps" >&5
+echo $ECHO_N "checking for alps_launch_tool_helper in -lalps... $ECHO_C" >&6
+if test "${ac_cv_lib_alps_alps_launch_tool_helper+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lalps -lxmlrpc-epi -lexpat  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char alps_launch_tool_helper ();
+int
+main ()
+{
+alps_launch_tool_helper ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_alps_alps_launch_tool_helper=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_alps_alps_launch_tool_helper=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_alps_alps_launch_tool_helper" >&5
+echo "${ECHO_T}$ac_cv_lib_alps_alps_launch_tool_helper" >&6
+if test $ac_cv_lib_alps_alps_launch_tool_helper = yes; then
+  HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXE_ATH_LIBS $EXTRA_LIBS"
+fi
+
+        fi
+
+        LIBS="$LIBS_HOLD"
+
+        if test "$HAVE_ATH_LIBS" = "no" ; then
+            { { echo "$as_me:$LINENO: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&5
+echo "$as_me: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&2;}
+   { (exit 1); exit 1; }; }
+        else
+            if test "$CRAY_ATH_LIBDIR" != "" ; then
+                EXTRA_LIBS="-L$CRAY_ATH_LIBDIR $EXTRA_LIBS"
+            fi
+        fi
     fi
 fi
 
@@ -6166,6 +6195,8 @@ echo "$as_me: error: no" >&2;}
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
+
 
 
 
@@ -9723,6 +9754,8 @@ s,@C_AS_CPLUSPLUS@,$C_AS_CPLUSPLUS,;t t
 s,@LIBS_LIGHTWEIGHT@,$LIBS_LIGHTWEIGHT,;t t
 s,@LIBS_LOWFAT@,$LIBS_LOWFAT,;t t
 s,@EXTRA_LIBS@,$EXTRA_LIBS,;t t
+s,@EXTRA_LIBS_LIGHTWEIGHT@,$EXTRA_LIBS_LIGHTWEIGHT,;t t
+s,@EXTRA_LIBS_LOWFAT@,$EXTRA_LIBS_LOWFAT,;t t
 s,@LTWT_THREADSAFE@,$LTWT_THREADSAFE,;t t
 s,@PLATFORM_BUILD@,$PLATFORM_BUILD,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t

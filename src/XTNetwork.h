@@ -165,7 +165,7 @@ public:
 
     virtual ~XTNetwork(void) {}
 
-    static Port FindTopoPort(int iport=-1);
+    static Port FindTopoPort(Port iport=UnknownPort);
     static Port FindParentPort(void);
 };
 

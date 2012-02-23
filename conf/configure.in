@@ -22,14 +22,14 @@ AC_ARG_WITH(startup,
 AC_ARG_WITH(alpstoolhelp-lib,
             [AS_HELP_STRING([--with-alpstoolhelp-lib=PATH],
                             [(CrayXT only) Absolute path to directory containing libalps library])],
-            [CRAYXT_ATH_LIBDIR="${withval}"],
-            [CRAYXT_ATH_LIBDIR=""])
+            [CRAY_ATH_LIBDIR="${withval}"],
+            [CRAY_ATH_LIBDIR=""])
     
 AC_ARG_WITH(alpstoolhelp-inc,
             [AS_HELP_STRING([--with-alpstoolhelp-inc=PATH],
                             [(CrayXT only) Absolute path to directory containing libalps.h])],
-            [CRAYXT_ATH_INCDIR="${withval}"],
-            [CRAYXT_ATH_INCDIR=""])
+            [CRAY_ATH_INCDIR="${withval}"],
+            [CRAY_ATH_INCDIR=""])
 
 AC_ARG_WITH(boost,
             [AS_HELP_STRING([--with-boost=PATH],
@@ -106,7 +106,10 @@ dnl === Initial settings ===
 LIBS="-lm -lpthread -ldl"
 LIBS_LIGHTWEIGHT="-lm"
 LIBS_LOWFAT=""
+
 EXTRA_LIBS=""
+EXTRA_LIBS_LIGHTWEIGHT=""
+EXTRA_LIBS_LOWFAT=""
 
 dnl === Check for Boost C++ shared-ptr ===
 HAVE_BOOST="no"
@@ -329,6 +332,7 @@ dnl === CRAY XT OPTIONS ===
 if test $MRNET_STARTUP_METHOD = "ssh" ; then
     AC_CHECK_FILE([/proc/cray_xt/nid],[MRNET_STARTUP_METHOD="cray_xt"])
 fi
+
 if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 
     CXXFLAGS="$CXXFLAGS -Darch_crayxt"
@@ -337,38 +341,58 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
     AC_CHECK_HEADERS([alps/alps.h] [alps/alps_toolAssist.h] [alps/apInfo.h], [], 
                      [AC_MSG_ERROR([One of the required ALPS include files was not found: alps/alps.h, alps/alps_toolAssist.h, alps/apInfo.h])])
 
-    HAVE_SYSTEM_LIBALPS="no"
-    AC_CHECK_HEADERS([alps/libalps.h], HAVE_SYSTEM_LIBALPS="yes", [], 
+    HAVE_LIBALPS="no"
+    if test "$CRAY_ATH_INCDIR" != "" ; then
+        CXXFLAGS="$CXXFLAGS -I$CRAY_ATH_INCDIR"
+    fi
+    AC_CHECK_HEADERS([alps/libalps.h] [libalps.h], [HAVE_LIBALPS="yes"; break], [], 
 [#if HAVE_ALPS_ALPS_TOOLASSIST_H
 # include <alps/alps_toolAssist.h>
 #endif
 #if HAVE_ALPS_APINFO_H 
 # include <alps/apInfo.h> 
-#endif]
+#endif
+]
                     )
-    if test $HAVE_SYSTEM_LIBALPS = "no" ; then
-      if test "$CRAYXT_ATH_INCDIR" != "" ; then
-        CXXFLAGS="$CXXFLAGS -I$CRAYXT_ATH_INCDIR"
-        AC_CHECK_HEADERS([libalps.h], [], 
-                         [AC_MSG_ERROR(Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc)],
-[#if HAVE_ALPS_ALPS_TOOLASSIST_H
-# include <alps/alps_toolAssist.h>
-#endif
-#if HAVE_ALPS_APINFO_H 
-# include <alps/apInfo.h> 
-#endif]
-                        )
-      fi
+    if test $HAVE_LIBALPS = "no" ; then
+        if test "$CRAY_ATH_INCDIR" != "" ; then
+            AC_MSG_ERROR(Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc)
+        fi
     fi
 
-    CRAYXT_ATH_LIBS="-lalps -lxmlrpc"
-    if test "$CRAYXT_ATH_LIBDIR" != "" ; then
+    if test $HAVE_LIBALPS = "yes" ; then
+
+        HAVE_ATH_LIBS="no"
         LIBS_HOLD=$LIBS
-	LIBS="-L$CRAYXT_ATH_LIBDIR $CRAYXT_ATH_LIBS $LIBS_HOLD"
-        AC_CHECK_LIB(alps, [alps_launch_tool_helper], 
-                     [LIBS="$LIBS_HOLD"; EXTRA_LIBS="-L$CRAYXT_ATH_LIBDIR $CRAYXT_ATH_LIBS $EXTRA_LIBS"], 
-                     [AC_MSG_ERROR(Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib)],
-                     [-lxmlrpc])
+
+        CRAYXT_ATH_LIBS="-lalps -lxmlrpc"
+        CRAYXE_ATH_LIBS="-lalps -lxmlrpc-epi -lexpat"
+
+        if test "$CRAY_ATH_LIBDIR" != "" ; then
+            LIBS="$LIBS -L$CRAY_ATH_LIBDIR"
+        fi
+
+        AC_CHECK_LIB( [alps], [alps_launch_tool_helper],
+                      [HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXT_ATH_LIBS $EXTRA_LIBS"],
+                      [], [-lxmlrpc] )
+
+        if test "$HAVE_ATH_LIBS" = "no" ; then
+            unset ac_cv_lib_alps_alps_launch_tool_helper
+            LIBS="$LIBS_HOLD"
+            AC_CHECK_LIB( [alps], [alps_launch_tool_helper],
+                          [HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXE_ATH_LIBS $EXTRA_LIBS"],
+                          [], [-lxmlrpc-epi -lexpat] )
+        fi
+
+        LIBS="$LIBS_HOLD"
+
+        if test "$HAVE_ATH_LIBS" = "no" ; then
+            AC_MSG_ERROR(Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib)
+        else
+            if test "$CRAY_ATH_LIBDIR" != "" ; then
+                EXTRA_LIBS="-L$CRAY_ATH_LIBDIR $EXTRA_LIBS" 
+            fi
+        fi
     fi
 fi
 
@@ -391,6 +415,8 @@ AC_SUBST(LIBS)
 AC_SUBST(LIBS_LIGHTWEIGHT)
 AC_SUBST(LIBS_LOWFAT)
 AC_SUBST(EXTRA_LIBS)
+AC_SUBST(EXTRA_LIBS_LIGHTWEIGHT)
+AC_SUBST(EXTRA_LIBS_LOWFAT)
 AC_SUBST(LTWT_THREADSAFE)
 
 AC_C_BIGENDIAN

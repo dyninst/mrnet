@@ -106,7 +106,9 @@ Network::CreateNetworkIN( int argc, char** argv )
     int topoPipeFd = -1;
     int beArgc = 0;
     char** beArgv = NULL;
+
     if( argc > 0 ) {
+
         if( strcmp(argv[0], topofd_optstr) == 0 ) {
             // we are NOT the first process on this node
             /* we were passed the FD of a pipe from which we 
@@ -122,8 +124,7 @@ Network::CreateNetworkIN( int argc, char** argv )
             // we ARE the first process on this node
             for( int i=0; i < argc; i++ ) {
                 if( strcmp(argv[i], port_optstr) == 0 ) {
-                    /* passed a timeout that should be used when listening
-                       for the topology */
+                    /* passed the port to listen on */
                     port = atoi( argv[++i] );
                     beArgc -= 2;
                     beArgv += 2;
@@ -137,13 +138,15 @@ Network::CreateNetworkIN( int argc, char** argv )
                 }
             }
         }
+
+        Port topoPort = XTNetwork::FindTopoPort(port);
+        Network* net = new XTNetwork( true, topoPipeFd, topoPort,
+                                      timeout, beArgc, beArgv ); 
+        
+        return net;
     }
 
-    Port topoPort = XTNetwork::FindTopoPort(port);
-    Network* net = new XTNetwork( true, topoPipeFd, topoPort,
-                                  timeout, beArgc, beArgv ); 
-
-    return net;
+    return NULL;
 }
 
 
@@ -282,7 +285,7 @@ XTNetwork::GetTopology( int topoSocket, Rank& myRank )
     uint32_t sTopologyLen = 0;
 
     // obtain topology from our parent
-    MRN_recv( topoSocket, &sTopologyLen, sizeof(sTopologyLen) );
+    MRN_recv( topoSocket, (char*)&sTopologyLen, sizeof(sTopologyLen) );
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%u\n", sTopologyLen) );
 
     sTopology = new char[sTopologyLen + 1];
@@ -296,10 +299,10 @@ XTNetwork::GetTopology( int topoSocket, Rank& myRank )
     *currBufPtr = 0;
 
     // get my rank
-    MRN_recv( topoSocket, &myRank, sizeof(myRank) );
+    MRN_recv( topoSocket, (char*)&myRank, sizeof(myRank) );
 
     // get ALPS apid 
-    MRN_recv( topoSocket, &alps_apid, sizeof(alps_apid) );
+    MRN_recv( topoSocket, (char*)&alps_apid, sizeof(alps_apid) );
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s, rank=%u, ALPS apid=%lu\n", 
                           sTopology, myRank, alps_apid) );
@@ -430,9 +433,8 @@ XTNetwork::XTNetwork( bool, /* dummy for distinguising from other constructors *
                                   "failed to create topology listening socket\n"));
             exit(1);
         }
-	int inout_errno;
 	int timeout = get_StartupTimeout();
-        topoFd = getSocketConnection( listeningTopoSocket, inout_errno, 
+        topoFd = getSocketConnection( listeningTopoSocket, 
                                       timeout, false );
         if( topoFd == -1 ) {
             mrn_dbg(1, mrn_printf(FLF, stderr,
@@ -771,11 +773,11 @@ XTNetwork::SpawnBE( int beArgc, char** beArgv, const char* parentHost,
 }
 
 Port
-XTNetwork::FindTopoPort( int passed_port /*= -1*/ )
+XTNetwork::FindTopoPort( Port passed_port /*= UnknownPort*/ )
 {
     static Port defaultTopoPort = 26500;
 
-    if( passed_port != -1 )
+    if( UnknownPort != passed_port )
         defaultTopoPort = (Port) passed_port;
 
     Port topoPort = defaultTopoPort;
@@ -789,12 +791,12 @@ XTNetwork::FindTopoPort( int passed_port /*= -1*/ )
 }
 
 Port
-XTNetwork::FindParentPort( void )
+XTNetwork::FindParentPort(void)
 {
     // assumption: EDT port == topology port + 1
     Port ret = FindTopoPort();
     assert( ret != UnknownPort );
-    return ret + 1;
+    return ret + (Port)1;
 }
 
 

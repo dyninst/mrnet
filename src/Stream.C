@@ -551,7 +551,6 @@ int Stream::push_Packet( PacketPtr ipacket,
 	long user_before, sys_before;
 	long user_after, sys_after;
 
-        Timer tagg;
         Filter* trans_filter = _ds_filter;
 
         if( igoing_upstream ) {
@@ -1008,7 +1007,7 @@ PacketPtr Stream::collect_PerfData( perfdata_metric_t metric,
     iter = data.begin();
 
     Rank my_rank = _network->get_LocalRank();
-    uint32_t num_elems = data.size();
+    uint32_t num_elems = (uint32_t) data.size();
     void* data_arr = NULL;
     const char* fmt = NULL;
 

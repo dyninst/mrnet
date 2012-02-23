@@ -54,7 +54,7 @@ const int MAX_OUTPUT_LEVEL = 5;
 int CUR_OUTPUT_LEVEL = 1;
 char* MRN_DEBUG_LOG_DIRECTORY = NULL;
 
-const Port UnknownPort = (Port)-1;
+const Port UnknownPort = XPlat::SocketUtils::InvalidPort;
 const Rank UnknownRank = (Rank)-1;
 
 const char *empty_str = NULL_STRING;
