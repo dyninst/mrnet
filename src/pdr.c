@@ -14,23 +14,11 @@
 #include "pdr.h"
 #include "pdr_mem.h"
 
-#ifndef __cplusplus
-
-#include "utils_lightweight.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#else /* defined(__cplusplus) */
-
-#include "utils.h"
+#ifdef __cplusplus
 using namespace MRN;
-
 #endif /* ! defined(__cplusplus) */
 
-#define LASTUNSIGNED    ((uint32_t) 0-1)
-
+#define LASTUNSIGNED ((uint32_t)-1)
 
 /*
  * Free a data structure using PDR

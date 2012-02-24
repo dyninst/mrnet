@@ -6,11 +6,11 @@
 #if !defined(__peernode_h)
 #define __peernode_h 1
 
-#include "xplat_lightweight/Mutex.h"
-#include "mrnet_lightweight/Network.h"
+#include "utils_lightweight.h"
 #include "Message.h"
-#include "mrnet_lightweight/Packet.h"
-#include "mrnet_lightweight/Types.h"
+
+#include "mrnet_lightweight/Network.h"
+#include "xplat_lightweight/Mutex.h"
 #include "xplat_lightweight/vector.h"
 
 struct PeerNode_t { 

@@ -3,15 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <assert.h>
-#include "mrnet_lightweight/Network.h"
 #include "SerialGraph.h"
-#include "mrnet_lightweight/Types.h"
-#include "utils_lightweight.h"
+#include "mrnet_lightweight/Network.h"
 
 SerialGraph_t* new_SerialGraph_t(char* ibyte_array)
 {

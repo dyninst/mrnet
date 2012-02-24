@@ -6,7 +6,7 @@
 #if !defined __perfdataevent 
 #define __perfdataevent 1
 
-#include "mrnet_lightweight/Types.h"
+#include "utils_lightweight.h"
 #include "xplat_lightweight/vector.h"
 
 struct PerfDataMgr_t {

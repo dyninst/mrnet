@@ -6,8 +6,7 @@
 #if !defined( __performance_data_sys_events_h )
 #define __performance_data_sys_events_h 1
 
-#include "mrnet/Packet.h"
-#include "mrnet/Types.h"
+#include "utils.h"
 
 namespace MRN {
 

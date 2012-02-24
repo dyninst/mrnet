@@ -11,15 +11,16 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
+#include "utils.h"
 #include "Message.h"
 #include "Protocol.h"
+
 #include "mrnet/CommunicationNode.h"
 #include "mrnet/Error.h"
-#include "mrnet/Types.h"
 #include "mrnet/Network.h"
-#include "xplat/Thread.h"
 #include "xplat/Monitor.h"
 #include "xplat/Mutex.h"
+#include "xplat/Thread.h"
 
 namespace MRN
 {

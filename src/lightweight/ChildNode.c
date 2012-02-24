@@ -3,19 +3,17 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <assert.h>
-
-#include "mrnet_lightweight/Network.h"
+#include "utils_lightweight.h"
 #include "BackEndNode.h"
 #include "ChildNode.h"
-#include "mrnet_lightweight/NetworkTopology.h"
-#include "mrnet_lightweight/Packet.h"
 #include "PeerNode.h"
 #include "Protocol.h"
 #include "SerialGraph.h"
+
+#include "mrnet_lightweight/Network.h"
+#include "mrnet_lightweight/NetworkTopology.h"
+#include "mrnet_lightweight/Packet.h"
 #include "mrnet_lightweight/Stream.h"
-#include "mrnet_lightweight/Types.h"
-#include "utils_lightweight.h"
 #include "xplat_lightweight/vector.h"
 
 int ChildNode_init_newChildDataConnection(BackEndNode_t* be, 

@@ -5,18 +5,10 @@
 
 #ifdef os_linux
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/syscall.h>
-#include <errno.h>
-#include <unistd.h>
 
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
-#include "mrnet_lightweight/Types.h"
-#include "utils_lightweight.h"
-
 #include "xplat_lightweight/Process.h"
 
 #define SEC_PER_JIFFIES (.01)

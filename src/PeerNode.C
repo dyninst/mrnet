@@ -3,12 +3,11 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "utils.h"
+#include "PeerNode.h"
 #include "ChildNode.h"
 #include "ParentNode.h"
-#include "PeerNode.h"
 
-#include "mrnet/MRNet.h"
+#include "mrnet/Network.h"
 #include "xplat/SocketUtils.h"
 #include "xplat/Error.h"
 #include "xplat/NetUtils.h"

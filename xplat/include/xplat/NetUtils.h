@@ -7,23 +7,10 @@
 #ifndef XPLAT_NETUTILS_H
 #define XPLAT_NETUTILS_H
 
-#include <cstdlib>
-#include <cstring>
 #include <string>
 #include <vector>
 
-#if !defined(os_windows)
-# include <netinet/in.h>
-#else
-# include <winsock2.h>
-# include <ws2tcpip.h>
-#endif
-
 #include "xplat/Types.h"
-
-#ifndef XPLAT_MAX_HOSTNAME_LEN
-#define XPLAT_MAX_HOSTNAME_LEN 256
-#endif
 
 namespace XPlat
 {

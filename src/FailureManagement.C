@@ -6,12 +6,11 @@
 #include <map>
 #include <set>
 
-#include "mrnet/MRNet.h"
 #include "FailureManagement.h"
-#include "mrnet/CommunicationNode.h"
 #include "Message.h"
 #include "PeerNode.h"
-#include "utils.h"
+
+#include "mrnet/MRNet.h"
 #include "xplat/Thread.h"
 #include "xplat/SocketUtils.h"
 

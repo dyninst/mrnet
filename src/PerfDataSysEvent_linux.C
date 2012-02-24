@@ -10,8 +10,6 @@
 
 #include "PerfDataSysEvent.h"
 #include "PerfDataEvent.h"
-#include "utils.h"
-
 #include "xplat/Process.h"
 
 #define SEC_PER_JIFFIES (.01)

@@ -7,6 +7,8 @@
 #ifndef XPLAT_PTHREADMUTEX_H
 #define XPLAT_PTHREADMUTEX_H
 
+#include "xplat_lightweight/Types.h"
+
 #ifndef __USE_UNIX98
 #define __USE_UNIX98 1 // to get PTHREAD_MUTEX_ERRORCHECK
 #endif

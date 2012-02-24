@@ -2,15 +2,12 @@
  *  Copyright 2003-2011 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
-//#define MRNET_FILTER_NOBLOCK 5
-#include <vector>
 
-#include "mrnet/MRNet.h"
+#include <vector>
 
 #include "Filter.h"
 #include "ParentNode.h"
 #include "PeerNode.h"
-#include "utils.h"
 
 #include "xplat/SharedObject.h"
 

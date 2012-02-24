@@ -3,20 +3,15 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdlib.h>
-#include <assert.h>
-
 #include "BackEndNode.h"
 #include "ChildNode.h"
 #include "FilterDefinitions.h"
 #include "PeerNode.h"
 #include "Protocol.h"
-#include "utils_lightweight.h"
 
 #include "mrnet_lightweight/Network.h"
 #include "mrnet_lightweight/NetworkTopology.h"
 #include "mrnet_lightweight/Stream.h"
-#include "mrnet_lightweight/Types.h"
 #include "xplat_lightweight/NetUtils.h"
 #include "xplat_lightweight/SocketUtils.h"
 
@@ -151,9 +146,8 @@ BackEndNode_t* CreateBackEndNode( Network_t* inetwork,
     return be;
 }
 
-int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* UNUSED(packet) )
+int BackEndNode_proc_DeleteSubTree( BackEndNode_t* be, Packet_t* UNUSED(packet) )
 {
-    (void) packet;
     mrn_dbg_func_begin();
 
     // processes will be exiting -- disable failure recovery
@@ -175,7 +169,7 @@ int BackEndNode_proc_DeleteSubTree(BackEndNode_t* be, Packet_t* UNUSED(packet) )
     return 0;
 }
 
-int BackEndNode_proc_newStream(BackEndNode_t* be, Packet_t* packet)
+int BackEndNode_proc_newStream( BackEndNode_t* be, Packet_t* packet )
 {
     uint32_t num_backends;
     Rank *backends;
@@ -249,20 +243,21 @@ int BackEndNode_proc_newStream(BackEndNode_t* be, Packet_t* packet)
     return 0;
 }
 
-int BackEndNode_proc_UpstreamFilterParams(BackEndNode_t* UNUSED(be), 
-                                          Packet_t* UNUSED(ipacket))
+int BackEndNode_proc_UpstreamFilterParams( BackEndNode_t* UNUSED(be), 
+                                           Packet_t* UNUSED(ipacket) )
 {
     // no filter support in lightweight BE, nothing to do
     return 0;  
 }
 
-int BackEndNode_proc_DownstreamFilterParams(BackEndNode_t* UNUSED(be), Packet_t* UNUSED(ipacket))
+int BackEndNode_proc_DownstreamFilterParams( BackEndNode_t* UNUSED(be), 
+                                             Packet_t* UNUSED(ipacket) )
 {
     // no filter support in lightweight BE, nothing to do
     return 0;
 }
 
-int BackEndNode_proc_deleteStream(BackEndNode_t* be, Packet_t* ipacket)
+int BackEndNode_proc_deleteStream( BackEndNode_t* be, Packet_t* ipacket )
 {
     unsigned int stream_id;
     Stream_t * strm;
@@ -293,13 +288,14 @@ int BackEndNode_proc_deleteStream(BackEndNode_t* be, Packet_t* ipacket)
     return 0;
 }
 
-int BackEndNode_proc_newFilter(BackEndNode_t* UNUSED(be), Packet_t* UNUSED(ipacket))
+int BackEndNode_proc_newFilter( BackEndNode_t* UNUSED(be), 
+                                Packet_t* UNUSED(ipacket) )
 {
     // no filter support in lightweight BE, nothing to do
     return 0;
 }
 
-int BackEndNode_proc_DataFromParent(BackEndNode_t* be, Packet_t* ipacket)
+int BackEndNode_proc_DataFromParent( BackEndNode_t* be, Packet_t* ipacket )
 {
     Stream_t* stream;
     Packet_t* opacket;

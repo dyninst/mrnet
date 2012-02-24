@@ -6,16 +6,12 @@
 #if !defined( __performance_data_events_h )
 #define __performance_data_events_h 1
 
-#include "mrnet/Packet.h"
-#include "mrnet/Types.h"
-
 #include <map>
 #include <string>
 #include <vector>
-#ifndef os_windows
-#include <sys/time.h>
-#include <inttypes.h> /* integer printf format macros */ 
-#endif
+
+#include "utils.h"
+#include "mrnet/Packet.h"
 
 namespace MRN {
 

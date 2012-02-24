@@ -3,26 +3,12 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "byte_order.h"
 #include "pdr_mem.h"
-
-#ifndef os_windows // unix
-#include "mrnet_config.h"
-#endif
+#include "byte_order.h"
 
 #if defined(__cplusplus)
-
-#include "utils.h"
 using namespace MRN;
-
-#else /* ! defined(__cplusplus) */ 
-
-#include "utils_lightweight.h"
-#include <string.h>
-#include <assert.h>
-
-#endif /* defined(__cplusplus) */
-
+#endif
 
 static struct pdr_ops pdrmem_ops = {
     pdrmem_putchar,
@@ -346,10 +332,6 @@ bool_t pdrmem_putbytes(PDR *pdrs, char * addr,  uint64_t len)
     pdrs->cur += len;
     return (TRUE);
 }
-
-#if defined( os_solaris )
-#include <sys/int_limits.h>
-#endif
 
 /* TODO: is the return size right, given 64-bit pointers? */
 uint64_t pdrmem_getpos( PDR *pdrs )

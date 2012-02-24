@@ -2,21 +2,17 @@
  *  Copyright 2003-2011 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
-#include <fcntl.h>
 
-#include "pdr.h"
-#include "utils.h"
 #include "Message.h"
 #include "PeerNode.h"
-#include <time.h>
-#include "mrnet/Types.h"
-#include "mrnet/Stream.h"
+#include "pdr.h"
+
 #include "mrnet/Packet.h"
+#include "mrnet/Stream.h"
 #include "xplat/Atomic.h"
 #include "xplat/Error.h"
 #include "xplat/NetUtils.h"
 #include "xplat/SocketUtils.h"
-#include "xplat/Types.h"
 
 namespace MRN
 {

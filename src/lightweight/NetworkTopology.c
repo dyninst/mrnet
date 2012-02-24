@@ -3,22 +3,17 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
 #include <math.h>
 #include <time.h>
 
 #include "utils_lightweight.h"
-#include "xplat_lightweight/map.h"
-#include "xplat_lightweight/vector.h"
 #include "SerialGraph.h"
 
 #include "mrnet_lightweight/NetworkTopology.h"
 #include "mrnet_lightweight/Stream.h"
-#include "mrnet_lightweight/Types.h"
 #include "xplat_lightweight/NetUtils.h"
+#include "xplat_lightweight/map.h"
+#include "xplat_lightweight/vector.h"
 
 #ifdef MRNET_LTWT_THREADSAFE  
 

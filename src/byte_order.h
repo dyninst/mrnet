@@ -6,16 +6,11 @@
 #if !defined(__byte_order_h)
 #define __byte_order_h
 
-
 #if defined(__cplusplus)
-
-#include "mrnet/Types.h"
+# include "utils.h"
 extern "C" {
-
-#else /* ! defined(__cplusplus) */
-
-#include "mrnet_lightweight/Types.h"
-
+#else
+# include "utils_lightweight.h"
 #endif /* defined(__cplusplus) */
 
 #define ntoh_bytes hton_bytes
@@ -62,9 +57,8 @@ void byte_swap_inplace(char * inout, uint32_t nelems, uint32_t elemsize);
 #define swap_inplace_double(in) \
         byte_swap_inplace((char *)in, 1, (uint32_t) sizeof(double) );
 
-
 #if defined(__cplusplus)
-}
+} // extern C
 #endif /* defined(__cplusplus) */
 
 #endif /* (__byte_order_h) */

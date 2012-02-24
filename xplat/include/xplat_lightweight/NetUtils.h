@@ -6,16 +6,7 @@
 #if !defined __netutils_h
 #define __netutils_h 1
 
-#if !defined(os_windows)
-#include <netinet/in.h>
-#else
-#include <winsock2.h>
-#define strtok_r strtok_s
-#endif
-
-#ifndef XPLAT_MAX_HOSTNAME_LEN
-#define XPLAT_MAX_HOSTNAME_LEN 256
-#endif
+#include "xplat_lightweight/Types.h"
 
 int XPlat_NetUtils_FindNetworkName(char* ihostname, char* ohostname);
 

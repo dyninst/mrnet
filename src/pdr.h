@@ -6,49 +6,23 @@
 #ifndef __PDR_HEADER__
 #define __PDR_HEADER__
 
-
-#ifndef UNUSED
-#if defined(__GNUC__)
-#   define UNUSED(x) x __attribute__((unused)) /* UNUSED: x */ 
-#else
-#   define UNUSED(x) x
-#endif
-#endif
-
-#if !defined (__STDC_LIMIT_MACROS)
-#  define __STDC_LIMIT_MACROS
-#endif
-#if !defined (__STDC_CONSTANT_MACROS)
-#  define __STDC_CONSTANT_MACROS
-#endif
-#if !defined (__STDC_FORMAT_MACROS)
-#  define __STDC_FORMAT_MACROS
+#ifndef os_windows
+# include "mrnet_config.h"
 #endif
 
 #define SIZEOF_INT16 2
 #define SIZEOF_INT32 4
 #define SIZEOF_INT64 8
 
-#include <sys/types.h>
-
 #if defined(__cplusplus)
-#include "mrnet/Types.h"
+#include "utils.h"
 #else
-#include "mrnet_lightweight/Types.h"
+#include "utils_lightweight.h"
 #endif
 
-#ifndef os_windows
-# include "mrnet_config.h"
-# if HAVE_INTTYPES_H
-#  include <inttypes.h>
-# else
-#  if HAVE_STDINT_H
-#   include <stdint.h>
-#  endif
-# endif
-#else
+#ifdef os_windows
 #define inline __inline
-#endif // ifndef os_windows
+#endif
 
 #if !defined(SIZEOF_CHAR)
 #  define SIZEOF_CHAR sizeof(char)
@@ -85,20 +59,8 @@
 #endif
 
 #ifdef __cplusplus
-
 extern "C" {
-
-#else
-
-# ifndef false
-#  define false (0)
-# endif
-
-# ifndef true
-#  define true (1)
-# endif
-
-#endif // __cplusplus
+#endif
 
 enum pdr_op {
     PDR_FREE=0,
@@ -308,6 +270,5 @@ extern uint64_t pdr_sizeof (pdrproc_t, void *);
 
 #define pdr_destroy(pdrs)                               \
         (*(pdrs)->p_ops->destroy)(pdrs)
-
 
 #endif /* __PDR_HEADER__ */

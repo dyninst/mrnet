@@ -5,7 +5,6 @@
 
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
-#include "utils.h"
 
 using namespace std;
 

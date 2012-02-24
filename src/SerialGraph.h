@@ -7,8 +7,8 @@
 #define SerialGraph_h 1
 
 #include <string>
-#include <cstdio>
-#include <mrnet/Types.h>
+
+#include "utils.h"
 
 namespace MRN
 {

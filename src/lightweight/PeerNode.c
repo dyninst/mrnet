@@ -3,12 +3,9 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <assert.h>
-#include <string.h>
+#include "PeerNode.h"
 #include "mrnet_lightweight/Error.h"
 #include "mrnet_lightweight/Network.h"
-#include "PeerNode.h"
-#include "utils_lightweight.h"
 #include "xplat_lightweight/vector.h"
 
 PeerNode_t* new_PeerNode_t(Network_t* inetwork, 

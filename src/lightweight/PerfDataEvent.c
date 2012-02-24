@@ -3,22 +3,11 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
-#if !defined(os_windows)
-#include <unistd.h>
-#include <inttypes.h>
-#endif //!defined(os_windows)
-
 #include "PerfDataEvent.h" 
 #include "PerfDataSysEvent.h"
-#include "xplat_lightweight/map.h"
-#include "mrnet_lightweight/Types.h"
-#include "utils_lightweight.h"
-#include "xplat_lightweight/vector.h"
 
+#include "xplat_lightweight/map.h"
+#include "xplat_lightweight/vector.h"
 
 perfdata_metinfo_t perfdata_metric_info[PERFDATA_MAX_MET] = 
 {

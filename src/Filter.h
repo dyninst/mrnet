@@ -10,18 +10,16 @@
 #include <string>
 #include <vector>
 
-#include "mrnet/Stream.h"
-
-#include "mrnet/Types.h"
-#include "mrnet/Error.h"
-#include "mrnet/NetworkTopology.h"
-#include "xplat/Mutex.h"
-
 #include "utils.h"
 #include "FilterDefinitions.h"
 #include "Message.h"
 #include "ParadynFilterDefinitions.h"
 #include "PeerNode.h"
+
+#include "mrnet/Error.h"
+#include "mrnet/Stream.h"
+#include "mrnet/NetworkTopology.h"
+#include "xplat/Mutex.h"
 
 namespace MRN
 {

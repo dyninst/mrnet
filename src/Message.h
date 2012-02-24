@@ -9,16 +9,15 @@
 #include <list>
 #include <vector>
 
-#include "mrnet/Error.h"
-#include "mrnet/Types.h"
-#include "mrnet/Packet.h"
-#include "xplat/Monitor.h"
-#include "mrnet/Network.h"
-#include "xplat/SocketUtils.h"
-
+#include "utils.h"
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
 
+#include "mrnet/Error.h"
+#include "mrnet/Network.h"
+#include "mrnet/Packet.h"
+#include "xplat/Monitor.h"
+#include "xplat/SocketUtils.h"
 
 #define MESSAGE_PREALLOC_LEN 10
 
