@@ -69,8 +69,13 @@
 
 // Printf macro for size_t types
 #ifndef PRIszt
-# define PRIszt  "zu"
-# define PRIsszt "zd"
+# ifdef os_solaris
+#  define PRIszt  "lu"
+#  define PRIsszt "ld"
+# else
+#  define PRIszt  "zu"
+#  define PRIsszt "zd"
+# endif
 #endif
 
 // socket types

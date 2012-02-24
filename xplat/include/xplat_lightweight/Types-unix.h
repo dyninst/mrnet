@@ -90,8 +90,15 @@
 #endif
 
 // Printf macro for size_t types
-#define PRIszt  "zu"
-#define PRIsszt "zd"
+#ifndef PRIszt
+# ifdef os_solaris
+#  define PRIszt  "lu"
+#  define PRIsszt "ld"
+# else
+#  define PRIszt  "zu"
+#  define PRIsszt "zd"
+# endif
+#endif
 
 // socket types
 typedef int XPlat_Socket;

@@ -96,7 +96,7 @@ ssize_t XPlat_SocketUtils_send(XPlat_Socket s, const void *buf, size_t count)
     if( count == 0 )
         return 0;
 
-    //fprintf(stderr, "XPlat DEBUG: SocketUtils_send - writing %zd bytes to fd=%d)\n", count, s);
+    //fprintf(stderr, "XPlat DEBUG: SocketUtils_send - writing %"PRIszt" bytes to fd=%d)\n", count, s);
 
     int flags = 0;
 #if defined(os_linux)
@@ -121,7 +121,7 @@ ssize_t XPlat_SocketUtils_send(XPlat_Socket s, const void *buf, size_t count)
             else {
                 /* fprintf(stderr, */
 /*                         "Warning: XPlat_SocketUtils_send - premature return from send(). " */
-/*                         "Wrote %zd of %zd bytes ('%s')\n",  */
+/*                         "Wrote %"PRIsszt" of %"PRIszt" bytes ('%s')\n",  */
 /*                         bytes_written, count, strerror(err)); */
                 return bytes_written;
             }
@@ -132,7 +132,7 @@ ssize_t XPlat_SocketUtils_send(XPlat_Socket s, const void *buf, size_t count)
                 continue;
             }
             else {
-                //fprintf(stderr, "XPlat DEBUG: SocketUtils_send - returning %zd\n", bytes_written);
+                //fprintf(stderr, "XPlat DEBUG: SocketUtils_send - returning %"PRIsszt"\n", bytes_written);
                 return bytes_written;
             }
         }
@@ -162,7 +162,7 @@ ssize_t XPlat_SocketUtils_recv(XPlat_Socket s, void *buf, size_t count)
             else {
                 /* fprintf(stderr, */
 /*                         "Warning: XPlat_SocketUtils_recv - premature return from recv(). " */
-/*                         "Got %zd of %zd bytes ('%s')\n",  */
+/*                         "Got %"PRIsszt" of %"PRIszt" bytes ('%s')\n",  */
 /*                         bytes_recvd, count, strerror(err)); */
                 return bytes_recvd;
             }
@@ -178,7 +178,7 @@ ssize_t XPlat_SocketUtils_recv(XPlat_Socket s, void *buf, size_t count)
                 continue;
             }
             else {
-                //fprintf(stderr, "XPlat DEBUG: SocketUtils_recv - returning %zd\n", bytes_recvd);
+                //fprintf(stderr, "XPlat DEBUG: SocketUtils_recv - returning %"PRIsszt"\n", bytes_recvd);
                 return bytes_recvd;
             }
         }
