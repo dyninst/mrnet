@@ -138,18 +138,6 @@ void tfilter_Sum( const vector< PacketPtr >& ipackets,
             case DOUBLE_T:
                 format_string="%lf";
                 break;
-            case CHAR_ARRAY_T:
-            case UCHAR_ARRAY_T:
-            case INT16_ARRAY_T:
-            case UINT16_ARRAY_T:
-            case INT32_ARRAY_T:
-            case UINT32_ARRAY_T:
-            case INT64_ARRAY_T:
-            case UINT64_ARRAY_T:
-            case FLOAT_ARRAY_T:
-            case DOUBLE_ARRAY_T:
-            case STRING_T:
-            case UNKNOWN_T:
             default:
                 mrn_dbg(1, mrn_printf(FLF, stderr, 
                                       "ERROR: tfilter_Sum() - invalid packet type: %d (%s)\n", 
@@ -284,18 +272,6 @@ void tfilter_Max( const vector< PacketPtr >& ipackets,
             case DOUBLE_T:
                 format_string="%lf";
                 break;
-            case CHAR_ARRAY_T:
-            case UCHAR_ARRAY_T:
-            case INT16_ARRAY_T:
-            case UINT16_ARRAY_T:
-            case INT32_ARRAY_T:
-            case UINT32_ARRAY_T:
-            case INT64_ARRAY_T:
-            case UINT64_ARRAY_T:
-            case FLOAT_ARRAY_T:
-            case DOUBLE_ARRAY_T:
-            case STRING_T:
-            case UNKNOWN_T:
             default:
                 mrn_dbg(1, mrn_printf(FLF, stderr, 
                                       "ERROR: tfilter_Max() - invalid packet type: %d (%s)\n",
@@ -434,18 +410,6 @@ void tfilter_Min( const vector< PacketPtr >& ipackets,
             case DOUBLE_T:
                 format_string="%lf";
                 break;
-            case CHAR_ARRAY_T:
-            case UCHAR_ARRAY_T:
-            case INT16_ARRAY_T:
-            case UINT16_ARRAY_T:
-            case INT32_ARRAY_T:
-            case UINT32_ARRAY_T:
-            case INT64_ARRAY_T:
-            case UINT64_ARRAY_T:
-            case FLOAT_ARRAY_T:
-            case DOUBLE_ARRAY_T:
-            case STRING_T:
-            case UNKNOWN_T:
             default:
                 mrn_dbg(1, mrn_printf(FLF, stderr, 
                                       "ERROR: tfilter_Min() - invalid packet type: %d (%s)\n",
@@ -797,19 +761,6 @@ void tfilter_ArrayConcat( const vector< PacketPtr >& ipackets,
                 format_string="%As";
                 break;
             
-            
-            case CHAR_T:
-            case UCHAR_T:
-            case INT16_T:
-            case UINT16_T:
-            case INT32_T:
-            case UINT32_T:
-            case INT64_T:
-            case UINT64_T:
-            case FLOAT_T:
-            case DOUBLE_T:
-            case STRING_T:
-            case UNKNOWN_T:
             default:
                 mrn_dbg(1, mrn_printf(FLF, stderr, 
                                       "ERROR: tfilter_ArrayConcat() - invalid packet type: %d (%s)\n", 
@@ -1973,192 +1924,119 @@ void sfilter_TimeOut( const vector< PacketPtr >& ipackets,
 
 static inline void sum(const void *in1, const void *in2, void* out, DataType type)
 {
-  switch (type){
-  case CHAR_T:
-    *( (char*) out ) = (char)(*((const char*)in1) + *((const char*)in2));
-    break;
-  case UCHAR_T:
-    *( (uchar_t*) out ) = (uchar_t)
-                            (*((const uchar_t*)in1) + *((const uchar_t*)in2));
-    break;
-  case INT16_T:
-    *( (int16_t*) out ) = (int16_t)
-                            (*((const int16_t*)in1) + *((const int16_t*)in2));
-    break;
-  case UINT16_T:
-    *( (uint16_t*) out ) = (uint16_t)
-                            (*((const uint16_t*)in1) + *((const uint16_t*)in2));
-    break;
-  case INT32_T:
-    *( (int32_t*) out ) = *((const int32_t*)in1) + *((const int32_t*)in2);
-    break;
-  case UINT32_T:
-    *( (uint32_t*) out ) = *((const uint32_t*)in1) + *((const uint32_t*)in2);
-    break;
-  case INT64_T:
-    *( (int64_t*) out ) = *((const int64_t*)in1) + *((const int64_t*)in2);
-    break;
-  case UINT64_T:
-    *( (uint64_t*) out ) = *((const uint64_t*)in1) + *((const uint64_t*)in2);
-    break;
-  case FLOAT_T:
-    *( (float*) out ) = *((const float*)in1) + *((const float*)in2);
-    break;
-  case DOUBLE_T:
-    *( (double*) out ) = *((const double*)in1) + *((const double*)in2);
-    break;
-  case CHAR_ARRAY_T:
-  case UCHAR_ARRAY_T:
-  case INT16_ARRAY_T:
-  case UINT16_ARRAY_T:
-  case INT32_ARRAY_T:
-  case UINT32_ARRAY_T:
-  case INT64_ARRAY_T:
-  case UINT64_ARRAY_T:
-  case FLOAT_ARRAY_T:
-  case DOUBLE_ARRAY_T:
-  case STRING_T:
-  case STRING_ARRAY_T:
-
-  case CHAR_LRG_ARRAY_T:
-  case UCHAR_LRG_ARRAY_T:
-  case INT16_LRG_ARRAY_T:
-  case UINT16_LRG_ARRAY_T:
-  case INT32_LRG_ARRAY_T:
-  case UINT32_LRG_ARRAY_T:
-  case INT64_LRG_ARRAY_T:
-  case UINT64_LRG_ARRAY_T:
-  case FLOAT_LRG_ARRAY_T:
-  case DOUBLE_LRG_ARRAY_T:
-  case STRING_LRG_ARRAY_T:
-  case UNKNOWN_T:
-    assert(0);
-  }
+    switch (type){
+    case CHAR_T:
+        *( (char*) out ) = (char)(*((const char*)in1) + *((const char*)in2));
+        break;
+    case UCHAR_T:
+        *( (uchar_t*) out ) = (uchar_t)
+            (*((const uchar_t*)in1) + *((const uchar_t*)in2));
+        break;
+    case INT16_T:
+        *( (int16_t*) out ) = (int16_t)
+            (*((const int16_t*)in1) + *((const int16_t*)in2));
+        break;
+    case UINT16_T:
+        *( (uint16_t*) out ) = (uint16_t)
+            (*((const uint16_t*)in1) + *((const uint16_t*)in2));
+        break;
+    case INT32_T:
+        *( (int32_t*) out ) = *((const int32_t*)in1) + *((const int32_t*)in2);
+        break;
+    case UINT32_T:
+        *( (uint32_t*) out ) = *((const uint32_t*)in1) + *((const uint32_t*)in2);
+        break;
+    case INT64_T:
+        *( (int64_t*) out ) = *((const int64_t*)in1) + *((const int64_t*)in2);
+        break;
+    case UINT64_T:
+        *( (uint64_t*) out ) = *((const uint64_t*)in1) + *((const uint64_t*)in2);
+        break;
+    case FLOAT_T:
+        *( (float*) out ) = *((const float*)in1) + *((const float*)in2);
+        break;
+    case DOUBLE_T:
+        *( (double*) out ) = *((const double*)in1) + *((const double*)in2);
+        break;
+    default:
+        assert(0);
+    }
 }
 
 static inline void mult(const void *in1, int in2, void* out, DataType type)
 {
-  switch (type){
-  case CHAR_T:
-    *( (char*) out ) = (char)(*((const char*)in1) * in2);
-    break;
-  case UCHAR_T:
-    *( (uchar_t*) out ) = (uchar_t)(*((const uchar_t*)in1) * in2);
-    break;
-  case INT16_T:
-    *( (int16_t*) out ) = (int16_t)(*((const int16_t*)in1) * in2);
-    break;
-  case UINT16_T:
-    *( (uint16_t*) out ) = (uint16_t)(*((const uint16_t*)in1) * in2);
-    break;
-  case INT32_T:
-    *( (int32_t*) out ) = *((const int32_t*)in1) * in2;	
-    break;
-  case UINT32_T:
-    *( (uint32_t*) out ) = *((const uint32_t*)in1) * in2;
-    break;
-  case INT64_T:
-    *( (int64_t*) out ) = *((const int64_t*)in1) * (int64_t)in2;
-    break;
-  case UINT64_T:
-    *( (uint64_t*) out ) = *((const uint64_t*)in1) * (int64_t)in2;
-    break;
-  case FLOAT_T:
-    *( (float*) out ) = *((const float*)in1) * (float)in2;
-    break;
-  case DOUBLE_T:
-    *( (double*) out ) = *((const double*)in1) * (double)in2;
-    break;
-  case CHAR_ARRAY_T:
-  case UCHAR_ARRAY_T:
-  case INT16_ARRAY_T:
-  case UINT16_ARRAY_T:
-  case INT32_ARRAY_T:
-  case UINT32_ARRAY_T:
-  case INT64_ARRAY_T:
-  case UINT64_ARRAY_T:
-  case FLOAT_ARRAY_T:
-  case DOUBLE_ARRAY_T:
-  case STRING_T:
-  case STRING_ARRAY_T:
-
-  case CHAR_LRG_ARRAY_T:
-  case UCHAR_LRG_ARRAY_T:
-  case INT16_LRG_ARRAY_T:
-  case UINT16_LRG_ARRAY_T:
-  case INT32_LRG_ARRAY_T:
-  case UINT32_LRG_ARRAY_T:
-  case INT64_LRG_ARRAY_T:
-  case UINT64_LRG_ARRAY_T:
-  case FLOAT_LRG_ARRAY_T:
-  case DOUBLE_LRG_ARRAY_T:
-  case STRING_LRG_ARRAY_T:
-  case UNKNOWN_T:
-    assert(0);
-  }
+    switch (type){
+    case CHAR_T:
+        *( (char*) out ) = (char)(*((const char*)in1) * in2);
+        break;
+    case UCHAR_T:
+        *( (uchar_t*) out ) = (uchar_t)(*((const uchar_t*)in1) * in2);
+        break;
+    case INT16_T:
+        *( (int16_t*) out ) = (int16_t)(*((const int16_t*)in1) * in2);
+        break;
+    case UINT16_T:
+        *( (uint16_t*) out ) = (uint16_t)(*((const uint16_t*)in1) * in2);
+        break;
+    case INT32_T:
+        *( (int32_t*) out ) = *((const int32_t*)in1) * in2;	
+        break;
+    case UINT32_T:
+        *( (uint32_t*) out ) = *((const uint32_t*)in1) * in2;
+        break;
+    case INT64_T:
+        *( (int64_t*) out ) = *((const int64_t*)in1) * (int64_t)in2;
+        break;
+    case UINT64_T:
+        *( (uint64_t*) out ) = *((const uint64_t*)in1) * (int64_t)in2;
+        break;
+    case FLOAT_T:
+        *( (float*) out ) = *((const float*)in1) * (float)in2;
+        break;
+    case DOUBLE_T:
+        *( (double*) out ) = *((const double*)in1) * (double)in2;
+        break;
+    default:
+        assert(0);
+    }
 }
 
 static inline void div(const void *in1, int in2, void* out, DataType type)
 {
-  switch (type){
-  case CHAR_T:
-    *( (char*) out ) = (char)(*((const char*)in1) / in2);
-    break;
-  case UCHAR_T:
-    *( (uchar_t*) out ) = (uchar_t)(*((const uchar_t*)in1) / in2);
-    break;
-  case INT16_T:
-    *( (int16_t*) out ) = (int16_t)(*((const int16_t*)in1) / in2);
-    break;
-  case UINT16_T:
-    *( (uint16_t*) out ) = (uint16_t)(*((const uint16_t*)in1) / in2);
-    break;
-  case INT32_T:
-    *( (int32_t*) out ) = *((const int32_t*)in1) / in2;
-    break;
-  case UINT32_T:
-    *( (uint32_t*) out ) = *((const uint32_t*)in1) / in2;
-    break;
-  case INT64_T:
-    *( (int64_t*) out ) = *((const int64_t*)in1) / (int64_t)in2;
-    break;
-  case UINT64_T:
-    *( (uint64_t*) out ) = *((const uint64_t*)in1) / (int64_t)in2;
-    break;
-  case FLOAT_T:
-    *( (float*) out ) = *((const float*)in1) / (float)in2;
-    break;
-  case DOUBLE_T:
-    *( (double*) out ) = *((const double*)in1) / (double)in2;
-    break;
-  case CHAR_ARRAY_T:
-  case UCHAR_ARRAY_T:
-  case INT16_ARRAY_T:
-  case UINT16_ARRAY_T:
-  case INT32_ARRAY_T:
-  case UINT32_ARRAY_T:
-  case INT64_ARRAY_T:
-  case UINT64_ARRAY_T:
-  case FLOAT_ARRAY_T:
-  case DOUBLE_ARRAY_T:
-  case STRING_T:
-  case STRING_ARRAY_T:
-  
-  case CHAR_LRG_ARRAY_T:
-  case UCHAR_LRG_ARRAY_T:
-  case INT16_LRG_ARRAY_T:
-  case UINT16_LRG_ARRAY_T:
-  case INT32_LRG_ARRAY_T:
-  case UINT32_LRG_ARRAY_T:
-  case INT64_LRG_ARRAY_T:
-  case UINT64_LRG_ARRAY_T:
-  case FLOAT_LRG_ARRAY_T:
-  case DOUBLE_LRG_ARRAY_T:
-  case STRING_LRG_ARRAY_T:
-  
-  case UNKNOWN_T:
-    assert(0);
-  }
+    switch (type){
+    case CHAR_T:
+        *( (char*) out ) = (char)(*((const char*)in1) / in2);
+        break;
+    case UCHAR_T:
+        *( (uchar_t*) out ) = (uchar_t)(*((const uchar_t*)in1) / in2);
+        break;
+    case INT16_T:
+        *( (int16_t*) out ) = (int16_t)(*((const int16_t*)in1) / in2);
+        break;
+    case UINT16_T:
+        *( (uint16_t*) out ) = (uint16_t)(*((const uint16_t*)in1) / in2);
+        break;
+    case INT32_T:
+        *( (int32_t*) out ) = *((const int32_t*)in1) / in2;
+        break;
+    case UINT32_T:
+        *( (uint32_t*) out ) = *((const uint32_t*)in1) / in2;
+        break;
+    case INT64_T:
+        *( (int64_t*) out ) = *((const int64_t*)in1) / (int64_t)in2;
+        break;
+    case UINT64_T:
+        *( (uint64_t*) out ) = *((const uint64_t*)in1) / (int64_t)in2;
+        break;
+    case FLOAT_T:
+        *( (float*) out ) = *((const float*)in1) / (float)in2;
+        break;
+    case DOUBLE_T:
+        *( (double*) out ) = *((const double*)in1) / (double)in2;
+        break;
+    default:
+        assert(0);
+    }
 }
 
 static inline void mrn_min(const void *in1, const void *in2, void* out, DataType type)
@@ -2204,31 +2082,7 @@ static inline void mrn_min(const void *in1, const void *in2, void* out, DataType
         *( (double*) out ) = ( ( *((const double*)in1) < *((const double*)in2) ) ?
                                *((const double*)in1) : *((const double*)in2) );
       break;
-    case CHAR_ARRAY_T:
-    case UCHAR_ARRAY_T:
-    case INT16_ARRAY_T:
-    case UINT16_ARRAY_T:
-    case INT32_ARRAY_T:
-    case UINT32_ARRAY_T:
-    case INT64_ARRAY_T:
-    case UINT64_ARRAY_T:
-    case FLOAT_ARRAY_T:
-    case DOUBLE_ARRAY_T:
-    case STRING_T:
-    case STRING_ARRAY_T:
-  
-    case CHAR_LRG_ARRAY_T:
-    case UCHAR_LRG_ARRAY_T:
-    case INT16_LRG_ARRAY_T:
-    case UINT16_LRG_ARRAY_T:
-    case INT32_LRG_ARRAY_T:
-    case UINT32_LRG_ARRAY_T:
-    case INT64_LRG_ARRAY_T:
-    case UINT64_LRG_ARRAY_T:
-    case FLOAT_LRG_ARRAY_T:
-    case DOUBLE_LRG_ARRAY_T:
-    case STRING_LRG_ARRAY_T:
-    case UNKNOWN_T:
+    default:
         assert(0);
     }
 }
@@ -2276,35 +2130,10 @@ static inline void mrn_max(const void *in1, const void *in2, void* out, DataType
         *( (double*) out ) = ( ( *((const double*)in1) > *((const double*)in2) ) ?
                                *((const double*)in1) : *((const double*)in2) );
         break;
-    case CHAR_ARRAY_T:
-    case UCHAR_ARRAY_T:
-    case INT16_ARRAY_T:
-    case UINT16_ARRAY_T:
-    case INT32_ARRAY_T:
-    case UINT32_ARRAY_T:
-    case INT64_ARRAY_T:
-    case UINT64_ARRAY_T:
-    case FLOAT_ARRAY_T:
-    case DOUBLE_ARRAY_T:
-    case STRING_T:
-    case STRING_ARRAY_T:
-
-    case CHAR_LRG_ARRAY_T:
-    case UCHAR_LRG_ARRAY_T:
-    case INT16_LRG_ARRAY_T:
-    case UINT16_LRG_ARRAY_T:
-    case INT32_LRG_ARRAY_T:
-    case UINT32_LRG_ARRAY_T:
-    case INT64_LRG_ARRAY_T:
-    case UINT64_LRG_ARRAY_T:
-    case FLOAT_LRG_ARRAY_T:
-    case DOUBLE_LRG_ARRAY_T:
-    case STRING_LRG_ARRAY_T:
-    case UNKNOWN_T:
+    default:
         assert(0);
     }
 }
-
 
 
 } /* namespace MRN */

@@ -27,6 +27,7 @@ void Packet::encode_pdr_header(void)
     hdr = (char*) malloc( hdr_len );
     if( hdr == NULL ) { 
         mrn_dbg( 1, mrn_printf(FLF, stderr, "malloc() failed\n") );
+        data_sync.Unlock();
         return;
     }
 
@@ -35,23 +36,23 @@ void Packet::encode_pdr_header(void)
 
     if( ! Packet::pdr_packet_header(&pdrs, this) ) {
         error( ERR_PACKING, UnknownRank, "pdr_packet_header() failed" );
-        return;
+    }
+    else {
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
+                               stream_id, tag, fmt_str) );
     }
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
-                           stream_id, tag, fmt_str) );
-
     data_sync.Unlock();
+
 }
 
 void Packet::encode_pdr_data(void)
 {
-    if (_decoded == false)
-    {
-        return;
-    }
-    data_sync.Lock();
+    // only called from constructor, so no locking (add locking if this changes)
 
+    if( _decoded == false )
+        return;
+ 
     buf_len = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_data), this );
     assert( buf_len );
 
@@ -71,13 +72,11 @@ void Packet::encode_pdr_data(void)
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
                            stream_id, tag, fmt_str) );
-
-    data_sync.Unlock();
 }
 
 void Packet::decode_pdr_header(void) const
 {
-    data_sync.Lock();
+    // only called from constructor, so no locking (add locking if this changes)
 
     if( hdr_len == 0 ) // NullPacket has hdr==NULL and hdr_len==0
         return;
@@ -92,27 +91,33 @@ void Packet::decode_pdr_header(void) const
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
                            stream_id, tag, fmt_str) );
-
-    data_sync.Unlock();
 }
 
 void Packet::decode_pdr_data(void) const
 {
     data_sync.Lock();
 
-    if( buf_len == 0 ) // NullPacket has buf==NULL and buf_len==0
-        return;
+    if( ! _decoded ) {
+        
+        if( buf_len == 0 ) { // NullPacket has buf==NULL and buf_len==0
+            _decoded = true;
+            data_sync.Unlock();
+            return;
+        }
 
-    Packet* me = const_cast< Packet* >(this);
-    PDR pdrs;
-    pdrmem_create( &pdrs, buf, buf_len, PDR_DECODE );
+        Packet* me = const_cast< Packet* >(this);
+        PDR pdrs;
+        pdrmem_create( &pdrs, buf, buf_len, PDR_DECODE );
 
-    if( ! Packet::pdr_packet_data(&pdrs, me) ) {
-        error( ERR_PACKING, UnknownRank, "pdr_packet_data() decode failed" );
+        if( ! Packet::pdr_packet_data(&pdrs, me) ) {
+            error( ERR_PACKING, UnknownRank, "pdr_packet_data() decode failed" );
+        }
+        else {
+            _decoded = true;
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
+                                   stream_id, tag, fmt_str) );
+        }
     }
-
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "stream:%u tag:%d fmt:'%s'\n",
-                           stream_id, tag, fmt_str) );
 
     data_sync.Unlock();
 }
@@ -275,12 +280,14 @@ Packet::Packet( unsigned int ihdr_len, char *ihdr,
     _perf_data_timer = new Timer[PERFDATA_PKT_TIMERS_MAX];
 
     decode_pdr_header();
-    decode_pdr_data();
+    // comment out following for lazy decode on unpack
+    //decode_pdr_data();
 }
 
 Packet::~Packet()
 {
     data_sync.Lock();
+
     if( _perf_data_timer != NULL ){
         delete[] _perf_data_timer;
     }
@@ -305,34 +312,29 @@ Packet::~Packet()
         }
         delete de;
     }
+
     data_sync.Unlock();
 }
 
 int Packet::unpack( const char *ifmt_str, ... )
 {
-    if (_decoded == false )
-    {
-        decode_pdr_data();
-        _decoded = true;
-    }
     int ret = -1;
-    if( ifmt_str != NULL ) {
+
+    if( NULL != ifmt_str ) {
         va_list arg_list;
         va_start( arg_list, ifmt_str );
-        ret = ExtractVaList( ifmt_str, arg_list );
+        ret = unpack( arg_list, ifmt_str, true );
         va_end( arg_list );
     }
+
     return ret;
 }
 
 int Packet::unpack( va_list iarg_list, const char* ifmt_str, 
                     bool /*dummy parameter to make sure signatures differ*/ )
 {
-    if (_decoded == false )
-    {
-        decode_pdr_data();
-        _decoded = true;
-    }
+    decode_pdr_data();
+
     int ret = -1;
     if( ifmt_str != NULL ) {
         ret = ExtractVaList( ifmt_str, iarg_list );
@@ -345,33 +347,24 @@ const DataElement * Packet::operator[]( unsigned int i ) const
     const DataElement * ret = NULL;
     size_t num_elems = 0;
 
-    if (_decoded == false)
-    {
-        decode_pdr_data();
-        _decoded = true;
-    }
-    data_sync.Lock();
+    decode_pdr_data();
+
     num_elems = data_elements.size();
     if( i < num_elems )
         ret = data_elements[i];
-    data_sync.Unlock();
 
     return ret;
 }
 
 bool Packet::operator==( const Packet& p ) const
 {
-    data_sync.Lock();
     bool ret = ( this == &p );
-    data_sync.Unlock();
     return ret;
 }
 
 bool Packet::operator!=(const Packet& p) const
 {
-    data_sync.Lock();
     bool ret = ( this != &p );
-    data_sync.Unlock();
     return ret;
 }
 
@@ -521,10 +514,10 @@ int Packet::ExtractVaList( const char *fmt, va_list arg_list ) const
     mrn_dbg( 5, mrn_printf(FLF, stderr, "pkt(%p)\n", this) );
 
     // make sure format strings agree
-    if( strcmp(fmt, fmt_str) ) {
+    if( (NULL == fmt_str) || strcmp(fmt, fmt_str) ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, 
-                               "passed format '%s' does not match packet's '%s'\n", 
-                               fmt, fmt_str) );
+                               "passed format '%s' does not match packet's\n", 
+                               fmt) );
         return -1;
     }
 
