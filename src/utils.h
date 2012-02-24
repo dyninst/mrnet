@@ -27,7 +27,9 @@
 #endif
  
 #ifdef os_solaris
-# define _REENTRANT          // needed to get strtok_r
+# ifndef _REENTRANT
+#  define _REENTRANT // needed to get strtok_r
+# endif
 # include <sys/int_limits.h> // integer types MIN/MAX
 #endif
 

@@ -27,7 +27,9 @@
 #ifdef MRNET_LTWT_THREADSAFE
 # define mrn_strtok(x,y,z) strtok_r(x,y,z)
 # ifdef os_solaris
-#  define _REENTRANT // needed to get strtok_r
+#  ifndef _REENTRANT
+#   define _REENTRANT // needed to get strtok_r
+#  endif
 # endif
 #else
 # define mrn_strtok(x,y,z) strtok(x,y)
