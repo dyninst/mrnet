@@ -220,8 +220,8 @@ int mrn_printf( const char *file, int line, const char * func,
 
     if( file ) {
         // print file, function, and line info
-        fprintf( f, "%s[%d] %s() - ", 
-                 XPlat::PathUtils::GetFilename( file ).c_str(), line, func );
+        fprintf( f, "%s[%d] %s - ", 
+                 XPlat::PathUtils::GetFilename(file).c_str(), line, func );
     }
 
     // print message

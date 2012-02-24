@@ -105,7 +105,7 @@ do{ \
 
 //FLF is used to call mrn_printf(FLF, ...)
 #if !defined( __GNUC__ )
-#define FLF  __FILE__,__LINE__,"unknown"
+#define FLF  __FILE__,__LINE__," "
 #else
 #define FLF  __FILE__,__LINE__,__FUNCTION__
 #endif
