@@ -107,7 +107,7 @@ int mrn_printf( const char *file, int line, const char * func,
 
     if (file) {
         base_file = GetFilename(file);
-        fprintf( f, "%ld.%06ld: %s[%d] %s() - ",
+        fprintf( f, "%ld.%06ld: %s[%d] %s - ",
                  tv.tv_sec-MRN_RELEASE_DATE_SECS, 
                  tv.tv_usec, 
                  base_file,
