@@ -7,10 +7,7 @@
 #if !defined(__network_topology_h)
 #define __network_topology_h 1
 
-#include <stdio.h>
-
 #include "mrnet_lightweight/Network.h"
-#include "mrnet_lightweight/Types.h"
 
 struct mrn_map_t;
 struct node_t;
@@ -36,7 +33,7 @@ typedef struct Node_t Node_t;
 
 struct NetworkTopology_t {
     Network_t* net;
-    Node_t* root;
+    struct Node_t* root;
     unsigned int min_fanout;
     unsigned int max_fanout;
     unsigned int depth;
@@ -48,7 +45,7 @@ struct NetworkTopology_t {
     struct vector_t* backend_nodes;
     struct vector_t* parent_nodes;
     struct SerialGraph_t* serial_graph;
-    Monitor_t* sync;
+    struct Monitor_t* sync;
 }; 
 
 typedef struct NetworkTopology_t NetworkTopology_t;

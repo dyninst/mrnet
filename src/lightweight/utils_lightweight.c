@@ -128,19 +128,6 @@ int mrn_printf( const char *file, int line, const char * func,
 
 /*************** Timing Utilities ***************/
 
-Timer_t new_Timer_t()
-{
-    Timer_t time;
-    time.start_tv.tv_sec = 0;
-    time.start_tv.tv_usec = 0;
-    time.stop_tv.tv_sec = 0;
-    time.stop_tv.tv_usec = 0;
-    time.start_d = 0;
-    time.stop_d = 0;
-
-    return time;
-}
-
 double tv2dbl(struct timeval tv)
 {
     return ((double)tv.tv_sec + (double)tv.tv_usec / 1000000.0);
@@ -149,44 +136,58 @@ double tv2dbl(struct timeval tv)
 struct timeval dbl2tv(double d)
 {
     struct timeval tv;
-
     tv.tv_sec = (long) d;
     tv.tv_usec = (long) ((d - (long) d) * 1000000.0);
-
-
     return tv;
 }
 
-void Timer_start(Timer_t time) 
+Timer_t* new_Timer_t(void)
 {
-    while (gettimeofday(&(time.start_tv), NULL) == -1) {}
-    time.start_d = tv2dbl(time.start_tv);
-    time.start_tv = dbl2tv(time.start_d);
+    Timer_t* t = (Timer_t*) calloc(1, sizeof(Timer_t));
+    return t;
 }
 
-void Timer_stop(Timer_t time)
+void Timer_start(Timer_t* t) 
 {
-    while (gettimeofday(&(time.stop_tv), NULL) == -1) {}
-    time.stop_d = tv2dbl(time.stop_tv);
-    time.stop_tv = dbl2tv(time.stop_d);
+    if( NULL != t ) {
+        while (gettimeofday(&(t->start_tv), NULL) == -1) {}
+        t->start_d = tv2dbl(t->start_tv);
+        t->start_tv = dbl2tv(t->start_d);
+    }
 }
 
-double Timer_get_latency_secs(Timer_t time) 
+void Timer_stop(Timer_t* t)
 {
-    return time.stop_d - time.start_d;
+    while (gettimeofday(&(t->stop_tv), NULL) == -1) {}
+    t->stop_d = tv2dbl(t->stop_tv);
+    t->stop_tv = dbl2tv(t->stop_d);
+}
+
+double Timer_get_latency_secs(Timer_t* t) 
+{
+    if( NULL != t ) {
+        if( t->stop_d > t->start_d )
+            return t->stop_d - t->start_d;
+    }
+    return 0.0;
 }   
 
-double Timer_get_latency_msecs(Timer_t time)
+double Timer_get_latency_msecs(Timer_t* t)
 {
-    return 1000 * Timer_get_latency_secs(time);
+    return 1000 * Timer_get_latency_secs(t);
+}
+
+double Timer_get_latency_usecs(Timer_t* t)
+{
+    return 1000 * Timer_get_latency_msecs(t);
 }
 
 /*************** MISC ***************/
 
-Rank getrank() { return myrank; }
+Rank getrank(void) { return myrank; }
 void setrank(Rank ir) { myrank = ir; }
 
-int isBigEndian() {
+int isBigEndian(void) {
     unsigned int one = 1;
     unsigned char * arr = (unsigned char *)&one;
 

@@ -6,6 +6,8 @@
 #ifndef MRNET_UTILS_H
 #define MRNET_UTILS_H 1
 
+#include "mrnet_config.h"
+
 #if !defined (__STDC_LIMIT_MACROS)
 #  define __STDC_LIMIT_MACROS
 #endif
@@ -18,23 +20,27 @@
 
 #ifndef UNUSED
 #if defined(__GNUC__)
-#   define UNUSED(x) x __attribute__((unused)) /* UNUSED: x */ 
+#   define UNUSED(x) x __attribute__((unused))
 #else
 #   define UNUSED(x) x
 #endif
 #endif
  
-#include "mrnet_config.h"
-#include "mrnet/Types.h"
-#include "xplat/TLSKey.h"
-#include "xplat/Thread.h"
+#ifdef os_solaris
+# define _REENTRANT          // needed to get strtok_r
+# include <sys/int_limits.h> // integer types MIN/MAX
+#endif
 
 #include <cctype>
-#include <cerrno>
 #include <cmath>
 #include <cstdarg>
 #include <vector>
 #include <string>
+
+#include "mrnet/Types.h"
+#include "xplat/TLSKey.h"
+#include "xplat/Thread.h"
+
 
 #if USE_BOOST_TIMER
 # include <boost/timer/timer.hpp>

@@ -7,22 +7,23 @@
 #if !defined(__network_h)
 #define __network_h 1
 
-#include "xplat_lightweight/Monitor.h"
 #include "mrnet_lightweight/Types.h"
 #include "mrnet_lightweight/Packet.h"
+#include "xplat_lightweight/Monitor.h"
+#include "xplat_lightweight/SocketUtils.h"
 
-static const Port UnknownPort = (Port)-1;
-static const Rank UnknownRank = (Rank)-1;
+#define UnknownPort InvalidPort
+extern const Rank UnknownRank;
 
-struct PeerNode_t;
 struct BackEndNode_t; 
-struct NetworkTopology_t ;
-struct Stream_t ;
+struct NetworkTopology_t;
+struct PeerNode_t;
+struct SerialGraph_t;
+struct Stream_t;
 struct vector_t;
 struct mrn_map_t;
-struct SerialGraph_t;
 
-typedef struct {
+struct Network_t {
     char* local_hostname;
     Port local_port;
     Rank local_rank;
@@ -39,7 +40,8 @@ typedef struct {
     Monitor_t* net_sync;
     Monitor_t* recv_sync;
     Monitor_t* parent_sync;
-} Network_t;
+};
+typedef struct Network_t Network_t;
 
 /* Representation for monitors */
 enum sync_index {

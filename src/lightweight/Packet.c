@@ -3,23 +3,14 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <assert.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#ifndef os_windows
-#include <unistd.h>
-#endif //ifdef os_windows
-
-#include "mrnet_lightweight/DataElement.h"
-#include "mrnet_lightweight/Network.h"
-#include "mrnet_lightweight/Error.h"
+#include "utils_lightweight.h"
 #include "pdr.h"
 #include "pdr_mem.h"
+
+#include "mrnet_lightweight/DataElement.h"
+#include "mrnet_lightweight/Error.h"
+#include "mrnet_lightweight/Network.h"
 #include "mrnet_lightweight/Packet.h"
-#include "mrnet_lightweight/Types.h"
-#include "utils_lightweight.h"
 #include "xplat_lightweight/vector.h"
 
 void delete_Packet_t(Packet_t* packet)
@@ -252,7 +243,7 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
     fmt = strdup(packet->fmt_str);
     assert(fmt);
 
-    tok = strtok_r(fmt, delim, &saveptr);
+    tok = mrn_strtok(fmt, delim, &saveptr);
 
     while (tok != NULL) {
         cur_elem = new_DataElement_t();
@@ -340,7 +331,7 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
         delete_DataElement_t(cur_elem);
         cur_elem = NULL;
 
-        tok = strtok_r(NULL, delim, &saveptr);
+        tok = mrn_strtok(NULL, delim, &saveptr);
     }
 
     free(fmt);
@@ -430,7 +421,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
     assert(fmt);
 
     i = 0;
-    tok = strtok_r(fmt, delim, &saveptr);
+    tok = mrn_strtok(fmt, delim, &saveptr);
 
     while( tok != NULL ) {
 
@@ -649,7 +640,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
             cur_elem = NULL;
         }
 
-        tok = strtok_r(NULL, delim, &saveptr);
+        tok = mrn_strtok(NULL, delim, &saveptr);
         i++;
     }
     free(fmt);
@@ -721,7 +712,7 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
     fmt = strdup(packet->fmt_str);
     assert(fmt != NULL);
 
-    tok = strtok_r(fmt, delim, &saveptr);
+    tok = mrn_strtok(fmt, delim, &saveptr);
     while( tok != NULL ) {
         cur_elem = (DataElement_t*)(packet->data_elements->vec[i]);
         assert(cur_elem->type == DataType_Fmt2Type(tok));
@@ -1063,7 +1054,7 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
         }
         i++;
 
-        tok = strtok_r(NULL, delim, &saveptr);
+        tok = mrn_strtok(NULL, delim, &saveptr);
     }
     free(fmt);
 

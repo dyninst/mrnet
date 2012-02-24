@@ -24,6 +24,15 @@
 # endif
 #endif
  
+#ifdef MRNET_LTWT_THREADSAFE
+# define mrn_strtok(x,y,z) strtok_r(x,y,z)
+# ifdef os_solaris
+#  define _REENTRANT // needed to get strtok_r
+# endif
+#else
+# define mrn_strtok(x,y,z) strtok(x,y)
+#endif 
+
 #include "mrnet_lightweight/Types.h"
 
 #define MRN_RELEASE_DATE_SECS 1308200400
@@ -72,29 +81,30 @@ do { \
 
 
 /*************** Timing Utilities ***************/
-typedef struct {  
+double tv2dbl(struct timeval tv);
+struct timeval dbl2tv(double d);
+
+struct Timer_t {  
     struct timeval start_tv;
     struct timeval stop_tv;
     double start_d;
     double stop_d;
-} Timer_t;
+};
+typedef struct Timer_t Timer_t;
 
-Timer_t new_Timer_t();
+Timer_t* new_Timer_t(void);
 
-double tv2dbl(struct timeval tv);
-struct timeval dbl2tv(double d);
+void Timer_start(Timer_t* t); 
+void Timer_stop(Timer_t* t);
 
-void Timer_start(Timer_t time); 
-void Timer_stop(Timer_t time);
-
-double Timer_get_latency_secs(Timer_t time);
-double Timer_get_latency_msecs(Timer_t time);
+double Timer_get_latency_secs(Timer_t* t);
+double Timer_get_latency_msecs(Timer_t* t);
 
 /*************** MISC ***************/
-Rank getrank();
+Rank getrank(void);
 void setrank(Rank ir);
 
-int isBigEndian();
+int isBigEndian(void);
 
 #endif /* __utils_lightweight_h */
 

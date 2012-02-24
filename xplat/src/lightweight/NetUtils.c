@@ -3,20 +3,16 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+#ifdef os_solaris
+# define _REENTRANT // needed to get strtok_r
+#endif
+
 #include "xplat_lightweight/NetUtils.h"
 #include "xplat_lightweight/Types.h"
-
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
 
 static int checked_resolve_env = 0;
 static int use_resolve = 1;
 static int use_canonical = 0;
-
-#define XPLAT_MAX_HOSTNAME_LEN 256
 
 static void get_resolve_env()
 {

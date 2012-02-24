@@ -4,20 +4,17 @@
  ****************************************************************************/
 
 // $Id: Mutex-pthread.C,v 1.5 2008/10/09 19:54:11 mjbrim Exp $
-#include <assert.h>
-#include <errno.h>
-#include <stdlib.h>
 #include "Mutex-pthread.h"
 
-struct Mutex* Mutex_construct( void )
+struct Mutex_t* Mutex_construct( void )
 {
     static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-    struct Mutex* mut = NULL;
+    struct Mutex_t* mut = NULL;
 
     pthread_mutex_lock( &init_mutex );
 
-    mut = (struct Mutex*) calloc( (size_t)1, sizeof(struct Mutex) );
+    mut = (struct Mutex_t*) calloc( (size_t)1, sizeof(struct Mutex_t) );
     assert(mut != NULL);
     mut->data = PthreadMutexData_construct();
     assert(mut->data != NULL);
@@ -27,7 +24,7 @@ struct Mutex* Mutex_construct( void )
     return mut;
 }
 
-int Mutex_destruct( struct Mutex* m )
+int Mutex_destruct( struct Mutex_t* m )
 {
     static pthread_mutex_t cleanup_mutex = PTHREAD_MUTEX_INITIALIZER;
     int rc = 0;
@@ -46,7 +43,7 @@ int Mutex_destruct( struct Mutex* m )
     return rc;
 }
 
-int Mutex_Lock( struct Mutex* m )
+int Mutex_Lock( struct Mutex_t* m )
 {
     if( (m != NULL) && (m->data != NULL) )
         return PthreadMutex_Lock( m->data );
@@ -54,7 +51,7 @@ int Mutex_Lock( struct Mutex* m )
         return EINVAL;
 }
 
-int Mutex_Unlock( struct Mutex* m )
+int Mutex_Unlock( struct Mutex_t* m )
 {
     if( (m != NULL) && (m->data != NULL) )
         return PthreadMutex_Unlock( m->data );
@@ -62,7 +59,7 @@ int Mutex_Unlock( struct Mutex* m )
         return EINVAL;
 }
 
-int Mutex_Trylock( struct Mutex* m )
+int Mutex_Trylock( struct Mutex_t* m )
 {
     if( (m != NULL) && (m->data != NULL) )
         return PthreadMutex_Trylock( m->data );
