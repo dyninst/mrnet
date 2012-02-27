@@ -21,10 +21,11 @@ void Packet::encode_pdr_header(void)
 {
     data_sync.Lock();
 
-    hdr_len = size_t(pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_header), this ));
+    uint64_t hdr_sz = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_header), this );
+    hdr_len = (unsigned) hdr_sz;
     assert( hdr_len );
 
-    hdr = (char*) malloc( hdr_len );
+    hdr = (char*) malloc( size_t(hdr_sz) );
     if( hdr == NULL ) { 
         mrn_dbg( 1, mrn_printf(FLF, stderr, "malloc() failed\n") );
         data_sync.Unlock();

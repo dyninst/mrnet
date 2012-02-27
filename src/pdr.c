@@ -14,10 +14,6 @@
 #include "pdr.h"
 #include "pdr_mem.h"
 
-#ifdef __cplusplus
-using namespace MRN;
-#endif /* ! defined(__cplusplus) */
-
 #define LASTUNSIGNED ((uint32_t)-1)
 
 /*

@@ -6,7 +6,9 @@
 #ifndef MRNET_UTILS_H
 #define MRNET_UTILS_H 1
 
-#include "mrnet_config.h"
+#ifndef os_windows
+# include "mrnet_config.h"
+#endif
 
 #if !defined (__STDC_LIMIT_MACROS)
 #  define __STDC_LIMIT_MACROS
@@ -19,11 +21,11 @@
 #endif
 
 #ifndef UNUSED
-#if defined(__GNUC__)
-#   define UNUSED(x) x __attribute__((unused))
-#else
-#   define UNUSED(x) x
-#endif
+# ifdef __GNUC__
+#  define UNUSED(x) x __attribute__((unused))
+# else
+#  define UNUSED(x) x
+# endif
 #endif
  
 #ifdef os_solaris
@@ -44,7 +46,7 @@
 #include "xplat/Thread.h"
 
 
-#if USE_BOOST_TIMER
+#ifdef USE_BOOST_TIMER
 # include <boost/timer/timer.hpp>
 #endif // USE_BOOST_TIMER
 
@@ -55,6 +57,14 @@
 namespace MRN
 {
 
+struct ltstr
+{
+    bool operator() ( std::string s1, std::string s2 ) const
+    {
+        return ( s1 < s2 );
+    }
+};
+
 /*************** Socket Utilities ***************/
 int connectHost( XPlat_Socket *sock_in, const std::string & hostname, 
                  XPlat_Port port, int num_retry = -1 );
@@ -63,14 +73,6 @@ int bindPort( XPlat_Socket *sock_in, XPlat_Port *port_in,
 int getSocketConnection( XPlat_Socket bound_socket, 
                          int timeout_sec=0, bool nonblock=false );
 int getPortFromSocket( XPlat_Socket sock, XPlat_Port *port );
-
-struct ltstr
-{
-    bool operator() ( std::string s1, std::string s2 ) const
-    {
-        return ( s1 < s2 );
-    }
-};
 
 /*************** Thread-level Storage ***************/
 extern XPlat::TLSKey tsd_key;
@@ -140,7 +142,7 @@ class Timer{
     double get_latency_usecs(void);
 
  private:
-#if USE_BOOST_TIMER
+#ifdef USE_BOOST_TIMER
     boost::timer::cpu_timer * _b_timer;
 #endif 
 };

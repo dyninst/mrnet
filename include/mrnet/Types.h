@@ -3,8 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined(Types_h)
-#define Types_h
+#ifndef MRNET_TYPES_H
+#define MRNET_TYPES_H 1
 
 #include "xplat/Types.h"
 
@@ -142,4 +142,4 @@ namespace MRN
 
 } /* namespace MRN */
 
-#endif /* !defined(Types_h) */
+#endif /* MRNET_TYPES_H */

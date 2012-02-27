@@ -3,10 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined(__types_h)
-#define __types_h 1
-
-#include <stdio.h>
+#ifndef __mrnet_types_h
+#define __mrnet_types_h 1
 
 #include "xplat_lightweight/Types.h"
 
@@ -139,4 +137,4 @@ typedef enum NodeType {
     NODE_TYPE_INTERNALNODE = 2
 } node_type_t;
 
-#endif /* __types_h */
+#endif /* __mrnet_types_h */

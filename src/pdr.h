@@ -6,18 +6,21 @@
 #ifndef __PDR_HEADER__
 #define __PDR_HEADER__
 
-#ifndef os_windows
-# include "mrnet_config.h"
+#ifndef SIZEOF_INT16
+# define SIZEOF_INT16 2
+#endif
+#ifndef SIZEOF_INT32
+# define SIZEOF_INT32 4
+#endif
+#ifndef SIZEOF_INT64
+# define SIZEOF_INT64 8
 #endif
 
-#define SIZEOF_INT16 2
-#define SIZEOF_INT32 4
-#define SIZEOF_INT64 8
-
-#if defined(__cplusplus)
-#include "utils.h"
+#ifdef __cplusplus
+# include "utils.h"
+using namespace MRN;
 #else
-#include "utils_lightweight.h"
+# include "utils_lightweight.h"
 #endif
 
 #ifdef os_windows
@@ -40,10 +43,6 @@
 
 #ifndef enum_t
 # define enum_t int32_t
-#endif
-
-#ifndef char_t
-# define char_t char
 #endif
 
 #ifndef uchar_t
@@ -92,7 +91,6 @@ struct pdr_ops {
     bool_t  (*getbytes)(PDR *pdrs, char *, uint64_t);
     bool_t  (*setpos)(PDR *pdrs, uint64_t ip);
     uint64_t (*getpos)(PDR *pdrs);
-    int32_t* (*pinline)(PDR *pdrs, int32_t ip);
     void    (*destroy)(PDR *pdrs);
 };
 
@@ -120,9 +118,9 @@ typedef bool_t (*pdrproc_t)(PDR *, void *, ...);
 /*
 * These are the "generic" pdr routines.
 */
-extern bool_t   pdr_void(PDR *pdrs,  char * addr);
-extern bool_t   pdr_char(PDR *pdrs,  char * addr);
-extern bool_t   pdr_uchar(PDR *pdrs,  uchar_t * addr);
+extern bool_t   pdr_void(PDR *pdrs, char *addr);
+extern bool_t   pdr_char(PDR *pdrs, char *addr);
+extern bool_t   pdr_uchar(PDR *pdrs, uchar_t *addr);
 extern bool_t   pdr_int16(PDR *pdrs, int16_t *ip);
 extern bool_t   pdr_uint16(PDR *pdrs, uint16_t *ip);
 extern bool_t   pdr_int32(PDR *pdrs, int32_t *ip);
@@ -135,12 +133,12 @@ extern bool_t   pdr_double(PDR *pdrs, double *ip);
 extern bool_t   pdr_bool(PDR *pdrs, bool_t *bp);
 extern bool_t   pdr_enum(PDR *pdrs, enum_t *bp);
 
-extern bool_t   pdr_opaque(PDR *pdrs, char * cp, uint64_t cnt);
+extern bool_t   pdr_opaque(PDR *pdrs, char *cp, uint64_t cnt);
 extern bool_t   pdr_bytes(PDR *pdrs, char **cpp, uint64_t *sizep,
                           uint64_t maxsize);
 extern bool_t   pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize);
 extern bool_t   pdr_wrapstring(PDR *pdrs, char **cpp);
-extern bool_t   pdr_reference(PDR *pdrs, char * *pp, uint32_t size,
+extern bool_t   pdr_reference(PDR *pdrs, char **pp, uint32_t size,
                               pdrproc_t proc);
 extern bool_t   pdr_pointer(PDR *pdrs, char **objpp, uint32_t obj_size,
                             pdrproc_t pdr_obj);
@@ -159,11 +157,7 @@ extern void pdrmem_create(PDR *pdrs, char * addr, uint64_t size,
                           enum pdr_op op);          /* PDR using memory buffers */
 extern void pdr_free(pdrproc_t proc, char *objp);
 
-uint32_t pdr_getpos(PDR *pdrs);
-bool_t   pdr_setpos(PDR *pdrs, uint32_t pos);
-int32_t  pdr_inline(PDR *pdrs, int32_t pos);
-
-extern uint64_t pdr_sizeof (pdrproc_t, void *);
+extern uint64_t pdr_sizeof(pdrproc_t, void *);
 
 #ifdef __cplusplus
 } /* extern C */
@@ -261,12 +255,9 @@ extern uint64_t pdr_sizeof (pdrproc_t, void *);
         (*(pdrs)->p_ops->putbytes)(pdrs, addr, len)
 
 #define pdr_getpos(pdrs)                                \
-        (*(pdrs)->p_ops->getpostn)(pdrs)
+        (*(pdrs)->p_ops->getpos)(pdrs)
 #define pdr_setpos(pdrs, pos)                           \
-        (*(pdrs)->p_ops->setpostn)(pdrs, pos)
-
-#define pdr_inline(pdrs, len)                           \
-        (*(pdrs)->p_ops->inline)(pdrs, len)
+        (*(pdrs)->p_ops->setpos)(pdrs, pos)
 
 #define pdr_destroy(pdrs)                               \
         (*(pdrs)->p_ops->destroy)(pdrs)

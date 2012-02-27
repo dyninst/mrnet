@@ -6,6 +6,10 @@
 #ifndef __utils_lightweight_h
 #define __utils_lightweight_h 1
 
+#ifndef os_windows
+# include "mrnet_config.h"
+#endif
+
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
 #endif

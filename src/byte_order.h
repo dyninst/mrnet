@@ -3,15 +3,15 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined(__byte_order_h)
-#define __byte_order_h
+#ifndef  __byte_order_h
+#define __byte_order_h 1
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 # include "utils.h"
 extern "C" {
 #else
 # include "utils_lightweight.h"
-#endif /* defined(__cplusplus) */
+#endif /* __cplusplus */
 
 #define ntoh_bytes hton_bytes
 void hton_bytes(char * out, char * in, uint32_t elsize);
@@ -57,8 +57,8 @@ void byte_swap_inplace(char * inout, uint32_t nelems, uint32_t elemsize);
 #define swap_inplace_double(in) \
         byte_swap_inplace((char *)in, 1, (uint32_t) sizeof(double) );
 
-#if defined(__cplusplus)
-} // extern C
-#endif /* defined(__cplusplus) */
+#ifdef __cplusplus
+} /* extern C */
+#endif
 
-#endif /* (__byte_order_h) */
+#endif /* __byte_order_h */

@@ -47,18 +47,19 @@ void delete_Packet_t(Packet_t* packet)
 Packet_t* Packet_construct(Packet_t* packet)
 {
     PDR pdrs;
+    uint64_t hdr_sz, buf_sz;
 
     // header
-    packet->hdr_len = (unsigned int)pdr_sizeof((pdrproc_t)(Packet_pdr_packet_header), packet);
-    assert(packet->hdr_len);
-
-    packet->hdr = (char*) malloc((size_t)packet->hdr_len);
-    if( packet->hdr == NULL ) {
+    hdr_sz = pdr_sizeof((pdrproc_t)(Packet_pdr_packet_header), packet);
+    assert( hdr_sz );
+    packet->hdr_len = (unsigned) hdr_sz;
+    packet->hdr = (char*) malloc( (size_t)hdr_sz );
+    if( NULL == packet->hdr ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() failed\n"));
         return NULL;
     }
 
-    pdrmem_create(&pdrs, packet->hdr, (uint64_t)packet->hdr_len, PDR_ENCODE);
+    pdrmem_create(&pdrs, packet->hdr, hdr_sz, PDR_ENCODE);
 
     if( ! Packet_pdr_packet_header(&pdrs, packet) ) {
         error(ERR_PACKING, UnknownRank, "pdr_packet() failed\n");
@@ -67,11 +68,11 @@ Packet_t* Packet_construct(Packet_t* packet)
     }
 
     // data
-    packet->buf_len = pdr_sizeof((pdrproc_t)(Packet_pdr_packet_data), packet);
-    assert(packet->buf_len);
-
-    packet->buf = (char*) malloc((size_t)packet->buf_len);
-    if( packet->buf == NULL ) {
+    buf_sz = pdr_sizeof((pdrproc_t)(Packet_pdr_packet_data), packet);
+    assert( buf_sz );
+    packet->buf_len = buf_sz;
+    packet->buf = (char*) malloc( (size_t)buf_sz );
+    if( NULL == packet->buf ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "malloc() failed\n"));
         return NULL;
     }
