@@ -21,7 +21,7 @@ struct PthreadMutexData
 };
 typedef struct PthreadMutexData PthreadMutexData_t;
 
-PthreadMutexData_t* PthreadMutexData_construct();
+PthreadMutexData_t* PthreadMutexData_construct(void);
 int PthreadMutexData_destruct( PthreadMutexData_t* pmd );
 
 int PthreadMutex_Lock( PthreadMutexData_t* pmd );

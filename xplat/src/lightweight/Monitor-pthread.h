@@ -22,7 +22,7 @@ struct PthreadMonitorData
 };
 typedef struct PthreadMonitorData PthreadMonitorData_t;
 
-PthreadMonitorData_t* PthreadMonitorData_construct();
+PthreadMonitorData_t* PthreadMonitorData_construct(void);
 int PthreadMonitorData_destruct(PthreadMonitorData_t* pmond);
 
 int PthreadMonitor_Lock(PthreadMonitorData_t* pmond);

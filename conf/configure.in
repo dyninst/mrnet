@@ -245,14 +245,8 @@ elif test $COMPILER_TYPE = "pgi" ; then
     CXXDEBUGFLAGS="-g -O0"
     CDEBUGFLAGS="-g -O0"
 
-    GOOD_CXXFLAGS="$CXXFLAGS"
-    CXXFLAGS="$CXXFLAGS --one_instantiation_per_object"
-    AC_MSG_CHECKING([[whether pgCC supports --one_instantiation_per_object]])
-    AC_COMPILE_IFELSE( [AC_LANG_PROGRAM([],[])],
-                       [AC_MSG_RESULT(yes) ; PGI_OLD_TEMPLATES="yes" ; debug_mode="no"],
-                       [AC_MSG_RESULT(no) ; PGI_OLD_TEMPLATES="no"])
+    PGI_OLD_TEMPLATES="no"
     AC_SUBST(PGI_OLD_TEMPLATES)
-    CXXFLAGS="$GOOD_CXXFLAGS"
 
     SOFLAGS="$SOFLAGS -fPIC -shared"
 
