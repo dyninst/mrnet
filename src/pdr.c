@@ -12,7 +12,6 @@
  */
 
 #include "pdr.h"
-#include "pdr_mem.h"
 
 #define LASTUNSIGNED ((uint32_t)-1)
 

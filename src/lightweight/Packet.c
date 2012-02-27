@@ -5,7 +5,6 @@
 
 #include "utils_lightweight.h"
 #include "pdr.h"
-#include "pdr_mem.h"
 
 #include "mrnet_lightweight/DataElement.h"
 #include "mrnet_lightweight/Error.h"
