@@ -7,11 +7,11 @@
 #ifndef XPLAT_MUTEX_H
 #define XPLAT_MUTEX_H
 
-struct Mutex
+struct Mutex_t
 {
     void* data;
 };
-typedef struct Mutex Mutex_t;
+typedef struct Mutex_t Mutex_t;
 
 Mutex_t* Mutex_construct( void );
 int Mutex_destruct( Mutex_t* mut );

@@ -7,25 +7,6 @@
 #include "pdr.h"
 #include "pdr_mem.h"
 
-#if defined(__cplusplus)
-
-#ifndef os_windows
-#include <cstdlib>
-#include <cstdio>
-#else
-#include <stdio.h>
-#endif
-
-extern "C" {
-
-#else /* ! defined(__cplusplus) */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#endif /* defined(__cplusplus) */
-
 static bool_t _putchar(PDR *pdrs, char * UNUSED(c))
 {
     pdrs->space += SIZEOF_CHAR;
@@ -108,39 +89,9 @@ static bool_t _setpos(PDR * UNUSED(pdrs), uint64_t UNUSED(u))
 
 static void _destroy(PDR *pdrs)
 {
+    pdrs->cur = NULL;
+    pdrs->base = NULL;
     pdrs->space = 0;
-    pdrs->cur = 0;
-    if (pdrs->base){
-        free (pdrs->base);
-        pdrs->base = NULL;
-    }
-    return;
-}
-
-
-static int32_t * _makeinline (PDR *pdrs, int32_t len)
-{
-    if (len == 0 || pdrs->p_op != PDR_ENCODE){
-        return NULL;
-    }
-
-    if (len < (int) (long int) pdrs->base){
-        /* cur was already allocated */
-        pdrs->space += len;
-        return (int32_t *) pdrs->cur;
-    }
-    else {
-        /* Free the earlier space and allocate new area */
-        if (pdrs->cur)
-            free (pdrs->cur);
-        if ((pdrs->cur = (char*) malloc((size_t)len)) == NULL) {
-            pdrs->base = 0;
-            return NULL;
-        }
-        pdrs->base = (char *) (long) len;
-        pdrs->space += len;
-        return (int32_t *) pdrs->cur;
-    }
 }
 
 static struct pdr_ops _ops = {
@@ -160,9 +111,12 @@ static struct pdr_ops _ops = {
     _getbytes,
     _setpos,
     _getpos,
-    _makeinline,
     _destroy
 };
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 uint64_t pdr_sizeof(pdrproc_t func, void *data)
 {
@@ -172,8 +126,8 @@ uint64_t pdr_sizeof(pdrproc_t func, void *data)
     pdrs.p_op = PDR_ENCODE;
     pdrs.p_ops = &_ops;
     pdrs.space = 1;  /* 1-byte byte ordering entity */
-    pdrs.cur = (caddr_t) NULL;
-    pdrs.base = (caddr_t) 0;
+    pdrs.cur = NULL;
+    pdrs.base = NULL;
 
     rc = func (&pdrs, data);
     if (pdrs.cur)
@@ -183,5 +137,5 @@ uint64_t pdr_sizeof(pdrproc_t func, void *data)
 }
 
 #if defined(__cplusplus)
-}
+} /* extern C */
 #endif

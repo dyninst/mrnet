@@ -11,10 +11,11 @@
 #include <stdlib.h>
 #endif // !defined(NULL)
 
-typedef struct Monitor
+struct Monitor_t
 {
     void *data;
-} Monitor_t;
+};
+typedef struct Monitor_t Monitor_t;
 
 Monitor_t* Monitor_construct( void );
 int Monitor_destruct(Monitor_t* m );

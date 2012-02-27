@@ -6,16 +6,12 @@
 #if !defined( __performance_data_events_h )
 #define __performance_data_events_h 1
 
-#include "mrnet/Packet.h"
-#include "mrnet/Types.h"
-
 #include <map>
 #include <string>
 #include <vector>
-#ifndef os_windows
-#include <sys/time.h>
-#include <inttypes.h> /* integer printf format macros */ 
-#endif
+
+#include "utils.h"
+#include "mrnet/Packet.h"
 
 namespace MRN {
 
@@ -26,8 +22,8 @@ class PerfDataMgr {
     static const char* perfdata_context_names[PERFDATA_MAX_CTX];
 
  public:
-    PerfDataMgr( void );
-    ~PerfDataMgr( void ) {}
+    PerfDataMgr(void);
+    ~PerfDataMgr(void);
 
     void enable( perfdata_metric_t, perfdata_context_t );
     void disable( perfdata_metric_t, perfdata_context_t );

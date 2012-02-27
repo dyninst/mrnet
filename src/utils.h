@@ -6,6 +6,10 @@
 #ifndef MRNET_UTILS_H
 #define MRNET_UTILS_H 1
 
+#ifndef os_windows
+# include "mrnet_config.h"
+#endif
+
 #if !defined (__STDC_LIMIT_MACROS)
 #  define __STDC_LIMIT_MACROS
 #endif
@@ -17,26 +21,32 @@
 #endif
 
 #ifndef UNUSED
-#if defined(__GNUC__)
-#   define UNUSED(x) x __attribute__((unused)) /* UNUSED: x */ 
-#else
-#   define UNUSED(x) x
-#endif
+# ifdef __GNUC__
+#  define UNUSED(x) x __attribute__((unused))
+# else
+#  define UNUSED(x) x
+# endif
 #endif
  
-#include "mrnet_config.h"
-#include "mrnet/Types.h"
-#include "xplat/TLSKey.h"
-#include "xplat/Thread.h"
+#ifdef os_solaris
+# ifndef _REENTRANT
+#  define _REENTRANT // needed to get strtok_r
+# endif
+# include <sys/int_limits.h> // integer types MIN/MAX
+#endif
 
 #include <cctype>
-#include <cerrno>
 #include <cmath>
 #include <cstdarg>
 #include <vector>
 #include <string>
 
-#if USE_BOOST_TIMER
+#include "mrnet/Types.h"
+#include "xplat/TLSKey.h"
+#include "xplat/Thread.h"
+
+
+#ifdef USE_BOOST_TIMER
 # include <boost/timer/timer.hpp>
 #endif // USE_BOOST_TIMER
 
@@ -47,6 +57,14 @@
 namespace MRN
 {
 
+struct ltstr
+{
+    bool operator() ( std::string s1, std::string s2 ) const
+    {
+        return ( s1 < s2 );
+    }
+};
+
 /*************** Socket Utilities ***************/
 int connectHost( XPlat_Socket *sock_in, const std::string & hostname, 
                  XPlat_Port port, int num_retry = -1 );
@@ -55,14 +73,6 @@ int bindPort( XPlat_Socket *sock_in, XPlat_Port *port_in,
 int getSocketConnection( XPlat_Socket bound_socket, 
                          int timeout_sec=0, bool nonblock=false );
 int getPortFromSocket( XPlat_Socket sock, XPlat_Port *port );
-
-struct ltstr
-{
-    bool operator() ( std::string s1, std::string s2 ) const
-    {
-        return ( s1 < s2 );
-    }
-};
 
 /*************** Thread-level Storage ***************/
 extern XPlat::TLSKey tsd_key;
@@ -99,7 +109,7 @@ do{ \
 
 //FLF is used to call mrn_printf(FLF, ...)
 #if !defined( __GNUC__ )
-#define FLF  __FILE__,__LINE__,"unknown"
+#define FLF  __FILE__,__LINE__," "
 #else
 #define FLF  __FILE__,__LINE__,__FUNCTION__
 #endif
@@ -123,16 +133,17 @@ class Timer{
  public:
     struct timeval _start_tv, _stop_tv;
     double  _start_d, _stop_d;
-    Timer( void );
-    void start( void );
-    void stop( void );
-    double get_latency_secs( void );
-    double get_latency_msecs( void );
-    double get_latency_usecs( void );
+    Timer(void);
+    ~Timer(void);
+    void start(void);
+    void stop(void);
+    double get_latency_secs(void);
+    double get_latency_msecs(void);
+    double get_latency_usecs(void);
 
  private:
-#if USE_BOOST_TIMER
-    boost::timer::cpu_timer  _b_timer;
+#ifdef USE_BOOST_TIMER
+    boost::timer::cpu_timer * _b_timer;
 #endif 
 };
 

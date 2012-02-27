@@ -113,7 +113,7 @@ int main(int argc, char **argv)
         for(size_t u=0; u < sz; u++ ) {
             // NOTE: for unsigned integer data use - printf(" %" PRIu64, mi->second[u].u);
             // NOTE: for signed integer data use - printf(" %" PRIi64, mi->second[u].i);
-            printf("  filter execution %zu time: %.6lf\n", u, mi->second[u].d);
+            printf("  filter execution %zu time: %.9lf\n", u, mi->second[u].d);
         }
     }
 

@@ -3,19 +3,17 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <assert.h>
-
-#include "mrnet_lightweight/Network.h"
+#include "utils_lightweight.h"
 #include "BackEndNode.h"
 #include "ChildNode.h"
-#include "mrnet_lightweight/NetworkTopology.h"
-#include "mrnet_lightweight/Packet.h"
 #include "PeerNode.h"
 #include "Protocol.h"
 #include "SerialGraph.h"
+
+#include "mrnet_lightweight/Network.h"
+#include "mrnet_lightweight/NetworkTopology.h"
+#include "mrnet_lightweight/Packet.h"
 #include "mrnet_lightweight/Stream.h"
-#include "mrnet_lightweight/Types.h"
-#include "utils_lightweight.h"
 #include "xplat_lightweight/vector.h"
 
 int ChildNode_init_newChildDataConnection(BackEndNode_t* be, 
@@ -26,6 +24,7 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
     Packet_t* packet;
     NetworkTopology_t* nettop;
     const char* fmt_str = "%s %uhd %ud %uhd %ud %c %s";
+    int num_retry = 15;
 
     mrn_dbg_func_begin();
 
@@ -35,7 +34,7 @@ int ChildNode_init_newChildDataConnection(BackEndNode_t* be,
                           iparent->port, ifailed_rank));
 
     // establish data detection connect with new parent
-    if( PeerNode_connect_DataSocket(iparent) == -1 ) {
+    if( PeerNode_connect_DataSocket(iparent, num_retry) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, 
                               "PeerNode_connect_data_socket() failed\n"));
         return -1;
@@ -101,11 +100,12 @@ int ChildNode_init_newChildEventConnection(BackEndNode_t* be,
     int retval = 0;
     Packet_t* packet;
     const char* fmt_str = "%s %uhd %ud";
+    int num_retry = 5;
 
     mrn_dbg_func_begin();
 
     // establish data detection connect with new parent
-    if( PeerNode_connect_EventSocket(iparent) == -1 ) {
+    if( PeerNode_connect_EventSocket(iparent, num_retry) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, 
                               "PeerNode_connect_data_socket() failed\n"));
         return -1;

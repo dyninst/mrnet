@@ -170,7 +170,7 @@ bool CreateListening( XPlat_Socket& sock,
     static int backlog = 128;
     int err;
     XPlat_Socket _sock;
-    XPlat_Port p, _port = port;
+    XPlat_Port _port = port;
     std::string err_str;
 
     if( InvalidPort == _port )

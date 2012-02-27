@@ -12,36 +12,35 @@
 extern "C" {
 #endif
 
-inline bool_t   pdrmem_putchar(PDR *, char *);
-inline bool_t   pdrmem_getchar(PDR *, char *);
+ bool_t   pdrmem_putchar(PDR *, char *);
+ bool_t   pdrmem_getchar(PDR *, char *);
 
-inline bool_t   pdrmem_putint16(PDR *, int16_t *);
-inline bool_t   pdrmem_getint16(PDR *, int16_t *);
-inline bool_t   pdrmem_getint16_swap(PDR *, int16_t *);
+ bool_t   pdrmem_putint16(PDR *, int16_t *);
+ bool_t   pdrmem_getint16(PDR *, int16_t *);
+ bool_t   pdrmem_getint16_swap(PDR *, int16_t *);
 
-inline bool_t   pdrmem_putint32(PDR *, int32_t *);
-inline bool_t   pdrmem_getint32(PDR *, int32_t *);
-inline bool_t   pdrmem_getint32_swap(PDR *, int32_t *);
+ bool_t   pdrmem_putint32(PDR *, int32_t *);
+ bool_t   pdrmem_getint32(PDR *, int32_t *);
+ bool_t   pdrmem_getint32_swap(PDR *, int32_t *);
 
-inline bool_t   pdrmem_putint64(PDR *, int64_t *);
-inline bool_t   pdrmem_getint64(PDR *, int64_t *);
-inline bool_t   pdrmem_getint64_swap(PDR *, int64_t *);
+ bool_t   pdrmem_putint64(PDR *, int64_t *);
+ bool_t   pdrmem_getint64(PDR *, int64_t *);
+ bool_t   pdrmem_getint64_swap(PDR *, int64_t *);
 
-inline bool_t   pdrmem_putfloat(PDR *, float *);
-inline bool_t   pdrmem_getfloat(PDR *, float *);
-inline bool_t   pdrmem_getfloat_swap(PDR *, float *);
+ bool_t   pdrmem_putfloat(PDR *, float *);
+ bool_t   pdrmem_getfloat(PDR *, float *);
+ bool_t   pdrmem_getfloat_swap(PDR *, float *);
 
-inline bool_t   pdrmem_putdouble(PDR *, double *);
-inline bool_t   pdrmem_getdouble(PDR *, double *);
-inline bool_t   pdrmem_getdouble_swap(PDR *, double *);
+ bool_t   pdrmem_putdouble(PDR *, double *);
+ bool_t   pdrmem_getdouble(PDR *, double *);
+ bool_t   pdrmem_getdouble_swap(PDR *, double *);
 
-inline bool_t   pdrmem_getbytes(PDR *, char *, uint64_t);
-inline bool_t   pdrmem_putbytes(PDR *, char *, uint64_t);
+ bool_t   pdrmem_getbytes(PDR *, char *, uint64_t);
+ bool_t   pdrmem_putbytes(PDR *, char *, uint64_t);
 
-bool_t   pdrmem_setpos(PDR *, uint64_t);
-inline uint64_t pdrmem_getpos(PDR *);
-int32_t* pdrmem_inline(PDR *, int32_t);
-void     pdrmem_destroy(PDR *);
+ bool_t   pdrmem_setpos(PDR *, uint64_t);
+ uint64_t pdrmem_getpos(PDR *);
+ void     pdrmem_destroy(PDR *);
 
 #ifdef __cplusplus
 } /* extern C */

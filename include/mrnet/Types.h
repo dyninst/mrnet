@@ -3,8 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#if !defined(Types_h)
-#define Types_h
+#ifndef MRNET_TYPES_H
+#define MRNET_TYPES_H 1
 
 #include "xplat/Types.h"
 
@@ -66,21 +66,10 @@ namespace MRN
     typedef std::map< Rank, std::vector< perfdata_t > > rank_perfdata_map;
 
     typedef enum PerfData_MetricType {
-        PERFDATA_TYPE_UINT  = 0,
-        PERFDATA_TYPE_INT   = 1,
-        PERFDATA_TYPE_FLOAT = 2
+        PERFDATA_TYPE_UINT=0,
+        PERFDATA_TYPE_INT,
+        PERFDATA_TYPE_FLOAT
     } perfdata_mettype_t;
-
-    typedef enum PerfData_Metric {
-        PERFDATA_MET_NUM_BYTES   = 0,
-        PERFDATA_MET_NUM_PKTS    = 1,
-        PERFDATA_MET_ELAPSED_SEC = 2,
-        PERFDATA_MET_CPU_SYS_PCT = 3,
-        PERFDATA_MET_CPU_USR_PCT = 4,
-        PERFDATA_MET_MEM_VIRT_KB = 5,
-        PERFDATA_MET_MEM_PHYS_KB = 6,
-        PERFDATA_MAX_MET         = 7
-    } perfdata_metric_t;
 
     typedef struct PerfData_MetricInfo {
         const char* name;
@@ -89,52 +78,68 @@ namespace MRN
         perfdata_mettype_t type;
     } perfdata_metinfo_t;
 
+    typedef enum PerfData_Metric {
+        PERFDATA_MET_NUM_BYTES=0,
+        PERFDATA_MET_NUM_PKTS,
+        PERFDATA_MET_ELAPSED_SEC,
+        PERFDATA_MET_CPU_SYS_PCT,
+        PERFDATA_MET_CPU_USR_PCT,
+        PERFDATA_MET_MEM_VIRT_KB, /* 5 */
+        PERFDATA_MET_MEM_PHYS_KB, 
+        PERFDATA_MAX_MET          /* 7 */
+        /* Note that if MAX_MET ever increases, the type of the 
+           PerfDataMgr::active_metrics bitfield must also be increased 
+           from current 8-bit char to a 16-bit or 32-bit int */
+    } perfdata_metric_t;
+
     typedef enum PerfData_Context {
-        PERFDATA_CTX_SEND     = 0,
-        PERFDATA_CTX_RECV     = 1,
-        PERFDATA_CTX_FILT_IN  = 2,
-        PERFDATA_CTX_FILT_OUT = 3,
-        PERFDATA_CTX_NONE     = 4,
-        PERFDATA_PKT_RECV     = 5,
-        PERFDATA_PKT_SEND     = 6,
-        PERFDATA_PKT_NET_SENDCHILD = 7,
-        PERFDATA_PKT_NET_SENDPAR = 8,
-        PERFDATA_PKT_INT_DATAPAR = 9,
-        PERFDATA_PKT_INT_DATACHILD = 10,
-        PERFDATA_PKT_FILTER = 11,
-        PERFDATA_PKT_RECV_TO_FILTER = 12,
-        PERFDATA_PKT_FILTER_TO_SEND = 13,
-        PERFDATA_MAX_CTX    = 14
+        PERFDATA_CTX_NONE=0,
+        PERFDATA_CTX_SEND,
+        PERFDATA_CTX_RECV,
+        PERFDATA_CTX_FILT_IN,
+        PERFDATA_CTX_FILT_OUT,
+        PERFDATA_CTX_SYNCFILT_IN,        /* 5 */
+        PERFDATA_CTX_SYNCFILT_OUT,
+        PERFDATA_CTX_PKT_RECV,    
+        PERFDATA_CTX_PKT_SEND,
+        PERFDATA_CTX_PKT_NET_SENDCHILD,
+        PERFDATA_CTX_PKT_NET_SENDPAR,    /* 10 */
+        PERFDATA_CTX_PKT_INT_DATAPAR,
+        PERFDATA_CTX_PKT_INT_DATACHILD,
+        PERFDATA_CTX_PKT_FILTER,
+        PERFDATA_CTX_PKT_RECV_TO_FILTER,
+        PERFDATA_CTX_PKT_FILTER_TO_SEND, /* 15 */
+        PERFDATA_MAX_CTX               
     } perfdata_context_t;
 
     typedef enum PerfData_PacketTimers {
-        PERFDATA_PKT_TIMERS_RECV     = 1,
-        PERFDATA_PKT_TIMERS_SEND     = 2,
-        PERFDATA_PKT_TIMERS_NET_SENDCHILD = 3,
-        PERFDATA_PKT_TIMERS_NET_SENDPAR = 4,
-        PERFDATA_PKT_TIMERS_INT_DATAPAR = 5,
-        PERFDATA_PKT_TIMERS_INT_DATACHILD = 6,
-        PERFDATA_PKT_TIMERS_FILTER = 7,
-        PERFDATA_PKT_TIMERS_RECV_TO_FILTER = 8,
-        PERFDATA_PKT_TIMERS_FILTER_TO_SEND = 9,
-        PERFDATA_PKT_TIMERS_MAX = 10
+        PERFDATA_PKT_TIMERS_RECV=0,
+        PERFDATA_PKT_TIMERS_SEND,
+        PERFDATA_PKT_TIMERS_NET_SENDCHILD,
+        PERFDATA_PKT_TIMERS_NET_SENDPAR,
+        PERFDATA_PKT_TIMERS_INT_DATAPAR,    /* 5 */
+        PERFDATA_PKT_TIMERS_INT_DATACHILD,
+        PERFDATA_PKT_TIMERS_FILTER,
+        PERFDATA_PKT_TIMERS_RECV_TO_FILTER,
+        PERFDATA_PKT_TIMERS_FILTER_TO_SEND,
+        PERFDATA_PKT_TIMERS_MAX             /* 10 */
     } perfdata_pkt_timers_t;
 
     typedef enum NetworkSettings {
-        MRNET_DEBUG_LEVEL         = 0,
-        MRNET_DEBUG_LOG_DIRECTORY = 1,
-        MRNET_COMMNODE_PATH       = 2, 
-        MRNET_FAILURE_RECOVERY    = 3,
-        MRNET_STARTUP_TIMEOUT     = 4,
-        MRNET_PORT_BASE           = 5,
-        XPLAT_RSH                 = 6, 
-        XPLAT_RSH_ARGS            = 7,
-        XPLAT_REMCMD              = 8,
-        CRAY_ALPS_APID            = 9,
-        CRAY_ALPS_APRUN_PID       = 10,
-        CRAY_ALPS_STAGE_FILES     = 11
+        MRNET_DEBUG_LEVEL=0,
+        MRNET_DEBUG_LOG_DIRECTORY,
+        MRNET_COMMNODE_PATH,
+        MRNET_FAILURE_RECOVERY,
+        MRNET_STARTUP_TIMEOUT,
+        MRNET_PORT_BASE,           /* 5 */
+        XPLAT_RSH,
+        XPLAT_RSH_ARGS,
+        XPLAT_REMCMD,
+        CRAY_ALPS_APID,
+        CRAY_ALPS_APRUN_PID,       /* 10 */
+        CRAY_ALPS_STAGE_FILES
     } net_settings_key_t;   
 
 } /* namespace MRN */
 
-#endif /* !defined(Types_h) */
+#endif /* MRNET_TYPES_H */

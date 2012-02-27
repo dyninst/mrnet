@@ -6,8 +6,9 @@
 #if !defined(__perfdatasysevent_h)
 #define __perfdatasysevent_h 1
 
-int PerfDataSysMgr_get_ThreadTime(long* user, long* sys);
+#include "utils_lightweight.h"
 
+int PerfDataSysMgr_get_ThreadTime(long* user, long* sys);
 int PerfDataSysMgr_get_MemUsage(double* vsize, double* psize);
 
-#endif 
+#endif /* __perfdatasysevent_h */

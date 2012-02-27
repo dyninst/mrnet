@@ -3,25 +3,21 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-
-#include "mrnet_lightweight/MRNet.h"
-
+#include "utils_lightweight.h"
 #include "BackEndNode.h"
-#include "mrnet_lightweight/NetworkTopology.h"
 #include "ChildNode.h"
 #include "Protocol.h"
 #include "PeerNode.h"
 #include "SerialGraph.h"
+
+#include "mrnet_lightweight/NetworkTopology.h"
+#include "mrnet_lightweight/Stream.h"
+#include "xplat_lightweight/NetUtils.h"
+#include "xplat_lightweight/SocketUtils.h"
 #include "xplat_lightweight/map.h"
-#include "utils_lightweight.h"
 #include "xplat_lightweight/vector.h"
 
-// from xplat
-#include "xplat_lightweight/NetUtils.h"
+const Rank UnknownRank = (Rank)-1;
 
 const int MIN_OUTPUT_LEVEL=0;
 const int MAX_OUTPUT_LEVEL=5;
@@ -959,10 +955,10 @@ int Network_recover_FromParentFailure(Network_t* net)
 {
 
     
-    Timer_t new_parent_timer = new_Timer_t();
-    Timer_t cleanup_timer = new_Timer_t();
-    Timer_t connection_timer = new_Timer_t();
-    Timer_t overall_timer = new_Timer_t();
+    Timer_t* new_parent_timer = new_Timer_t();
+    Timer_t* cleanup_timer = new_Timer_t();
+    Timer_t* connection_timer = new_Timer_t();
+    Timer_t* overall_timer = new_Timer_t();
     Rank failed_rank;
     Node_t* new_parent_node;
     char* new_parent_name;
@@ -1073,6 +1069,12 @@ int Network_recover_FromParentFailure(Network_t* net)
     Network_unlock(net, PARENT_SYNC);
 
     Network_unlock(net, NET_SYNC);
+
+    if( NULL != new_parent_timer ) free( new_parent_timer );
+    if( NULL != cleanup_timer ) free( cleanup_timer );
+    if( NULL != connection_timer ) free( connection_timer );
+    if( NULL != overall_timer ) free( overall_timer );
+
     mrn_dbg_func_end();
 
     return 0;
@@ -1085,7 +1087,7 @@ char* Network_get_LocalSubTreeStringPtr(Network_t* net)
 
 void Network_set_DebugLogDir( char* value )
 {
-    if( value != NULL )
+    if( NULL != value )
         MRN_DEBUG_LOG_DIRECTORY = strdup( value );
 }
 

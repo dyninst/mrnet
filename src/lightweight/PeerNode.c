@@ -3,12 +3,9 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <assert.h>
-#include <string.h>
+#include "PeerNode.h"
 #include "mrnet_lightweight/Error.h"
 #include "mrnet_lightweight/Network.h"
-#include "PeerNode.h"
-#include "utils_lightweight.h"
 #include "xplat_lightweight/vector.h"
 
 PeerNode_t* new_PeerNode_t(Network_t* inetwork, 
@@ -119,14 +116,14 @@ Rank PeerNode_get_Rank(PeerNode_t* node)
     return node->rank;
 }
 
-int PeerNode_connect_DataSocket(PeerNode_t* parent) 
+int PeerNode_connect_DataSocket(PeerNode_t* parent, int num_retry) 
 {
     mrn_dbg(3, mrn_printf(FLF, stderr, 
                           "Creating data conection to (%s:%d) ...\n", 
                           parent->net->local_hostname, parent->net->local_port));
 
     if( connectHost(&(parent->data_sock_fd), parent->hostname, 
-                    parent->port, -1) == -1 ) { 
+                    parent->port, num_retry) == -1 ) { 
         error (ERR_SYSTEM, parent->net->local_rank, "connectHost() failed" );
         mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost() failed\n"));
         return -1;
@@ -138,14 +135,14 @@ int PeerNode_connect_DataSocket(PeerNode_t* parent)
     return 0;
 }
 
-int PeerNode_connect_EventSocket(PeerNode_t* parent) 
+int PeerNode_connect_EventSocket(PeerNode_t* parent, int num_retry) 
 {
     mrn_dbg(3, mrn_printf(FLF, stderr, 
                           "Creating event conection to (%s:%d) ...\n", 
                           parent->net->local_hostname, parent->net->local_port));
 
     if( connectHost(&(parent->event_sock_fd), parent->hostname, 
-                    parent->port, -1) == -1 ) { 
+                    parent->port, num_retry) == -1 ) { 
         error (ERR_SYSTEM, parent->net->local_rank, "connectHost() failed" );
         mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost() failed\n"));
         return -1;

@@ -6,11 +6,11 @@
 #if !defined(__peernode_h)
 #define __peernode_h 1
 
-#include "xplat_lightweight/Mutex.h"
-#include "mrnet_lightweight/Network.h"
+#include "utils_lightweight.h"
 #include "Message.h"
-#include "mrnet_lightweight/Packet.h"
-#include "mrnet_lightweight/Types.h"
+
+#include "mrnet_lightweight/Network.h"
+#include "xplat_lightweight/Mutex.h"
 #include "xplat_lightweight/vector.h"
 
 struct PeerNode_t { 
@@ -44,8 +44,8 @@ typedef struct PeerNode_t PeerNode_t;
 
 Rank PeerNode_get_Rank(PeerNode_t* node);
 
-int PeerNode_connect_DataSocket(PeerNode_t* parent);
-int PeerNode_connect_EventSocket(PeerNode_t* parent);
+int PeerNode_connect_DataSocket(PeerNode_t* parent, int num_retry);
+int PeerNode_connect_EventSocket(PeerNode_t* parent, int num_retry);
 
 int PeerNode_send(PeerNode_t* peer,  Packet_t* ipacket);
 

@@ -137,7 +137,8 @@ DoRoundtripLatencyExp( Stream* stream,
     int sret = -1;
     int fret = -1;
 
-    std::cout << "FE: roundtrip latency: " << std::flush;
+    std::cout << "FE: starting roundtrip latency experiment" << std::endl;
+
     startTime.set_time();
     for( unsigned long i = 0; i < nIters; i++ ) {
         // broadcast
@@ -182,7 +183,8 @@ DoRoundtripLatencyExp( Stream* stream,
     // dump broadcast/reduction roundtrip latency
     double totalLatency = (endTime - startTime).get_double_time();
     double avgLatency = totalLatency / (double)nIters;
-    std::cout << "total(sec): " << totalLatency
+    std::cout << "FE: roundtrip latency: "
+              << "total(sec): " << totalLatency
               << ", nIters: " << nIters
               << ", avg(sec): " << avgLatency
               << std::endl;
@@ -199,6 +201,7 @@ DoReductionThroughputExp( Stream* stream,
     mb_time endTime;
 
     std::cout << "FE: starting reduction throughput experiment" << std::endl;
+
     // broadcast request to start throughput experiment
     // we send number of iterations to do and the value to send
     if( (stream->send( MB_RED_THROUGHPUT, "%d %d", nIters, 1 ) == -1) ||

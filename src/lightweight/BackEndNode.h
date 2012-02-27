@@ -6,10 +6,9 @@
 #if !defined(__backendnode_h)
 #define __backendnode_h 1
 
-#include "mrnet_lightweight/Network.h"
-#include "mrnet_lightweight/Types.h"
+#include "utils_lightweight.h"
 #include "PeerNode.h"
-#include <string.h>
+#include "mrnet_lightweight/Network.h"
 
 /*  definition */
 struct BackEndNode_t {

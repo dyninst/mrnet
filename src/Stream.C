@@ -507,11 +507,13 @@ int Stream::push_Packet( PacketPtr ipacket,
                          bool igoing_upstream )
 {
     vector< PacketPtr > ipackets;
+    Timer tagg;
+
+    mrn_dbg_func_begin();
+
     NetworkTopology* topol = _network->get_NetworkTopology();
     TopologyLocalInfo topol_info( topol,
                                   topol->find_Node(_network->get_LocalRank()) );
-
-    mrn_dbg_func_begin();
 
     if( ipacket != Packet::NullPacket ) {
         ipackets.push_back(ipacket);
@@ -520,15 +522,28 @@ int Stream::push_Packet( PacketPtr ipacket,
     // if going upstream, sync first
     if( igoing_upstream ) {
 
+        tagg.start();
         if( _sync_filter->push_Packets(ipackets, opackets, opackets_reverse, topol_info ) == -1 ){
             mrn_dbg(1, mrn_printf(FLF, stderr, "SyncFilt.push_packets() failed\n"));
             return -1;
         }
+        tagg.stop();
+
         // NOTE: ipackets is cleared by Filter::push_Packets()
         if( opackets.size() != 0 ){
             ipackets = opackets;
             opackets.clear();
         }
+
+        // performance data update for FILTER_OUT
+        if( _perf_data->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_SYNCFILT_OUT) ) {
+            perfdata_t val;
+            val.d = tagg.get_latency_secs();
+            _perf_data->add_DataInstance( PERFDATA_MET_ELAPSED_SEC, 
+                                          PERFDATA_CTX_SYNCFILT_OUT,
+                                          val );
+        }
+            
     }
 
     if( ipackets.size() > 0 ) {
@@ -536,67 +551,70 @@ int Stream::push_Packet( PacketPtr ipacket,
 	long user_before, sys_before;
 	long user_after, sys_after;
 
-        Timer tagg;
         Filter* trans_filter = _ds_filter;
 
         if( igoing_upstream ) {
             trans_filter = _us_filter;
 
             // performance data update for FILTER_IN
-            if( _perf_data->is_Enabled( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_IN ) ) {
+            if( _perf_data->is_Enabled(PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_IN) ) {
                 perfdata_t val;
                 val.u = ipackets.size();
-                _perf_data->add_DataInstance( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_IN,
+                _perf_data->add_DataInstance( PERFDATA_MET_NUM_PKTS, 
+                                              PERFDATA_CTX_FILT_IN,
                                               val );
             }
 
-
             if( _perf_data->is_Enabled(PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT)  ||
                 _perf_data->is_Enabled(PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT) ) {
-	       PerfDataSysMgr::get_ThreadTime(user_before,sys_before);
+                PerfDataSysMgr::get_ThreadTime(user_before,sys_before);
 	    }
-            tagg.start();
         }
 
         // run transformation filter
+        tagg.start();
         if( trans_filter->push_Packets(ipackets, opackets, opackets_reverse, topol_info ) == -1 ){
             mrn_dbg(1, mrn_printf(FLF, stderr, "TransFilt.push_packets() failed\n"));
             return -1;
         }
+        tagg.stop();
 
         if( igoing_upstream ) {
-            tagg.stop();
 
+            // performance data update for FILTER_OUT
             if( _perf_data->is_Enabled(PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT)  ||
-               _perf_data->is_Enabled(PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT) ) {
+                _perf_data->is_Enabled(PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT) ) {
             	PerfDataSysMgr::get_ThreadTime(user_after,sys_after);
 	    }
 
-            // performance data update for FILTER_OUT
-            if( _perf_data->is_Enabled( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_OUT ) ) {
+            if( _perf_data->is_Enabled(PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_OUT) ) {
                 perfdata_t val;
                 val.u = opackets.size() + opackets_reverse.size();
-                _perf_data->add_DataInstance( PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_OUT,
-                                             val );
-            }
-            if( _perf_data->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_FILT_OUT ) ) {
-                perfdata_t val;
-                val.d = tagg.get_latency_secs();
-                _perf_data->add_DataInstance( PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_FILT_OUT,
+                _perf_data->add_DataInstance( PERFDATA_MET_NUM_PKTS, 
+                                              PERFDATA_CTX_FILT_OUT,
                                               val );
             }
-            if( _perf_data->is_Enabled( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT ) ) {
+            if( _perf_data->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_FILT_OUT) ) {
+                perfdata_t val;
+                val.d = tagg.get_latency_secs();
+                _perf_data->add_DataInstance( PERFDATA_MET_ELAPSED_SEC, 
+                                              PERFDATA_CTX_FILT_OUT,
+                                              val );
+            }
+            if( _perf_data->is_Enabled(PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT) ) {
                 perfdata_t val;
                 double diff = (double)(user_after  - user_before) ;   
                 val.d = ( diff / tagg.get_latency_msecs() ) * 100.0;
-                _perf_data->add_DataInstance( PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT,
+                _perf_data->add_DataInstance( PERFDATA_MET_CPU_USR_PCT, 
+                                              PERFDATA_CTX_FILT_OUT,
                                               val );
             }
-            if( _perf_data->is_Enabled( PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT ) ) {
+            if( _perf_data->is_Enabled(PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT) ) {
                 perfdata_t val;
                 double diff = (double)(sys_after  - sys_before) ;   
                 val.d = ( diff / tagg.get_latency_msecs() ) * 100.0;
-                _perf_data->add_DataInstance( PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT,
+                _perf_data->add_DataInstance( PERFDATA_MET_CPU_SYS_PCT, 
+                                              PERFDATA_CTX_FILT_OUT,
                                               val );
             } 
         }
@@ -989,7 +1007,7 @@ PacketPtr Stream::collect_PerfData( perfdata_metric_t metric,
     iter = data.begin();
 
     Rank my_rank = _network->get_LocalRank();
-    uint32_t num_elems = data.size();
+    uint32_t num_elems = (uint32_t) data.size();
     void* data_arr = NULL;
     const char* fmt = NULL;
 

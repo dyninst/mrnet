@@ -158,14 +158,14 @@ public:
     // CP role
     XTNetwork( bool,
                int topoPipeFd = -1,
-               Port topoPort = -1,
+               Port topoPort = UnknownPort,
                int timeOut = -1,
                int beArgc = 0,
                char** beArgv = NULL );
 
     virtual ~XTNetwork(void) {}
 
-    static Port FindTopoPort(int iport=-1);
+    static Port FindTopoPort(Port iport=UnknownPort);
     static Port FindParentPort(void);
 };
 

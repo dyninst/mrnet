@@ -2,15 +2,12 @@
  *  Copyright 2003-2011 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
-//#define MRNET_FILTER_NOBLOCK 5
-#include <vector>
 
-#include "mrnet/MRNet.h"
+#include <vector>
 
 #include "Filter.h"
 #include "ParentNode.h"
 #include "PeerNode.h"
-#include "utils.h"
 
 #include "xplat/SharedObject.h"
 
@@ -49,55 +46,55 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
                           vector< PacketPtr >& opackets_reverse,
                           const TopologyLocalInfo& topol_info )
 {
+    std::vector< PacketPtr >::iterator iter;
+
     mrn_dbg_func_begin();
-    if(_strm != NULL && _filter_func != NULL)
-    {
-        if(_strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_FILTER))
-        {
-            for (std::vector<PacketPtr>::iterator i = ipackets.begin();
-                    i != ipackets.end(); i++)
-            {
-                (*i)->start_Timer(PERFDATA_PKT_TIMERS_FILTER);
-            }
-        }
-    }
-    _mutex.Lock();
-    
+
     if( _filter_func == NULL ) {  //do nothing
         opackets = ipackets;
-        ipackets.clear( );
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "NULL FILTER: returning %d packets\n",
-                               opackets.size( ) ));
-        _mutex.Unlock();
+        ipackets.clear();
+        mrn_dbg( 3, mrn_printf(FLF, stderr, 
+                               "NULL FILTER: returning %"PRIszt" packets\n",
+                               opackets.size() ));
         return 0;
     }
 
-    _filter_func( ipackets, opackets, opackets_reverse, &_filter_state, _params, topol_info );
-    _mutex.Unlock();
+    PerfDataMgr* pdm = NULL;
+    if( _strm != NULL )
+        pdm = _strm->get_PerfData();
 
-    if(_strm != NULL)
-    { 
-        if(_strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_FILTER) ||            
-           _strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_RECV_TO_FILTER) ||
-           _strm->get_PerfData()->is_Enabled( PERFDATA_MET_ELAPSED_SEC, PERFDATA_PKT_RECV))
-        {
-            for (std::vector<PacketPtr>::iterator i = ipackets.begin();
-                    i != ipackets.end(); i++)
-            {
-                PacketPtr iter = *i;
-                iter->stop_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
-                iter->stop_Timer(PERFDATA_PKT_TIMERS_FILTER);
-                _strm->get_PerfData()->add_PacketTimers(iter);
-            }
-            for (std::vector<PacketPtr>::iterator i =  opackets.begin(); 
-                 i != opackets.end(); i++)
-            {
-                PacketPtr iter = *i;
-                iter->start_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
-            }
+    if( pdm != NULL ) {
+        if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_FILTER) ) {
+            for( iter = ipackets.begin(); iter != ipackets.end(); iter++ )
+                (*iter)->start_Timer(PERFDATA_PKT_TIMERS_FILTER);
         }
     }
-    ipackets.clear( );
+
+    /* For now, we don't allow multiple threads in same filter func at same time.
+     * Eventually, the sync filters should be made thread-safe so we can 
+     * remove the mutex.
+     */
+    _mutex.Lock();
+    _filter_func( ipackets, opackets, opackets_reverse, 
+                  &_filter_state, _params, topol_info );
+    _mutex.Unlock();
+
+    if( pdm != NULL ) {
+        if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_FILTER) ||            
+            pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_RECV_TO_FILTER) ||
+            pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_RECV) ) {
+
+            for( iter = ipackets.begin(); iter != ipackets.end(); iter++ ) {
+                PacketPtr p = *iter;
+                p->stop_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
+                p->stop_Timer(PERFDATA_PKT_TIMERS_FILTER);
+                pdm->add_PacketTimers(p);
+            }
+            for( iter = opackets.begin(); iter != opackets.end(); iter++ )
+                (*iter)->start_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
+        }
+    }
+    ipackets.clear();
     
     mrn_dbg_func_end();
     return 0;
@@ -138,7 +135,7 @@ int Filter::load_FilterFunc( unsigned short iid, const char *iso_file, const cha
 
     so_handle = XPlat::SharedObject::Load( iso_file );
     if( so_handle == NULL ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::SharedObject::Load(\"%s\"): %s\n",
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::SharedObject::Load(%s): %s\n",
                  iso_file, XPlat::SharedObject::GetErrorString() ));
         return -1;
     }
@@ -147,7 +144,7 @@ int Filter::load_FilterFunc( unsigned short iid, const char *iso_file, const cha
     filter_func_ptr = (void(*)())so_handle->GetSymbol( ifunc_name );
     if( filter_func_ptr == NULL ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "XPlat::SharedObject::GetSymbol(\"%s\"): %s\n",
+                               "XPlat::SharedObject::GetSymbol(%s): %s\n",
                                ifunc_name, XPlat::SharedObject::GetErrorString() ));
 
         delete so_handle;
@@ -162,7 +159,7 @@ int Filter::load_FilterFunc( unsigned short iid, const char *iso_file, const cha
     fmt_str_ptr = ( const char ** )so_handle->GetSymbol( func_fmt_str.c_str() );
     if( fmt_str_ptr == NULL ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "XPlat::SharedObject::GetSymbol(\"%s\"): %s\n",
+                               "XPlat::SharedObject::GetSymbol(%s): %s\n",
                                func_fmt_str.c_str(),
                                XPlat::SharedObject::GetErrorString()));
         delete so_handle;

@@ -6,7 +6,7 @@
 #if !defined(__serial_graph_h)
 #define __serial_graph_h 1
 
-#include "mrnet_lightweight/Types.h"
+#include "utils_lightweight.h"
 
 struct SerialGraph_t {
     char* byte_array;

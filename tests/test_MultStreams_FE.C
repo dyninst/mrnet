@@ -151,7 +151,6 @@ int test_alltypes( Network * net, std::vector< Stream * > streams, bool block )
     for (stream_iter = streams.begin();
          stream_iter != streams.end();
          ++stream_iter) {
-        
         // reset num_received
         num_received = 0;
         do {

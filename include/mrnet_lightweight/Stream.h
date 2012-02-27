@@ -7,7 +7,6 @@
 #if !defined(__stream_h)
 #define __stream_h 1
 
-#include "mrnet_lightweight/Network.h"
 #include "mrnet_lightweight/Packet.h"
 #include "mrnet_lightweight/Types.h"
 
@@ -19,6 +18,7 @@ extern const unsigned int USER_STRM_BASE_ID;
 extern const unsigned int INTERNAL_STRM_BASE_ID;
 
 struct vector_t;
+struct Network_t;
 struct PerfDataMgr_t;
 struct Filter_t;
 struct vector_t;
@@ -29,7 +29,7 @@ struct Stream_t {
     struct Filter_t* ds_filter;
     struct vector_t* incoming_packet_buffer;
     struct PerfDataMgr_t* perf_data;
-    Network_t* network;
+    struct Network_t* network;
     unsigned int id;
     unsigned int sync_filter_id;
     unsigned int us_filter_id;
@@ -39,7 +39,7 @@ struct Stream_t {
 
 typedef struct Stream_t Stream_t;
 
-Stream_t* new_Stream_t(Network_t* net,
+Stream_t* new_Stream_t(struct Network_t* net,
                        unsigned int iid, 
                        Rank *ibackends,
                        unsigned int inum_backends,

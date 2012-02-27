@@ -28,6 +28,8 @@ void PerfDataFilt( std::vector< PacketPtr >& packets_in,
 	cur_packet->unpack("%d", &val);
         sum += val;
     }
+
+    sleep(1); // simulate significant walltime, won't show up in cputime 
     
     PacketPtr new_packet ( new Packet(packets_in[0]->get_StreamId(),
                                       packets_in[0]->get_Tag(), "%d", sum ) );

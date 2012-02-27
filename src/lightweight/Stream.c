@@ -4,27 +4,18 @@
  ****************************************************************************/
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <assert.h>
-
-#ifndef os_windows
-#include <unistd.h>
-#include <sys/time.h>
-#endif
-
-#include "mrnet_lightweight/Network.h"
+#include "utils_lightweight.h"
+#include "Filter.h"
 #include "PeerNode.h"
 #include "Protocol.h"
-#include "mrnet_lightweight/Stream.h"
-#include "mrnet_lightweight/NetworkTopology.h"
-#include "utils_lightweight.h"
 #include "PerfDataEvent.h"
 #include "PerfDataSysEvent.h"
+
+#include "mrnet_lightweight/Stream.h"
+#include "mrnet_lightweight/Network.h"
+#include "mrnet_lightweight/NetworkTopology.h"
 #include "xplat_lightweight/map.h"
 #include "xplat_lightweight/vector.h"
-#include "Filter.h"
 
 #define STREAM_BASE_ID (1 << 30)
 
@@ -173,7 +164,7 @@ int Stream_push_Packet(Stream_t* stream,
     long user_before, sys_before;
     long user_after, sys_after;
 
-    Timer_t tagg = new_Timer_t();
+    Timer_t* tagg = new_Timer_t();
     Filter_t* trans_filter = stream->ds_filter;
     
     perfdata_t val;
@@ -278,8 +269,8 @@ int Stream_push_Packet(Stream_t* stream,
 
     delete_vector_t( ipackets );
     
-    if( topol_info != NULL )
-        free( topol_info );
+    if( NULL != topol_info ) free( topol_info );
+    if( NULL != tagg ) free( tagg );
 
     mrn_dbg_func_end();
     return 0;
@@ -388,8 +379,8 @@ int Stream_send_packet(Stream_t* stream, Packet_t* packet)
 
 int Stream_send_aux(Stream_t* stream, int itag, const char* ifmt, Packet_t* ipacket)
 {
-    Timer_t tagg = new_Timer_t();
-    Timer_t tsend = new_Timer_t();
+    Timer_t* tagg = new_Timer_t();
+    Timer_t* tsend = new_Timer_t();
     vector_t* opackets = new_empty_vector_t();
     vector_t* opackets_reverse = new_empty_vector_t();
     Packet_t* opacket;

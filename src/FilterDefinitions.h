@@ -8,9 +8,10 @@
 
 #include <vector>
 #include <set>
-#include "mrnet/FilterIds.h"
-#include "mrnet/Packet.h"
 
+#include "mrnet/FilterIds.h"
+#include "mrnet/NetworkTopology.h"
+#include "mrnet/Packet.h"
 
 namespace MRN
 {

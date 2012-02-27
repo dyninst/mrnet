@@ -3,12 +3,11 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "utils.h"
+#include "PeerNode.h"
 #include "ChildNode.h"
 #include "ParentNode.h"
-#include "PeerNode.h"
 
-#include "mrnet/MRNet.h"
+#include "mrnet/Network.h"
 #include "xplat/SocketUtils.h"
 #include "xplat/Error.h"
 #include "xplat/NetUtils.h"
@@ -33,7 +32,8 @@ PeerNodePtr PeerNode::NullPeerNode;
 PeerNode::PeerNode( Network * inetwork, std::string const& ihostname, Port iport,
                     Rank irank, bool iis_parent, bool iis_internal )
     : CommunicationNode(ihostname, iport, irank ), _network(inetwork),
-      _data_sock_fd(-1), _event_sock_fd(-1),
+      _data_sock_fd(XPlat::SocketUtils::InvalidSocket), 
+      _event_sock_fd(XPlat::SocketUtils::InvalidSocket),
       _is_internal_node(iis_internal), _is_parent(iis_parent), 
       _recv_thread_started(false), _send_thread_started(false),
       recv_thread_id(0), send_thread_id(0), 
@@ -50,13 +50,13 @@ PeerNode::~PeerNode()
     delete _msg_in;
 }
 
-int PeerNode::connect_DataSocket(void)
+int PeerNode::connect_DataSocket( int num_retry /* =0 */ )
 {
-    int data_fd = -1;
+    XPlat_Socket data_fd = XPlat::SocketUtils::InvalidSocket;
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Creating data connection to (%s:%d) ...\n",
                           _hostname.c_str(), _port) );
 
-    if( connectHost(&data_fd, _hostname.c_str(), _port) == -1) {
+    if( connectHost(&data_fd, _hostname.c_str(), _port, num_retry) == -1) {
         error( ERR_SYSTEM, _rank, "connectHost() failed" );
         return -1;
     }
@@ -65,13 +65,13 @@ int PeerNode::connect_DataSocket(void)
     return 0;
 }
 
-int PeerNode::connect_EventSocket(void)
+int PeerNode::connect_EventSocket( int num_retry /* =0 */ )
 {
-    int evt_fd = -1;
+    XPlat_Socket evt_fd = XPlat::SocketUtils::InvalidSocket;
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Creating event connection to (%s:%d) ...\n",
                           _hostname.c_str(), _port) );
 
-    if( connectHost(&evt_fd, _hostname.c_str(), _port) == -1 ) {
+    if( connectHost(&evt_fd, _hostname.c_str(), _port, num_retry) == -1 ) {
         error( ERR_SYSTEM, _rank, "connectHost() failed" );
         return -1;
     }
@@ -80,7 +80,7 @@ int PeerNode::connect_EventSocket(void)
     return 0;
 }
 
-void PeerNode::set_DataSocketFd( int data_sock_fd )
+void PeerNode::set_DataSocketFd( XPlat_Socket data_sock_fd )
 {
     _sync.Lock();
     _data_sock_fd = data_sock_fd;
@@ -89,7 +89,7 @@ void PeerNode::set_DataSocketFd( int data_sock_fd )
                            "new data socket %d\n", data_sock_fd) );
 }
 
-void PeerNode::set_EventSocketFd( int evt_sock_fd )
+void PeerNode::set_EventSocketFd( XPlat_Socket evt_sock_fd )
 {
     _sync.Lock();
     _event_sock_fd = evt_sock_fd;
@@ -101,25 +101,25 @@ void PeerNode::set_EventSocketFd( int evt_sock_fd )
 void PeerNode::close_Sockets(void)
 {
     mrn_dbg(5, mrn_printf(FLF, stderr,
-                          "Closing data(%d) and event(%d) sockets to %s:%d\n",
+                          "Closing data(%d) and event(%d) sockets to %s:%u\n",
                           _data_sock_fd,
                           _event_sock_fd,
                           _hostname.c_str(),
                           _rank));
     _sync.Lock();
-    if( _data_sock_fd != -1 ) {
+    if( _data_sock_fd != XPlat::SocketUtils::InvalidSocket) {
         if( ! XPlat::SocketUtils::Close(_data_sock_fd) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
-                                  "error on close(data_sock_fd) for peer %d\n", _rank));
+                                  "error on close(data_sock_fd) for peer %u\n", _rank));
         }
-        _data_sock_fd = -1;
+        _data_sock_fd = XPlat::SocketUtils::InvalidSocket;
     }
-    if( _event_sock_fd != -1 ) {
+    if( _event_sock_fd != XPlat::SocketUtils::InvalidSocket) {
         if( ! XPlat::SocketUtils::Close(_event_sock_fd) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
-                                  "error on close(event_sock_fd) for peer %d\n", _rank));
+                                  "error on close(event_sock_fd) for peer %u\n", _rank));
         }
-        _event_sock_fd = -1;
+        _event_sock_fd = XPlat::SocketUtils::InvalidSocket;
     }
     _sync.Unlock();   
 }

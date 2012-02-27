@@ -3,9 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "SerialGraph.h"
-#include "utils.h"
 #include <sstream>
+#include "SerialGraph.h"
 
 namespace MRN
 {
