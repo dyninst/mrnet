@@ -122,7 +122,9 @@ namespace MRN
         PERFDATA_PKT_TIMERS_FILTER,
         PERFDATA_PKT_TIMERS_RECV_TO_FILTER,
         PERFDATA_PKT_TIMERS_FILTER_TO_SEND,
-        PERFDATA_PKT_TIMERS_MAX             /* 10 */
+        PERFDATA_PKT_TIMERS_FILTER_SYNC,    /* 10 */
+        PERFDATA_PKT_TIMERS_FILTER_UPDOWN,
+        PERFDATA_PKT_TIMERS_MAX            
     } perfdata_pkt_timers_t;
 
     typedef enum NetworkSettings {

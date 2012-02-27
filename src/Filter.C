@@ -23,8 +23,8 @@ map< unsigned short, Filter::FilterInfo > Filter::Filters;
 int FilterCounter::count=0;
 static FilterCounter fc;
 
-Filter::Filter(unsigned short iid, Stream * strm)
-    : _id(iid), _filter_state(NULL), _strm(strm), _params(Packet::NullPacket)
+Filter::Filter(unsigned short iid, Stream * strm, filter_type_t type)
+    : _id(iid), _filter_state(NULL), _strm(strm), _params(Packet::NullPacket), _type(type)
 {
     FilterInfo& finfo = Filters[iid];
     _filter_func =
@@ -66,7 +66,11 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
     if( pdm != NULL ) {
         if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_FILTER) ) {
             for( iter = ipackets.begin(); iter != ipackets.end(); iter++ )
-                (*iter)->start_Timer(PERFDATA_PKT_TIMERS_FILTER);
+                if (_type == FILTER_SYNC)
+                    (*iter)->start_Timer(PERFDATA_PKT_TIMERS_FILTER_SYNC);
+                else
+                    (*iter)->start_Timer(PERFDATA_PKT_TIMERS_FILTER_UPDOWN);
+                (*iter)->start_Timer (PERFDATA_PKT_TIMERS_FILTER);
         }
     }
 
@@ -87,12 +91,20 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
             for( iter = ipackets.begin(); iter != ipackets.end(); iter++ ) {
                 PacketPtr p = *iter;
                 p->stop_Timer(PERFDATA_PKT_TIMERS_RECV_TO_FILTER);
-                p->stop_Timer(PERFDATA_PKT_TIMERS_FILTER);
+
+                if (_type == FILTER_SYNC)
+                    p->stop_Timer(PERFDATA_PKT_TIMERS_FILTER_SYNC);
+                else
+                    p->stop_Timer(PERFDATA_PKT_TIMERS_FILTER_UPDOWN);
+
+                (*iter)->stop_Timer (PERFDATA_PKT_TIMERS_FILTER);
                 pdm->add_PacketTimers(p);
             }
+        }
+    
+       if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_FILTER_TO_SEND))
             for( iter = opackets.begin(); iter != opackets.end(); iter++ )
                 (*iter)->start_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
-        }
     }
     ipackets.clear();
     

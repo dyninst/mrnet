@@ -21,6 +21,12 @@
 #include "mrnet/NetworkTopology.h"
 #include "xplat/Mutex.h"
 
+typedef enum FilterType {
+    FILTER_SYNC = 0,
+    FILTER_UPSTREAM = 1,
+    FILTER_DOWNSTREAM = 2
+} filter_type_t;
+
 namespace MRN
 {
 
@@ -53,7 +59,7 @@ class Filter: public Error {
     };
 
  public:
-    Filter( unsigned short iid, Stream * strm );
+    Filter( unsigned short iid, Stream * strm, filter_type_t type);
     ~Filter( void );
 
     int push_Packets( std::vector < PacketPtr > &ipackets,
@@ -87,6 +93,7 @@ class Filter: public Error {
 
     Stream * _strm;
     PacketPtr _params;
+    filter_type_t _type;
 };
 
 inline void Filter::initialize_static_stuff( )
