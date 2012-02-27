@@ -5,7 +5,6 @@
 
 
 #include "pdr.h"
-#include "pdr_mem.h"
 
 static bool_t _putchar(PDR *pdrs, char * UNUSED(c))
 {
