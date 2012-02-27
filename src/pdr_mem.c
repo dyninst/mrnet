@@ -7,6 +7,16 @@
 #include "pdr.h"
 
 /*
+ * pdrmem_bytecopy - This is a compatability function for GCC on Solaris 
+ */  
+void pdrmem_bytecopy (void * source, void * dest, size_t d_size)
+{
+    size_t i;
+    for(i = 0 ; i < d_size; i++)
+        *(((int8_t *)(dest))+i)= (int8_t)*(((int8_t *)source)+i);
+}
+
+/*
  *  pdrmem_xxxchar(): Procedures for putting/getting 1 byte CHARS.
  */
 static bool_t pdrmem_putchar(PDR *pdrs, char *p)
@@ -14,7 +24,14 @@ static bool_t pdrmem_putchar(PDR *pdrs, char *p)
     if( SIZEOF_CHAR > pdrs->space ) {
         return FALSE;
     }
+    
+#ifdef os_solaris 
+    pdrmem_bytecopy ((void *)p,(void *)pdrs->cur, SIZEOF_CHAR);
+#else
     *((char *)(pdrs->cur)) = *p;
+    #endif
+
+
     pdrs->cur += SIZEOF_CHAR;
     pdrs->space -= SIZEOF_CHAR;
     return TRUE;
@@ -25,11 +42,17 @@ static bool_t pdrmem_getchar(PDR *pdrs, char *p)
     if( SIZEOF_CHAR > pdrs->space ) {
         return FALSE;
     }
+
+#ifdef os_solaris 
+    pdrmem_bytecopy ((void *)pdrs->cur,(void *)p, SIZEOF_CHAR);
+#else
     *p = *((char *)(pdrs->cur));
+#endif
     pdrs->cur += SIZEOF_CHAR;
     pdrs->space -= SIZEOF_CHAR;
     return TRUE;
 }
+
 
 /*
  *  pdrmem_xxxint16(): Procedures for puting/getting 16 bit INTS.
@@ -40,8 +63,12 @@ static bool_t pdrmem_putint16(PDR *pdrs, int16_t *p)
         return FALSE;
     }
     assert(pdrs->p_op == PDR_ENCODE);
-    
+
+#ifdef os_solaris 
+    pdrmem_bytecopy ((void *)p,(void *)pdrs->cur, SIZEOF_INT16);
+#else
     *((int16_t *)pdrs->cur) = *p;
+#endif
 
     pdrs->cur += SIZEOF_INT16;
     pdrs->space -= SIZEOF_INT16;
@@ -55,7 +82,12 @@ static bool_t pdrmem_getint16(PDR *pdrs, int16_t *p)
     }
     assert(pdrs->p_op == PDR_DECODE);
 
+#ifdef os_solaris 
+    pdrmem_bytecopy ((void *)pdrs->cur,(void *)p, SIZEOF_INT16);
+#else
     *p = *((int16_t *)(pdrs->cur));
+#endif
+
     pdrs->cur += SIZEOF_INT16;
     pdrs->space -= SIZEOF_INT16;
     return TRUE;
@@ -82,9 +114,12 @@ static bool_t pdrmem_putint32(PDR *pdrs, int32_t *p)
         return FALSE;
     }
     assert(pdrs->p_op == PDR_ENCODE);
- 
-    *((int32_t *) pdrs->cur) = *p;
 
+#ifdef os_solaris 
+    pdrmem_bytecopy ( (void *) p, (void *)pdrs->cur, SIZEOF_INT32);
+#else
+    *((int32_t *) pdrs->cur) = *p;
+#endif 
     pdrs->cur += SIZEOF_INT32;
     pdrs->space -= SIZEOF_INT32;
     return TRUE;
@@ -97,7 +132,11 @@ static bool_t pdrmem_getint32(PDR *pdrs, int32_t *p)
     }
     assert(pdrs->p_op == PDR_DECODE);
 
+#ifdef os_solaris 
+    pdrmem_bytecopy ( (void *) pdrs->cur, (void *)p, SIZEOF_INT32);
+#else
     *p = *((int32_t *)pdrs->cur);
+#endif
     
     pdrs->cur += SIZEOF_INT32;
     pdrs->space -= SIZEOF_INT32;
@@ -128,8 +167,11 @@ static bool_t pdrmem_putint64(PDR *pdrs, int64_t *p)
     }
     assert(pdrs->p_op == PDR_ENCODE);
 
+#ifdef os_solaris 
+    pdrmem_bytecopy ( (void *) p, (void *)pdrs->cur, SIZEOF_INT64);
+#else
     *((int64_t*)pdrs->cur) = *p;
-    
+#endif
     pdrs->cur += SIZEOF_INT64;
     pdrs->space -= SIZEOF_INT64;
     return TRUE;
@@ -142,7 +184,11 @@ static bool_t pdrmem_getint64(PDR *pdrs, int64_t *p)
     }
     assert(pdrs->p_op == PDR_DECODE);
 
+#ifdef os_solaris 
+    pdrmem_bytecopy ( (void *) pdrs->cur, (void *)p, SIZEOF_INT64);
+#else
     *p = *((int64_t*)pdrs->cur);
+#endif
 
     pdrs->cur += SIZEOF_INT64;
     pdrs->space -= SIZEOF_INT64;
@@ -173,7 +219,11 @@ static bool_t pdrmem_putfloat(PDR *pdrs, float *p)
     }
     assert(pdrs->p_op == PDR_ENCODE);
 
+#ifdef os_solaris 
+    pdrmem_bytecopy ( (void *) p, (void *)pdrs->cur, SIZEOF_FLOAT);
+#else
     *((float *)pdrs->cur) = *p;
+#endif
 
     pdrs->cur += SIZEOF_FLOAT;
     pdrs->space -= SIZEOF_FLOAT;
@@ -187,8 +237,11 @@ static bool_t pdrmem_getfloat(PDR *pdrs, float *p)
     }
     assert(pdrs->p_op == PDR_DECODE);
 
+#ifdef os_solaris 
+    pdrmem_bytecopy ( (void *) pdrs->cur, (void *) p, SIZEOF_FLOAT);
+#else
     *p = *((float *)pdrs->cur);
-
+#endif
     pdrs->cur += SIZEOF_FLOAT;
     pdrs->space -= SIZEOF_FLOAT;
     return TRUE;
@@ -218,7 +271,11 @@ static bool_t pdrmem_putdouble(PDR *pdrs, double *p)
     }
     assert(pdrs->p_op == PDR_ENCODE);
 
+#ifdef os_solaris 
+    pdrmem_bytecopy ( (void *) p, (void *)pdrs->cur, SIZEOF_DOUBLE);
+#else
     *((double *)pdrs->cur) = *p;
+#endif
 
     pdrs->cur += SIZEOF_DOUBLE;
     pdrs->space -= SIZEOF_DOUBLE;
@@ -232,8 +289,12 @@ static bool_t pdrmem_getdouble(PDR *pdrs, double *p)
     }
     assert(pdrs->p_op == PDR_DECODE);
 
-    *p = *((double *)pdrs->cur);
 
+#ifdef os_solaris 
+    pdrmem_bytecopy ( (void *) pdrs->cur, (void *)p, SIZEOF_DOUBLE);
+#else
+    *p = *((double *)pdrs->cur);
+#endif
     pdrs->cur += SIZEOF_DOUBLE;
     pdrs->space -= SIZEOF_DOUBLE;
     return TRUE;
