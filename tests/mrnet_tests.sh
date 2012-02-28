@@ -2,27 +2,28 @@
 
 bin_dir=`dirname $0`
 TOPGEN="${bin_dir}/mrnet_topgen"
-topology_dir="${bin_dir}/topology_files"
+topology_dir="${bin_dir}/mrnet_test_files"
 
-topologies=(1x1 1x2 1x16 1x1x1 1x2x2 1x16x16 1x1x2 1x1x16 1x2x4 1x4x16)
-remote_topology_specs=(1 2 16 1:1 2:2x1 16:16x1 1:2 1:16 2:2x2 4:4x4)
-#topologies=(1x1x16 1x2x4 1x4x16)
-#remote_topology_specs=(1:16 2:2x2 4:4x4)
+topologies=(1x1 1x4 1x16 1x1x2 1x2x4 1x4x16 1x1x1x1)
+remote_topology_specs=(1 4 16 1:2 2:2x2 4:4x4 1:1:1)
 
+usage="Usage: $0 ( -l | -r hostfile | -a hostfile ) [ -filter ] [ -lightweight ]"
 print_usage()
 {
-    echo "Usage:  $cmdname [ -l | -r <hostfile> | -a <hostfile> | -f <sharedobject> ] [ -lightweight]"
+    echo $usage
     return 0
 }
 
 print_help()
 {
-    echo "Usage:  $cmdname [ -l | -r <hostfile> | -a <hostfile> | -f <sharedobject>]"
-    echo "    -l will run tests on the local host only"
-    echo "    -r will run tests on remote hosts and requires a hostfile"
-    echo "    -a will run tests locally and remotely and requires a hostfile"
-    echo "    -f will additionally test dynamic filter loading and requires a .so file"
-    echo "    -lightweight will run tests using lightweight back-end library in addition to standard tests"
+    echo $usage
+    echo " One of the following must be provided:"
+    echo "    -l           : run tests on the local host only"
+    echo "    -r           : run tests on remote hosts"
+    echo "    -a           : run tests locally and remotely"
+    echo " Optional switches:"
+    echo "    -filter      : test dynamic filter loading"
+    echo "    -lightweight : additionally run tests using lightweight back-ends"
     return 0
 }
 
@@ -87,7 +88,7 @@ run_test()
         fi
 
         if [ ! -f $topology_file ]; then
-            echo "failure! Topology file $topology_file does not exist."
+            echo "Error: topology file $topology_file does not exist."
         else
 
             /bin/rm -f $outfile
@@ -116,11 +117,11 @@ run_test()
                     echo "success!"
                     /bin/rm -f $logfile
                 else
-                    echo "failure! (details in $outfile and $logfile)"
+                    echo "Error: (details in $outfile and $logfile)"
                 fi
                 /bin/rm -f mrnet_tests_grep.out
             else
-                echo "failure! (details in $outfile and $logfile)"
+                echo "Error: (details in $outfile and $logfile)"
             fi
         fi
 
@@ -142,7 +143,11 @@ lightweight="false"
 
 while [ $# -gt 0 ]
 do
-  case $1 in
+  case "$1" in
+    -lightweight )
+        lightweight="true"
+        shift
+        ;;
     -l )
         local="true"
         shift
@@ -173,22 +178,16 @@ do
             echo "    Must specify a hostfile after -r option"
             exit -1;
         fi
-        if test -r "$1"; then
+        if test -r "$1" ; then
             hostfile="$1"
         else
-            echo "    $1 doesn't exist or is not readable"
+            echo "Error: $1 doesn't exist or is not readable"
             exit -1
         fi
 		shift
         ;;
-    -f )
-        shift
-        if [ $# -lt 1 ]; then
-            print_usage
-            echo "    Must specify a .so file after -f option"
-            exit -1;
-        fi
-        sharedobject="$1"
+    -filter )
+        sharedobject="${topology_dir}/test_DynamicFilters.so"
         shift
         ;;
     *)
@@ -197,10 +196,7 @@ do
       ;;
   esac
   case $1 in 
-      -lightweight )
-            lightweight="true"
-            shift
-            ;;
+
   esac
 done
 
