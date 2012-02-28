@@ -481,7 +481,7 @@ $(BINDIR)/mrnet_tests.sh: $(BASEDIR)/tests/mrnet_tests.sh
 
 $(LIBDIR)/test_DynamicFilters.so: $(TSTDIR)/test_DynamicFilters.C
 	@echo "Building `basename $@` ..."
-	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(TSTDIR)/test_DynamicFilters.C -L$(LIBDIR) -lmrnet
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(TSTDIR)/test_DynamicFilters.C
 
 $(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(LIBMRNET) \
                             $(OBJDIR)/%.o \

@@ -37,7 +37,7 @@ Filter::Filter(unsigned short iid, Stream * strm, filter_type_t type)
     _fmt_str = finfo.filter_fmt;
 }
 
-Filter::~Filter(  )
+Filter::~Filter(void)
 {
 }
 
