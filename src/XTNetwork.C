@@ -276,7 +276,7 @@ void XTNetwork::init_NetSettings(void)
 }
 
 SerialGraph*
-XTNetwork::GetTopology( int topoSocket, Rank& myRank )
+XTNetwork::GetTopology( int topoFd, Rank& myRank )
                         
 {
     mrn_dbg_func_begin();
@@ -285,24 +285,24 @@ XTNetwork::GetTopology( int topoSocket, Rank& myRank )
     uint32_t sTopologyLen = 0;
 
     // obtain topology from our parent
-    MRN_recv( topoSocket, (char*)&sTopologyLen, sizeof(sTopologyLen) );
+    read( topoFd, (char*)&sTopologyLen, sizeof(sTopologyLen) );
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo len=%u\n", sTopologyLen) );
 
     sTopology = new char[sTopologyLen + 1];
     char* currBufPtr = sTopology;
     size_t nRemaining = sTopologyLen;
     while( nRemaining > 0 ) {
-        ssize_t nread = MRN_recv( topoSocket, currBufPtr, nRemaining );
+        ssize_t nread = read( topoFd, currBufPtr, nRemaining );
         nRemaining -= nread;
         currBufPtr += nread;
     }
     *currBufPtr = 0;
 
     // get my rank
-    MRN_recv( topoSocket, (char*)&myRank, sizeof(myRank) );
+    read( topoFd, (char*)&myRank, sizeof(myRank) );
 
     // get ALPS apid 
-    MRN_recv( topoSocket, (char*)&alps_apid, sizeof(alps_apid) );
+    read( topoFd, (char*)&alps_apid, sizeof(alps_apid) );
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "read topo=%s, rank=%u, ALPS apid=%lu\n", 
                           sTopology, myRank, alps_apid) );

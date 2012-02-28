@@ -96,7 +96,7 @@ ssize_t Send( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
         ssize_t numBytesToSend = 0;
         for( i = 0; (i < currIovLen) && (currBufNdx < nBufs); i++ ) {
             size_t len = currBuf[currBufNdx].len;
-            // fprintf(stdout, "XPlat DEBUG: Send - currBuf->len = %"PRIszt"\n", len);
+            // xplat_dbg( 5, fprintf(stdout, "XPlat::SocketUtils::Send - currBuf->len = %"PRIszt"\n", len) );
             currIov[i].iov_base = currBuf[currBufNdx].buf;
             currIov[i].iov_len = len;
             numBytesToSend += len;
@@ -113,9 +113,9 @@ ssize_t Send( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
             if( (err == EINTR) || (err == EAGAIN) || (err == EWOULDBLOCK) )
                 continue;
             
-            fprintf(stderr, "Error: XPlat::SocketUtils::Send - "
-                    "writev() failed with '%s'\n", 
-                    strerror(err));
+            xplat_dbg( 1, fprintf(stderr, "Error: XPlat::SocketUtils::Send - "
+                                  "writev() failed with '%s'\n", 
+                                  strerror(err)) );
             ret = wret;
             break; // out of while
         }
@@ -124,7 +124,7 @@ ssize_t Send( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
 
         if( wret != numBytesToSend ) {
 
-            // fprintf(stdout, "XPlat DEBUG: Send - writev wrote %"PRIsszt" of %"PRIsszt" bytes\n", wret, numBytesToSend);
+            // xplat_dbg( 5, fprintf(stdout, "XPlat::SocketUtils::Send - writev wrote %"PRIsszt" of %"PRIsszt" bytes\n", wret, numBytesToSend) );
 
             // find unsent or partial-send buffers
             ssize_t running_total = 0;
@@ -143,9 +143,9 @@ ssize_t Send( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
                     wret = send( s, new_base, unsent );
                     if( wret < 0 ) {
                         free( currIov );
-                        fprintf(stderr, "Warning: XPlat::SocketUtils::Send - "
-                                "wrote %"PRIsszt" of %"PRIsszt" bytes\n", 
-                                ret, numBytesToSend);
+                        xplat_dbg( 3, fprintf(stderr, "Warning: XPlat::SocketUtils::Send - "
+                                              "wrote %"PRIsszt" of %"PRIsszt" bytes\n", 
+                                              ret, numBytesToSend) );
 
                         return ret;
                     }
@@ -163,9 +163,9 @@ ssize_t Send( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
                     err = XPlat::NetUtils::GetLastError();
                     if( wret < 0 ) {
                         free( currIov );
-                        fprintf(stderr, "Error: XPlat::SocketUtils::Send - "
-                                "fallback send() failed with '%s'\n", 
-                                strerror(err));
+                        xplat_dbg( 1, fprintf(stderr, "Error: XPlat::SocketUtils::Send - "
+                                              "fallback send() failed with '%s'\n", 
+                                              strerror(err)) );
                         return ret;
                     }   
                     ret += wret; 
@@ -196,6 +196,7 @@ ssize_t Recv( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
 
     // Use blocking recvmsg to get all buffers in one call 
 
+    int err;
     unsigned int i, nBufsLeftToRecv = nBufs;
     NCBuf* currBuf = ncbufs;
     while( nBufsLeftToRecv > 0 ) {
@@ -229,12 +230,15 @@ ssize_t Recv( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
         // do the receive
         ssize_t rret = recvmsg( s, &msg, 0 );
         if( rret < 0 ) {
-            perror( "XPlat::SocketUtils::Recv - recvmsg()");
+            err = XPlat::NetUtils::GetLastError();        
+            xplat_dbg( 1, fprintf(stderr, "Error: XPlat::SocketUtils::Recv - "
+                                  "recvmsg() failed with '%s'\n", 
+                                  strerror(err)) );
             ret = rret;
 #if ! (defined(os_solaris) && defined(compiler_sun))
-            int err = msg.msg_flags;
-            fprintf(stderr, "Warning: XPlat::SocketUtils::Recv - "
-                    "error msg_flags=%x\n", err);
+            err = msg.msg_flags;
+            xplat_dbg( 1, fprintf(stderr, "Warning: XPlat::SocketUtils::Recv - "
+                                  "error msg_flags=%x\n", err) );
 #endif
             break; // out of while
         }
@@ -260,9 +264,6 @@ ssize_t Recv( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
                     rret = recv( s, new_base, torecv );
                     if( rret < 0 ) {
                         delete[] msg.msg_iov;
-                        fprintf(stderr, "Warning: XPlat::SocketUtils::Recv - "
-                                "got %"PRIsszt" of %"PRIsszt" bytes\n", 
-                                ret, numBytesToRecv);
                         return ret;
                     }
                     ret += rret;
@@ -277,9 +278,6 @@ ssize_t Recv( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
                 rret = recv( s, msg.msg_iov[i].iov_base , msg.msg_iov[i].iov_len  );
                 if( rret < 0 ) {
                     delete[] msg.msg_iov;
-                    fprintf(stderr, "Warning: XPlat::SocketUtils::Recv - "
-                            "got %"PRIsszt" of %"PRIsszt" bytes\n", 
-                            ret, numBytesToRecv);
                     return ret;
                 }
                 ret += rret;    
@@ -303,7 +301,8 @@ ssize_t send( XPlat_Socket s, const void *buf, size_t count )
     if( count == 0 )
         return 0;
 
-    //fprintf(stderr, "XPlat DEBUG: send - writing %"PRIszt" bytes to fd=%d)\n", count, s);
+    //xplat_dbg( 5, fprintf(stderr, "XPlat::SocketUtils::send - "
+    //                      "writing %"PRIszt" bytes to fd=%d)\n", count, s) );
 
     int flags = 0;
 #if defined(os_linux)
@@ -327,10 +326,10 @@ ssize_t send( XPlat_Socket s, const void *buf, size_t count )
             }
             else {
                 std::string errstr = XPlat::Error::GetErrorString( err );
-                fprintf(stderr,
-                        "Warning: XPlat::SocketUtils::send - premature return from send(). "
-                        "Wrote %"PRIsszt" of %"PRIszt" bytes ('%s')\n", 
-                        bytes_written, count, errstr.c_str());
+                xplat_dbg( 3, fprintf(stderr, "Warning: XPlat::SocketUtils::send - "
+                                      "premature return from send() ('%s'). "
+                                      "Wrote %"PRIsszt" of %"PRIszt" bytes.\n", 
+                                      errstr.c_str(), bytes_written, count) );
                 return bytes_written;
             }
         }
@@ -340,7 +339,8 @@ ssize_t send( XPlat_Socket s, const void *buf, size_t count )
                 continue;
             }
             else {
-                //fprintf(stderr, "XPlat DEBUG: send - returning %"PRIsszt"\n", bytes_written);
+                xplat_dbg( 5, fprintf(stderr, "XPlat::SocketUtils::send - "
+                                      "returning %"PRIsszt"\n", bytes_written) );
                 return bytes_written;
             }
         }
@@ -368,18 +368,23 @@ ssize_t recv( XPlat_Socket s, void *buf, size_t count )
             if( (err == EINTR) || (err == EAGAIN) ) {
                 continue;
             }
+            else if( err == ECONNRESET ) {
+                // the remote endpoint has gone away
+                //xplat_dbg( 5, fprintf(stderr, "XPlat::SocketUtils::recv - recv() got connection reset\n") );
+                return -1;
+            }
             else {
                 std::string errstr = XPlat::Error::GetErrorString( err );
-                fprintf(stderr,
-                        "Warning: XPlat::SocketUtils::recv - premature return from recv(). "
-                        "Got %"PRIsszt" of %"PRIszt" bytes ('%s')\n", 
-                        bytes_recvd, count, errstr.c_str());
+                xplat_dbg( 3, fprintf(stderr,
+                                      "Warning: XPlat::SocketUtils::recv - premature return from recv(). "
+                                      "Got %"PRIsszt" of %"PRIszt" bytes ('%s')\n", 
+                                      bytes_recvd, count, errstr.c_str()) );
                 return bytes_recvd;
             }
         }
         else if( ret == 0 ) {
             // the remote endpoint has gone away
-            //fprintf(stderr, "XPlat DEBUG: recv - recv() returned 0 (peer likely gone)\n");
+            //xplat_dbg( 5, fprintf(stderr, "XPlat::SocketUtils::recv - recv() returned 0 (peer likely gone)\n");
             return -1;
         }
         else {
@@ -388,7 +393,8 @@ ssize_t recv( XPlat_Socket s, void *buf, size_t count )
                 continue;
             }
             else {
-                //fprintf(stderr, "XPlat DEBUG: recv - returning %"PRIsszt"\n", bytes_recvd);
+                xplat_dbg( 5, fprintf(stderr, "XPlat::SocketUtils::recv - "
+                                      "returning %"PRIsszt"\n", bytes_recvd) );
                 return bytes_recvd;
             }
         }
