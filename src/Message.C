@@ -204,7 +204,7 @@ int Message::send( XPlat_Socket sock_fd )
     enum pdr_op op = PDR_ENCODE;
     bool using_prealloc = true;
     bool go_away = false;
-
+    PacketPtr pkt;
     std::list< PacketPtr > send_packets;
     std::list< PacketPtr >::iterator piter;
 
@@ -220,7 +220,7 @@ int Message::send( XPlat_Socket sock_fd )
 
     piter = send_packets.begin();
     for( ; piter != send_packets.end(); piter++ ) {
-        PacketPtr& pkt = *piter;
+        pkt = *piter;
         strm = _net->get_Stream( pkt->get_StreamId() );
         if( NULL != strm ) {
             pdm = strm->get_PerfData();
@@ -323,7 +323,7 @@ int Message::send( XPlat_Socket sock_fd )
     packetLength = (int) send_packets.size();
     piter = send_packets.begin();
     for( ; piter != send_packets.end(); piter++ ) {
-        PacketPtr& pkt = *piter;
+        pkt = *piter;
         strm = _net->get_Stream( pkt->get_StreamId() );
         if( NULL != strm ) {
             pdm = strm->get_PerfData();
@@ -333,8 +333,14 @@ int Message::send( XPlat_Socket sock_fd )
                                     PERFDATA_CTX_PKT_SEND) ) {
                     pkt->set_OutgoingPktCount( packetLength );
                     pkt->stop_Timer( PERFDATA_PKT_TIMERS_SEND );
+                    pdm->add_PacketTimers( pkt );
+                }   
+                else if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC,  PERFDATA_CTX_PKT_NET_SENDCHILD) || 
+                     pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_NET_SENDPAR) ||
+                     pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_FILTER_TO_SEND)) 
+                {
+                    pdm->add_PacketTimers( pkt );
                 }
-                pdm->add_PacketTimers( pkt );
             }
         }
     }
