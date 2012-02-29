@@ -312,7 +312,7 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
             mrn_dbg(5, mrn_printf(FLF, stderr, "Malloc failed\n" ));
             return FALSE;
         }
-        sp[nodesize-1] = '\0';
+        sp[nodesize_uint-1] = '\0';
         /* fall into ... */
 				
     case PDR_ENCODE:

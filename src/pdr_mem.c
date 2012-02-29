@@ -29,7 +29,7 @@ static bool_t pdrmem_putchar(PDR *pdrs, char *p)
     pdrmem_bytecopy ((void *)p,(void *)pdrs->cur, SIZEOF_CHAR);
 #else
     *((char *)(pdrs->cur)) = *p;
-    #endif
+#endif
 
 
     pdrs->cur += SIZEOF_CHAR;
