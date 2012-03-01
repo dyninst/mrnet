@@ -94,7 +94,7 @@ bool Connect( const std::string &hostname,
     XPlat::NetUtils::NetworkAddress naddr;
     int rc = XPlat::NetUtils::GetNetworkAddress( hostname, naddr );
     if( rc == -1 ) {
-        xplat_dbg (1, fprintf(stderr, "XPlat::SocketUtils::Connect - "
+        xplat_dbg( 1, fprintf(stderr, "XPlat::SocketUtils::Connect - "
                               "failed to convert name %s to network address\n",
                               host) );
         return false;

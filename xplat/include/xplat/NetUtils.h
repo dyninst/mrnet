@@ -88,8 +88,8 @@ public:
     };
 
 private:
-    static int FindNetworkName( std::string ihostname, std::string& );
-    static int FindNetworkAddress( std::string ihostname, NetworkAddress& );
+    static int FindNetworkName( const std::string& ihostname, std::string& ohostname );
+    static int FindNetworkAddress( const std::string& ihostname, NetworkAddress& );
     static int FindNumberOfLocalNetworkInterfaces( void ); 
     static int FindLocalNetworkInterfaces( std::vector< NetworkAddress >& );
 

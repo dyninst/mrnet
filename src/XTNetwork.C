@@ -347,7 +347,7 @@ XTNetwork::PropagateTopologyOffNode( Port topoPort,
                                       childHost.c_str(), childRank ));
 
                 int childTopoSocket = -1;
-                int cret = connectHost( &childTopoSocket, childHost.c_str(), topoPort, 15 );
+                int cret = connectHost( &childTopoSocket, childHost, topoPort, 15 );
                 if( cret != 0 ) {
                     mrn_dbg(1, mrn_printf(FLF, stderr, 
                                           "Failure: unable to connect to %s:%d to send topology\n", 

@@ -56,7 +56,7 @@ int PeerNode::connect_DataSocket( int num_retry /* =0 */ )
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Creating data connection to (%s:%d) ...\n",
                           _hostname.c_str(), _port) );
 
-    if( connectHost(&data_fd, _hostname.c_str(), _port, num_retry) == -1) {
+    if( connectHost(&data_fd, _hostname, _port, num_retry) == -1) {
         error( ERR_SYSTEM, _rank, "connectHost() failed" );
         return -1;
     }
@@ -71,7 +71,7 @@ int PeerNode::connect_EventSocket( int num_retry /* =0 */ )
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Creating event connection to (%s:%d) ...\n",
                           _hostname.c_str(), _port) );
 
-    if( connectHost(&evt_fd, _hostname.c_str(), _port, num_retry) == -1 ) {
+    if( connectHost(&evt_fd, _hostname, _port, num_retry) == -1 ) {
         error( ERR_SYSTEM, _rank, "connectHost() failed" );
         return -1;
     }

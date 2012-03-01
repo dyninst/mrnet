@@ -47,7 +47,7 @@ bool EventDetector::stop( )
             edt_port = _network->get_LocalPort();
             mrn_dbg(3, mrn_printf( FLF, stderr, "Telling EDT(%s:%d) to go away\n",
                                    edt_host.c_str(), edt_port )); 
-            if( connectHost( &sock_fd, edt_host.c_str(), edt_port ) == -1 ) {
+            if( connectHost( &sock_fd, edt_host, edt_port ) == -1 ) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost(%s:%d) failed\n",
                                       edt_host.c_str(), edt_port ));
                 return false;
@@ -850,8 +850,8 @@ int EventDetector::recover_FromParentFailure( int& new_parent_sock )
     mrn_dbg(3, mrn_printf( FLF, stderr, "Sending recovery report to FIS:%s:%d ...\n",
                            _network->get_FailureManager()->get_HostName().c_str(),
                            _network->get_FailureManager()->get_Port() )); 
-    if(connectHost( &sock_fd, _network->get_FailureManager()->get_HostName().c_str(),
-                    _network->get_FailureManager()->get_Port() ) == -1){
+    if( connectHost(&sock_fd, _network->get_FailureManager()->get_HostName(),
+                    _network->get_FailureManager()->get_Port()) == -1 ){
         mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost() failed\n"));
         return -1;
     }

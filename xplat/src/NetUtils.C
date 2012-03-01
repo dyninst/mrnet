@@ -62,8 +62,9 @@ void get_resolve_env(void)
 #endif
 }
 
-struct addrinfo* get_host_addrs( const char* ihostname )
+struct addrinfo* get_host_addrs( const std::string& ihost )
 {
+    const char* ihostname = ihost.c_str();
     struct addrinfo hints;
     struct addrinfo *addrs = NULL;
     int error;
@@ -179,7 +180,7 @@ bool NetUtils::IsIPAddressStr( std::string& iaddr )
     return false;
 }
 
-int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
+int NetUtils::FindNetworkName( const std::string& ihostname, std::string& ohostname )
 {
     if( ihostname == "" )
         return -1;
@@ -189,7 +190,7 @@ int NetUtils::FindNetworkName( std::string ihostname, std::string & ohostname )
         struct addrinfo *addrs = NULL;
         int error;
         
-        addrs = get_host_addrs( ihostname.c_str() );
+        addrs = get_host_addrs( ihostname );
         if( addrs == NULL ) {
             return -1;
         }
@@ -372,7 +373,7 @@ int NetUtils::GetLocalNetworkInterfaces( std::vector<NetUtils::NetworkAddress> &
     return 0;
 }
 
-int NetUtils::FindNetworkAddress( std::string ihostname, NetUtils::NetworkAddress &oaddr )
+int NetUtils::FindNetworkAddress( const std::string& ihostname, NetUtils::NetworkAddress& oaddr )
 {
     struct addrinfo *addrs, *addrs_iter;
 
@@ -381,7 +382,7 @@ int NetUtils::FindNetworkAddress( std::string ihostname, NetUtils::NetworkAddres
 
     get_resolve_env();
 
-    addrs = get_host_addrs( ihostname.c_str() );
+    addrs = get_host_addrs( ihostname );
     if( addrs != NULL ) {
         addrs_iter = addrs;
         while( addrs_iter != NULL ) {

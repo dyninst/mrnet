@@ -173,7 +173,7 @@ int inject_Failure( NetworkTopology::Node * inode, Network *net )
                            inode->get_HostName().c_str(),
                            inode->get_Rank(),
                            inode->get_Port() ));
-    if(connectHost(&sock_fd, inode->get_HostName().c_str(), inode->get_Port() ) == -1){
+    if( connectHost(&sock_fd, inode->get_HostName(), inode->get_Port()) == -1 ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "connect_to_host() failed\n"));
         return -1;
     }
