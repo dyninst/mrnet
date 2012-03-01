@@ -14,6 +14,7 @@
 #include <sstream>
 
 #include "xplat/Types.h"
+#include "xplat/Mutex.h"
 #include "xplat/NetUtils.h"
 #include "xplat/PathUtils.h"
 
@@ -62,6 +63,7 @@ void get_resolve_env(void)
 #endif
 }
 
+static Mutex gha_lock;
 struct addrinfo* get_host_addrs( const std::string& ihost )
 {
     const char* ihostname = ihost.c_str();
@@ -70,16 +72,19 @@ struct addrinfo* get_host_addrs( const std::string& ihost )
     int error;
 
     // do the lookup
+    gha_lock.Lock();
     memset(&hints, 0, sizeof(hints));
     if( use_canonical )
         hints.ai_flags = AI_CANONNAME;
     hints.ai_socktype = SOCK_STREAM;
     if( error = getaddrinfo(ihostname, NULL, &hints, &addrs) ) {
+        gha_lock.Unlock();
         fprintf(stderr, "%s[%d]: getaddrinfo(%s): %s\n", 
                 __FILE__, __LINE__,
                 ihostname, gai_strerror(error));
         return NULL;
     }
+    gha_lock.Unlock();
 
     return addrs;
 }
