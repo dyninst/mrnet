@@ -332,6 +332,8 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 
     CXXFLAGS="$CXXFLAGS -Darch_crayxt"
     CFLAGS="$CFLAGS -Darch_crayxt"
+    LDFLAGS="-dynamic $LDFLAGS"
+    CN_LDFLAGS="-dynamic $CN_LDFLAGS"
 
     AC_CHECK_HEADERS([alps/alps.h] [alps/alps_toolAssist.h] [alps/apInfo.h], [], 
                      [AC_MSG_ERROR([One of the required ALPS include files was not found: alps/alps.h, alps/alps_toolAssist.h, alps/apInfo.h])])
@@ -360,8 +362,8 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
         HAVE_ATH_LIBS="no"
         LIBS_HOLD=$LIBS
 
-        CRAYXT_ATH_LIBS="-lalps -lxmlrpc"
-        CRAYXE_ATH_LIBS="-lalps -lxmlrpc-epi -lexpat"
+        CRAYXT_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic "
+        CRAYXE_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic "
 
         if test "$CRAY_ATH_LIBDIR" != "" ; then
             LIBS="$LIBS -L$CRAY_ATH_LIBDIR"

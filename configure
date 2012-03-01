@@ -5646,6 +5646,7 @@ case "$host_os" in
   *solaris*)
     LIBS="-lrpcsvc -lsocket -lnsl $LIBS"
     LIBS_LIGHTWEIGHT="-lrpcsvc -lsocket -lnsl $LIBS_LIGHTWEIGHT"
+
     CXXFLAGS="$CXXFLAGS -Dos_solaris"
     CFLAGS="$CFLAGS -Dos_solaris"
     ;;
@@ -5684,6 +5685,8 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 
     CXXFLAGS="$CXXFLAGS -Darch_crayxt"
     CFLAGS="$CFLAGS -Darch_crayxt"
+    LDFLAGS="-dynamic $LDFLAGS"
+    CN_LDFLAGS="-dynamic $CN_LDFLAGS"
 
 
 
@@ -5928,8 +5931,8 @@ echo "$as_me: error: Can't find libalps.h. Specify proper directory with --with-
         HAVE_ATH_LIBS="no"
         LIBS_HOLD=$LIBS
 
-        CRAYXT_ATH_LIBS="-lalps -lxmlrpc"
-        CRAYXE_ATH_LIBS="-lalps -lxmlrpc-epi -lexpat"
+        CRAYXT_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic "
+        CRAYXE_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic "
 
         if test "$CRAY_ATH_LIBDIR" != "" ; then
             LIBS="$LIBS -L$CRAY_ATH_LIBDIR"
