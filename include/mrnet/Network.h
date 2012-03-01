@@ -206,6 +206,8 @@ protected:
     InternalNode* get_LocalInternalNode(void) const;
 
     void set_LocalHostName( std::string const& );
+    void set_LocalPort( Port );
+    void set_LocalRank( Rank );
 
     void shutdown_Network(void);
 
@@ -296,9 +298,6 @@ protected:
     int recv( bool iblocking=true );
     int recv_PacketsFromParent( std::list< PacketPtr >& ) const;
     bool has_PacketsFromParent(void);
-
-    void set_LocalPort( Port );
-    void set_LocalRank( Rank );
 
     void set_NetworkTopology( NetworkTopology* );
     void set_Router( Router* );
