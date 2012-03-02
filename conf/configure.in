@@ -359,7 +359,7 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
     fi
 
     if test $HAVE_LIBALPS = "no" ; then
-        if test "x$CRAY_ATH_INCDIR" != "s" ; then
+        if test "x$CRAY_ATH_INCDIR" != "x" ; then
             AC_MSG_ERROR(Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc)
         fi
     fi

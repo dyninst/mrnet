@@ -5926,7 +5926,7 @@ done
     fi
 
     if test $HAVE_LIBALPS = "no" ; then
-        if test "x$CRAY_ATH_INCDIR" != "s" ; then
+        if test "x$CRAY_ATH_INCDIR" != "x" ; then
             { { echo "$as_me:$LINENO: error: Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc" >&5
 echo "$as_me: error: Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc" >&2;}
    { (exit 1); exit 1; }; }
