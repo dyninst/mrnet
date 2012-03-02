@@ -56,10 +56,8 @@ AC_ARG_ENABLE(debug,
 
 AC_ARG_ENABLE(ltwt-threadsafe,
     [AS_HELP_STRING([--enable-ltwt-threadsafe],[Enable the thread-safe version of the lightweight backends (default off)])],
-    [ LTWT_THREADSAFE="yes"
-      ltwt_threadsafe="yes" ],
-    [ LTWT_THREADSAFE="no"
-      ltwt_threadsafe="no" ])
+    [ LTWT_THREADSAFE="yes" ],
+    [ LTWT_THREADSAFE="no" ])
 
 AC_ARG_WITH(purify,
     [AS_HELP_STRING([--with-purify],[Use purify for memory debugging])],
@@ -117,7 +115,7 @@ HAVE_USER_BOOST="no"
 HAVE_BOOST_TIMER="no"
 BOOST_INC=""
 BOOST_LIB=""
-if test "$BOOST_INSTALL_DIR" = "" ; then
+if test "x$BOOST_INSTALL_DIR" = "x" ; then
     AC_CHECK_HEADERS([boost/shared_ptr.hpp],[HAVE_BOOST="yes"])
     AC_CHECK_HEADERS([boost/timer/timer.hpp], [HAVE_BOOST_TIMER="yes"])
 else
@@ -130,13 +128,13 @@ else
     CXXFLAGS="$SAVE_CXXFLAGS" 
 fi
 
-if test "$HAVE_USER_BOOST" = "yes" ; then
+if test $HAVE_USER_BOOST = "yes" ; then
     CXXFLAGS="$CXXFLAGS $BOOST_INC"
     LIBS="$LIBS $BOOST_LIB"
     HAVE_BOOST="yes"
 fi
 
-if test "$HAVE_BOOST_TIMER" = "yes" ; then
+if test $HAVE_BOOST_TIMER = "yes" ; then
     CXXFLAGS="$CXXFLAGS -DUSE_BOOST_TIMER"
     LIBS="$LIBS -lboost_system -lboost_timer"
 fi
@@ -332,16 +330,20 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 
     CXXFLAGS="$CXXFLAGS -Darch_crayxt"
     CFLAGS="$CFLAGS -Darch_crayxt"
-    LDFLAGS="-dynamic $LDFLAGS"
-    CN_LDFLAGS="-dynamic $CN_LDFLAGS"
+
+    if test "x$CRAY_ATH_INCDIR" != "x" ; then
+        CXXFLAGS="$CXXFLAGS -I$CRAY_ATH_INCDIR"
+    fi
+
+    if test "x$CRAY_ATH_LIBDIR" != "x" ; then
+        LDFLAGS="$LDFLAGS -L$CRAY_ATH_LIBDIR"
+        CN_LDFLAGS="$CN_LDFLAGS -L$CRAY_ATH_LIBDIR"
+    fi
 
     AC_CHECK_HEADERS([alps/alps.h] [alps/alps_toolAssist.h] [alps/apInfo.h], [], 
                      [AC_MSG_ERROR([One of the required ALPS include files was not found: alps/alps.h, alps/alps_toolAssist.h, alps/apInfo.h])])
 
     HAVE_LIBALPS="no"
-    if test "$CRAY_ATH_INCDIR" != "" ; then
-        CXXFLAGS="$CXXFLAGS -I$CRAY_ATH_INCDIR"
-    fi
     AC_CHECK_HEADERS([alps/libalps.h] [libalps.h], [HAVE_LIBALPS="yes"; break], [], 
 [#if HAVE_ALPS_ALPS_TOOLASSIST_H
 # include <alps/alps_toolAssist.h>
@@ -351,8 +353,13 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 #endif
 ]
                     )
+    if test $CXX = "CC" ; then
+        LDFLAGS="-dynamic $LDFLAGS"
+        CN_LDFLAGS="-dynamic $CN_LDFLAGS"
+    fi
+
     if test $HAVE_LIBALPS = "no" ; then
-        if test "$CRAY_ATH_INCDIR" != "" ; then
+        if test "x$CRAY_ATH_INCDIR" != "s" ; then
             AC_MSG_ERROR(Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc)
         fi
     fi
@@ -365,15 +372,11 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
         CRAYXT_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic "
         CRAYXE_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic "
 
-        if test "$CRAY_ATH_LIBDIR" != "" ; then
-            LIBS="$LIBS -L$CRAY_ATH_LIBDIR"
-        fi
-
         AC_CHECK_LIB( [alps], [alps_launch_tool_helper],
                       [HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXT_ATH_LIBS $EXTRA_LIBS"],
                       [], [-lxmlrpc] )
 
-        if test "$HAVE_ATH_LIBS" = "no" ; then
+        if test $HAVE_ATH_LIBS = "no" ; then
             unset ac_cv_lib_alps_alps_launch_tool_helper
             LIBS="$LIBS_HOLD"
             AC_CHECK_LIB( [alps], [alps_launch_tool_helper],
@@ -383,12 +386,8 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 
         LIBS="$LIBS_HOLD"
 
-        if test "$HAVE_ATH_LIBS" = "no" ; then
+        if test $HAVE_ATH_LIBS = "no" ; then
             AC_MSG_ERROR(Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib)
-        else
-            if test "$CRAY_ATH_LIBDIR" != "" ; then
-                EXTRA_LIBS="-L$CRAY_ATH_LIBDIR $EXTRA_LIBS" 
-            fi
         fi
     fi
 fi

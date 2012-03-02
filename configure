@@ -2496,10 +2496,8 @@ fi;
 if test "${enable_ltwt_threadsafe+set}" = set; then
   enableval="$enable_ltwt_threadsafe"
    LTWT_THREADSAFE="yes"
-      ltwt_threadsafe="yes"
 else
    LTWT_THREADSAFE="no"
-      ltwt_threadsafe="no"
 fi;
 
 
@@ -4538,7 +4536,7 @@ HAVE_USER_BOOST="no"
 HAVE_BOOST_TIMER="no"
 BOOST_INC=""
 BOOST_LIB=""
-if test "$BOOST_INSTALL_DIR" = "" ; then
+if test "x$BOOST_INSTALL_DIR" = "x" ; then
 
 for ac_header in boost/shared_ptr.hpp
 do
@@ -5147,13 +5145,13 @@ done
     CXXFLAGS="$SAVE_CXXFLAGS"
 fi
 
-if test "$HAVE_USER_BOOST" = "yes" ; then
+if test $HAVE_USER_BOOST = "yes" ; then
     CXXFLAGS="$CXXFLAGS $BOOST_INC"
     LIBS="$LIBS $BOOST_LIB"
     HAVE_BOOST="yes"
 fi
 
-if test "$HAVE_BOOST_TIMER" = "yes" ; then
+if test $HAVE_BOOST_TIMER = "yes" ; then
     CXXFLAGS="$CXXFLAGS -DUSE_BOOST_TIMER"
     LIBS="$LIBS -lboost_system -lboost_timer"
 fi
@@ -5685,8 +5683,15 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
 
     CXXFLAGS="$CXXFLAGS -Darch_crayxt"
     CFLAGS="$CFLAGS -Darch_crayxt"
-    LDFLAGS="-dynamic $LDFLAGS"
-    CN_LDFLAGS="-dynamic $CN_LDFLAGS"
+
+    if test "x$CRAY_ATH_INCDIR" != "x" ; then
+        CXXFLAGS="$CXXFLAGS -I$CRAY_ATH_INCDIR"
+    fi
+
+    if test "x$CRAY_ATH_LIBDIR" != "x" ; then
+        LDFLAGS="$LDFLAGS -L$CRAY_ATH_LIBDIR"
+        CN_LDFLAGS="$CN_LDFLAGS -L$CRAY_ATH_LIBDIR"
+    fi
 
 
 
@@ -5846,9 +5851,6 @@ done
 
 
     HAVE_LIBALPS="no"
-    if test "$CRAY_ATH_INCDIR" != "" ; then
-        CXXFLAGS="$CXXFLAGS -I$CRAY_ATH_INCDIR"
-    fi
 
 
 for ac_header in alps/libalps.h libalps.h
@@ -5918,8 +5920,13 @@ fi
 
 done
 
+    if test $CXX = "CC" ; then
+        LDFLAGS="-dynamic $LDFLAGS"
+        CN_LDFLAGS="-dynamic $CN_LDFLAGS"
+    fi
+
     if test $HAVE_LIBALPS = "no" ; then
-        if test "$CRAY_ATH_INCDIR" != "" ; then
+        if test "x$CRAY_ATH_INCDIR" != "s" ; then
             { { echo "$as_me:$LINENO: error: Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc" >&5
 echo "$as_me: error: Can't find libalps.h. Specify proper directory with --with-alpstoolhelp-inc" >&2;}
    { (exit 1); exit 1; }; }
@@ -5933,10 +5940,6 @@ echo "$as_me: error: Can't find libalps.h. Specify proper directory with --with-
 
         CRAYXT_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic "
         CRAYXE_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic "
-
-        if test "$CRAY_ATH_LIBDIR" != "" ; then
-            LIBS="$LIBS -L$CRAY_ATH_LIBDIR"
-        fi
 
         echo "$as_me:$LINENO: checking for alps_launch_tool_helper in -lalps" >&5
 echo $ECHO_N "checking for alps_launch_tool_helper in -lalps... $ECHO_C" >&6
@@ -6007,7 +6010,7 @@ if test $ac_cv_lib_alps_alps_launch_tool_helper = yes; then
 fi
 
 
-        if test "$HAVE_ATH_LIBS" = "no" ; then
+        if test $HAVE_ATH_LIBS = "no" ; then
             unset ac_cv_lib_alps_alps_launch_tool_helper
             LIBS="$LIBS_HOLD"
             echo "$as_me:$LINENO: checking for alps_launch_tool_helper in -lalps" >&5
@@ -6082,14 +6085,10 @@ fi
 
         LIBS="$LIBS_HOLD"
 
-        if test "$HAVE_ATH_LIBS" = "no" ; then
+        if test $HAVE_ATH_LIBS = "no" ; then
             { { echo "$as_me:$LINENO: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&5
 echo "$as_me: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&2;}
    { (exit 1); exit 1; }; }
-        else
-            if test "$CRAY_ATH_LIBDIR" != "" ; then
-                EXTRA_LIBS="-L$CRAY_ATH_LIBDIR $EXTRA_LIBS"
-            fi
         fi
     fi
 fi
