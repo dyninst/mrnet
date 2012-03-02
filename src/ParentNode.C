@@ -319,7 +319,7 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 
         // exit recv/EDT thread
         mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));
-        _network->free_ThreadState();
+        Network::free_ThreadState();
         XPlat::Thread::Exit(NULL);
     }
 

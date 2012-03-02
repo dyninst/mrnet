@@ -111,17 +111,24 @@ void cleanup_local(void)
 /*             Network DEFINITIONS        */
 /*===========================================================*/
 Network::Network(void)
-    : _local_port(UnknownPort), _local_rank(UnknownRank),_network_topology(NULL), 
-      _failure_manager(NULL), _bcast_communicator(NULL), 
-      _local_front_end_node(NULL), _local_back_end_node(NULL), 
-      _local_internal_node(NULL), _local_time_keeper( new TimeKeeper() ),
+    : _local_port(UnknownPort), 
+      _local_rank(UnknownRank), 
+      _network_topology(NULL), 
+      _failure_manager(NULL), 
+      _bcast_communicator(NULL), 
+      _local_front_end_node(NULL), 
+      _local_back_end_node(NULL), 
+      _local_internal_node(NULL), 
+      _local_time_keeper( new TimeKeeper() ),
       _evt_mgr( new EventMgr() ),
       _next_user_stream_id(USER_STRM_BASE_ID),
       _next_int_stream_id(INTERNAL_STRM_BASE_ID),
-      _threaded(true), _recover_from_failures(true),
-      _was_shutdown(false), _shutting_down(false),
+      _threaded(true), 
+      _recover_from_failures(true),
+      _was_shutdown(false), 
+      _shutting_down(false),
       _startup_timeout(120),
-      _perf_data(new PerfDataMgr())
+      _perf_data( new PerfDataMgr() )
 {
     
     init_local();
@@ -134,9 +141,9 @@ Network::~Network(void)
     shutdown_Network( );
     clear_EndPoints();
 
-    if (_perf_data != NULL)
-    {
+    if( _perf_data != NULL ) {
         delete _perf_data;
+        _perf_data = NULL;
     }
     if( parsed_graph != NULL ) {
         delete parsed_graph;
