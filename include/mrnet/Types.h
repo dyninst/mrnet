@@ -19,10 +19,12 @@
 #define FirstSystemTag 0
 #define FirstApplicationTag 100
 
-/* version info */
-#define MRNET_VERSION_MAJOR 3
-#define MRNET_VERSION_MINOR 1
-#define MRNET_VERSION_REV   0
+/* version info - our build will define these, but API users want them too */
+#ifndef MRNET_VERSION_MAJOR
+# define MRNET_VERSION_MAJOR 4
+# define MRNET_VERSION_MINOR 0
+# define MRNET_VERSION_REV   0
+#endif
 
 namespace MRN
 {

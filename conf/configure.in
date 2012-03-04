@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-AC_INIT(MRNet,[],[mrnet@cs.wisc.edu],[mrnet],[http://www.paradyn.org/mrnet/])
+AC_INIT([MRNet],[4.0.0],[mrnet@cs.wisc.edu],[mrnet],[http://www.paradyn.org/mrnet/])
 AC_CONFIG_SRCDIR(src/Network.C)
 AC_CONFIG_AUX_DIR(conf)
 
@@ -87,10 +87,14 @@ AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AC_PROG_RANLIB
 AC_PROG_YACC
+AC_PROG_LN_S
+
 AC_PATH_PROG(GREP, grep)
 AC_SUBST(GREP)
+
 AC_PATH_PROG(CP, cp)
 AC_SUBST(CP)
+
 AC_PATH_PROG(RM, rm)
 AC_SUBST(RM)
 
@@ -161,20 +165,26 @@ dnl -DMRNET_ARCH can be passed to the compiler
 dnl without it complaining
 
 AC_CANONICAL_HOST
-changequote(<<, >>)dnl
+changequote(<<, >>) dnl - temporarily disable [] as quote
 MRNET_ARCH=`echo $host | sed 's/[-|.]/_/g'`
 MRNET_CPU=$host_cpu
 MRNET_OS=`echo $host_os | sed 's/[-0-9].*//'`
 MRNET_OSVER=`echo $host_os | sed 's/[-|.]/_/g'`
 MRNET_ROOT=$abs_srcdir
-MRNET_VERSION='`cat "$(srcdir)"/VERSION`'
-changequote([, ])dnl
+MRNET_VERSION=$PACKAGE_VERSION
+MRNET_VERSION_MAJOR=`echo $MRNET_VERSION | sed -e 's/\..*//'`
+MRNET_VERSION_MINOR=`echo $MRNET_VERSION | sed -e 's/^[0-9]*\.//' | sed -e 's/\..*//'`
+MRNET_VERSION_REVISION=`echo $MRNET_VERSION | sed -e 's/^[0-9]*\.[0-9]*\.//' | sed -e 's/\..*//'`
+changequote([, ]) dnl - restore [] as quote
 
 AC_DEFINE([COMMNODE_EXE], "mrnet_commnode", [Set to default path of mrnet_commnode executable.])
 AC_SUBST(MRNET_ARCH)
 AC_SUBST(MRNET_OS)
 AC_SUBST(MRNET_ROOT)
 AC_SUBST(MRNET_VERSION)
+AC_SUBST(MRNET_VERSION_MAJOR)
+AC_SUBST(MRNET_VERSION_MINOR)
+AC_SUBST(MRNET_VERSION_REVISION)
 
 CXXFLAGS="$CXXFLAGS -Darch_$MRNET_CPU"
 CFLAGS="$CFLAGS -Darch_$MRNET_CPU"
