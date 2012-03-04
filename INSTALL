@@ -57,21 +57,19 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
     UNIX>  make
 
     After a successful build, the following files will be present: 
-      $MRNET_ROOT/build/$MRNET_ARCH/bin/mrnet_commnode: MRNet communcation process executable
-      $MRNET_ROOT/build/$MRNET_ARCH/bin/mrnet_topgen: MRNet topology file generator
-      $MRNET_ROOT/build/$MRNET_ARCH/lib/libmrnet.[a,so]: MRNet API library
-      $MRNET_ROOT/build/$MRNET_ARCH/lib/libmrnet_lightweight.[a,so]: Lightweight MRNet library
-      $MRNET_ROOT/build/$MRNET_ARCH/lib/libxplat.[a,so]: Cross-Platform library
-      $MRNET_ROOT/build/$MRNET_ARCH/lib/libxplat_lightweight.[a,so]: Lightweight Cross-Platform library
+      bin/mrnet_commnode: MRNet communcation process executable
+      bin/mrnet_topgen: MRNet topology file generator
+      lib/libmrnet.[a,so]: MRNet API library
+      lib/libmrnet_lightweight.[a,so]: Lightweight MRNet backend library
+      lib/libmrnet_lightweight_r.[a,so]: Lightweight MRNet backend library (threadsafe)
+      lib/libxplat.[a,so]: Cross-Platform library
+      lib/libxplat_lightweight.[a,so]: Lightweight Cross-Platform library
+      lib/libxplat_lightweight_r.[a,so]: Lightweight Cross-Platform library (threadsafe)
   
   * To build the standard MRNet tests:
 
     UNIX>  cd build/$MRNET_ARCH
     UNIX>  make tests
-
-    After a successful build, the following files will be present: 
-      $MRNET_ROOT/build/$MRNET_ARCH/bin/*_[FE,BE]: MRNet test front-end and back-end programs
-      $MRNET_ROOT/build/$MRNET_ARCH/bin/mrnet_tests.sh: MRNet test driver script
 
   * To build the MRNet examples:
 
@@ -90,5 +88,5 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
   MRNet is maintained by the Paradyn Project, University of Wisconsin-Madison.
   Comments and other feedback whether positive or negative are welcome. 
 
-  Please report bugs to paradyn@cs.wisc.edu. 
+  Please report bugs to mrnet@cs.wisc.edu. 
   The MRNet webpage is http://www.paradyn.org/mrnet/ 

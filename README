@@ -1,6 +1,6 @@
 MRNet: A Multicast/Reduction Network
 http://www.paradyn.org/mrnet/
-Copyright © 2003-2011 Dorian C. Arnold, Philip C. Roth, Barton P. Miller.
+Copyright © 2003-2012 Dorian C. Arnold, Philip C. Roth, Barton P. Miller.
 
 LICENSE contains the usage terms for MRNet.
 
@@ -44,34 +44,34 @@ LICENSE contains the usage terms for MRNet.
 
     * Open source licensing.
 
-2. MRNet v3.1.0 RELEASE NOTES
+2. MRNet v4.0.0 RELEASE NOTES
 
   This release of MRNet includes a source distribution for all platforms, 
   as well as associated manuals. The release incorporates improvements made 
-  to MRNet since version 3.0.1.
+  to MRNet since version 3.1.0.
  
   For information about the software releases, plus papers and manuals on the
   MRNet system, visit:
       http://www.paradyn.org/mrnet
 
   Release Highlights:
-    * New Network::load_FilterFuncs() method that permits loading several
-      functions from the same filter library at once
-    * New non-blocking recv() methods in lightweight MRNet back-end library
-    * New CrayXT support for staging files using ALPS tool helper 
-    * Improved build structure that permits configuration for multiple 
-      platforms from a single source distribution
-    * Numerous bug fixes and enhancements
+    * New threadsafe version of lightweight back-end library
+    * New support for very large arrays
+    * Numerous bug fixes and performance enhancements
 
 3. SUPPORTED PLATFORMS
 
   MRNet is designed to be a highly-portable system. The source code has
-  been compiled using both GNU GCC and native platform compilers. We 
-  have successfully tested MRNet components on the following platforms:
-   - Linux: x86, x86_64, powerpc64, ia64, CrayXT
-   - AIX 5.2, 5.3: powerpc32
-   - Solaris 8, 9: sparc32
-   - Windows: x86
+  been compiled using both GCC and native platform compilers. We have
+  successfully tested MRNet components on the following platforms:
+   - Linux: x86, x86_64, powerpc32, powerpc64
+   - Windows: x86_64
+
+  Support has been discontinued for the following platforms, although
+  we believe MRNet will continue to compile and run correctly.
+   - Linux: ia64
+   - AIX: powerpc32
+   - Solaris: sparc
 
 4. CONTACT
 
@@ -81,5 +81,4 @@ LICENSE contains the usage terms for MRNet.
   1210 West Dayton Street
   Madison, WI 53706
   Web: http://www.paradyn.org/mrnet
-  Email: paradyn@cs.wisc.edu
-  FAX: (608) 262-9777
+  Email: mrnet@cs.wisc.edu
