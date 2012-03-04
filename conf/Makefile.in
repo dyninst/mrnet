@@ -507,15 +507,6 @@ $(LIBDIR)/test_RecoveryFilter.so: $(TSTDIR)/test_Recovery/test_RecoveryFilter.C
 	@echo "Building `basename $@` ..."
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(TSTDIR)/test_Recovery/test_RecoveryFilter.C
 
-$(BINDIR)/pdr_test: $(PDR_OBJS) tests/xdr_test.c
-	@echo "Linking `basename $@` ..."
-	$(PURIFY) $(CXX) $(CXXFLAGS) -Itests -o $@ $(PDR_OBJS) tests/pdr_test.c $(LIBS)
-
-$(BINDIR)/xdr_test: tests/xdr_test.c
-	@echo "Linking `basename $@` ..."
-	$(PURIFY) $(CXX) $(CXXFLAGS) -Itests -o $@ -DUSE_XDR tests/xdr_test.c $(LIBS)
-
-
 #################################
 # Cleaning rules
 #################################
