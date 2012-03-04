@@ -25,8 +25,10 @@ clean:
 
 distclean:
 	@echo Cleaning all platforms ...
-	for dir in build/* ; do \
+	for dir in conf/autom4te.cache build/* ; do \
 	    if [ -d $$dir ] ; then $(RM) -r $$dir ; fi \
 	done
-	if [ -d conf/autom4te.cache ] ; then $(RM) -r conf/autom4te.cache ; fi
+	for file in config.log config.status  ; do \
+	    if [ -e $$file ] ; then $(RM) $$file ; fi \
+	done
 
