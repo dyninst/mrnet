@@ -5,9 +5,7 @@
 # $Id: Makefile.in,v 1.14 2008/10/09 19:50:12 mjbrim Exp $
 
 ROOTDIR = @MRNET_ROOT@
-BASEDIR = $(ROOTDIR)
-SRCDIR  = $(BASEDIR)/src/lightweight
-INCDIR  = $(BASEDIR)/include
+SRCDIR  = $(ROOTDIR)/src/lightweight
 
 PLATDIR = @PLATFORM_BUILD@
 BINDIR   = $(PLATDIR)/bin
@@ -20,10 +18,10 @@ install_INCDIR = $(IINCDIR)/mrnet_lightweight
 
 VPATH = $(SRCDIR) $(ROOTDIR)/src
 
-TARGET           = $(LIBDIR)/libmrnet_lightweight.a
-TARGET_LOWFAT    = $(LIBDIR)/libmrnet_lightweight_r.a
-TARGET_SO        = $(LIBDIR)/libmrnet_lightweight.so
-TARGET_SO_LOWFAT = $(LIBDIR)/libmrnet_lightweight_r.so
+TARGET           = $(LIBDIR)/libmrnet_lightweight.a.$(VERSION)
+TARGET_LOWFAT    = $(LIBDIR)/libmrnet_lightweight_r.a.$(VERSION)
+TARGET_SO        = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
+TARGET_SO_LOWFAT = $(LIBDIR)/libmrnet_lightweight_r.so.$(VERSION)
 
 TARGET_SO_DEPLIBS        = -L$(LIBDIR) -lxplat_lightweight $(LIBS_LIGHTWEIGHT)
 TARGET_SO_LOWFAT_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight_r $(LIBS_LOWFAT)
@@ -84,19 +82,27 @@ $(TARGET): $(LTWT_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
+	( cd $(LIBDIR) && $(LN_S) libmrnet_lightweight.a.$(VERSION) libmrnet_lightweight.a )
 
 $(TARGET_LOWFAT): $(LOWFAT_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
+	( cd $(LIBDIR) && $(LN_S) libmrnet_lightweight_r.a.$(VERSION) libmrnet_lightweight_r.a )
 
 $(TARGET_SO): $(LTWT_OBJS)
 	@echo Building `basename $@` ...
 	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_DEPLIBS)
+	( cd $(LIBDIR) && \
+	  $(LN_S) libmrnet_lightweight.so.$(VERSION) libmrnet_lightweight.so.$(VERSION_MAJOR) && \
+	  $(LN_S) libmrnet_lightweight.so.$(VERSION_MAJOR) libmrnet_lightweight.so )
 
 $(TARGET_SO_LOWFAT): $(LOWFAT_OBJS)
 	@echo Building `basename $@` ...
 	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LOWFAT_DEPLIBS)
+	( cd $(LIBDIR) && \
+	  $(LN_S) libmrnet_lightweight_r.so.$(VERSION) libmrnet_lightweight_r.so.$(VERSION_MAJOR) && \
+	  $(LN_S) libmrnet_lightweight_r.so.$(VERSION_MAJOR) libmrnet_lightweight_r.so )
 
 install-prep:
 	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
@@ -108,24 +114,29 @@ install-prep:
 
 $(INSTALL_HEADERS): $(install_INCDIR)/%: $(mrnet_INCDIR)/%
 	@echo Installing MRNet lightweight header $(<F)
-	$(INSTALL) -m 644 $< $(@D)
+	$(INSTALL_DATA) $< $(@D)
 
 install: all install-prep $(INSTALL_HEADERS)
 	@echo Installing MRNet lightweight libraries
-	$(INSTALL) -m 755 $(TARGET) $(ILIBDIR)/
-	if [ -f $(TARGET_LOWFAT) ] ; then \
-            $(INSTALL) -m 755 $(TARGET_LOWFAT) $(ILIBDIR)/ ; \
-        fi
-	if [ -f $(TARGET_SO) ] ; then \
-            $(INSTALL) -m 755 $(TARGET_SO) $(ILIBDIR)/ ; \
-        fi
-	if [ -f $(TARGET_SO_LOWFAT) ] ; then \
-            $(INSTALL) -m 755 $(TARGET_SO_LOWFAT) $(ILIBDIR)/ ; \
-        fi
+	$(INSTALL) $(TARGETS) $(ILIBDIR)/
+	( cd $(ILIBDIR) && $(LN_S) libmrnet_lightweight.a.$(VERSION) libmrnet_lightweight.a )
+	if [ $(WANT_THREADSAFE_LTWT) = "yes" ] ; then \
+	    ( cd $(ILIBDIR) && $(LN_S) libmrnet_lightweight_r.a.$(VERSION) libmrnet_lightweight_r.a ) ; \
+	fi
+	if [ $(BUILD_SHARED_LIBS) = "yes" ] ; then \
+	    ( cd $(ILIBDIR) && \
+	      $(LN_S) libmrnet_lightweight.so.$(VERSION) libmrnet_lightweight.so.$(VERSION_MAJOR) && \
+	      $(LN_S) libmrnet_lightweight.so.$(VERSION_MAJOR) libmrnet_lightweight.so ) ; \
+	    if [ $(WANT_THREADSAFE_LTWT) = "yes" ] ; then \
+		( cd $(ILIBDIR) && \
+		  $(LN_S) libmrnet_lightweight_r.so.$(VERSION) libmrnet_lightweight_r.so.$(VERSION_MAJOR) && \
+		  $(LN_S) libmrnet_lightweight_r.so.$(VERSION_MAJOR) libmrnet_lightweight_r.so ) ; \
+	    fi ; \
+	fi
 
 clean:
-	for file in $(LTWT_DEPS) $(LTWT_OBJS) $(LOWFAT_OBJS) $(TARGETS) ; do \
-	    if [ -f $$file ] ; then $(RM) $$file ; fi \
+	for file in $(LTWT_DEPS) $(LTWT_OBJS) $(LOWFAT_OBJS) ; do \
+	    if [ -e $$file ] ; then $(RM) $$file ; fi ; \
 	done
 
 # pattern rules

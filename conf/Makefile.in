@@ -3,7 +3,6 @@
 # *                  Detailed MRNet usage rights in "LICENSE" file.          *
 # ****************************************************************************/
 
-MRNET_VERSION  = @MRNET_VERSION@
 MRNET_ROOT     = @MRNET_ROOT@
 MRNET_PLATFORM = @host@
 MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
@@ -47,14 +46,16 @@ ARFLAGS = @ARFLAGS@
 RANLIB  = @RANLIB@
 CP      = @CP@
 RM      = @RM@
-INSTALL = @INSTALL@
 PURIFY  = @PURIFY@
+LN_S    = @LN_S@
 MKDIR_P = mkdir -p
+
+INSTALL      = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
 
 #####################
 # General Definitions
 #####################
-
 
 WANT_THREADSAFE_LTWT = @LTWT_THREADSAFE@
 
@@ -128,12 +129,12 @@ ifeq ($(COMPILER_TYPE), gnu)
    endif # SILENCE_WARNINGS
 endif #GNU options
 
-ifeq ($(COMPILER_TYPE), forte)
-    ifndef SILENCE_WARNINGS
-#        WARNFLAGS = +w +w2 -D_REENTRANT -errtags=yes  -erroff=inllargeuse,reftotemp,hidef,inllargeint
-#        WARNFLAGS_LIGHTWEIGHT = +w +w2 -D_REENTRANT -errtags=yes 
-    endif # SILENCE_WARNINGS
-endif #Forte (Sun) compiler warnings
+#ifeq ($(COMPILER_TYPE), forte)
+#    ifndef SILENCE_WARNINGS
+#        WARNFLAGS = +w +w2 -errtags=yes  -erroff=inllargeuse,reftotemp,hidef,inllargeint
+#        WARNFLAGS_LIGHTWEIGHT = +w +w2 -errtags=yes 
+#    endif # SILENCE_WARNINGS
+#endif #Forte (Sun) compiler warnings
 
 CXX = @CXX@
 CC = @CC@
@@ -143,14 +144,17 @@ CCFLAGS = @CFLAGS@ $(INCLUDES_LIGHTWEIGHT) $(WARNFLAGS_LIGHTWEIGHT)
 TEST_CXXFLAGS := $(CXXFLAGS)
 TEST_CCFLAGS := $(CCFLAGS)
 
-# Check for older PGI compilers (before 6.0) that require 
-# special handling for template libraries
-PGI_OLD_TEMPLATES = @PGI_OLD_TEMPLATES@
-ifeq ($(COMPILER_TYPE), pgi)
-    ifeq ($(PGI_OLD_TEMPLATES), yes)
-        CXXFLAGS += --one_instantiation_per_object
-    endif
-endif
+VERSION        = @MRNET_VERSION@
+VERSION_MAJOR  = @MRNET_VERSION_MAJOR@
+VERSION_MINOR  = @MRNET_VERSION_MINOR@
+VERSION_REV    = @MRNET_VERSION_REVISION@
+
+CXXFLAGS += -DMRNET_VERSION_MAJOR=$(VERSION_MAJOR)
+CXXFLAGS += -DMRNET_VERSION_MINOR=$(VERSION_MINOR)
+CXXFLAGS += -DMRNET_VERSION_REV=$(VERSION_REV) 
+CFLAGS += -DMRNET_VERSION_MAJOR=$(VERSION_MAJOR)
+CFLAGS += -DMRNET_VERSION_MINOR=$(VERSION_MINOR)
+CFLAGS += -DMRNET_VERSION_REV=$(VERSION_REV) 
 
 export
 
@@ -160,10 +164,10 @@ export
 COMMNODE    = $(BINDIR)/mrnet_commnode 
 TOPGEN      = $(BINDIR)/mrnet_topgen
 
-LIBMRNET    = $(LIBDIR)/libmrnet.a
-LIBMRNET_SO = $(LIBDIR)/libmrnet.so
-LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a
-LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so
+LIBMRNET    = $(LIBDIR)/libmrnet.a.$(VERSION)
+LIBMRNET_SO = $(LIBDIR)/libmrnet.so.$(VERSION)
+LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a.$(VERSION)
+LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
 
 LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat $(LIBS)
 
@@ -172,12 +176,12 @@ LIBXPLAT_SO = $(LIBDIR)/libxplat.so
 LIBXPLAT_LIGHTWEIGHT    = $(LIBDIR)/libxplat_lightweight.a
 LIBXPLAT_LIGHTWEIGHT_SO = $(LIBDIR)/libxplat_lightweight.so
 
-TARGETS = $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT) $(COMMNODE) $(TOPGEN)
+TARGET_LIBS = $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT)
 ifeq ($(BUILD_SHARED_LIBS), yes)
-    TARGETS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
-    TARGETS += $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
+    TARGET_LIBS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
+    TARGET_LIBS += $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
 endif
-
+TARGETS = $(COMMNODE) $(TOPGEN) $(TARGET_LIBS)
 
 STD_TESTS_FE = $(BINDIR)/test_basic_FE \
                $(BINDIR)/microbench_FE \
@@ -335,16 +339,20 @@ install-prep:
 
 $(INSTALL_HEADERS): $(install_incdir)/%: $(mrnet_incdir)/%
 	@echo Installing MRNet header $(<F)
-	$(INSTALL) -m 644 $< $(@D)
+	$(INSTALL_DATA) $< $(@D)
 
 install-local: all $(INSTALL_HEADERS) install-boost
 	@echo Installing MRNet binaries
-	$(INSTALL) -m 755 $(COMMNODE) $(BINDIR)/mrnet_topgen $(IBINDIR)/
+	$(INSTALL) $(COMMNODE) $(TOPGEN) $(IBINDIR)/
 	@echo Installing MRNet libraries
-	$(INSTALL) -m 644 $(PLATDIR)/mrnet_config.h $(ILIBDIR)/
-	$(INSTALL) -m 755 $(LIBMRNET) $(ILIBDIR)/
-	if [ -f $(LIBMRNET_SO) ] ; then \
-            $(INSTALL) -m 755 $(LIBMRNET_SO) $(ILIBDIR)/ ; \
+	$(INSTALL_DATA) $(PLATDIR)/mrnet_config.h $(ILIBDIR)/
+	$(INSTALL) $(LIBMRNET) $(ILIBDIR)/
+	( cd $(ILIBDIR) && $(LN_S) libmrnet.a.$(VERSION) libmrnet.a )
+	if [ $(BUILD_SHARED_LIBS) = "yes" ] ; then \
+	    $(INSTALL) $(LIBMRNET_SO) $(ILIBDIR)/ ; \
+	    ( cd $(ILIBDIR) && \
+	      $(LN_S) libmrnet.so.$(VERSION) libmrnet.so.$(VERSION_MAJOR) && \
+	      $(LN_S) libmrnet.so.$(VERSION_MAJOR) libmrnet.so ) ; \
 	fi
 
 install-boost:
@@ -365,20 +373,20 @@ install-boost:
 
 install-tests: tests $(BINDIR)/mrnet_tests.sh
 	@echo Installing standard tests
-	$(INSTALL) -m 755 $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(BINDIR)/mrnet_tests.sh  $(IBINDIR)/
+	$(INSTALL) $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(BINDIR)/mrnet_tests.sh  $(IBINDIR)/
 	if [ ! -d $(IBINDIR)/mrnet_test_files ] ; then \
             $(MKDIR_P) $(IBINDIR)/mrnet_test_files ; \
 	    chmod 755 $(IBINDIR)/mrnet_test_files ; \
 	fi
-	$(INSTALL) -m 755 $(LIBDIR)/test_DynamicFilters.so $(IBINDIR)/mrnet_test_files/
+	$(INSTALL) $(LIBDIR)/test_DynamicFilters.so $(IBINDIR)/mrnet_test_files/
 	for top in $(TSTDIR)/topology_files/local-*.top ; do \
-	    $(INSTALL) -m 644 $$top $(IBINDIR)/mrnet_test_files/ ; \
+	    $(INSTALL_DATA) $$top $(IBINDIR)/mrnet_test_files/ ; \
 	done
 
 install-tests-opt: tests-opt
 	@echo Installing optional tests
-	$(INSTALL) -m 755 $(OPT_TESTS) $(IBINDIR)/
-	$(INSTALL) -m 755 $(LIBDIR)/test_RecoveryFilter.so $(ILIBDIR)/
+	$(INSTALL) $(OPT_TESTS) $(IBINDIR)/
+	$(INSTALL) $(LIBDIR)/test_RecoveryFilter.so $(ILIBDIR)/
 
 install-examples: examples
 	$(MAKE) -f $(PLATDIR)/Makefile.examples install
@@ -414,24 +422,16 @@ $(SRCDIR)/parser.tab.C $(SRCDIR)/parser.tab.h: $(SRCDIR)/parser.y
 
 $(LIBMRNET): $(LIBMRNET_OBJS)
 	@echo Archiving `basename $@` ...
-	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
-	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
-	    $(AR) $(ARFLAGS) $@ $(LIBMRNET_OBJS) Template.dir/*.o ; \
-	    $(RM) -r Template.dir ; \
-	else \
-	    $(AR) $(ARFLAGS) $@ $(LIBMRNET_OBJS)  ; \
-	fi
+	$(AR) $(ARFLAGS) $@ $(LIBMRNET_OBJS)
 	$(RANLIB) $@
+	( cd $(LIBDIR) && $(LN_S) libmrnet.a.$(VERSION) libmrnet.a )
 
 $(LIBMRNET_SO): $(LIBMRNET_OBJS) $(LIBXPLAT_SO)
 	@echo Building `basename $@` ...
-	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
-	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
-	    $(CXX) $(SOFLAGS) -o $@  $(LIBMRNET_OBJS) Template.dir/*.o $(LIBMRNET_SO_DEPLIBS) ; \
-	    $(RM) -r Template.dir ; \
-	else \
-	    $(CXX) $(SOFLAGS) -o $@ $(LIBMRNET_OBJS) $(LIBMRNET_SO_DEPLIBS) ; \
-	fi
+	$(CXX) $(SOFLAGS) -o $@ $(LIBMRNET_OBJS) $(LIBMRNET_SO_DEPLIBS)
+	( cd $(LIBDIR) && \
+	  $(LN_S) libmrnet.so.$(VERSION) libmrnet.so.$(VERSION_MAJOR) && \
+	  $(LN_S) libmrnet.so.$(VERSION_MAJOR) libmrnet.so )
 
 $(LIBXPLAT): xplat-all
 
@@ -523,10 +523,13 @@ clean: local-clean xplat-clean
 
 local-clean: examples-clean lightweight-clean
 	@echo Cleaning $(MRNET_PLATFORM) platform ...
-	for file in $(DEPS) $(OBJDIR)/*.o $(BINDIR)/* $(LIBMRNET) $(LIBMRNET_SO) $(LIBDIR)/test_DynamicFilters.so ; do \
-	    if [ -f $$file ] ; then $(RM) $$file ; fi \
+	for file in $(DEPS) $(OBJDIR)/*.o $(BINDIR)/* ; do \
+	    if [ -e $$file ] ; then $(RM) $$file ; fi ; \
 	done
-	for file in `find $(BASEDIR) -name "*.ti" -print` ; do $(RM) $$file ; done
+	for file in $(LIBDIR)/* ; do \
+	    if [ -L $$file ] ; then $(RM) $$file ; fi ; \
+	    if [ -e $$file ] ; then $(RM) $$file ; fi ; \
+	done
 
 lightweight-clean:
 	@echo Cleaning lightweight back-end library
