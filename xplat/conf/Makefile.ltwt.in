@@ -20,28 +20,28 @@ install_INCDIR = $(IINCDIR)/xplat_lightweight
 
 VPATH = $(SRCDIR) 
 
-TARGET    = $(LIBDIR)/libxplat_lightweight.a
-TARGET_SO = $(LIBDIR)/libxplat_lightweight.so
-TARGET_LOWFAT    = $(LIBDIR)/libxplat_lightweight_r.a
-TARGET_SO_LOWFAT = $(LIBDIR)/libxplat_lightweight_r.so
+TARGET           = $(LIBDIR)/libxplat_lightweight.a.$(VERSION)
+TARGET_SO        = $(LIBDIR)/libxplat_lightweight.so.$(VERSION)
+TARGET_LOWFAT    = $(LIBDIR)/libxplat_lightweight_r.a.$(VERSION)
+TARGET_SO_LOWFAT = $(LIBDIR)/libxplat_lightweight_r.so.$(VERSION)
 
-TARGET_SO_LIBS   = @LIBS_LIGHTWEIGHT@
+TARGET_SO_LIBS        = @LIBS_LIGHTWEIGHT@
 TARGET_SO_LOWFAT_LIBS = @LIBS_LOWFAT@
 
 TARGETS = $(TARGET)
-SO_LIST = $(TARGET_SO)
+
+ifeq ($(WANT_THREADSAFE_LTWT), yes)
+    TARGETS += $(TARGET_LOWFAT)
+endif
 
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(TARGET_SO)
+    SO_LIST = $(TARGET_SO)
     ifeq ($(WANT_THREADSAFE_LTWT), yes)
         TARGETS += $(TARGET_SO_LOWFAT)
         SO_LIST += $(TARGET_SO_LOWFAT)
     endif
 endif 
-
-ifeq ($(WANT_THREADSAFE_LTWT), yes)
-    TARGETS += $(TARGET_LOWFAT)
-endif
 
 XPLAT_LTWT_SRCS = $(SRCDIR)/Error-unix.c \
                   $(SRCDIR)/NetUtils.c \
@@ -53,10 +53,11 @@ XPLAT_LTWT_SRCS = $(SRCDIR)/Error-unix.c \
                   $(SRCDIR)/map.c \
                   $(SRCDIR)/vector.c
 
-XPLAT_LOWFAT_SRCS = $(XPLAT_LTWT_SRCS)
-XPLAT_LOWFAT_SRCS += $(SRCDIR)/Mutex-pthread.c
-XPLAT_LOWFAT_SRCS += $(SRCDIR)/Monitor-pthread.c
-XPLAT_LOWFAT_SRCS += $(SRCDIR)/Thread-pthread.c
+LOWFAT_SRCS = $(SRCDIR)/Mutex-pthread.c \
+              $(SRCDIR)/Monitor-pthread.c \
+              $(SRCDIR)/Thread-pthread.c
+
+XPLAT_LOWFAT_SRCS = $(XPLAT_LTWT_SRCS) $(LOWFAT_SRCS)
 
 XPLAT_HEADERS = $(wildcard $(xplat_INCDIR)/*.h)
 INSTALL_HEADERS = $(addprefix $(install_INCDIR)/, $(notdir $(XPLAT_HEADERS)))
@@ -74,19 +75,27 @@ $(TARGET): $(XPLAT_LTWT_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
+	( cd $(LIBDIR) && $(LN_S) libxplat_lightweight.a.$(VERSION) libxplat_lightweight.a )
 
 $(TARGET_LOWFAT): $(XPLAT_LOWFAT_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
+	( cd $(LIBDIR) && $(LN_S) libxplat_lightweight_r.a.$(VERSION) libxplat_lightweight_r.a )
 
 $(TARGET_SO): $(XPLAT_LTWT_OBJS)
 	@echo Building `basename $@` ...
 	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LIBS)
+	( cd $(LIBDIR) && \
+	  $(LN_S) libxplat_lightweight.so.$(VERSION) libxplat_lightweight.so.$(VERSION_MAJOR) && \
+	  $(LN_S) libxplat_lightweight.so.$(VERSION_MAJOR) libxplat_lightweight.so )
 
 $(TARGET_SO_LOWFAT): $(XPLAT_LOWFAT_OBJS)
 	@echo Building `basename $@` ...
 	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LOWFAT_LIBS)
+	( cd $(LIBDIR) && \
+	  $(LN_S) libxplat_lightweight_r.so.$(VERSION) libxplat_lightweight_r.so.$(VERSION_MAJOR) && \
+	  $(LN_S) libxplat_lightweight_r.so.$(VERSION_MAJOR) libxplat_lightweight_r.so )
 
 install-prep:
 	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
@@ -98,25 +107,30 @@ install-prep:
 
 $(INSTALL_HEADERS): $(install_INCDIR)/%: $(xplat_INCDIR)/%
 	@echo Installing XPlat lightweight header $(<F)
-	$(INSTALL) -m 644 $< $(@D)
+	$(INSTALL_DATA) $< $(@D)
 
 install: $(TARGETS) install-prep $(INSTALL_HEADERS)
 	@echo Installing XPlat lightweight libraries
-	$(INSTALL) -m 755 $(TARGET) $(ILIBDIR)/
-	if [ -f $(TARGET_LOWFAT) ] ; then \
-            $(INSTALL) -m 755 $(TARGET_LOWFAT) $(ILIBDIR)/ ; \
-        fi
-	if [ -f $(TARGET_SO) ] ; then \
-            $(INSTALL) -m 755 $(TARGET_SO) $(ILIBDIR)/ ; \
-        fi
-	if [ -f $(TARGET_SO_LOWFAT) ] ; then \
-            $(INSTALL) -m 755 $(TARGET_SO_LOWFAT) $(ILIBDIR)/ ; \
-        fi
+	$(INSTALL) $(TARGETS) $(ILIBDIR)/
+	( cd $(ILIBDIR) && $(LN_S) libxplat_lightweight.a.$(VERSION) libxplat_lightweight.a )
+	if [ $(WANT_THREADSAFE_LTWT) = "yes" ] ; then \
+	    ( cd $(ILIBDIR) && $(LN_S) libxplat_lightweight_r.a.$(VERSION) libxplat_lightweight_r.a ) ; \
+	fi
+	if [ $(BUILD_SHARED_LIBS) = "yes" ] ; then \
+	    ( cd $(ILIBDIR) && \
+	      $(LN_S) libxplat_lightweight.so.$(VERSION) libxplat_lightweight.so.$(VERSION_MAJOR) && \
+	      $(LN_S) libxplat_lightweight.so.$(VERSION_MAJOR) libxplat_lightweight.so ) ; \
+	    if [ $(WANT_THREADSAFE_LTWT) = "yes" ] ; then \
+	        ( cd $(ILIBDIR) && \
+	          $(LN_S) libxplat_lightweight_r.so.$(VERSION) libxplat_lightweight_r.so.$(VERSION_MAJOR) && \
+	          $(LN_S) libxplat_lightweight_r.so.$(VERSION_MAJOR) libxplat_lightweight_r.so ) ; \
+	    fi ; \
+	fi
 
 clean:
 	for file in $(XPLAT_LTWT_DEPS) $(XPLAT_LTWT_OBJS) \
-		$(XPLAT_LOWFAT_DEPS) $(XPLAT_LOWFAT_OBJS) $(TARGETS) ; do \
-	    if [ -f $$file ] ; then $(RM) $$file ; fi \
+		$(XPLAT_LOWFAT_DEPS) $(XPLAT_LOWFAT_OBJS) ; do \
+	    if [ -e $$file ] ; then $(RM) $$file ; fi ; \
 	done
 
 # pattern rules

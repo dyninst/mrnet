@@ -8,38 +8,51 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
 1. SUPPORTED PLATFORMS
 
   MRNet is designed to be a highly-portable system. It should build
-  effortlessly with recent GNU compilers, as well as native compilers on
-  Solaris, AIX, and Windows. See the README for the latest list of
-  platforms on which we have built and successfully tested MRNet.
+  effortlessly with recent GNU compilers, as well as native compilers.
+  See the README for the latest list of platforms on which we have
+  built and successfully tested MRNet.
+
 
 2. SYSTEM REQUIREMENTS
 
-  The third party tools that MRNet uses and needs for proper installation are: 
+  The third party tools that MRNet needs to build properly are: 
     - GNU make
+
 
 3. Build Configuration
 
   MRNet uses GNU autoconf to discover the platform specific configuration
   parameters. The script that does this auto-configuration is called configure. 
+  Invoking configure as follows shows all possible options.
 
-    UNIX>  ./configure --help
+    prompt>  ./configure --help
 
-  shows all possible options of the command. Below, we display the MRNet-specific
-  ones: 
+  Below, we describe the MRNet-specific options.
 
-    --with-startup=METHOD       Tree instantiation method - "ssh" (default),
-                                                            "cray_xt"
+    --enable-ltwt-threadsafe      Build threasafe version of lightweight MRNet 
+                                  and XPlat libraries.
 
-    --with-alpstoolhelp-lib=DIR (CrayXT only) Absolute path to directory containing
-				              libalps library
-    --with-alpstoolhelp-inc=DIR (CrayXT only) Absolute path to directory containing
-                                              libalps.h
+    --enable-verbosebuild         Display commands used during build and install.
 
+    --with-boost=DIR              Absolute path to installation of Boost C++ libraries.
+                                  Specify the path to the directory containing
+			          "include" and "lib" sub-directories.
 
-  ./configure without any options should give reasonable results, but the user
-  may specify certain options. For example, 
+    --with-startup=METHOD         Tree instantiation method - "ssh"      (default)
+                                                              "cray_xt"
 
-    UNIX> ./configure CXX=g++
+  The following options are only applicable to Cray systems.
+
+    --with-alpstoolhelp-lib=DIR   Absolute path to directory containing 
+				  libalps library.
+
+    --with-alpstoolhelp-inc=DIR   Absolute path to directory containing 
+                                  libalps.h header file.
+
+  Users may additionally specify certain compilation and linking settings by
+  supplying values for common make variables. For example, 
+
+    prompt> ./configure CXX=g++
 
   instructs the configure script to use g++ for the C++ compiler
  
@@ -53,42 +66,45 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
 
   * To build the MRNet toolkit: 
 
-    UNIX>  cd build/$MRNET_ARCH
-    UNIX>  make
+    prompt>  cd build/$MRNET_ARCH
+    prompt>  make
 
     After a successful build, the following files will be present: 
-      $MRNET_ROOT/build/$MRNET_ARCH/bin/mrnet_commnode: MRNet communcation process executable
-      $MRNET_ROOT/build/$MRNET_ARCH/bin/mrnet_topgen: MRNet topology file generator
-      $MRNET_ROOT/build/$MRNET_ARCH/lib/libmrnet.[a,so]: MRNet API library
-      $MRNET_ROOT/build/$MRNET_ARCH/lib/libmrnet_lightweight.[a,so]: Lightweight MRNet library
-      $MRNET_ROOT/build/$MRNET_ARCH/lib/libxplat.[a,so]: Cross-Platform library
-      $MRNET_ROOT/build/$MRNET_ARCH/lib/libxplat_lightweight.[a,so]: Lightweight Cross-Platform library
+
+      bin/mrnet_commnode                 : MRNet communication process
+      bin/mrnet_topgen                   : MRNet topology file generator
+      bin/mrnet_tests.sh                 : MRNet test harness
+
+      lib/libmrnet.[a,so]                : MRNet API library
+      lib/libmrnet_lightweight.[a,so]    : Lightweight MRNet backend library
+      lib/libmrnet_lightweight_r.[a,so]  : Lightweight MRNet backend library (threadsafe)
+ 
+      lib/libxplat.[a,so]                : Cross-Platform library
+      lib/libxplat_lightweight.[a,so]    : Lightweight Cross-Platform library
+      lib/libxplat_lightweight_r.[a,so]  : Lightweight Cross-Platform library (threadsafe)
   
   * To build the standard MRNet tests:
 
-    UNIX>  cd build/$MRNET_ARCH
-    UNIX>  make tests
-
-    After a successful build, the following files will be present: 
-      $MRNET_ROOT/build/$MRNET_ARCH/bin/*_[FE,BE]: MRNet test front-end and back-end programs
-      $MRNET_ROOT/build/$MRNET_ARCH/bin/mrnet_tests.sh: MRNet test driver script
+    prompt>  cd build/$MRNET_ARCH
+    prompt>  make tests
 
   * To build the MRNet examples:
 
-    UNIX>  cd build/$MRNET_ARCH
-    UNIX>  make examples
+    prompt>  cd build/$MRNET_ARCH
+    prompt>  make examples
 
   * To install the MRNet toolkit: 
 
-    UNIX>  cd build/$MRNET_ARCH
-    UNIX>  make install
-    UNIX>  make install-examples (Optional: install example programs)
-    UNIX>  make install-tests    (Optional: install test programs)
-    
+    prompt>  cd build/$MRNET_ARCH
+    prompt>  make install
+    prompt>  make install-examples (Optional: install example programs)
+    prompt>  make install-tests    (Optional: install test programs)
+
+
 5. Bugs, Questions and Comments
 
   MRNet is maintained by the Paradyn Project, University of Wisconsin-Madison.
   Comments and other feedback whether positive or negative are welcome. 
 
-  Please report bugs to paradyn@cs.wisc.edu. 
+  Please report bugs to mrnet@cs.wisc.edu. 
   The MRNet webpage is http://www.paradyn.org/mrnet/ 

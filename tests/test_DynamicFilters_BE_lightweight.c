@@ -56,8 +56,10 @@ int main(int argc, char **argv)
             fprintf(stdout, "BE: Unknown Protocol: %d\n", tag);
             break;
         }
-        if( Stream_flush(stream ) == -1 ){
-            fprintf(stderr, "stream_flush() failure\n");
+        if( tag != PROT_EXIT ) {
+            if( Stream_flush(stream ) == -1 ) {
+                fprintf(stderr, "stream_flush() failure\n");
+            }
         }
     } while ( tag != PROT_EXIT );
 

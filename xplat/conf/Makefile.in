@@ -10,9 +10,14 @@ AR      = @AR@
 ARFLAGS = @ARFLAGS@
 RANLIB  = @RANLIB@
 RM      = @RM@
-INSTALL = @INSTALL@
 MKDIR_P = mkdir -p
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
 MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
+
+VERSION       = @MRNET_VERSION@
+VERSION_MAJOR = @MRNET_VERSION_MAJOR@
 
 ROOTDIR = @MRNET_ROOT@
 BASEDIR = $(ROOTDIR)/xplat
@@ -49,29 +54,16 @@ COMPILER_TYPE = @COMPILER_TYPE@
 CXX = @CXX@
 CXXFLAGS = @CXXFLAGS@ $(INCFLAGS)
 
-# Check for older PGI compilers (before 6.0) that require 
-# special handling for template libraries
-PGI_OLD_TEMPLATES = @PGI_OLD_TEMPLATES@
-ifeq ($(COMPILER_TYPE), pgi)
-    ifeq ($(PGI_OLD_TEMPLATES), yes)
-        CXXFLAGS += --one_instantiation_per_object
-    endif
-endif
-
 SOFLAGS  = @SOFLAGS@
 
-TARGET    = $(LIBDIR)/libxplat.a
-TARGET_SO = $(LIBDIR)/libxplat.so
+TARGET    = $(LIBDIR)/libxplat.a.$(VERSION)
+TARGET_SO = $(LIBDIR)/libxplat.so.$(VERSION)
 TARGET_SO_DEPLIBS = @LIBS@
 
 TARGETS = $(TARGET)
 ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(TARGET_SO)
 endif 
-
-ifeq ($(MRNET_STARTUP_METHOD),cray_xt)
-    CXXFLAGS += -Darch_crayxt
-endif
 
 XPLAT_SRCS = $(SRCDIR)/Monitor-pthread.C \
              $(SRCDIR)/Mutex-pthread.C \
@@ -101,30 +93,23 @@ sharedobj: $(TARGET_SO)
 
 $(TARGET): $(XPLAT_OBJS)
 	@echo Archiving `basename $@` ...
-	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
-	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
-	    $(AR) $(ARFLAGS) $@ $^ Template.dir/*.o ; \
-	    $(RM) -r Template.dir ; \
-	else \
-	    $(AR) $(ARFLAGS) $@ $^ ; \
-	fi
+	$(AR) $(ARFLAGS) $@ $^ ; \
 	$(RANLIB) $@
+	( cd $(LIBDIR) && $(LN_S) libxplat.a.$(VERSION) libxplat.a )
 
 $(TARGET_SO): $(XPLAT_OBJS)
 	@echo Building `basename $@` ...
-	if [ "$(COMPILER_TYPE)" = "pgi" -a "$(PGI_OLD_TEMPLATES)" = "yes" ]; then \
-	    $(CXX) $(CXXFLAGS) --prelink_objects $^ ; \
-	    $(CXX) $(SOFLAGS) -o $@ $(XPLAT_OBJS) Template.dir/*.o $(TARGET_SO_DEPLIBS) ; \
-	else \
-	    $(CXX) $(SOFLAGS) -o $@ $(XPLAT_OBJS) $(TARGET_SO_DEPLIBS) ; \
-	fi
+	$(CXX) $(SOFLAGS) -o $@ $(XPLAT_OBJS) $(TARGET_SO_DEPLIBS)
+	( cd $(LIBDIR) && \
+	  $(LN_S) libxplat.so.$(VERSION) libxplat.so.$(VERSION_MAJOR) && \
+	  $(LN_S) libxplat.so.$(VERSION_MAJOR) libxplat.so )
 
 install-prep:
 	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
 	    if [ ! -d $$dir ] ; then \
 	        $(MKDIR_P) $$dir ; \
 	        chmod 755 $$dir ; \
-	    fi \
+	    fi ; \
 	done
 	if [ ! -x `echo $(INSTALL) | sed 's/ .*$$//'` ] ; then \
 	    chmod +x `echo $(INSTALL) | sed 's/ .*$$//'` ; \
@@ -132,19 +117,22 @@ install-prep:
 
 $(INSTALL_HEADERS): $(install_INCDIR)/%: $(xplat_INCDIR)/%
 	@echo Installing XPlat header $(<F)
-	$(INSTALL) -m 644 $< $(@D)
+	$(INSTALL_DATA) $< $(@D)
 
 install: $(TARGETS) install-prep $(INSTALL_HEADERS)
+	$(INSTALL_DATA) $(PLATDIR)/xplat_config.h $(ILIBDIR)/
 	@echo Installing XPlat libraries
-	$(INSTALL) -m 644 $(PLATDIR)/xplat_config.h $(ILIBDIR)/
-	$(INSTALL) -m 755 $(TARGET) $(ILIBDIR)/
-	if [ -f $(TARGET_SO) ] ; then \
-            $(INSTALL) -m 755 $(TARGET_SO) $(ILIBDIR)/ ; \
-        fi
+	$(INSTALL) $(TARGETS) $(ILIBDIR)/
+	( cd $(ILIBDIR) && $(LN_S) libxplat.a.$(VERSION) libxplat.a )
+	if [ $(BUILD_SHARED_LIBS) = "yes" ] ; then \
+	    ( cd $(ILIBDIR) && \
+	      $(LN_S) libxplat.so.$(VERSION) libxplat.so.$(VERSION_MAJOR) && \
+	      $(LN_S) libxplat.so.$(VERSION_MAJOR) libxplat.so ) ; \
+	fi
 
 clean:
-	for file in $(XPLAT_DEPS) $(XPLAT_OBJS) $(XPLAT_OBJS:.o=.ii) $(XPLAT_OBJS:.o=.ti) $(TARGETS) ; do \
-	    if [ -f $$file ] ; then $(RM) $$file ; fi \
+	for file in $(XPLAT_DEPS) $(XPLAT_OBJS) ; do \
+	    if [ -e $$file ] ; then $(RM) $$file ; fi ; \
 	done
 
 distclean: clean

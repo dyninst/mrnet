@@ -486,7 +486,7 @@ void * EventDetector::main( void* iarg )
                             }
                             edt->set_ThrId( 0 );
                             mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
-                            net->free_ThreadState();
+                            Network::free_ThreadState();
                             XPlat::Thread::Exit(NULL);
 
                         case PROT_NEW_CHILD_FD_CONNECTION:
@@ -576,7 +576,7 @@ void * EventDetector::main( void* iarg )
                     }
 
                     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
-                    net->free_ThreadState();
+                    Network::free_ThreadState();
                     XPlat::Thread::Exit(NULL);
                 }
             }
@@ -623,7 +623,7 @@ void * EventDetector::main( void* iarg )
 
     edt->set_ThrId( 0 );
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
-    net->free_ThreadState();
+    Network::free_ThreadState();
     return NULL;
 }
 
