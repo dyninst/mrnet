@@ -23,8 +23,8 @@ PeerNode_t* new_PeerNode_t(Network_t* inetwork,
   peer_node->hostname = ihostname;
   peer_node->rank = irank;
   peer_node->port = iport;
-  peer_node->data_sock_fd = 0;
-  peer_node->event_sock_fd = 0;
+  peer_node->data_sock_fd = InvalidSocket;
+  peer_node->event_sock_fd = InvalidSocket;
   peer_node->is_internal_node = is_internal_node;
   peer_node->is_parent = is_parent;
   peer_node->available = true;

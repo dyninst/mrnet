@@ -16,11 +16,11 @@
 // next, the windows headers
 #include <fcntl.h>
 #include <io.h>
-#include <stdbool.h>
 #include <sys/timeb.h>
-#include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 // Microsoft's compiler does not provide typedefs for specific-sized integers
 // in <stdint.h>, or any other header.

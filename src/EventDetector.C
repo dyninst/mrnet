@@ -39,7 +39,7 @@ bool EventDetector::stop( )
         if( _network->is_LocalNodeParent() ) {
             // send KILL_SELF message to EDT on listening port
             Port edt_port;
-            int sock_fd=0;
+            XPlat_Socket sock_fd=XPlat::SocketUtils::InvalidSocket;
             string edt_host;
             Message msg(_network);
             PacketPtr packet( new Packet(CTL_STRM_ID, PROT_KILL_SELF, NULL) );
@@ -107,7 +107,7 @@ bool EventDetector::start( Network* inetwork )
     return true;
 }
 
-bool EventDetector::add_FD( int ifd )
+bool EventDetector::add_FD( XPlat_Socket ifd )
 {
     int nchild;
 
@@ -153,7 +153,7 @@ bool EventDetector::add_FD( int ifd )
     return true;
 }
 
-bool EventDetector::remove_FD( int ifd )
+bool EventDetector::remove_FD( XPlat_Socket ifd )
 {
     XPlat_Socket new_max = -1;
     unsigned int i, j;
@@ -184,7 +184,7 @@ bool EventDetector::remove_FD( int ifd )
 }
 
 
-int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms, 
+int EventDetector::eventWait( std::set< XPlat_Socket >& event_fds, int timeout_ms, 
                               bool use_poll=true )
 {
     int retval, err;
@@ -263,7 +263,7 @@ int EventDetector::eventWait( std::set< int >& event_fds, int timeout_ms,
                 add = true;
         }
         if( add ) {
-            event_fds.insert( _pollfds[num].fd );
+            event_fds.insert( (XPlat_Socket)_pollfds[num].fd );
             mrn_dbg( 5, mrn_printf(FLF, stderr,
                                    "activity on fd %d\n", _pollfds[num].fd) );
         }
@@ -414,7 +414,7 @@ void * EventDetector::main( void* iarg )
 	    waitTimer.start();
 	}
 
-        std::set< int > eventfds;
+        std::set< XPlat_Socket > eventfds;
         mrn_dbg( 5, mrn_printf(FLF, stderr, "eventWait(timeout=%dms)\n", timeout));
         int retval = edt->eventWait( eventfds, timeout );
 
@@ -582,9 +582,9 @@ void * EventDetector::main( void* iarg )
             }
                     
             // Check for child failures
-            list< int >::iterator iter;
+            list< XPlat_Socket >::iterator iter;
             for( iter = watch_list.begin(); iter != watch_list.end(); ) {
-                int cur_sock = *iter;
+                XPlat_Socket cur_sock = *iter;
 		
                 // skip local_sock and parent_sock, or if socket isn't set
                 if( (cur_sock == local_sock) ||
@@ -596,13 +596,13 @@ void * EventDetector::main( void* iarg )
                     
                 // remove from watched lists
                 edt->remove_FD( cur_sock );
-                list< int >::iterator tmp_iter = iter++;
+                list< XPlat_Socket >::iterator tmp_iter = iter++;
                 watch_list.erase( tmp_iter );
 
                 /*mrn_dbg( 5, mrn_printf(FLF, stderr, 
                   "socket:%d IS set\n", cur_sock) );*/
 
-                map< int, Rank >:: iterator iter2 =
+                map< XPlat_Socket, Rank >:: iterator iter2 =
                     edt->childRankByEventDetectionSocket.find( cur_sock );
 
                 if( iter2 != edt->childRankByEventDetectionSocket.end() ) {
@@ -653,7 +653,7 @@ int EventDetector::init_NewChildFDConnection( PeerNodePtr iparent_node )
     return 0;
 }
 
-int EventDetector::proc_NewChildFDConnection( PacketPtr ipacket, int isock )
+int EventDetector::proc_NewChildFDConnection( PacketPtr ipacket, XPlat_Socket isock )
 {
     char* child_hostname = NULL;
     Port child_port;
@@ -714,7 +714,7 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
     return 0;
 }
 
-int EventDetector::recover_FromParentFailure( int& new_parent_sock )
+int EventDetector::recover_FromParentFailure( XPlat_Socket& new_parent_sock )
 {
     Timer new_parent_timer, cleanup_timer, connection_timer, 
           filter_state_timer, overall_timer;

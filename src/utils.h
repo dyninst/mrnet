@@ -8,6 +8,8 @@
 
 #ifndef os_windows
 # include "mrnet_config.h"
+#else
+#define COMMNODE_EXE "mrnet_commnode"
 #endif
 
 #if !defined (__STDC_LIMIT_MACROS)

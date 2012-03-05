@@ -253,7 +253,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						IgnoreStandardIncludePath="true"
+						IgnoreStandardIncludePath="false"
 					/>
 				</FileConfiguration>
 			</File>
@@ -267,10 +267,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\lightweight\PerfDataSysEvent_none.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\lightweight\PerfDataSysEvent_win.c"
 				>
 			</File>
 			<File

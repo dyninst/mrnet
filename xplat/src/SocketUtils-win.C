@@ -21,7 +21,7 @@ bool SetBlockingMode( XPlat_Socket sock, bool blocking )
 { 
     // 0 is blocking, !0 is non-blocking
     unsigned long mode = ( blocking ? 0 : 1 );
-    if( 0 != ioctlsocket(_sock, FIONBIO, &mode) ) {
+    if( 0 != ioctlsocket(sock, FIONBIO, &mode) ) {
         // failed to set the socket flags
         xplat_dbg( 1, fprintf(stderr, "XPlat::SocketUtils::SetBlockingMode - "
                               "failed to set %s\n",

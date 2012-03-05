@@ -95,7 +95,7 @@ void * FailureInjectionThreadMain( void* iarg )
     }
 
     //setup listening socket for failure event reporting from tree processes
-    int listening_sock_fd;
+    XPlat_Socket listening_sock_fd;
     Port listening_port=FAILURE_REPORTING_PORT;
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Binding to port %d ...\n", listening_port ));
     if( bindPort( &listening_sock_fd, &listening_port ) == -1 ) {
@@ -168,7 +168,7 @@ int inject_Failure( NetworkTopology::Node * inode, Network *net )
     FailureEvent * failure_event = new FailureEvent( inode->get_Rank() );
 
     //connect to node and tell to die
-    int sock_fd=0;
+    XPlat_Socket sock_fd=XPlat::SocketUtils::InvalidSocket;
     mrn_dbg( 1, mrn_printf(FLF, stderr, "Connecting to victim: %s:%d:%d\n",
                            inode->get_HostName().c_str(),
                            inode->get_Rank(),
@@ -276,7 +276,7 @@ void waitFor_FailureRecoveryReports( int isock_fd, Network *net )
 
             if( recovery_timestamp > max_recovery_timestamp ) {
                 max_recovery_timestamp = recovery_timestamp;
-                failure_event->_timer.stop( recovery_timestamp );
+                failure_event->_timer.stop( );
             }
             //failure_event->_timer.stop();
         }

@@ -18,8 +18,8 @@ struct PeerNode_t {
   char* hostname;
   Port port;
   Rank rank;
-  int data_sock_fd;
-  int event_sock_fd;
+  XPlat_Socket data_sock_fd;
+  XPlat_Socket event_sock_fd;
   int is_internal_node;
   int is_parent;
 

@@ -96,7 +96,7 @@ RSHNetwork::CreateInternalNode( Network* inetwork,
                                 int idataSocket,
                                 Port idataPort )
 {
-    int listeningSocket = idataSocket;
+    XPlat_Socket listeningSocket = idataSocket;
     Port listeningPort = idataPort;
 
     // we build and bind our listening socket now

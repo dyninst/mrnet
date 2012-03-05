@@ -8,7 +8,9 @@
 #include <vector>
 #include <time.h>
 
+#ifndef os_windows
 #include "mrnet_config.h"
+#endif
 #include "FailureManagement.h"
 #include "Router.h"
 #include "SerialGraph.h"

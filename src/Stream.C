@@ -50,11 +50,8 @@ Stream::Stream( Network * inetwork, unsigned int iid,
      _network( inetwork ),
     _id( iid ),
     _sync_filter_id( isync_filter_id ),
-    _sync_filter( new Filter( isync_filter_id, this, FILTER_SYNC ) ),
     _us_filter_id( ius_filter_id ),
-    _us_filter( new Filter( ius_filter_id, this, FILTER_UPSTREAM ) ),
     _ds_filter_id( ids_filter_id ),
-    _ds_filter( new Filter( ids_filter_id, this, FILTER_DOWNSTREAM) ),
     _evt_pipe(NULL),
     _was_closed(false)
 {
@@ -84,6 +81,10 @@ Stream::Stream( Network * inetwork, unsigned int iid,
             _peers_sync.Unlock();        
         }
     }
+
+    _sync_filter = new Filter( isync_filter_id, this, FILTER_SYNC );
+    _us_filter = new Filter( ius_filter_id, this, FILTER_UPSTREAM );
+    _ds_filter = new Filter( ids_filter_id, this, FILTER_DOWNSTREAM);
 
     mrn_dbg_func_end();
 }

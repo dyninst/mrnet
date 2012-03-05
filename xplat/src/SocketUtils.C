@@ -15,13 +15,13 @@ static bool SetTcpNoDelay( XPlat_Socket sock )
 #if defined(TCP_NODELAY)
     // turn off Nagle algorithm for coalescing packets
     int optval = 1;
-    bool soret = SetOption( sock, 
-                            IPPROTO_TCP, 
+    bool soret = XPlat::SocketUtils::SetOption( sock,
+                            IPPROTO_TCP,
                             TCP_NODELAY,
-                            (void*) &optval, 
+                            (void*) &optval,
                             (socklen_t) sizeof(optval) );
     if( ! soret ) {
-        xplat_dbg( 1, fprintf(stderr, 
+        xplat_dbg( 1, fprintf(stderr,
                               "XPlat_SocketUtils_SetTcpNoDelay failed\n") );
         return false;
     }
@@ -58,8 +58,11 @@ namespace XPlat
 
 namespace SocketUtils
 {
-
+#ifndef os_windows
 const XPlat_Socket InvalidSocket = -1;
+#else
+const XPlat_Socket InvalidSocket = INVALID_SOCKET;
+#endif
 const XPlat_Port InvalidPort = (XPlat_Port)-1;
 
 
@@ -73,13 +76,13 @@ bool Connect( const std::string &hostname,
     int err;
     std::string err_str;
 
-    xplat_dbg( 3, fprintf(stderr, "XPlat_SocketUtils_Connect - "
+    xplat_dbg( 3, fprintf(stderr, "XPlat::SocketUtils::Connect - "
                           "host=%s port=%hu sock=%d\n",
                           host, port, _sock) );
 
-    if( _sock <= 0 ) {
+    if( _sock == InvalidSocket ) {
         _sock = socket( AF_INET, SOCK_STREAM, 0 );
-        if( _sock == -1 ) {
+        if( _sock == InvalidSocket ) {
             err = XPlat::NetUtils::GetLastError();
             err_str = XPlat::Error::GetErrorString( err );
              xplat_dbg( 1, fprintf(stderr, "XPlat::SocketUtils::Connect - "
@@ -216,7 +219,7 @@ bool CreateListening( XPlat_Socket& sock,
         // the process exits (needed because on at least some platforms we
         // use well-known ports when connecting sockets)
         int soVal = 1;
-        bool soret = SetOption( _sock, SOL_SOCKET, SO_REUSEADDR, 
+        bool soret = SetOption( _sock, SOL_SOCKET, SO_REUSEADDR,
                                 (void*)&soVal, sizeof(soVal) );
         if( ! soret ) {
             err = XPlat::NetUtils::GetLastError();
@@ -414,15 +417,24 @@ bool GetPort( const XPlat_Socket sock, XPlat_Port& port )
 bool SetOption( XPlat_Socket sock, int level,
                 int option, void* optval, socklen_t optsz )
 {
+#ifndef os_windows
     int ssoret = setsockopt( sock,
                              level,
                              option,
                              optval,
                              optsz );
+#else
+    int ssoret = setsockopt( sock,
+                             level,
+                             option,
+                             (char *)optval,
+                             optsz );
+#endif
     if( ssoret == -1 ) return false;
     return true;
 }
 
 } // namespace SocketUtils
+
 } // namespace XPlat
 

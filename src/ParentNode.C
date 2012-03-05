@@ -5,7 +5,9 @@
 
 #include <set>
 
+#ifndef os_windows
 #include "mrnet_config.h"
+#endif
 #include "ChildNode.h"
 #include "EventDetector.h"
 #include "Filter.h"

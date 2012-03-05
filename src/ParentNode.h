@@ -93,7 +93,7 @@ class ParentNode: public virtual Error,
     virtual int proc_PacketFromChildren( PacketPtr ipacket );
 
  private:
-    int listening_sock_fd;
+    XPlat_Socket listening_sock_fd;
 
 };
 

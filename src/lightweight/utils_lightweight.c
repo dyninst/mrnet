@@ -3,6 +3,7 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
+
 #include "utils_lightweight.h"
 #include "mrnet_lightweight/Network.h"
 #include "xplat_lightweight/Error.h"
@@ -31,13 +32,13 @@ int connectHost( XPlat_Socket *sock_in, char* hostname,
                  XPlat_Port port, int num_retry )
 {
     XPlat_Socket sock = *sock_in;
-
     unsigned nretry = 0;
+    bool_t rc;
+
     if( num_retry > 0 ) 
         nretry = (unsigned) num_retry;
 
-    bool_t rc = XPlat_SocketUtils_Connect( hostname, port, 
-                                           &sock, nretry );
+    rc = XPlat_SocketUtils_Connect( hostname, port, &sock, nretry );
     if( rc ) {
         *sock_in = sock;
         return 0;

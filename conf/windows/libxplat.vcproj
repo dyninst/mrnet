@@ -217,26 +217,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\xplat\src\NCIO-win.C"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\xplat\src\NetUtils-win.C"
 				>
 				<FileConfiguration
@@ -397,6 +377,26 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\xplat\src\SocketUtils.C"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\xplat\src\Thread-win.C"
 				>
 				<FileConfiguration
@@ -487,10 +487,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xplat\include\xplat\NCIO.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\xplat\include\xplat\NetUtils.h"
 				>
 			</File>
@@ -544,6 +540,10 @@
 			</File>
 			<File
 				RelativePath="..\..\xplat\include\xplat\Types.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\src\xplat_dbg.h"
 				>
 			</File>
 		</Filter>

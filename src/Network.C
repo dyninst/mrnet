@@ -13,7 +13,9 @@
 #include <sys/socket.h>
 #endif
 
+#ifndef os_windows
 #include "mrnet_config.h"
+#endif
 #include "utils.h"
 #include "BackEndNode.h"
 #include "ChildNode.h"

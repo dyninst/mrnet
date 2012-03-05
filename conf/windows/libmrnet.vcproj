@@ -1123,10 +1123,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\pdr_mem.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\PeerNode.h"
 				>
 			</File>

@@ -18,6 +18,7 @@
 
 #include "xplat/Mutex.h"
 #include "xplat/Thread.h"
+#include "xplat/SocketUtils.h"
 
 namespace MRN {
 
@@ -27,7 +28,7 @@ class EventDetector {
 
     EventDetector( Network* inetwork )
         : _network(inetwork), _thread_id(0), _pollfds(NULL), 
-          _num_pollfds(0), _max_pollfds(0), _max_fd(-1)
+        _num_pollfds(0), _max_pollfds(0), _max_fd(-1)
     { }
 
     ~EventDetector(void)
@@ -46,15 +47,15 @@ class EventDetector {
 
  private:
 
-    int proc_NewChildFDConnection( PacketPtr ipacket, int isock );
+    int proc_NewChildFDConnection( PacketPtr ipacket, XPlat_Socket isock );
     int init_NewChildFDConnection( PeerNodePtr iparent_node );
 
     int recover_FromChildFailure( Rank ifailed_rank );
-    int recover_FromParentFailure( int& new_parent_sock );
+    int recover_FromParentFailure( XPlat_Socket& new_parent_sock );
     
-    bool add_FD( int ifd );
-    bool remove_FD( int ifd );
-    int eventWait( std::set< int >& event_fds, int timeout,
+    bool add_FD( XPlat_Socket ifd );
+    bool remove_FD( XPlat_Socket ifd );
+    int eventWait( std::set< XPlat_Socket >& event_fds, int timeout,
                    bool use_poll/*=true*/ );
 
     void handle_Timeout( TimeKeeper*, int );
@@ -66,8 +67,8 @@ class EventDetector {
     XPlat::Thread::Id _thread_id;
     struct pollfd* _pollfds;
     unsigned int _num_pollfds, _max_pollfds;
-    int _max_fd;
-    std::map< int, Rank > childRankByEventDetectionSocket;
+    XPlat_Socket _max_fd;
+    std::map< XPlat_Socket, Rank > childRankByEventDetectionSocket;
 };
 
 } // namespace MRN

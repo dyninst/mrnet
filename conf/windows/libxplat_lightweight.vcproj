@@ -172,14 +172,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xplat\src\lightweight\NCIO-win.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\xplat\src\lightweight\NCIO.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\xplat\src\lightweight\NetUtils-win.c"
 				>
 			</File>
@@ -197,6 +189,10 @@
 			</File>
 			<File
 				RelativePath="..\..\xplat\src\lightweight\SocketUtils-win.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\src\lightweight\SocketUtils.c"
 				>
 			</File>
 			<File
@@ -238,10 +234,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xplat\include\xplat_lightweight\NCIO.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\xplat\include\xplat_lightweight\NetUtils.h"
 				>
 			</File>
@@ -268,9 +260,21 @@
 			<File
 				RelativePath="..\..\xplat\include\xplat_lightweight\Types.h"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						AdditionalDependencies=""
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\xplat\include\xplat_lightweight\vector.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\xplat\src\lightweight\xplat_dbg.h"
 				>
 			</File>
 		</Filter>

@@ -8,12 +8,15 @@
 
 #include <iphlpapi.h>
 
+const char* block_str = "blocking";
+const char* nonblock_str = "non-blocking";
+
 bool_t XPlat_SocketUtils_SetBlockingMode( XPlat_Socket sock,
                                           bool_t blocking )
 {
     // 0 is blocking, !0 is non-blocking
     unsigned long mode = ( blocking ? 0 : 1 );
-    if( 0 != ioctlsocket(_sock, FIONBIO, &mode) ) {
+    if( 0 != ioctlsocket(sock, FIONBIO, &mode) ) {
         // failed to set the socket flags
         xplat_dbg( 1, fprintf(stderr, "XPlat::SocketUtils::SetBlockingMode - "
                               "failed to set %s\n",
@@ -150,7 +153,7 @@ ssize_t XPlat_SocketUtils_send( XPlat_Socket s, const void *buf, size_t count )
     ncbuf.buf = (char *)buf;
     ncbuf.len = count;
 
-    return XPlat_SocketUtils_Send(s, ncbuf, 1);
+    return XPlat_SocketUtils_Send(s, &ncbuf, 1);
 }
 
 ssize_t XPlat_SocketUtils_recv( XPlat_Socket s, void *buf, size_t count )
@@ -160,5 +163,5 @@ ssize_t XPlat_SocketUtils_recv( XPlat_Socket s, void *buf, size_t count )
     ncbuf.buf = buf;
     ncbuf.len = count;
 
-    return XPlat_SocketUtils_Recv(s, ncbuf, 1);
+    return XPlat_SocketUtils_Recv(s, &ncbuf, 1);
 }

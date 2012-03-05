@@ -67,7 +67,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="Iphlpapi.lib Ws2_32.lib shlwapi.lib"
 				OutputFile="$(OutDir)/mrnet_commnode.exe"
-				LinkIncremental="1"
+				LinkIncremental="0"
 				AdditionalLibraryDirectories="../obj/i386-unknown-nt4.0"
 				GenerateDebugInformation="true"
 				SubSystem="1"

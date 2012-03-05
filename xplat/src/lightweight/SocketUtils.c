@@ -10,7 +10,11 @@
 
 // Functions implemented herein are (mostly) cross-platform
 
+#ifndef os_windows
 const XPlat_Socket InvalidSocket = -1;
+#else
+const XPlat_Socket InvalidSocket = INVALID_SOCKET;
+#endif
 const XPlat_Port InvalidPort = (XPlat_Port)-1;
 
 static bool_t SetTcpNoDelay( XPlat_Socket sock )
@@ -72,9 +76,9 @@ bool_t XPlat_SocketUtils_Connect( const char* host,
                           "host=%s port=%hu sock=%d\n",
                           host, port, _sock) );
 
-    if( InvalidSocket != _sock ) {
+    if( InvalidSocket == _sock ) {
         _sock = socket( AF_INET, SOCK_STREAM, 0 );
-        if ( -1 == _sock ) {
+        if ( InvalidSocket == _sock ) {
             err = XPlat_NetUtils_GetLastError();
             err_str = XPlat_Error_GetErrorString(err);
             xplat_dbg( 1, fprintf(stderr, "XPlat_SocketUtils_Connect - "
