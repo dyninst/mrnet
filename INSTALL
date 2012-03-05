@@ -15,7 +15,7 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
 
 2. SYSTEM REQUIREMENTS
 
-  The third party tools that MRNet uses and needs for proper installation are: 
+  The third party tools that MRNet needs to build properly are: 
     - GNU make
 
 
@@ -25,7 +25,7 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
   parameters. The script that does this auto-configuration is called configure. 
   Invoking configure as follows shows all possible options.
 
-    UNIX>  ./configure --help
+    prompt>  ./configure --help
 
   Below, we describe the MRNet-specific options.
 
@@ -52,7 +52,7 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
   Users may additionally specify certain compilation and linking settings by
   supplying values for common make variables. For example, 
 
-    UNIX> ./configure CXX=g++
+    prompt> ./configure CXX=g++
 
   instructs the configure script to use g++ for the C++ compiler
  
@@ -66,35 +66,39 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
 
   * To build the MRNet toolkit: 
 
-    UNIX>  cd build/$MRNET_ARCH
-    UNIX>  make
+    prompt>  cd build/$MRNET_ARCH
+    prompt>  make
 
     After a successful build, the following files will be present: 
-      bin/mrnet_commnode: MRNet communcation process executable
-      bin/mrnet_topgen: MRNet topology file generator
+
+      bin/mrnet_commnode                 : MRNet communication process
+      bin/mrnet_topgen                   : MRNet topology file generator
+      bin/mrnet_tests.sh                 : MRNet test harness
+
       lib/libmrnet.[a,so]                : MRNet API library
       lib/libmrnet_lightweight.[a,so]    : Lightweight MRNet backend library
       lib/libmrnet_lightweight_r.[a,so]  : Lightweight MRNet backend library (threadsafe)
+ 
       lib/libxplat.[a,so]                : Cross-Platform library
       lib/libxplat_lightweight.[a,so]    : Lightweight Cross-Platform library
       lib/libxplat_lightweight_r.[a,so]  : Lightweight Cross-Platform library (threadsafe)
   
   * To build the standard MRNet tests:
 
-    UNIX>  cd build/$MRNET_ARCH
-    UNIX>  make tests
+    prompt>  cd build/$MRNET_ARCH
+    prompt>  make tests
 
   * To build the MRNet examples:
 
-    UNIX>  cd build/$MRNET_ARCH
-    UNIX>  make examples
+    prompt>  cd build/$MRNET_ARCH
+    prompt>  make examples
 
   * To install the MRNet toolkit: 
 
-    UNIX>  cd build/$MRNET_ARCH
-    UNIX>  make install
-    UNIX>  make install-examples (Optional: install example programs)
-    UNIX>  make install-tests    (Optional: install test programs)
+    prompt>  cd build/$MRNET_ARCH
+    prompt>  make install
+    prompt>  make install-examples (Optional: install example programs)
+    prompt>  make install-tests    (Optional: install test programs)
 
 
 5. Bugs, Questions and Comments
