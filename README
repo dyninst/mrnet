@@ -1,5 +1,6 @@
 MRNet: A Multicast/Reduction Network
 http://www.paradyn.org/mrnet/
+
 Copyright © 2003-2012 Dorian C. Arnold, Philip C. Roth, Barton P. Miller.
 
 LICENSE contains the usage terms for MRNet.
@@ -49,15 +50,15 @@ LICENSE contains the usage terms for MRNet.
   This release of MRNet includes a source distribution for all platforms, 
   as well as associated manuals. The release incorporates improvements made 
   to MRNet since version 3.1.0.
- 
-  For information about the software releases, plus papers and manuals on the
-  MRNet system, visit:
-      http://www.paradyn.org/mrnet
 
   Release Highlights:
     * New threadsafe version of lightweight back-end library
     * New support for very large arrays
     * Numerous bug fixes and performance enhancements
+
+  For information about software releases, plus papers and manuals on the
+  MRNet system, visit:
+      http://www.paradyn.org/mrnet
 
 3. SUPPORTED PLATFORMS
 
@@ -71,7 +72,7 @@ LICENSE contains the usage terms for MRNet.
   we believe MRNet will continue to compile and run correctly.
    - Linux: ia64
    - AIX: powerpc32
-   - Solaris: sparc
+   - Solaris: sparc32
 
 4. CONTACT
 
@@ -80,5 +81,5 @@ LICENSE contains the usage terms for MRNet.
   University of Wisconsin
   1210 West Dayton Street
   Madison, WI 53706
-  Web: http://www.paradyn.org/mrnet
+
   Email: mrnet@cs.wisc.edu
