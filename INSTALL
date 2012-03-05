@@ -27,14 +27,24 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
   shows all possible options of the command. Below, we display the MRNet-specific
   ones: 
 
-    --with-startup=METHOD       Tree instantiation method - "ssh" (default),
+    --enable-ltwt-threadsafe      Build threasafe version of lightweight MRNet 
+                                  and XPlat libraries.
+
+    --enable-verbosebuild         Display commands used during build and install.
+
+    --with-startup=METHOD         Tree instantiation method - "ssh" (default),
                                                             "cray_xt"
 
-    --with-alpstoolhelp-lib=DIR (CrayXT only) Absolute path to directory containing
-				              libalps library
-    --with-alpstoolhelp-inc=DIR (CrayXT only) Absolute path to directory containing
-                                              libalps.h
+    --with-alpstoolhelp-lib=DIR   (Cray only) 
+                                  Absolute path to directory containing
+				  libalps library.
+    --with-alpstoolhelp-inc=DIR   (Cray only) 
+                                  Absolute path to directory containing
+                                  libalps.h header file.
 
+    --with-boost=PATH             Absolute path to installation of Boost C++ libraries
+                                  (note: specify the path to the directory containing
+			                 "include" and "lib" sub-directories)
 
   ./configure without any options should give reasonable results, but the user
   may specify certain options. For example, 
@@ -59,12 +69,13 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
     After a successful build, the following files will be present: 
       bin/mrnet_commnode: MRNet communcation process executable
       bin/mrnet_topgen: MRNet topology file generator
-      lib/libmrnet.[a,so]: MRNet API library
-      lib/libmrnet_lightweight.[a,so]: Lightweight MRNet backend library
-      lib/libmrnet_lightweight_r.[a,so]: Lightweight MRNet backend library (threadsafe)
-      lib/libxplat.[a,so]: Cross-Platform library
-      lib/libxplat_lightweight.[a,so]: Lightweight Cross-Platform library
-      lib/libxplat_lightweight_r.[a,so]: Lightweight Cross-Platform library (threadsafe)
+      bin/mrnet_test: MRNet topology file generator
+      lib/libmrnet.[a,so]                : MRNet API library
+      lib/libmrnet_lightweight.[a,so]    : Lightweight MRNet backend library
+      lib/libmrnet_lightweight_r.[a,so]  : Lightweight MRNet backend library (threadsafe)
+      lib/libxplat.[a,so]                : Cross-Platform library
+      lib/libxplat_lightweight.[a,so]    : Lightweight Cross-Platform library
+      lib/libxplat_lightweight_r.[a,so]  : Lightweight Cross-Platform library (threadsafe)
   
   * To build the standard MRNet tests:
 
@@ -82,7 +93,7 @@ Complete documentation may be found at http://www.paradyn.org/mrnet.
     UNIX>  make install
     UNIX>  make install-examples (Optional: install example programs)
     UNIX>  make install-tests    (Optional: install test programs)
-    
+
 5. Bugs, Questions and Comments
 
   MRNet is maintained by the Paradyn Project, University of Wisconsin-Madison.
