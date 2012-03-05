@@ -14,7 +14,7 @@ using namespace MRN;
 using namespace MRN_test;
 
 
-int test_alltypes( Network *, std::vector<Stream*>, bool block );
+int test_alltypes( std::vector<Stream*>, bool block );
 
 Test * test;
 
@@ -54,8 +54,8 @@ int main(int argc, char **argv)
     /* For all the following tests, the bool param indicates *
      * whether the recv should block or not */
 
-    if (test_alltypes(net, streams, false) == -1) {}
-    if (test_alltypes(net, streams, true) == -1) {}
+    if (test_alltypes(streams, false) == -1) {}
+    if (test_alltypes(streams, true) == -1) {}
 
     std::vector<Stream *>::iterator stream_iter;
     stream_iter = streams.begin();    
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
  *    bcast a packet containing data of all types to all endpoints in stream.
  *    recv  a packet containing data of all types from every endpoint
  */
-int test_alltypes( Network * net, std::vector< Stream * > streams, bool block )
+int test_alltypes( std::vector< Stream * > streams, bool block )
 {
     int num_received=0, num_to_receive=0;
     int tag;
