@@ -4,6 +4,14 @@ bin_dir=`dirname $0`
 TOPGEN="${bin_dir}/mrnet_topgen"
 topology_dir="${bin_dir}/mrnet_test_files"
 
+if [ ! -d $topology_dir ]; then
+    topology_dir="${bin_dir}/../../../tests/topology_files"
+    if [ ! -d $topology_dir ]; then
+        echo "Error: could not locate directory containing topology files"
+	exit
+    fi
+fi
+
 topologies=(1x1 1x4 1x16 1x1x2 1x2x4 1x4x16 1x1x1x1)
 remote_topology_specs=(1 4 16 1:2 2:2x2 4:4x4 1:1:1)
 
@@ -188,6 +196,13 @@ do
         ;;
     -filter )
         sharedobject="${topology_dir}/test_DynamicFilters.so"
+	if [ ! -f $sharedobject ]; then
+	    sharedobject="{bin_dir}/../lib/test_DynamicFilters.so"
+	    if [ ! -f $sharedobject ] ; then
+                echo "Error: could not located test_DynamicFilters.so"
+		exit
+	    fi
+	fi
         shift
         ;;
     *)
