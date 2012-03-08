@@ -53,6 +53,8 @@ MKDIR_P = mkdir -p
 INSTALL      = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 
+INSTALL_LIB_LINKS = $(MRNET_ROOT)/conf/gen_lib_version_links.sh
+
 #####################
 # General Definitions
 #####################
@@ -304,6 +306,7 @@ ALL_SRCS = $(LIBMRNET_SRCS) $(COMMNODE_SRCS) $(TEST_SRCS)
 DEPS	= $(addprefix $(DEPDIR)/, $(patsubst %.C,%.d,$(patsubst %.c,%.d,$(notdir $(ALL_SRCS)))))
 
 all: $(TARGETS)
+	$(INSTALL_LIB_LINKS) $(LIBDIR) libmrnet $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV)
 
 xplat-all:
 	$(MAKE) -f $(PLATDIR)/Makefile.xplat all
@@ -347,13 +350,10 @@ install-local: all $(INSTALL_HEADERS) install-boost
 	@echo Installing MRNet libraries
 	$(INSTALL_DATA) $(PLATDIR)/mrnet_config.h $(ILIBDIR)/
 	$(INSTALL) $(LIBMRNET) $(ILIBDIR)/
-	( cd $(ILIBDIR) && $(LN_S) libmrnet.a.$(VERSION) libmrnet.a )
 	if [ $(BUILD_SHARED_LIBS) = "yes" ] ; then \
 	    $(INSTALL) $(LIBMRNET_SO) $(ILIBDIR)/ ; \
-	    ( cd $(ILIBDIR) && \
-	      $(LN_S) libmrnet.so.$(VERSION) libmrnet.so.$(VERSION_MAJOR) && \
-	      $(LN_S) libmrnet.so.$(VERSION_MAJOR) libmrnet.so ) ; \
 	fi
+	$(INSTALL_LIB_LINKS) $(ILIBDIR) libmrnet $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV)
 
 install-boost:
 	@if [ "$(HAVE_BOOST)" = "no" ]; then \
@@ -424,14 +424,10 @@ $(LIBMRNET): $(LIBMRNET_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $(LIBMRNET_OBJS)
 	$(RANLIB) $@
-	( cd $(LIBDIR) && $(LN_S) libmrnet.a.$(VERSION) libmrnet.a )
 
 $(LIBMRNET_SO): $(LIBMRNET_OBJS) $(LIBXPLAT_SO)
 	@echo Building `basename $@` ...
 	$(CXX) $(SOFLAGS) -o $@ $(LIBMRNET_OBJS) $(LIBMRNET_SO_DEPLIBS)
-	( cd $(LIBDIR) && \
-	  $(LN_S) libmrnet.so.$(VERSION) libmrnet.so.$(VERSION_MAJOR) && \
-	  $(LN_S) libmrnet.so.$(VERSION_MAJOR) libmrnet.so )
 
 $(LIBXPLAT): xplat-all
 

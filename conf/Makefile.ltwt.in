@@ -75,6 +75,10 @@ LOWFAT_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.c,%_r.o,$(notdir $(LTWT_SRCS)
 LTWT_DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.c,%.d,$(notdir $(LTWT_SRCS))))
 
 all: $(TARGETS)
+	$(INSTALL_LIB_LINKS) $(LIBDIR) libmrnet_lightweight $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV)
+	if [ $(WANT_THREADSAFE_LTWT) = "yes" ] ; then \
+	    $(INSTALL_LIB_LINKS) $(LIBDIR) libmrnet_lightweight_r $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV) ; \
+	fi
 
 sharedobj: $(SO_LIST)
 
@@ -82,27 +86,19 @@ $(TARGET): $(LTWT_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
-	( cd $(LIBDIR) && $(LN_S) libmrnet_lightweight.a.$(VERSION) libmrnet_lightweight.a )
 
 $(TARGET_LOWFAT): $(LOWFAT_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
-	( cd $(LIBDIR) && $(LN_S) libmrnet_lightweight_r.a.$(VERSION) libmrnet_lightweight_r.a )
 
 $(TARGET_SO): $(LTWT_OBJS)
 	@echo Building `basename $@` ...
 	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_DEPLIBS)
-	( cd $(LIBDIR) && \
-	  $(LN_S) libmrnet_lightweight.so.$(VERSION) libmrnet_lightweight.so.$(VERSION_MAJOR) && \
-	  $(LN_S) libmrnet_lightweight.so.$(VERSION_MAJOR) libmrnet_lightweight.so )
 
 $(TARGET_SO_LOWFAT): $(LOWFAT_OBJS)
 	@echo Building `basename $@` ...
 	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LOWFAT_DEPLIBS)
-	( cd $(LIBDIR) && \
-	  $(LN_S) libmrnet_lightweight_r.so.$(VERSION) libmrnet_lightweight_r.so.$(VERSION_MAJOR) && \
-	  $(LN_S) libmrnet_lightweight_r.so.$(VERSION_MAJOR) libmrnet_lightweight_r.so )
 
 install-prep:
 	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
@@ -119,19 +115,9 @@ $(INSTALL_HEADERS): $(install_INCDIR)/%: $(mrnet_INCDIR)/%
 install: all install-prep $(INSTALL_HEADERS)
 	@echo Installing MRNet lightweight libraries
 	$(INSTALL) $(TARGETS) $(ILIBDIR)/
-	( cd $(ILIBDIR) && $(LN_S) libmrnet_lightweight.a.$(VERSION) libmrnet_lightweight.a )
+	$(INSTALL_LIB_LINKS) $(ILIBDIR) libmrnet_lightweight $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV)
 	if [ $(WANT_THREADSAFE_LTWT) = "yes" ] ; then \
-	    ( cd $(ILIBDIR) && $(LN_S) libmrnet_lightweight_r.a.$(VERSION) libmrnet_lightweight_r.a ) ; \
-	fi
-	if [ $(BUILD_SHARED_LIBS) = "yes" ] ; then \
-	    ( cd $(ILIBDIR) && \
-	      $(LN_S) libmrnet_lightweight.so.$(VERSION) libmrnet_lightweight.so.$(VERSION_MAJOR) && \
-	      $(LN_S) libmrnet_lightweight.so.$(VERSION_MAJOR) libmrnet_lightweight.so ) ; \
-	    if [ $(WANT_THREADSAFE_LTWT) = "yes" ] ; then \
-		( cd $(ILIBDIR) && \
-		  $(LN_S) libmrnet_lightweight_r.so.$(VERSION) libmrnet_lightweight_r.so.$(VERSION_MAJOR) && \
-		  $(LN_S) libmrnet_lightweight_r.so.$(VERSION_MAJOR) libmrnet_lightweight_r.so ) ; \
-	    fi ; \
+	    $(INSTALL_LIB_LINKS) $(ILIBDIR) libmrnet_lightweight_r $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV) ; \
 	fi
 
 clean:

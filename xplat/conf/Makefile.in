@@ -38,6 +38,8 @@ IINCDIR = @includedir@
 xplat_INCDIR = $(INCDIR)/xplat
 install_INCDIR = $(IINCDIR)/xplat
 
+INSTALL_LIB_LINKS = $(ROOTDIR)/conf/gen_lib_version_links.sh
+
 VPATH = $(SRCDIR)
 
 C_AS_CPLUSPLUS = @C_AS_CPLUSPLUS@
@@ -88,6 +90,7 @@ XPLAT_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(not
 XPLAT_DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.C,%.d,$(patsubst %.c,%.d,$(notdir $(XPLAT_SRCS)))))
 
 all: $(TARGETS)
+	$(INSTALL_LIB_LINKS) $(LIBDIR) libxplat $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV)
 
 sharedobj: $(TARGET_SO)
 
@@ -95,14 +98,10 @@ $(TARGET): $(XPLAT_OBJS)
 	@echo Archiving `basename $@` ...
 	$(AR) $(ARFLAGS) $@ $^ ; \
 	$(RANLIB) $@
-	( cd $(LIBDIR) && $(LN_S) libxplat.a.$(VERSION) libxplat.a )
 
 $(TARGET_SO): $(XPLAT_OBJS)
 	@echo Building `basename $@` ...
 	$(CXX) $(SOFLAGS) -o $@ $(XPLAT_OBJS) $(TARGET_SO_DEPLIBS)
-	( cd $(LIBDIR) && \
-	  $(LN_S) libxplat.so.$(VERSION) libxplat.so.$(VERSION_MAJOR) && \
-	  $(LN_S) libxplat.so.$(VERSION_MAJOR) libxplat.so )
 
 install-prep:
 	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
@@ -123,12 +122,7 @@ install: $(TARGETS) install-prep $(INSTALL_HEADERS)
 	$(INSTALL_DATA) $(PLATDIR)/xplat_config.h $(ILIBDIR)/
 	@echo Installing XPlat libraries
 	$(INSTALL) $(TARGETS) $(ILIBDIR)/
-	( cd $(ILIBDIR) && $(LN_S) libxplat.a.$(VERSION) libxplat.a )
-	if [ $(BUILD_SHARED_LIBS) = "yes" ] ; then \
-	    ( cd $(ILIBDIR) && \
-	      $(LN_S) libxplat.so.$(VERSION) libxplat.so.$(VERSION_MAJOR) && \
-	      $(LN_S) libxplat.so.$(VERSION_MAJOR) libxplat.so ) ; \
-	fi
+	$(INSTALL_LIB_LINKS) $(ILIBDIR) libxplat $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV)
 
 clean:
 	for file in $(XPLAT_DEPS) $(XPLAT_OBJS) ; do \
