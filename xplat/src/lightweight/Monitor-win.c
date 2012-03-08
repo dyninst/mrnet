@@ -22,15 +22,24 @@ Monitor_t* Monitor_construct( void )
 {
     static CRITICAL_SECTION init_mutex;
     Monitor_t *mon;
+    HANDLE c;
 
     InitializeCriticalSection(&init_mutex);
 
     EnterCriticalSection(&init_mutex);
 
+    /* Construct data */
     mon = (Monitor_t *)malloc(sizeof(Monitor_t));
     assert(mon != NULL);
     mon->data = (void *)WinMonitorData_construct();
     assert(mon->data != NULL);
+
+    /* Construct cleanup lock */
+    c = CreateMutex(NULL,FALSE,NULL);
+    assert(c != NULL);
+
+    mon->cleanup_initialized = true;
+    mon->cleanup = (void *)c;
 
     LeaveCriticalSection(&init_mutex);
 
@@ -39,20 +48,34 @@ Monitor_t* Monitor_construct( void )
 
 int Monitor_destruct( Monitor_t* m )
 {
-    static CRITICAL_SECTION cleanup_mutex;
+    DWORD ret;
     int rc = 0;
 
-    InitializeCriticalSection(&cleanup_mutex);
+    if(m == NULL)
+        return -1;
 
-    EnterCriticalSection(&cleanup_mutex);
+    ret = WaitForSingleObject((HANDLE)m->cleanup, INFINITE);
 
-    if((m != NULL) && (m->data != NULL)) {
+    if(m->cleanup == NULL) {
+        return;
+    }
+
+    if(m->data != NULL) {
         rc = WinMonitorData_destruct(m->data);
         free(m->data);
         m->data = NULL;
     } else {
         rc = -1;
     }
+
+    m->cleanup_initialized = 0;
+    
+    ret = ReleaseMutex((HANDLE)m->cleanup);
+    assert(!ret);
+
+    ret = CloseHandle((HANDLE)m->cleanup);
+    assert(!ret);
+    m->cleanup = NULL;
 
     LeaveCriticalSection(&cleanup_mutex);
 
@@ -61,50 +84,154 @@ int Monitor_destruct( Monitor_t* m )
 
 int Monitor_Lock( Monitor_t* m )
 {
-    if( (m != NULL) && (m->data != NULL) )
-        return WinMonitor_Lock(m->data);
+    DWORD ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = WaitForSingleObject((HANDLE)m->cleanup);
+        if(ret)
+            return ret;
+
+        if( m->data != NULL ) {
+            ret = WinMonitor_Lock(m->data);
+            assert(ReleaseMutex((HANDLE)m->cleanup));
+            return ret;
+        }
+
+        assert(ReleaseMutex((HANDLE)m->cleanup));
+        return WSAEINVAL;
+    }
+
     return WSAEINVAL;
 }
 
 int Monitor_Unlock( Monitor_t* m )
 {
-    if( (m != NULL) && (m->data != NULL) )
-        return WinMonitor_Unlock(m->data);
+    DWORD ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = WaitForSingleObject((HANDLE)m->cleanup);
+
+        if(ret)
+            return ret;
+
+        if( m->data != NULL ) {
+            ret = WinMonitor_Unlock(m->data);
+            assert(ReleaseMutex((HANDLE)m->cleanup));
+            return ret;
+        }
+
+        assert(ReleaseMutex((HANDLE)m->cleanup));
+        return WSAEINVAL;
+    }
+
     return WSAEINVAL;
 }
 
 int Monitor_Trylock( Monitor_t* m )
 {
-    if( (m != NULL) && (m->data != NULL) )
-        return WinMonitor_Trylock(m->data);
+    DWORD ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = WaitForSingleObject((HANDLE)m->cleanup);
+
+        if(ret)
+            return ret;
+
+        if( m->data != NULL ) {
+            ret = WinMonitor_Trylock(m->data);
+            assert(ReleaseMutex((HANDLE)m->cleanup));
+            return ret;
+        }
+
+        assert(ReleaseMutex((HANDLE)m->cleanup));
+        return WSAEINVAL;
+    }
+
     return WSAEINVAL;
 }
 
 int Monitor_RegisterCondition( Monitor_t *m, int condid ) 
 {
-    if( (m != NULL) && (m->data != NULL) )
-        return WinMonitor_RegisterCondition( m->data, condid );
+    DWORD ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = WaitForSingleObject((HANDLE)m->cleanup);
+
+        if(ret)
+            return ret;
+
+        if( m->data != NULL ) {
+            ret = WinMonitor_RegisterCondition(m->data, condid);
+            assert(ReleaseMutex((HANDLE)m->cleanup));
+            return ret;
+        }
+
+        assert(ReleaseMutex((HANDLE)m->cleanup));
+        return WSAEINVAL;
+    }
+
     return WSAEINVAL;
 }
 
 int Monitor_WaitOnCondition( Monitor_t *m, int condid )
 {
-    if( (m != NULL) && (m->data != NULL) )
-        return WinMonitor_WaitOnCondition( m->data, condid );
+    DWORD ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = WaitForSingleObject((HANDLE)m->cleanup);
+
+        if(ret)
+            return ret;
+
+        if( m->data != NULL ) {
+            ret = WinMonitor_WaitOnCondition(m->data, condid);
+            assert(ReleaseMutex((HANDLE)m->cleanup));
+            return ret;
+        }
+
+        assert(ReleaseMutex((HANDLE)m->cleanup));
+        return WSAEINVAL;
+    }
+
     return WSAEINVAL;
 }
 
 int Monitor_SignalCondition( Monitor_t *m, int condid )
 {
-    if( (m != NULL) && (m->data != NULL) )
-        return WinMonitor_SignalCondition( m->data, condid );
+    DWORD ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = WaitForSingleObject((HANDLE)m->cleanup);
+
+        if(ret)
+            return ret;
+
+        if( m->data != NULL ) {
+            ret = WinMonitor_SignalCondition(m->data, condid);
+            assert(ReleaseMutex((HANDLE)m->cleanup));
+            return ret;
+        }
+
+        assert(ReleaseMutex((HANDLE)m->cleanup));
+        return WSAEINVAL;
+    }
+
     return WSAEINVAL;
 }
 
 int Monitor_BroadcastCondition( Monitor_t *m, int condid )
 {
-    if( (m != NULL) && (m->data != NULL) )
-        return WinMonitor_BroadcastCondition( m->data, condid );
+    DWORD ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = WaitForSingleObject((HANDLE)m->cleanup);
+
+        if(ret)
+            return ret;
+
+        if( m->data != NULL ) {
+            ret = WinMonitor_BroadcastCondition(m->data, condid);
+            assert(ReleaseMutex((HANDLE)m->cleanup));
+            return ret;
+        }
+
+        assert(ReleaseMutex((HANDLE)m->cleanup));
+        return WSAEINVAL;
+    }
+
     return WSAEINVAL;
 }
 
@@ -129,7 +256,6 @@ int WinMonitorData_destruct( WinMonitorData_t *wmd )
         for(i = 0; i < (int)wmd->cvmap->size; i++) {
             temp_key = wmd->cvmap->keys[i];
 
-            //
             rc = WinConditionVariable_destruct((WinConditionVariable_t *)
                                                 get_val(wmd->cvmap, temp_key));
             if(rc) {

@@ -16,38 +16,167 @@ namespace XPlat
 Monitor::Monitor( void )
 {
     static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
+    int ret;
     pthread_mutex_lock( &init_mutex );
 
     data = new PthreadMonitorData;
+    pthread_rwlock_t *c = new pthread_rwlock_t;
+    assert(data != NULL);
+    assert(c != NULL);
+
+    ret = pthread_rwlock_init(c, NULL);
+    assert(!ret);
+    cleanup_initialized = true;
+
+    cleanup = (void *)c;
 
     pthread_mutex_unlock( &init_mutex );
 }
 
 Monitor::~Monitor( void )
 {
-    static pthread_mutex_t cleanup_mutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_lock( &cleanup_mutex );
+    int ret;
+
+    ret = pthread_rwlock_wrlock((pthread_rwlock_t *)cleanup);
+    
+    // Make sure no one destroys the rwlock twice
+    if(cleanup == NULL) {
+        return;
+    }
+    assert(!ret);
 
     if( data != NULL ) {
         delete data;
         data = NULL;
     }
+    
+    cleanup_initialized = false;
+    ret = pthread_rwlock_unlock((pthread_rwlock_t *)cleanup);
+    assert(!ret);
 
-    pthread_mutex_unlock( &cleanup_mutex );
+    ret = pthread_rwlock_destroy((pthread_rwlock_t *)cleanup);
+    assert(!ret);
+    cleanup = NULL;
 }
 
 int Monitor::Lock( void )
 {
-    if( data != NULL )
-        return data->Lock();
+    int ret;
+    if( cleanup_initialized && (cleanup != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+        if(ret)
+            return ret;
+
+        if( data != NULL ) {
+            ret = data->Lock();
+            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            return ret;
+        }
+        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        return EINVAL;
+    }
+
     return EINVAL;
 }
 
 int Monitor::Unlock( void )
 {
-    if( data != NULL )
-        return data->Unlock();
+    int ret;
+    if( cleanup_initialized && (cleanup != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+        if(ret)
+            return ret;
+
+        if( data != NULL ) {
+            ret = data->Unlock();
+            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            return ret;
+        }
+        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        return EINVAL;
+    }
+
     return EINVAL;
+}
+
+int Monitor::RegisterCondition( unsigned int condid )
+{
+    int ret;
+    if( cleanup_initialized && (cleanup != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+        if(ret)
+            return ret;
+
+        if( data != NULL ) {
+            ret = data->RegisterCondition( condid );
+            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            return ret;
+        }
+        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        return -1;
+    }
+
+    return -1;
+}
+
+int Monitor::WaitOnCondition( unsigned int condid )
+{
+    int ret;
+    if( cleanup_initialized && (cleanup != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+        if(ret)
+            return ret;
+
+        if( data != NULL ) {
+            ret = data->WaitOnCondition( condid );
+            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            return ret;
+        }
+        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        return -1;
+    }
+
+    return -1;
+}
+
+int Monitor::SignalCondition( unsigned int condid )
+{
+    int ret;
+    if( cleanup_initialized && (cleanup != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+        if(ret)
+            return ret;
+
+        if( data != NULL ) {
+            ret = data->SignalCondition( condid );
+            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            return ret;
+        }
+        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        return -1;
+    }
+
+    return -1;
+}
+
+int Monitor::BroadcastCondition( unsigned int condid )
+{
+    int ret;
+    if( cleanup_initialized && (cleanup != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+        if(ret)
+            return ret;
+
+        if( data != NULL ) {
+            ret = data->BroadcastCondition( condid );
+            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            return ret;
+        }
+        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        return -1;
+    }
+
+    return -1;
 }
 
 PthreadMonitorData::PthreadMonitorData( void )
