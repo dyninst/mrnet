@@ -24,6 +24,8 @@ public:
 
 private:
     Data* data;
+    void* cleanup;
+    bool cleanup_initialized;
 
 public:
     Mutex( void );

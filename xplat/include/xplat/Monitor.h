@@ -36,6 +36,8 @@ public:
 
 private:
     Data* data;
+    void *cleanup;
+    bool cleanup_initialized;
 
 public:
     Monitor( void );
@@ -46,33 +48,10 @@ public:
     virtual int Unlock( void );
 
     // condition variable-related methods
-    virtual int RegisterCondition( unsigned int condid )
-    {
-        if( data != NULL )
-            return data->RegisterCondition( condid );
-        return -1;
-    }
-
-    virtual int WaitOnCondition( unsigned int condid )
-    {
-        if( data != NULL )
-            return data->WaitOnCondition( condid );
-        return -1;
-    }
-
-    virtual int SignalCondition( unsigned int condid )
-    {
-        if( data != NULL )
-            return data->SignalCondition( condid );
-        return -1;
-    }
-
-    virtual int BroadcastCondition( unsigned int condid )
-    {
-        if( data != NULL )
-            return data->BroadcastCondition( condid );
-        return -1;
-    }
+    virtual int RegisterCondition( unsigned int condid );
+    virtual int WaitOnCondition( unsigned int condid );
+    virtual int SignalCondition( unsigned int condid );
+    virtual int BroadcastCondition( unsigned int condid );
 };
 
 } // namespace XPlat

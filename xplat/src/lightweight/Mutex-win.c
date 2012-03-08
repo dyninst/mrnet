@@ -14,10 +14,19 @@ Mutex_t* Mutex_construct( void )
 
     EnterCriticalSection(&init_mutex);
 
+    /* Construct data */
     mut = (Mutex_t *)malloc(sizeof(Mutex_t));
     assert(mut != NULL);
     mut->data = (void *)WinMutexData_construct();
     assert(mut->data != NULL);
+
+    /* Construct cleanup lock */
+    c = CreateMutex(NULL,FALSE,NULL);
+    assert(c != NULL);
+
+    mut->cleanup_initialized = true;
+    mut->cleanup = (void *)c;
+
 
     LeaveCriticalSection(&init_mutex);
 
@@ -26,20 +35,34 @@ Mutex_t* Mutex_construct( void )
 
 int Mutex_destruct( Mutex_t* m )
 {
-    static CRITICAL_SECTION cleanup_mutex;
+    DWORD ret;
     int rc = 0;
 
-    InitializeCriticalSection(&cleanup_mutex);
+    if(m == NULL)
+        return -1;
 
-    EnterCriticalSection(&cleanup_mutex);
+    ret = WaitForSingleObject((HANDLE)m->cleanup, INFINITE);
 
-    if((m != NULL) && (m->data != NULL)) {
-        WinMutexData_destruct(m->data);
+    if(m->cleanup == NULL) {
+        return;
+    }
+
+    if(m->data != NULL) {
+        rc = WinMutexData_destruct(m->data);
         free(m->data);
         m->data = NULL;
     } else {
         rc = -1;
     }
+
+    m->cleanup_initialized = 0;
+    
+    ret = ReleaseMutex((HANDLE)m->cleanup);
+    assert(!ret);
+
+    ret = CloseHandle((HANDLE)m->cleanup);
+    assert(!ret);
+    m->cleanup = NULL;
 
     LeaveCriticalSection(&cleanup_mutex);
 
@@ -48,24 +71,65 @@ int Mutex_destruct( Mutex_t* m )
 
 int Mutex_Lock( Mutex_t *m )
 {
-    if(m->data != NULL)
-        return WinMutex_Lock(m->data);
-    else
+    DWORD ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = WaitForSingleObject((HANDLE)m->cleanup);
+        if(ret)
+            return ret;
+
+        if( m->data != NULL ) {
+            ret = WinMutex_Lock(m->data);
+            assert(ReleaseMutex((HANDLE)m->cleanup));
+            return ret;
+        }
+
+        assert(ReleaseMutex((HANDLE)m->cleanup));
         return WSAEINVAL;
+    }
+
+    return WSAEINVAL;
 }
 
 int Mutex_Unlock( Mutex_t *m )
 {
-    if( m->data != NULL )
-        return WinMutex_Unlock(m->data);
-    else
+    DWORD ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = WaitForSingleObject((HANDLE)m->cleanup);
+
+        if(ret)
+            return ret;
+
+        if( m->data != NULL ) {
+            ret = WinMutex_Unlock(m->data);
+            assert(ReleaseMutex((HANDLE)m->cleanup));
+            return ret;
+        }
+
+        assert(ReleaseMutex((HANDLE)m->cleanup));
         return WSAEINVAL;
+    }
+
+    return WSAEINVAL;
 }
 
 int Mutex_Trylock( Mutex_t *m )
 {
-    if(m->data != NULL)
-        return WinMutex_Trylock(m->data);
-    else
+    DWORD ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = WaitForSingleObject((HANDLE)m->cleanup);
+
+        if(ret)
+            return ret;
+
+        if( m->data != NULL ) {
+            ret = WinMutex_Trylock(m->data);
+            assert(ReleaseMutex((HANDLE)m->cleanup));
+            return ret;
+        }
+
+        assert(ReleaseMutex((HANDLE)m->cleanup));
         return WSAEINVAL;
+    }
+
+    return WSAEINVAL;
 }

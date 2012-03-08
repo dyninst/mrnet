@@ -8,16 +8,26 @@
 
 struct Mutex_t* Mutex_construct( void )
 {
+    int ret;
     static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
     struct Mutex_t* mut = NULL;
 
     pthread_mutex_lock( &init_mutex );
+    pthread_rwlock_t *c = NULL;
 
+    /* Construct *data */
     mut = (struct Mutex_t*) calloc( (size_t)1, sizeof(struct Mutex_t) );
     assert(mut != NULL);
     mut->data = PthreadMutexData_construct();
     assert(mut->data != NULL);
+
+    /* Construct lock */
+    c = (pthread_rwlock_t *)malloc(sizeof(pthread_rwlock_t));
+    ret = pthread_rwlock_init(c, NULL);
+    assert(!ret);
+    mut->cleanup_initialized = true;
+    mut->cleanup = (void *)c;
 
     pthread_mutex_unlock( &init_mutex );
 
@@ -26,45 +36,92 @@ struct Mutex_t* Mutex_construct( void )
 
 int Mutex_destruct( struct Mutex_t* m )
 {
-    static pthread_mutex_t cleanup_mutex = PTHREAD_MUTEX_INITIALIZER;
     int rc = 0;
+    int ret;
     
-    pthread_mutex_lock( &cleanup_mutex );
+    if(m == NULL)
+        return -1;
 
-    if( (m != NULL) && (m->data != NULL) ) {
+    ret = pthread_rwlock_wrlock((pthread_rwlock_t *)m->cleanup);
+
+    if(m->cleanup == NULL)
+        return -1;
+    assert(!ret);
+
+    if( m->data != NULL ) {
         PthreadMutexData_destruct( m->data );
         free(m->data);
         m->data = NULL;
     }
-    else rc = -1;
+    else
+        rc = -1;
 
-    pthread_mutex_unlock( &cleanup_mutex );
+    m->cleanup_initialized = 0;
+    ret = pthread_rwlock_unlock((pthread_rwlock_t *)m->cleanup);
+    assert(!ret);
+
+    ret = pthread_rwlock_destroy((pthread_rwlock_t *)m->cleanup);
+    assert(!ret);
+    m->cleanup = NULL;
 
     return rc;
 }
 
 int Mutex_Lock( struct Mutex_t* m )
 {
-    if( (m != NULL) && (m->data != NULL) )
-        return PthreadMutex_Lock( m->data );
-    else
+    int ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->cleanup);
+        if(ret)
+            return ret;
+        if( m->data != NULL ) {
+            ret = PthreadMutex_Lock( m->data );
+            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)m->cleanup));
+            return ret;
+        }
+        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)m->cleanup));
         return EINVAL;
+    }
+
+    return EINVAL;
 }
 
 int Mutex_Unlock( struct Mutex_t* m )
 {
-    if( (m != NULL) && (m->data != NULL) )
-        return PthreadMutex_Unlock( m->data );
-    else
+    int ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->cleanup);
+        if(ret)
+            return ret;
+        if( m->data != NULL ) {
+            ret = PthreadMutex_Unlock( m->data );
+            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)m->cleanup));
+            return ret;
+        }
+        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)m->cleanup));
         return EINVAL;
+    }
+
+    return EINVAL;
 }
 
 int Mutex_Trylock( struct Mutex_t* m )
 {
-    if( (m != NULL) && (m->data != NULL) )
-        return PthreadMutex_Trylock( m->data );
-    else
+    int ret;
+    if( (m != NULL) && m->cleanup_initialized && (m->cleanup != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->cleanup);
+        if(ret)
+            return ret;
+        if( m->data != NULL ) {
+            ret = PthreadMutex_Unlock( m->data );
+            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)m->cleanup));
+            return ret;
+        }
+        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)m->cleanup));
         return EINVAL;
+    }
+
+    return EINVAL;
 }
 
 PthreadMutexData_t* PthreadMutexData_construct( void )
