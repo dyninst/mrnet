@@ -265,7 +265,7 @@ else
     LIBMRNET_SRCS += $(SRCDIR)/PerfDataSysEvent_none.C
 endif
 
-ifeq ($(MRNET_STARTUP_METHOD),cray_xt)
+ifeq ($(MRNET_STARTUP_METHOD),cray)
 
 # build for a Cray XT (uses aprun or alps_tool_helper for parallel process launch)
 LIBMRNET_SRCS += $(SRCDIR)/XTNetwork.C \

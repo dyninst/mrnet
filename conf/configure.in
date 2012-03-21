@@ -15,19 +15,19 @@ AC_LANG(C++)
 dnl === CONFIGURE OPTIONS
 AC_ARG_WITH(startup,
             [AS_HELP_STRING([--with-startup=METHOD],
-                            [Tree instantiation method - "ssh" (default), "cray_xt"])],
+                            [Tree instantiation method - "ssh" (default), "cray"])],
             [MRNET_STARTUP_METHOD="${withval}"],
             [MRNET_STARTUP_METHOD="ssh"])
 
 AC_ARG_WITH(alpstoolhelp-lib,
             [AS_HELP_STRING([--with-alpstoolhelp-lib=PATH],
-                            [(CrayXT only) Absolute path to directory containing libalps library])],
+                            [(Cray only) Absolute path to directory containing libalps library])],
             [CRAY_ATH_LIBDIR="${withval}"],
             [CRAY_ATH_LIBDIR=""])
     
 AC_ARG_WITH(alpstoolhelp-inc,
             [AS_HELP_STRING([--with-alpstoolhelp-inc=PATH],
-                            [(CrayXT only) Absolute path to directory containing libalps.h])],
+                            [(Cray only) Absolute path to directory containing libalps.h])],
             [CRAY_ATH_INCDIR="${withval}"],
             [CRAY_ATH_INCDIR=""])
 
@@ -333,21 +333,27 @@ LIBS_LOWFAT="$LIBS_LIGHTWEIGHT -lpthread"
 
 dnl === CRAY XT OPTIONS ===
 if test $MRNET_STARTUP_METHOD = "ssh" ; then
-    AC_CHECK_FILE([/proc/cray_xt/nid],[MRNET_STARTUP_METHOD="cray_xt"])
+    AC_CHECK_FILE([/proc/cray_xt/nid],[MRNET_STARTUP_METHOD="cray"])
 fi
 
-if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
+if test $MRNET_STARTUP_METHOD = "cray" ; then
+
+    CRAYXT_ATH_LIBS=""
+    CRAYXE_ATH_LIBS=""
 
     CXXFLAGS="$CXXFLAGS -Darch_crayxt"
     CFLAGS="$CFLAGS -Darch_crayxt"
+
+    LDFLAGS_HOLD="$LDFLAGS"
 
     if test "x$CRAY_ATH_INCDIR" != "x" ; then
         CXXFLAGS="$CXXFLAGS -I$CRAY_ATH_INCDIR"
     fi
 
     if test "x$CRAY_ATH_LIBDIR" != "x" ; then
+        CRAYXT_ATH_LIBS="-L$CRAY_ATH_LIBDIR $CRAYXT_ATH_LIBS"
+        CRAYXE_ATH_LIBS="-L$CRAY_ATH_LIBDIR $CRAYXE_ATH_LIBS"
         LDFLAGS="$LDFLAGS -L$CRAY_ATH_LIBDIR"
-        CN_LDFLAGS="$CN_LDFLAGS -L$CRAY_ATH_LIBDIR"
     fi
 
     AC_CHECK_HEADERS([alps/alps.h] [alps/alps_toolAssist.h] [alps/apInfo.h], [], 
@@ -379,8 +385,8 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
         HAVE_ATH_LIBS="no"
         LIBS_HOLD=$LIBS
 
-        CRAYXT_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic "
-        CRAYXE_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic "
+        CRAYXT_ATH_LIBS="$CRAYXT_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
+        CRAYXE_ATH_LIBS="$CRAYXE_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic"
 
         AC_CHECK_LIB( [alps], [alps_launch_tool_helper],
                       [HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXT_ATH_LIBS $EXTRA_LIBS"],
@@ -397,9 +403,13 @@ if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
         LIBS="$LIBS_HOLD"
 
         if test $HAVE_ATH_LIBS = "no" ; then
-            AC_MSG_ERROR(Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib)
+            if test "x$CRAY_ATH_INCDIR" != "x" ; then
+                AC_MSG_ERROR(Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib)
+            fi
         fi
     fi
+    
+    LDFLAGS="$LDFLAGS_HOLD"
 fi
 
 AC_SUBST(MRNET_STARTUP_METHOD)
