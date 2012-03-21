@@ -51,7 +51,6 @@ class ParentNode: public virtual Error,
     
     int proc_SubTreeInitDoneReport ( PacketPtr ipacket ) const;
     bool waitfor_SubTreeInitDoneReports(void) const;
-    bool waitfor_SubTreeReports(void) const;
 
     int proc_DeleteSubTree( PacketPtr ipacket ) const;
     int proc_DeleteSubTreeAck( PacketPtr ipacket ) const;

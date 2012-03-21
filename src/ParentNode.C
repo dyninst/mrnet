@@ -247,27 +247,6 @@ int ParentNode::proc_ControlProtocolAck( int ack_tag ) const
     return 0;
 }
 
-bool ParentNode::waitfor_SubTreeReports( void ) const
-{
-    subtreereport_sync.Lock( );
-
-    while( _num_children > _num_children_reported ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u subtree reports ...\n",
-                               _num_children - _num_children_reported,
-                               _num_children ));
-        subtreereport_sync.WaitOnCondition( ALL_NODES_REPORTED );
-        mrn_dbg( 3, mrn_printf(FLF, stderr,
-                               "%d of %d children have checked in.\n",
-                               _num_children_reported, _num_children ));
-    }
-
-    subtreereport_sync.Unlock( );
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "All %d children nodes have reported\n",
-                _num_children ));
-    return true;
-}
-
 int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
