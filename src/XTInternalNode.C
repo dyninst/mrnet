@@ -21,18 +21,17 @@ XTInternalNode::XTInternalNode( Network* inetwork,
                                 int listeningSocket,
                                 Port listeningPort )
   : CommunicationNode( ihostname, listeningPort, irank ),
-    ParentNode( inetwork, ihostname, irank, listeningSocket, listeningPort ),
-    ChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank ),
+    ParentNode( inetwork, 
+                ihostname, irank, 
+                listeningSocket, listeningPort ),
+    ChildNode( inetwork, 
+               ihostname, irank, 
+               iphostname, ipport, iprank ),
     InternalNode( inetwork,
-                  ihostname,
-                  irank, 
-                  iphostname, 
-                  ipport, 
-                  iprank,
-                  listeningSocket,
-                  listeningPort )
+                  ihostname, irank, 
+                  iphostname, ipport, iprank,
+                  listeningSocket, listeningPort )
 {
-    // nothing else to do
 }
 
 XTInternalNode::~XTInternalNode(void)

@@ -85,6 +85,29 @@ Network::CreateNetworkIN( int argc, char* argv[] )
     }
 }
 
+FrontEndNode*
+RSHNetwork::CreateFrontEndNode( Network* n,
+                                std::string ihost,
+                                Rank irank )
+{
+    return new RSHFrontEndNode( n, ihost, irank );
+}
+
+BackEndNode*
+RSHNetwork::CreateBackEndNode(Network* inetwork, 
+                                std::string imy_hostname, 
+                                Rank imy_rank,
+                                std::string iphostname, 
+                                Port ipport, 
+                                Rank iprank )
+{
+    return new RSHBackEndNode( inetwork,
+                               imy_hostname,
+                               imy_rank,
+                               iphostname,
+                               ipport,
+                               iprank );
+}
 
 InternalNode*
 RSHNetwork::CreateInternalNode( Network* inetwork, 
@@ -178,6 +201,12 @@ RSHNetwork::RSHNetwork( const char* phostname, Port pport, Rank prank,
                                     prank,
                                     myhostname,
                                     myrank );
+
+        RSHInternalNode* in = dynamic_cast<RSHInternalNode*>( get_LocalInternalNode() );
+        if( in == NULL )
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "internal-node dynamic_cast failed\n") );
+        else
+            in->request_LaunchInfo();
     }
     else {
         // initialize as a Network BE
@@ -227,50 +256,25 @@ RSHNetwork::Instantiate( ParsedGraph* _parsed_graph,
         localnode->set_Port( get_LocalPort() );
     }   
 
-    PacketPtr packet( new MRN::Packet(CTL_STRM_ID, PROT_LAUNCH_SUBTREE, "%s %s %s %as", 
-                                 sg.c_str(), mrn_commnode_path, 
-                                 backend_exe, backend_args, backend_argc) );
-    
     RSHFrontEndNode* fe = dynamic_cast<RSHFrontEndNode*>( get_LocalFrontEndNode() );
     if( fe == NULL ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "front-end dynamic_cast failed\n") );
         return false;
     }
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "Instantiating network ... \n") );
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Instantiating network\n") );
 
-    if( fe->proc_newSubTree( packet ) == -1 ) {
+    PacketPtr packet( new MRN::Packet(CTL_STRM_ID, PROT_LAUNCH_SUBTREE, "%s %s %as", 
+                                      mrn_commnode_path, 
+                                      backend_exe, 
+                                      backend_args, backend_argc) );    
+    if( fe->proc_LaunchSubTree(packet) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to spawn subtree\n") );
         error( ERR_INTERNAL, get_LocalRank(), "failed to spawn subtree");
         return false;
     }
 
     return true;
-}
-
-FrontEndNode*
-RSHNetwork::CreateFrontEndNode( Network* n,
-                                std::string ihost,
-                                Rank irank )
-{
-    return new RSHFrontEndNode( n, ihost, irank );
-}
-
-
-BackEndNode*
-RSHNetwork::CreateBackEndNode(Network* inetwork, 
-                                std::string imy_hostname, 
-                                Rank imy_rank,
-                                std::string iphostname, 
-                                Port ipport, 
-                                Rank iprank )
-{
-    return new RSHBackEndNode( inetwork,
-                                imy_hostname,
-                                imy_rank,
-                                iphostname,
-                                ipport,
-                                iprank );
 }
 
 } // namespace MRN

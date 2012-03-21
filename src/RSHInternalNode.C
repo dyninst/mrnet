@@ -13,38 +13,59 @@ namespace MRN
 /*  InternalNode CLASS METHOD DEFINITIONS            */
 /*======================================================*/
 RSHInternalNode::RSHInternalNode( Network * inetwork,
-                            std::string const& ihostname, Rank irank,
-                            std::string const& iphostname, Port ipport, Rank iprank,
-                            int listeningSocket,
-                            Port listeningPort )
+                                  std::string const& ihostname, 
+                                  Rank irank,
+                                  std::string const& iphostname, 
+                                  Port ipport, 
+                                  Rank iprank,
+                                  int listeningSocket,
+                                  Port listeningPort )
   : CommunicationNode( ihostname, listeningPort, irank ),
-    ParentNode( inetwork, ihostname, irank, listeningSocket, listeningPort ),
-    ChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank ),
-    InternalNode( inetwork, ihostname, irank, iphostname, ipport, iprank, 
-                  listeningSocket, listeningPort ),
-    RSHParentNode( inetwork, ihostname, irank ),
-    RSHChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank )
+    ParentNode( inetwork, 
+                ihostname, irank, 
+                listeningSocket, listeningPort ),
+    ChildNode( inetwork, 
+               ihostname, irank, 
+               iphostname, ipport, iprank ),
+    RSHParentNode(),
+    RSHChildNode(),
+    InternalNode( inetwork, 
+                  ihostname, irank, 
+                  iphostname, ipport, iprank, 
+                  listeningSocket, listeningPort )
 {
-    //request subtree information    
-    if( request_SubTreeInfo() == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "request_SubTreeInfo() failed\n") );
-    }
 }
 
 RSHInternalNode::~RSHInternalNode(void)
 {
 }
 
+int RSHInternalNode::request_LaunchInfo(void) const
+{
+    mrn_dbg_func_begin();
+
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_LAUNCH_SUBTREE, NULL_STRING) );
+    if( ! packet->has_Error() ) {
+        RSHParentNode::_network->send_PacketToParent( packet );
+        RSHParentNode::_network->flush_PacketsToParent();
+    }
+    else {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n") );
+        return -1;
+    }
+
+    return 0;
+}
+
 int RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
 {
     int retval = 0;
 
-    switch( cur_packet->get_Tag() )
-    {
+    switch( cur_packet->get_Tag() ) {
     case PROT_LAUNCH_SUBTREE:
         mrn_dbg(3, mrn_printf(FLF, stderr, "Processing PROT_LAUNCH_SUBTREE\n"));
 
-        if( proc_newSubTree( cur_packet ) == -1 ) {
+        if( proc_LaunchSubTree( cur_packet ) == -1 ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_newSubTree() failed\n"));
             retval = -1;
         }

@@ -13,14 +13,8 @@ namespace MRN
 class RSHChildNode : public virtual ChildNode
 {
  public:
-    RSHChildNode( Network* inetwork,
-                  std::string const& ihostname,
-                  Rank irank,
-                  std::string const& iphostname, 
-                  Port ipport, 
-                  Rank iprank );
-
-    virtual ~RSHChildNode(void);
+    RSHChildNode();
+    virtual ~RSHChildNode();
 };
 
 } // namespace MRN

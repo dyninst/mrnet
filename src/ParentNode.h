@@ -28,9 +28,8 @@ class Stream;
 class ParentNode: public virtual Error, 
                   public virtual CommunicationNode
 {
-    friend class Aggregator;
-    friend class Synchronizer;
     friend class PeerNode;
+
  public:
     ParentNode( Network* inetwork, 
                 std::string const& myhost, 
@@ -49,7 +48,7 @@ class ParentNode: public virtual Error,
     int proc_ControlProtocolAck( int ack_tag ) const; 
     bool waitfor_ControlProtocolAcks( int ack_tag, 
                                       unsigned num_acks_expected ) const;
-
+    
     int proc_SubTreeInitDoneReport ( PacketPtr ipacket ) const;
     bool waitfor_SubTreeInitDoneReports(void) const;
     bool waitfor_SubTreeReports(void) const;
@@ -80,6 +79,8 @@ class ParentNode: public virtual Error,
 
     virtual int proc_PortUpdates( PacketPtr ipacket ) const;
 
+    virtual int send_LaunchInfo( PeerNodePtr ) const;
+
  protected:
     Network * _network;
 
@@ -91,6 +92,8 @@ class ParentNode: public virtual Error,
     mutable XPlat::Mutex cps_sync;
 
     virtual int proc_PacketFromChildren( PacketPtr ipacket );
+
+    ParentNode() {}
 
  private:
     XPlat_Socket listening_sock_fd;

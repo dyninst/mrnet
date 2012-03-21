@@ -12,15 +12,15 @@ namespace MRN
 
 class XTInternalNode : public InternalNode
 {
-public:
+ public:
     XTInternalNode( Network* inetwork,
-                        std::string const& ihostname,
-                        Rank irank,
-                        std::string const& iphostname,
-                        Port ipport,
-                        Rank iprank,
-                        int listeningSocket,
-                        Port listeningPort );
+                    std::string const& ihostname,
+                    Rank irank,
+                    std::string const& iphostname,
+                    Port ipport,
+                    Rank iprank,
+                    int listeningSocket,
+                    Port listeningPort );
     virtual ~XTInternalNode(void);
 
     int PropagateSubtreeReports( void );

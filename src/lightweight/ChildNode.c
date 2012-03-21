@@ -190,9 +190,14 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
                           "ChildNode_proc_PacketFromParent, packet->tag = %d\n", 
                           tag));
 
-    if( (tag >= FirstSystemTag) && (tag < PROT_LAST) ) {
+    if( (tag > PROT_FIRST) && (tag < PROT_LAST) ) {
 
         switch( tag ) {
+
+        case PROT_LAUNCH_SUBTREE:
+            // BEs don't launch anything, ignore
+            break;
+
         case PROT_SHUTDOWN:
             if (BackEndNode_proc_DeleteSubTree(be, packet) == -1) {
                 mrn_dbg(1, mrn_printf(FLF, stderr,"BackEndNode_proc_deleteSubTree() failed\n"));
@@ -234,7 +239,7 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
             break;
 
         case PROT_NEW_FILTER:
-            mrn_dbg(5, mrn_printf(FLF, stderr, "BE ignoring new filter; currently, lightweight backend nodes do not perform any filtering. This is different than standard MRNet behavior.\n"));
+            mrn_dbg(5, mrn_printf(FLF, stderr, "lightweight BE ignoring new filter\n"));
             break;
 
         case PROT_RECOVERY_RPT:
@@ -308,7 +313,7 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
             }
             break;
         default:
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
+            mrn_dbg( 3, mrn_printf(FLF, stderr,
                                    "internal protocol tag %d is unhandled\n", tag) );
             break;
         }
