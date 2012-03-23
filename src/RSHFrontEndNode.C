@@ -13,15 +13,13 @@ RSHFrontEndNode::RSHFrontEndNode( Network* inetwork,
                                   Rank irank )
   : CommunicationNode( ihostname, UnknownPort, irank ),
     ParentNode( inetwork, ihostname, irank ),
-    RSHParentNode( inetwork, ihostname, irank ),
+    RSHParentNode(),
     FrontEndNode( inetwork, ihostname, irank )
 {
-    // nothing else to do
 }
 
 RSHFrontEndNode::~RSHFrontEndNode( void  )
 {
-    // nothing else to do
 }
 
 } // namespace MRN

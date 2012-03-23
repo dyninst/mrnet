@@ -867,13 +867,12 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-startup=METHOD   Tree instantiation method - "ssh" (default),
-                          "cray_xt"
+  --with-startup=METHOD   Tree instantiation method - "ssh" (default), "cray"
   --with-alpstoolhelp-lib=PATH
-                          (CrayXT only) Absolute path to directory containing
+                          (Cray only) Absolute path to directory containing
                           libalps library
   --with-alpstoolhelp-inc=PATH
-                          (CrayXT only) Absolute path to directory containing
+                          (Cray only) Absolute path to directory containing
                           libalps.h
   --with-boost=PATH       Absolute path to installation of Boost C++ libraries
                           (note: specify the path to the directory containing
@@ -5708,23 +5707,29 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_file__proc_cray_xt_nid" >&5
 echo "${ECHO_T}$ac_cv_file__proc_cray_xt_nid" >&6
 if test $ac_cv_file__proc_cray_xt_nid = yes; then
-  MRNET_STARTUP_METHOD="cray_xt"
+  MRNET_STARTUP_METHOD="cray"
 fi
 
 fi
 
-if test $MRNET_STARTUP_METHOD = "cray_xt" ; then
+if test $MRNET_STARTUP_METHOD = "cray" ; then
+
+    CRAYXT_ATH_LIBS=""
+    CRAYXE_ATH_LIBS=""
 
     CXXFLAGS="$CXXFLAGS -Darch_crayxt"
     CFLAGS="$CFLAGS -Darch_crayxt"
+
+    LDFLAGS_HOLD="$LDFLAGS"
 
     if test "x$CRAY_ATH_INCDIR" != "x" ; then
         CXXFLAGS="$CXXFLAGS -I$CRAY_ATH_INCDIR"
     fi
 
     if test "x$CRAY_ATH_LIBDIR" != "x" ; then
+        CRAYXT_ATH_LIBS="-L$CRAY_ATH_LIBDIR $CRAYXT_ATH_LIBS"
+        CRAYXE_ATH_LIBS="-L$CRAY_ATH_LIBDIR $CRAYXE_ATH_LIBS"
         LDFLAGS="$LDFLAGS -L$CRAY_ATH_LIBDIR"
-        CN_LDFLAGS="$CN_LDFLAGS -L$CRAY_ATH_LIBDIR"
     fi
 
 
@@ -5972,8 +5977,8 @@ echo "$as_me: error: Can't find libalps.h. Specify proper directory with --with-
         HAVE_ATH_LIBS="no"
         LIBS_HOLD=$LIBS
 
-        CRAYXT_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic "
-        CRAYXE_ATH_LIBS="-Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic "
+        CRAYXT_ATH_LIBS="$CRAYXT_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
+        CRAYXE_ATH_LIBS="$CRAYXE_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic"
 
         echo "$as_me:$LINENO: checking for alps_launch_tool_helper in -lalps" >&5
 echo $ECHO_N "checking for alps_launch_tool_helper in -lalps... $ECHO_C" >&6
@@ -6120,11 +6125,15 @@ fi
         LIBS="$LIBS_HOLD"
 
         if test $HAVE_ATH_LIBS = "no" ; then
-            { { echo "$as_me:$LINENO: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&5
+            if test "x$CRAY_ATH_INCDIR" != "x" ; then
+                { { echo "$as_me:$LINENO: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&5
 echo "$as_me: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&2;}
    { (exit 1); exit 1; }; }
+            fi
         fi
     fi
+
+    LDFLAGS="$LDFLAGS_HOLD"
 fi
 
 

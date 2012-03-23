@@ -415,7 +415,7 @@ void * EventDetector::main( void* iarg )
 	}
 
         std::set< XPlat_Socket > eventfds;
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "eventWait(timeout=%dms)\n", timeout));
+        //mrn_dbg( 5, mrn_printf(FLF, stderr, "eventWait(timeout=%dms)\n", timeout));
         int retval = edt->eventWait( eventfds, timeout );
 
         if( retval == -1 ) {
@@ -429,7 +429,7 @@ void * EventDetector::main( void* iarg )
 	    elapsed_ms = waitTimer.get_latency_msecs();
 	    elapsed = (int)elapsed_ms;
 	    if( elapsed == 0 ) elapsed++;
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "timeout after %d ms\n", elapsed));
+            //mrn_dbg( 5, mrn_printf(FLF, stderr, "timeout after %d ms\n", elapsed));
                 
 	    // notify streams with registered timeouts
 	    edt->handle_Timeout( tk, elapsed );

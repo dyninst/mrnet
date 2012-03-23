@@ -13,14 +13,7 @@
 namespace MRN
 {
 
-RSHChildNode::RSHChildNode( Network* inetwork,
-                            std::string const& ihostname,
-                            Rank irank,
-                            std::string const& iphostname,
-                            Port ipport, 
-                            Rank iprank )
-  : CommunicationNode( ihostname, UnknownPort, irank ),
-    ChildNode( inetwork, ihostname, irank, iphostname, ipport, iprank )
+RSHChildNode::RSHChildNode(void)
 {
 }
 

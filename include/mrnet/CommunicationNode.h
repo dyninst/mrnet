@@ -19,9 +19,9 @@ class CommunicationNode {
 
     // BEGIN MRNET API
 
-    std::string get_HostName( ) const;
-    Port get_Port( ) const;
-    Rank get_Rank( ) const;
+    std::string get_HostName(void) const;
+    Port get_Port(void) const;
+    Rank get_Rank(void) const;
 
     // END MRNET API
 
@@ -39,7 +39,8 @@ class CommunicationNode {
     std::string _hostname;
     Port _port;
     Rank _rank;
-    
+
+    CommunicationNode() {}  
 };
 
 } /* namespace MRN */

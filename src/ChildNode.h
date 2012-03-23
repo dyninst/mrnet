@@ -15,10 +15,12 @@
 
 namespace MRN
 {
+
 class Network;
 
 class ChildNode: public virtual Error, 
-                 public virtual CommunicationNode {
+                 public virtual CommunicationNode
+{
   public:
     ChildNode( Network *inetwork,
                std::string const& ihostname, Rank irank,
@@ -33,7 +35,6 @@ class ChildNode: public virtual Error,
     int proc_RecoveryReport( PacketPtr ipacket ) const;
 
     int send_SubTreeInitDoneReport(void) const;
-    int request_SubTreeInfo(void) const;
     bool ack_DeleteSubTree(void) const;
 
     int proc_PortUpdate(PacketPtr ipacket ) const;
@@ -43,8 +44,8 @@ class ChildNode: public virtual Error,
     int proc_CollectPerfData( PacketPtr ipacket ) const;
     int proc_PrintPerfData( PacketPtr ipacket ) const;
     
-    //Env and Topo distribution
-    int proc_SetTopoEnv( PacketPtr ipacket ) const;
+    // Network Settings (topology and environment)
+    int proc_NetworkSettings( PacketPtr ipacket ) const;
 
     /* Failure Recovery */
     int proc_EnableFailReco( PacketPtr ipacket ) const;
@@ -62,6 +63,8 @@ class ChildNode: public virtual Error,
  protected:
     Network * _network;
     virtual int proc_PacketFromParent( PacketPtr cur_packet );
+
+    ChildNode(void) {}
 
  private:
     uint16_t _incarnation; //incremented each time child connects to new parent

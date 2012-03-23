@@ -33,7 +33,7 @@ InternalNode::InternalNode( Network * inetwork,
     ParentNode::_network->set_LocalRank( ParentNode::_rank );
     ParentNode::_network->set_InternalNode( this );
 
-    //new topo prop code
+    // set initial topology to just this process
     ParentNode::_network->set_NetworkTopology( new NetworkTopology(inetwork, 
                                                                    ParentNode::_hostname,
 								   ParentNode::_port,

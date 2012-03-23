@@ -255,7 +255,8 @@ protected:
     friend class EventDetector;
     friend class RSHParentNode;
     friend class RSHChildNode;
-
+    friend class RSHInternalNode;
+    
     // some conditions we waitfor/signal
     enum {
         STREAMS_NONEMPTY,

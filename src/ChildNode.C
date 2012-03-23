@@ -18,13 +18,14 @@ namespace MRN
 /*  ChildNode CLASS METHOD DEFINITIONS               */
 /*===================================================*/
 ChildNode::ChildNode( Network * inetwork,
-                      std::string const& ihostname, Rank irank,
+                      std::string const& UNUSED(ihostname), 
+                      Rank UNUSED(irank),
                       std::string const& iphostname, Port ipport, Rank iprank )
-    : CommunicationNode(ihostname, UnknownPort, irank),
-      _network(inetwork), _incarnation(0)
+    : _network( inetwork ), 
+      _incarnation( 0 )
 {
-    PeerNodePtr parent =
-        _network->new_PeerNode( iphostname, ipport, iprank, true, true );
+    PeerNodePtr parent = _network->new_PeerNode( iphostname, ipport, iprank, 
+                                                 true, true );
 }
 
 int ChildNode::proc_PacketsFromParent( std::list< PacketPtr > & packets )
@@ -51,7 +52,7 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
 {
     int retval = 0;
     int tag = cur_packet->get_Tag();
-    if( (tag >= FirstSystemTag) && (tag < PROT_LAST) ) {
+    if( (tag > PROT_FIRST) && (tag < PROT_LAST) ) {
 
         switch ( tag ) {
 
@@ -219,9 +220,9 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
             }
             break;
         case PROT_NET_SETTINGS:
-            if( proc_SetTopoEnv( cur_packet ) == -1 ) {
+            if( proc_NetworkSettings( cur_packet ) == -1 ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "proc_SetTopoEnv() failed\n") );
+                                       "proc_NetworkSettings() failed\n") );
                 retval = -1;
             }
             break;
@@ -257,7 +258,7 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
     return retval;
 }
 
-int ChildNode::proc_SetTopoEnv( PacketPtr ipacket ) const
+int ChildNode::proc_NetworkSettings( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
     
@@ -534,24 +535,6 @@ int ChildNode::send_SubTreeInitDoneReport( ) const
     _network->get_NetworkTopology()->update_Router_Table();
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SUBTREE_INITDONE_RPT, NULL) );
-
-    if( ! packet->has_Error() ) {
-        _network->send_PacketToParent( packet );
-        _network->flush_PacketsToParent();
-    }
-    else {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "new packet() failed\n") );
-        return -1;
-    }
-
-    mrn_dbg_func_end();
-    return 0;
-}
-
-int ChildNode::request_SubTreeInfo( void ) const 
-{
-    mrn_dbg_func_begin();
-    PacketPtr packet( new Packet( CTL_STRM_ID, PROT_SUBTREE_INFO_REQ, "%ud", _rank ) );
 
     if( ! packet->has_Error() ) {
         _network->send_PacketToParent( packet );

@@ -117,7 +117,7 @@ SerialGraph* SerialGraph::get_MySubTree( std::string &ihostname,
 
     begin = _byte_array.find( hoststr.str() );
     if( begin == std::string::npos ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
+        mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "SubTreeRoot:'%s' not found\n",
                                hoststr.str().c_str()) );
         return NULL;
@@ -160,7 +160,7 @@ bool SerialGraph::set_Port(std::string hostname, Port port, Rank irank)
     
     begin = _byte_array.find( hoststr.str() );
     if( begin == std::string::npos ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr,
+        mrn_dbg( 5, mrn_printf(FLF, stderr,
                  "Host :\"%s\" whose port is to changed is not found in byte_array:\"%s\"\n",
                  hoststr.str().c_str(), _byte_array.c_str() ));
        return false; //return value of false means not succesful set_Port

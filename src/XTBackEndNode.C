@@ -16,8 +16,12 @@ XTBackEndNode::XTBackEndNode( Network * inetwork,
                               std::string imyhostname, Rank imyrank,
                               std::string iphostname, Port ipport, Rank iprank )
   : CommunicationNode( imyhostname, UnknownPort, imyrank ),
-    ChildNode( inetwork, imyhostname, imyrank, iphostname, ipport, iprank ),
-    BackEndNode( inetwork, imyhostname, imyrank, iphostname, ipport, iprank )
+    ChildNode( inetwork, 
+               imyhostname, imyrank, 
+               iphostname, ipport, iprank ),
+    BackEndNode( inetwork, 
+                 imyhostname, imyrank, 
+                 iphostname, ipport, iprank )
 {
 }
 
