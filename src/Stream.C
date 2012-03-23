@@ -94,6 +94,8 @@ Stream::~Stream()
 {
     close();
 
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Deleting stream %u\n", _id) );
+
     if( _network->is_LocalNodeFrontEnd() ) {
         PacketPtr packet( new Packet(CTL_STRM_ID, PROT_DEL_STREAM, "%ud", _id) );
         if( _network->get_LocalFrontEndNode()->proc_deleteStream( packet ) == -1 ) {

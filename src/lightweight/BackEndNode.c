@@ -268,20 +268,22 @@ int BackEndNode_proc_deleteStream( BackEndNode_t* be, Packet_t* ipacket )
         mrn_dbg(1, mrn_printf(FLF, stderr, "Packet_unpack() failed\n"));
         return -1;
     }
-    
-    strm = Network_get_Stream(be->network, stream_id);
-    if (strm == NULL) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "stream %u lookup failed\n", stream_id));
-        return -1;
-    }
 
-    if( ! Network_is_UserStreamId(stream_id) ) {
-        // kill internal streams
-        delete_Stream_t( strm );
-    }
-    else {
-        // close user streams
-        strm->_was_closed = 1;
+    strm = Network_get_Stream(be->network, stream_id);
+
+    if(Network_is_UserStreamId(stream_id)) {
+        if (strm != NULL) {
+            // close user streams
+            strm->_was_closed = 1;
+        } else {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "stream %u lookup failed\n", stream_id));
+            return -1;
+        }
+    } else {
+        if( strm != NULL ) {
+            // kill internal streams
+            delete_Stream_t( strm );
+        }
     }
 
     mrn_dbg_func_end();

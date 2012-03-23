@@ -63,11 +63,10 @@ int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
     }
 
     if( _network->is_LocalNodeFrontEnd() && (net_size > 1) ) {
-        // block until updates received, then kill the stream
+        // block until updates received
         int tag;
         PacketPtr p;
         port_strm->recv( &tag, p );
-        delete port_strm;
 
         // broadcast the accumulated updates
         _network->send_TopologyUpdates();
