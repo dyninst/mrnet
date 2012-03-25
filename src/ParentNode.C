@@ -29,12 +29,11 @@ namespace MRN
 /*  ParentNode CLASS METHOD DEFINITIONS            */
 /*====================================================*/
 ParentNode::ParentNode( Network* inetwork,
-                        std::string const& myhost,
-                        Rank myrank,
-                        int listeningSocket,
-                        Port listeningPort )
-    : CommunicationNode( myhost, listeningPort, myrank ),
-      _network(inetwork),
+                        std::string const& UNUSED(myhost),
+                        Rank UNUSED(myrank),
+                        int listeningSocket /* = -1 */,
+                        Port UNUSED(listeningPort) /* = UnknownPort */ )
+    : _network( inetwork ),
       _num_children( 0 ),
       _num_children_reported( 0 ),
       listening_sock_fd( listeningSocket )
@@ -88,7 +87,7 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
     
     int tag = cur_packet->get_Tag();
 
-    if( (tag >= FirstSystemTag) && (tag < PROT_LAST) ) {
+    if( (tag > PROT_FIRST) && (tag < PROT_LAST) ) {
         switch ( cur_packet->get_Tag() ) {
         case PROT_SUBTREE_INITDONE_RPT:
             if( proc_SubTreeInitDoneReport(cur_packet) == -1 ) {
@@ -155,7 +154,7 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
 
 int ParentNode::proc_PortUpdates( PacketPtr ) const
 {
-    return 1;
+    return 0;
 }
 
 bool ParentNode::waitfor_ControlProtocolAcks( int ack_tag, 
@@ -246,27 +245,6 @@ int ParentNode::proc_ControlProtocolAck( int ack_tag ) const
 
     mrn_dbg_func_end();
     return 0;
-}
-
-bool ParentNode::waitfor_SubTreeReports( void ) const
-{
-    subtreereport_sync.Lock( );
-
-    while( _num_children > _num_children_reported ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u subtree reports ...\n",
-                               _num_children - _num_children_reported,
-                               _num_children ));
-        subtreereport_sync.WaitOnCondition( ALL_NODES_REPORTED );
-        mrn_dbg( 3, mrn_printf(FLF, stderr,
-                               "%d of %d children have checked in.\n",
-                               _num_children_reported, _num_children ));
-    }
-
-    subtreereport_sync.Unlock( );
-
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "All %d children nodes have reported\n",
-                _num_children ));
-    return true;
 }
 
 int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
@@ -380,6 +358,12 @@ bool ParentNode::waitfor_DeleteSubTreeAcks( void ) const
 
     mrn_dbg_func_end();
     return true;
+}
+
+int ParentNode::send_LaunchInfo( PeerNodePtr ) const
+{
+    // nothing to see here, try the platform-specific code
+    return 0;
 }
 
 int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ) const
@@ -741,6 +725,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                                   vals, count) );
         pkt->set_DestroyData( true );
         child_node->sendDirectly( pkt );
+
     }
     
     if( NULL == nt->find_Node(child_rank) ) {

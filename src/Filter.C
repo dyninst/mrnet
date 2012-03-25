@@ -65,12 +65,13 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
 
     if( pdm != NULL ) {
         if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_FILTER) ) {
-            for( iter = ipackets.begin(); iter != ipackets.end(); iter++ )
+            for( iter = ipackets.begin(); iter != ipackets.end(); iter++ ) {
                 if (_type == FILTER_SYNC)
                     (*iter)->start_Timer(PERFDATA_PKT_TIMERS_FILTER_SYNC);
                 else
                     (*iter)->start_Timer(PERFDATA_PKT_TIMERS_FILTER_UPDOWN);
                 (*iter)->start_Timer (PERFDATA_PKT_TIMERS_FILTER);
+            }
         }
     }
 
@@ -97,12 +98,12 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
                 else
                     p->stop_Timer(PERFDATA_PKT_TIMERS_FILTER_UPDOWN);
 
-                (*iter)->stop_Timer (PERFDATA_PKT_TIMERS_FILTER);
+                p->stop_Timer (PERFDATA_PKT_TIMERS_FILTER);
                 pdm->add_PacketTimers(p);
             }
         }
     
-       if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_FILTER_TO_SEND))
+        if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_FILTER_TO_SEND))
             for( iter = opackets.begin(); iter != opackets.end(); iter++ )
                 (*iter)->start_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
     }

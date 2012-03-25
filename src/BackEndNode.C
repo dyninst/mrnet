@@ -234,20 +234,22 @@ int BackEndNode::proc_deleteStream( PacketPtr ipacket ) const
 
     stream_id = (*ipacket)[0]->get_uint32_t();
     strm = _network->get_Stream( stream_id );
-    if( strm == NULL ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n", 
-                               stream_id) );
-        return -1;
-    } 
 
-    if( ! Network::is_UserStreamId(stream_id) ) {
-        // kill internal streams
-        delete strm;
+    if(Network::is_UserStreamId(stream_id)) {
+        if(strm != NULL) {
+            // close user streams
+            strm->close();
+        } else {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "stream %u lookup failed\n", 
+                        stream_id) );
+            return -1;
+        }
+    } else {
+        if(strm != NULL) {
+            delete strm;
+        }
     }
-    else {
-        // close user streams
-        strm->close();
-    }
+
     mrn_dbg_func_end();
     return 0;
 }

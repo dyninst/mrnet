@@ -11,7 +11,7 @@ namespace MRN {
 #endif
 
 enum ProtocolTags {
-/*  0 */     PROT_SUBTREE_INFO_REQ = FirstSystemTag,
+/*  0 */     PROT_FIRST = FirstSystemTag,
 /*  1 */     PROT_LAUNCH_SUBTREE,
 /*  2 */     PROT_SUBTREE_INITDONE_RPT,
 /*  3 */     PROT_SHUTDOWN,

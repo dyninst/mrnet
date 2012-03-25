@@ -15,24 +15,37 @@
 namespace MRN
 {
 
-/*====================================================*/
-/*  ParentNode CLASS METHOD DEFINITIONS            */
-/*====================================================*/
-RSHParentNode::RSHParentNode( Network* inetwork,
-                              std::string const& ihostname,
-                              Rank irank )
-  : CommunicationNode( ihostname, UnknownPort, irank ),
-    ParentNode( inetwork, ihostname, irank )
+RSHParentNode::RSHParentNode(void)
 {
-    // nothing else to do
 }
 
-RSHParentNode::~RSHParentNode( void )
+RSHParentNode::~RSHParentNode(void)
 {
-    // nothing else to do
 }
 
-int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
+int 
+RSHParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
+{
+    int retval = 0;
+    
+    int tag = cur_packet->get_Tag();
+    switch( tag ) {
+     case PROT_LAUNCH_SUBTREE: {
+         // child is requesting the launch info
+         Rank child_rank = cur_packet->get_InletNodeRank();
+         PeerNodePtr child = _network->get_PeerNode( child_rank );
+         send_LaunchInfo( child );
+         break;
+     }
+     default:
+         retval = ParentNode::proc_PacketFromChildren( cur_packet );
+    }
+
+    return retval;
+}
+
+int 
+RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
 {
     mrn_dbg_func_begin();
 
@@ -63,11 +76,10 @@ int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
     }
 
     if( _network->is_LocalNodeFrontEnd() && (net_size > 1) ) {
-        // block until updates received, then kill the stream
+        // block until updates received
         int tag;
         PacketPtr p;
         port_strm->recv( &tag, p );
-        delete port_strm;
 
         // broadcast the accumulated updates
         _network->send_TopologyUpdates();
@@ -78,46 +90,54 @@ int RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
 }
 
 int 
-RSHParentNode::proc_newSubTree( PacketPtr ipacket )
+RSHParentNode::send_LaunchInfo( PeerNodePtr child_node ) const
 {
-    const char *byte_array = NULL;
-    const char *backend_exe = NULL;
+    mrn_dbg_func_begin();
+    child_node->send( _launch_pkt );
+    child_node->flush();
+    return 0;
+}
+
+int 
+RSHParentNode::proc_LaunchSubTree( PacketPtr ipacket )
+{
     const char *commnode_path = NULL;
+    const char *backend_exe = NULL;
     const char **backend_argv;
     uint32_t backend_argc;
-    int rc;
-  
+    int rc;  
     DataType dt;
 
     mrn_dbg_func_begin();
 
-    byte_array = (*ipacket)[0]->get_string();
-    commnode_path = (*ipacket)[1]->get_string(); 
-    backend_exe = (*ipacket)[2]->get_string();
-    backend_argv = (const char**) (*ipacket)[3]->get_array( &dt, &backend_argc );
+    _launch_pkt = ipacket;
 
-    SerialGraph sg( byte_array );
-    
-    // update the local port in the topology string to actual dynamic port
-    sg.set_Port( _network->get_LocalHostName(), 
-                 _network->get_LocalPort(), 
-                 _network->get_LocalRank() );
-    std::string new_topo = sg.get_ByteArray();
+    commnode_path = (*ipacket)[0]->get_string(); 
+    backend_exe = (*ipacket)[1]->get_string();
+    backend_argv = (const char**) (*ipacket)[2]->get_array( &dt, &backend_argc );
 
-    PacketPtr packet( new MRN::Packet(CTL_STRM_ID, PROT_LAUNCH_SUBTREE, "%s %s %s %as", 
-                                      new_topo.c_str(), commnode_path, 
-                                      backend_exe, backend_argv, backend_argc) );  
-
-    _initial_subtree_packet = packet;
-    
     bool have_backend_exe = ( backend_exe != NULL );
     std::string backend_exe_str( have_backend_exe ? backend_exe : NULL_STRING );
 
-    SerialGraph *cur_sg, *my_sg;
-    my_sg = sg.get_MySubTree( _hostname, _network->get_LocalPort(), _rank );
-    if( my_sg == NULL ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "get_MySubTree() failed\n") );
+    NetworkTopology* nettop = _network->get_NetworkTopology();
+    if( NULL == nettop ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "internal error, topology is NULL\n") );
         return -1;
+    }
+
+    std::string myhost = get_HostName();
+    std::string topol = nettop->get_TopologyString();
+    Rank myrank = get_Rank();
+
+    SerialGraph sg( topol );
+    SerialGraph *cur_sg, *my_sg;
+    my_sg = sg.get_MySubTree( myhost, UnknownPort, myrank );
+    if( NULL == my_sg ) {
+        my_sg = sg.get_MySubTree( myhost, _network->get_LocalPort(), myrank );
+        if( NULL == my_sg ) {// I must have attached, since I'm not in the topology
+            mrn_dbg_func_end();
+            return 0;
+        }
     }
 
     my_sg->set_ToFirstChild( );
@@ -128,13 +148,13 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
         _num_children++;
         subtreereport_sync.Unlock( );
 
-        std::string cur_node_hostname = cur_sg->get_RootHostName( ); 
-        Rank cur_node_rank = cur_sg->get_RootRank( );
+        std::string child_hostname = cur_sg->get_RootHostName(); 
+        Rank child_rank = cur_sg->get_RootRank();
 
         if( ! cur_sg->is_RootBackEnd() ) {
             mrn_dbg( 5, mrn_printf(FLF, stderr, "launching internal node ...\n") );
-            rc = launch_InternalNode( cur_node_hostname, cur_node_rank, commnode_path );
-            if( rc == -1 ) {
+            rc = launch_InternalNode( child_hostname, child_rank, commnode_path );
+            if( -1 == rc ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
                                        "launch_InternalNode() failed\n") );
                 return rc;
@@ -142,15 +162,15 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
         }
         else {
             if( have_backend_exe ) {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, "launching backend_exe: \"%s\"\n",
+                mrn_dbg( 5, mrn_printf(FLF, stderr, "launching backend '%s'\n",
                                        backend_exe_str.c_str()) ); 
                 std::vector < std::string > args;
                 for( uint64_t i=0; i < backend_argc; i++ ) {
                     args.push_back( backend_argv[i] );
                 }
-                rc = launch_Application( cur_node_hostname, cur_node_rank,
+                rc = launch_Application( child_hostname, child_rank,
                                          backend_exe_str, args );
-                if( rc == -1 ) {
+                if( -1 == rc ) {
                     mrn_dbg( 1, mrn_printf(FLF, stderr,
                                            "launch_Application() failed\n") );
                     return rc;
@@ -159,8 +179,8 @@ RSHParentNode::proc_newSubTree( PacketPtr ipacket )
             else {
                 // BE attach case
                 mrn_dbg( 5, mrn_printf(FLF, stderr, "launching internal node ...\n") );
-                rc = launch_InternalNode( cur_node_hostname, cur_node_rank, commnode_path );
-                if( rc == -1 ) {
+                rc = launch_InternalNode( child_hostname, child_rank, commnode_path );
+                if( -1 == rc ) {
                     mrn_dbg( 1, mrn_printf(FLF, stderr,
                                            "launch_InternalNode() failed\n") );
                     return rc;
@@ -179,30 +199,30 @@ int
 RSHParentNode::launch_InternalNode( std::string ihostname, Rank irank,
                                     std::string icommnode_exe ) const
 {
-    char parent_port_str[128];
-    snprintf(parent_port_str, sizeof(parent_port_str), "%d", _port);
-    char parent_rank_str[128];
-    snprintf(parent_rank_str, sizeof(parent_rank_str), "%d", _rank);
-    char rank_str[128];
-    snprintf(rank_str, sizeof(rank_str), "%d", irank );
+    char parent_port_str[16];
+    char parent_rank_str[16];
+    char rank_str[16];
+
+    snprintf( parent_port_str, sizeof(parent_port_str), "%hu", get_Port() );
+    snprintf( parent_rank_str, sizeof(parent_rank_str), "%u", get_Rank() );
+    snprintf( rank_str, sizeof(rank_str), "%u", irank );
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Launching %s:%d ...\n",
                            ihostname.c_str(), irank) );
 
     // set up arguments for the new process
     std::vector <std::string> args;
-
-    args.push_back(icommnode_exe);
-    args.push_back(_hostname);
-    args.push_back(parent_port_str);
+    args.push_back( icommnode_exe );
+    args.push_back( get_HostName() );
+    args.push_back( parent_port_str );
     args.push_back( parent_rank_str );
-    args.push_back(ihostname);
-    args.push_back(rank_str);
+    args.push_back( ihostname );
+    args.push_back( rank_str );
 
     if( XPlat::Process::Create( ihostname, icommnode_exe, args ) != 0 ){
         int err = XPlat::Process::GetLastError();
         
-        error( ERR_SYSTEM, get_Rank(), "XPlat::Process::Create(%s %s): %s",
+        error( ERR_SYSTEM, get_Rank(), "XPlat::Process::Create('%s','%s'): %s",
                ihostname.c_str(), icommnode_exe.c_str(),
                XPlat::Error::GetErrorString( err ).c_str() );
         return -1;
@@ -215,44 +235,41 @@ RSHParentNode::launch_InternalNode( std::string ihostname, Rank irank,
 }
 
 
-int
+int 
 RSHParentNode::launch_Application( std::string ihostname, Rank irank, 
                                    std::string &ibackend_exe,
                                    std::vector <std::string> &ibackend_args ) const
 {
+    char parent_port_str[16];
+    char parent_rank_str[16];
+    char rank_str[16];
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, 
                            "Launching application on %s:%d (\"%s\")\n",
                            ihostname.c_str(), irank, ibackend_exe.c_str()) );
   
-    char parent_port_str[128];
-    snprintf( parent_port_str, sizeof(parent_port_str), "%d", _port );
-
-    char parent_rank_str[128];
-    snprintf( parent_rank_str, sizeof(parent_rank_str), "%d", _rank );
-
-    char rank_str[128];
+    snprintf( parent_port_str, sizeof(parent_port_str), "%d", get_Port() );
+    snprintf( parent_rank_str, sizeof(parent_rank_str), "%d", get_Rank() );
     snprintf( rank_str, sizeof(rank_str), "%d", irank );
 
     // set up arguments for new process: copy to get the cmd in front
     
     // set up arguments for the new process
     std::vector< std::string > new_args;
-
     new_args.push_back( ibackend_exe );
     for(unsigned int i=0; i<ibackend_args.size(); i++){
         new_args.push_back(ibackend_args[i]);
     }
-    new_args.push_back( _hostname );
+    new_args.push_back( get_HostName() );
     new_args.push_back( parent_port_str );
     new_args.push_back( parent_rank_str );
     new_args.push_back( ihostname );
     new_args.push_back( rank_str );
 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating \"%s\" on \"%s:%d\"\n",
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating '%s' on %s:%d\n",
                            ibackend_exe.c_str(), ihostname.c_str(), irank) );
   
-    if( XPlat::Process::Create( ihostname, ibackend_exe, new_args ) != 0 ){
+    if( XPlat::Process::Create(ihostname, ibackend_exe, new_args) != 0 ){
         int err = XPlat::Process::GetLastError();
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
                                "XPlat::Process::Create() failed with '%s'\n",
@@ -260,48 +277,10 @@ RSHParentNode::launch_Application( std::string ihostname, Rank irank,
         return -1;
     }
 
-    mrn_dbg( 3, mrn_printf(FLF, stderr, "Successful launch of app on %s:%d\n",
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "Successful app launch on %s:%d\n",
                            ihostname.c_str(), irank) );
     
     return 0;
-}
-
-int
-RSHParentNode::proc_SubTreeInfoRequest( PacketPtr ipacket ) const
-{
-    //send the packet containing the initial subtree to requesting node
-    mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                           "sending initial subtree packet:\n\t%s\n", 
-                           (*_initial_subtree_packet)[0]->get_string()) );
-    PeerNodePtr outlet = _network->get_PeerNode( ipacket->get_InletNodeRank() );
-    outlet->send( _initial_subtree_packet );
-    if( outlet->flush() == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "flush() failed\n") );
-        return -1;
-    }
-    return 0;
-}
-
-
-int
-RSHParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
-{
-    int retval = 0;
-
-    switch( cur_packet->get_Tag() ) {
-    case PROT_SUBTREE_INFO_REQ:
-        if( proc_SubTreeInfoRequest(cur_packet) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                   "proc_SubTreeInfoRequest() failed\n") );
-	    retval = -1;
-	}
-	break;
-
-    default:
-        retval = ParentNode::proc_PacketFromChildren( cur_packet );
-	break;
-    }
-    return retval;
 }
 
 } // namespace MRN

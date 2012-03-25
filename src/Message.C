@@ -95,12 +95,14 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
         buf = _packet_sizes_buf;
         packet_sizes = _packet_sizes;
         ncbufs = _ncbuf;
+        bzero( (void*)_ncbuf, sizeof(_ncbuf) );
     }
     else {
         using_prealloc = false;
         buf = (char*) malloc( buf_len );
         packet_sizes = (uint64_t*) malloc( sizeof(uint64_t) * num_buffers );
         ncbufs = new XPlat::SocketUtils::NCBuf[num_buffers];
+        bzero( (void*)ncbufs, num_buffers * sizeof(XPlat::SocketUtils::NCBuf) );
     }
 
     retval = MRN_recv( sock_fd, buf, buf_len );
@@ -152,6 +154,8 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
             goto recv_cleanup_return;
         }
         packets_in.push_back( new_packet );
+        ncbufs[i].buf = NULL;
+        ncbufs[i+1].buf = NULL;        
     }
 
     t1.stop();
@@ -172,9 +176,11 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
     }
  recv_cleanup_return:
 
-    if( rc == -1 ) {
-        for( unsigned u = 0; u < num_buffers; u++ )
-            free( (void*)(ncbufs[u].buf) );
+    if( -1 == rc ) {
+        for( unsigned u = 0; u < num_buffers; u++ ) {
+            if( NULL != ncbufs[u].buf )
+                free( (void*)(ncbufs[u].buf) );
+        }
     }
 
     if( ! using_prealloc ) {

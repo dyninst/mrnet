@@ -14,10 +14,12 @@ namespace MRN
 class RSHParentNode : public virtual ParentNode
 {
 public:
-    RSHParentNode( Network* inetwork, std::string const& ihostname, Rank irank );
-    virtual ~RSHParentNode( void );
+    RSHParentNode();
+    virtual ~RSHParentNode();
 
-    int proc_newSubTree( PacketPtr ipacket );
+    int proc_PacketFromChildren( PacketPtr cur_packet );
+
+    int proc_LaunchSubTree( PacketPtr ipacket );
 
     int launch_InternalNode( std::string ihostname, Rank irank,
                              std::string icommnode_exe ) const;
@@ -25,15 +27,12 @@ public:
                             std::string &ibackend_exe,
                             std::vector <std::string> &ibackend_args) const;
 
-
-protected:
-   virtual int proc_PacketFromChildren( PacketPtr ipacket );
+    int send_LaunchInfo( PeerNodePtr child_node ) const;
 
 private:
-    PacketPtr _initial_subtree_packet;
-
-    int proc_SubTreeInfoRequest( PacketPtr ipacket ) const;
     int proc_PortUpdates( PacketPtr ipacket ) const ;
+
+    PacketPtr _launch_pkt;
 };
 
 } // namespace MRN
