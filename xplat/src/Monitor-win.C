@@ -22,173 +22,58 @@ namespace XPlat
 {
 
 Monitor::Monitor( void )
+: data( new WinMonitorData )
 {
-    static HANDLE initMutex = CreateMutex( NULL, FALSE, NULL );
-    assert(initMutex != NULL);
-    DWORD ret = WaitForSingleObject( initMutex, INFINITE );
-    assert(ret != WAIT_FAILED);
-
-    data = new WinMonitorData;
-    HANDLE c = CreateMutex( NULL, FALSE, NULL );
-    assert(c != NULL);
-
-    cleanup_initialized = true;
-    cleanup = (void *)c;
-
-    ReleaseMutex(initMutex);
+    cleanup = NULL;
+    cleanup_initialized = false;
 }
 
 Monitor::~Monitor( void )
 {
-    DWORD ret;
-
-    ret = WaitForSingleObject((HANDLE)cleanup, INFINITE);
-
-    // Make sure no one destroys the cleanup twice
-    if(cleanup == NULL) {
-        return;
-    }
-    assert(!ret);
-
-    if( data != NULL ) {
-        delete data;
-        data = NULL;
-    }
-
-    cleanup_initialized = false;
-
-    ret = ReleaseMutex((HANDLE)cleanup);
-    assert(!ret);
-
-    ret = CloseHandle((HANDLE)cleanup);
-    assert(!ret);
-    cleanup = NULL;
+    delete data;
+    data = NULL;
 }
 
 int Monitor::Lock( void )
 {
-    DWORD ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = WaitForSingleObject((HANDLE)cleanup);
-        if(ret)
-            return ret;
-
-        if( data != NULL ) {
-            ret = data->Lock();
-            assert(ReleaseMutex((HANDLE)cleanup));
-            return ret;
-        }
-
-        assert(ReleaseMutex((HANDLE)cleanup));
-        return WSAEINVAL;
-    }
-        
-    return WSAEINVAL;
+    if( data != NULL )
+        return data->Lock();
+    return -1;
 }
 
 int Monitor::Unlock( void )
 {
-    DWORD ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = WaitForSingleObject((HANDLE)cleanup);
-        if(ret)
-            return ret;
-
-        if( data != NULL ) {
-            ret = data->Unlock();
-            assert(ReleaseMutex((HANDLE)cleanup));
-            return ret;
-        }
-
-        assert(ReleaseMutex((HANDLE)cleanup));
-        return WSAEINVAL;
-    }
-        
-    return WSAEINVAL;
+    if( data != NULL )
+        return data->Unlock();
+    return 0;
 }
 
 int Monitor::RegisterCondition( unsigned int condid )
 {
-    DWORD ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = WaitForSingleObject((HANDLE)cleanup);
-        if(ret)
-            return ret;
-
-        if( data != NULL ) {
-            ret = data->RegisterCondition();
-            assert(ReleaseMutex((HANDLE)cleanup));
-            return ret;
-        }
-
-        assert(ReleaseMutex((HANDLE)cleanup));
-        return WSAEINVAL;
-    }
-        
-    return WSAEINVAL;
+    if( data != NULL )
+        return data->RegisterCondition( condid );
+    return -1;
 }
 
 int Monitor::WaitOnCondition( unsigned int condid )
 {
-    DWORD ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = WaitForSingleObject((HANDLE)cleanup);
-        if(ret)
-            return ret;
-
-        if( data != NULL ) {
-            ret = data->WaitOnCondition();
-            assert(ReleaseMutex((HANDLE)cleanup));
-            return ret;
-        }
-
-        assert(ReleaseMutex((HANDLE)cleanup));
-        return WSAEINVAL;
-    }
-        
-    return WSAEINVAL;
+    if( data != NULL )
+        return data->WaitOnCondition( condid );
+    return -1;
 }
 
 int Monitor::SignalCondition( unsigned int condid )
 {
-    DWORD ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = WaitForSingleObject((HANDLE)cleanup);
-        if(ret)
-            return ret;
-
-        if( data != NULL ) {
-            ret = data->SignalCondition();
-            assert(ReleaseMutex((HANDLE)cleanup));
-            return ret;
-        }
-
-        assert(ReleaseMutex((HANDLE)cleanup));
-        return WSAEINVAL;
-    }
-        
-    return WSAEINVAL;
+    if( data != NULL )
+        return data->SignalCondition( condid );
+    return -1;
 }
 
 int Monitor::BroadcastCondition( unsigned int condid )
 {
-    DWORD ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = WaitForSingleObject((HANDLE)cleanup);
-        if(ret)
-            return ret;
-
-        if( data != NULL ) {
-            ret = data->BroadcastCondition();
-            assert(ReleaseMutex((HANDLE)cleanup));
-            return ret;
-        }
-
-        assert(ReleaseMutex((HANDLE)cleanup));
-        return WSAEINVAL;
-    }
-        
-    return WSAEINVAL;
+    if( data != NULL )
+        return data->BroadcastCondition( condid );
+    return -1;
 }
 
 WinMonitorData::WinMonitorData( void )
