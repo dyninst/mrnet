@@ -95,14 +95,15 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
         buf = _packet_sizes_buf;
         packet_sizes = _packet_sizes;
         ncbufs = _ncbuf;
-        bzero( (void*)_ncbuf, sizeof(_ncbuf) );
+        memset( (void *)_ncbuf, 0, sizeof(_ncbuf) );
     }
     else {
         using_prealloc = false;
         buf = (char*) malloc( buf_len );
         packet_sizes = (uint64_t*) malloc( sizeof(uint64_t) * num_buffers );
         ncbufs = new XPlat::SocketUtils::NCBuf[num_buffers];
-        bzero( (void*)ncbufs, num_buffers * sizeof(XPlat::SocketUtils::NCBuf) );
+        memset( (void*)ncbufs, 0,
+                 num_buffers * sizeof(XPlat::SocketUtils::NCBuf) );
     }
 
     retval = MRN_recv( sock_fd, buf, buf_len );
