@@ -9,6 +9,7 @@
 #include <cstring>
 #include <cstdio>
 #include "Monitor-pthread.h"
+#include "xplat_dbg.h"
 
 namespace XPlat
 {
@@ -17,62 +18,101 @@ Monitor::Monitor( void )
 {
     static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
     int ret;
+    bool failed = false;
     pthread_mutex_lock( &init_mutex );
 
     data = new PthreadMonitorData;
     pthread_rwlock_t *c = new pthread_rwlock_t;
-    assert(data != NULL);
-    assert(c != NULL);
+    if(data == NULL || c == NULL) {
+        failed = true;
+        goto ctor_fail;
+    }
 
     ret = pthread_rwlock_init(c, NULL);
-    assert(!ret);
-    cleanup_initialized = true;
+    if(ret) {
+        failed = true;
+        goto ctor_fail;
+    }
+    destruct_sync_initialized = true;
 
-    cleanup = (void *)c;
+    destruct_sync = (void *)c;
 
+ctor_fail:
     pthread_mutex_unlock( &init_mutex );
+    if(failed) {
+        xplat_dbg(1, fprintf(stderr, 
+                     "XPlat Error: Failed to construct Monitor\n"));
+        destruct_sync_initialized = false;
+        destruct_sync = NULL;
+        data = NULL;
+    }
 }
 
 Monitor::~Monitor( void )
 {
     int ret;
 
-    ret = pthread_rwlock_wrlock((pthread_rwlock_t *)cleanup);
+    ret = pthread_rwlock_wrlock((pthread_rwlock_t *)destruct_sync);
     
     // Make sure no one destroys the rwlock twice
-    if(cleanup == NULL) {
+    if(destruct_sync == NULL) {
         return;
     }
-    assert(!ret);
+    
+    // Check for wrlock error
+    if(ret) {
+        xplat_dbg(1, fprintf(stderr, 
+                     "XPlat Error: destruct_sync wrlock returned '%s'\n",
+                     strerror( ret )));
+        return;
+    }
 
     if( data != NULL ) {
         delete data;
         data = NULL;
     }
     
-    cleanup_initialized = false;
-    ret = pthread_rwlock_unlock((pthread_rwlock_t *)cleanup);
-    assert(!ret);
+    destruct_sync_initialized = false;
+    ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+    if(ret) { 
+        xplat_dbg(1, fprintf(stderr, 
+                     "XPlat Error: destruct_sync unlock returned '%s'\n",
+                     strerror( ret )));
+    }
 
-    ret = pthread_rwlock_destroy((pthread_rwlock_t *)cleanup);
-    assert(!ret);
-    cleanup = NULL;
+    ret = pthread_rwlock_destroy((pthread_rwlock_t *)destruct_sync);
+    if(ret) { 
+        xplat_dbg(1, fprintf(stderr, 
+                     "XPlat Error: destruct_sync destroy returned '%s'\n",
+                     strerror( ret )));
+    }
+    destruct_sync = NULL;
 }
 
 int Monitor::Lock( void )
 {
-    int ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+    int ret, rw_ret;
+    if( destruct_sync_initialized && (destruct_sync != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
             return ret;
 
         if( data != NULL ) {
             ret = data->Lock();
-            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+            if(rw_ret) {
+                xplat_dbg(1, fprintf(stderr, 
+                            "XPlat Error: destruct_sync unlock returned '%s'\n",
+                            strerror( rw_ret )));
+            }
             return ret;
         }
-        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+        if(rw_ret) {
+            xplat_dbg(1, fprintf(stderr, 
+                        "XPlat Error: destruct_sync unlock returned '%s'\n",
+                        strerror( rw_ret )));
+        }
         return EINVAL;
     }
 
@@ -81,18 +121,28 @@ int Monitor::Lock( void )
 
 int Monitor::Unlock( void )
 {
-    int ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+    int ret, rw_ret;
+    if( destruct_sync_initialized && (destruct_sync != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
             return ret;
 
         if( data != NULL ) {
             ret = data->Unlock();
-            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+            if(rw_ret) {
+                xplat_dbg(1, fprintf(stderr, 
+                            "XPlat Error: destruct_sync unlock returned '%s'\n",
+                            strerror( rw_ret )));
+            }
             return ret;
         }
-        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+        if(rw_ret) {
+            xplat_dbg(1, fprintf(stderr, 
+                         "XPlat Error: destruct_sync unlock returned '%s'\n",
+                         strerror( rw_ret )));
+        }
         return EINVAL;
     }
 
@@ -101,18 +151,28 @@ int Monitor::Unlock( void )
 
 int Monitor::RegisterCondition( unsigned int condid )
 {
-    int ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+    int ret, rw_ret;
+    if( destruct_sync_initialized && (destruct_sync != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
             return ret;
 
         if( data != NULL ) {
             ret = data->RegisterCondition( condid );
-            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+            if(rw_ret) {
+                xplat_dbg(1, fprintf(stderr, 
+                            "XPlat Error: destruct_sync unlock returned '%s'\n",
+                            strerror( rw_ret )));
+            }
             return ret;
         }
-        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+        if(rw_ret) {
+            xplat_dbg(1, fprintf(stderr, 
+                         "XPlat Error: destruct_sync unlock returned '%s'\n",
+                         strerror( rw_ret )));
+        }
         return -1;
     }
 
@@ -121,18 +181,28 @@ int Monitor::RegisterCondition( unsigned int condid )
 
 int Monitor::WaitOnCondition( unsigned int condid )
 {
-    int ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+    int ret, rw_ret;
+    if( destruct_sync_initialized && (destruct_sync != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
             return ret;
 
         if( data != NULL ) {
             ret = data->WaitOnCondition( condid );
-            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+            if(rw_ret) {
+                xplat_dbg(1, fprintf(stderr, 
+                            "XPlat Error: destruct_sync unlock returned '%s'\n",
+                            strerror( rw_ret )));
+            }
             return ret;
         }
-        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+        if(rw_ret) {
+            xplat_dbg(1, fprintf(stderr, 
+                         "XPlat Error: destruct_sync unlock returned '%s'\n",
+                         strerror( rw_ret )));
+        }
         return -1;
     }
 
@@ -141,18 +211,28 @@ int Monitor::WaitOnCondition( unsigned int condid )
 
 int Monitor::SignalCondition( unsigned int condid )
 {
-    int ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+    int ret, rw_ret;
+    if( destruct_sync_initialized && (destruct_sync != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
             return ret;
 
         if( data != NULL ) {
             ret = data->SignalCondition( condid );
-            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+            if(rw_ret) {
+                xplat_dbg(1, fprintf(stderr, 
+                            "XPlat Error: destruct_sync unlock returned '%s'\n",
+                            strerror( rw_ret )));
+            }
             return ret;
         }
-        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+        if(rw_ret) {
+            xplat_dbg(1, fprintf(stderr, 
+                         "XPlat Error: destruct_sync unlock returned '%s'\n",
+                         strerror( rw_ret )));
+        }
         return -1;
     }
 
@@ -161,18 +241,28 @@ int Monitor::SignalCondition( unsigned int condid )
 
 int Monitor::BroadcastCondition( unsigned int condid )
 {
-    int ret;
-    if( cleanup_initialized && (cleanup != NULL) ) {
-        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)cleanup);
+    int ret, rw_ret;
+    if( destruct_sync_initialized && (destruct_sync != NULL) ) {
+        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
             return ret;
 
         if( data != NULL ) {
             ret = data->BroadcastCondition( condid );
-            assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+            rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+            if(rw_ret) {
+                xplat_dbg(1, fprintf(stderr, 
+                             "XPlat Error: destruct_sync unlock returned '%s'\n",
+                             strerror( rw_ret )));
+            }
             return ret;
         }
-        assert(!pthread_rwlock_unlock((pthread_rwlock_t *)cleanup));
+        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
+        if(rw_ret) {
+            xplat_dbg(1, fprintf(stderr, 
+                         "XPlat Error: destruct_sync unlock returned '%s'\n",
+                         strerror( rw_ret )));
+        }
         return -1;
     }
 

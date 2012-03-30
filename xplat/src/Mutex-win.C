@@ -13,8 +13,8 @@ namespace XPlat
 Mutex::Mutex( void )
 : data( new WinMutexData )
 {
-    cleanup_initialized = false;
-    cleanup = NULL;
+    destruct_sync_initialized = false;
+    destruct_sync = NULL;
 }
 
 Mutex::~Mutex( void )
