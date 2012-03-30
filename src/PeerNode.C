@@ -212,14 +212,16 @@ bool PeerNode::has_data() const
 
     // check if data is available
     int sret = select( _data_sock_fd + 1, &rfds, NULL, NULL, &zeroTimeout );
-    if( sret == -1 ){
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "select() failed\n") );
+    if( sret == -1 ) {
+        int err = XPlat::NetUtils::GetLastError();
+        if( EINTR != err )
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "select() failed\n") );
         return false;
     }
 
     // We only put one descriptor in the read set.  Therefore, if the return 
     // value from select() is 1, that descriptor has data available.
-    if( sret == 1 ){
+    if( sret == 1 ) {
         mrn_dbg( 5, mrn_printf(FLF, stderr, "select(): data to be read.\n") );
         return true;
     }
