@@ -131,9 +131,11 @@ int Mutex::Unlock( void )
         if( data != NULL ) {
             ret = data->Unlock();
             rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
-            xplat_dbg(1, fprintf(stderr, 
-                         "XPlat Error: destruct_sync unlock returned '%s'\n",
-                         strerror( rw_ret )));
+			if(rw_ret) {
+				xplat_dbg(1, fprintf(stderr, 
+							"XPlat Error: destruct_sync unlock returned '%s'\n",
+							strerror( rw_ret )));
+			}
             return ret;
         }
 
