@@ -66,11 +66,18 @@ class Packet: public Error {
 
     // END MRNET API
 
-    //Starts and stops a timer for a specific context
+
+    // Only use these if you **really** know what you are doing!!
+    const char *get_Buffer(void) const;
+    uint64_t get_BufferLen(void) const;
+    const char *get_Header(void) const;
+    unsigned int get_HeaderLen(void) const;
+
+    // Starts and stops a timer for a specific context
     void start_Timer (perfdata_pkt_timers_t context);
     void stop_Timer (perfdata_pkt_timers_t context);
     
-    //Sets a timer for a specific context to t 
+    // Sets a timer for a specific context to t 
     // (used in cases where packet class not yet created EX: recv)
     void set_Timer (perfdata_pkt_timers_t context, Timer t);
 
@@ -95,11 +102,6 @@ class Packet: public Error {
     void encode_pdr_data(void);
     void decode_pdr_header(void) const;
     void decode_pdr_data(void) const;
-
-    const char *get_Buffer(void) const;
-    uint64_t get_BufferLen(void) const;
-    const char *get_Header(void) const;
-    unsigned int get_HeaderLen(void) const;
 
     void set_SourceRank( Rank r ) { src_rank = r; }
 
