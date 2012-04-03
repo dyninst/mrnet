@@ -36,8 +36,8 @@ public:
 
 private:
     Data* data;
-    void *cleanup;
-    bool cleanup_initialized;
+    void *destruct_sync;
+    bool destruct_sync_initialized;
 
 public:
     Monitor( void );

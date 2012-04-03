@@ -33,8 +33,8 @@ Monitor_t* Monitor_construct( void )
     mon->data = (void *)WinMonitorData_construct();
     assert(mon->data != NULL);
 
-    mon->cleanup_initialized = 0;
-    mon->cleanup = NULL;
+    mon->destruct_sync_initialized = 0;
+    mon->destruct_sync = NULL;
 
     LeaveCriticalSection(&init_mutex);
 

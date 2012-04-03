@@ -10,8 +10,8 @@
 struct Mutex_t
 {
     void* data;
-    void* cleanup;
-    int cleanup_initialized;
+    void* destruct_sync;
+    int destruct_sync_initialized;
 };
 typedef struct Mutex_t Mutex_t;
 

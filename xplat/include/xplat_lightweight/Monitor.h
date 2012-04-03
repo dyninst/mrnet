@@ -14,8 +14,8 @@
 struct Monitor_t
 {
     void *data;
-    void *cleanup;
-    int cleanup_initialized;
+    void *destruct_sync;
+    int destruct_sync_initialized;
 };
 typedef struct Monitor_t Monitor_t;
 
