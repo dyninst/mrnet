@@ -123,6 +123,10 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
         goto recv_cleanup_return;
     }
 
+
+    /* NOTE: we tell users that packet header and data buffers will have similar
+             alignment characteristics to malloc, so if we ever stop using malloc
+             we will need to make sure that the buffers are properly aligned */
     for( i = 0; i < num_buffers; i++ ) {
         len = packet_sizes[i];
         ncbufs[i].buf = (char*) malloc( size_t(len) );
