@@ -21,7 +21,7 @@ const Rank UnknownRank = (Rank)-1;
 
 const int MIN_OUTPUT_LEVEL=0;
 const int MAX_OUTPUT_LEVEL=5;
-int CUR_OUTPUT_LEVEL=5;
+int CUR_OUTPUT_LEVEL=1;
 char* MRN_DEBUG_LOG_DIRECTORY = NULL;
 
 void init_local(void)
