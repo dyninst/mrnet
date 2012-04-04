@@ -25,6 +25,9 @@ void Packet::encode_pdr_header(void)
     hdr_len = (unsigned) hdr_sz;
     assert( hdr_len );
 
+    /* NOTE: we tell users that packet header and data buffers will have similar
+             alignment characteristics to malloc, so if we ever stop using malloc
+             we will need to make sure that the buffers are properly aligned */
     hdr = (char*) malloc( size_t(hdr_sz) );
     if( hdr == NULL ) { 
         mrn_dbg( 1, mrn_printf(FLF, stderr, "malloc() failed\n") );
@@ -57,6 +60,9 @@ void Packet::encode_pdr_data(void)
     buf_len = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_data), this );
     assert( buf_len );
 
+    /* NOTE: we tell users that packet header and data buffers will have similar
+             alignment characteristics to malloc, so if we ever stop using malloc
+             we will need to make sure that the buffers are properly aligned */
     buf = (char*) malloc( size_t(buf_len) );
     if( buf == NULL ) { 
         mrn_dbg( 1, mrn_printf(FLF, stderr, "malloc() failed\n") );
