@@ -3,7 +3,7 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "xplat_dbg.h"
+#include "xplat_lightweight/xplat_utils_lightweight.h"
 #include "xplat_lightweight/Error.h"
 #include "xplat_lightweight/NetUtils.h"
 #include "xplat_lightweight/SocketUtils.h"
@@ -31,7 +31,7 @@ static bool_t ClearFlag( XPlat_Socket sock, int flag )
     int fdflag = fcntl( sock, F_GETFL );
     if( -1 == fdflag ) {
         // failed to retrieve the socket status flags
-        xplat_dbg( 1, fprintf(stderr, "XPlat::SocketUtils::SetBlockingMode - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::SetBlockingMode - "
                               "failed to get flags\n") );
         return false;
     }
@@ -96,7 +96,9 @@ ssize_t XPlat_SocketUtils_send(XPlat_Socket s, const void *buf, size_t count)
     if( count == 0 )
         return 0;
 
-    //fprintf(stderr, "XPlat DEBUG: SocketUtils_send - writing %"PRIszt" bytes to fd=%d)\n", count, s);
+    xplat_dbg(5, xplat_printf(FLF, stderr, 
+                 "writing %"PRIszt" bytes to fd=%d)\n",
+                 count, s));
 
     int flags = 0;
 #if defined(os_linux)
@@ -119,10 +121,10 @@ ssize_t XPlat_SocketUtils_send(XPlat_Socket s, const void *buf, size_t count)
                 continue;
             }
             else {
-                /* fprintf(stderr, */
-/*                         "Warning: XPlat_SocketUtils_send - premature return from send(). " */
-/*                         "Wrote %"PRIsszt" of %"PRIszt" bytes ('%s')\n",  */
-/*                         bytes_written, count, strerror(err)); */
+                xplat_dbg(1, xplat_printf(FLF, stderr,
+                         "Warning: premature return from send(). "
+                         "Wrote %"PRIsszt" of %"PRIszt" bytes ('%s')\n",
+                         bytes_written, count, strerror(err)));
                 return bytes_written;
             }
         }
@@ -132,7 +134,8 @@ ssize_t XPlat_SocketUtils_send(XPlat_Socket s, const void *buf, size_t count)
                 continue;
             }
             else {
-                //fprintf(stderr, "XPlat DEBUG: SocketUtils_send - returning %"PRIsszt"\n", bytes_written);
+                xplat_dbg(5, xplat_printf(FLF, stderr, "returning %"PRIsszt"\n",
+                                          bytes_written));
                 return bytes_written;
             }
         }
@@ -160,16 +163,17 @@ ssize_t XPlat_SocketUtils_recv(XPlat_Socket s, void *buf, size_t count)
                 continue;
             }
             else {
-                /* fprintf(stderr, */
-/*                         "Warning: XPlat_SocketUtils_recv - premature return from recv(). " */
-/*                         "Got %"PRIsszt" of %"PRIszt" bytes ('%s')\n",  */
-/*                         bytes_recvd, count, strerror(err)); */
+                xplat_dbg(1, xplat_printf(FLF, stderr,
+                             "Warning: premature return from recv(). "
+                             "Got %"PRIsszt" of %"PRIszt" bytes ('%s')\n",
+                             bytes_recvd, count, strerror(err)));
                 return bytes_recvd;
             }
         }
         else if( ret == 0 ) {
             // the remote endpoint has gone away
-            //fprintf(stderr, "XPlat DEBUG: SocketUtils_recv - recv() returned 0 (peer likely gone)\n");
+            xplat_dbg(1, xplat_printf(FLF, stderr, 
+                         "recv() returned 0 (peer likely gone)\n"));
             return -1;
         }
         else {
@@ -178,7 +182,8 @@ ssize_t XPlat_SocketUtils_recv(XPlat_Socket s, void *buf, size_t count)
                 continue;
             }
             else {
-                //fprintf(stderr, "XPlat DEBUG: SocketUtils_recv - returning %"PRIsszt"\n", bytes_recvd);
+                xplat_dbg(5, xplat_printf(FLF, stderr, "returning %"PRIsszt"\n",
+                                          bytes_recvd));
                 return bytes_recvd;
             }
         }

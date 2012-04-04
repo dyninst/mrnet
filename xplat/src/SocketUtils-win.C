@@ -3,7 +3,7 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include "xplat_dbg.h"
+#include "xplat/xplat_utils.h"
 #include "xplat/SocketUtils.h"
 
 #include <iphlpapi.h>
@@ -23,8 +23,7 @@ bool SetBlockingMode( XPlat_Socket sock, bool blocking )
     unsigned long mode = ( blocking ? 0 : 1 );
     if( 0 != ioctlsocket(sock, FIONBIO, &mode) ) {
         // failed to set the socket flags
-        xplat_dbg( 1, fprintf(stderr, "XPlat::SocketUtils::SetBlockingMode - "
-                              "failed to set %s\n",
+        xplat_dbg( 1, xplat_printf(FLF, stderr, "failed to set %s\n",
 			      (blocking ? block_str : nonblock_str)) );
         return false;
     }

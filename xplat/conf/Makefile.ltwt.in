@@ -51,7 +51,8 @@ XPLAT_LTWT_SRCS = $(SRCDIR)/Error-unix.c \
                   $(SRCDIR)/SocketUtils.c \
                   $(SRCDIR)/SocketUtils-unix.c \
                   $(SRCDIR)/map.c \
-                  $(SRCDIR)/vector.c
+                  $(SRCDIR)/vector.c \
+                  $(SRCDIR)/xplat_utils_lightweight.c
 
 LOWFAT_SRCS = $(SRCDIR)/Mutex-pthread.c \
               $(SRCDIR)/Monitor-pthread.c \

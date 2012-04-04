@@ -5,6 +5,7 @@
 
 #include "utils.h"
 #include "mrnet/MRNet.h"
+#include "xplat/xplat_utils.h"
 
 #include "xplat/NetUtils.h"
 #include "xplat/PathUtils.h"
@@ -119,6 +120,10 @@ static FILE* mrn_printf_fp = NULL;
 void mrn_printf_init( FILE* ifp )
 {
     mrn_printf_fp = ifp;
+    xplat_printf_init(mrn_printf_fp);
+    if(XPlat::get_DebugLevel() <= CUR_OUTPUT_LEVEL) {
+        XPlat::set_DebugLevel(CUR_OUTPUT_LEVEL);
+    }
 } 
 
 void mrn_printf_setup( int rank, node_type_t type )
@@ -164,6 +169,10 @@ void mrn_printf_setup( int rank, node_type_t type )
                   logdir, node_type, host, rank, pid );
 
         mrn_printf_fp = fopen( logfile, "w" );
+        xplat_printf_init(mrn_printf_fp);
+        if(XPlat::get_DebugLevel() <= CUR_OUTPUT_LEVEL) {
+            XPlat::set_DebugLevel(CUR_OUTPUT_LEVEL);
+        }
     }
 }
 

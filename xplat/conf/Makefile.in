@@ -81,7 +81,8 @@ XPLAT_SRCS = $(SRCDIR)/Monitor-pthread.C \
              $(SRCDIR)/PathUtils-unix.C \
              $(SRCDIR)/SocketUtils.C \
              $(SRCDIR)/SocketUtils-unix.C \
-             $(SRCDIR)/Error-unix.C
+             $(SRCDIR)/Error-unix.C \
+             $(SRCDIR)/xplat_utils.C
 
 XPLAT_HEADERS = $(wildcard $(xplat_INCDIR)/*.h)
 INSTALL_HEADERS = $(addprefix $(install_INCDIR)/, $(notdir $(XPLAT_HEADERS)))

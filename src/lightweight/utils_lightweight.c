@@ -11,6 +11,7 @@
 #include "xplat_lightweight/PathUtils.h"
 #include "xplat_lightweight/Process.h"
 #include "xplat_lightweight/SocketUtils.h"
+#include "xplat_lightweight/xplat_utils_lightweight.h"
 
 #include <stdarg.h>
 
@@ -90,15 +91,19 @@ int mrn_printf( const char *file, int line, const char * func,
             if (varval != NULL) {
                 if ( (stat(varval, &s) == 0) && (S_IFDIR & s.st_mode) ) {
                     snprintf( logdir, sizeof(logdir), "%s", varval);
-	            
-		    // set file name format
+            
+                    // set file name format
                     snprintf(logfile, sizeof(logfile), "%s/%s_%s_%d.%d",
-                             logdir, node_type, host, rank, pid);
+                            logdir, node_type, host, rank, pid);
                     fp = fopen(logfile, "w");
-		} 
-		else
-		    retry = false; 
-            }		    
+                    xplat_printf_init(fp);
+                    if(get_DebugLevel() <= CUR_OUTPUT_LEVEL) {
+                        set_DebugLevel(CUR_OUTPUT_LEVEL);
+                    }
+                } else {
+                    retry = false; 
+                }
+            }    
         }
     }
 

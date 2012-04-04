@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <cstring>
 #include "Mutex-pthread.h"
-#include "xplat_dbg.h"
+#include "xplat/xplat_utils.h"
 
 namespace XPlat
 {
@@ -40,8 +40,8 @@ Mutex::Mutex( void )
 ctor_fail:
     pthread_mutex_unlock( &init_mutex );
     if(failed) {
-        xplat_dbg(1, fprintf(stderr, 
-                     "XPlat Error: Failed to construct Monitor\n"));
+        xplat_dbg(1, xplat_printf(FLF, stderr, 
+                     "XPlat Error: Failed to construct Mutex\n"));
         destruct_sync_initialized = false;
         destruct_sync = NULL;
         data = NULL;
@@ -61,7 +61,7 @@ Mutex::~Mutex( void )
 
     // Check for wrlock error
     if(ret) {
-        xplat_dbg(1, fprintf(stderr, 
+        xplat_dbg(1, xplat_printf(FLF, stderr, 
                      "XPlat Error: destruct_sync wrlock returned '%s'\n",
                      strerror( ret )));
         return;
@@ -75,14 +75,14 @@ Mutex::~Mutex( void )
     destruct_sync_initialized = false;
     ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
     if(ret) {
-        xplat_dbg(1, fprintf(stderr, 
+        xplat_dbg(1, xplat_printf(FLF, stderr, 
                     "XPlat Error: destruct_sync unlock returned '%s'\n",
                     strerror( ret )));
     }
 
     ret = pthread_rwlock_destroy((pthread_rwlock_t *)destruct_sync);
     if(ret) {
-        xplat_dbg(1, fprintf(stderr, 
+        xplat_dbg(1, xplat_printf(FLF, stderr, 
                     "XPlat Error: destruct_sync destroy returned '%s'\n",
                     strerror( ret )));
     }
@@ -101,7 +101,7 @@ int Mutex::Lock( void )
             ret = data->Lock();
             rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
             if(rw_ret) {
-                xplat_dbg(1, fprintf(stderr, 
+                xplat_dbg(1, xplat_printf(FLF, stderr, 
                             "XPlat Error: destruct_sync unlock returned '%s'\n",
                             strerror( rw_ret )));
             }
@@ -110,7 +110,7 @@ int Mutex::Lock( void )
 
         rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
         if(rw_ret) {
-            xplat_dbg(1, fprintf(stderr, 
+            xplat_dbg(1, xplat_printf(FLF, stderr, 
                         "XPlat Error: destruct_sync unlock returned '%s'\n",
                         strerror( rw_ret )));
         }
@@ -132,7 +132,7 @@ int Mutex::Unlock( void )
             ret = data->Unlock();
             rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
 			if(rw_ret) {
-				xplat_dbg(1, fprintf(stderr, 
+				xplat_dbg(1, xplat_printf(FLF, stderr, 
 							"XPlat Error: destruct_sync unlock returned '%s'\n",
 							strerror( rw_ret )));
 			}
@@ -141,7 +141,7 @@ int Mutex::Unlock( void )
 
         rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
         if(rw_ret) {
-            xplat_dbg(1, fprintf(stderr, 
+            xplat_dbg(1, xplat_printf(FLF, stderr, 
                         "XPlat Error: destruct_sync unlock returned '%s'\n",
                         strerror( rw_ret )));
         }
