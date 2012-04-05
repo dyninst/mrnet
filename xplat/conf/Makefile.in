@@ -6,6 +6,9 @@
 
 @SET_MAKE@
 
+VERSION       = @MRNET_VERSION@
+VERSION_MAJOR = @MRNET_VERSION_MAJOR@
+
 AR      = @AR@
 ARFLAGS = @ARFLAGS@
 RANLIB  = @RANLIB@
@@ -15,9 +18,6 @@ INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 
 MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
-
-VERSION       = @MRNET_VERSION@
-VERSION_MAJOR = @MRNET_VERSION_MAJOR@
 
 ROOTDIR = @MRNET_ROOT@
 BASEDIR = $(ROOTDIR)/xplat
@@ -37,6 +37,7 @@ IINCDIR = @includedir@
 
 xplat_INCDIR = $(INCDIR)/xplat
 install_INCDIR = $(IINCDIR)/xplat
+install_LIBINCDIR = $(ILIBDIR)/xplat-$(VERSION)/include
 
 INSTALL_LIB_LINKS = $(ROOTDIR)/conf/gen_lib_version_links.sh
 
@@ -104,7 +105,7 @@ $(TARGET_SO): $(XPLAT_OBJS)
 	$(CXX) $(SOFLAGS) -o $@ $(XPLAT_OBJS) $(TARGET_SO_DEPLIBS)
 
 install-prep:
-	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
+	for dir in $(ILIBDIR) $(install_INCDIR) $(install_LIBINCDIR) ; do \
 	    if [ ! -d $$dir ] ; then \
 	        $(MKDIR_P) $$dir ; \
 	        chmod 755 $$dir ; \
@@ -119,7 +120,7 @@ $(INSTALL_HEADERS): $(install_INCDIR)/%: $(xplat_INCDIR)/%
 	$(INSTALL_DATA) $< $(@D)
 
 install: $(TARGETS) install-prep $(INSTALL_HEADERS)
-	$(INSTALL_DATA) $(PLATDIR)/xplat_config.h $(ILIBDIR)/
+	$(INSTALL_DATA) $(PLATDIR)/xplat_config.h $(install_LIBINCDIR)/
 	@echo Installing XPlat libraries
 	$(INSTALL) $(TARGETS) $(ILIBDIR)/
 	$(INSTALL_LIB_LINKS) $(ILIBDIR) libxplat $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV)
