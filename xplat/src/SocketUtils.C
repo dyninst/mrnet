@@ -21,8 +21,7 @@ static bool SetTcpNoDelay( XPlat_Socket sock )
                             (void*) &optval,
                             (socklen_t) sizeof(optval) );
     if( ! soret ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr,
-                              "XPlat_SocketUtils_SetTcpNoDelay failed\n") );
+        xplat_dbg( 1, xplat_printf(FLF, stderr, "failed to set option\n") );
         return false;
     }
 #endif
@@ -37,7 +36,6 @@ static bool SetCloseOnExec( XPlat_Socket sock )
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags
         xplat_dbg( 1, XPlat::xplat_printf(FLF, stderr, 
-                              "XPlat::SocketUtils::SetCloseOnExec - "
                               "failed to get flags\n") );     
     return false;
     }
@@ -46,7 +44,6 @@ static bool SetCloseOnExec( XPlat_Socket sock )
         if( fret == -1 ) {
             // failed to set the socket descriptor flags
             xplat_dbg( 1, XPlat::xplat_printf(FLF, stderr, 
-                              "XPlat::SocketUtils::SetCloseOnExec - "
                               "failed to set flags\n") );
         return false;
         }
@@ -78,7 +75,7 @@ bool Connect( const std::string &hostname,
     int err;
     std::string err_str;
 
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat::SocketUtils::Connect - "
+    xplat_dbg( 3, xplat_printf(FLF, stderr,
                                "host=%s port=%hu sock=%d\n",
                                host, port, _sock) );
 
@@ -87,19 +84,19 @@ bool Connect( const std::string &hostname,
         if( _sock == InvalidSocket ) {
             err = XPlat::NetUtils::GetLastError();
             err_str = XPlat::Error::GetErrorString( err );
-             xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::Connect - "
+             xplat_dbg( 1, xplat_printf(FLF, stderr,
                                    "socket() failed with '%s'\n",
                                    err_str.c_str()) );
             return false;
         }
-        xplat_dbg(5, xplat_printf(FLF, stderr, "XPlat::SocketUtils::Connect - "
+        xplat_dbg(5, xplat_printf(FLF, stderr,
                              "socket() => %d\n", _sock));
     }
 
     XPlat::NetUtils::NetworkAddress naddr;
     int rc = XPlat::NetUtils::GetNetworkAddress( hostname, naddr );
     if( rc == -1 ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::Connect - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to convert name %s to network address\n",
                               host) );
         return false;
@@ -121,7 +118,7 @@ bool Connect( const std::string &hostname,
             if( ! (XPlat::Error::ETimedOut(err) || 
                    XPlat::Error::EConnRefused(err)) ) {
                 err_str = XPlat::Error::GetErrorString( err );
-                xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::Connect - " 
+                xplat_dbg( 1, xplat_printf(FLF, stderr,
                                       "connect() to %s:%hu failed with '%s'\n",
                                       host, port, err_str.c_str()) );
                 XPlat::SocketUtils::Close( _sock );
@@ -129,7 +126,7 @@ bool Connect( const std::string &hostname,
             }
 
             nConnectTries++;
-            xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat::SocketUtils::Connect - " 
+            xplat_dbg( 3, xplat_printf(FLF, stderr,
                                   "connect() to %s:%hu timed-out %u times\n",
                                   host, port, nConnectTries) );
             if( (num_retry > 0) && (nConnectTries >= num_retry) )
@@ -142,7 +139,7 @@ bool Connect( const std::string &hostname,
 
     if( -1 == cret ) {
         err_str = XPlat::Error::GetErrorString( err );
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::Connect - " 
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "connect() to %s:%hu failed with '%s' after %u tries\n",
                               host, port, err_str.c_str(), nConnectTries) );
         XPlat::SocketUtils::Close( _sock );
@@ -151,17 +148,17 @@ bool Connect( const std::string &hostname,
 
     // Close socket on exec
     if( ! SetCloseOnExec(_sock) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::Connect - " 
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set close-on-exec\n") );
     }
 
     // Turn off Nagle algorithm
     if( ! SetTcpNoDelay(_sock) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::Connect - " 
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set TCP_NODELAY\n") );
     }
 
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat::SocketUtils::Connect - "             
+    xplat_dbg( 3, xplat_printf(FLF, stderr,
                           "Returning socket=%d\n", _sock) );
     sock = _sock;
     return true;
@@ -185,26 +182,26 @@ bool CreateListening( XPlat_Socket& sock,
     if( -1 == _sock ) {
         err = XPlat::NetUtils::GetLastError();
         err_str = XPlat::Error::GetErrorString( err );
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::CreateListening - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "socket() failed with '%s'\n",
                                err_str.c_str()) );
         return false;
     }
 
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat::SocketUtils::CreateListening - "
+    xplat_dbg( 3, xplat_printf(FLF, stderr,
                           "sock:%d, port:%d\n",
                           _sock, _port) );
 
     // Close socket on exec
     if( ! SetCloseOnExec(_sock) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::CreateListening - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set close-on-exec\n") );     
     }
 
     // Set listening socket to non-blocking if requested
     if( nonblock ) {
         if( ! SetBlockingMode(_sock, false) )
-            xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::CreateListening - "
+            xplat_dbg( 1, xplat_printf(FLF, stderr,
                                   "failed to set non-blocking\n") );
     }
 
@@ -226,7 +223,7 @@ bool CreateListening( XPlat_Socket& sock,
         if( ! soret ) {
             err = XPlat::NetUtils::GetLastError();
             err_str = XPlat::Error::GetErrorString( err );
-            xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::CreateListening - "
+            xplat_dbg( 1, xplat_printf(FLF, stderr,
                                   "setsockopt() failed with '%s'\n",
                                   err_str.c_str()) );
         }
@@ -236,7 +233,7 @@ bool CreateListening( XPlat_Socket& sock,
         if( -1 == bind(_sock, (sockaddr*)&local_addr, sizeof(local_addr)) ) {
             err = XPlat::NetUtils::GetLastError();
             err_str = XPlat::Error::GetErrorString( err );
-            xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::CreateListening - "
+            xplat_dbg( 1, xplat_printf(FLF, stderr,
                                   "bind() to static port %d failed with '%s'\n",
                                    _port, err_str.c_str()) );
             XPlat::SocketUtils::Close( _sock );
@@ -249,14 +246,14 @@ bool CreateListening( XPlat_Socket& sock,
     if( -1 == listen(_sock, backlog) ) {
         err = XPlat::NetUtils::GetLastError();
         err_str = XPlat::Error::GetErrorString( err );
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::CreateListening - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "listen() failed with '%s'\n", err_str.c_str() ) );
         XPlat::SocketUtils::Close( _sock );
         return false;
     }
     // determine which port we were actually assigned to
     if( ! GetPort(_sock, _port) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::CreateListening - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to obtain port from socket\n" ) );
         XPlat::SocketUtils::Close( _sock );
         return false;
@@ -275,7 +272,7 @@ bool CreateListening( XPlat_Socket& sock,
                 continue;
             }
             else {
-                xplat_dbg( 1, xplat_printf(FLF, stderr,  "XPlat::SocketUtils::CreateListening - "
+                xplat_dbg( 1, xplat_printf(FLF, stderr,
                                       "bind() to dynamic port %hu failed with '%s'\n",
                                       _port, err_str.c_str() ) );
                 XPlat::SocketUtils::Close( _sock );
@@ -291,7 +288,7 @@ bool CreateListening( XPlat_Socket& sock,
                 }
                 else {
                     err_str = XPlat::Error::GetErrorString( err );
-                    xplat_dbg( 1, xplat_printf(FLF, stderr,  "XPlat::SocketUtils::CreateListening - "
+                    xplat_dbg( 1, xplat_printf(FLF, stderr,
                                           "listen() failed with '%s'\n",
                                           err_str.c_str() ) );
                     XPlat::SocketUtils::Close( _sock );
@@ -305,13 +302,13 @@ bool CreateListening( XPlat_Socket& sock,
 
     // Turn off Nagle algorithm
     if( ! SetTcpNoDelay(_sock) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::CreateListening - " 
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set TCP_NODELAY\n") );
     }
 
     port = _port;
     sock = _sock;
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat::SocketUtils::CreateListening - "
+    xplat_dbg( 3, xplat_printf(FLF, stderr,
                            "returning sock:%d, port:%hu\n",
                            sock, port) );
     return true;
@@ -326,7 +323,7 @@ bool AcceptConnection( const XPlat_Socket listen_sock,
     XPlat_Socket connection;
     std::string err_str;
 
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat::SocketUtils::AcceptConnection - "
+    xplat_dbg( 3, xplat_printf(FLF, stderr,
                           "listening on socket=%d\n", listen_sock) );
 
     connected_sock = InvalidSocket;
@@ -351,7 +348,7 @@ bool AcceptConnection( const XPlat_Socket listen_sock,
             }
             else if( retval < 0 ) {
                 err_str = XPlat::Error::GetErrorString( err );
-                xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::AcceptConnection - "
+                xplat_dbg( 1, xplat_printf(FLF, stderr,
                                       "select() failed with '%s'\n", 
                                       err_str.c_str()) );
                 return false;
@@ -366,7 +363,7 @@ bool AcceptConnection( const XPlat_Socket listen_sock,
                 return false; // let our caller decide what's next
         if( EWOULDBLOCK != err ) {
                 err_str = XPlat::Error::GetErrorString( err );
-                xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::AcceptConnection - "
+                xplat_dbg( 1, xplat_printf(FLF, stderr,
                                       "accept() failed with '%s'\n", 
                                err_str.c_str()) );
         } 
@@ -377,22 +374,22 @@ bool AcceptConnection( const XPlat_Socket listen_sock,
 
     // Set the socket to be blocking
     if( ! SetBlockingMode(connection, true) )
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::AcceptConnection - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set blocking\n") );
 
     // Close socket on exec
     if( ! SetCloseOnExec(connection) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::AcceptConnection - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set close-on-exec\n") );     
     }
 
     // Turn off Nagle algorithm
     if( ! SetTcpNoDelay(connection) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::AcceptConnection - " 
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set TCP_NODELAY\n") );
     }
 
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat::SocketUtils::AcceptConnection - "
+    xplat_dbg( 3, xplat_printf(FLF, stderr,
                           "returning socket=%d\n", connection) );
     connected_sock = connection;
     return true;
@@ -405,7 +402,7 @@ bool GetPort( const XPlat_Socket sock, XPlat_Port& port )
     if( getsockname( sock, (struct sockaddr*) &local_addr, &sockaddr_len ) == -1 ) {
         int err = XPlat::NetUtils::GetLastError();
         std::string err_str = XPlat::Error::GetErrorString( err );
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::getPort - " 
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "getsockname(%d) failed with %s\n",
                               sock, err_str.c_str()) );
         port = InvalidPort;

@@ -29,7 +29,7 @@ static bool_t SetTcpNoDelay( XPlat_Socket sock )
                                                 (socklen_t) sizeof(optval) );
     if( ! soret ) {
         xplat_dbg( 1, xplat_printf(FLF, stderr, 
-                              "XPlat_SocketUtils_SetTcpNoDelay failed\n") );
+                              "failed to set option\n") );
         return false;
     }
 #endif
@@ -43,7 +43,7 @@ static bool_t SetCloseOnExec( XPlat_Socket sock )
     fdflag = fcntl( sock, F_GETFD );
     if( fdflag == -1 ) {
         // failed to retrieve the socket descriptor flags
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_SetCloseOnExec - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to get flags\n") );     
 	return false;
     }
@@ -51,7 +51,7 @@ static bool_t SetCloseOnExec( XPlat_Socket sock )
         fret = fcntl( sock, F_SETFD, fdflag | FD_CLOEXEC );
         if( fret == -1 ) {
             // failed to set the socket descriptor flags
-            xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_SetCloseOnExec - "
+            xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set flags\n") );
 	    return false;
         }
@@ -72,7 +72,7 @@ bool_t XPlat_SocketUtils_Connect( const char* host,
     struct hostent *server_hostent = NULL;
     struct sockaddr_in server_addr;
 
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat_SocketUtils_Connect - "
+    xplat_dbg( 3, xplat_printf(FLF, stderr,
                           "host=%s port=%hu sock=%d\n",
                           host, port, _sock) );
 
@@ -81,11 +81,11 @@ bool_t XPlat_SocketUtils_Connect( const char* host,
         if ( InvalidSocket == _sock ) {
             err = XPlat_NetUtils_GetLastError();
             err_str = XPlat_Error_GetErrorString(err);
-            xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_Connect - "
+            xplat_dbg( 1, xplat_printf(FLF, stderr,
                                   "socket() failed with '%s'\n", err_str) );
             return false;
         }
-        xplat_dbg( 5, xplat_printf(FLF, stderr, "XPlat_SocketUtils_Connect - "
+        xplat_dbg( 5, xplat_printf(FLF, stderr,
                               "socket() => %d\n", _sock) );
     }
 
@@ -93,7 +93,7 @@ bool_t XPlat_SocketUtils_Connect( const char* host,
     if ( NULL == server_hostent ) {
         err = XPlat_NetUtils_GetLastError();
         err_str = XPlat_Error_GetErrorString(err);
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_Connect - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "gethostbyname() failed with '%s'\n", err_str) );
         return false;
     } 
@@ -110,18 +110,18 @@ bool_t XPlat_SocketUtils_Connect( const char* host,
         if( -1 == cret ) {
             err = XPlat_NetUtils_GetLastError();
             err_str = XPlat_Error_GetErrorString(err);
-            xplat_dbg( 5, xplat_printf(FLF, stderr, "XPlat_SocketUtils_Connect - "
+            xplat_dbg( 5, xplat_printf(FLF, stderr,
                                   "connect() failed with '%s'\n", err_str) );
             if( ! (XPlat_Error_ETimedOut(err) || 
                    XPlat_Error_EConnRefused(err)) ) {
-                xplat_dbg(1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_Connect - "
+                xplat_dbg(1, xplat_printf(FLF, stderr,
                                      "connect() to %s:%hu failed with '%s'\n", 
                                       host, port, err_str));
                 return false;
             }
 
             nConnectTries++;
-            xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat_SocketUtils_Connect - "
+            xplat_dbg( 3, xplat_printf(FLF, stderr,
                                   "timed out %d times\n", nConnectTries) );
             if( (num_retry > 0) && (nConnectTries >= num_retry) )
                 break;
@@ -133,13 +133,13 @@ bool_t XPlat_SocketUtils_Connect( const char* host,
 
     if( -1 == cret ) {
         err_str = XPlat_Error_GetErrorString(err);
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_Connect - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "connect() to %s:%d failed with '%s'\n", 
                               host, port, err_str) );
         return false;
     }
 
-    xplat_dbg( 5, xplat_printf(FLF, stderr, "XPlat_SocketUtils_Connect - "
+    xplat_dbg( 5, xplat_printf(FLF, stderr,
                           "connected to %s:%d \n", host, port) );
 
     // Close socket on exec
@@ -150,11 +150,11 @@ bool_t XPlat_SocketUtils_Connect( const char* host,
 
     // Turn off Nagle algorithm
     if( ! SetTcpNoDelay(_sock) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_Connect - " 
+        xplat_dbg( 1, xplat_printf(FLF, stderr, 
                               "failed to set TCP_NODELAY\n") );
     }
 
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat_SocketUtils_Connect - "             
+    xplat_dbg( 3, xplat_printf(FLF, stderr,             
                           "returning socket=%d\n", _sock) );
     *sock = _sock;
     return true;
@@ -179,25 +179,25 @@ bool_t XPlat_SocketUtils_CreateListening( XPlat_Socket* sock,
     if( -1 == _sock ) {
         err = XPlat_NetUtils_GetLastError();
         err_str = XPlat_Error_GetErrorString(err);
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_CreateListening - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "socket() failed with '%s'\n", err_str) );
         return false;
     }
 
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat_SocketUtils_CreateListening - "
+    xplat_dbg( 3, xplat_printf(FLF, stderr,
                           "sock:%d, port:%d\n",
                           _sock, _port) );
 
     // Close socket on exec
     if( ! SetCloseOnExec(_sock) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_CreateListening - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set close-on-exec\n") );     
     }
 
     // Set listening socket to non-blocking if requested
     if( nonblock ) {
         if( ! XPlat_SocketUtils_SetBlockingMode(_sock, false) )
-            xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_CreateListening - "
+            xplat_dbg( 1, xplat_printf(FLF, stderr,
                                   "failed to set non-blocking\n") );
     }
 
@@ -212,7 +212,7 @@ bool_t XPlat_SocketUtils_CreateListening( XPlat_Socket* sock,
     if( ! soret ) {
         err = XPlat_NetUtils_GetLastError();
         err_str = XPlat_Error_GetErrorString(err);
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_CreateListening - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "setsockopt() failed with '%s'\n", err_str) );
     }
 #endif
@@ -227,7 +227,7 @@ bool_t XPlat_SocketUtils_CreateListening( XPlat_Socket* sock,
         if( -1 == bind(_sock, (struct sockaddr*)&local_addr, sizeof(local_addr)) ) {
             err = XPlat_NetUtils_GetLastError();
             err_str = XPlat_Error_GetErrorString(err);
-            xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_CreateListening - "
+            xplat_dbg( 1, xplat_printf(FLF, stderr,
                                   "bind() to static port %d failed with '%s'\n",
                                    _port, err_str) );
             XPlat_SocketUtils_Close( _sock );
@@ -240,14 +240,14 @@ bool_t XPlat_SocketUtils_CreateListening( XPlat_Socket* sock,
     if( -1 == listen(_sock, backlog) ) {
         err = XPlat_NetUtils_GetLastError();
         err_str = XPlat_Error_GetErrorString(err);
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_CreateListening - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "listen() failed with '%s'\n", err_str) );
         XPlat_SocketUtils_Close( _sock );
         return false;
     }
     // determine which port we were actually assigned to
     if( ! XPlat_SocketUtils_GetPort(_sock, &_port) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_CreateListening - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to obtain port from socket\n" ) );
         XPlat_SocketUtils_Close( _sock );
         return false;
@@ -266,7 +266,7 @@ bool_t XPlat_SocketUtils_CreateListening( XPlat_Socket* sock,
             }
             else {
                 err_str = XPlat_Error_GetErrorString(err);
-                xplat_dbg( 1, xplat_printf(FLF, stderr,  "XPlat_SocketUtils_CreateListening - "
+                xplat_dbg( 1, xplat_printf(FLF, stderr,
                                       "bind() to dynamic port %d failed with '%s'\n",
                                       _port, err_str) );
                 XPlat_SocketUtils_Close( _sock );
@@ -282,7 +282,7 @@ bool_t XPlat_SocketUtils_CreateListening( XPlat_Socket* sock,
                 }
                 else {
                     err_str = XPlat_Error_GetErrorString(err);
-                    xplat_dbg( 1, xplat_printf(FLF, stderr,  "XPlat_SocketUtils_CreateListening - "
+                    xplat_dbg( 1, xplat_printf(FLF, stderr,
                                           "listen() failed with '%s'\n", err_str) );
                     XPlat_SocketUtils_Close( _sock );
                     return false;
@@ -295,13 +295,13 @@ bool_t XPlat_SocketUtils_CreateListening( XPlat_Socket* sock,
 
     // Turn off Nagle algorithm
     if( ! SetTcpNoDelay(_sock) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_CreateListening - " 
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set TCP_NODELAY\n") );
     }
 
     *port = _port;
     *sock = _sock;
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat_SocketUtils_CreateListening - "
+    xplat_dbg( 3, xplat_printf(FLF, stderr,
                           "returning socket=%d, port=%hu\n", _sock, _port) );
  
     return true;
@@ -318,7 +318,7 @@ bool_t XPlat_SocketUtils_AcceptConnection( XPlat_Socket listen_sock,
     fd_set readfds;
     struct timeval tv;
 
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat_SocketUtils_AcceptConnection - "
+    xplat_dbg( 3, xplat_printf(FLF, stderr,
                           "listening on socket=%d\n", listen_sock) );
 
     *connected_sock = InvalidSocket;
@@ -343,7 +343,7 @@ bool_t XPlat_SocketUtils_AcceptConnection( XPlat_Socket listen_sock,
             }
             else if( retval < 0 ) {
                 err_str = XPlat_Error_GetErrorString(err);
-                xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_AcceptConnection - "
+                xplat_dbg( 1, xplat_printf(FLF, stderr,
                                       "select() failed with '%s'\n", err_str) );
                 return false;
             }
@@ -357,7 +357,7 @@ bool_t XPlat_SocketUtils_AcceptConnection( XPlat_Socket listen_sock,
                 return false; // let caller decide what's next
 	    if( EWOULDBLOCK != err ) {
                 err_str = XPlat_Error_GetErrorString(err);
-                xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_AcceptConnection - "
+                xplat_dbg( 1, xplat_printf(FLF, stderr,
                                       "accept() failed with '%s'\n", err_str) );
 	    } 
             if( EINTR != err )
@@ -367,22 +367,22 @@ bool_t XPlat_SocketUtils_AcceptConnection( XPlat_Socket listen_sock,
 
     // Set the socket to be blocking
     if( ! XPlat_SocketUtils_SetBlockingMode(connection, true) )
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_AcceptConnection - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set blocking\n") );
 
     // Close socket on exec
     if( ! SetCloseOnExec(connection) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_AcceptConnection - "
+        xplat_dbg( 1, xplat_printf(FLF, stderr,
                               "failed to set close-on-exec\n") );     
     }
     
     // Turn off Nagle algorithm
     if( ! SetTcpNoDelay(connection) ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_AcceptConnection - " 
+        xplat_dbg( 1, xplat_printf(FLF, stderr, 
                               "failed to set TCP_NODELAY\n") );
     }
 
-    xplat_dbg( 3, xplat_printf(FLF, stderr, "XPlat_SocketUtils_AcceptConnection() - "
+    xplat_dbg( 3, xplat_printf(FLF, stderr,
                           "returning socket=%d\n", connection) );
     *connected_sock = connection;
     return true;
@@ -398,7 +398,7 @@ bool_t XPlat_SocketUtils_GetPort( const XPlat_Socket sock,
     if( -1 == getsockname(sock, (struct sockaddr*) &local_addr, &sockaddr_len) ) {
         err = XPlat_NetUtils_GetLastError();
         err_str = XPlat_Error_GetErrorString(err);
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat_SocketUtils_getPort - " 
+        xplat_dbg( 1, xplat_printf(FLF, stderr, 
                               "getsockname(%d) failed with %s\n",
                               sock, err_str) );
         return false;

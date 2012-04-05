@@ -31,8 +31,7 @@ static bool_t ClearFlag( XPlat_Socket sock, int flag )
     int fdflag = fcntl( sock, F_GETFL );
     if( -1 == fdflag ) {
         // failed to retrieve the socket status flags
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "XPlat::SocketUtils::SetBlockingMode - "
-                              "failed to get flags\n") );
+        xplat_dbg( 1, xplat_printf(FLF, stderr, "failed to get flags\n") );
         return false;
     }
     else {
