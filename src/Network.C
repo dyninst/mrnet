@@ -220,10 +220,7 @@ void Network::shutdown_Network(void)
 
     if( ! started ) {
 
-        XPlat::Thread::Id my_id = 0;
-        tsd_t *tsd = ( tsd_t * )tsd_key.Get();
-        if( tsd != NULL )
-            my_id = tsd->thread_id;
+        XPlat::Thread::Id my_id = XPlat_TLSKey.GetTid();
 
         // kill streams
         close_Streams();
@@ -553,6 +550,7 @@ void Network::update_BcastCommunicator(void)
 void Network::init_ThreadState( node_type_t node_type,
                                 const char* thread_name /*=NULL*/ )
 {
+    const char *tname;
     Rank myrank = get_LocalRank();
     node_type_t mytype = node_type;
 
@@ -599,26 +597,27 @@ void Network::init_ThreadState( node_type_t node_type,
     else
         nameStream << thread_name; 
 
+    tname = (const char *)strdup( nameStream.str().c_str() );
     tsd_t *local_data = new tsd_t;
-    local_data->thread_id = XPlat::Thread::GetId( );
-    local_data->thread_name = strdup( nameStream.str().c_str() );
     local_data->process_rank = myrank;
     local_data->node_type = mytype;
     local_data->network = this;
 
     int status;
-    if( (status = tsd_key.Set(local_data)) != 0 ) {
+    if( (status = XPlat_TLSKey.Set(tname, local_data)) != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
                                strerror(status)) );
     } 
 }
 void Network::free_ThreadState(void)
 {
-    tsd_t* tsd = (tsd_t*)tsd_key.Get();
+    tsd_t* tsd = (tsd_t*)XPlat_TLSKey.GetUserData();
     if( tsd != NULL ) {
-        tsd_key.Set( NULL );
-        free( const_cast<char*>( tsd->thread_name ) );
         delete tsd;
+        if(XPlat_TLSKey.DestroyData() != 0) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "Thread 0x%lx failed to destroy"
+                        " thread-specific data.\n", XPlat::Thread::GetId()));
+        }
     }
 }
 

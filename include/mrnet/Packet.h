@@ -76,14 +76,14 @@ class Packet: public Error {
     // Starts and stops a timer for a specific context
     void start_Timer (perfdata_pkt_timers_t context);
     void stop_Timer (perfdata_pkt_timers_t context);
-    
+    void reset_Timers ();
+
     // Sets a timer for a specific context to t 
     // (used in cases where packet class not yet created EX: recv)
     void set_Timer (perfdata_pkt_timers_t context, Timer t);
 
     // Get the eleased time in the context timer
     double get_ElapsedTime (perfdata_pkt_timers_t context);
-
     void set_IncomingPktCount(int size);
     void set_OutgoingPktCount(int size);
 

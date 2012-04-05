@@ -1795,6 +1795,14 @@ void Packet::stop_Timer( perfdata_pkt_timers_t context )
     _perf_data_timer[context].stop();
 }
 
+void Packet::reset_Timers()
+{
+    if (_perf_data_timer != NULL)
+        delete [] _perf_data_timer;
+
+    _perf_data_timer = new Timer[PERFDATA_PKT_TIMERS_MAX];
+}
+
 void Packet::set_Timer( perfdata_pkt_timers_t context, Timer t )
 {
     _perf_data_timer[context] = t;

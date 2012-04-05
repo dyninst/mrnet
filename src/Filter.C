@@ -100,12 +100,17 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
 
                 p->stop_Timer (PERFDATA_PKT_TIMERS_FILTER);
                 pdm->add_PacketTimers(p);
+                p->reset_Timers();
+            }
+
+        }
+        if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_FILTER_TO_SEND))
+        {
+            for( iter = opackets.begin(); iter != opackets.end(); iter++ )
+            {
+                (*iter)->start_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
             }
         }
-    
-        if( pdm->is_Enabled(PERFDATA_MET_ELAPSED_SEC, PERFDATA_CTX_PKT_FILTER_TO_SEND))
-            for( iter = opackets.begin(); iter != opackets.end(); iter++ )
-                (*iter)->start_Timer(PERFDATA_PKT_TIMERS_FILTER_TO_SEND);
     }
     ipackets.clear();
     

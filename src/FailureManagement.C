@@ -83,13 +83,10 @@ void * FailureInjectionThreadMain( void* iarg )
     srand(0);
 
     //TLS: setup FIS thread local storage
-    tsd_t * local_data = new tsd_t;
-    local_data->thread_id = XPlat::Thread::GetId();
-    local_data->thread_name = strdup("FIS");
 
     int status;
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Setting local thread storage ...\n"));
-    if( (status = tsd_key.Set( local_data )) != 0){
+    if( (status = XPlat_TLSKey.Set( strdup("FIS"), NULL )) != 0){
         fprintf(stderr, "XPlat::TLSKey::Set(): %s\n", strerror(status)); 
         return NULL;
     }

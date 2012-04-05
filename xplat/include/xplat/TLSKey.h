@@ -7,9 +7,18 @@
 #ifndef XPLAT_TLSKEY_H
 #define XPLAT_TLSKEY_H
 
+#include <cstdlib>
+#include <cerrno>
+#include "xplat/Thread.h"
 #include "xplat/Monitor.h"
 namespace XPlat
 {
+
+typedef struct {
+    XPlat::Thread::Id tid;
+    const char *tname;
+    void *user_data;
+} tls_t;
 
 class TLSKey
 {
@@ -35,23 +44,88 @@ public:
         data = NULL;
         data_sync.Unlock();
     }
-    virtual void* Get( void ) const {
-        void* ret = NULL;
+    virtual XPlat::Thread::Id GetTid( void ) const {
+        tls_t *tls_ret = NULL;
+        XPlat::Thread::Id ret = 0;
         data_sync.Lock();
         if( data != NULL )
-            ret = data->Get();
+            tls_ret = (tls_t *)data->Get();
+        if(tls_ret != NULL)
+            ret = tls_ret->tid;
         data_sync.Unlock();
         return ret;
     }
-    virtual int Set( void* val ) {
-        int ret = 0;
+    virtual const char* GetName( void ) const {
+        tls_t *tls_ret = NULL;
+        const char *ret = NULL;
         data_sync.Lock();
         if( data != NULL )
-            ret = data->Set( val );
+            tls_ret = (tls_t *)data->Get();
+        if(tls_ret != NULL)
+            ret = tls_ret->tname;
         data_sync.Unlock();
+        return ret;
+    }
+    virtual void* GetUserData( void ) const {
+        tls_t *tls_ret = NULL;
+        void *ret = NULL;
+        data_sync.Lock();
+        if( data != NULL )
+            tls_ret = (tls_t *)data->Get();
+        if(tls_ret != NULL)
+            ret = tls_ret->user_data;
+        data_sync.Unlock();
+        return ret;
+    }
+    virtual int Set( const char* name, void* val ) {
+        int ret = 0;
+        void *get_ret = NULL;
+        tls_t *tls_data;
+        data_sync.Lock();
+        if( data != NULL )
+            get_ret = data->Get();
+
+        // Allocate our internal tls structure if nothing is found
+        if(get_ret == NULL) {
+            tls_data = new tls_t;
+            if(tls_data == NULL) {
+                return ENOMEM;
+            }
+        } else {
+            tls_data = (tls_t*)get_ret;
+        }
+        
+        tls_data->tid = XPlat::Thread::GetId();
+        tls_data->tname = name;
+        tls_data->user_data = val;
+        if( data != NULL )
+            ret = data->Set( tls_data );
+        data_sync.Unlock();
+        return ret;
+    }
+    // Assumes user has already freed user data
+    virtual int DestroyData() {
+        tls_t *tls_ret = NULL;
+        int ret = 0;
+        if( data != NULL )
+            tls_ret = (tls_t *)data->Get();
+        if(tls_ret != NULL) {
+            // Free given thread name
+            // We assume the user used malloc and not new
+            free( const_cast<char*>(tls_ret->tname) );
+
+            // Delete our internal tls structure
+            delete tls_ret;
+            tls_ret = NULL;
+        } else {
+            ret = -1;
+        }
+
         return ret;
     }
 };
+
+extern TLSKey XPlat_TLSKey;
 
 } // namespace XPlat
 

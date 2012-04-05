@@ -12,7 +12,7 @@
 #include <assert.h>
 
 #include "xplat_lightweight/vector.h"
-#include "xplat_dbg.h"
+#include "xplat_lightweight/xplat_utils_lightweight.h"
 
 vector_t* new_empty_vector_t()
 {
@@ -24,7 +24,7 @@ vector_t* new_empty_vector_t()
     new_vector->vec = (void**) calloc( new_vector->alloc_size, sizeof(void*) );
     assert( new_vector->vec != NULL );
 
-/*     xplat_dbg(5, fprintf(stderr, */
+/*     xplat_dbg(5, xplat_printf(FLF, stderr, */
 /*                           "new_vector_t() = %p, vec->vec = %p\n", new_vector, new_vector->vec)); */
 
     return new_vector;
@@ -88,7 +88,7 @@ void delete_vector_t(vector_t* vector)
     /* because elements stored are pointers, they might be in use 
        elsewhere, so don't free */
 
-/*     xplat_dbg(5, fprintf(stderr, */
+/*     xplat_dbg(5, xplat_printf(FLF, stderr, */
 /*                           "delete_vector_t() = %p, vec->vec = %p\n", vector, vector->vec)); */
     
     if( vector->vec != NULL )
