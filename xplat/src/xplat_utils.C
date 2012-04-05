@@ -41,6 +41,7 @@ int xplat_printf( const char *file, int line, const char * func,
     va_list arglist;
 
     struct timeval tv;
+    const char *thread_name;
     while( gettimeofday( &tv, NULL ) == -1 ) {}
 
     xplat_printf_mutex.Lock();
@@ -52,14 +53,18 @@ int xplat_printf( const char *file, int line, const char * func,
         f = ifp;
     }
 
+    thread_name = XPlat_TLSKey.GetName();
+
     // print timestamp and thread info
-    fprintf( f, "%ld.%06ld: ", 
-             tv.tv_sec-XPLAT_RELEASE_DATE_SECS, tv.tv_usec);
+    fprintf( f, "%ld.%06ld: %s(0x%lx): ", 
+             tv.tv_sec-XPLAT_RELEASE_DATE_SECS, tv.tv_usec,
+             ( thread_name != NULL ) ? thread_name : "UNKNOWN_THREAD",
+             Thread::GetId());
 
     if( file ) {
         // print file, function, and line info
-        fprintf( f, "%s[%d] %s - ", 
-                 XPlat::PathUtils::GetFilename(file).c_str(), line, func );
+        fprintf( f, "(XPlat) %s[%d] %s - ", 
+                 PathUtils::GetFilename(file).c_str(), line, func );
     }
 
     // print message

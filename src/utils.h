@@ -77,14 +77,10 @@ int getSocketConnection( XPlat_Socket bound_socket,
 int getPortFromSocket( XPlat_Socket sock, XPlat_Port *port );
 
 /*************** Thread-level Storage ***************/
-extern XPlat::TLSKey tsd_key;
-
 class Network;
 
 class tsd_t {
  public:
-    XPlat::Thread::Id thread_id;
-    const char *thread_name;
     Rank process_rank;
     node_type_t node_type;
     Network* network;

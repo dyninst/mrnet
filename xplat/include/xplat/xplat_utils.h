@@ -10,6 +10,7 @@
 #include <cstdarg>
 #include "mrnet/Types.h"
 #include "xplat/Thread.h"
+#include "xplat/TLSKey.h"
 
 namespace XPlat {
 

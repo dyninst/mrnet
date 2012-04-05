@@ -21,6 +21,7 @@
 #include "xplat/Monitor.h"
 #include "xplat/Mutex.h"
 #include "xplat/Thread.h"
+#include "xplat/TLSKey.h"
 
 namespace MRN
 {

@@ -27,8 +27,6 @@ std::string LocalNetworkAddr = NULL_STRING;
 
 Port LocalPort = 0;
 
-XPlat::TLSKey tsd_key;
-
 void get_Version( int& major,
                   int& minor,
                   int& revision )
@@ -196,10 +194,10 @@ int mrn_printf( const char *file, int line, const char * func,
     node_type_t node_type = UNKNOWN_NODE;
     //Network* net = NULL;
     
-    tsd_t *tsd = (tsd_t*) tsd_key.Get();
+    tid = XPlat_TLSKey.GetTid();
+    thread_name = XPlat_TLSKey.GetName();
+    tsd_t *tsd = (tsd_t*) XPlat_TLSKey.GetUserData();
     if( tsd != NULL ) {
-        tid = tsd->thread_id;
-        thread_name = tsd->thread_name;
         rank = tsd->process_rank;
         node_type = tsd->node_type;
         //net = tsd->network;
@@ -225,7 +223,7 @@ int mrn_printf( const char *file, int line, const char * func,
     fprintf( f, "%ld.%06ld: %s(0x%lx): ", 
              tv.tv_sec-MRN_RELEASE_DATE_SECS, tv.tv_usec,
              ( thread_name != NULL ) ? thread_name : "UNKNOWN_THREAD",
-             tid );
+             XPlat::Thread::GetId() );
 
     if( file ) {
         // print file, function, and line info
