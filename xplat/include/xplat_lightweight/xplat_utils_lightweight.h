@@ -7,8 +7,8 @@
 #define XPLAT_UTILS_LIGHTWEIGHT_H 1
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
-#include "mrnet_lightweight/Types.h"
 
 #define XPLAT_RELEASE_DATE_SECS 1308200400
 
