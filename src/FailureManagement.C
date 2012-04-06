@@ -86,7 +86,7 @@ void * FailureInjectionThreadMain( void* iarg )
 
     int status;
     mrn_dbg( 3, mrn_printf(FLF, stderr, "Setting local thread storage ...\n"));
-    if( (status = XPlat_TLSKey.InitTLS( strdup("FIS"), NULL )) != 0){
+    if( (status = XPlat::XPlat_TLSKey.InitTLS( strdup("FIS"), NULL )) != 0){
         fprintf(stderr, "XPlat::TLSKey::Set(): %s\n", strerror(status)); 
         return NULL;
     }

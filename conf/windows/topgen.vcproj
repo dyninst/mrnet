@@ -68,7 +68,7 @@
 				AdditionalDependencies="Iphlpapi.lib Ws2_32.lib shlwapi.lib"
 				OutputFile="$(OutDir)/mrnet_topgen.exe"
 				LinkIncremental="0"
-				AdditionalLibraryDirectories="../obj/i386-unknown-nt4.0/lightweight/"
+				AdditionalLibraryDirectories="&quot;../obj/i386-unknown-nt4.0&quot;"
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -145,7 +145,7 @@
 				AdditionalDependencies="Iphlpapi.lib Ws2_32.lib shlwapi.lib"
 				OutputFile="$(OutDir)/mrnet_topgen.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="../obj/i386-unknown-nt4.0/lightweight/"
+				AdditionalLibraryDirectories="../obj/i386-unknown-nt4.0"
 				GenerateDebugInformation="false"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -186,6 +186,26 @@
 			>
 			<File
 				RelativePath="..\..\tests\config_generator.C"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\tests\ntKludges.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"

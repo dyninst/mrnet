@@ -1,8 +1,12 @@
-#include <sys/time.h>
-
 #include "xplat/xplat_utils.h"
 #include "xplat/PathUtils.h"
 #include "xplat/Mutex.h"
+
+#ifndef os_windows
+#include <sys/time.h>
+#else
+#include "xplat/Types.h"
+#endif
 
 namespace XPlat
 {

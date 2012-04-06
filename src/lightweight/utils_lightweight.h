@@ -39,8 +39,8 @@
 # define mrn_strtok(x,y,z) strtok(x,y)
 #endif 
 
-#include "mrnet_lightweight/Types.h"
 #include "xplat_lightweight/xplat_utils_lightweight.h"
+#include "mrnet_lightweight/Types.h"
 
 #define MRN_RELEASE_DATE_SECS 1308200400
 

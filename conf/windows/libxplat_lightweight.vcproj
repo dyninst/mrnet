@@ -203,6 +203,18 @@
 				RelativePath="..\..\xplat\src\lightweight\vector.c"
 				>
 			</File>
+			<File
+				RelativePath="..\..\xplat\src\lightweight\xplat_utils_lightweight.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="1"
+					/>
+				</FileConfiguration>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -274,7 +286,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xplat\src\lightweight\xplat_dbg.h"
+				RelativePath="..\..\xplat\include\xplat_lightweight\xplat_utils_lightweight.h"
 				>
 			</File>
 		</Filter>

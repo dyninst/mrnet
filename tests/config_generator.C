@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include "xplat/xplat_utils.h"
 
 #if defined(os_linux)
 # include <getopt.h>

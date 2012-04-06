@@ -21,7 +21,7 @@ static bool SetTcpNoDelay( XPlat_Socket sock )
                             (void*) &optval,
                             (socklen_t) sizeof(optval) );
     if( ! soret ) {
-        xplat_dbg( 1, xplat_printf(FLF, stderr, "failed to set option\n") );
+        xplat_dbg( 1, XPlat::xplat_printf(FLF, stderr, "failed to set option\n") );
         return false;
     }
 #endif

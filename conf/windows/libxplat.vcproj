@@ -456,6 +456,26 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath="..\..\xplat\src\xplat_utils.C"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -543,7 +563,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\xplat\src\xplat_dbg.h"
+				RelativePath="..\..\xplat\include\xplat\xplat_utils.h"
 				>
 			</File>
 		</Filter>

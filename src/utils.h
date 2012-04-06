@@ -43,10 +43,10 @@
 #include <vector>
 #include <string>
 
-#include "mrnet/Types.h"
 #include "xplat/TLSKey.h"
 #include "xplat/Thread.h"
 #include "xplat/xplat_utils.h"
+#include "mrnet/Types.h"
 
 
 #ifdef USE_BOOST_TIMER

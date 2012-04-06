@@ -1,7 +1,11 @@
-#include <sys/time.h>
-
 #include "xplat_lightweight/xplat_utils_lightweight.h"
 #include "xplat_lightweight/PathUtils.h"
+
+#ifndef os_windows
+#include <sys/time.h>
+#else
+#include "xplat_lightweight/Types.h"
+#endif
 
 static FILE* xplat_printf_fp = NULL;
 

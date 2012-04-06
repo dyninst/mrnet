@@ -63,7 +63,6 @@ int Monitor_destruct( Monitor_t* m )
 
 int Monitor_Lock( Monitor_t* m )
 {
-    DWORD ret;
     if( (m != NULL) && (m->data != NULL) )
         return WinMonitor_Lock(m->data);
 
@@ -72,7 +71,6 @@ int Monitor_Lock( Monitor_t* m )
 
 int Monitor_Unlock( Monitor_t* m )
 {
-    DWORD ret;
     if( (m != NULL) && (m->data != NULL) )
         return WinMonitor_Unlock(m->data);
 
@@ -81,7 +79,6 @@ int Monitor_Unlock( Monitor_t* m )
 
 int Monitor_Trylock( Monitor_t* m )
 {
-    DWORD ret;
     if( (m != NULL) && (m->data != NULL) )
         return WinMonitor_Trylock(m->data);
 
@@ -90,7 +87,6 @@ int Monitor_Trylock( Monitor_t* m )
 
 int Monitor_RegisterCondition( Monitor_t *m, int condid ) 
 {
-    DWORD ret;
     if( (m != NULL) && (m->data != NULL) )
         return WinMonitor_RegisterCondition( m->data, condid );
 
@@ -99,7 +95,6 @@ int Monitor_RegisterCondition( Monitor_t *m, int condid )
 
 int Monitor_WaitOnCondition( Monitor_t *m, int condid )
 {
-    DWORD ret;
     if( (m != NULL) && (m->data != NULL) )
         return WinMonitor_WaitOnCondition( m->data, condid );
 
@@ -108,7 +103,6 @@ int Monitor_WaitOnCondition( Monitor_t *m, int condid )
 
 int Monitor_SignalCondition( Monitor_t *m, int condid )
 {
-    DWORD ret;
     if( (m != NULL) && (m->data != NULL) )
         return WinMonitor_SignalCondition( m->data, condid );
 
@@ -117,7 +111,6 @@ int Monitor_SignalCondition( Monitor_t *m, int condid )
 
 int Monitor_BroadcastCondition( Monitor_t *m, int condid )
 {
-    DWORD ret;
     if( (m != NULL) && (m->data != NULL) )
         return WinMonitor_BroadcastCondition( m->data, condid );
 

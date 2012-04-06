@@ -70,7 +70,7 @@
 				LinkIncremental="0"
 				AdditionalLibraryDirectories="../obj/i386-unknown-nt4.0"
 				GenerateDebugInformation="true"
-				SubSystem="1"
+				SubSystem="0"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				TargetMachine="1"

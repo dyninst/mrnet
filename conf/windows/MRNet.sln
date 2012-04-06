@@ -135,6 +135,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PerThreadStreams_BE_lightwe
 		{35EFAC4F-15EE-4168-8FC8-FDE5C917B770} = {35EFAC4F-15EE-4168-8FC8-FDE5C917B770}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mrnet_topgen", "topgen.vcproj", "{A4F3F9DD-A9DE-4805-8424-728982525471}"
+	ProjectSection(ProjectDependencies) = postProject
+		{87F3491E-E79B-450B-AD1B-AB68D2594AAB} = {87F3491E-E79B-450B-AD1B-AB68D2594AAB}
+		{6009C354-8FF4-44B2-9ED6-F3380B8281B0} = {6009C354-8FF4-44B2-9ED6-F3380B8281B0}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -237,6 +243,10 @@ Global
 		{ACBC2B21-A374-4079-8293-96AFD3EEC09C}.Debug|Win32.Build.0 = Debug|Win32
 		{ACBC2B21-A374-4079-8293-96AFD3EEC09C}.Release|Win32.ActiveCfg = Release|Win32
 		{ACBC2B21-A374-4079-8293-96AFD3EEC09C}.Release|Win32.Build.0 = Release|Win32
+		{A4F3F9DD-A9DE-4805-8424-728982525471}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A4F3F9DD-A9DE-4805-8424-728982525471}.Debug|Win32.Build.0 = Debug|Win32
+		{A4F3F9DD-A9DE-4805-8424-728982525471}.Release|Win32.ActiveCfg = Release|Win32
+		{A4F3F9DD-A9DE-4805-8424-728982525471}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
