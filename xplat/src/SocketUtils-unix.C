@@ -95,7 +95,7 @@ ssize_t Send( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
         ssize_t numBytesToSend = 0;
         for( i = 0; (i < currIovLen) && (currBufNdx < nBufs); i++ ) {
             size_t len = currBuf[currBufNdx].len;
-            // xplat_dbg( 5, xplat_printf(FLF, stdout, "currBuf->len = %"PRIszt"\n", len) );
+            //xplat_dbg( 5, xplat_printf(FLF, stderr, "currBuf->len = %"PRIszt"\n", len) );
             currIov[i].iov_base = currBuf[currBufNdx].buf;
             currIov[i].iov_len = len;
             numBytesToSend += len;
@@ -381,7 +381,7 @@ ssize_t recv( XPlat_Socket s, void *buf, size_t count )
         }
         else if( ret == 0 ) {
             // the remote endpoint has gone away
-            //xplat_dbg( 5, xplat_printf(FLF, stderr, "recv() returned 0 (peer likely gone)\n");
+            xplat_dbg( 5, xplat_printf(FLF, stderr, "recv() returned 0 (peer likely gone)\n"));
             return -1;
         }
         else {

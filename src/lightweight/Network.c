@@ -1100,6 +1100,7 @@ void Network_set_OutputLevel(int l)
     } else {
         CUR_OUTPUT_LEVEL = l;
     }
+    set_DebugLevel(CUR_OUTPUT_LEVEL);
 }
 
 char Network_is_ShutDown(Network_t* net)

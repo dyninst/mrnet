@@ -40,6 +40,7 @@
 #endif 
 
 #include "mrnet_lightweight/Types.h"
+#include "xplat_lightweight/xplat_utils_lightweight.h"
 
 #define MRN_RELEASE_DATE_SECS 1308200400
 

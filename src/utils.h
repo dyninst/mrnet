@@ -46,6 +46,7 @@
 #include "mrnet/Types.h"
 #include "xplat/TLSKey.h"
 #include "xplat/Thread.h"
+#include "xplat/xplat_utils.h"
 
 
 #ifdef USE_BOOST_TIMER

@@ -120,7 +120,7 @@ ssize_t XPlat_SocketUtils_send(XPlat_Socket s, const void *buf, size_t count)
                 continue;
             }
             else {
-                xplat_dbg(1, xplat_printf(FLF, stderr,
+                xplat_dbg(3, xplat_printf(FLF, stderr,
                          "Warning: premature return from send(). "
                          "Wrote %"PRIsszt" of %"PRIszt" bytes ('%s')\n",
                          bytes_written, count, strerror(err)));
@@ -162,7 +162,7 @@ ssize_t XPlat_SocketUtils_recv(XPlat_Socket s, void *buf, size_t count)
                 continue;
             }
             else {
-                xplat_dbg(1, xplat_printf(FLF, stderr,
+                xplat_dbg(3, xplat_printf(FLF, stderr,
                              "Warning: premature return from recv(). "
                              "Got %"PRIsszt" of %"PRIszt" bytes ('%s')\n",
                              bytes_recvd, count, strerror(err)));
@@ -171,7 +171,7 @@ ssize_t XPlat_SocketUtils_recv(XPlat_Socket s, void *buf, size_t count)
         }
         else if( ret == 0 ) {
             // the remote endpoint has gone away
-            xplat_dbg(1, xplat_printf(FLF, stderr, 
+            xplat_dbg(5, xplat_printf(FLF, stderr, 
                          "recv() returned 0 (peer likely gone)\n"));
             return -1;
         }

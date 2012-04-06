@@ -11,7 +11,6 @@
 #include "xplat_lightweight/PathUtils.h"
 #include "xplat_lightweight/Process.h"
 #include "xplat_lightweight/SocketUtils.h"
-#include "xplat_lightweight/xplat_utils_lightweight.h"
 
 #include <stdarg.h>
 

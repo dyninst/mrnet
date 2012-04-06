@@ -2341,6 +2341,7 @@ void set_OutputLevel(int l)
     else {
         CUR_OUTPUT_LEVEL = l;
     }
+    XPlat::set_DebugLevel(CUR_OUTPUT_LEVEL);
 }
 
 /* Failure Recovery */
