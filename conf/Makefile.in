@@ -7,6 +7,11 @@ MRNET_ROOT     = @MRNET_ROOT@
 MRNET_PLATFORM = @host@
 MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
 
+VERSION        = @MRNET_VERSION@
+VERSION_MAJOR  = @MRNET_VERSION_MAJOR@
+VERSION_MINOR  = @MRNET_VERSION_MINOR@
+VERSION_REV    = @MRNET_VERSION_REVISION@
+
 @SET_MAKE@
 
 #############################
@@ -35,6 +40,7 @@ IINCDIR     = @includedir@
 
 mrnet_incdir   = $(INCDIR)/mrnet
 install_incdir = $(IINCDIR)/mrnet
+install_libincdir = $(ILIBDIR)/mrnet-$(VERSION)/include
 
 ##########################
 ### AUXILIARY PROGRAMS ###
@@ -145,11 +151,6 @@ CCFLAGS = @CFLAGS@ $(INCLUDES_LIGHTWEIGHT) $(WARNFLAGS_LIGHTWEIGHT)
 
 TEST_CXXFLAGS := $(CXXFLAGS)
 TEST_CCFLAGS := $(CCFLAGS)
-
-VERSION        = @MRNET_VERSION@
-VERSION_MAJOR  = @MRNET_VERSION_MAJOR@
-VERSION_MINOR  = @MRNET_VERSION_MINOR@
-VERSION_REV    = @MRNET_VERSION_REVISION@
 
 CXXFLAGS += -DMRNET_VERSION_MAJOR=$(VERSION_MAJOR)
 CXXFLAGS += -DMRNET_VERSION_MINOR=$(VERSION_MINOR)
@@ -330,7 +331,7 @@ install: install-prep install-local lightweight-install xplat-install xplat_ligh
 
 install-prep:
 	@echo Creating install directories
-	for dir in $(IBINDIR) $(ILIBDIR) $(install_incdir) ; do \
+	for dir in $(IBINDIR) $(ILIBDIR) $(install_incdir) $(install_libincdir) ; do \
 	    if [ ! -d $$dir ] ; then \
 	        $(MKDIR_P) $$dir ; \
 	        chmod 755 $$dir ; \
@@ -348,7 +349,7 @@ install-local: all $(INSTALL_HEADERS) install-boost
 	@echo Installing MRNet binaries
 	$(INSTALL) $(COMMNODE) $(TOPGEN) $(IBINDIR)/
 	@echo Installing MRNet libraries
-	$(INSTALL_DATA) $(PLATDIR)/mrnet_config.h $(ILIBDIR)/
+	$(INSTALL_DATA) $(PLATDIR)/mrnet_config.h $(install_libincdir)/
 	$(INSTALL) $(LIBMRNET) $(ILIBDIR)/
 	if [ $(BUILD_SHARED_LIBS) = "yes" ] ; then \
 	    $(INSTALL) $(LIBMRNET_SO) $(ILIBDIR)/ ; \
