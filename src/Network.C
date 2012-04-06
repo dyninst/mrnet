@@ -604,7 +604,7 @@ void Network::init_ThreadState( node_type_t node_type,
     local_data->network = this;
 
     int status;
-    if( (status = XPlat_TLSKey.Set(tname, local_data)) != 0 ) {
+    if( (status = XPlat_TLSKey.InitTLS(tname, local_data)) != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
                                strerror(status)) );
     } 
@@ -614,6 +614,11 @@ void Network::free_ThreadState(void)
     tsd_t* tsd = (tsd_t*)XPlat_TLSKey.GetUserData();
     if( tsd != NULL ) {
         delete tsd;
+        if(XPlat_TLSKey.SetUserData(NULL) != 0) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "Thread 0x%lx failed to set"
+                        " thread-specific user data to NULL.\n",
+                        XPlat::Thread::GetId()));
+        }
         if(XPlat_TLSKey.DestroyData() != 0) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "Thread 0x%lx failed to destroy"
                         " thread-specific data.\n", XPlat::Thread::GetId()));

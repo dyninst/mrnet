@@ -55,6 +55,22 @@ public:
         data_sync.Unlock();
         return ret;
     }
+    virtual int SetTid( XPlat::Thread::Id tid ) {
+        tls_t *tls_ret = NULL;
+        int ret = -1;
+        data_sync.Lock();
+        if( data != NULL )
+            tls_ret = (tls_t *)data->Get();
+        if( tls_ret != NULL ) {
+            tls_ret->tid = tid;
+            ret = 0;
+        }
+        if(data->Set((void *)tls_ret)) {
+            ret = -1;
+        }
+        data_sync.Unlock();
+        return ret;
+    }
     virtual const char* GetName( void ) const {
         tls_t *tls_ret = NULL;
         const char *ret = NULL;
@@ -63,6 +79,22 @@ public:
             tls_ret = (tls_t *)data->Get();
         if(tls_ret != NULL)
             ret = tls_ret->tname;
+        data_sync.Unlock();
+        return ret;
+    }
+    virtual int SetName( const char *name ) {
+        tls_t *tls_ret = NULL;
+        int ret = -1;
+        data_sync.Lock();
+        if( data != NULL )
+            tls_ret = (tls_t *)data->Get();
+        if( tls_ret != NULL ) {
+            tls_ret->tname = name;
+            ret = 0;
+        }
+        if(data->Set((void *)tls_ret)) {
+            ret = -1;
+        }
         data_sync.Unlock();
         return ret;
     }
@@ -77,7 +109,23 @@ public:
         data_sync.Unlock();
         return ret;
     }
-    virtual int Set( const char* name, void* val ) {
+    virtual int SetUserData( void *val ) {
+        tls_t *tls_ret = NULL;
+        int ret = -1;
+        data_sync.Lock();
+        if( data != NULL )
+            tls_ret = (tls_t *)data->Get();
+        if( tls_ret != NULL ) {
+            tls_ret->user_data = val;
+            ret = 0;
+        }
+        if(data->Set((void *)tls_ret)) {
+            ret = -1;
+        }
+        data_sync.Unlock();
+        return ret;
+    }
+    virtual int InitTLS( const char* name, void* val ) {
         int ret = 0;
         void *get_ret = NULL;
         tls_t *tls_data;
@@ -110,13 +158,22 @@ public:
         if( data != NULL )
             tls_ret = (tls_t *)data->Get();
         if(tls_ret != NULL) {
+            if(tls_ret->user_data != NULL) {
+                return -1;
+            }
             // Free given thread name
-            // We assume the user used malloc and not new
+            // We assume the user used malloc and not new for thread name
             free( const_cast<char*>(tls_ret->tname) );
+            tls_ret->tname = NULL;
 
             // Delete our internal tls structure
             delete tls_ret;
             tls_ret = NULL;
+            
+            // set TLS to NULL
+            data_sync.Lock();
+            data->Set(NULL);
+            data_sync.Unlock();
         } else {
             ret = -1;
         }
