@@ -1,5 +1,5 @@
 /**************************************************************************
- * Copyright 2003-2011   Michael J. Brim, Barton P. Miller                *
+ * Copyright 2003-2012   Michael J. Brim, Barton P. Miller                *
  *                Detailed MRNet usage rights in "LICENSE" file.          *
  **************************************************************************/
 

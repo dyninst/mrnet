@@ -1,3 +1,8 @@
+/****************************************************************************
+ * Copyright 2003-2012 Dorian C. Arnold, Philip C. Roth, Barton P. Miller   *
+ *                  Detailed MRNet usage rights in "LICENSE" file.          *
+ ****************************************************************************/
+
 #include "xplat_lightweight/xplat_utils_lightweight.h"
 #include "xplat_lightweight/PathUtils.h"
 
