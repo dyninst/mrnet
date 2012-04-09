@@ -477,11 +477,11 @@ void * EventDetector::main( void* iarg )
                                 mrn_dbg( 5, mrn_printf(FLF, stderr, "... writing \n") );
                                 char c = 1;
                                 if( XPlat::SocketUtils::send(*iter, &c, 1) == (ssize_t)-1 ) {
-                                    mrn_dbg( 1, mrn_printf(FLF, stderr, ("send(event_fd) failed")) );
+                                    mrn_dbg( 1, mrn_printf(FLF, stderr, ("send(event_fd) failed\n")) );
                                 }
                                 mrn_dbg( 5, mrn_printf(FLF, stderr, "... closing\n"));
                                 if( ! XPlat::SocketUtils::Close(*iter) ) {
-                                    mrn_dbg( 1, mrn_printf(FLF, stderr, ("close(event_fd) failed")) );
+                                    mrn_dbg( 1, mrn_printf(FLF, stderr, ("close(event_fd) failed\n")) );
                                 }
                             }
                             edt->set_ThrId( 0 );
