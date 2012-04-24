@@ -146,7 +146,7 @@ int Mutex_Unlock( struct Mutex_t* m )
             }
             return ret;
         }
-        pthread_rwlock_unlock((pthread_rwlock_t *)m->destruct_sync);
+        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)m->destruct_sync);
         if(rw_ret) {
             xplat_dbg(1, xplat_printf(FLF, stderr, 
                         "Error: destruct_sync unlock returned '%s'\n",
