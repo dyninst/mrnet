@@ -16,7 +16,7 @@ if [ ! -d $idir ]; then
   exit 1
 fi
 
-pushd $idir > /dev/null 2>&1
+cd $idir
 
 if [ ! -e $target ]; then
   echo "ERROR: $0 - target $idir/$target not found"
@@ -37,6 +37,6 @@ else
   result=1
 fi
 
-popd > /dev/null 2>&1
+cd -
 
 exit $result
