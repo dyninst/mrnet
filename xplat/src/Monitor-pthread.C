@@ -52,12 +52,12 @@ Monitor::~Monitor( void )
 {
     int ret;
 
-    ret = pthread_rwlock_wrlock((pthread_rwlock_t *)destruct_sync);
-    
     // Make sure no one destroys the rwlock twice
     if(destruct_sync == NULL) {
         return;
     }
+    
+    ret = pthread_rwlock_wrlock((pthread_rwlock_t *)destruct_sync);
     
     // Check for wrlock error
     if(ret) {
