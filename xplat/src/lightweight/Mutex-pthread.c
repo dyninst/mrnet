@@ -57,13 +57,10 @@ int Mutex_destruct( struct Mutex_t* m )
     int rc = 0;
     int ret;
     
-    if(m == NULL)
+    if(m == NULL || m->destruct_sync == NULL)
         return -1;
 
     ret = pthread_rwlock_wrlock((pthread_rwlock_t *)m->destruct_sync);
-
-    if(m->destruct_sync == NULL)
-        return -1;
 
     // Check for wrlock error
     if(ret) {
