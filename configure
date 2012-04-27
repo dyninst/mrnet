@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY CXXCPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC LN_S GREP CP RM FLEX HAVE_BOOST build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION MRNET_VERSION_MAJOR MRNET_VERSION_MINOR MRNET_VERSION_REVISION COMPILER_TYPE AR ARFLAGS PGI_OLD_TEMPLATES MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT LIBS_LOWFAT EXTRA_LIBS EXTRA_LIBS_LIGHTWEIGHT EXTRA_LIBS_LOWFAT LTWT_THREADSAFE PLATFORM_BUILD LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX BUILDSHARED VERBOSEMAKE PURIFY CXXCPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB YACC LN_S GREP CP RM FLEX HAVE_BOOST build build_cpu build_vendor build_os host host_cpu host_vendor host_os MRNET_ARCH MRNET_OS MRNET_ROOT MRNET_VERSION MRNET_VERSION_MAJOR MRNET_VERSION_MINOR MRNET_VERSION_REVISION AR ARFLAGS PGI_OLD_TEMPLATES MRNET_STARTUP_METHOD CN_LDFLAGS SOFLAGS C_AS_CPLUSPLUS LIBS_LIGHTWEIGHT LIBS_LOWFAT EXTRA_LIBS EXTRA_LIBS_LIGHTWEIGHT EXTRA_LIBS_LOWFAT LTWT_THREADSAFE PLATFORM_BUILD LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -5278,88 +5278,90 @@ CXXFLAGS="$CXXFLAGS -Darch_$MRNET_CPU"
 CFLAGS="$CFLAGS -Darch_$MRNET_CPU"
 
 
+echo "$as_me:$LINENO: checking for C++ compiler vendor" >&5
+echo $ECHO_N "checking for C++ compiler vendor... $ECHO_C" >&6
+if test "${ax_cv_cxx_compiler_vendor+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  # note: don't check for gcc first since some other compilers define __GNUC__
+  vendors="intel:     __ICC,__ECC,__INTEL_COMPILER
+           ibm:       __xlc__,__xlC__,__IBMC__,__IBMCPP__
+           pathscale: __PATHCC__,__PATHSCALE__
+           clang:     __clang__
+           gnu:       __GNUC__
+           sun:       __SUNPRO_C,__SUNPRO_CC
+           hp:        __HP_cc,__HP_aCC
+           dec:       __DECC,__DECCXX,__DECC_VER,__DECCXX_VER
+           borland:   __BORLANDC__,__TURBOC__
+           comeau:    __COMO__
+           cray:      _CRAYC
+           kai:       __KCC
+           lcc:       __LCC__
+           sgi:       __sgi,sgi
+           microsoft: _MSC_VER
+           metrowerks: __MWERKS__
+           watcom:    __WATCOMC__
+           portland:  __PGI
+           unknown:   UNKNOWN"
+  for ventest in $vendors; do
+    case $ventest in
+      *:) vendor=$ventest; continue ;;
+      *)  vencpp="defined("`echo $ventest | sed 's/,/) || defined(/g'`")" ;;
+    esac
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
 
-  echo "$as_me:$LINENO: checking for compiler type" >&5
-echo $ECHO_N "checking for compiler type... $ECHO_C" >&6
+int
+main ()
+{
 
-  COMPILER_TYPE="unknown"
+      #if !($vencpp)
+        thisisanerror;
+      #endif
 
-  if test "$CXX" = "g++" ; then
-    COMPILER_TYPE="gnu"
-    echo "$as_me:$LINENO: result: gnu" >&5
-echo "${ECHO_T}gnu" >&6
-  elif test "$CXX" = "xlC_r" ; then
-    COMPILER_TYPE="aix-native"
-    echo "$as_me:$LINENO: result: aix-native" >&5
-echo "${ECHO_T}aix-native" >&6
-  elif test "$CXX" = "xlC" ; then
-    COMPILER_TYPE="aix-native"
-    echo "$as_me:$LINENO: result: aix-native" >&5
-echo "${ECHO_T}aix-native" >&6
-  elif test "$CXX" = "xlc++" ; then
-    COMPILER_TYPE="aix-native"
-    echo "$as_me:$LINENO: result: aix-native" >&5
-echo "${ECHO_T}aix-native" >&6
-  elif test "$CXX" = "pgCC" ; then
-    COMPILER_TYPE="pgi"
-    echo "$as_me:$LINENO: result: pgi" >&5
-echo "${ECHO_T}pgi" >&6
-  elif test "$CXX" = "icpc" ; then
-    COMPILER_TYPE="intel"
-    echo "$as_me:$LINENO: result: intel" >&5
-echo "${ECHO_T}intel" >&6
-  fi
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
 
-  if test "$COMPILER_TYPE" = "unknown"; then
-    $CXX --version 2> /dev/null > version.out
-    $GREP "GCC" version.out > /dev/null
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+  done
+  ax_cv_cxx_compiler_vendor=`echo $vendor | cut -d: -f1`
 
-    if test "$?" = 0 ; then
-      COMPILER_TYPE="gnu"
-      echo "$as_me:$LINENO: result: gnu" >&5
-echo "${ECHO_T}gnu" >&6
-    else
-      $GREP "Portland Group" version.out > /dev/null
-      if test "$?" = 0; then
-        COMPILER_TYPE="pgi"
-        echo "$as_me:$LINENO: result: pgi" >&5
-echo "${ECHO_T}pgi" >&6
-      else
-        $GREP "Intel Corporation" version.out > /dev/null
-        if test "$?" = 0; then
-          COMPILER_TYPE="intel"
-          echo "$as_me:$LINENO: result: intel" >&5
-echo "${ECHO_T}intel" >&6
-        fi
-      fi
-    fi
-    $RM -f version.out
-  fi
-
-  if test "$COMPILER_TYPE" = "unknown"; then
-    $CXX -V 2> version.out
-
-    $GREP "Forte" version.out > /dev/null
-    if test "$?" = 0 ; then
-      COMPILER_TYPE="forte"
-      echo "$as_me:$LINENO: result: forte" >&5
-echo "${ECHO_T}forte" >&6
-    else
-      $GREP "Sun" version.out > /dev/null
-      if test "$?" = 0 ; then
-        COMPILER_TYPE="forte"
-        echo "$as_me:$LINENO: result: forte" >&5
-echo "${ECHO_T}forte" >&6
-      fi
-    fi
-    $RM -f version.out
-  fi
-
-  if test "$COMPILER_TYPE" = "unknown"; then
-    echo "$as_me:$LINENO: result: unknown" >&5
-echo "${ECHO_T}unknown" >&6
-  fi
-
+fi
+echo "$as_me:$LINENO: result: $ax_cv_cxx_compiler_vendor" >&5
+echo "${ECHO_T}$ax_cv_cxx_compiler_vendor" >&6
 
 
 CXXDEBUGFLAGS="-g"
@@ -5367,6 +5369,8 @@ CDEBUGFLAGS="-g"
 
 CXXOPTFLAGS="-O2"
 COPTFLAGS="-O2"
+
+COMPILER_TYPE=$ax_cv_cxx_compiler_vendor
 
 if test $COMPILER_TYPE = "gnu" ; then
 
@@ -5423,7 +5427,7 @@ fi
     ARFLAGS="crv"
 
 
-elif test $COMPILER_TYPE = "aix-native" ; then
+elif test $COMPILER_TYPE = "ibm" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_ibm"
     CFLAGS="$CFLAGS -Dcompiler_ibm"
@@ -5475,7 +5479,7 @@ fi
     ARFLAGS="crv"
 
 
-elif test $COMPILER_TYPE = "forte" ; then
+elif test $COMPILER_TYPE = "sun" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_sun -KPIC"
     CFLAGS="$CFLAGS -Dcompiler_sun -KPIC"
@@ -5531,7 +5535,7 @@ fi
     ARFLAGS="-xar -o"
 
 
-elif test $COMPILER_TYPE = "pgi" ; then
+elif test $COMPILER_TYPE = "portland" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
     CFLAGS="$CFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
@@ -9741,7 +9745,6 @@ s,@MRNET_VERSION@,$MRNET_VERSION,;t t
 s,@MRNET_VERSION_MAJOR@,$MRNET_VERSION_MAJOR,;t t
 s,@MRNET_VERSION_MINOR@,$MRNET_VERSION_MINOR,;t t
 s,@MRNET_VERSION_REVISION@,$MRNET_VERSION_REVISION,;t t
-s,@COMPILER_TYPE@,$COMPILER_TYPE,;t t
 s,@AR@,$AR,;t t
 s,@ARFLAGS@,$ARFLAGS,;t t
 s,@PGI_OLD_TEMPLATES@,$PGI_OLD_TEMPLATES,;t t

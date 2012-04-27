@@ -191,13 +191,15 @@ CFLAGS="$CFLAGS -Darch_$MRNET_CPU"
 
 dnl === COMPILER-SPECIFIC OPTIONS ===
 
-PD_COMPILER_TYPE
+AX_COMPILER_VENDOR
 
 CXXDEBUGFLAGS="-g"
 CDEBUGFLAGS="-g"
 
 CXXOPTFLAGS="-O2"
 COPTFLAGS="-O2"
+
+COMPILER_TYPE=$ax_cv_[]_AC_LANG_ABBREV[]_compiler_vendor
 
 if test $COMPILER_TYPE = "gnu" ; then
 
@@ -216,7 +218,7 @@ if test $COMPILER_TYPE = "gnu" ; then
     ARFLAGS="crv"
     AC_SUBST(ARFLAGS)
 
-elif test $COMPILER_TYPE = "aix-native" ; then
+elif test $COMPILER_TYPE = "ibm" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_ibm"
     CFLAGS="$CFLAGS -Dcompiler_ibm"
@@ -230,7 +232,7 @@ elif test $COMPILER_TYPE = "aix-native" ; then
     ARFLAGS="crv"
     AC_SUBST(ARFLAGS)
 
-elif test $COMPILER_TYPE = "forte" ; then
+elif test $COMPILER_TYPE = "sun" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_sun -KPIC"
     CFLAGS="$CFLAGS -Dcompiler_sun -KPIC"
@@ -248,7 +250,7 @@ elif test $COMPILER_TYPE = "forte" ; then
     ARFLAGS="-xar -o"
     AC_SUBST(ARFLAGS)
 
-elif test $COMPILER_TYPE = "pgi" ; then
+elif test $COMPILER_TYPE = "portland" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
     CFLAGS="$CFLAGS -Dcompiler_pgi -D_GNU_SOURCE -fPIC"
