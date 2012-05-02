@@ -75,7 +75,7 @@ int main( int argc, char ** argv )
         return -1;
     }
     int fe_filter_id = net->load_FilterFunc( so_file, FE_filter_uniq );
-    if( cp_filter_id == -1 ){
+    if( fe_filter_id == -1 ){
         fprintf( stderr, "ERROR: failed to load %s from library %s\n", FE_filter_uniq, so_file );
         delete net;
         return -1;
