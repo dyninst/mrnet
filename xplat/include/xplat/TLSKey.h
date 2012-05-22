@@ -155,6 +155,7 @@ public:
     virtual int DestroyData() {
         tls_t *tls_ret = NULL;
         int ret = 0;
+        data_sync.Lock();
         if( data != NULL )
             tls_ret = (tls_t *)data->Get();
         if(tls_ret != NULL) {
@@ -163,20 +164,21 @@ public:
             }
             // Free given thread name
             // We assume the user used malloc and not new for thread name
-            free( const_cast<char*>(tls_ret->tname) );
-            tls_ret->tname = NULL;
+            if(tls_ret->tname != NULL) {
+                free( const_cast<char*>(tls_ret->tname) );
+                tls_ret->tname = NULL;
+            }
 
             // Delete our internal tls structure
             delete tls_ret;
             tls_ret = NULL;
             
             // set TLS to NULL
-            data_sync.Lock();
             data->Set(NULL);
-            data_sync.Unlock();
         } else {
             ret = -1;
         }
+        data_sync.Unlock();
 
         return ret;
     }
