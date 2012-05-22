@@ -64,9 +64,9 @@ public:
         if( tls_ret != NULL ) {
             tls_ret->tid = tid;
             ret = 0;
-        }
-        if(data->Set((void *)tls_ret)) {
-            ret = -1;
+            if(data->Set((void *)tls_ret)) {
+                ret = -1;
+            }
         }
         data_sync.Unlock();
         return ret;
@@ -91,9 +91,9 @@ public:
         if( tls_ret != NULL ) {
             tls_ret->tname = name;
             ret = 0;
-        }
-        if(data->Set((void *)tls_ret)) {
-            ret = -1;
+            if(data->Set((void *)tls_ret)) {
+                ret = -1;
+            }
         }
         data_sync.Unlock();
         return ret;
@@ -118,9 +118,9 @@ public:
         if( tls_ret != NULL ) {
             tls_ret->user_data = val;
             ret = 0;
-        }
-        if(data->Set((void *)tls_ret)) {
-            ret = -1;
+            if(data->Set((void *)tls_ret)) {
+                ret = -1;
+            }
         }
         data_sync.Unlock();
         return ret;
