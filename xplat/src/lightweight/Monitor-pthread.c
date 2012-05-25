@@ -90,21 +90,12 @@ int Monitor_destruct( Monitor_t* m )
                      "Error: destruct_sync unlock returned '%s'\n",
                      strerror( ret )));
     }
-
-    ret = pthread_rwlock_destroy((pthread_rwlock_t *)m->destruct_sync);
-    if(ret) { 
-        xplat_dbg(1, xplat_printf(FLF, stderr, 
-                     "Error: destruct_sync destroy returned '%s'\n",
-                     strerror( ret )));
-    }
-    m->destruct_sync = NULL;
-
     return rc;
 }
 
 int Monitor_Lock( Monitor_t* m )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( (m != NULL) && m->destruct_sync_initialized && (m->destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->destruct_sync);
         if(ret)
@@ -133,7 +124,7 @@ int Monitor_Lock( Monitor_t* m )
 
 int Monitor_Unlock( Monitor_t* m )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( (m != NULL) && m->destruct_sync_initialized && (m->destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->destruct_sync);
         if(ret)
@@ -162,7 +153,7 @@ int Monitor_Unlock( Monitor_t* m )
 
 int Monitor_Trylock( Monitor_t* m )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( (m != NULL) && m->destruct_sync_initialized && (m->destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->destruct_sync);
         if(ret)
@@ -191,7 +182,7 @@ int Monitor_Trylock( Monitor_t* m )
 
 int Monitor_RegisterCondition( Monitor_t* m, int condid )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( (m != NULL) && m->destruct_sync_initialized && (m->destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->destruct_sync);
         if(ret)
@@ -220,7 +211,7 @@ int Monitor_RegisterCondition( Monitor_t* m, int condid )
 
 int Monitor_WaitOnCondition( Monitor_t* m, int condid )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( (m != NULL) && m->destruct_sync_initialized && (m->destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->destruct_sync);
         if(ret)
@@ -249,7 +240,7 @@ int Monitor_WaitOnCondition( Monitor_t* m, int condid )
 
 int Monitor_SignalCondition( Monitor_t* m, int condid )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( (m != NULL) && m->destruct_sync_initialized && (m->destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->destruct_sync);
         if(ret)
@@ -278,7 +269,7 @@ int Monitor_SignalCondition( Monitor_t* m, int condid )
 
 int Monitor_BroadcastCondition( Monitor_t* m, int condid )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( (m != NULL) && m->destruct_sync_initialized && (m->destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->destruct_sync);
         if(ret)

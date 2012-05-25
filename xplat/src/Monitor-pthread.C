@@ -79,19 +79,11 @@ Monitor::~Monitor( void )
                      "Error: destruct_sync unlock returned '%s'\n",
                      strerror( ret )));
     }
-
-    ret = pthread_rwlock_destroy((pthread_rwlock_t *)destruct_sync);
-    if(ret) { 
-        xplat_dbg(1, xplat_printf(FLF, stderr, 
-                     "Error: destruct_sync destroy returned '%s'\n",
-                     strerror( ret )));
-    }
-    destruct_sync = NULL;
 }
 
 int Monitor::Lock( void )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( destruct_sync_initialized && (destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
@@ -121,7 +113,7 @@ int Monitor::Lock( void )
 
 int Monitor::Unlock( void )
 {
-    int ret, rw_ret = 0;
+    int ret = 1, rw_ret = 1;
     if( destruct_sync_initialized && (destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
@@ -151,7 +143,7 @@ int Monitor::Unlock( void )
 
 int Monitor::RegisterCondition( unsigned int condid )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( destruct_sync_initialized && (destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
@@ -181,7 +173,7 @@ int Monitor::RegisterCondition( unsigned int condid )
 
 int Monitor::WaitOnCondition( unsigned int condid )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( destruct_sync_initialized && (destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
@@ -211,7 +203,7 @@ int Monitor::WaitOnCondition( unsigned int condid )
 
 int Monitor::SignalCondition( unsigned int condid )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( destruct_sync_initialized && (destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
@@ -241,7 +233,7 @@ int Monitor::SignalCondition( unsigned int condid )
 
 int Monitor::BroadcastCondition( unsigned int condid )
 {
-    int ret, rw_ret;
+    int ret = 1, rw_ret = 1;
     if( destruct_sync_initialized && (destruct_sync != NULL) ) {
         ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
         if(ret)
