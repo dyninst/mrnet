@@ -20,8 +20,10 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
+#define GCC_VERSION_INFO (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+
 #ifndef UNUSED
-# if defined(__GNUC__)
+# if GCC_VERSION_INFO > 30500 // If GCC Version > 3.5 
 #   define UNUSED(x) UNUSED_ ## x __attribute__((unused))
 # else
 #   define UNUSED(x) x
