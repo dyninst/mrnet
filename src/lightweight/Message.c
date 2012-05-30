@@ -36,7 +36,8 @@ int Message_recv(XPlat_Socket sock_fd, vector_t* packets_in, Rank iinlet_rank)
     uint32_t num_buffers = 0;
     PDR pdrs;
     enum pdr_op op = PDR_DECODE;
-    size_t psz, buf_len, recv_total, total_bytes = 0;
+    size_t psz, recv_total, total_bytes = 0;
+    uint64_t buf_len = 0;
     ssize_t readRet;
     XPlat_NCBuf_t* ncbufs;
     Packet_t* new_packet;
@@ -52,22 +53,22 @@ int Message_recv(XPlat_Socket sock_fd, vector_t* packets_in, Rank iinlet_rank)
     //
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Calling sizeof ...\n"));
-    buf_len = pdr_sizeof((pdrproc_t)(pdr_uint32), &num_packets);
+    bool done = pdr_sizeof((pdrproc_t)(pdr_uint32), &num_packets, &buf_len);
     assert(buf_len);
-    buf = (char*) malloc(buf_len);
+    buf = (char*) malloc(buf_len + 1);
     assert(buf);
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Reading packet count\n"));
 
-    readRet = MRN_recv(sock_fd, buf, buf_len);
-    if( readRet != (ssize_t)buf_len ) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_recv() of packet count failed\n"));
+    readRet = MRN_recv(sock_fd, buf, buf_len + 1);
+    if( readRet != (ssize_t)buf_len + 1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "MRN_recv() of packet count failed\n"));
         free(buf);
         return -1;
     }
-
+    
     mrn_dbg(5, mrn_printf(FLF, stderr, "Calling memcreate ...\n"));
-    pdrmem_create(&pdrs, buf, (uint32_t)buf_len, op);
+    pdrmem_create(&pdrs, &(buf[1]), (uint32_t)buf_len, op, (pdr_byteorder) buf[0]);
     mrn_dbg(5, mrn_printf(FLF, stderr, "Calling uint32 ...\n"));
     if( ! pdr_uint32(&pdrs, &num_packets) ) {
         error(ERR_PACKING, iinlet_rank, "pdr_uint32() failed\n");
@@ -118,7 +119,7 @@ int Message_recv(XPlat_Socket sock_fd, vector_t* packets_in, Rank iinlet_rank)
         return -1;
     }
 
-    pdrmem_create(&pdrs, buf, (uint64_t)buf_len, op);
+    pdrmem_create(&pdrs, buf, (uint64_t)buf_len, op, pdrmem_getbo());
     if( ! pdr_vector(&pdrs, (char*)packet_sizes, num_buffers,
                      (uint64_t) sizeof(uint64_t), (pdrproc_t)pdr_uint64) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "pdr_vector() failed\n"));
@@ -215,7 +216,7 @@ int Message_recv(XPlat_Socket sock_fd, vector_t* packets_in, Rank iinlet_rank)
 int Message_send(Message_t* msg_out, XPlat_Socket sock_fd)
 {
     uint32_t num_buffers, num_packets;
-    size_t buf_len;
+    uint64_t buf_len;
     PDR pdrs;
     enum pdr_op op = PDR_ENCODE;
     int err, go_away = 0;
@@ -259,21 +260,21 @@ int Message_send(Message_t* msg_out, XPlat_Socket sock_fd)
     // packet count
     //
 
-    buf_len = pdr_sizeof((pdrproc_t)(pdr_uint32), &num_packets);
+    bool done = pdr_sizeof((pdrproc_t)(pdr_uint32), &num_packets, &buf_len);
     assert(buf_len);
-    buf = (char*) malloc(buf_len);
+    buf = (char*) malloc(buf_len + 1);
     assert(buf);
-    pdrmem_create(&pdrs, buf, (uint32_t)buf_len, op);
+    pdrmem_create(&pdrs, &(buf[1]), (uint32_t)buf_len, op, pdrmem_getbo());
 
     if( ! pdr_uint32(&pdrs, &num_packets) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint32() failed\n") );
         free(buf);
         return -1;
     }
-
+    buf[0] = (char) pdrmem_getbo();
     mrn_dbg(5, mrn_printf(FLF, stderr, "writing packet count\n"));
-    mcwret = MRN_send(sock_fd, buf, buf_len);
-    if( mcwret != (ssize_t)buf_len ) {
+    mcwret = MRN_send(sock_fd, buf, buf_len + 1);
+    if( mcwret != (ssize_t)buf_len + 1) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "MRN_send() failed\n"));
         free(buf);
         return -1;
@@ -288,7 +289,7 @@ int Message_send(Message_t* msg_out, XPlat_Socket sock_fd)
     buf_len = (num_buffers * sizeof(uint64_t)) + 1; // 1 extra bytes overhead
     buf = (char*) malloc( buf_len );
     assert(buf);
-    pdrmem_create(&pdrs, buf, (uint64_t)buf_len, op);
+    pdrmem_create(&pdrs, buf, (uint64_t)buf_len, op, pdrmem_getbo());
 
     if( ! pdr_vector(&pdrs, (char*)(packet_sizes), num_buffers, 
                      (uint64_t) sizeof(uint64_t), (pdrproc_t) pdr_uint64) ) {

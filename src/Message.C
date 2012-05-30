@@ -27,11 +27,11 @@ Message::Message(Network * net):
     _net(net)
 {
     uint32_t num_packets = 0;
-    _packet_count_buf_len = (size_t) pdr_sizeof( (pdrproc_t)( pdr_uint32 ), &num_packets );
+    bool ret = pdr_sizeof((pdrproc_t)( pdr_uint32 ), &num_packets, &_packet_count_buf_len); 
     _packet_sizes_buf_len = ((size_t)MESSAGE_PREALLOC_LEN * sizeof(uint64_t)) + 1;
     _ncbuf_len = (size_t) MESSAGE_PREALLOC_LEN;
 
-    _packet_count_buf = (char*) malloc(_packet_count_buf_len);
+    _packet_count_buf = (char*) malloc(_packet_count_buf_len + 1);
     _packet_sizes_buf = (char*) malloc(_packet_sizes_buf_len);
 
     _packet_sync.RegisterCondition( MRN_QUEUE_NONEMPTY );
@@ -68,14 +68,14 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
     Stream * strm;
     std::list< PacketPtr >::iterator piter;
 
-    retval = MRN_recv( sock_fd, _packet_count_buf, _packet_count_buf_len );
-    if( retval != (ssize_t)_packet_count_buf_len ) {
+    retval = MRN_recv( sock_fd, _packet_count_buf, _packet_count_buf_len + 1);
+    if( retval != (ssize_t)_packet_count_buf_len + 1 ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %"PRIsszt" of %"PRIszt" bytes received\n", 
                                retval, _packet_count_buf_len));
         return -1;
     }
 
-    pdrmem_create( &pdrs, _packet_count_buf, _packet_count_buf_len, op );
+    pdrmem_create( &pdrs, &(_packet_count_buf[1]), _packet_count_buf_len, op, (pdr_byteorder)_packet_count_buf[0] );
 
     if( ! pdr_uint32(&pdrs, &num_packets) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint32() failed\n") );
@@ -114,7 +114,7 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
         goto recv_cleanup_return;
     }
 
-    pdrmem_create( &pdrs, buf, buf_len, op );
+    pdrmem_create( &pdrs, buf, buf_len, op, pdrmem_getbo() );
 
     if( ! pdr_vector(&pdrs, (char*)packet_sizes, num_buffers,
                      sizeof(uint64_t), (pdrproc_t)pdr_uint64) ) {
@@ -302,15 +302,15 @@ int Message::send( XPlat_Socket sock_fd )
     //
     // packet count
     //
-    pdrmem_create( &pdrs, _packet_count_buf, _packet_count_buf_len, op );
+    pdrmem_create( &pdrs, &(_packet_count_buf[1]), _packet_count_buf_len, op, pdrmem_getbo() );
     pdr_uint32(&pdrs, &num_packets);
     ncbufs[0].buf = _packet_count_buf;
-    ncbufs[0].len = _packet_count_buf_len;
-
+    ncbufs[0].len = _packet_count_buf_len + 1;
+    _packet_count_buf[0] = (char) pdrmem_getbo();
     //
     // packet sizes
     //
-    pdrmem_create( &pdrs, buf, buf_len, op );
+    pdrmem_create( &pdrs, buf, buf_len, op, pdrmem_getbo() );
     if( ! pdr_vector(&pdrs, (char*)packet_sizes, num_buffers, 
                      sizeof(uint64_t), (pdrproc_t)pdr_uint64) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_vector() failed\n" ));
@@ -322,7 +322,7 @@ int Message::send( XPlat_Socket sock_fd )
 
     // Send it all
     sret = XPlat::SocketUtils::Send( sock_fd, ncbufs, num_ncbufs );
-    if( sret < (ssize_t)(total_bytes + _packet_count_buf_len + buf_len) ) {
+    if( sret < (ssize_t)(total_bytes + _packet_count_buf_len + buf_len + 1) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                                "XPlat::SocketUtils::Send() returned %"PRIsszt
 		               " of %"PRIszt" bytes, nbuffers = %u\n",

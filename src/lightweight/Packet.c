@@ -49,7 +49,8 @@ Packet_t* Packet_construct(Packet_t* packet)
     uint64_t hdr_sz, buf_sz;
 
     // header
-    hdr_sz = pdr_sizeof((pdrproc_t)(Packet_pdr_packet_header), packet);
+    
+    bool done =  pdr_sizeof((pdrproc_t)(Packet_pdr_packet_header), packet, &hdr_sz);
     assert( hdr_sz );
     packet->hdr_len = (unsigned) hdr_sz;
     packet->hdr = (char*) malloc( (size_t)hdr_sz );
@@ -58,7 +59,7 @@ Packet_t* Packet_construct(Packet_t* packet)
         return NULL;
     }
 
-    pdrmem_create(&pdrs, packet->hdr, hdr_sz, PDR_ENCODE);
+    pdrmem_create(&pdrs, packet->hdr, hdr_sz, PDR_ENCODE, pdrmem_getbo());
 
     if( ! Packet_pdr_packet_header(&pdrs, packet) ) {
         error(ERR_PACKING, UnknownRank, "pdr_packet() failed\n");
@@ -67,7 +68,9 @@ Packet_t* Packet_construct(Packet_t* packet)
     }
 
     // data
-    buf_sz = pdr_sizeof((pdrproc_t)(Packet_pdr_packet_data), packet);
+    done = pdr_sizeof((pdrproc_t)(Packet_pdr_packet_data), packet, &buf_sz);
+    if (done == true && buf_sz == 0)
+        return packet;
     assert( buf_sz );
     packet->buf_len = buf_sz;
     packet->buf = (char*) malloc( (size_t)buf_sz );
@@ -76,7 +79,7 @@ Packet_t* Packet_construct(Packet_t* packet)
         return NULL;
     }
 
-    pdrmem_create(&pdrs, packet->buf, packet->buf_len, PDR_ENCODE);
+    pdrmem_create(&pdrs, packet->buf, packet->buf_len, PDR_ENCODE, pdrmem_getbo());
 
     if( ! Packet_pdr_packet_data(&pdrs, packet) ) {
         error(ERR_PACKING, UnknownRank, "pdr_packet() failed\n");
@@ -108,6 +111,7 @@ Packet_t* new_Packet_t(Rank isrc, unsigned int istream_id, int itag,
     else
         packet->fmt_str = NULL;
 
+    packet->byteorder = (char) pdrmem_getbo();
     packet->hdr_len = 0;
     packet->hdr = NULL;
     packet->buf_len = 0;
@@ -167,7 +171,7 @@ Packet_t* new_Packet_t_3(unsigned int ihdr_len, char* ihdr,
     packet->src_rank = UnknownRank;
     
     // decode header
-    pdrmem_create(&pdrs, packet->hdr, (uint64_t)packet->hdr_len, PDR_DECODE);
+    pdrmem_create(&pdrs, packet->hdr, (uint64_t)packet->hdr_len, PDR_DECODE, (pdr_byteorder)packet->hdr[packet->hdr_len - 1]);
 
     if( ! Packet_pdr_packet_header(&pdrs, packet) ) {
         mrn_dbg(1, mrn_printf(FLF,stderr, "pdr_packet() failed\n"));
@@ -181,7 +185,7 @@ Packet_t* new_Packet_t_3(unsigned int ihdr_len, char* ihdr,
     if( packet->buf_len != 0 ) { 
 
         // decode data
-        pdrmem_create(&pdrs, packet->buf, packet->buf_len, PDR_DECODE);
+        pdrmem_create(&pdrs, packet->buf, packet->buf_len, PDR_DECODE, (pdr_byteorder) packet->byteorder);
 
         if( ! Packet_pdr_packet_data(&pdrs, packet) ) {
             mrn_dbg(1, mrn_printf(FLF,stderr, "pdr_packet() failed\n"));
@@ -393,6 +397,10 @@ bool_t Packet_pdr_packet_header( PDR * pdrs, Packet_t * pkt )
         return false;
     }
 
+    if( pdr_char( pdrs, &( pkt->byteorder ) ) == false ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_uint16() failed\n" ));
+        return false;
+    }
     mrn_dbg_func_end();
     return true;
 }

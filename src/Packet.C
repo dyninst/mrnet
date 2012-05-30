@@ -20,8 +20,9 @@ PacketPtr Packet::NullPacket;
 void Packet::encode_pdr_header(void)
 {
     data_sync.Lock();
-
-    uint64_t hdr_sz = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_header), this );
+    uint64_t hdr_sz = 0;
+    _byteorder = (char) pdrmem_getbo();
+    bool done = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_header), this, &hdr_sz );
     hdr_len = (unsigned) hdr_sz;
     assert( hdr_len );
 
@@ -36,7 +37,7 @@ void Packet::encode_pdr_header(void)
     }
 
     PDR pdrs;
-    pdrmem_create( &pdrs, hdr, hdr_len, PDR_ENCODE );
+    pdrmem_create( &pdrs, hdr, hdr_len, PDR_ENCODE, pdrmem_getbo() );
 
     if( ! Packet::pdr_packet_header(&pdrs, this) ) {
         error( ERR_PACKING, UnknownRank, "pdr_packet_header() failed" );
@@ -57,7 +58,9 @@ void Packet::encode_pdr_data(void)
     if( _decoded == false )
         return;
  
-    buf_len = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_data), this );
+    bool done = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_data), this, &buf_len );
+    if (buf_len == 0 && done == true)
+        return;
     assert( buf_len );
 
     /* NOTE: we tell users that packet header and data buffers will have similar
@@ -70,7 +73,7 @@ void Packet::encode_pdr_data(void)
     }
 
     PDR pdrs;
-    pdrmem_create( &pdrs, buf, buf_len, PDR_ENCODE );
+    pdrmem_create( &pdrs, buf, buf_len, PDR_ENCODE, pdrmem_getbo() );
 
     if( ! Packet::pdr_packet_data(&pdrs, this) ) {
         error( ERR_PACKING, UnknownRank, "pdr_packet_data() failed" );
@@ -90,7 +93,7 @@ void Packet::decode_pdr_header(void) const
 
     Packet* me = const_cast< Packet* >(this);
     PDR pdrs;
-    pdrmem_create( &pdrs, hdr, hdr_len, PDR_DECODE );
+    pdrmem_create( &pdrs, hdr, hdr_len, PDR_DECODE, (pdr_byteorder)hdr[hdr_len - 1] );
 
     if( ! Packet::pdr_packet_header(&pdrs, me) ) {
         error( ERR_PACKING, UnknownRank, "pdr_packet_header() failed" );
@@ -114,7 +117,7 @@ void Packet::decode_pdr_data(void) const
 
         Packet* me = const_cast< Packet* >(this);
         PDR pdrs;
-        pdrmem_create( &pdrs, buf, buf_len, PDR_DECODE );
+        pdrmem_create( &pdrs, buf, buf_len, PDR_DECODE, (pdr_byteorder) _byteorder );
 
         if( ! Packet::pdr_packet_data(&pdrs, me) ) {
             error( ERR_PACKING, UnknownRank, "pdr_packet_data() decode failed" );
@@ -581,6 +584,10 @@ int Packet::pdr_packet_header( PDR * pdrs, Packet * pkt )
         return FALSE;
     }
 
+    if( pdr_char( pdrs, &( pkt->_byteorder ) ) == FALSE ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "pdr_char() failed\n" ));
+        return FALSE;
+    }
     mrn_dbg_func_end();
     return TRUE;
 }

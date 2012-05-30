@@ -67,6 +67,12 @@ enum pdr_op {
     PDR_DECODE
 };
 
+typedef enum pdr_bo {
+    PDR_LITTLEENDIAN=0,
+    PDR_BIGENDIAN=1
+} pdr_byteorder;
+
+
 /*
  * The PDR handle.
  * Contains operation which is being applied to the stream,
@@ -154,11 +160,11 @@ extern bool_t   pdr_vector(PDR *pdrs, char *basep, uint64_t nelem,
  * pdr streams.
  */
 extern void pdrmem_create(PDR *pdrs, char * addr, uint64_t size,
-                          enum pdr_op op);          /* PDR using memory buffers */
+                          enum pdr_op op, pdr_byteorder bo);          /* PDR using memory buffers */
 extern void pdr_free(pdrproc_t proc, char *objp);
 
-extern uint64_t pdr_sizeof(pdrproc_t, void *);
-
+extern bool pdr_sizeof(pdrproc_t, void *, uint64_t * size);
+extern pdr_byteorder pdrmem_getbo(void);  // Get local machine byte ordering (use for encode)
 #ifdef __cplusplus
 } /* extern C */
 #endif

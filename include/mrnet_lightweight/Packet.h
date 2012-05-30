@@ -26,6 +26,7 @@ typedef struct {
   uint64_t buf_len;
   Rank inlet_rank;
   struct vector_t* data_elements;
+  char byteorder;
 } Packet_t;
 
 /* BEGIN PUBLIC API */

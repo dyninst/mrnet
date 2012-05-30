@@ -415,33 +415,34 @@ static struct pdr_ops pdrmem_ops_swap = {
 extern "C" {
 #endif
 
+/** 
+ *  Gets the local byte ordering
+ */
+pdr_byteorder pdrmem_getbo(void)
+{
+#if defined(WORDS_BIGENDIAN)
+    return PDR_BIGENDIAN; 
+#else
+    return PDR_LITTLEENDIAN;
+#endif
+}
+
 /*
  * The procedure pdrmem_create initializes a stream descriptor for a memory buffer. 
  */
-void pdrmem_create(PDR *pdrs, char *addr, uint64_t size, enum pdr_op op)
+void pdrmem_create(PDR *pdrs, char *addr, uint64_t size, enum pdr_op op, pdr_byteorder bo)
 {
-
-#if defined(WORDS_BIGENDIAN)
-    static char local_bo = 1;  /* Big Endian */
-#else
-    static char local_bo = 0;  /* Little Endian */
-#endif
-    char remote_bo;
+    char local_bo = pdrmem_getbo();
+    char remote_bo = bo;
 
     pdrs->cur = pdrs->base = addr;
     pdrs->space = size;
     pdrs->p_ops = &pdrmem_ops;
     pdrs->p_op = op;
 
-    if( PDR_ENCODE == pdrs->p_op ) {
-        if( ! pdr_char(pdrs, (char *)&local_bo) ) {
-            pdrs->space = 0;
-        }
-    }
-    else if( PDR_DECODE == pdrs->p_op ) {
-        if( ! pdr_char(pdrs, (char *)&remote_bo) ) {
-            pdrs->space = 0;
-        }
+    // @NOTE:WELTON This is where the byte order is set in pdr.
+    if( PDR_DECODE == pdrs->p_op ) {
+        // Set byte ordering flag
         if( remote_bo != local_bo ) {
             pdrs->p_ops = &pdrmem_ops_swap;
             return;

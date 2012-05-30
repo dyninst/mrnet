@@ -141,6 +141,7 @@ class Packet: public Error {
     int _in_packet_count;
     int _out_packet_count;
     mutable bool _decoded;
+    mutable char _byteorder;
 };
 
 
