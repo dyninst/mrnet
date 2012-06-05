@@ -62,7 +62,7 @@ int Message_recv(XPlat_Socket sock_fd, vector_t* packets_in, Rank iinlet_rank)
 
     readRet = MRN_recv(sock_fd, buf, buf_len + 1);
     if( readRet != (ssize_t)buf_len + 1) {
-        mrn_dbg(1, mrn_printf(FLF, stderr, "MRN_recv() of packet count failed\n"));
+        mrn_dbg(3, mrn_printf(FLF, stderr, "MRN_recv() of packet count failed\n"));
         free(buf);
         return -1;
     }
