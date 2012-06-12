@@ -2482,7 +2482,11 @@ fi;
 # Check whether --enable-shared or --disable-shared was given.
 if test "${enable_shared+set}" = set; then
   enableval="$enable_shared"
-   BUILDSHARED="yes"
+   if test "$enableval" = "no" ; then
+       BUILDSHARED="no"
+   else
+       BUILDSHARED="yes"
+   fi
 else
    BUILDSHARED="no"
 fi;
@@ -2491,16 +2495,24 @@ fi;
 # Check whether --enable-verbosebuild or --disable-verbosebuild was given.
 if test "${enable_verbosebuild+set}" = set; then
   enableval="$enable_verbosebuild"
-   VERBOSEMAKE=""
+   if test "$enableval" = "no" ; then
+       VERBOSEMAKE=".SILENT"
+   else
+       VERBOSEMAKE=""
+   fi
 else
-   VERBOSEMAKE=".SILENT:"
+  VERBOSEMAKE=".SILENT"
 fi;
 
 
 # Check whether --enable-debug or --disable-debug was given.
 if test "${enable_debug+set}" = set; then
   enableval="$enable_debug"
-   debug_mode="yes"
+   if test "$enableval" = "no" ; then
+       debug_mode="no"
+   else
+       debug_mode="yes"
+   fi
 else
    debug_mode="no"
 fi;
@@ -2508,7 +2520,11 @@ fi;
 # Check whether --enable-ltwt-threadsafe or --disable-ltwt-threadsafe was given.
 if test "${enable_ltwt_threadsafe+set}" = set; then
   enableval="$enable_ltwt_threadsafe"
-   LTWT_THREADSAFE="yes"
+   if test "$enableval" = "no" ; then
+       LTWT_THREADSAFE="no"
+   else
+       LTWT_THREADSAFE="yes"
+   fi
 else
    LTWT_THREADSAFE="no"
 fi;
