@@ -2496,12 +2496,12 @@ fi;
 if test "${enable_verbosebuild+set}" = set; then
   enableval="$enable_verbosebuild"
    if test "$enableval" = "no" ; then
-       VERBOSEMAKE=".SILENT"
+       VERBOSEMAKE=".SILENT:"
    else
        VERBOSEMAKE=""
    fi
 else
-  VERBOSEMAKE=".SILENT"
+  VERBOSEMAKE=".SILENT:"
 fi;
 
 
