@@ -126,12 +126,20 @@ public:
         return ret;
     }
     virtual int InitTLS( const char* name, void* val ) {
-        int ret = 0;
+        int ret = -1;
         void *get_ret = NULL;
         tls_t *tls_data;
         data_sync.Lock();
-        if( data != NULL )
+        if( data != NULL ) {
             get_ret = data->Get();
+        } else {
+            return ret;
+        }
+        
+        if(name == NULL)
+            return ret;
+        if(val == NULL)
+            return ret;
 
         // Allocate our internal tls structure if nothing is found
         if(get_ret == NULL) {
@@ -146,12 +154,15 @@ public:
         tls_data->tid = XPlat::Thread::GetId();
         tls_data->tname = name;
         tls_data->user_data = val;
-        if( data != NULL )
+        if( data != NULL ) {
             ret = data->Set( tls_data );
+        } else {
+            delete tls_data;
+        }
         data_sync.Unlock();
         return ret;
     }
-    // Assumes user has already freed user data
+    // Assumes user (MRNet) has already freed user data
     virtual int DestroyData() {
         tls_t *tls_ret = NULL;
         int ret = 0;
