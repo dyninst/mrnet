@@ -133,6 +133,10 @@ Network::Network(void)
       _perf_data( new PerfDataMgr() )
 {
     
+    if(XPlat_TLSKey == NULL) {
+        XPlat_TLSKey = new TLSKey();
+    }
+
     init_local();
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
     _edt = new EventDetector(this);
@@ -220,7 +224,7 @@ void Network::shutdown_Network(void)
 
     if( ! started ) {
 
-        XPlat::Thread::Id my_id = XPlat_TLSKey.GetTid();
+        XPlat::Thread::Id my_id = XPlat_TLSKey->GetTid();
 
         // kill streams
         close_Streams();
@@ -604,22 +608,22 @@ void Network::init_ThreadState( node_type_t node_type,
     local_data->network = this;
 
     int status;
-    if( (status = XPlat_TLSKey.InitTLS(tname, local_data)) != 0 ) {
+    if( (status = XPlat_TLSKey->InitTLS(tname, local_data)) != 0 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "XPlat::TLSKey::Set(): %s\n",
                                strerror(status)) );
     } 
 }
 void Network::free_ThreadState(void)
 {
-    tsd_t* tsd = (tsd_t*)XPlat_TLSKey.GetUserData();
+    tsd_t* tsd = (tsd_t*)XPlat_TLSKey->GetUserData();
     if( tsd != NULL ) {
         delete tsd;
-        if(XPlat_TLSKey.SetUserData(NULL) != 0) {
+        if(XPlat_TLSKey->SetUserData(NULL) != 0) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "Thread 0x%lx failed to set"
                         " thread-specific user data to NULL.\n",
                         XPlat::Thread::GetId()));
         }
-        if(XPlat_TLSKey.DestroyData() != 0) {
+        if(XPlat_TLSKey->DestroyData() != 0) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "Thread 0x%lx failed to destroy"
                         " thread-specific data.\n", XPlat::Thread::GetId()));
         }
@@ -748,6 +752,7 @@ void Network::init_FrontEnd( const char * itopology,
         error( ERR_INTERNAL, rootRank, "proc_PortUpdates() failed");
         shutdown_Network();
     }
+
 }
 
 void Network::send_TopologyUpdates(void)

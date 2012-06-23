@@ -10,7 +10,7 @@
 namespace XPlat
 {
 
-TLSKey XPlat_TLSKey;
+TLSKey *XPlat_TLSKey = NULL;
 
 TLSKey::TLSKey( void )
   : data( new PthreadTLSKeyData )

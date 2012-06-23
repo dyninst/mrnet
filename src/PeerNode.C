@@ -428,7 +428,7 @@ void PeerNode::mark_Failed(void)
         _sync.Unlock();
 
         // wake up send thread, if that's not this thread
-        XPlat::Thread::Id my_id = XPlat::XPlat_TLSKey.GetTid();
+        XPlat::Thread::Id my_id = XPlat::XPlat_TLSKey->GetTid();
 
         if( my_id != get_SendThrId() ) {
             // shutdown packet send will fail, but that's expected

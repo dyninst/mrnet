@@ -195,7 +195,7 @@ public:
     }
 };
 
-extern TLSKey XPlat_TLSKey;
+extern TLSKey *XPlat_TLSKey;
 
 } // namespace XPlat
 

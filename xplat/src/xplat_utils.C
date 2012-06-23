@@ -50,19 +50,20 @@ int xplat_printf( const char *file, int line, const char * func,
     va_list arglist;
 
     struct timeval tv;
-    const char *thread_name;
+    const char *thread_name = NULL;
     while( gettimeofday( &tv, NULL ) == -1 ) {}
 
     xplat_printf_mutex.Lock();
 
-    // What is the best behavior for this?
-    // Answer: send to stderr (or whatever was specified)
+    // if we weren't set up, send to stderr (or whatever was specified)
     FILE *f = xplat_printf_fp;
     if( f == NULL ) {
         f = ifp;
     }
 
-    thread_name = XPlat_TLSKey.GetName();
+    if(XPlat_TLSKey != NULL) {
+        thread_name = XPlat_TLSKey->GetName();
+    }
 
     // print timestamp and thread info
     fprintf( f, "%ld.%06ld: %s(0x%lx): ", 

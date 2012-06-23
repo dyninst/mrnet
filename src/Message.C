@@ -367,15 +367,15 @@ int Message::send( XPlat_Socket sock_fd )
     if( go_away ) {
         // exit send thread
         mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));
-        tsd_t* tsd = (tsd_t*)XPlat::XPlat_TLSKey.GetUserData();
+        tsd_t* tsd = (tsd_t*)XPlat::XPlat_TLSKey->GetUserData();
         if( NULL != tsd ) {
             delete tsd;
-            if(XPlat::XPlat_TLSKey.SetUserData(NULL) != 0) {
+            if(XPlat::XPlat_TLSKey->SetUserData(NULL) != 0) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "Thread 0x%lx failed to set"
                             " thread-specific user data to NULL.\n",
                             XPlat::Thread::GetId()));
             }
-            if(XPlat::XPlat_TLSKey.DestroyData() != 0) {
+            if(XPlat::XPlat_TLSKey->DestroyData() != 0) {
                 mrn_dbg(1, mrn_printf(FLF, stderr, "Thread 0x%lx failed to "
                             "destroy thread-specific data.\n",
                             XPlat::Thread::GetId()));

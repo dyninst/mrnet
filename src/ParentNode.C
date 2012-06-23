@@ -22,6 +22,8 @@
 #include "xplat/Process.h"
 #include "xplat/Error.h"
 
+using namespace XPlat;
+
 namespace MRN
 {
 
@@ -327,20 +329,7 @@ int ParentNode::proc_DeleteSubTreeAck( PacketPtr ) const
 	
     // exit recv thread from child
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
-    tsd_t* tsd = (tsd_t*)XPlat::XPlat_TLSKey.GetUserData();
-    if( tsd != NULL ) {
-        delete tsd;
-        if(XPlat::XPlat_TLSKey.SetUserData(NULL) != 0) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Thread 0x%lx failed to set"
-                        " thread-specific user data to NULL.\n",
-                        XPlat::Thread::GetId()));
-        }
-        if(XPlat::XPlat_TLSKey.DestroyData() != 0) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "Thread 0x%lx failed to "
-                        "destroy thread-specific data.\n",
-                        XPlat::Thread::GetId()));
-        }
-    }
+    _network->free_ThreadState();
     XPlat::Thread::Exit(NULL);
 
     return 0;

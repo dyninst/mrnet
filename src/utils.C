@@ -193,13 +193,15 @@ int mrn_printf( const char *file, int line, const char * func,
     node_type_t node_type = UNKNOWN_NODE;
     //Network* net = NULL;
     
-    tid = XPlat_TLSKey.GetTid();
-    thread_name = XPlat_TLSKey.GetName();
-    tsd_t *tsd = (tsd_t*) XPlat_TLSKey.GetUserData();
-    if( tsd != NULL ) {
-        rank = tsd->process_rank;
-        node_type = tsd->node_type;
-        //net = tsd->network;
+    if(XPlat_TLSKey != NULL) {
+        tid = XPlat_TLSKey->GetTid();
+        thread_name = XPlat_TLSKey->GetName();
+        tsd_t *tsd = (tsd_t*) XPlat_TLSKey->GetUserData();
+        if( tsd != NULL ) {
+            rank = tsd->process_rank;
+            node_type = tsd->node_type;
+            //net = tsd->network;
+        }
     }
 
     if( mrn_printf_fp == NULL ) {
