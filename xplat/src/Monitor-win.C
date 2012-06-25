@@ -24,8 +24,6 @@ namespace XPlat
 Monitor::Monitor( void )
 : data( new WinMonitorData )
 {
-    destruct_sync = NULL;
-    destruct_sync_initialized = false;
 }
 
 Monitor::~Monitor( void )

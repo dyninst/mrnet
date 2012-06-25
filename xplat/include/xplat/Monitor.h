@@ -36,8 +36,6 @@ public:
 
 private:
     Data* data;
-    void *destruct_sync;
-    bool destruct_sync_initialized;
 
 public:
     Monitor( void );

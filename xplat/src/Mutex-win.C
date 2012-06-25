@@ -13,8 +13,6 @@ namespace XPlat
 Mutex::Mutex( void )
 : data( new WinMutexData )
 {
-    destruct_sync_initialized = false;
-    destruct_sync = NULL;
 }
 
 Mutex::~Mutex( void )

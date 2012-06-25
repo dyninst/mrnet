@@ -16,7 +16,6 @@ struct Mutex_t* Mutex_construct( void )
     struct Mutex_t* mut = NULL;
 
     pthread_mutex_lock( &init_mutex );
-    pthread_rwlock_t *c = NULL;
 
     /* Construct *data */
     mut = (struct Mutex_t*) calloc( (size_t)1, sizeof(struct Mutex_t) );
@@ -30,21 +29,9 @@ struct Mutex_t* Mutex_construct( void )
         goto ctor_fail;
     }
 
-    /* Construct lock */
-    c = (pthread_rwlock_t *)malloc(sizeof(pthread_rwlock_t));
-    ret = pthread_rwlock_init(c, NULL);
-    if(ret) {
-        failed = 1;
-        goto ctor_fail;
-    }
-    mut->destruct_sync_initialized = true;
-    mut->destruct_sync = (void *)c;
-
 ctor_fail:
     pthread_mutex_unlock( &init_mutex );
     if(failed) {
-        mut->destruct_sync = NULL;
-        mut->destruct_sync_initialized = 0;
         mut->data = NULL;
         mut = NULL;
     }
@@ -54,23 +41,12 @@ ctor_fail:
 
 int Mutex_destruct( struct Mutex_t* m )
 {
+    static pthread_mutex_t cleanup_mutex = PTHREAD_MUTEX_INITIALIZER;
     int rc = 0;
-    int ret;
     
-    if(m == NULL || m->destruct_sync == NULL)
-        return -1;
+    pthread_mutex_lock( &cleanup_mutex );
 
-    ret = pthread_rwlock_wrlock((pthread_rwlock_t *)m->destruct_sync);
-
-    // Check for wrlock error
-    if(ret) {
-        xplat_dbg(1, xplat_printf(FLF, stderr, 
-                     "Error: destruct_sync wrlock returned '%s'\n",
-                     strerror( ret )));
-        return -1;
-    }
-
-    if( m->data != NULL ) {
+    if( (m != NULL) && m->data != NULL ) {
         PthreadMutexData_destruct( m->data );
         free(m->data);
         m->data = NULL;
@@ -78,102 +54,33 @@ int Mutex_destruct( struct Mutex_t* m )
     else
         rc = -1;
 
-    m->destruct_sync_initialized = 0;
-    ret = pthread_rwlock_unlock((pthread_rwlock_t *)m->destruct_sync);
-    if(ret) { 
-        xplat_dbg(1, xplat_printf(FLF, stderr, 
-                     "Error: destruct_sync unlock returned '%s'\n",
-                     strerror( ret )));
-    }
+    pthread_mutex_unlock( &cleanup_mutex );
 
     return rc;
 }
 
 int Mutex_Lock( struct Mutex_t* m )
 {
-    int ret = 1, rw_ret = 1;
-    if( (m != NULL) && m->destruct_sync_initialized && (m->destruct_sync != NULL) ) {
-        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->destruct_sync);
-        if(ret)
-            return ret;
-        if( m->data != NULL ) {
-            ret = PthreadMutex_Lock( m->data );
-            rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)m->destruct_sync);
-            if(rw_ret) {
-                xplat_dbg(1, xplat_printf(FLF, stderr, 
-                            "Error: destruct_sync unlock returned '%s'\n",
-                            strerror( rw_ret )));
-            }
-            return ret;
-        }
-        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)m->destruct_sync);
-        if(rw_ret) {
-            xplat_dbg(1, xplat_printf(FLF, stderr, 
-                        "Error: destruct_sync unlock returned '%s'\n",
-                        strerror( rw_ret )));
-        }
+    if( (m != NULL) && (m->data != NULL) )
+        return PthreadMutex_Lock( m->data );
+    else
         return EINVAL;
-    }
-
-    return EINVAL;
 }
 
 int Mutex_Unlock( struct Mutex_t* m )
 {
-    int ret = 1, rw_ret = 1;
-    if( (m != NULL) && m->destruct_sync_initialized && (m->destruct_sync != NULL) ) {
-        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->destruct_sync);
-        if(ret)
-            return ret;
-        if( m->data != NULL ) {
-            ret = PthreadMutex_Unlock( m->data );
-            rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)m->destruct_sync);
-            if(rw_ret) {
-                xplat_dbg(1, xplat_printf(FLF, stderr, 
-                            "Error: destruct_sync unlock returned '%s'\n",
-                            strerror( rw_ret )));
-            }
-            return ret;
-        }
-        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)m->destruct_sync);
-        if(rw_ret) {
-            xplat_dbg(1, xplat_printf(FLF, stderr, 
-                        "Error: destruct_sync unlock returned '%s'\n",
-                        strerror( rw_ret )));
-        }
+    if( (m != NULL) && (m->data != NULL) )
+        return PthreadMutex_Unlock( m->data );
+    else
         return EINVAL;
-    }
-
-    return EINVAL;
 }
 
 int Mutex_Trylock( struct Mutex_t* m )
 {
-    int ret = 1, rw_ret = 1;
-    if( (m != NULL) && m->destruct_sync_initialized && (m->destruct_sync != NULL) ) {
-        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)m->destruct_sync);
-        if(ret)
-            return ret;
-        if( m->data != NULL ) {
-            ret = PthreadMutex_Unlock( m->data );
-            rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)m->destruct_sync);
-            if(rw_ret) {
-                xplat_dbg(1, xplat_printf(FLF, stderr, 
-                            "Error: destruct_sync unlock returned '%s'\n",
-                            strerror( rw_ret )));
-            }
-            return ret;
-        }
-        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)m->destruct_sync);
-        if(rw_ret) {
-            xplat_dbg(1, xplat_printf(FLF, stderr, 
-                        "Error: destruct_sync unlock returned '%s'\n",
-                        strerror( rw_ret )));
-        }
+    if( (m != NULL) && (m->data != NULL) )
+        return PthreadMutex_Trylock( m->data );
+    else
         return EINVAL;
-    }
-
-    return EINVAL;
 }
 
 PthreadMutexData_t* PthreadMutexData_construct( void )

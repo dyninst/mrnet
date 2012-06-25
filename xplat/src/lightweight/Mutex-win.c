@@ -20,9 +20,6 @@ Mutex_t* Mutex_construct( void )
     mut->data = (void *)WinMutexData_construct();
     assert(mut->data != NULL);
 
-    mut->destruct_sync_initialized = 0;
-    mut->destruct_sync = NULL;
-
     LeaveCriticalSection(&init_mutex);
 
     return mut;

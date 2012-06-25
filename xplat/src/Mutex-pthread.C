@@ -22,122 +22,43 @@ Mutex::Mutex( void )
     pthread_mutex_lock( &init_mutex );
 
     data = new PthreadMutexData;
-    pthread_rwlock_t *c = new pthread_rwlock_t;
-    if(data == NULL || c == NULL) {
+    if(data == NULL) {
         failed = true;
         goto ctor_fail;
     }
-
-    ret = pthread_rwlock_init(c, NULL);
-    if(ret) {
-        failed = true;
-        goto ctor_fail;
-    }
-    destruct_sync_initialized = true;
-
-    destruct_sync = (void *)c;
 
 ctor_fail:
     pthread_mutex_unlock( &init_mutex );
     if(failed) {
         xplat_dbg(1, xplat_printf(FLF, stderr, 
                      "Error: Failed to construct Mutex\n"));
-        destruct_sync_initialized = false;
-        destruct_sync = NULL;
         data = NULL;
     }
 }
 
 Mutex::~Mutex( void )
 {
-    int ret;
-
-    // Make sure no one destroys the rwlock twice
-    if(destruct_sync == NULL) {
-        return;
-    }
-
-    ret = pthread_rwlock_wrlock((pthread_rwlock_t *)destruct_sync);
-
-    // Check for wrlock error
-    if(ret) {
-        xplat_dbg(1, xplat_printf(FLF, stderr, 
-                     "Error: destruct_sync wrlock returned '%s'\n",
-                     strerror( ret )));
-        return;
-    }
-
     if( data != NULL ) {
         delete data;
         data = NULL;
-    }
-
-    destruct_sync_initialized = false;
-    ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
-    if(ret) {
-        xplat_dbg(1, xplat_printf(FLF, stderr, 
-                    "Error: destruct_sync unlock returned '%s'\n",
-                    strerror( ret )));
     }
 }
 
 int Mutex::Lock( void )
 {
-    int ret = 1, rw_ret = 1;
-    if( destruct_sync_initialized && (destruct_sync != NULL) ) {
-        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
-        if(ret)
-            return ret;
-
-        if( data != NULL ) {
-            ret = data->Lock();
-            rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
-            if(rw_ret) {
-                xplat_dbg(1, xplat_printf(FLF, stderr, 
-                            "Error: destruct_sync unlock returned '%s'\n",
-                            strerror( rw_ret )));
-            }
-            return ret;
-        }
-
-        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
-        if(rw_ret) {
-            xplat_dbg(1, xplat_printf(FLF, stderr, 
-                        "Error: destruct_sync unlock returned '%s'\n",
-                        strerror( rw_ret )));
-        }
-        return EINVAL;
+    int ret = -1;
+    if( data != NULL ) {
+        return data->Lock();
     }
-        
+
     return EINVAL;
 }
 
 int Mutex::Unlock( void )
 {
-    int ret = 1, rw_ret = 1;
-    if( destruct_sync_initialized && (destruct_sync != NULL) ) {
-        ret = pthread_rwlock_rdlock((pthread_rwlock_t *)destruct_sync);
-        if(ret)
-            return ret;
-
-        if( data != NULL ) {
-            ret = data->Unlock();
-            rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
-			if(rw_ret) {
-				xplat_dbg(1, xplat_printf(FLF, stderr, 
-							"Error: destruct_sync unlock returned '%s'\n",
-							strerror( rw_ret )));
-			}
-            return ret;
-        }
-
-        rw_ret = pthread_rwlock_unlock((pthread_rwlock_t *)destruct_sync);
-        if(rw_ret) {
-            xplat_dbg(1, xplat_printf(FLF, stderr, 
-                        "Error: destruct_sync unlock returned '%s'\n",
-                        strerror( rw_ret )));
-        }
-        return EINVAL;
+    int ret = -1;
+    if( data != NULL ) {
+        return data->Unlock();
     }
 
     return EINVAL;
