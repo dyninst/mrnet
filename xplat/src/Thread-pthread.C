@@ -5,6 +5,7 @@
 
 // $Id: Thread-pthread.C,v 1.6 2008/10/09 19:53:54 mjbrim Exp $
 #include <pthread.h>
+#include <cerrno>
 #include "xplat/Thread.h"
 
 #include <signal.h>
@@ -64,6 +65,9 @@ Thread::GetId( void )
 int
 Thread::Join( Thread::Id joinWith, void** exitValue )
 {
+    if (joinWith == 0) {
+        return EINVAL;
+    }
     pthread_t jwith = (pthread_t) joinWith;
     return pthread_join( jwith, exitValue );
 }

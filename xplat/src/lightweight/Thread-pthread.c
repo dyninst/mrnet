@@ -9,6 +9,7 @@
 
 #include <signal.h>
 #include <stdlib.h>
+#include <errno.h>
 
 typedef struct 
 {
@@ -61,7 +62,13 @@ Thread_GetId( void )
 int
 Thread_Join( Thread_Id joinWith, void** exitValue )
 {
-    pthread_t jwith = (pthread_t) joinWith;
+    pthread_t jwith;
+
+    if(joinWith == 0) {
+        return EINVAL;
+    }
+
+    jwith = (pthread_t) joinWith;
     return pthread_join( jwith, exitValue );
 }
 

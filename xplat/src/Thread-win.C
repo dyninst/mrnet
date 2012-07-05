@@ -45,6 +45,10 @@ Thread::Join( Id joinWith, void** exitValue )
     int ret = -1;
     HANDLE cur_handle;
 
+    if(joinWith == 0) {
+        return ret;
+    }
+
     // Get the thread handle from the given Id
     cur_handle = OpenThread(SYNCHRONIZE | THREAD_QUERY_INFORMATION, FALSE,
                             (DWORD)joinWith);
