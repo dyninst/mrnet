@@ -20,7 +20,8 @@ std::string GetErrorString( int code );
 bool ETimedOut( int code );
 bool EAddrInUse( int code );
 bool EConnRefused( int code ); 
-
+bool EInProgress( int code );
+bool EInterrupted( int code );
 } // namespace Error
 
 } // namespace XPlat

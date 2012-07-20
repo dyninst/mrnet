@@ -48,5 +48,17 @@ Error::EConnRefused( int code )
     return (code == WSAECONNREFUSED);
 }
 
+bool
+Error::EInProgress( int code )
+{
+    return (code == WSAEINPROGRESS);
+}
+
+bool
+Error::EInterrupted( int code )
+{
+    return (code == WSAEINTR);
+}
+
 } // namespace XPlat
 

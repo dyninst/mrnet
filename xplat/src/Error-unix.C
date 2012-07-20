@@ -36,4 +36,17 @@ Error::EConnRefused( int code )
     return (code == ECONNREFUSED);
 }
 
+
+bool
+Error::EInProgress( int code )
+{
+    return (code == EINPROGRESS);
+}
+
+bool
+Error::EInterrupted( int code )
+{
+    return (code == EINTR);
+}
+
 } // namespace XPlat
