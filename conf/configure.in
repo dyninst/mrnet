@@ -126,6 +126,7 @@ LIBS_LIGHTWEIGHT="-lm"
 LIBS_LOWFAT=""
 
 EXTRA_LIBS=""
+EXTRA_LIBS_SO=""
 EXTRA_LIBS_LIGHTWEIGHT=""
 EXTRA_LIBS_LOWFAT=""
 
@@ -403,18 +404,20 @@ if test $MRNET_STARTUP_METHOD = "cray" ; then
         HAVE_ATH_LIBS="no"
         LIBS_HOLD=$LIBS
 
+        CRAYXT_ATH_LIBS_SO="$CRAYXT_ATH_LIBS -lalps"
         CRAYXT_ATH_LIBS="$CRAYXT_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
+        CRAYXE_ATH_LIBS_SO="$CRAYXE_ATH_LIBS -lalps"
         CRAYXE_ATH_LIBS="$CRAYXE_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic"
 
         AC_CHECK_LIB( [alps], [alps_launch_tool_helper],
-                      [HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXT_ATH_LIBS $EXTRA_LIBS"],
+                      [HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXT_ATH_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXT_ATH_LIBS_SO $EXTRA_LIBS_SO"],
                       [], [-lxmlrpc] )
 
         if test $HAVE_ATH_LIBS = "no" ; then
             unset ac_cv_lib_alps_alps_launch_tool_helper
             LIBS="$LIBS_HOLD"
             AC_CHECK_LIB( [alps], [alps_launch_tool_helper],
-                          [HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXE_ATH_LIBS $EXTRA_LIBS"],
+                          [HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXE_ATH_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXE_ATH_LIBS_SO $EXTRA_LIBS_SO"],
                           [], [-lxmlrpc-epi -lexpat] )
         fi
 
@@ -449,6 +452,7 @@ AC_SUBST(LIBS)
 AC_SUBST(LIBS_LIGHTWEIGHT)
 AC_SUBST(LIBS_LOWFAT)
 AC_SUBST(EXTRA_LIBS)
+AC_SUBST(EXTRA_LIBS_SO)
 AC_SUBST(EXTRA_LIBS_LIGHTWEIGHT)
 AC_SUBST(EXTRA_LIBS_LOWFAT)
 AC_SUBST(LTWT_THREADSAFE)
