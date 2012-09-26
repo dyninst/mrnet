@@ -32,6 +32,11 @@ XPLATDIR = $(BASEDIR)/xplat
 EXTDIR   = $(BASEDIR)/external
 BUILDDIR = $(BASEDIR)/build
 
+# Added by Taylor:
+
+LIBIDIR  = @LIBI_IDIR@
+LMONDIR  = @LMON_IDIR@
+
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
 IBINDIR     = @bindir@
@@ -82,12 +87,16 @@ SOFLAGS = @SOFLAGS@
 LDFLAGS = @LDFLAGS@
 COMMNODE_LDFLAGS = @CN_LDFLAGS@
 
-LIBS = @LIBS@ @EXTRA_LIBS@
+LIBS += @LIBS@ @EXTRA_LIBS@ 
+
 LIBS_LIGHTWEIGHT = @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS_LIGHTWEIGHT@
 LIBS_LOWFAT = @LIBS_LOWFAT@ @EXTRA_LIBS_LOWFAT@
 
 # includes
-COMMON_INCLUDES = -I$(INCDIR) -I$(XPLATDIR)/include -I$(TSTDIR) -I$(PLATDIR) -I$(SRCDIR) 
+COMMON_INCLUDES = -I$(INCDIR) -I$(XPLATDIR)/include -I$(TSTDIR) -I$(PLATDIR) -I$(SRCDIR)
+ifeq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi-ssh libi-slurm))
+	COMMON_INCLUDES += -I$(LIBIDIR)/include -I$(install_libincdir)
+endif
 INCLUDES = $(COMMON_INCLUDES)
 INCLUDES_LIGHTWEIGHT = $(COMMON_INCLUDES) -I$(SRCDIR)/lightweight
 
@@ -174,16 +183,39 @@ LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
 
 LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat $(LIBS)
 
+# Added by Taylor
+ifeq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi-ssh libi-slurm))
+	LIBLIBI = $(LIBDIR)/liblibi.a
+endif
+
+ifeq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi-ssh libi-slurm))
+	LIBLIBI_SO  = $(LIBDIR)/liblibi.so
+endif
+ifeq ($(MRNET_STARTUP_METHOD), libi-slurm)
+	LIBLIBI += -L$(LMONDIR)/lib -lmonfeapi -lmonmwapi -lmonbeapi                        
+endif
+ifeq ($(MRNET_STARTUP_METHOD), libi-ssh)
+    LIBS += $(LIBLIBI) -lrt 
+endif
+
 LIBXPLAT    = $(LIBDIR)/libxplat.a
 LIBXPLAT_SO = $(LIBDIR)/libxplat.so
 LIBXPLAT_LIGHTWEIGHT    = $(LIBDIR)/libxplat_lightweight.a
 LIBXPLAT_LIGHTWEIGHT_SO = $(LIBDIR)/libxplat_lightweight.so
 
-TARGET_LIBS = $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT)
-ifeq ($(BUILD_SHARED_LIBS), yes)
-    TARGET_LIBS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
-    TARGET_LIBS += $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
+
+ifeq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi-ssh libi-slurm))
+	TARGET_LIBS = $(LIBLIBI)
 endif
+
+TARGET_LIBS += $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT)
+
+ifeq ($(BUILD_SHARED_LIBS), yes)
+	TARGET_LIBS += $(LIBLIBI_SO)
+	TARGET_LIBS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
+	TARGET_LIBS += $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
+endif
+
 TARGETS = $(COMMNODE) $(TOPGEN) $(TARGET_LIBS)
 
 STD_TESTS_FE = $(BINDIR)/test_basic_FE \
@@ -267,30 +299,27 @@ else
 endif
 
 ifeq ($(MRNET_STARTUP_METHOD),cray)
-
-# build for a Cray XT (uses aprun or alps_tool_helper for parallel process launch)
-LIBMRNET_SRCS += $(SRCDIR)/XTNetwork.C \
+	# build for a Cray XT (uses aprun or alps_tool_helper for parallel process launch)
+    LIBMRNET_SRCS += $(SRCDIR)/XTNetwork.C \
                  $(SRCDIR)/XTFrontEndNode.C \
                  $(SRCDIR)/XTBackEndNode.C \
                  $(SRCDIR)/XTInternalNode.C
-
-else
-    ifeq ($(MRNET_STARTUP_METHOD),ssh)
-
-# fall back to RSH instantiation approach
-LIBMRNET_SRCS += $(SRCDIR)/RSHNetwork.C \
+endif
+ifeq ($(MRNET_STARTUP_METHOD),ssh)
+	# fall back to RSH instantiation approach
+    LIBMRNET_SRCS += $(SRCDIR)/RSHNetwork.C \
                  $(SRCDIR)/RSHParentNode.C \
                  $(SRCDIR)/RSHChildNode.C \
                  $(SRCDIR)/RSHFrontEndNode.C \
                  $(SRCDIR)/RSHBackEndNode.C \
                  $(SRCDIR)/RSHInternalNode.C
-
-    else
-
-$(error Unrecognized MRNet instantiation method "$(MRNET_STARTUP_METHOD)"; see configure --help for supported methods)
-    endif
 endif
-
+ifeq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi-ssh libi-slurm))
+    LIBMRNET_SRCS += $(SRCDIR)/LIBINetwork.C 
+endif
+ifneq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi-ssh libi-slurm ssh cray))
+    $(error Unrecognized MRNet instantiation method "$(MRNET_STARTUP_METHOD)"; see configure --help for supported methods)
+endif
 
 LIBMRNET_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(LIBMRNET_SRCS)))))
 
@@ -327,7 +356,16 @@ lightweight-all:
 lightweight-sharedobj:
 	$(MAKE) -f $(PLATDIR)/Makefile.ltwt sharedobj
 
-install: install-prep install-local lightweight-install xplat-install xplat_lightweight-install
+libi-all: $(LIBXPLAT) $(INSTALL_PREREQ)
+	$(MAKE) -f $(PLATDIR)/Makefile.libi all
+
+INSTALL_PREREQ = install-prep install-local lightweight-install 
+ifeq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi-ssh libi-slurm))
+	INSTALL_PREREQ += libi-install
+endif
+INSTALL_PREREQ += xplat-install xplat_lightweight-install
+
+install: $(INSTALL_PREREQ)
 
 install-prep:
 	@echo Creating install directories
@@ -401,7 +439,13 @@ lightweight-install:
 xplat_lightweight-install:
 	$(MAKE) -f $(PLATDIR)/Makefile.xplat_ltwt install
 
-tests: all $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(LIBDIR)/test_DynamicFilters.so
+libi-install:
+	$(MAKE) -f $(PLATDIR)/Makefile.libi install
+
+tests: all $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(LIBDIR)/test_DynamicFilters.so 
+
+tests-libi: all
+	$(MAKE) -f $(PLATDIR)/Makefile.libi test
 
 tests-opt: $(OPT_TESTS)
 
@@ -442,10 +486,18 @@ $(LIBXPLAT_LIGHTWEIGHT): xplat_lightweight-all
 
 $(LIBXPLAT_LIGHTWEIGHT_SO): xplat_lightweight-sharedobj
 
-$(COMMNODE): $(COMMNODE_OBJS) $(LIBMRNET) $(LIBXPLAT)
+$(LIBLIBI): libi-all
+
+CNDEP = $(COMMNODE_OBJS) $(LIBMRNET) 
+ifeq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi-ssh libi-slurm))
+	CNDEP += $(LIBLIBI)
+endif
+CNDEP += $(LIBXPLAT)
+
+$(COMMNODE): $(CNDEP)
 	@echo Linking `basename $@` ...
 	$(PURIFY) $(CXX) $(CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(COMMNODE_OBJS) \
-	   $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+   	  $(LIBMRNET) $(LIBLIBI) $(LIBXPLAT) $(LIBS)
 
 $(TOPGEN): $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
 	@echo "Linking `basename $@` ..."
@@ -507,7 +559,14 @@ $(LIBDIR)/test_RecoveryFilter.so: $(TSTDIR)/test_Recovery/test_RecoveryFilter.C
 #################################
 # Cleaning rules
 #################################
-clean: local-clean xplat-clean
+
+CLEANDEP = local-clean 
+ifeq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi-ssh libi-slurm))
+	CLEANDEP += libi-clean
+endif
+CLEANDEP += xplat-clean
+
+clean: $(CLEANDEP)  
 
 local-clean: examples-clean lightweight-clean
 	@echo Cleaning $(MRNET_PLATFORM) platform ...
@@ -530,6 +589,10 @@ xplat-clean: xplat_lightweight-clean
 xplat_lightweight-clean:
 	@echo Cleaning xplat for lightweight back-end library
 	$(MAKE) -f $(PLATDIR)/Makefile.xplat_ltwt clean
+
+libi-clean:
+	@echo Cleaning libi library
+	$(MAKE) -f $(PLATDIR)/Makefile.libi clean
 
 examples-clean:
 	$(MAKE) -f $(PLATDIR)/Makefile.examples clean

@@ -49,6 +49,9 @@ endif
 WANT_THREADSAFE_LTWT = @LTWT_THREADSAFE@
 
 # libs
+LIBIDIR				 = @LIBI_IDIR@
+LMONDIR              = @LMON_IDIR@
+
 LIBMRNET             = -lmrnet
 LIBXPLAT             = -lxplat
 LIBMRNET_LIGHTWEIGHT = -lmrnet_lightweight
@@ -57,9 +60,15 @@ LIBXPLAT_LIGHTWEIGHT = -lxplat_lightweight
 LIBXPLAT_LOWFAT      = -lxplat_lightweight_r
 
 LDFLAGS = @LDFLAGS@
-SOFLAGS = @SOFLAGS@
+SOFLAGS = @SOFLAGS@ 
+ifeq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD),libi-ssh, libi-slurm))
+	LIBLIBI              = -L$(LIBIDIR) -llibi
+endif
+ifeq ($(MRNET_STARTUP_METHOD),libi-slurm)
+     LIBLIBI += -L$(LMONDIR)/lib -lmonfeapi -lmonmwapi -lmonbeapi -lrt
+endif
 
-LIBS                 = -L$(LIBDIR) $(LIBMRNET) $(LIBXPLAT) @LIBS@ @EXTRA_LIBS@
+LIBS                 = -L$(LIBDIR) $(LIBMRNET) $(LIBLIBI) $(LIBXPLAT) @LIBS@ @EXTRA_LIBS@
 LIBS_LIGHTWEIGHT     = -L$(LIBDIR) $(LIBMRNET_LIGHTWEIGHT) $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS_LIGHTWEIGHT@
 LIBS_LOWFAT          = -L$(LIBDIR) $(LIBMRNET_LOWFAT) $(LIBXPLAT_LOWFAT) @LIBS_LOWFAT@ @EXTRA_LIBS_LOWFAT@
 
