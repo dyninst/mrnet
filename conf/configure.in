@@ -157,7 +157,7 @@ fi
 
 if test $HAVE_BOOST_TIMER = "yes" ; then
     CXXFLAGS="$CXXFLAGS -DUSE_BOOST_TIMER"
-    LIBS="$LIBS -lboost_system -lboost_timer"
+    LIBS="$LIBS -lboost_system"
 fi
 
 AC_SUBST(HAVE_BOOST)
