@@ -90,7 +90,7 @@ CXXFLAGS="$CXXFLAGS $STDCFLAGS"
 dnl === Ignore user-requested debug/optimization levels
 CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
 
-SOFLAGS="SOFLAGS -fPIC -shared -rdynamic"
+SOFLAGS="$SOFLAGS -fPIC -shared -rdynamic"
 AC_SUBST(SOFLAGS)
 
 AC_SUBST(LIBI_STARTUP_METHOD)
