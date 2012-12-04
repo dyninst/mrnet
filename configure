@@ -6075,7 +6075,7 @@ as_val=`eval 'as_val=${'$as_ac_Header'}
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
- HAVE_BOOST_TIMER="yes"
+ HAVE_BOOST_TIMER="no"
 fi
 
 done
@@ -6091,7 +6091,7 @@ fi
 
 if test $HAVE_BOOST_TIMER = "yes" ; then
     CXXFLAGS="$CXXFLAGS -DUSE_BOOST_TIMER"
-    LIBS="$LIBS -lboost_system"
+    LIBS="$LIBS -lboost_system -lboost_timer"
 fi
 
 

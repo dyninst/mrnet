@@ -145,7 +145,7 @@ else
     SAVE_CXXFLAGS="$CXXFLAGS"
     CXXFLAGS="$CXXFLAGS $BOOST_INC"
     AC_CHECK_HEADERS([boost/shared_ptr.hpp],[HAVE_USER_BOOST="yes"])
-    AC_CHECK_HEADERS([boost/timer/timer.hpp], [HAVE_BOOST_TIMER="yes"])
+    AC_CHECK_HEADERS([boost/timer/timer.hpp], [HAVE_BOOST_TIMER="no"])
     CXXFLAGS="$SAVE_CXXFLAGS" 
 fi
 
@@ -157,7 +157,7 @@ fi
 
 if test $HAVE_BOOST_TIMER = "yes" ; then
     CXXFLAGS="$CXXFLAGS -DUSE_BOOST_TIMER"
-    LIBS="$LIBS -lboost_system"
+    LIBS="$LIBS -lboost_system -lboost_timer"
 fi
 
 AC_SUBST(HAVE_BOOST)
