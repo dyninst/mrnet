@@ -165,6 +165,13 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
     char* stage_files = getenv("CRAY_ALPS_STAGE_FILES");
 #endif
 
+    char *procs_per_node = getenv("MRNET_CRAY_PROCS_PER_NODE");
+    if(procs_per_node != NULL) {
+        aprun_depth = atoi(procs_per_node);
+    } else {
+        aprun_depth = -1;
+    }
+
     if( iattrs != NULL ) {
         std::map< std::string, std::string >::const_iterator iter = iattrs->begin();
         for( ; iter != iattrs->end(); iter++ ) {
@@ -998,9 +1005,12 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
     // we should never be asked not to spawn any processes
     assert( ! (aprunHosts.empty() && athHosts.empty()) );
 
-    char timeout[8], topoport[8];
+    char timeout[8], topoport[8], depth[8];
     sprintf(timeout, "%d", get_StartupTimeout());
     sprintf(topoport, "%hd", FindTopoPort());
+    if(aprun_depth > 0) {
+        sprintf(depth, "%d", aprun_depth);
+    }
 
     // start processes (if any) that need to be started with aprun
     if( ! aprunHosts.empty() ) {
@@ -1017,6 +1027,12 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         // specify number of processes per node - we want one
         args.push_back( "-N" );
         args.push_back( "1" );
+
+        // specify depth
+        if(aprun_depth > 0) {
+            args.push_back( "-d" );
+            args.push_back( depth );
+        }
 
         // specify the nodes on which to run the processes
         std::string nodeSpec;

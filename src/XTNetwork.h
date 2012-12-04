@@ -31,6 +31,7 @@ private:
 
     // FE support
     uint64_t alps_apid;
+    int aprun_depth;
     std::set< std::string > alps_stage_files;
 
     void DetermineProcessTypes( ParsedGraph::Node* node,
