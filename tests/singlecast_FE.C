@@ -56,20 +56,25 @@ int main( int argc, char* argv[] )
     PacketPtr pkt;
     int rret, tag = 0;
     unsigned int val, send_val = 1;
+    Rank be_rank;
+    Stream* be_strm;
     
-
+    // send a batch of singlecasts
     set< CommunicationNode* >::const_iterator iter = bes.begin();
     for( ; iter != bes.end() ; iter++ ) {
-
-        Rank be_rank = (*iter)->get_Rank();
+        be_rank = (*iter)->get_Rank();
+        send_val = be_rank;
         if( (-1 == net->send( be_rank, SC_SINGLE, "%ud", send_val )) ||
             (-1 == net->flush()) ) {
             std::cerr << "FE: send() failed" << std::endl;
             return -1;
         }
+    }
         
-        Stream *be_strm = net->get_Stream( be_rank );
-        
+    // get singlecast responses
+    for( iter = bes.begin(); iter != bes.end() ; iter++ ) {
+        be_rank = (*iter)->get_Rank();
+        be_strm = net->get_Stream( be_rank );
         rret = be_strm->recv( &tag, pkt );
         if( rret == -1 ) {
             std::cerr << "FE: be_stream recv() failed" << std::endl;
@@ -78,7 +83,7 @@ int main( int argc, char* argv[] )
         if( tag == SC_SINGLE ) {
             pkt->unpack( "%ud", &val );
             if( val != be_rank ) {
-                std::cerr << "FE: expected BE to send value " << be_rank 
+                std::cerr << "FE: expected BE to send its rank value " << be_rank 
                       << ", got " << val << std::endl;
             }
         }
@@ -86,11 +91,11 @@ int main( int argc, char* argv[] )
             std::cerr << "FE: unexpected tag " << tag 
                       << " received on BE stream instead of SC_SINGLE\n";
         }
-
-        cout << "FE: successfully received value and rank on BE stream " 
+        cout << "FE: successfully received rank on BE stream " 
              << be_rank << endl;
     }
 
+    // get group response
     rret = stream->recv( &tag, pkt );
     if( rret == -1 ) {
         std::cerr << "FE: recv() failed" << std::endl;
