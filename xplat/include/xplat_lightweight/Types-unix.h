@@ -121,5 +121,7 @@ typedef uint16_t XPlat_Port;
 # endif
 #endif
 
+// Needed for TCP_NODELAY on unix
+#include <netinet/tcp.h>
 
 #endif // __xplat_types_unix_h
