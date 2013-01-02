@@ -54,7 +54,7 @@ class Timer{
     }
 };
 
-typedef enum {NOTRUN, FAILURE, SUCCESS, COMPLETED} TestStatus;
+typedef enum {MRNTEST_NOTRUN, MRNTEST_FAILURE, MRNTEST_SUCCESS, MRNTEST_COMPLETED} TestStatus;
 
 class Test{
  private:

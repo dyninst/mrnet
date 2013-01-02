@@ -180,19 +180,19 @@ int test_char( Network * net, Stream *stream, bool anonymous, bool block)
 
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
     if( stream->send( PROT_CHAR, "%c", send_val ) == -1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -209,7 +209,7 @@ int test_char( Network * net, Stream *stream, bool anonymous, bool block)
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -240,11 +240,11 @@ int test_char( Network * net, Stream *stream, bool anonymous, bool block)
     } while( num_received < num_to_receive );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -284,20 +284,20 @@ int test_short( Network * net, Stream *stream, bool anonymous, bool block )
     num_to_receive = stream->size();
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
 
     if( stream->send( PROT_SHORT, "%hd", send_val ) == -1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -314,7 +314,7 @@ int test_short( Network * net, Stream *stream, bool anonymous, bool block )
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -345,11 +345,11 @@ int test_short( Network * net, Stream *stream, bool anonymous, bool block )
     } while( num_received < num_to_receive );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -390,20 +390,20 @@ int test_ushort( Network * net, Stream *stream, bool anonymous, bool block )
     num_to_receive = stream->size();
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
 
     if( stream->send( PROT_USHORT, "%uhd", send_val ) == -1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -420,7 +420,7 @@ int test_ushort( Network * net, Stream *stream, bool anonymous, bool block )
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -451,11 +451,11 @@ int test_ushort( Network * net, Stream *stream, bool anonymous, bool block )
     } while( num_received < num_to_receive );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -496,20 +496,20 @@ int test_int( Network * net, Stream *stream, bool anonymous, bool block )
     num_to_receive = stream->size();
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
 
     if( stream->send( PROT_INT, "%d", send_val ) == -1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -526,7 +526,7 @@ int test_int( Network * net, Stream *stream, bool anonymous, bool block )
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -557,11 +557,11 @@ int test_int( Network * net, Stream *stream, bool anonymous, bool block )
     } while( num_received < num_to_receive );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -602,20 +602,20 @@ int test_uint( Network * net, Stream *stream, bool anonymous, bool block )
     num_to_receive = stream->size();
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
 
     if( stream->send( PROT_UINT, "%ud", send_val ) == -1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -632,7 +632,7 @@ int test_uint( Network * net, Stream *stream, bool anonymous, bool block )
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -663,11 +663,11 @@ int test_uint( Network * net, Stream *stream, bool anonymous, bool block )
     } while( num_received < num_to_receive );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -708,20 +708,20 @@ int test_long( Network * net, Stream *stream, bool anonymous, bool block )
     num_to_receive = stream->size();
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
 
     if( stream->send( PROT_LONG, "%ld", send_val ) == -1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -738,7 +738,7 @@ int test_long( Network * net, Stream *stream, bool anonymous, bool block )
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -769,11 +769,11 @@ int test_long( Network * net, Stream *stream, bool anonymous, bool block )
     } while( num_received < num_to_receive );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -814,20 +814,20 @@ int test_ulong( Network * net, Stream *stream, bool anonymous, bool block )
     num_to_receive = stream->size();
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
 
     if( stream->send( PROT_ULONG, "%uld", send_val ) == -1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -844,7 +844,7 @@ int test_ulong( Network * net, Stream *stream, bool anonymous, bool block )
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -876,11 +876,11 @@ int test_ulong( Network * net, Stream *stream, bool anonymous, bool block )
     } while( num_received < num_to_receive );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -921,20 +921,20 @@ int test_float( Network * net, Stream *stream, bool anonymous, bool block )
     num_to_receive = stream->size();
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
 
     if( stream->send( PROT_FLOAT, "%f", send_val ) == -1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -951,7 +951,7 @@ int test_float( Network * net, Stream *stream, bool anonymous, bool block )
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -982,11 +982,11 @@ int test_float( Network * net, Stream *stream, bool anonymous, bool block )
     } while( num_received < num_to_receive );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -1027,20 +1027,20 @@ int test_double( Network * net, Stream *stream, bool anonymous, bool block )
     num_to_receive = stream->size();
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
 
     if( stream->send( PROT_DOUBLE, "%lf", send_val ) == -1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -1057,7 +1057,7 @@ int test_double( Network * net, Stream *stream, bool anonymous, bool block )
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -1088,11 +1088,11 @@ int test_double( Network * net, Stream *stream, bool anonymous, bool block )
     } while( num_received < num_to_receive );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -1133,20 +1133,20 @@ int test_string( Network * net, Stream *stream, bool anonymous, bool block )
     num_to_receive = stream->size();
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
 
     if( stream->send( PROT_STRING, "%s", send_val ) == -1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -1163,7 +1163,7 @@ int test_string( Network * net, Stream *stream, bool anonymous, bool block )
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -1198,11 +1198,11 @@ int test_string( Network * net, Stream *stream, bool anonymous, bool block )
     free( send_val );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -1228,7 +1228,7 @@ int test_really_big_string( Network * net, Stream *stream, bool anonymous, bool 
     send_val = (char*) malloc( bigMB );
     if( send_val == NULL ) {
         test->print("malloc(bigMB) failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
     
@@ -1254,19 +1254,19 @@ int test_really_big_string( Network * net, Stream *stream, bool anonymous, bool 
     num_to_receive = stream->size();
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
     if( stream->send( PROT_STRING, "%s", send_val ) == -1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -1283,7 +1283,7 @@ int test_really_big_string( Network * net, Stream *stream, bool anonymous, bool 
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -1318,11 +1318,11 @@ int test_really_big_string( Network * net, Stream *stream, bool anonymous, bool 
     free( send_val );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -1375,7 +1375,7 @@ int test_alltypes( Network * net, Stream *stream, bool anonymous, bool block )
     num_to_receive = stream->size();
     if( num_to_receive == 0 ) {
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, NOTRUN);
+        test->end_SubTest(testname, MRNTEST_NOTRUN);
         return -1;
     }
 
@@ -1387,13 +1387,13 @@ int test_alltypes( Network * net, Stream *stream, bool anonymous, bool block )
                       send_long, send_ulong,
                       send_float, send_double, send_string ) == 1 ) {
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush() == -1 ) {
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -1410,7 +1410,7 @@ int test_alltypes( Network * net, Stream *stream, bool anonymous, bool block )
         if( retval == -1 ) {
             //recv error
             test->print("stream::recv() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         else if ( retval == 0 ) {
@@ -1477,11 +1477,11 @@ int test_alltypes( Network * net, Stream *stream, bool anonymous, bool block )
     free( send_string );
 
     if( success ) {
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
