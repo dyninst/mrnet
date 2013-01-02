@@ -368,7 +368,6 @@ LIBINetwork::get_parameters( int argc, char* argv[], bool isForMW,
         type = "BE";
 
     if( !isForMW && argc >= 6 ) {
-        Network::init_FE_NetSettings( NULL );
         //backend attach case, may need to rethink what we use to identify this
         phostname = argv[argc-5];
 		pport = (Port)strtoul( argv[argc-4], NULL, 10 );
@@ -390,9 +389,6 @@ LIBINetwork::get_parameters( int argc, char* argv[], bool isForMW,
         mrn_printf(FLF, stderr, "Failure: unable to initialize LIBI\n");
         return;
     }
-
-    //grab environvment variables
-    init_FE_NetSettings( NULL );
 
     if( LIBI_getSize(&size) != LIBI_OK ){
         mrn_dbg(1, mrn_printf(FLF, stderr, "Failure: unable to get size\n") );
