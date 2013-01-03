@@ -38,15 +38,15 @@ Network::CreateNetworkFE( const char * itopology,
                           bool irank_backends,
                           bool iusing_mem_buf )
 {
-	mrn_dbg_func_begin();
-    // endianTest();
+    mrn_dbg_func_begin();
 
     //debug
-    int k;
-    mrn_dbg(1, mrn_printf(FLF, stderr, "argv in CreateNetworkFE:\n"));
-    for (k = 0; ibackend_argv[k] != NULL; k++){
-        mrn_dbg(1, mrn_printf(FLF, stderr, "argv[%d] = %s\n", k, ibackend_argv[k]));
+    if( NULL != ibackend_argv ) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "argv in CreateNetworkFE:\n"));
+        for (int k=0; ibackend_argv[k] != NULL; k++)
+            mrn_dbg(1, mrn_printf(FLF, stderr, "argv[%d] = %s\n", k, ibackend_argv[k]));
     }
+
     Network* net = new LIBINetwork;
     net->init_FrontEnd( itopology,
                         ibackend_exe,
@@ -54,14 +54,15 @@ Network::CreateNetworkFE( const char * itopology,
                         iattrs,
                         irank_backends,
                         iusing_mem_buf );
-	mrn_dbg_func_end();
+
+    mrn_dbg_func_end();
     return net;
 }
 
 Network*
 Network::CreateNetworkBE( int argc, char* argv[] )
 {
-	mrn_dbg_func_begin();
+    mrn_dbg_func_begin();
     char* myhostname = NULL;
     Rank myrank;
     Port myport;
@@ -201,17 +202,15 @@ LIBINetwork::Instantiate( ParsedGraph* _parsed_graph,
                          const std::map< std::string, std::string >* /* iattrs */ )
 
 {
-	mrn_dbg_func_begin();
+    mrn_dbg_func_begin();
     bool have_backends = ( strlen(ibackend_exe) != 0 );
     std::string sg = _parsed_graph->get_SerializedGraphString( have_backends );
 
     NetworkTopology* nt = get_NetworkTopology();
-
     if( nt != NULL ) {
         nt->reset( sg, false );
         NetworkTopology::Node* localnode = nt->find_Node( get_LocalRank() );
         localnode->set_Port( get_LocalPort() );
-
     }
 
     FrontEndNode* fe = get_LocalFrontEndNode();
