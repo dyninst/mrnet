@@ -154,13 +154,15 @@ class Stream {
     //Dynamic Data Members
     EventPipe * _evt_pipe;
     bool _was_closed;
+    int _num_sending;
     std::set< PeerNodePtr > _peers; // child peers in stream
     mutable XPlat::Mutex _peers_sync;
+    mutable XPlat::Monitor _send_sync;
 
     std::list< PacketPtr > _incoming_packet_buffer;
     mutable XPlat::Monitor _incoming_packet_buffer_sync;
 
-    enum {PACKET_BUFFER_NONEMPTY};
+    enum {PACKET_BUFFER_NONEMPTY, STREAM_SEND_EMPTY};
 };
 
 

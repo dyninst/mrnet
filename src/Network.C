@@ -228,7 +228,7 @@ void Network::shutdown_Network(void)
 
         // kill streams
         close_Streams();
-    
+
         // do shutdown protocol
         if( is_LocalNodeFrontEnd() ) {
 
