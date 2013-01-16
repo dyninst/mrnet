@@ -95,7 +95,7 @@ ssize_t Send( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
         ssize_t numBytesToSend = 0;
         for( i = 0; (i < currIovLen) && (currBufNdx < nBufs); i++ ) {
             size_t len = currBuf[currBufNdx].len;
-            //xplat_dbg( 5, xplat_printf(FLF, stderr, "currBuf->len = %"PRIszt"\n", len) );
+            //xplat_dbg( 5, xplat_printf(FLF, stderr, "currBuf->len = %" PRIszt"\n", len) );
             currIov[i].iov_base = currBuf[currBufNdx].buf;
             currIov[i].iov_len = len;
             numBytesToSend += len;
@@ -122,7 +122,7 @@ ssize_t Send( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
 
         if( wret != numBytesToSend ) {
 
-            // xplat_dbg( 5, xplat_printf(FLF, stdout, "writev wrote %"PRIsszt" of %"PRIsszt" bytes\n", wret, numBytesToSend) );
+            // xplat_dbg( 5, xplat_printf(FLF, stdout, "writev wrote %" PRIsszt" of %" PRIsszt" bytes\n", wret, numBytesToSend) );
 
             // find unsent or partial-send buffers
             ssize_t running_total = 0;
@@ -141,7 +141,7 @@ ssize_t Send( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
                     wret = send( s, new_base, unsent );
                     if( wret < 0 ) {
                         free( currIov );
-                        xplat_dbg( 3, xplat_printf(FLF, stderr, "Warning: wrote %"PRIsszt" of %"PRIsszt" bytes\n", 
+                        xplat_dbg( 3, xplat_printf(FLF, stderr, "Warning: wrote %" PRIsszt" of %" PRIsszt" bytes\n", 
                                               ret, numBytesToSend) );
 
                         return ret;
@@ -299,7 +299,7 @@ ssize_t send( XPlat_Socket s, const void *buf, size_t count )
         return 0;
 
     //xplat_dbg( 5, xplat_printf(FLF, stderr, 
-    //                      "writing %"PRIszt" bytes to fd=%d)\n", count, s) );
+    //                      "writing %" PRIszt" bytes to fd=%d)\n", count, s) );
 
     int flags = 0;
 #if defined(os_linux)
@@ -325,7 +325,7 @@ ssize_t send( XPlat_Socket s, const void *buf, size_t count )
                 std::string errstr = XPlat::Error::GetErrorString( err );
                 xplat_dbg( 3, xplat_printf(FLF, stderr, "Warning: "
                                       "premature return from send() ('%s'). "
-                                      "Wrote %"PRIsszt" of %"PRIszt" bytes.\n", 
+                                      "Wrote %" PRIsszt" of %" PRIszt" bytes.\n", 
                                       errstr.c_str(), bytes_written, count) );
                 return bytes_written;
             }
@@ -337,7 +337,7 @@ ssize_t send( XPlat_Socket s, const void *buf, size_t count )
             }
             else {
                 xplat_dbg( 5, xplat_printf(FLF, stderr,
-                                      "returning %"PRIsszt"\n", bytes_written) );
+                                      "returning %" PRIsszt"\n", bytes_written) );
                 return bytes_written;
             }
         }
@@ -374,7 +374,7 @@ ssize_t recv( XPlat_Socket s, void *buf, size_t count )
                 std::string errstr = XPlat::Error::GetErrorString( err );
                 xplat_dbg( 3, xplat_printf(FLF, stderr,
                                       "Warning: premature return from recv(). "
-                                      "Got %"PRIsszt" of %"PRIszt" bytes ('%s')\n", 
+                                      "Got %" PRIsszt" of %" PRIszt" bytes ('%s')\n", 
                                       bytes_recvd, count, errstr.c_str()) );
                 return bytes_recvd;
             }
@@ -391,7 +391,7 @@ ssize_t recv( XPlat_Socket s, void *buf, size_t count )
             }
             else {
                 xplat_dbg( 5, xplat_printf(FLF, stderr,
-                                      "returning %"PRIsszt"\n", bytes_recvd) );
+                                      "returning %" PRIsszt"\n", bytes_recvd) );
                 return bytes_recvd;
             }
         }

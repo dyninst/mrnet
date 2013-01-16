@@ -54,7 +54,7 @@ int Filter::push_Packets( vector< PacketPtr >& ipackets,
         opackets = ipackets;
         ipackets.clear();
         mrn_dbg( 3, mrn_printf(FLF, stderr, 
-                               "NULL FILTER: returning %"PRIszt" packets\n",
+                               "NULL FILTER: returning %" PRIszt" packets\n",
                                opackets.size() ));
         return 0;
     }

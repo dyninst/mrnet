@@ -1504,7 +1504,7 @@ XTNetwork::FindAppNodes( int nPlaces,
         }
     }
     mrn_dbg(5, mrn_printf(FLF, stderr, 
-                         "Found " PRIszt " app nodes\n", hosts.size()));
+                         "Found %" PRIszt " app nodes\n", hosts.size()));
 }
 
 void

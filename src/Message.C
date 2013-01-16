@@ -70,7 +70,7 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
 
     retval = MRN_recv( sock_fd, _packet_count_buf, _packet_count_buf_len + 1);
     if( retval != (ssize_t)_packet_count_buf_len + 1 ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %"PRIsszt" of %"PRIszt" bytes received\n", 
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %" PRIsszt" of %" PRIszt" bytes received\n", 
                                retval, _packet_count_buf_len));
         return -1;
     }
@@ -108,7 +108,7 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
 
     retval = MRN_recv( sock_fd, buf, buf_len );
     if( retval != (ssize_t)buf_len ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %"PRIsszt" of %"PRIsszt" bytes received\n", 
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %" PRIsszt" of %" PRIsszt" bytes received\n", 
                                retval, buf_len ));
         rc = -1;
         goto recv_cleanup_return;
@@ -136,7 +136,7 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
 
     retval = XPlat::SocketUtils::Recv( sock_fd, ncbufs, num_buffers );
     if( retval != total_bytes ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "SocketUtils::Recv %"PRIsszt" of %"PRIsszt" bytes received\n", 
+        mrn_dbg( 1, mrn_printf(FLF, stderr, "SocketUtils::Recv %" PRIsszt" of %" PRIsszt" bytes received\n", 
                                retval, total_bytes) );
         rc = -1;
         goto recv_cleanup_return;
@@ -324,8 +324,8 @@ int Message::send( XPlat_Socket sock_fd )
     sret = XPlat::SocketUtils::Send( sock_fd, ncbufs, num_ncbufs );
     if( sret < (ssize_t)(total_bytes + _packet_count_buf_len + buf_len + 1) ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "XPlat::SocketUtils::Send() returned %"PRIsszt
-		               " of %"PRIszt" bytes, nbuffers = %u\n",
+                               "XPlat::SocketUtils::Send() returned %" PRIsszt
+		               " of %" PRIszt" bytes, nbuffers = %u\n",
                                sret, total_bytes, num_buffers ));
         rc = -1;
         goto send_cleanup_return;

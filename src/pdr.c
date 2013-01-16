@@ -281,7 +281,7 @@ bool_t pdr_string(PDR *pdrs, char **cpp, uint32_t maxsize)
             return FALSE;
         }
         nodesize = strlen(sp) + 1; /* add 1-byte null terminator */
-        mrn_dbg(5, mrn_printf(FLF, stderr, "encoding - string size+1: %"PRIszt"\n", nodesize ));
+        mrn_dbg(5, mrn_printf(FLF, stderr, "encoding - string size+1: %" PRIszt"\n", nodesize ));
         break;
     case PDR_DECODE:
         break;

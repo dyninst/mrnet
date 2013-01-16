@@ -568,7 +568,7 @@ bool KnomialTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
     
     size_t nhosts = int_hostids.size() + be_hostids.size();
     if( nhosts < _num_nodes ) {
-        fprintf( stderr, "Not enough hosts(%"PRIszt") for topology %s\n", 
+        fprintf( stderr, "Not enough hosts(%" PRIszt") for topology %s\n", 
                  nhosts, _topology_spec.c_str() );
         return false;
     }
@@ -614,10 +614,10 @@ bool KnomialTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
             if( avail_iter == avail_end ) {
                 if( i < (_kfactor-1) ) {
                     if( avail_end == int_hostids.end() )
-                        fprintf( stderr, "Not enough internal hosts(%"PRIszt") for topology %s\n", 
+                        fprintf( stderr, "Not enough internal hosts(%" PRIszt") for topology %s\n", 
                                  int_hostids.size(), _topology_spec.c_str() );
                     else
-                        fprintf( stderr, "Not enough back-end hosts(%"PRIszt") for topology %s\n", 
+                        fprintf( stderr, "Not enough back-end hosts(%" PRIszt") for topology %s\n", 
                                  be_hostids.size(), _topology_spec.c_str() );
                     return false;
                 }
@@ -625,7 +625,7 @@ bool KnomialTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
         }
     }
     if( curr_step_nodes < _num_nodes ) {
-        fprintf( stderr, "Not enough internal(%"PRIszt") and back-end(%"PRIszt") hosts for topology %s\n", 
+        fprintf( stderr, "Not enough internal(%" PRIszt") and back-end(%" PRIszt") hosts for topology %s\n", 
                  int_hostids.size(), be_hostids.size(), _topology_spec.c_str() );
         return false;
     }
@@ -672,7 +672,7 @@ bool KnomialTree::initialize_Tree( list< pair<string,unsigned> > & hosts )
         }
     }
     if( hostids.size() < _num_nodes ) {
-        fprintf( stderr, "Not enough hosts(%"PRIszt") for topology %s\n", 
+        fprintf( stderr, "Not enough hosts(%" PRIszt") for topology %s\n", 
                  hostids.size(), _topology_spec.c_str() );
         return false;
     }
@@ -904,7 +904,7 @@ bool GenericTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
 
             for( unsigned int j=0; j < cur_num_children; j++ ) {
                 if( avail_iter == int_hostids.end() ) {
-                    fprintf( stderr, "Not enough hosts(%"PRIszt") for topology %s\n", 
+                    fprintf( stderr, "Not enough hosts(%" PRIszt") for topology %s\n", 
                              nhosts, _topology_spec.c_str() );
                     return false;
                 }
@@ -930,7 +930,7 @@ bool GenericTree::initialize_Tree( list< pair<string,unsigned> > & backend_hosts
 
         for( unsigned int j=0; j < cur_num_children; j++ ) {
             if( avail_iter == be_hostids.end() ) {
-                fprintf( stderr, "Not enough hosts(%"PRIszt") for topology %s\n", 
+                fprintf( stderr, "Not enough hosts(%" PRIszt") for topology %s\n", 
                          int_hostids.size() + be_hostids.size(), _topology_spec.c_str() );
                 return false;
             }
@@ -984,7 +984,7 @@ bool GenericTree::initialize_Tree( list< pair<string,unsigned> > & hosts )
 
             for( unsigned int j=0; j < cur_num_children; j++ ) {
                 if( avail_iter == hostids.end() ) {
-                    fprintf( stderr, "Not enough hosts(%"PRIszt") for topology %s\n", 
+                    fprintf( stderr, "Not enough hosts(%" PRIszt") for topology %s\n", 
                              hostids.size(), _topology_spec.c_str() );
                     return false;
                 }
