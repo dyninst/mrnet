@@ -53,7 +53,8 @@ Stream::Stream( Network * inetwork, unsigned int iid,
     _us_filter_id( ius_filter_id ),
     _ds_filter_id( ids_filter_id ),
     _evt_pipe(NULL),
-    _was_closed(false)
+    _was_closed(false),
+    _num_sending(0)
 {
 
     set< PeerNodePtr > node_set;
@@ -62,6 +63,7 @@ Stream::Stream( Network * inetwork, unsigned int iid,
                            _id, _us_filter_id , _sync_filter_id, _ds_filter_id));
 
     _incoming_packet_buffer_sync.RegisterCondition( PACKET_BUFFER_NONEMPTY );
+    _send_sync.RegisterCondition( STREAM_SEND_EMPTY );
 
     //parent nodes set up relevant downstream nodes 
     if( _network->is_LocalNodeParent() ) {
@@ -89,10 +91,29 @@ Stream::Stream( Network * inetwork, unsigned int iid,
     mrn_dbg_func_end();
 }
 
-
+// A stream is considered safe to delete when:
+//
+// (1) No threads are allowed to send on this stream anymore.
+//
+// (2) There are no threads in Stream::send_aux attempting to send something
+// on this stream.
+//
+// (3) There exists no messages to be sent on behalf of this stream on any
+// send queue.
+//
 Stream::~Stream()
 {
+    int retval;
+    mrn_dbg_func_begin();
+
+    _send_sync.Lock();
+    // This satisfies (2)
+    while(_num_sending != 0) {
+        _send_sync.WaitOnCondition( STREAM_SEND_EMPTY );
+    }
+    // This satisfies (1)
     close();
+    _send_sync.Unlock();
 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Deleting stream %u\n", _id) );
 
@@ -105,6 +126,35 @@ Stream::~Stream()
 
     _network->delete_Stream( _id );
 
+    // Flush all message queues that could have this stream
+    // This satisfies (3)
+    if( _network->is_LocalNodeParent() ) {
+
+        _peers_sync.Lock();
+
+        set< PeerNodePtr >::const_iterator iter = _peers.begin(),
+                                           iend = _peers.end();
+        for( ; iter != iend; iter++ ) {
+            mrn_dbg( 5, mrn_printf(FLF, stderr,
+                                   "child[%d].flush()\n",
+                                   (*iter)->get_Rank()) );
+            if( (*iter) != PeerNode::NullPeerNode && !(*iter)->has_Failed() ) {
+                if( (*iter)->flush() == -1 ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr,
+                                "child flush() failed\n") );
+                }
+            }
+        }
+        _peers_sync.Unlock();
+    }
+    if( _network->is_LocalNodeChild()){
+        mrn_dbg( 5, mrn_printf(FLF, stderr,
+                    "parent.flush()\n"));
+        if(_network->get_ParentNode()->flush() == -1) {
+            mrn_dbg(1, mrn_printf(FLF, stderr, "parent flush() failed\n") );
+        }
+    }
+
     if( _sync_filter != NULL )
         delete _sync_filter;
     if( _us_filter != NULL )
@@ -113,6 +163,8 @@ Stream::~Stream()
         delete _ds_filter;
     if( _perf_data != NULL )
         delete _perf_data;
+
+    mrn_dbg_func_end();
 }
 
 void Stream::add_Stream_EndPoint( Rank irank )
@@ -263,6 +315,9 @@ int Stream::send_aux( PacketPtr &ipacket, bool upstream,
                       bool internal /* =false */ )
 {
     mrn_dbg_func_begin();
+    _send_sync.Lock();
+    _num_sending++;
+    _send_sync.Unlock();
 
     if( is_Closed() ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "send on closed stream\n"));
@@ -327,6 +382,13 @@ int Stream::send_aux( PacketPtr &ipacket, bool upstream,
             }
         }
     }
+
+    _send_sync.Lock();
+    _num_sending--;
+    if(_num_sending == 0) {
+        _send_sync.SignalCondition( STREAM_SEND_EMPTY );
+    }
+    _send_sync.Unlock();
 
     mrn_dbg_func_end();
     return 0;
@@ -587,8 +649,8 @@ int Stream::push_Packet( PacketPtr ipacket,
             // performance data update for FILTER_OUT
             if( _perf_data->is_Enabled(PERFDATA_MET_CPU_USR_PCT, PERFDATA_CTX_FILT_OUT)  ||
                 _perf_data->is_Enabled(PERFDATA_MET_CPU_SYS_PCT, PERFDATA_CTX_FILT_OUT) ) {
-            	PerfDataSysMgr::get_ThreadTime(user_after,sys_after);
-	    }
+                PerfDataSysMgr::get_ThreadTime(user_after,sys_after);
+            }
 
             if( _perf_data->is_Enabled(PERFDATA_MET_NUM_PKTS, PERFDATA_CTX_FILT_OUT) ) {
                 perfdata_t val;
@@ -619,7 +681,7 @@ int Stream::push_Packet( PacketPtr ipacket,
                 _perf_data->add_DataInstance( PERFDATA_MET_CPU_SYS_PCT, 
                                               PERFDATA_CTX_FILT_OUT,
                                               val );
-            } 
+            }
         }
     }
 

@@ -309,6 +309,7 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
     return 0;
 }
 
+// Makes assumption that it is only called by recv thread
 int ParentNode::proc_DeleteSubTreeAck( PacketPtr ) const
 {
     mrn_dbg_func_begin();
@@ -326,11 +327,36 @@ int ParentNode::proc_DeleteSubTreeAck( PacketPtr ) const
     }
 
     subtreereport_sync.Unlock();
-	
+
     // exit recv thread from child
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
     _network->free_ThreadState();
     XPlat::Thread::Exit(NULL);
+
+    return 0;
+}
+
+// This is basically proc_DeleteSubTreeAck without the assumption that the
+// recv thread is calling it, so no Thread::Exit at the end. The parameter
+// is simply used for the debug message.
+int ParentNode::proc_DeleteSubTreeAckForFailed( Rank rank )
+{
+    mrn_dbg_func_begin();
+    subtreereport_sync.Lock();
+    mrn_dbg(3, mrn_printf(FLF, stderr, "Rank %d failed without sending a "
+                "shutdown ack. Reporting on its behalf.\n", rank));
+    _num_children_reported++;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
+                          _num_children_reported, _num_children));
+
+    if( _num_children_reported == _num_children ) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling ALL_NODES_REPORTED\n"));
+        subtreereport_sync.SignalCondition( ALL_NODES_REPORTED );
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling done\n"));
+    }
+
+    subtreereport_sync.Unlock();
+    mrn_dbg_func_end();
 
     return 0;
 }
@@ -826,6 +852,5 @@ void ParentNode::init_numChildrenExpected( SerialGraph& sg )
     for( ; currSubtree != NULL; currSubtree = sg.get_NextChild() )
         _num_children++;
 }
-
 
 } // namespace MRN

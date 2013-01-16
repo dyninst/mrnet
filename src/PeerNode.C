@@ -37,7 +37,8 @@ PeerNode::PeerNode( Network * inetwork, std::string const& ihostname, Port iport
       _is_internal_node(iis_internal), _is_parent(iis_parent), 
       _recv_thread_started(false), _send_thread_started(false),
       recv_thread_id(0), send_thread_id(0), 
-      _available(true), _msg_out( new Message(inetwork)), _msg_in(new Message(inetwork))
+      _available(true), _msg_out( new Message(inetwork)),
+      _msg_in(new Message(inetwork)), _failed_without_ack(false)
 {
     _sync.RegisterCondition( MRN_FLUSH_COMPLETE );
     _sync.RegisterCondition( MRN_RECV_THREAD_STARTED );
@@ -315,10 +316,19 @@ void * PeerNode::recv_thread_main( void* iargs )
         }
     }
 
-    if( net->is_ShuttingDown() ) {
-        // handle case where child goes away before sending shutdown ack
-        if( peer_node->is_child() ) {
+    // handle case where child goes away before sending shutdown ack
+    if( peer_node->is_child() ) {
+        if( net->is_ShuttingDown() ) {
             net->get_LocalParentNode()->proc_DeleteSubTreeAck( Packet::NullPacket );
+        } else {
+            if(peer_node->has_Failed()) {
+                // This assumes that if the thread has broken out of the loop
+                // to this check, there is no way it would have processed a 
+                // DeleteSubTreeAck. If network is not currently shutting down,
+                // we must set this flag because no one is waiting for
+                // DeleteSubTreeAcks at this time.
+                peer_node->_failed_without_ack = true;
+            }
         }
     }
 
@@ -445,6 +455,15 @@ bool PeerNode::has_Failed(void) const
     bool rc;
     _sync.Lock();
     rc = ! _available;
+    _sync.Unlock();
+    return rc;
+}
+
+bool PeerNode::has_Failed_Without_Ack(void) const
+{
+    bool rc;
+    _sync.Lock();
+    rc = _failed_without_ack;
     _sync.Unlock();
     return rc;
 }

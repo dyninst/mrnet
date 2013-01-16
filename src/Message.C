@@ -68,7 +68,7 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
     Stream * strm;
     std::list< PacketPtr >::iterator piter;
 
-    retval = MRN_recv( sock_fd, _packet_count_buf, _packet_count_buf_len + 1);
+    retval = MRN_recv( sock_fd, _packet_count_buf, size_t(_packet_count_buf_len + 1));
     if( retval != (ssize_t)_packet_count_buf_len + 1 ) {
         mrn_dbg( 3, mrn_printf(FLF, stderr, "MRN_recv() %" PRIsszt" of %" PRIszt" bytes received\n", 
                                retval, _packet_count_buf_len));
@@ -305,7 +305,7 @@ int Message::send( XPlat_Socket sock_fd )
     pdrmem_create( &pdrs, &(_packet_count_buf[1]), _packet_count_buf_len, op, pdrmem_getbo() );
     pdr_uint32(&pdrs, &num_packets);
     ncbufs[0].buf = _packet_count_buf;
-    ncbufs[0].len = _packet_count_buf_len + 1;
+    ncbufs[0].len = size_t(_packet_count_buf_len + 1);
     _packet_count_buf[0] = (char) pdrmem_getbo();
     //
     // packet sizes

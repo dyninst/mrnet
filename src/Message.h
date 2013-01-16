@@ -50,7 +50,8 @@ class Message: public Error{
     XPlat::Monitor _packet_sync;
 
     char *_packet_count_buf, *_packet_sizes_buf;
-    size_t _packet_count_buf_len, _packet_sizes_buf_len, _ncbuf_len;
+    uint64_t _packet_count_buf_len;
+    size_t _packet_sizes_buf_len, _ncbuf_len;
 
     uint64_t _packet_sizes[MESSAGE_PREALLOC_LEN];
     XPlat::SocketUtils::NCBuf _ncbuf[MESSAGE_PREALLOC_LEN];

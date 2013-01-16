@@ -406,7 +406,10 @@ void * EventDetector::main( void* iarg )
         int timeout = -1; /* block */
         TimeKeeper* tk = NULL;
 
-        if( net->is_ShuttingDown() ) break;
+        if( net->is_ShuttingDown() ) {
+            mrn_dbg( 5, mrn_printf(FLF, stderr, "Noticed network is shutting down\n"));
+            break;
+        }
 
         tk = net->get_TimeKeeper();
 	if( tk != NULL ) {
@@ -621,6 +624,21 @@ void * EventDetector::main( void* iarg )
         }//else
     }//while
 
+    // Before going away, make sure that if we are shutting down, all nodes 
+    // are accounted for deleting their subtree or failing.
+    if(net->is_ShuttingDown()) {
+        set<PeerNodePtr> remaining_peers;
+        ParentNode *parent = net->get_LocalParentNode();
+        net->get_ChildPeers(remaining_peers);
+        set<PeerNodePtr>::const_iterator iter = remaining_peers.begin(),
+                                         iend = remaining_peers.end();
+        for(; iter != iend; iter++) {
+            if( (*iter)->has_Failed_Without_Ack() ) {
+                parent->proc_DeleteSubTreeAckForFailed((*iter)->get_Rank());
+            }
+        }
+    }
+
     edt->set_ThrId( 0 );
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
     Network::free_ThreadState();
@@ -691,6 +709,9 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
 
     // generate topology update for failed child
     if( _network->is_LocalNodeInternal() ) {
+        // TODO: Maybe remove or change this?
+        mrn_dbg(5, mrn_printf(FLF, stderr,
+                    "Generating topology update for failed child\n") );
         Stream *s = _network->get_Stream( TOPOL_STRM_ID ); // topol prop stream
         if( s != NULL ) {
             int type = NetworkTopology::TOPO_REMOVE_RANK; 

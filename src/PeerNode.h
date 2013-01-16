@@ -70,6 +70,7 @@ class PeerNode: public CommunicationNode, public Error {
     void signal_FlushComplete(void) const;
     void mark_Failed(void);
     bool has_Failed(void) const;
+    bool has_Failed_Without_Ack(void) const;
 
     XPlat::Thread::Id get_SendThrId(void) const;
     XPlat::Thread::Id get_RecvThrId(void) const;
@@ -90,6 +91,7 @@ class PeerNode: public CommunicationNode, public Error {
     //Dynamic data members
 
     bool _available;
+    bool _failed_without_ack;
     mutable Message * _msg_out;
     mutable Message * _msg_in;
     mutable XPlat::Monitor _sync;

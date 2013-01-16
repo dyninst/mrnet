@@ -24,6 +24,9 @@ static bool SetTcpNoDelay( XPlat_Socket sock )
         xplat_dbg( 1, XPlat::xplat_printf(FLF, stderr, "failed to set option\n") );
         return false;
     }
+#else
+    xplat_dbg(1, XPlat::xplat_printf(FLF, stderr, 
+                "WARNING: TCP_NODELAY not found! Performance WILL suffer.\n"));
 #endif
     return true;
 }
