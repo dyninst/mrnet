@@ -103,8 +103,12 @@ EXTRA_LIBS_LOWFAT=""
 
 dnl === Get necessary macros
 STDCFLAGS="-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS"
+<<<<<<< HEAD
 CXXFLAGS="$CXXFLAGS $STDCFLAGS"
 CFLAGS="$CFLAGS $STDCFLAGS"
+=======
+CXXFLAGS="$CXXFLAGS -fPIC $STDCFLAGS"
+>>>>>>> 8ca65987718b7d868d9f8aa9f97582c5d649a1dc
 
 dnl === Ignore user-requested debug/optimization levels
 CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`

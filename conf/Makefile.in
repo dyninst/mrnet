@@ -33,7 +33,6 @@ EXTDIR   = $(BASEDIR)/external
 BUILDDIR = $(BASEDIR)/build
 
 # Added by Taylor:
-
 LIBIDIR  = @LIBI_INSTALL_DIR@
 LMONDIR  = @LMON_IDIR@
 
@@ -182,33 +181,32 @@ LIBMRNET_SO = $(LIBDIR)/libmrnet.so.$(VERSION)
 LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a.$(VERSION)
 LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
 
-ifeq ($(MRNET_STARTUP_METHOD),libi)
-	LIBMRNET_SO_DEPLIBS =  -L$(LIBDIR) -llibi
-endif
-ifeq ($(LIBI_STARTUP_METHOD),libi)
-	LIBMRNET_SO_DEPLIBS += -L$(LMON_IDIR)/lib -lmonfeapi -lmonmwapi -lmonbeapi
-endif
-LIBMRNET_SO_DEPLIBS += -L$(LIBDIR) -lxplat $(LIBS)
-
-LIBLIBI_SO = $(LIBDIR)/liblibi.so 
-LIBLIBI = $(LIBDIR)/liblibi.a  
-
-ifneq ($(MRNET_STARTUP_METHOD),libi)
-	LIBLIBI = 
-	LIBLIBI_SO =
-endif
+LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat $(LIBS)
 
 LIBXPLAT    = $(LIBDIR)/libxplat.a
 LIBXPLAT_SO = $(LIBDIR)/libxplat.so
 LIBXPLAT_LIGHTWEIGHT    = $(LIBDIR)/libxplat_lightweight.a
 LIBXPLAT_LIGHTWEIGHT_SO = $(LIBDIR)/libxplat_lightweight.so
 
-TARGET_LIBS = $(LIBLIBI) $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT)
+LIBI_TARGETS = 
+LIBLIBI = $(LIBDIR)/liblibi.a
+LIBLIBI_SO = $(LIBDIR)/liblibi.so
+ifeq ($(MRNET_STARTUP_METHOD),libi)
+    LIBI_TARGETS = $(LIBLIBI)
+    ifeq ($(BUILD_SHARED_LIBS), yes)
+        LIBMRNET_SO_DEPLIBS += -llibi
+	LIBI_TARGETS += $(LIBLIBI_SO)
+    endif
+endif
 
+TARGET_LIBS = $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) 
 ifeq ($(BUILD_SHARED_LIBS), yes)
-	TARGET_LIBS += $(LIBLIBI_SO)
-	TARGET_LIBS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
-	TARGET_LIBS += $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
+    TARGET_LIBS += $(LIBXPLAT_SO) $(LIBXPLAT_LIGHTWEIGHT_SO)
+endif
+TARGET_LIBS += $(LIBI_TARGETS)
+TARGET_LIBS += $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT)
+ifeq ($(BUILD_SHARED_LIBS), yes)
+    TARGET_LIBS += $(LIBMRNET_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
 endif
 
 TARGETS = $(COMMNODE) $(TOPGEN) $(TARGET_LIBS)
@@ -351,17 +349,15 @@ lightweight-all:
 lightweight-sharedobj:
 	$(MAKE) -f $(PLATDIR)/Makefile.ltwt sharedobj
 
-libi-all: $(LIBXPLAT) $(INSTALL_PREREQ)
+libi-all: $(LIBXPLAT)
 	$(MAKE) -f $(LIBIDIR)/Makefile all
 
-libi-sharedobj:
-	$(MAKE) -f $(LIBIDIR)/Makefile sharedobj
-
-INSTALL_PREREQ = install-prep install-local lightweight-install 
-ifeq ($(MRNET_STARTUP_METHOD),libi)
-	INSTALL_PREREQ += libi-install
-endif
+INSTALL_PREREQ = install-prep 
 INSTALL_PREREQ += xplat-install xplat_lightweight-install
+ifeq ($(MRNET_STARTUP_METHOD),libi)
+    INSTALL_PREREQ += libi-install
+endif
+INSTALL_PREREQ = install-local lightweight-install 
 
 install: $(INSTALL_PREREQ)
 
@@ -481,40 +477,37 @@ $(LIBXPLAT_LIGHTWEIGHT): xplat_lightweight-all
 
 $(LIBXPLAT_LIGHTWEIGHT_SO): xplat_lightweight-sharedobj
 
-$(LIBLIBI): libi-all
+$(LIBI_TARGETS): libi-all
 
-$(LIBLIBI_SO): libi-sharedobj
-
-CNDEP = $(COMMNODE_OBJS) $(LIBMRNET) 
-CNDEP += $(LIBLIBI)
+CNDEP = $(LIBMRNET) 
+ifeq ($(MRNET_STARTUP_METHOD),libi)
+    CNDEP += $(LIBLIBI)
+endif
 CNDEP += $(LIBXPLAT)
 
-$(COMMNODE): $(CNDEP)
+$(COMMNODE): $(COMMNODE_OBJS) $(CNDEP)
 	@echo Linking `basename $@` ...
 	$(PURIFY) $(CXX) $(CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(COMMNODE_OBJS) \
-   	  $(LIBMRNET) $(LIBLIBI) $(LIBLMON) $(LIBXPLAT) $(LIBS)
+           $(CNDEP) $(LIBS)
 
 $(TOPGEN): $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
 	@echo "Linking `basename $@` ..."
 	$(PURIFY) $(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/config_generator.o \
-           $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+           $(CNDEP) $(LIBS)
 
-$(STD_TESTS_FE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
-              $(TSTDIR)/test_common.h \
-              $(BINDIR)/mrnet_tests.sh
+$(STD_TESTS_FE): $(BINDIR)/%: $(CNDEP) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
+                              $(TSTDIR)/test_common.h
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+	   $(OBJDIR)/test_common.o $(CNDEP) $(LIBS)
 
-$(STD_TESTS_BE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
-              $(TSTDIR)/test_common.h \
-              $(BINDIR)/mrnet_tests.sh
+$(STD_TESTS_BE): $(BINDIR)/%: $(CNDEP) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
+                              $(TSTDIR)/test_common.h
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+	   $(OBJDIR)/test_common.o $(CNDEP) $(LIBS)
 
-$(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o \
-				$(BINDIR)/mrnet_tests.sh
+$(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CC) $(TEST_CCFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 		$(LIBMRNET_LIGHTWEIGHT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBS_LIGHTWEIGHT)
@@ -522,30 +515,27 @@ $(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o 
 $(BINDIR)/mrnet_tests.sh: $(BASEDIR)/tests/mrnet_tests.sh
 	$(CP) $(BASEDIR)/tests/mrnet_tests.sh $(BINDIR)/
 
-
 $(LIBDIR)/test_DynamicFilters.so: $(TSTDIR)/test_DynamicFilters.C
 	@echo "Building `basename $@` ..."
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(TSTDIR)/test_DynamicFilters.C
 
-$(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(LIBMRNET) \
-                            $(OBJDIR)/%.o \
-                            $(OBJDIR)/test_Recovery.o \
-                            $(OBJDIR)/ThroughputExperiment.o \
-                            $(OBJDIR)/test_Recovery_aux.o \
-                            $(LIBDIR)/test_RecoveryFilter.so
+$(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(CNDEP) $(OBJDIR)/%.o \
+                                         $(OBJDIR)/test_Recovery.o \
+                                         $(OBJDIR)/ThroughputExperiment.o \
+                                         $(OBJDIR)/test_Recovery_aux.o \
+                                         $(LIBDIR)/test_RecoveryFilter.so
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_Recovery.o $(OBJDIR)/test_Recovery_aux.o \
-           $(OBJDIR)/ThroughputExperiment.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+           $(OBJDIR)/ThroughputExperiment.o $(CNDEP) $(LIBS)
 
-$(BINDIR)/test_Recovery_BE: $(BINDIR)/%: $(LIBMRNET) \
-                            $(OBJDIR)/%.o \
-                            $(OBJDIR)/ThroughputExperiment.o \
-                            $(OBJDIR)/test_Recovery.o
+$(BINDIR)/test_Recovery_BE: $(BINDIR)/%: $(CNDEP) $(OBJDIR)/%.o \
+                                         $(OBJDIR)/ThroughputExperiment.o \
+                                         $(OBJDIR)/test_Recovery.o
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
            $(OBJDIR)/ThroughputExperiment.o \
-           $(OBJDIR)/test_Recovery.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+           $(OBJDIR)/test_Recovery.o $(CNDEP) $(LIBS)
 
 $(LIBDIR)/test_RecoveryFilter.so: $(TSTDIR)/test_Recovery/test_RecoveryFilter.C
 	@echo "Building `basename $@` ..."
