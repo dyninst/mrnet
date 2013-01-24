@@ -35,6 +35,9 @@ BUILDDIR = $(BASEDIR)/build
 # Added by Taylor:
 
 LIBIDIR  = @LIBI_INSTALL_DIR@
+LMONDIR  = @LMON_IDIR@
+
+LIBLMON  = @LIBLMON@ 
 
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
@@ -179,15 +182,20 @@ LIBMRNET_SO = $(LIBDIR)/libmrnet.so.$(VERSION)
 LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a.$(VERSION)
 LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
 
-LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat $(LIBS)
-
-ifeq ($(BUILD_SHARED_LIBS), yes)
-	LIBLIBI = $(LIBDIR)/liblibi.so
-else
-	LIBLIBI = $(LIBDIR)/liblibi.a -lrt
+ifeq ($(MRNET_STARTUP_METHOD),libi)
+	LIBMRNET_SO_DEPLIBS =  -L$(LIBDIR) -llibi
 endif
+ifeq ($(LIBI_STARTUP_METHOD),libi)
+	LIBMRNET_SO_DEPLIBS += -L$(LMON_IDIR)/lib -lmonfeapi -lmonmwapi -lmonbeapi
+endif
+LIBMRNET_SO_DEPLIBS += -L$(LIBDIR) -lxplat $(LIBS)
+
+LIBLIBI_SO = $(LIBDIR)/liblibi.so 
+LIBLIBI = $(LIBDIR)/liblibi.a  
+
 ifneq ($(MRNET_STARTUP_METHOD),libi)
 	LIBLIBI = 
+	LIBLIBI_SO =
 endif
 
 LIBXPLAT    = $(LIBDIR)/libxplat.a
@@ -195,13 +203,10 @@ LIBXPLAT_SO = $(LIBDIR)/libxplat.so
 LIBXPLAT_LIGHTWEIGHT    = $(LIBDIR)/libxplat_lightweight.a
 LIBXPLAT_LIGHTWEIGHT_SO = $(LIBDIR)/libxplat_lightweight.so
 
-ifeq ($(MRNET_STARTUP_METHOD),libi)
-	TARGET_LIBS = $(LIBLIBI)
-endif
-
-TARGET_LIBS += $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT)
+TARGET_LIBS = $(LIBLIBI) $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT)
 
 ifeq ($(BUILD_SHARED_LIBS), yes)
+	TARGET_LIBS += $(LIBLIBI_SO)
 	TARGET_LIBS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
 	TARGET_LIBS += $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
 endif
@@ -349,6 +354,9 @@ lightweight-sharedobj:
 libi-all: $(LIBXPLAT) $(INSTALL_PREREQ)
 	$(MAKE) -f $(LIBIDIR)/Makefile all
 
+libi-sharedobj:
+	$(MAKE) -f $(LIBIDIR)/Makefile sharedobj
+
 INSTALL_PREREQ = install-prep install-local lightweight-install 
 ifeq ($(MRNET_STARTUP_METHOD),libi)
 	INSTALL_PREREQ += libi-install
@@ -457,9 +465,9 @@ $(LIBMRNET): $(LIBMRNET_OBJS)
 	$(AR) $(ARFLAGS) $@ $(LIBMRNET_OBJS)
 	$(RANLIB) $@
 
-$(LIBMRNET_SO): $(LIBMRNET_OBJS) $(LIBXPLAT_SO)
+$(LIBMRNET_SO): $(LIBMRNET_OBJS) $(LIBLIBI_SO) $(LIBXPLAT_SO)
 	@echo Building `basename $@` ...
-	$(CXX) $(SOFLAGS) -o $@ $(LIBMRNET_OBJS) $(LIBLIBI) $(LIBMRNET_SO_DEPLIBS)
+	$(CXX) $(SOFLAGS) -o $@ $(LIBMRNET_OBJS) $(LIBMRNET_SO_DEPLIBS)
 
 $(LIBXPLAT): xplat-all
 
@@ -475,16 +483,16 @@ $(LIBXPLAT_LIGHTWEIGHT_SO): xplat_lightweight-sharedobj
 
 $(LIBLIBI): libi-all
 
+$(LIBLIBI_SO): libi-sharedobj
+
 CNDEP = $(COMMNODE_OBJS) $(LIBMRNET) 
-ifeq ($(MRNET_STARTUP_METHOD),libi)
-	CNDEP += $(LIBLIBI)
-endif
+CNDEP += $(LIBLIBI)
 CNDEP += $(LIBXPLAT)
 
 $(COMMNODE): $(CNDEP)
 	@echo Linking `basename $@` ...
 	$(PURIFY) $(CXX) $(CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(COMMNODE_OBJS) \
-   	  $(LIBMRNET) $(LIBLIBI) $(LIBXPLAT) $(LIBS)
+   	  $(LIBMRNET) $(LIBLIBI) $(LIBLMON) $(LIBXPLAT) $(LIBS)
 
 $(TOPGEN): $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
 	@echo "Linking `basename $@` ..."

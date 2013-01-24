@@ -16,7 +16,7 @@ RM      = @RM@
 INSTALL = @INSTALL@
 MKDIR_P = mkdir -p
 LAUNCH_TYPE = @LIBI_STARTUP_METHOD@
-BUILD_SHARED_LIBS = @BUILDSHARED@ 
+BUILD_SHARED_LIBS = @BUILDSHARED@
 
 ROOTDIR     = @MRNET_ROOT@
 LIBI_ROOT   = @abs_srcdir@
@@ -27,18 +27,20 @@ LIBDIR  = $(PLATDIR)/lib
 OBJDIR  = $(PLATDIR)/obj/libi
 DEPDIR  = $(PLATDIR)/depends/libi
 XPLATDIR    = $(ROOTDIR)/xplat
+LIBLIBI_SO 	= $(LIBDIR)/liblibi.so
+LIBLIBI 	= $(LIBDIR)/liblibi.a
+
+TARGETS = $(LIBLIBI)
 ifeq ($(BUILD_SHARED_LIBS), yes)
-	LIBLIBI 	= $(LIBDIR)/liblibi.so
-else
-	LIBLIBI 	= $(LIBDIR)/liblibi.a
+    TARGETS += $(LIBLIBI_SO)
 endif
+
 LIBXPLAT    = $(LIBDIR)/libxplat.a
 LIBXPLAT_SO = $(LIBDIR)/libxplat.so
 LMON_DIR    = @LMON_IDIR@
-LMON_LIBS   = -L$(LMON_DIR)/lib -lmonfeapi -lmonmwapi -lmonbeapi
 MAKEDEPENDS = $(LIBI_ROOT)/conf/makedepends.sh
 INCDIR      = $(LIBI_ROOT)/include
-INCLUDES    = -I$(INCDIR) -I$(XPLATDIR)/include -I$(ROOTDIR)/src -I$(ROOTDIR)/include
+INCLUDES    = -I$(INCDIR) -I$(XPLATDIR)/include -I$(PLATDIR) -I$(ROOTDIR)/src -I$(ROOTDIR)/include
 SEQ_LIBS    = $(LIBXPLAT) -lpthread
 
 libi_incdir    = $(INCDIR)/libi
@@ -96,16 +98,18 @@ $(INSTALL_LIBI_HEADERS): $(install_libi_incdir)/%: $(libi_incdir)/%
 	$(INSTALL) -m 644 $< $(@D)
 
 install: liblibi install-prep $(INSTALL_LIBI_HEADERS)
-	@echo Installing LIBI library: ${LIBLIBI} ...
-	$(INSTALL) -m 755 $(LIBLIBI) $(ILIBDIR)/
+	@echo Installing LIBI library: ${TARGETS} ...
+	$(INSTALL) -m 755 $(TARGETS) $(ILIBDIR)/
 
 #This will end up callng the Default Rules
 
 liblibi: libi-prep $(LIBI_OBJS)
-	@echo Creating LIBI SO ...
-	$(CXX) $(SOFLAGS) -o $(LIBDIR)/liblibi.so $(LIBI_OBJS)
 	@echo Creating LIBI Archive ...
 	$(AR) $(ARFLAGS) $(LIBDIR)/liblibi.a $(LIBI_OBJS)
+
+sharedobj: libi-prep $(LIBI_OBJS)
+	@echo Creating LIBI SO ...
+	$(CXX) $(SOFLAGS) -o $(LIBDIR)/liblibi.so $(LIBI_OBJS)
 
 # Default Rules
 
