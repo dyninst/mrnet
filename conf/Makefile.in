@@ -34,9 +34,6 @@ BUILDDIR = $(BASEDIR)/build
 
 # Added by Taylor:
 LIBIDIR  = @LIBI_INSTALL_DIR@
-LMONDIR  = @LMON_IDIR@
-
-LIBLMON  = @LIBLMON@ 
 
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
@@ -461,7 +458,7 @@ $(LIBMRNET): $(LIBMRNET_OBJS)
 	$(AR) $(ARFLAGS) $@ $(LIBMRNET_OBJS)
 	$(RANLIB) $@
 
-$(LIBMRNET_SO): $(LIBMRNET_OBJS) $(LIBLIBI_SO) $(LIBXPLAT_SO)
+$(LIBMRNET_SO): $(LIBMRNET_OBJS) $(LIBXPLAT_SO)
 	@echo Building `basename $@` ...
 	$(CXX) $(SOFLAGS) -o $@ $(LIBMRNET_OBJS) $(LIBMRNET_SO_DEPLIBS)
 

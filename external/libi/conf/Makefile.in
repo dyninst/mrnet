@@ -18,13 +18,10 @@ MKDIR_P = mkdir -p
 
 LAUNCH_TYPE = @LIBI_STARTUP_METHOD@
 BUILD_SHARED_LIBS = @BUILDSHARED@
-<<<<<<< HEAD
-=======
 
 ROOTDIR   = @MRNET_ROOT@
 LIBI_ROOT = @abs_srcdir@
 SRC_DIR   = $(LIBI_ROOT)/src
->>>>>>> 8ca65987718b7d868d9f8aa9f97582c5d649a1dc
 
 PLATDIR = @PLATFORM_BUILD@
 BINDIR  = $(PLATDIR)/bin
@@ -33,19 +30,6 @@ OBJDIR  = $(PLATDIR)/obj/libi
 DEPDIR  = $(PLATDIR)/depends/libi
 
 XPLATDIR    = $(ROOTDIR)/xplat
-<<<<<<< HEAD
-LIBLIBI_SO 	= $(LIBDIR)/liblibi.so
-LIBLIBI 	= $(LIBDIR)/liblibi.a
-
-TARGETS = $(LIBLIBI)
-ifeq ($(BUILD_SHARED_LIBS), yes)
-    TARGETS += $(LIBLIBI_SO)
-endif
-
-LIBXPLAT    = $(LIBDIR)/libxplat.a
-LIBXPLAT_SO = $(LIBDIR)/libxplat.so
-LMON_DIR    = @LMON_IDIR@
-=======
 LIBXPLAT    = $(LIBDIR)/libxplat.a
 LIBXPLAT_SO = $(LIBDIR)/libxplat.so
 
@@ -60,16 +44,10 @@ ifeq ($(BUILD_SHARED_LIBS), yes)
     TARGETS += $(LIBLIBI_SO)
 endif
 
->>>>>>> 8ca65987718b7d868d9f8aa9f97582c5d649a1dc
 MAKEDEPENDS = $(LIBI_ROOT)/conf/makedepends.sh
 
 INCDIR      = $(LIBI_ROOT)/include
-<<<<<<< HEAD
-INCLUDES    = -I$(INCDIR) -I$(XPLATDIR)/include -I$(PLATDIR) -I$(ROOTDIR)/src -I$(ROOTDIR)/include
-SEQ_LIBS    = $(LIBXPLAT) -lpthread
-=======
 INCLUDES    = -I$(INCDIR) -I$(XPLATDIR)/include -I$(ROOTDIR)/src -I$(ROOTDIR)/include -I$(PLATDIR)
->>>>>>> 8ca65987718b7d868d9f8aa9f97582c5d649a1dc
 
 libi_incdir = $(INCDIR)/libi
 install_libi_incdir = $(IINCDIR)/libi
@@ -125,26 +103,12 @@ $(INSTALL_LIBI_HEADERS): $(install_libi_incdir)/%: $(libi_incdir)/%
 	@echo Installing LIBI header $(<F)
 	$(INSTALL) -m 644 $< $(@D)
 
-<<<<<<< HEAD
-install: liblibi install-prep $(INSTALL_LIBI_HEADERS)
-	@echo Installing LIBI library: ${TARGETS} ...
-=======
 install: $(TARGETS) install-prep $(INSTALL_LIBI_HEADERS)
 	@echo Installing LIBI library: $(TARGETS) ...
->>>>>>> 8ca65987718b7d868d9f8aa9f97582c5d649a1dc
 	$(INSTALL) -m 755 $(TARGETS) $(ILIBDIR)/
 
 #This will end up callng the Default Rules
 
-<<<<<<< HEAD
-liblibi: libi-prep $(LIBI_OBJS)
-	@echo Creating LIBI Archive ...
-	$(AR) $(ARFLAGS) $(LIBDIR)/liblibi.a $(LIBI_OBJS)
-
-sharedobj: libi-prep $(LIBI_OBJS)
-	@echo Creating LIBI SO ...
-	$(CXX) $(SOFLAGS) -o $(LIBDIR)/liblibi.so $(LIBI_OBJS)
-=======
 $(LIBLIBI): libi-prep $(LIBI_OBJS)
 	@echo Creating LIBI Archive ...
 	$(AR) $(ARFLAGS) $(LIBDIR)/liblibi.a $(LIBI_OBJS)
@@ -152,7 +116,6 @@ $(LIBLIBI): libi-prep $(LIBI_OBJS)
 $(LIBLIBI_SO): libi-prep $(LIBI_OBJS)
 	@echo Creating LIBI SO ...
 	$(CXX) $(SOFLAGS) -o $(LIBDIR)/liblibi.so $(LIBI_OBJS) -L$(LIBDIR) -lxplat
->>>>>>> 8ca65987718b7d868d9f8aa9f97582c5d649a1dc
 
 # Default Rules
 

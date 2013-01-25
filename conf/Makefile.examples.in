@@ -61,10 +61,10 @@ LIBXPLAT_LOWFAT      = -lxplat_lightweight_r
 
 LDFLAGS = @LDFLAGS@
 SOFLAGS = @SOFLAGS@ 
-ifeq ($(MRNET_STARTUP_METHOD),libi)
+ifeq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD),libi-ssh, libi-slurm))
 	LIBLIBI              = -L$(LIBIDIR) -llibi
 endif
-ifeq ($(MRNET_STARTUP_METHOD),libi)
+ifeq ($(MRNET_STARTUP_METHOD),libi-slurm)
      LIBLIBI += -L$(LMONDIR)/lib -lmonfeapi -lmonmwapi -lmonbeapi -lrt
 endif
 
@@ -74,9 +74,6 @@ LIBS_LOWFAT          = -L$(LIBDIR) $(LIBMRNET_LOWFAT) $(LIBXPLAT_LOWFAT) @LIBS_L
 
 # includes
 INCDIRS = -I$(MRNET_ROOT)/include -I$(MRNET_ROOT)/xplat/include -I$(PLATDIR)
-ifeq ($(MRNET_STARTUP_METHOD),libi)
-	INCDIRS += -I$(LIBIDIR)/include	
-endif
 INCDIRS_LIGHTWEIGHT = $(INCDIRS)
 
 # Boost

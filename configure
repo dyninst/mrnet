@@ -651,9 +651,7 @@ LIBS_LIGHTWEIGHT
 C_AS_CPLUSPLUS
 SOFLAGS
 CN_LDFLAGS
-LIBLMON
 LIBI_INSTALL_DIR
-LMON_IDIR
 MRNET_STARTUP_METHOD
 PGI_OLD_TEMPLATES
 ARFLAGS
@@ -746,9 +744,7 @@ with_startup
 with_alpstoolhelp_lib
 with_alpstoolhelp_inc
 with_boost
-with_libi_startup
 with_libi
-with_launchmon
 enable_shared
 enable_verbosebuild
 enable_debug
@@ -1416,11 +1412,9 @@ Optional Packages:
   --with-boost=PATH       Absolute path to installation of Boost C++ libraries
                           (note: specify the path to the directory containing
                           "include" and "lib" sub-directories)
-  --with-libi-startup=METHOD
-                          Uunderlying method of libi launch - "ssh" (default),
-                          "slurm")
-  --with-libi=PATH        Absolute path to installation of libi
-  --with-launchmon=PATH   Absolute path to installation of LaunchMON
+  --with-libi=PATH        Absolute path to the installation of LIBI C++
+                          libraries (note: specify the path to the directory
+                          containing "include" and "lib" sub-directories)
   --with-purify           Use purify for memory debugging
 
 Some influential environment variables:
@@ -3080,30 +3074,11 @@ fi
 
 
 
-# Check whether --with-libi-startup was given.
-if test "${with_libi_startup+set}" = set; then
-  withval=$with_libi_startup; LIBI_STARTUP_METHOD="${withval}"
-else
-  LIBI_STARTUP_METHOD="ssh"
-fi
-
-
-
-
 # Check whether --with-libi was given.
 if test "${with_libi+set}" = set; then
   withval=$with_libi; LIBI_INSTALL_DIR="${withval}"
 else
   LIBI_INSTALL_DIR="${abs_srcdir}/external/libi"
-fi
-
-
-
-# Check whether --with-launchmon was given.
-if test "${with_launchmon+set}" = set; then
-  withval=$with_launchmon; LMON_IDIR="${withval}"
-else
-  LMON_IDIR="${LIBI_INSTALL_DIR}/lmon"
 fi
 
 
@@ -7109,13 +7084,6 @@ $as_echo "$as_me: error: Can't find libalps. Specify proper directory with --wit
     LDFLAGS="$LDFLAGS_HOLD"
 fi
 
-if test $MRNET_STARTUP_METHOD = "libi" ; then
-	if test $LIBI_STARTUP_METHOD = "slurm" ; then
-		LIBLMON="-L$LMON_IDIR/lib -lmonfeapi -lmonmwapi -lmonbeapi"
-	fi
-fi
-
-
 
 
 
@@ -10007,12 +9975,10 @@ ac_config_headers="$ac_config_headers ${PLATFORM_BUILD}/xplat_config.h:xplat/con
 ac_config_files="$ac_config_files ${PLATFORM_BUILD}/Makefile:conf/Makefile.in ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in"
 
 
-if test $MRNET_STARTUP_METHOD = "libi"; then
 
 
 subdirs="$subdirs external/libi"
 
-fi
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
