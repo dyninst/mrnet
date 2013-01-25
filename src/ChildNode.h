@@ -30,7 +30,7 @@ class ChildNode: public virtual Error,
     int proc_PacketsFromParent( std::list<PacketPtr> & );
     virtual int proc_DataFromParent( PacketPtr ipacket ) const=0;
 
-    bool ack_ControlProtocol( int ack_tag ) const;
+    bool ack_ControlProtocol( int ack_tag, bool success ) const;
 
     int proc_RecoveryReport( PacketPtr ipacket ) const;
 

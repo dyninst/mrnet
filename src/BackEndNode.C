@@ -194,7 +194,7 @@ int BackEndNode::proc_newStream( PacketPtr ipacket ) const
 
     if( tag == PROT_NEW_INTERNAL_STREAM ) {
         // send ack to parent
-        if( ! ack_ControlProtocol(PROT_NEW_STREAM_ACK) ) {
+        if( ! ack_ControlProtocol(PROT_NEW_STREAM_ACK, true) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
                                   "ack_ControlProtocol(PROT_NEW_STREAM_ACK) failed\n"));
         }

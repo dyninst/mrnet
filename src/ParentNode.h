@@ -45,7 +45,7 @@ class ParentNode: public virtual Error,
 
     virtual int proc_DataFromChildren( PacketPtr ipacket ) const = 0;
 
-    int proc_ControlProtocolAck( int ack_tag ) const; 
+    int proc_ControlProtocolAck( PacketPtr ipacket ); 
     bool waitfor_ControlProtocolAcks( int ack_tag, 
                                       unsigned num_acks_expected ) const;
     
@@ -81,14 +81,25 @@ class ParentNode: public virtual Error,
 
     virtual int send_LaunchInfo( PeerNodePtr ) const;
 
+    int abort_ActiveControlProtocols();
+
+    void notify_OfChildFailure();
+
  protected:
     Network * _network;
+    struct ControlProtocol {
+        mutable XPlat::Monitor *sync;
+        unsigned num_acked;
+        bool aborted;
+    };
 
     enum { NODE_REPORTED, ALL_NODES_REPORTED };
     mutable XPlat::Monitor subtreereport_sync;
     mutable XPlat::Monitor initdonereport_sync;
     mutable unsigned int _num_children, _num_children_reported;
-    mutable std::map< int, std::pair<XPlat::Monitor*, unsigned> > ctl_protocol_syncs;
+    mutable XPlat::Mutex failed_sync;
+    mutable unsigned int _num_failed_children;
+    mutable std::map< int, struct ControlProtocol > active_ctl_protocols;
     mutable XPlat::Mutex cps_sync;
 
     virtual int proc_PacketFromChildren( PacketPtr ipacket );
@@ -96,6 +107,7 @@ class ParentNode: public virtual Error,
     ParentNode() {}
 
  private:
+    int abort_ControlProtocol( struct ControlProtocol &cp );
     XPlat_Socket listening_sock_fd;
 
 };

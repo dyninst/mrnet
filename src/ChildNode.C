@@ -522,7 +522,7 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
     //Create send/recv threads
     mrn_dbg( 5, mrn_printf(FLF, stderr, "Creating comm threads for parent\n") );
     iparent->start_CommunicationThreads();
-        
+
     mrn_dbg_func_end();
 
     return 0;
@@ -576,11 +576,13 @@ int ChildNode::proc_RecoveryReport( PacketPtr ipacket ) const
     return 0;
 }
 
-bool ChildNode::ack_ControlProtocol( int ack_tag ) const
+bool ChildNode::ack_ControlProtocol( int ack_tag, bool success ) const
 {
-    mrn_dbg(3, mrn_printf(FLF, stderr, "tag=%d\n", ack_tag));
+    char succ_byte = success ? (char)1 : (char)0;
+    mrn_dbg(3, mrn_printf(FLF, stderr, "tag=%d success=%d\n", ack_tag,
+                                        (int)success));
 
-    PacketPtr packet( new Packet(CTL_STRM_ID, ack_tag, NULL) );    
+    PacketPtr packet( new Packet(CTL_STRM_ID, ack_tag, "%c", succ_byte) );
     if( ! packet->has_Error() ) {
         _network->send_PacketToParent( packet );
         _network->flush_PacketsToParent();

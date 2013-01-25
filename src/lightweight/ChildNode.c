@@ -397,13 +397,14 @@ int ChildNode_proc_SetTopoEnv( BackEndNode_t* be, Packet_t* ipacket )
     return 0;
 }
 
-int ChildNode_ack_ControlProtocol(BackEndNode_t* be, int ack_tag)
+int ChildNode_ack_ControlProtocol(BackEndNode_t* be, int ack_tag, char success)
 {
     Packet_t* packet;
+    char succ_byte;
     
     mrn_dbg_func_begin();
-
-    packet = new_Packet_t_2(CTL_STRM_ID, ack_tag, NULL_STRING);
+    succ_byte = success;
+    packet = new_Packet_t_2(CTL_STRM_ID, ack_tag, "%c", succ_byte);
    
     if( packet != NULL ) {
         if((PeerNode_sendDirectly(be->network->parent, packet) == -1 ) ||
@@ -426,7 +427,7 @@ int ChildNode_ack_ControlProtocol(BackEndNode_t* be, int ack_tag)
 int ChildNode_ack_DeleteSubTree(BackEndNode_t* be)
 {
     mrn_dbg_func_begin();
-    return ChildNode_ack_ControlProtocol(be, PROT_SHUTDOWN_ACK);
+    return ChildNode_ack_ControlProtocol(be, PROT_SHUTDOWN_ACK, (char)1);
 }
 
 int ChildNode_proc_RecoveryReport(BackEndNode_t* be, Packet_t* ipacket)

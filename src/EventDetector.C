@@ -709,7 +709,6 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
 
     // generate topology update for failed child
     if( _network->is_LocalNodeInternal() ) {
-        // TODO: Maybe remove or change this?
         mrn_dbg(5, mrn_printf(FLF, stderr,
                     "Generating topology update for failed child\n") );
         Stream *s = _network->get_Stream( TOPOL_STRM_ID ); // topol prop stream
@@ -730,6 +729,10 @@ int EventDetector::recover_FromChildFailure( Rank ifailed_rank )
         NetworkTopology* nt = _network->get_NetworkTopology();
         nt->update_removeNode( my_rank, ifailed_rank, true );
     }
+
+    ParentNode *parent = _network->get_LocalParentNode();
+    parent->notify_OfChildFailure();
+    parent->abort_ActiveControlProtocols();
 
     mrn_dbg_func_end();
     return 0;

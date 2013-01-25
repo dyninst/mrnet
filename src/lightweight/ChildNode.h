@@ -23,7 +23,7 @@ int ChildNode_proc_PacketsFromParent(BackEndNode_t* be, vector_t* packets);
 
 int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet);
 
-int ChildNode_ack_ControlProtocol(BackEndNode_t* be, int ack_tag);
+int ChildNode_ack_ControlProtocol(BackEndNode_t* be, int ack_tag, char success);
 
 int ChildNode_ack_DeleteSubTree(BackEndNode_t* be);
 

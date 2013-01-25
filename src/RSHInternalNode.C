@@ -60,6 +60,7 @@ int RSHInternalNode::request_LaunchInfo(void) const
 int RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
 {
     int retval = 0;
+    bool success = true;
 
     switch( cur_packet->get_Tag() ) {
     case PROT_LAUNCH_SUBTREE:
@@ -73,13 +74,18 @@ int RSHInternalNode::proc_PacketFromParent( PacketPtr cur_packet )
         if( ! waitfor_SubTreeInitDoneReports() ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_SubTreeInitDoneReports() failed\n"));
             retval = -1;
+            success = false;
         }
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Subtrees have reported.\n"));
-        
+
+        if(success)
+            mrn_dbg(5, mrn_printf(FLF, stderr, "Subtrees have reported\n" ));
+        else
+            mrn_dbg(5, mrn_printf(FLF, stderr, "Subtrees failed to report\n" ));
+
         // must send reports upwards
         if( send_SubTreeInitDoneReport() == -1 ) {
-            mrn_dbg(1, mrn_printf(FLF, stderr,
-                                   "send_SubTreeInitDoneReport() failed\n"));
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                        "send_SubTreeInitDoneReport() failed\n" ));
             retval = -1;
         }
         break;

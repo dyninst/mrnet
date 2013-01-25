@@ -736,12 +736,22 @@ void Network::init_FrontEnd( const char * itopology,
     // create topology propagation stream
     Stream* s = new_InternalStream( _bcast_communicator, TFILTER_TOPO_UPDATE, 
                                     SFILTER_TIMEOUT, TFILTER_TOPO_UPDATE_DOWNSTREAM );
+    if(s == NULL) {
+        error( ERR_INTERNAL, rootRank, "failed to create topology update stream");
+        shutdown_Network();
+        return;
+    }
     if( s->get_Id() != TOPOL_STRM_ID ) {
         error( ERR_INTERNAL, rootRank, "topology update stream id is wrong");
         shutdown_Network();
         return;
     }
-    s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 );
+
+    if( s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 ) == -1) {
+        error( ERR_INTERNAL,  rootRank, "failed to set filter parameters");
+        shutdown_Network();
+        return;
+    }
 
     /* collect port updates and broadcast them
      * - this is a no-op on XT

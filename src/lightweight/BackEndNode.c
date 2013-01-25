@@ -232,7 +232,7 @@ int BackEndNode_proc_newStream( BackEndNode_t* be, Packet_t* packet )
 
     if (tag == PROT_NEW_INTERNAL_STREAM) {
         // Send ack to parent
-        if( ! ChildNode_ack_ControlProtocol(be, PROT_NEW_STREAM_ACK) ) {
+        if( ! ChildNode_ack_ControlProtocol(be, PROT_NEW_STREAM_ACK, (char)1) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
                                   "ChildNode_ack_ControlProtocol() failed\n"));
         }

@@ -77,9 +77,11 @@ RSHParentNode::proc_PortUpdates( PacketPtr ipacket ) const
 
     if( _network->is_LocalNodeFrontEnd() && (net_size > 1) ) {
         // block until updates received
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "blocking until port updates received.\n"));
         int tag;
         PacketPtr p;
         port_strm->recv( &tag, p );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "Received port updates\n"));
 
         // broadcast the accumulated updates
         _network->send_TopologyUpdates();

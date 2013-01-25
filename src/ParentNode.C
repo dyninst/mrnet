@@ -38,6 +38,7 @@ ParentNode::ParentNode( Network* inetwork,
     : _network( inetwork ),
       _num_children( 0 ),
       _num_children_reported( 0 ),
+      _num_failed_children( 0 ),
       listening_sock_fd( listeningSocket )
 {
     mrn_dbg( 5, mrn_printf(FLF, stderr, "ParentNode(local[%u]:\"%s:%u\")\n",
@@ -106,7 +107,7 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
             }
             break;
         case PROT_NEW_STREAM_ACK:
-            if( proc_ControlProtocolAck(PROT_NEW_STREAM_ACK) == -1 ) {
+            if( proc_ControlProtocolAck(cur_packet) == -1 ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
                                        "proc_ControlProtocolAck() failed\n" ));
                 retval = -1;
@@ -159,25 +160,29 @@ int ParentNode::proc_PortUpdates( PacketPtr ) const
     return 0;
 }
 
+// This function fails if ANY of our direct children have failed at ANY time.
+// This is because it is currently only used during startup.
 bool ParentNode::waitfor_ControlProtocolAcks( int ack_tag, 
                                               unsigned num_acks_expected ) const
-{    
+{
     mrn_dbg_func_begin();
+    bool ret_val = true;
     
     if( num_acks_expected > 0 ) {
 
         XPlat::Monitor wait_sync;
-        std::map< int, std::pair< XPlat::Monitor*, unsigned > >::iterator cps_iter;
+        std::map< int, struct ControlProtocol >::iterator cps_iter;
 
         wait_sync.RegisterCondition( NODE_REPORTED );
 
         cps_sync.Lock();
-        cps_iter = ctl_protocol_syncs.find( ack_tag );
-        if( cps_iter == ctl_protocol_syncs.end() ) {
-            std::pair< XPlat::Monitor*, unsigned >& wait_info = ctl_protocol_syncs[ ack_tag ];
-            wait_info.first = &wait_sync;
-            wait_info.second = 0;
-            cps_iter = ctl_protocol_syncs.find( ack_tag );
+        cps_iter = active_ctl_protocols.find( ack_tag );
+        if( cps_iter == active_ctl_protocols.end() ) {
+            struct ControlProtocol &wait_info = active_ctl_protocols[ ack_tag ];
+            wait_info.sync = &wait_sync;
+            wait_info.num_acked = 0;
+            wait_info.aborted = false;
+            cps_iter = active_ctl_protocols.find( ack_tag );
         }
         else {
             cps_sync.Unlock();
@@ -190,9 +195,17 @@ bool ParentNode::waitfor_ControlProtocolAcks( int ack_tag,
     
         wait_sync.Lock();
 
-        unsigned num_acked = cps_iter->second.second;
+        unsigned num_acked = cps_iter->second.num_acked;
+        bool abort = ((_num_failed_children > 0) || cps_iter->second.aborted);
 
         while( num_acked < num_acks_expected ) {
+            // ONLY true if a node has failed, direct child or not
+            if(abort) {
+                mrn_dbg(3, mrn_printf(FLF, stderr,
+                           "Protocol(%d) has been aborted!\n", ack_tag));
+                ret_val = false;
+                break;
+            }
 
             mrn_dbg(5, mrn_printf(FLF, stderr, 
                                   "Waiting for %u of %u protocol(%d) acks ...\n",
@@ -201,35 +214,43 @@ bool ParentNode::waitfor_ControlProtocolAcks( int ack_tag,
                                   ack_tag));
             wait_sync.WaitOnCondition( NODE_REPORTED );
  
-            num_acked = cps_iter->second.second;    
+            num_acked = cps_iter->second.num_acked;    
             mrn_dbg(3, mrn_printf(FLF, stderr,
                                   "%d of %d have ack'd protocol(%d).\n",
                                   num_acked, num_acks_expected, ack_tag));
+
+            abort = ((_num_failed_children > 0) || cps_iter->second.aborted);
         }
 
         wait_sync.Unlock();
 
         cps_sync.Lock();
-        ctl_protocol_syncs.erase( cps_iter );
+        if(ret_val)
+            active_ctl_protocols.erase( cps_iter );
         cps_sync.Unlock();
     }
 
     mrn_dbg_func_end();
-    return true;
+    return ret_val;
 }
 
-int ParentNode::proc_ControlProtocolAck( int ack_tag ) const
+int ParentNode::proc_ControlProtocolAck( PacketPtr ipacket )
 {
     mrn_dbg_func_begin();
 
+    char recv_char;
+    ipacket->unpack("%c", &recv_char);
+    bool abort = (recv_char == (char)0) ? true : false; 
+    int ack_tag = ipacket->get_Tag();
+    
     XPlat::Monitor* wait_sync = NULL;
 
-    std::map< int, std::pair< XPlat::Monitor*, unsigned > >::iterator cps_iter;
+    std::map< int, struct ControlProtocol >::iterator cps_iter;
     do {
         cps_sync.Lock();
-        cps_iter = ctl_protocol_syncs.find( ack_tag );
-        if( cps_iter != ctl_protocol_syncs.end() ) {
-            wait_sync = (*cps_iter).second.first;
+        cps_iter = active_ctl_protocols.find( ack_tag );
+        if( cps_iter != active_ctl_protocols.end() ) {
+            wait_sync = (*cps_iter).second.sync;
         }
         else {
             // an ack can arrive before we have even started waiting
@@ -238,15 +259,67 @@ int ParentNode::proc_ControlProtocolAck( int ack_tag ) const
                                   ack_tag));
         }
         cps_sync.Unlock();
-    } while( wait_sync == NULL );
+    } while( wait_sync == NULL && !abort );
 
+    if(abort) {
+        if( cps_iter != active_ctl_protocols.end() ) {
+            // This is the first failed ack we have received
+            abort_ControlProtocol(cps_iter->second);
+        }
+    } else {
+        wait_sync->Lock();
+        (*cps_iter).second.num_acked++;
+        wait_sync->SignalCondition( NODE_REPORTED );
+        wait_sync->Unlock();
+    }
+
+    mrn_dbg_func_end();
+    return 0;
+}
+
+int ParentNode::abort_ControlProtocol( struct ControlProtocol &cp ) {
+    mrn_dbg_func_begin();
+
+    if(cp.aborted) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Already aborted!\n"));
+        return -1;
+    }
+
+    XPlat::Monitor *wait_sync = cp.sync;
+
+    // Signal the correct CV so the waiting
+    // thread can see the protocol has failed and act accordingly
     wait_sync->Lock();
-    (*cps_iter).second.second++;
+    cp.aborted = true;
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Signalling NODE_REPORTED to abort\n"));
     wait_sync->SignalCondition( NODE_REPORTED );
     wait_sync->Unlock();
 
     mrn_dbg_func_end();
     return 0;
+}
+
+int ParentNode::abort_ActiveControlProtocols() {
+    mrn_dbg_func_begin();
+    std::map<int, struct ControlProtocol >::iterator cps_iter;
+    int ret_val = 0;
+    cps_sync.Lock();
+    if(active_ctl_protocols.size() == 0) {
+        mrn_dbg(5, mrn_printf(FLF, stderr, "No active control protocols to abort!\n"));
+        cps_sync.Unlock();
+        return -1;
+    } else {
+        cps_iter = active_ctl_protocols.begin();
+        for(; cps_iter != active_ctl_protocols.end(); cps_iter++) {
+            if(abort_ControlProtocol(cps_iter->second) == -1) {
+                ret_val = -1;
+            }
+        }
+    }
+    cps_sync.Unlock();
+
+    mrn_dbg_func_end();
+    return ret_val;
 }
 
 int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
@@ -457,6 +530,7 @@ Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
     uint32_t num_backends;
     unsigned int stream_id;
     int tag, ds_filter_id, us_filter_id, sync_id;
+    bool wait_success;
 
     mrn_dbg_func_begin();
 
@@ -547,12 +621,19 @@ Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
         // wait for acks
         if( ! waitfor_ControlProtocolAcks(PROT_NEW_STREAM_ACK,
                                           _network->get_NumChildren()) ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_DeleteSubTreeAcks() failed\n" ));
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_ControlProtocolAcks() failed\n" ));
+            // Stream creation has failed, we should clean up
+            _network->delete_Stream(stream_id);
+            delete stream;
+            stream = NULL;
+            wait_success = false;
+        } else {
+            wait_success = true;
         }
 
         // send ack to parent, if any
         if( _network->is_LocalNodeChild() ) {
-            if( ! _network->get_LocalChildNode()->ack_ControlProtocol(PROT_NEW_STREAM_ACK) ) {
+            if( ! _network->get_LocalChildNode()->ack_ControlProtocol(PROT_NEW_STREAM_ACK, wait_success) ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_ControlProtocol(PROT_NEW_STREAM_ACK) failed\n" ));
             }
         }
@@ -851,6 +932,13 @@ void ParentNode::init_numChildrenExpected( SerialGraph& sg )
     SerialGraph* currSubtree = sg.get_NextChild();
     for( ; currSubtree != NULL; currSubtree = sg.get_NextChild() )
         _num_children++;
+}
+
+void ParentNode::notify_OfChildFailure()
+{
+    failed_sync.Lock();
+    _num_failed_children++;
+    failed_sync.Unlock();
 }
 
 } // namespace MRN
