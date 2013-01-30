@@ -34,6 +34,9 @@ BUILDDIR = $(BASEDIR)/build
 
 # Added by Taylor:
 LIBIDIR  = @LIBI_INSTALL_DIR@
+LIBIMETHOD = @LIBI_STARTUP_METHOD@
+LMONIDIR = @LMON_IDIR@ 
+LIBLMON = @LIBLMON@
 
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
@@ -93,7 +96,7 @@ LIBS_LOWFAT = @LIBS_LOWFAT@ @EXTRA_LIBS_LOWFAT@
 # includes
 COMMON_INCLUDES = -I$(INCDIR) -I$(XPLATDIR)/include -I$(TSTDIR) -I$(PLATDIR) -I$(SRCDIR) -I$(install_libincdir)
 ifeq ($(MRNET_STARTUP_METHOD), libi)
-	COMMON_INCLUDES += -I$(LIBIDIR)/include 
+    COMMON_INCLUDES += -I$(LIBIDIR)/include 
 endif
 INCLUDES = $(COMMON_INCLUDES)
 INCLUDES_LIGHTWEIGHT = $(COMMON_INCLUDES) -I$(SRCDIR)/lightweight
@@ -178,12 +181,14 @@ LIBMRNET_SO = $(LIBDIR)/libmrnet.so.$(VERSION)
 LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a.$(VERSION)
 LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
 
-LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat $(LIBS)
+LIBMRNET_SO_DEPLIBS = $(LIBLMON)
+LIBMRNET_SO_DEPLIBS += -L$(LIBDIR) -lxplat $(LIBS)
 
 LIBXPLAT    = $(LIBDIR)/libxplat.a
 LIBXPLAT_SO = $(LIBDIR)/libxplat.so
 LIBXPLAT_LIGHTWEIGHT    = $(LIBDIR)/libxplat_lightweight.a
 LIBXPLAT_LIGHTWEIGHT_SO = $(LIBDIR)/libxplat_lightweight.so
+
 
 LIBI_TARGETS = 
 LIBLIBI = $(LIBDIR)/liblibi.a
@@ -192,7 +197,7 @@ ifeq ($(MRNET_STARTUP_METHOD),libi)
     LIBI_TARGETS = $(LIBLIBI)
     ifeq ($(BUILD_SHARED_LIBS), yes)
         LIBMRNET_SO_DEPLIBS += -llibi
-	LIBI_TARGETS += $(LIBLIBI_SO)
+        LIBI_TARGETS += $(LIBLIBI_SO)
     endif
 endif
 
@@ -476,9 +481,14 @@ $(LIBXPLAT_LIGHTWEIGHT_SO): xplat_lightweight-sharedobj
 
 $(LIBI_TARGETS): libi-all
 
+$(LIBLMON):
+
 CNDEP = $(LIBMRNET) 
 ifeq ($(MRNET_STARTUP_METHOD),libi)
     CNDEP += $(LIBLIBI)
+endif
+ifeq ($(LIBIMETHOD),slurm)
+    CNDEP += $(LIBLMON)
 endif
 CNDEP += $(LIBXPLAT)
 
