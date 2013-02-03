@@ -531,7 +531,7 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
 int ChildNode::send_SubTreeInitDoneReport( ) const
 {   
     mrn_dbg_func_begin();
-    
+
     _network->get_NetworkTopology()->update_Router_Table();
 
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SUBTREE_INITDONE_RPT, NULL) );

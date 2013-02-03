@@ -8,6 +8,7 @@
 #include <cerrno>
 #include <cstring>
 #include <cstdio>
+#include <climits>
 #include "Monitor-pthread.h"
 #include "xplat/xplat_utils.h"
 
@@ -82,6 +83,17 @@ int Monitor::WaitOnCondition( unsigned int condid )
     int ret = -1;
     if( data != NULL ) {
         ret = data->WaitOnCondition( condid );
+        return ret;
+    }
+
+    return -1;
+}
+
+int Monitor::TimedWaitOnCondition( unsigned int condid, int milliseconds )
+{
+    int ret = -1;
+    if( data != NULL ) {
+        ret = data->TimedWaitOnCondition( condid, milliseconds );
         return ret;
     }
 
@@ -207,6 +219,55 @@ PthreadMonitorData::WaitOnCondition( unsigned int cvid )
         // TODO how to indicate the error
     	assert( 0 );
     }
+    return ret;
+}
+
+
+// Returns -1 for a fatal error, 0 on success, and 1 if the time given in 
+// milliseconds has expired before the condition variable has been signalled.
+int
+PthreadMonitorData::TimedWaitOnCondition( unsigned int cvid, int milliseconds )
+{
+    int ret = -1, gt_ret;
+    int seconds = milliseconds / 1000;
+    struct timespec tmp_tmspec;
+    struct timeval tv;
+
+    if(milliseconds < 0) {
+        return ret;
+    }
+
+    // Get time of day for 'abstime' arg of pthread_cond_timedwait
+    gt_ret = gettimeofday(&tv, NULL);
+    if(gt_ret == -1) {
+        perror("gettimeofday");
+        return gt_ret;
+    }
+
+    if(seconds >= 1) {
+        tmp_tmspec.tv_sec = (time_t)seconds + tv.tv_sec;
+        tmp_tmspec.tv_nsec = 0l + (tv.tv_usec * 1000l);
+    } else {
+        tmp_tmspec.tv_sec = (time_t)0;
+        tmp_tmspec.tv_nsec = (milliseconds * 1000000l) + (tv.tv_usec * 1000l);
+    }
+
+    ConditionVariableMap::iterator iter = cvmap.find( cvid );
+    if( iter != cvmap.end() )
+    {
+        pthread_cond_t *cv = cvmap[cvid];
+        if(cv == NULL) {
+            xplat_dbg(1, xplat_printf(FLF, stderr, 
+                "Error: TimedWaitOnCondition on NULL condition variable\n"));
+            return ret;
+        }
+
+        ret = pthread_cond_timedwait( cv, &mutex, &tmp_tmspec );
+        xplat_dbg(1, xplat_printf(FLF, stderr,  "time out!\n"));
+    } else {
+        return -1;
+    }
+
     return ret;
 }
 

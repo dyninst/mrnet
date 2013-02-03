@@ -60,6 +60,17 @@ int Monitor::WaitOnCondition( unsigned int condid )
     return -1;
 }
 
+int Monitor::TimedWaitOnCondition( unsigned int condid, int milliseconds )
+{
+    int ret = -1;
+    if( data != NULL ) {
+        ret = data->TimedWaitOnCondition( condid, milliseconds );
+        return ret;
+    }
+
+    return -1;
+}
+
 int Monitor::SignalCondition( unsigned int condid )
 {
     if( data != NULL )
@@ -171,6 +182,34 @@ WinMonitorData::WaitOnCondition( unsigned int cvid )
         // TODO how to indicate the error?
 	assert(0);
     }
+    return ret;
+}
+
+
+// Returns -1 for a fatal error, 0 on success, and 1 if the time given in 
+// milliseconds has expired before the condition variable has been signalled.
+int
+WinMonitorData::TimedWaitOnCondition( unsigned int cvid, int milliseconds )
+{
+    int ret = -1;
+
+    assert( hMutex != NULL );
+
+    ConditionVariableMap::iterator iter = cvmap.find( cvid );
+    if( iter != cvmap.end() )
+    {
+        ConditionVariable* cv = cvmap[cvid];
+        assert( cv != NULL );
+
+        ret = cv->TimedWait(milliseconds);
+    }
+    else
+    {
+        // bad cvid
+        // TODO how to indicate the error?
+	    assert(0);
+    }
+
     return ret;
 }
 
@@ -356,6 +395,91 @@ WinMonitorData::ConditionVariable::Wait( void )
     return ret;
 }
 
+
+int
+WinMonitorData::ConditionVariable::TimedWait( int milliseconds )
+{
+    int ret = -1;
+    DWORD dwret;        // used for return value from Win32 calls
+    DWORD msecs;        // used for time limit
+
+    if(milliseconds <= 0) {
+        xplat_dbg(1, xplat_printf(FLF, stderr, 
+                    "Error: TimedWait received %d ms limit\n", milliseconds));
+        return ret;
+    }
+
+    msecs = (DWORD)milliseconds;
+
+
+    // We're going to be waiting, so bump the number of waiters.
+    // Even though we currently have our owning Monitor's mutex locked,
+    // we need to protect access to this variable because our access to 
+    // this variable later in this file occur when we do *not* have it locked.
+    EnterCriticalSection( &nWaitersMutex );
+    nWaiters++;
+    LeaveCriticalSection( &nWaitersMutex );
+
+    // Atomically release our owning object's mutex and 
+    // wait on our semaphore.  ("Signalling" a Win32 Mutex releases it.)
+    dwret = SignalObjectAndWait( hMutex,            // obj to signal
+                                    hWaitSemaphore, // obj to wait on
+                                    msecs,   // timeout
+                                    FALSE );    // alertable?
+    if( dwret == WAIT_OBJECT_0 )
+    {
+        // We have been released from the semaphore.
+        // At this point, we do *not* have the critical section mutex.
+
+        EnterCriticalSection( &nWaitersMutex );
+        nWaiters--;
+
+        // check if we were released via a broadcast and we are
+        // the last thread to be released
+        bool signalBroadcaster = (waitReleasedByBroadcast && (nWaiters == 0));
+        LeaveCriticalSection( &nWaitersMutex );
+
+        if( signalBroadcaster )
+        {
+            // We were unblocked by a broadcast and we were the last
+            // waiter to run.  We need to:
+            //
+            //   1. Signal the broadcaster that it should continue (and
+            //      release the owning Monitor's mutex lock)
+            //   2. Try to acquire the owning Monitor's mutex lock.
+            //
+            // We need to do both in the same atomic operation.
+            dwret = SignalObjectAndWait( hAllWaitersReleasedEvent,  // obj to signal
+                                            hMutex,         // obj to wait on
+                                            INFINITE,       // timeout
+                                            FALSE );        // alertable?
+        }
+        else
+        {
+            // We were unblocked by a signal operation, or we were not
+            // the last waiter to run.  We just need to try to reacquire the
+            // owning Monitor's mutex lock.
+            dwret = WaitForSingleObject( hMutex, INFINITE );
+        }
+
+        if( dwret == WAIT_OBJECT_0 )
+        {
+            ret = 0;
+        }
+        else
+        {
+            // the wait or signalandwait failed
+            // TODO how to indicate this to the user?
+        }
+    }
+    else
+    {
+        // SignalObjectAndWait failed
+        // TODO how to indicate the failure?
+    }
+
+    return ret;
+}
 
 
 int

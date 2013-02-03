@@ -30,6 +30,7 @@ public:
         // condition variable-related methods
         virtual int RegisterCondition( unsigned int condid ) = 0;
         virtual int WaitOnCondition( unsigned int condid ) = 0;
+        virtual int TimedWaitOnCondition( unsigned int condid, int milliseconds) = 0;
         virtual int SignalCondition( unsigned int condid ) = 0;
         virtual int BroadcastCondition( unsigned int condid ) = 0;
     };
@@ -48,6 +49,7 @@ public:
     // condition variable-related methods
     virtual int RegisterCondition( unsigned int condid );
     virtual int WaitOnCondition( unsigned int condid );
+    virtual int TimedWaitOnCondition( unsigned int condid, int milliseconds);
     virtual int SignalCondition( unsigned int condid );
     virtual int BroadcastCondition( unsigned int condid );
 };

@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include "xplat/Monitor.h"
 #include <map>
+#include <sys/time.h>
 
 namespace XPlat
 {
@@ -34,6 +35,7 @@ public:
     // methods dealing with condition variables
     virtual int RegisterCondition( unsigned int cvid );
     virtual int WaitOnCondition( unsigned int cvid );
+    virtual int TimedWaitOnCondition( unsigned int cvid, int milliseconds );
     virtual int SignalCondition( unsigned int cvid );
     virtual int BroadcastCondition( unsigned int cvid );
 };

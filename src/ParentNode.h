@@ -96,7 +96,9 @@ class ParentNode: public virtual Error,
     enum { NODE_REPORTED, ALL_NODES_REPORTED };
     mutable XPlat::Monitor subtreereport_sync;
     mutable XPlat::Monitor initdonereport_sync;
-    mutable unsigned int _num_children, _num_children_reported;
+    mutable unsigned int _num_children, _num_children_to_del;
+    mutable unsigned int _num_children_reported_init;
+    mutable unsigned int _num_children_reported_del;
     mutable XPlat::Mutex failed_sync;
     mutable unsigned int _num_failed_children;
     mutable std::map< int, struct ControlProtocol > active_ctl_protocols;

@@ -37,7 +37,9 @@ ParentNode::ParentNode( Network* inetwork,
                         Port UNUSED(listeningPort) /* = UnknownPort */ )
     : _network( inetwork ),
       _num_children( 0 ),
-      _num_children_reported( 0 ),
+      _num_children_to_del( 0 ),
+      _num_children_reported_init( 0 ),
+      _num_children_reported_del( 0 ),
       _num_failed_children( 0 ),
       listening_sock_fd( listeningSocket )
 {
@@ -330,8 +332,8 @@ int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
 
     subtreereport_sync.Lock( );
 
-    _num_children_reported = 0;
-    _num_children = _network->get_NumChildren();
+    _num_children_reported_del = 0;
+    _num_children_to_del = _network->get_NumChildren();
 
     subtreereport_sync.Unlock( );
 
@@ -389,11 +391,11 @@ int ParentNode::proc_DeleteSubTreeAck( PacketPtr ) const
 
     subtreereport_sync.Lock();
 
-    _num_children_reported++;
+    _num_children_reported_del++;
     mrn_dbg(3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
-                          _num_children_reported, _num_children));
+                          _num_children_reported_del, _num_children_to_del));
 
-    if( _num_children_reported == _num_children ) {
+    if( _num_children_reported_del == _num_children_to_del ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling ALL_NODES_REPORTED\n"));
         subtreereport_sync.SignalCondition( ALL_NODES_REPORTED );
         mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling done\n"));
@@ -418,11 +420,11 @@ int ParentNode::proc_DeleteSubTreeAckForFailed( Rank rank )
     subtreereport_sync.Lock();
     mrn_dbg(3, mrn_printf(FLF, stderr, "Rank %d failed without sending a "
                 "shutdown ack. Reporting on its behalf.\n", rank));
-    _num_children_reported++;
+    _num_children_reported_del++;
     mrn_dbg(3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
-                          _num_children_reported, _num_children));
+                          _num_children_reported_del, _num_children_to_del));
 
-    if( _num_children_reported == _num_children ) {
+    if( _num_children_reported_del == _num_children_to_del ) {
         mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling ALL_NODES_REPORTED\n"));
         subtreereport_sync.SignalCondition( ALL_NODES_REPORTED );
         mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling done\n"));
@@ -440,14 +442,14 @@ bool ParentNode::waitfor_DeleteSubTreeAcks( void ) const
 
     subtreereport_sync.Lock();
 
-    while( _num_children > _num_children_reported ) {
+    while( _num_children_to_del > _num_children_reported_del ) {
         mrn_dbg(3, mrn_printf(FLF, stderr, "Waiting for %u of %u delete subtree acks ...\n",
-                               _num_children - _num_children_reported,
-                               _num_children));
+                               _num_children_to_del - _num_children_reported_del,
+                               _num_children_to_del));
         subtreereport_sync.WaitOnCondition( ALL_NODES_REPORTED );
         mrn_dbg(3, mrn_printf(FLF, stderr,
                                "%d of %d children have ack'd.\n",
-                               _num_children, _num_children_reported));
+                               _num_children_to_del, _num_children_reported_del));
     }
 
     subtreereport_sync.Unlock();
@@ -468,16 +470,16 @@ int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ) const
 
     initdonereport_sync.Lock();
 
-    if( _num_children_reported == _num_children ) {
+    if( _num_children_reported_init == _num_children ) {
         // already saw reports from known children, must be a newborn
         _num_children++;
-        _num_children_reported++;
+        _num_children_reported_init++;
     }
     else {
-        _num_children_reported++;
+        _num_children_reported_init++;
         mrn_dbg(3, mrn_printf(FLF, stderr, "%d of %d descendants reported\n",
-                              _num_children_reported, _num_children));
-        if( _num_children_reported == _num_children ) {
+                              _num_children_reported_init, _num_children));
+        if( _num_children_reported_init == _num_children ) {
             mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling ALL_NODES_REPORTED\n"));
             initdonereport_sync.SignalCondition( ALL_NODES_REPORTED );
             mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling done\n"));
@@ -492,16 +494,24 @@ int ParentNode::proc_SubTreeInitDoneReport( PacketPtr ) const
 
 bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
 {
+    int ret;
     initdonereport_sync.Lock();
 
-    while( _num_children > _num_children_reported ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u subtree reports ...\n",
-                               _num_children - _num_children_reported,
+    while( _num_children > _num_children_reported_init ) {
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "%d: Waiting for %u of %u subtree reports ...\n",
+                               _network->get_StartupTimeout(),
+                               _num_children - _num_children_reported_init,
                                _num_children ));
-        initdonereport_sync.WaitOnCondition( ALL_NODES_REPORTED );
+        ret = initdonereport_sync.TimedWaitOnCondition( ALL_NODES_REPORTED, 
+                _network->get_StartupTimeout()*1000 );
+        if(ret != 0) {
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "TimedWait returned %d: %s\n", ret, strerror(ret)));
+            initdonereport_sync.Unlock();
+            return false;
+        }
         mrn_dbg( 3, mrn_printf(FLF, stderr,
                                "%d of %d children have checked in.\n",
-                               _num_children_reported, _num_children ));
+                               _num_children_reported_init, _num_children ));
     }
 
     initdonereport_sync.Unlock();
