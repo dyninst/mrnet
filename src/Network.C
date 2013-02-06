@@ -130,6 +130,7 @@ Network::Network(void)
       _was_shutdown(false), 
       _shutting_down(false),
       _startup_timeout(120),
+      _topo_update_timeout_msec(250),
       _perf_data( new PerfDataMgr() )
 {
     
@@ -406,6 +407,12 @@ int Network::get_NetSettingKey( const std::string & s )
 
         else if( strcmp("MRNET_PORT_BASE", cstr) == 0 )
             ret = MRNET_PORT_BASE;
+
+        else if( strcmp("MRNET_EVENT_WAIT_TIMEOUT_MSEC", cstr) == 0 )
+            ret = MRNET_EVENT_WAIT_TIMEOUT_MSEC;
+
+        else if( strcmp("MRNET_TOPOLOGY_UPDATE_TIMEOUT_MSEC", cstr) == 0 )
+            ret = MRNET_TOPOLOGY_UPDATE_TIMEOUT_MSEC;
     }
     else if( 0 == strncmp("XPLAT_", cstr, 6) ) {
 
@@ -491,6 +498,22 @@ void Network::init_FE_NetSettings( const std::map< std::string, std::string > * 
             _network_settings[ MRNET_STARTUP_TIMEOUT ] = std::string( envval );
         }
     }
+    
+    if( _network_settings.find(MRNET_EVENT_WAIT_TIMEOUT_MSEC) == _network_settings.end() ) {
+        envval = getenv("MRNET_EVENT_WAIT_TIMEOUT_MSEC");
+        if( envval != NULL ) {
+            _network_settings[ MRNET_EVENT_WAIT_TIMEOUT_MSEC ] =
+                std::string( envval );
+        }
+    }
+
+    if( _network_settings.find(MRNET_TOPOLOGY_UPDATE_TIMEOUT_MSEC) == _network_settings.end() ) {
+        envval = getenv("MRNET_TOPOLOGY_UPDATE_TIMEOUT_MSEC");
+        if( envval != NULL ) {
+            _network_settings[ MRNET_TOPOLOGY_UPDATE_TIMEOUT_MSEC ] =
+                std::string( envval );
+        }
+    }
 
     init_NetSettings();
 }
@@ -521,6 +544,20 @@ void Network::init_NetSettings(void)
     if( eit != _network_settings.end() ) {
         int timeout = atoi( eit->second.c_str() );
         set_StartupTimeout( timeout );
+    }
+
+    eit = _network_settings.find( MRNET_EVENT_WAIT_TIMEOUT_MSEC );
+    if( eit != _network_settings.end() ) {
+        // User specifies in seconds, but our interface is milliseconds
+        int timeout = atoi( eit->second.c_str() );
+        _local_time_keeper->set_DefaultTimeout( timeout );
+    }
+    
+    eit = _network_settings.find( MRNET_TOPOLOGY_UPDATE_TIMEOUT_MSEC );
+    if( eit != _network_settings.end() ) {
+        // User specifies in seconds, but our interface is milliseconds
+        int timeout = atoi( eit->second.c_str() );
+        _topo_update_timeout_msec = timeout;
     }
 }
 
@@ -747,7 +784,7 @@ void Network::init_FrontEnd( const char * itopology,
         return;
     }
 
-    if( s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", 250 ) == -1) {
+    if( s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", _topo_update_timeout_msec ) == -1) {
         error( ERR_INTERNAL,  rootRank, "failed to set filter parameters");
         shutdown_Network();
         return;

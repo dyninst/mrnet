@@ -412,10 +412,10 @@ void * EventDetector::main( void* iarg )
         }
 
         tk = net->get_TimeKeeper();
-	if( tk != NULL ) {
-	    timeout = tk->get_Timeout();
-	    waitTimer.start();
-	}
+        if( tk != NULL ) {
+            timeout = tk->get_Timeout();
+            waitTimer.start();
+        }
 
         std::set< XPlat_Socket > eventfds;
         //mrn_dbg( 5, mrn_printf(FLF, stderr, "eventWait(timeout=%dms)\n", timeout));

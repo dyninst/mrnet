@@ -136,11 +136,13 @@ namespace MRN
         MRNET_FAILURE_RECOVERY,
         MRNET_STARTUP_TIMEOUT,
         MRNET_PORT_BASE,           /* 5 */
+        MRNET_EVENT_WAIT_TIMEOUT_MSEC,
+        MRNET_TOPOLOGY_UPDATE_TIMEOUT_MSEC,
         XPLAT_RSH,
         XPLAT_RSH_ARGS,
-        XPLAT_REMCMD,
+        XPLAT_REMCMD,             /* 10 */
         CRAY_ALPS_APID,
-        CRAY_ALPS_APRUN_PID,       /* 10 */
+        CRAY_ALPS_APRUN_PID,
         CRAY_ALPS_STAGE_FILES
     } net_settings_key_t;   
 

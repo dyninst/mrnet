@@ -17,6 +17,10 @@ int TimeKeeper::get_Timeout(void) const
     return _min_timeout;
 }
 
+void TimeKeeper::set_DefaultTimeout(int default_ms) {
+    TimeKeeper::default_timeout = default_ms;
+}
+
 /* update registered timeouts based on elapsed time,
    fills set of stream ids whose timers have expired */
 void TimeKeeper::notify_Elapsed( unsigned int elapsed_ms, 

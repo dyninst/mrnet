@@ -498,8 +498,7 @@ bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
     initdonereport_sync.Lock();
 
     while( _num_children > _num_children_reported_init ) {
-        mrn_dbg( 3, mrn_printf(FLF, stderr, "%d: Waiting for %u of %u subtree reports ...\n",
-                               _network->get_StartupTimeout(),
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Waiting for %u of %u subtree reports ...\n",
                                _num_children - _num_children_reported_init,
                                _num_children ));
         ret = initdonereport_sync.TimedWaitOnCondition( ALL_NODES_REPORTED, 

@@ -25,6 +25,8 @@ class TimeKeeper {
     /* get minimum timeout in milliseconds */
     int get_Timeout() const;
 
+    void set_DefaultTimeout(int default_ms);
+
     /* update registered timeouts based on elapsed time,
        fills set of stream ids whose timers have expired */
     void notify_Elapsed( unsigned int elapsed_ms, std::set< unsigned int >& expired_streams );

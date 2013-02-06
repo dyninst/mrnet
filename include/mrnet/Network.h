@@ -385,6 +385,7 @@ protected:
     bool _was_shutdown, _shutting_down;
 
     int _startup_timeout;
+    int _topo_update_timeout_msec;
     /* EventPipe notifications */
     std::map< EventClass, EventPipe* > _evt_pipes;
 
