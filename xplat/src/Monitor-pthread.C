@@ -230,6 +230,7 @@ PthreadMonitorData::TimedWaitOnCondition( unsigned int cvid, int milliseconds )
 {
     int ret = -1, gt_ret;
     int seconds = milliseconds / 1000;
+    int rem_msecs = milliseconds % 1000;
     struct timespec tmp_tmspec;
     struct timeval tv;
 
@@ -244,13 +245,8 @@ PthreadMonitorData::TimedWaitOnCondition( unsigned int cvid, int milliseconds )
         return gt_ret;
     }
 
-    if(seconds >= 1) {
-        tmp_tmspec.tv_sec = (time_t)seconds + tv.tv_sec;
-        tmp_tmspec.tv_nsec = 0l + (tv.tv_usec * 1000l);
-    } else {
-        tmp_tmspec.tv_sec = (time_t)0;
-        tmp_tmspec.tv_nsec = (milliseconds * 1000000l) + (tv.tv_usec * 1000l);
-    }
+    tmp_tmspec.tv_sec = (time_t)seconds + tv.tv_sec;
+    tmp_tmspec.tv_nsec = (rem_msecs*1000000l) + (tv.tv_usec * 1000l);
 
     ConditionVariableMap::iterator iter = cvmap.find( cvid );
     if( iter != cvmap.end() )
@@ -263,7 +259,7 @@ PthreadMonitorData::TimedWaitOnCondition( unsigned int cvid, int milliseconds )
         }
 
         ret = pthread_cond_timedwait( cv, &mutex, &tmp_tmspec );
-        xplat_dbg(1, xplat_printf(FLF, stderr,  "time out!\n"));
+        xplat_dbg(3, xplat_printf(FLF, stderr,  "time out!\n"));
     } else {
         return -1;
     }
