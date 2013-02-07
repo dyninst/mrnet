@@ -6,6 +6,7 @@
 MRNET_ROOT     = @MRNET_ROOT@
 MRNET_PLATFORM = @host@
 MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
+LIBIMETHOD = @LIBI_STARTUP_METHOD@
 
 @SET_MAKE@
 
@@ -61,14 +62,16 @@ LIBXPLAT_LOWFAT      = -lxplat_lightweight_r
 
 LDFLAGS = @LDFLAGS@
 SOFLAGS = @SOFLAGS@ 
-ifeq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD),libi-ssh, libi-slurm))
-	LIBLIBI              = -L$(LIBIDIR) -llibi
-endif
-ifeq ($(MRNET_STARTUP_METHOD),libi-slurm)
-     LIBLIBI += -L$(LMONDIR)/lib -lmonfeapi -lmonmwapi -lmonbeapi -lrt
+LIBLIBI = -L$(LIBIDIR) -llibi
+ifeq ($(LIBIMETHOD),slurm)
+    LIBLIBI += -L$(LMONDIR)/lib -lmonfeapi -lmonmwapi -lmonbeapi -lrt
 endif
 
-LIBS                 = -L$(LIBDIR) $(LIBMRNET) $(LIBLIBI) $(LIBXPLAT) @LIBS@ @EXTRA_LIBS@
+LIBS                 = -L$(LIBDIR) $(LIBMRNET) 
+ifeq ($(MRNET_STARTUP_METHOD), libi)
+    LIBS             += $(LIBLIBI) 
+endif
+LIBS                 += $(LIBXPLAT) @LIBS@ @EXTRA_LIBS@
 LIBS_LIGHTWEIGHT     = -L$(LIBDIR) $(LIBMRNET_LIGHTWEIGHT) $(LIBXPLAT_LIGHTWEIGHT) @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS_LIGHTWEIGHT@
 LIBS_LOWFAT          = -L$(LIBDIR) $(LIBMRNET_LOWFAT) $(LIBXPLAT_LOWFAT) @LIBS_LOWFAT@ @EXTRA_LIBS_LOWFAT@
 

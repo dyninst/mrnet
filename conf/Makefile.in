@@ -359,7 +359,7 @@ INSTALL_PREREQ += xplat-install xplat_lightweight-install
 ifeq ($(MRNET_STARTUP_METHOD),libi)
     INSTALL_PREREQ += libi-install
 endif
-INSTALL_PREREQ = install-local lightweight-install 
+INSTALL_PREREQ += install-local lightweight-install 
 
 install: $(INSTALL_PREREQ)
 
