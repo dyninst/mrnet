@@ -39,7 +39,6 @@ int connectHost( XPlat_Socket *sock_in, const std::string & hostname,
                  XPlat_Port port, int num_retry /*=-1*/ )
 {
     XPlat_Socket sock = *sock_in;
-    exit(-1);
 
     unsigned nretry = 0;
     if( num_retry > 0 ) 
