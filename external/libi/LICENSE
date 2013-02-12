@@ -1,6 +1,10 @@
-MRNet: The Multicast/Reduction Network
-A tree-based overlay network for scalable communication and analysis.
-Copyright © 2003-2012 Dorian C. Arnold, Philip C. Roth, Barton P. Miller
+LIBI: The Lightweight Infrastructure-Bootstrapping Infrastructure
+A framework for bootstrapping large scale software systems
+Copyright © 2011 The Regents of the University of New Mexico
+All Rights Reserved
+Created by Josh Goehner and Dorian Arnold
+Department of Computer Science
+
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public

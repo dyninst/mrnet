@@ -86,49 +86,52 @@ void* BackendThreadMain( void* arg )
     rinfo->argv[5] = myRank;
 				
     net = Network::CreateNetworkBE( rinfo->argc, rinfo->argv );
-
-    do {
-        if( net->recv(&tag, p, &stream) != 1 ) {
-            printf("net->recv() failure\n");
-            tag = PROT_EXIT;
-        }
-
-        switch( tag ) {
-        case PROT_INT:
-            if( p->unpack( "%d", &recv_int) == -1 ) {
-                printf("stream::unpack(%%d) failure\n");
-                return NULL;
+    if( NULL == net ) {
+         fprintf( stderr, "BE[%d] failed to attach to network\n", mRank );
+    }
+    else {
+        do {
+            if( net->recv(&tag, p, &stream) != 1 ) {
+                fprintf( stderr, "BE[%d]: net->recv() failure\n", mRank );
+                tag = PROT_EXIT;
             }
 
-            fprintf(stdout, "BE[%d]: received int = %d\n", mRank, recv_int);
+            switch( tag ) {
+            case PROT_INT:
+                if( p->unpack( "%d", &recv_int) == -1 ) {
+                    fprintf( stderr, "BE[%d]: stream::unpack(%%d) failure\n", mRank );
+                    return NULL;
+                }
 
-            if( (stream->send(PROT_INT, "%d", recv_int) == -1) ||
-                (stream->flush() == -1 ) ) {
-                printf("stream::send(%%d) failure\n");
-                return NULL;
-            }
-            break;
+                fprintf( stdout, "BE[%d]: received int = %d\n", mRank, recv_int);
+
+                if( (stream->send(PROT_INT, "%d", recv_int) == -1) ||
+                    (stream->flush() == -1 ) ) {
+                    fprintf( stderr, "BE[%d]: stream::send(%%d) failure\n", mRank );
+                    return NULL;
+                }
+                break;
             
-        case PROT_EXIT:            
-            break;
+            case PROT_EXIT:            
+                break;
 
-        default:
-            fprintf(stdout, "BE[%d]: Unknown Protocol %d\n", mRank, tag);
-            tag = PROT_EXIT;
-            break;
-        }
+            default:
+                fprintf( stderr, "BE[%d]: Unknown Protocol %d\n", mRank, tag);
+                tag = PROT_EXIT;
+                break;
+            }
 
-        fflush(stdout);
-        fflush(stderr);
+            fflush(stdout);
+            fflush(stderr);
 
-    } while ( tag != PROT_EXIT );    
+        } while ( tag != PROT_EXIT );    
 
-    // FE delete of the network will cause us to exit, wait for it
-    net->waitfor_ShutDown();
-    delete net;
+        // FE delete of the network will cause us to exit, wait for it
+        net->waitfor_ShutDown();
+        delete net;
+    }
 
     free( arg );
-
     return NULL;
 }
 
@@ -138,7 +141,7 @@ int main( int argc, char *argv[] ) {
     int nthreads = 1;
     int wSize, wRank;
     if( (argc < 2) || (argc > 3) ) {
-        fprintf(stderr, "ERROR: usage: %s connections_file [#threads]\n", argv[0]);
+        fprintf( stderr, "ERROR: usage: %s connections_file [#threads]\n", argv[0]);
         return -1;
     }
     

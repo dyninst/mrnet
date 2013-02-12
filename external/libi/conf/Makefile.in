@@ -1,0 +1,146 @@
+#This script does not configure, compile, or install the LaunchMON libraries.
+
+#In the case of subconfigure -- srcdir does not use the parent value
+#In the case of subconfigure -- prefix takes the parent value
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
+ILIBDIR     = @libdir@
+IINCDIR     = @includedir@
+
+@SET_MAKE@
+
+AR      = @AR@
+ARFLAGS = @ARFLAGS@
+RANLIB  = @RANLIB@
+RM      = @RM@
+INSTALL = @INSTALL@
+MKDIR_P = mkdir -p
+
+LAUNCH_TYPE = @LIBI_STARTUP_METHOD@
+BUILD_SHARED_LIBS = @BUILDSHARED@
+
+ROOTDIR   = @MRNET_ROOT@
+LIBI_ROOT = @abs_srcdir@
+SRC_DIR   = $(LIBI_ROOT)/src
+
+PLATDIR = @PLATFORM_BUILD@
+BINDIR  = $(PLATDIR)/bin
+LIBDIR  = $(PLATDIR)/lib
+OBJDIR  = $(PLATDIR)/obj/libi
+DEPDIR  = $(PLATDIR)/depends/libi
+
+XPLATDIR    = $(ROOTDIR)/xplat
+LIBXPLAT    = $(LIBDIR)/libxplat.a
+LIBXPLAT_SO = $(LIBDIR)/libxplat.so
+
+LMON_DIR  = @LMON_IDIR@
+LMON_LIBS = -L$(LMON_DIR)/lib -lmonfeapi -lmonmwapi -lmonbeapi
+
+LIBLIBI    = $(LIBDIR)/liblibi.a
+LIBLIBI_SO = $(LIBDIR)/liblibi.so
+
+TARGETS = $(LIBLIBI)
+ifeq ($(BUILD_SHARED_LIBS), yes)
+    TARGETS += $(LIBLIBI_SO)
+endif
+
+MAKEDEPENDS = $(LIBI_ROOT)/conf/makedepends.sh
+
+INCDIR      = $(LIBI_ROOT)/include
+INCLUDES    = -I$(INCDIR) -I$(XPLATDIR)/include -I$(ROOTDIR)/src -I$(ROOTDIR)/include -I$(PLATDIR)
+
+libi_incdir = $(INCDIR)/libi
+install_libi_incdir = $(IINCDIR)/libi
+
+LIBI_SRCS = libi_api.cxx \
+            debug.cxx
+
+ifeq ($(LAUNCH_TYPE), slurm)
+    INCLUDES  += -I$(LMON_DIR)/include 
+    LIBI_SRCS += ProcessGroup_LMONMW.C \
+                 ProcessGroupMember_LMONMW.C
+else
+    LIBI_SRCS += ProcessGroup_MULTIRSH.C \
+                 ProcessGroupMember_MULTIRSH.C
+endif
+
+LIBI_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.cxx,%.o,$(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(LIBI_SRCS))))))
+
+LIBLIBI_HEADERS = $(wildcard $(libi_incdir)/*.h)
+INSTALL_LIBI_HEADERS = $(addprefix $(install_libi_incdir)/, $(notdir $(LIBLIBI_HEADERS)))
+
+CXX           = @CXX@
+CXXFLAGS      = @CXXFLAGS@ $(INCLUDES)
+SOFLAGS       = @SOFLAGS@
+
+all: $(TARGETS)
+
+clean:
+	rm -f $(OBJDIR)/*.o; rm -f $(DEPDIR)/*.d; rm -f $(LIBDIR)/liblibi.a; rm -f $(LIBDIR)/liblibi.so;
+
+install-prep:
+	@echo Creating install directories ...
+	for dir in $(IBINDIR) $(ILIBDIR) $(install_libi_incdir) ; do \
+	    if [ ! -d $$dir ] ; then \
+	        $(MKDIR_P) $$dir ; \
+	        chmod 755 $$dir ; \
+	    fi \
+	done
+	if [ ! -x `echo $(INSTALL) | sed 's/ .*$$//'` ] ; then \
+	    chmod +x `echo $(INSTALL) | sed 's/ .*$$//'` ; \
+	fi
+
+libi-prep:
+	@echo Creating Pre-Install directories ...
+	for dir in $(OBJDIR) $(DEPDIR) ; do \
+	    if [ ! -d $$dir ] ; then \
+	        $(MKDIR_P) $$dir ; \
+	        chmod 755 $$dir ; \
+	    fi \
+	done
+
+$(INSTALL_LIBI_HEADERS): $(install_libi_incdir)/%: $(libi_incdir)/%
+	@echo Installing LIBI header $(<F)
+	$(INSTALL) -m 644 $< $(@D)
+
+install: $(TARGETS) install-prep $(INSTALL_LIBI_HEADERS)
+	@echo Installing LIBI library: $(TARGETS) ...
+	$(INSTALL) -m 755 $(TARGETS) $(ILIBDIR)/
+
+#This will end up callng the Default Rules
+
+$(LIBLIBI): libi-prep $(LIBI_OBJS)
+	@echo Creating LIBI Archive ...
+	$(AR) $(ARFLAGS) $(LIBDIR)/liblibi.a $(LIBI_OBJS)
+
+$(LIBLIBI_SO): libi-prep $(LIBI_OBJS)
+	@echo Creating LIBI SO ...
+	$(CXX) $(SOFLAGS) -o $(LIBDIR)/liblibi.so $(LIBI_OBJS) -L$(LIBDIR) -lxplat
+
+# Default Rules
+
+$(OBJDIR)/%.o: $(SRC_DIR)/%.c $(DEPDIR)/%.d
+	@echo Compiling `basename $@` ...
+	$(CXX) $(CXXFLAGS) $(C_AS_CPLUSPLUS) -o $@ -c $<
+
+$(OBJDIR)/%.o: $(SRC_DIR)/%.C $(DEPDIR)/%.d
+	@echo Compiling `basename $@` ...
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+$(OBJDIR)/%.o: $(SRC_DIR)/%.cxx $(DEPDIR)/%.d
+	@echo Compiling `basename $@` ...
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+#"Usage:  $cmdname src_file obj_file dep_file [inc_dir]"
+
+$(DEPDIR)/%.d: $(SRC_DIR)/%.c
+	@echo Building Depends File `basename $@` ...
+	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCLUDES)
+
+$(DEPDIR)/%.d: $(SRC_DIR)/%.C
+	@echo Building Depends File `basename $@` ...
+	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCLUDES)
+
+$(DEPDIR)/%.d: $(SRC_DIR)/%.cxx
+	@echo Building Depends File `basename $@` ...
+	$(MAKEDEPENDS)  $< $(OBJDIR)/$*.o $@ $(INCLUDES)

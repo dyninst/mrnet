@@ -84,7 +84,7 @@ int test_CountFilter( Network * net, const char * so_file )
     int filter_id = net->load_FilterFunc( so_file, "aggr_Count" );
     if( filter_id == -1 ){
         test->print("Stream::load_FilterFunc() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -93,12 +93,12 @@ int test_CountFilter( Network * net, const char * so_file )
 
     if( stream->send(PROT_COUNT, "") == -1 ){
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
     if( stream->flush( ) == -1 ){
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -107,7 +107,7 @@ int test_CountFilter( Network * net, const char * so_file )
     if( retval == -1){
         //recv error
         test->print("stream::recv() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
     else{
@@ -121,12 +121,12 @@ int test_CountFilter( Network * net, const char * so_file )
             sprintf(tmp_buf, "recv_val(%d) != NumEndPoints(%d). Failure.\n",
                     recv_val, stream->size( ) );
             test->print(tmp_buf, testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
     }
 
-    test->end_SubTest(testname, SUCCESS);
+    test->end_SubTest(testname, MRNTEST_SUCCESS);
     return 0;
 }
 
@@ -142,7 +142,7 @@ int test_CountOddsAndEvensFilter( Network * net, const char * so_file )
                                              "aggr_CountOddsAndEvens" );
     if( filter_id == -1 ){
         test->print("Stream::load_FilterFunc() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -151,13 +151,13 @@ int test_CountOddsAndEvensFilter( Network * net, const char * so_file )
 
     if( stream->send(PROT_COUNTODDSANDEVENS, "") == -1 ){
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush( ) == -1 ){
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -166,14 +166,14 @@ int test_CountOddsAndEvensFilter( Network * net, const char * so_file )
     if( retval == -1){
         //recv error
         test->print("stream::recv() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
     else{
         //Got data
         if( buf->unpack( "%d %d", &num_odds, &num_evens ) == -1 ){
             test->print("stream::unpack() failure\n", testname);
-            test->end_SubTest(testname, FAILURE);
+            test->end_SubTest(testname, MRNTEST_FAILURE);
             return -1;
         }
         char tmp_buf[256];
@@ -182,6 +182,6 @@ int test_CountOddsAndEvensFilter( Network * net, const char * so_file )
         test->print(tmp_buf, testname);
     }
 
-    test->end_SubTest(testname, SUCCESS);
+    test->end_SubTest(testname, MRNTEST_SUCCESS);
     return 0;
 }
