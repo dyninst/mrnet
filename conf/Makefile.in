@@ -38,7 +38,7 @@ LIBIMETHOD = @LIBI_STARTUP_METHOD@
 LMONIDIR = @LMON_IDIR@ 
 LIBLMON = @LIBLMON@
 
-prefix      = @prefix@
+prefix      = ${DESTDIR}@prefix@
 exec_prefix = @exec_prefix@
 IBINDIR     = @bindir@
 ILIBDIR     = @libdir@
@@ -183,7 +183,7 @@ LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a.$(VERSION)
 LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
 
 LIBMRNET_SO_DEPLIBS = $(LIBLMON)
-LIBMRNET_SO_DEPLIBS += -L$(LIBDIR) -lxplat $(LIBS)
+LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -l:libxplat.so.$(VERSION) $(LIBS_SO)
 
 LIBXPLAT    = $(LIBDIR)/libxplat.a
 LIBXPLAT_SO = $(LIBDIR)/libxplat.so

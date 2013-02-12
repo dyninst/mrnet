@@ -22,7 +22,7 @@ EXTDIR  = $(MRNET_ROOT)/external
 #############################
 #### INSTALL DIRECTORIES ####
 #############################
-prefix = @prefix@
+prefix = ${DESTDIR}/@prefix@
 exec_prefix = @exec_prefix@
 IBINDIR = @bindir@
 ILIBDIR = @libdir@
