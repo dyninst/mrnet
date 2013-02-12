@@ -30,7 +30,7 @@ LIBDIR  = $(PLATDIR)/lib
 OBJDIR  = $(PLATDIR)/obj/xplat
 DEPDIR  = $(PLATDIR)/depends/xplat
 
-prefix      = @prefix@
+prefix      = ${DESTDIR}@prefix@
 exec_prefix = @exec_prefix@
 ILIBDIR = @libdir@
 IINCDIR = @includedir@

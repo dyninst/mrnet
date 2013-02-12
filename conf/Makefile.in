@@ -32,7 +32,7 @@ XPLATDIR = $(BASEDIR)/xplat
 EXTDIR   = $(BASEDIR)/external
 BUILDDIR = $(BASEDIR)/build
 
-prefix      = @prefix@
+prefix      = ${DESTDIR}@prefix@
 exec_prefix = @exec_prefix@
 IBINDIR     = @bindir@
 ILIBDIR     = @libdir@
@@ -173,7 +173,7 @@ LIBMRNET_SO = $(LIBDIR)/libmrnet.so.$(VERSION)
 LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a.$(VERSION)
 LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
 
-LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat $(LIBS_SO)
+LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -l:libxplat.so.$(VERSION) $(LIBS_SO)
 
 LIBXPLAT    = $(LIBDIR)/libxplat.a
 LIBXPLAT_SO = $(LIBDIR)/libxplat.so
