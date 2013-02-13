@@ -124,7 +124,7 @@ int test_alltypes( std::vector< Stream * > streams, bool block )
         num_to_receive = (*stream_iter)->size();
         if( num_to_receive == 0 ) {
             test->print("No endpoints in stream\n", testname);
-            test->end_SubTest(testname, MRNTEST_NOTRUN);
+            test->end_SubTest(testname, NOTRUN);
             return -1;
         }
 
@@ -136,13 +136,13 @@ int test_alltypes( std::vector< Stream * > streams, bool block )
                           send_long, send_ulong,
                           send_float, send_double, send_string ) == 1 ) {
             test->print("stream::send() failure\n", testname);
-            test->end_SubTest(testname, MRNTEST_FAILURE);
+            test->end_SubTest(testname, FAILURE);
             return -1;
         }
 
         if( (*stream_iter)->flush() == -1 ) {
             test->print("stream::flush() failure\n", testname);
-            test->end_SubTest(testname, MRNTEST_FAILURE);
+            test->end_SubTest(testname, FAILURE);
             return -1;
         }
     }
@@ -163,7 +163,7 @@ int test_alltypes( std::vector< Stream * > streams, bool block )
             if( retval == -1 ) {
                 //recv error
                 test->print("stream::recv() failure\n", testname);
-                test->end_SubTest(testname, MRNTEST_FAILURE);
+                test->end_SubTest(testname, FAILURE);
                 return -1;
             }
             else if ( retval == 0 ) {
@@ -229,11 +229,11 @@ int test_alltypes( std::vector< Stream * > streams, bool block )
     }// for each stream
     
     if( success ) {
-        test->end_SubTest(testname, MRNTEST_SUCCESS);
+        test->end_SubTest(testname, SUCCESS);
         return 0;
     }
     else {
-        test->end_SubTest(testname, MRNTEST_FAILURE);
+        test->end_SubTest(testname, FAILURE);
         return -1;
     }
 

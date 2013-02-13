@@ -300,21 +300,21 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
     num_to_receive = stream->size();
     if( num_to_receive == 0 ){
         test->print("No endpoints in stream\n", testname);
-        test->end_SubTest(testname, MRNTEST_NOTRUN);
+        test->end_SubTest(testname, NOTRUN);
         free(send_array);
         return -1;
     }
 
     if(stream->send(tag, format_string.c_str(), send_array, ARRAY_LEN) == -1){
         test->print("FE: stream::send() failure\n", testname);
-        test->end_SubTest(testname, MRNTEST_FAILURE);
+        test->end_SubTest(testname, FAILURE);
         free(send_array);
         return -1;
     }
 
     if(stream->flush() == -1){
         test->print("FE: stream::flush() failure\n", testname);
-        test->end_SubTest(testname, MRNTEST_FAILURE);
+        test->end_SubTest(testname, FAILURE);
         free(send_array);
         return -1;
     }
@@ -332,7 +332,7 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
         if( retval == -1){
             //recv error
             test->print("FE: recv() failure\n", testname);
-            test->end_SubTest(testname, MRNTEST_FAILURE);
+            test->end_SubTest(testname, FAILURE);
             free(send_array);
             return -1;
         }
@@ -365,11 +365,11 @@ int test_array( Network * net, Stream *stream, bool anonymous, bool block,
     free(recv_array);
 
     if( success ){
-        test->end_SubTest(testname, MRNTEST_SUCCESS);
+        test->end_SubTest(testname, SUCCESS);
         return 0;
     }
     else{
-        test->end_SubTest(testname, MRNTEST_FAILURE);
+        test->end_SubTest(testname, FAILURE);
         return -1;
     }
 

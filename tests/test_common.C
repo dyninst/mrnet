@@ -39,7 +39,7 @@ bool compare_Double(double f1, double f2, int sig)
 }
 
 Test::SubTest::SubTest(const std::string & subtest_name, FILE *f)
-    :name(subtest_name), fout(f), status(MRNTEST_NOTRUN)
+    :name(subtest_name), fout(f), status(NOTRUN)
 {
     fprintf( fout, "    **Starting SubTest: \"%s\"\n", name.c_str() );
     fflush(fout);
@@ -51,16 +51,16 @@ void Test::SubTest::end(TestStatus s)
     timer.end();
     status=s;
     switch(status){
-    case MRNTEST_SUCCESS:
-        fprintf(fout, "      %s: MRNTEST_SUCCESS! (%f secs)\n\n", name.c_str(),
+    case SUCCESS:
+        fprintf(fout, "      %s: SUCCESS! (%f secs)\n\n", name.c_str(),
                 timer.duration() );
         break;
-    case MRNTEST_COMPLETED:
-        fprintf(fout, "      %s: MRNTEST_COMPLETED! (%f secs)\n\n", name.c_str(),
+    case COMPLETED:
+        fprintf(fout, "      %s: COMPLETED! (%f secs)\n\n", name.c_str(),
                 timer.duration() );
         break;
-    case MRNTEST_FAILURE:
-        fprintf(fout, "      %s: MRNTEST_FAILURE! (%f secs)\n\n", name.c_str(),
+    case FAILURE:
+        fprintf(fout, "      %s: FAILURE! (%f secs)\n\n", name.c_str(),
                 timer.duration() );
         break;
     default:
@@ -75,16 +75,16 @@ void Test::SubTest::end(TestStatus s)
 void Test::SubTest::print_status()
 {
     switch(status){
-    case MRNTEST_SUCCESS:
-        fprintf(fout, "%s: MRNTEST_SUCCESS! (%f secs)\n", name.c_str(),
+    case SUCCESS:
+        fprintf(fout, "%s: SUCCESS! (%f secs)\n", name.c_str(),
                 timer.duration() );
         break;
-    case MRNTEST_COMPLETED:
-        fprintf(fout, "%s: MRNTEST_COMPLETED! (%f secs)\n", name.c_str(),
+    case COMPLETED:
+        fprintf(fout, "%s: COMPLETED! (%f secs)\n", name.c_str(),
                 timer.duration() );
         break;
-    case MRNTEST_FAILURE:
-        fprintf(fout, "%s: MRNTEST_FAILURE! (%f secs)\n", name.c_str(),
+    case FAILURE:
+        fprintf(fout, "%s: FAILURE! (%f secs)\n", name.c_str(),
                 timer.duration() );
         break;
     default:
@@ -168,7 +168,7 @@ int Test::end_SubTest(const std::string & subtest_name, TestStatus status)
     subtest = (*iter).second;
     subtest->end(status);
 
-    if(status == MRNTEST_FAILURE){
+    if(status == FAILURE){
         num_failures++;
     }
 

@@ -950,12 +950,4 @@ void ParentNode::notify_OfChildFailure()
     failed_sync.Unlock();
 }
 
-// Added by Taylor:
-void ParentNode::set_numChildrenExpected( const int num_children )
-{
-    subtreereport_sync.Lock( );
-    _num_children = num_children;
-    subtreereport_sync.Unlock( );
-}
-
 } // namespace MRN

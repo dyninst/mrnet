@@ -10,7 +10,7 @@
 #include "utils.h"
 #include "mrnet/MRNet.h"
 #include "xplat/NetUtils.h"
-#include <execinfo.h>
+
 
 using namespace MRN;
 using namespace XPlat;
@@ -21,14 +21,7 @@ int main(int argc, char **argv)
 {
     int ret = 0;
     Network *net = NULL;
-	
-	char hn[128];
-	gethostname(hn, sizeof hn);
-    mrn_dbg( 1, mrn_printf( FLF, stderr, "CN main, Hostname(%s) PID(%d)\n", hn, getpid() ));
-	/*while(true){
-    		mrn_dbg( 1, mrn_printf( FLF, stderr, "CN main, Hostname(%s) PID(%d)\n", hn, getpid() ));
-			sleep(10);
-	}*/
+
     try
     {
         // parse the command line for platform-independent arguments
@@ -53,26 +46,6 @@ int main(int argc, char **argv)
         // build our object allowing access to the MRNet network
 
         net = Network::CreateNetworkIN( argc, argv );
-		for (int i = 0; i < argc; i++){
-            mrn_dbg( 1, mrn_printf( FLF, stderr, "argv[%d] = %s\n", i, argv[i]));
-        }
-
-  		void *array[20];
-  		size_t size;
-  		char **strings;
-  		size_t i;
-
-  		size = backtrace (array, 20);
-  		strings = backtrace_symbols (array, size);
-
-  		mrn_dbg( 1, mrn_printf( FLF, stderr, "Obtained %zd stack frames.\n", size));
-
-  		for (i = 0; i < size; i++)
-     		mrn_dbg( 1, mrn_printf( FLF, stderr, "%s\n", strings[i]));
-
-		free (strings);
-
-
         if( (net == NULL) || net->has_Error() ) {
             fprintf( stderr, "Network::CreateNetworkIN() failed, check args\n" );
             ret = 1;
