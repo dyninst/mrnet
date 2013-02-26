@@ -91,13 +91,13 @@ int test_Sum( Network * net, DataType type )
 
     if( stream->send(tag, "%d", type) == -1 ){
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush( ) == -1 ){
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -106,7 +106,7 @@ int test_Sum( Network * net, DataType type )
     if( retval == -1){
         //recv error
         test->print("stream::recv() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
     else{
@@ -242,10 +242,10 @@ int test_Sum( Network * net, DataType type )
     }
 
     if(success){
-        test->end_SubTest(testname, SUCCESS);
+        test->end_SubTest(testname, MRNTEST_SUCCESS);
     }
     else{
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
     }
     return 0;
 }
@@ -270,13 +270,13 @@ int test_Max( Network * net, DataType type )
 
     if( stream->send(tag, "") == -1 ){
         test->print("stream::send() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
     if( stream->flush( ) == -1 ){
         test->print("stream::flush() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
 
@@ -284,7 +284,7 @@ int test_Max( Network * net, DataType type )
     assert( retval != 0 ); //shouldn't be 0, either error or block till data
     if( retval == -1){
         test->print("stream::recv() failure\n", testname);
-        test->end_SubTest(testname, FAILURE);
+        test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
     }
     else{
