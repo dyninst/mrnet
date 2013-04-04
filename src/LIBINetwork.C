@@ -193,6 +193,11 @@ LIBINetwork::CreateInternalNode( Network* inetwork,
 //----------------------------------------------------------------------------
 // LIBINetwork methods
 
+/* Instantiate is called by Network::init_FrontEnd
+ * This is the first significant divergence from 
+ * the RSHNetwork class.  Particularly the bootstrapping
+ */
+
 bool
 LIBINetwork::Instantiate( ParsedGraph* _parsed_graph,
                          const char* mrn_commnode_path,
@@ -207,6 +212,7 @@ LIBINetwork::Instantiate( ParsedGraph* _parsed_graph,
     std::string sg = _parsed_graph->get_SerializedGraphString( have_backends );
 
     NetworkTopology* nt = get_NetworkTopology();
+    
     if( nt != NULL ) {
         nt->reset( sg, false );
         NetworkTopology::Node* localnode = nt->find_Node( get_LocalRank() );
@@ -220,12 +226,14 @@ LIBINetwork::Instantiate( ParsedGraph* _parsed_graph,
 
     mrn_dbg( 2, mrn_printf(FLF, stderr, "Instantiating network ... \n") );
 
+	// Just creates the libi sessions data type
     if( LIBI_fe_init( LIBI_VERSION ) != LIBI_OK ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, "Failed to init LIBI.\n") );
         return false;
     }
 
     int num_dists = 0;
+    // Two proc_dist one for MW one for BE's
     proc_dist_req_t proc_distribution[2];
     libi_sess_handle_t mw_sess;
     libi_sess_handle_t be_sess;
@@ -237,7 +245,10 @@ LIBINetwork::Instantiate( ParsedGraph* _parsed_graph,
 
     host_dist_t** mw_tail = &mw_hosts;
     host_dist_t** be_tail = &be_hosts;
-    CreateHostDistributions( nt->get_Root(), true, !launchBE, mw_tail, be_tail );
+
+    // Populates each node in mw_tail, be_tail with some basic info:
+    // hostname, nproc, next 
+	CreateHostDistributions( nt->get_Root(), true, !launchBE, mw_tail, be_tail );
 
     if( _network_settings.size() > 0 ){
         mrnet_env = (libi_env_t*)malloc( sizeof( libi_env_t ) );
@@ -255,6 +266,10 @@ LIBINetwork::Instantiate( ParsedGraph* _parsed_graph,
                 cur->next = NULL;
         }
     }
+
+	/* Each call to LIBI_fe_createSession creates a new libi process group object
+	 * Addtionally the pointers to latest are updated
+	 */ 
 
     //mw
     if( mw_hosts != NULL ){
@@ -296,6 +311,8 @@ LIBINetwork::Instantiate( ParsedGraph* _parsed_graph,
         }
     }
 
+	// At this point proc_distribution just has the hostname in .hd and ibackend_exe in .proc_path
+	// Within the LIBI_fe_launch method we need to be launching a BE with 4 MRNet arguments
     if( num_dists > 0 ){
         mrn_dbg( 2, mrn_printf(FLF, stderr, "LIBI launch\n") );
         if( LIBI_fe_launch( proc_distribution, num_dists ) != LIBI_OK ){
@@ -315,6 +332,7 @@ LIBINetwork::Instantiate( ParsedGraph* _parsed_graph,
     cur += sizeof(Rank);
     memcpy( (void*)cur, (void*)&p, sizeof(Port) );
 
+	// This is where I believe the MRNet topology is passed to nodes and they form connections.
 	mrn_dbg( 1, mrn_printf(FLF, stderr, "Right before bootstrap_comm... \n") );
     if( launchMW ){
         mrn_dbg( 2, mrn_printf(FLF, stderr, "LIBI MW communication\n") );
@@ -565,6 +583,8 @@ LIBINetwork::get_parameters( int argc, char* argv[], bool isForMW,
     mrn_dbg( 2, mrn_printf(FLF, stderr, "%s phostname:%s pport:%i prank:%i myrank:%i children:%u \n", type, phostname, pport, prank, myrank, mynumchild) );
 }
 
+
+// This relays the MRNet topology information and allows nodes to connect back to their MRNet topology parents.
 bool
 LIBINetwork::bootstrap_communication_distributed( libi_sess_handle_t sess,
                               NetworkTopology* nt,

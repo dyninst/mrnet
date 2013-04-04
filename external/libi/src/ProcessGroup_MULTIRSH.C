@@ -271,6 +271,7 @@ libi_rc_e ProcessGroup::launch(dist_req_t distributions[], int nreq, env_t* env)
     void* send_buf;
     int send_buf_size;
 
+	// Look at packto see what it does, it seems like it also initiates the connect back
     pack( send_buf, send_buf_size, environment, distributions, nreq, num_procs, launch_topo, dbg );
 
     //wait for connect back
@@ -657,7 +658,7 @@ void pack( void * & send_buf, int & send_buf_size, env_t *env,
     // launch_topo
 
 
-    //fprintf( stderr, "%s(%i) Packing \n", __FUNCTION__, __LINE__ );
+    fprintf( stderr, "%s(%i) Packing \n", __FUNCTION__, __LINE__ );
     unsigned int i,sz,num;
     char** arg;
 
@@ -668,7 +669,7 @@ void pack( void * & send_buf, int & send_buf_size, env_t *env,
         send_buf_size += strlen(env_cur->value)+1;
         env_cur = env_cur->next;
     }
-//    fprintf(stderr, "%s(%i) env args size:%u\n", __FUNCTION__, __LINE__, send_buf_size);
+    fprintf(stderr, "%s(%i) env args size:%u\n", __FUNCTION__, __LINE__, send_buf_size);
     send_buf_size += sizeof( unsigned int );
     for( i = 0; i < nreq; i++ ){
         send_buf_size += strlen(distributions[i].proc_path)+1;
@@ -683,24 +684,24 @@ void pack( void * & send_buf, int & send_buf_size, env_t *env,
         }
     }
     send_buf_size += sizeof( unsigned int );   //num procs
-//    fprintf(stderr, "%s(%i) base args size:%u\n", __FUNCTION__, __LINE__, send_buf_size);
+    fprintf(stderr, "%s(%i) base args size:%u\n", __FUNCTION__, __LINE__, send_buf_size);
     send_buf_size += sizeof( char );           //master or slave
     send_buf_size += strlen( launch_topo.c_str() )+1;     //launch topology
-//    fprintf(stderr, "%s(%i) total args size:%u\n", __FUNCTION__, __LINE__, send_buf_size);
+    fprintf(stderr, "%s(%i) total args size:%u\n", __FUNCTION__, __LINE__, send_buf_size);
     send_buf = malloc( send_buf_size );
 
-    //fprintf( stderr, "%s(%i) creating buffer of size %i \n", __FUNCTION__, __LINE__, send_buf_size );
+    fprintf( stderr, "%s(%i) creating buffer of size %i \n", __FUNCTION__, __LINE__, send_buf_size );
 
     env_cur = env;
     char* cur = (char*)send_buf;
     char* count = cur;
     num = 0;
-//    fprintf(stderr, "%s(%i) cur:%u\n", __FUNCTION__, __LINE__, cur);
+    fprintf(stderr, "%s(%i) cur:%u\n", __FUNCTION__, __LINE__, cur);
     cur += sizeof( unsigned int );
     while( env_cur != NULL ){
         num++;
 
-//    fprintf(stderr, "%s(%i) env name:%s size:%s\n", __FUNCTION__, __LINE__, env_cur->name, env_cur->value);
+    fprintf(stderr, "%s(%i) env name:%s size:%s\n", __FUNCTION__, __LINE__, env_cur->name, env_cur->value);
         sz = strlen(env_cur->name)+1;
         memcpy((void*)cur, (void*)env_cur->name, sz);
         cur += sz;
@@ -712,9 +713,9 @@ void pack( void * & send_buf, int & send_buf_size, env_t *env,
         env_cur = env_cur->next;
     }
     memcpy((void*)count, (void*)&num, sizeof( unsigned int ));
-//    fprintf(stderr, "%s(%i) cur:%u env-num:%u\n", __FUNCTION__, __LINE__, count, num);
+    fprintf(stderr, "%s(%i) cur:%u env-num:%u\n", __FUNCTION__, __LINE__, count, num);
 
-//    fprintf(stderr, "%s(%i) cur:%u nreq:%u\n", __FUNCTION__, __LINE__, cur, nreq);
+    fprintf(stderr, "%s(%i) cur:%u nreq:%u\n", __FUNCTION__, __LINE__, cur, nreq);
     memcpy((void*)cur, (void*)&nreq, sizeof( unsigned int ));
     cur+=sizeof( unsigned int );
     for( i = 0; i < nreq; i++ ){
@@ -735,10 +736,10 @@ void pack( void * & send_buf, int & send_buf_size, env_t *env,
                 arg++;
             }
         }
-//        fprintf(stderr, "%s(%i) cur:%u num args:%u\n", __FUNCTION__, __LINE__, count, nreq);
+        fprintf(stderr, "%s(%i) cur:%u num args:%u\n", __FUNCTION__, __LINE__, count, nreq);
         memcpy((void*)count, (void*)&num, sizeof( unsigned int ));
     }
-//    fprintf(stderr, "%s(%i) cur:%u num procs:%u\n", __FUNCTION__, __LINE__, cur, nreq);
+  fprintf(stderr, "%s(%i) cur:%u num procs:%u\n", __FUNCTION__, __LINE__, cur, nreq);
     memcpy((void*)cur, (void*)&num_procs, sizeof( unsigned int ));
     cur += sizeof(unsigned int);
 

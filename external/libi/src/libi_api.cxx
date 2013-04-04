@@ -92,6 +92,7 @@ libi_rc_e LIBI_fe_launch(proc_dist_req_t distributions[], int nreq ){
         }
     }
 
+	// Fill in temp with the .hd .proc_path and .proc_argv then call process group launch
     for(iter = us.begin(); iter != us.end(); iter++){
         dist_req_t* temp = (dist_req_t*)malloc(nreq*sizeof(dist_req_t));
         int count = 0;
@@ -104,6 +105,7 @@ libi_rc_e LIBI_fe_launch(proc_dist_req_t distributions[], int nreq ){
             }
         }
         ProcessGroup* pg = (ProcessGroup*)(*iter)->sess;
+		// Launch dist_req_t[count]
         rc = pg->launch(temp, count, (*iter)->env);
         if( rc != LIBI_OK )
             return rc;

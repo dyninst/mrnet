@@ -5,7 +5,7 @@ TOPGEN="${bin_dir}/mrnet_topgen"
 topology_dir="${bin_dir}/mrnet_test_files"
 
 if [ ! -d $topology_dir ]; then
-    topology_dir="${bin_dir}/../../../tests/topology_files"
+    topology_dir="${bin_dir}/topology_files"
     if [ ! -d $topology_dir ]; then
         echo "Error: could not locate directory containing topology files"
 	exit
