@@ -50,7 +50,7 @@ public:
         data_sync.Lock();
         if( data != NULL )
             tls_ret = (tls_t *)data->Get();
-        if(tls_ret != NULL)
+        if( tls_ret != NULL )
             ret = tls_ret->tid;
         data_sync.Unlock();
         return ret;
@@ -64,7 +64,7 @@ public:
         if( tls_ret != NULL ) {
             tls_ret->tid = tid;
             ret = 0;
-            if(data->Set((void *)tls_ret)) {
+            if( data->Set((void *)tls_ret) ) {
                 ret = -1;
             }
         }
@@ -77,7 +77,7 @@ public:
         data_sync.Lock();
         if( data != NULL )
             tls_ret = (tls_t *)data->Get();
-        if(tls_ret != NULL)
+        if( tls_ret != NULL )
             ret = tls_ret->tname;
         data_sync.Unlock();
         return ret;
@@ -104,7 +104,7 @@ public:
         data_sync.Lock();
         if( data != NULL )
             tls_ret = (tls_t *)data->Get();
-        if(tls_ret != NULL)
+        if( tls_ret != NULL )
             ret = tls_ret->user_data;
         data_sync.Unlock();
         return ret;
@@ -129,22 +129,23 @@ public:
         int ret = -1;
         void *get_ret = NULL;
         tls_t *tls_data;
+
+        if( NULL == name )
+            return ret;
+
         data_sync.Lock();
-        if( data != NULL ) {
-            get_ret = data->Get();
-        } else {
+        if( NULL == data ) {
+            data_sync.Unlock();
             return ret;
         }
         
-        if(name == NULL)
-            return ret;
-        if(val == NULL)
-            return ret;
-
+        get_ret = data->Get();
+        
         // Allocate our internal tls structure if nothing is found
-        if(get_ret == NULL) {
+        if( NULL == get_ret ) {
             tls_data = new tls_t;
-            if(tls_data == NULL) {
+            if( NULL == tls_data ) {
+                data_sync.Unlock();
                 return ENOMEM;
             }
         } else {
@@ -154,11 +155,8 @@ public:
         tls_data->tid = XPlat::Thread::GetId();
         tls_data->tname = name;
         tls_data->user_data = val;
-        if( data != NULL ) {
-            ret = data->Set( tls_data );
-        } else {
-            delete tls_data;
-        }
+        ret = data->Set( tls_data );
+
         data_sync.Unlock();
         return ret;
     }
@@ -169,13 +167,14 @@ public:
         data_sync.Lock();
         if( data != NULL )
             tls_ret = (tls_t *)data->Get();
-        if(tls_ret != NULL) {
-            if(tls_ret->user_data != NULL) {
+        if( tls_ret != NULL ) {
+            if( tls_ret->user_data != NULL ) {
+                data_sync.Unlock();
                 return -1;
             }
             // Free given thread name
             // We assume the user used malloc and not new for thread name
-            if(tls_ret->tname != NULL) {
+            if( tls_ret->tname != NULL ) {
                 free( const_cast<char*>(tls_ret->tname) );
                 tls_ret->tname = NULL;
             }
