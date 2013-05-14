@@ -32,8 +32,7 @@ class Process
  public:
     static int GetProcessId( void );
 
-    // spawn a new process
-    // expects args[0] *not* to be cmd
+    // spawn a new process (cmd should be args[0])
     static int Create( const std::string& host,
                        const std::string& cmd,
                        const std::vector<std::string>& args )
