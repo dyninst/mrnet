@@ -101,6 +101,10 @@ Stream::Stream( Network * inetwork, unsigned int iid,
 // (3) There exists no messages to be sent on behalf of this stream on any
 // send queue.
 //
+// (4) There are no threads out there that hold a reference to this Stream
+// where it will try to do some sort of private function.
+//
+// (3) and (4) are not satisfied right now.  We need shared_ptr for this!
 Stream::~Stream()
 {
     int retval;
@@ -125,35 +129,6 @@ Stream::~Stream()
     }
 
     _network->delete_Stream( _id );
-
-    // Flush all message queues that could have this stream
-    // This satisfies (3)
-    if( _network->is_LocalNodeParent() ) {
-
-        _peers_sync.Lock();
-
-        set< PeerNodePtr >::const_iterator iter = _peers.begin(),
-                                           iend = _peers.end();
-        for( ; iter != iend; iter++ ) {
-            mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                   "child[%d].flush()\n",
-                                   (*iter)->get_Rank()) );
-            if( (*iter) != PeerNode::NullPeerNode && !(*iter)->has_Failed() ) {
-                if( (*iter)->flush() == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                "child flush() failed\n") );
-                }
-            }
-        }
-        _peers_sync.Unlock();
-    }
-    if( _network->is_LocalNodeChild()){
-        mrn_dbg( 5, mrn_printf(FLF, stderr,
-                    "parent.flush()\n"));
-        if(_network->get_ParentNode()->flush() == -1) {
-            mrn_dbg(1, mrn_printf(FLF, stderr, "parent flush() failed\n") );
-        }
-    }
 
     if( _sync_filter != NULL )
         delete _sync_filter;
