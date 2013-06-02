@@ -37,13 +37,12 @@ int main(int argc, char **argv)
             for( i=0; i<num_iters; i++ ) {
                 fprintf( stdout, "BE: Sending wave %u ...\n", i);
                 if( Stream_send(stream, tag, "%d", recv_val*i) == -1 ){
-                    fprintf(stderr, "BE: stream::send(%%d) failure\n");
+                    fprintf(stderr, "BE: stream::send(%%d) failure in PROT_SUM\n");
                     tag = PROT_EXIT;
                     break;
                 }
                 if( Stream_flush(stream ) == -1 ){
-                    fprintf(stderr, "BE: stream::flush() failure\n");
-                    tag = PROT_EXIT;
+                    fprintf(stderr, "BE: stream::flush() failure in PROT_SUM\n");
                     break;
                 }
                 fflush(stdout);
@@ -52,12 +51,12 @@ int main(int argc, char **argv)
             break;
 
         case PROT_EXIT:
-	    if( Stream_send(stream, tag, "%d", 0) == -1 ) {
-                fprintf(stderr, "BE: stream::send(%%s) failure\n");
+            if( Stream_send(stream, tag, "%d", 0) == -1 ) {
+                fprintf(stderr, "BE: stream::send(%%s) failure in PROT_EXIT\n");
                 break;
             }
             if( Stream_flush(stream ) == -1 ) {
-                fprintf(stderr, "BE: stream::flush() failure\n");
+                fprintf(stderr, "BE: stream::flush() failure in PROT_EXIT\n");
             }
             break;
 
