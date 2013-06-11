@@ -220,9 +220,11 @@ int Message::send( XPlat_Socket sock_fd )
     std::list< PacketPtr >::iterator piter;
 
     _packet_sync.Lock();
+    _send_sync.Lock();
     if( _packets.size() == 0 ) {   //nothing to do
         mrn_dbg( 3, mrn_printf(FLF, stderr, "Nothing to send!\n") );
         _packet_sync.Unlock();
+        _send_sync.Unlock();
         return 0;
     }
     send_packets = _packets;
@@ -276,6 +278,7 @@ int Message::send( XPlat_Socket sock_fd )
         
         /* check for final packet */
         int tag = curPacket->get_Tag();
+
         if( (tag == PROT_SHUTDOWN) || (tag == PROT_SHUTDOWN_ACK) )
             go_away = true;
 
@@ -357,6 +360,7 @@ int Message::send( XPlat_Socket sock_fd )
     }
 
  send_cleanup_return:
+    _send_sync.Unlock();
 
     if( ! using_prealloc ) {
         free( buf );

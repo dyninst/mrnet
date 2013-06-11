@@ -305,6 +305,7 @@ protected:
 
     void cancel_IOThreads(void);
     void signal_ShutDown(void);
+    int broadcast_ShutDown( );
 
     char* get_LocalSubTreeStringPtr(void) const;
     char* get_TopologyStringPtr(void) const;

@@ -16,6 +16,8 @@
 # define MSG_NOSIGNAL 0
 #endif
 
+enum SDHowType {XPLAT_SHUT_RD, XPLAT_SHUT_WR, XPLAT_SHUT_RDWR};
+
 namespace XPlat
 {
 
@@ -23,6 +25,7 @@ namespace SocketUtils
 {
     extern const XPlat_Socket InvalidSocket;
     extern const XPlat_Port InvalidPort;
+
 
     bool Connect( const std::string &hostname,
                   const XPlat_Port port,
@@ -44,6 +47,8 @@ namespace SocketUtils
                     int option, void* optval, socklen_t optsz );
     
     bool SetBlockingMode( XPlat_Socket sock, bool blocking );
+
+    int Shutdown(XPlat_Socket s, SDHowType how);
     
     bool Close( const XPlat_Socket sock );
                               

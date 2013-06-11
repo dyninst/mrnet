@@ -254,25 +254,6 @@ int BackEndNode::proc_deleteStream( PacketPtr ipacket ) const
     return 0;
 }
 
-
-int BackEndNode::proc_DeleteSubTree( PacketPtr ) const
-{
-    mrn_dbg_func_begin();
-
-    // processes will be exiting -- disable failure recovery
-    _network->disable_FailureRecovery();
-
-    // kill threads, topology, and events
-    _network->shutdown_Network();
-
-    // exit recv/EDT thread
-    mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
-    _network->free_ThreadState();
-    XPlat::Thread::Exit(NULL);
-
-    return 0;
-}
-
 int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
 {
     int retval = 0;

@@ -51,6 +51,8 @@ class PeerNode: public CommunicationNode, public Error {
     void set_DataSocketFd( XPlat_Socket isock );
     void set_EventSocketFd( XPlat_Socket isock );
     void close_Sockets(void);
+    void close_DataSocket(void);
+    void close_EventSocket(void);
 
     void send( PacketPtr ) const;
     int sendDirectly( PacketPtr ipacket ) const;
@@ -65,6 +67,7 @@ class PeerNode: public CommunicationNode, public Error {
 
     int start_CommunicationThreads(void);    
     void waitfor_CommunicationThreads(void) const;
+    bool stop_CommunicationThreads(void);
     
     int waitfor_FlushCompletion(void) const;
     void signal_FlushComplete(void) const;

@@ -400,6 +400,23 @@ ssize_t recv( XPlat_Socket s, void *buf, size_t count )
     return -1;
 }
 
+int Shutdown(XPlat_Socket s, SDHowType how) {
+    int in_how;
+
+    if(how == XPLAT_SHUT_RD) {
+        in_how = SHUT_RD;
+    } else if(how == XPLAT_SHUT_WR) {
+        in_how = SHUT_WR;
+    } else if(how == XPLAT_SHUT_RDWR) {
+        in_how = SHUT_RDWR;
+    } else {
+        xplat_dbg(1, xplat_printf(FLF, stderr, "Invalid 'how' given\n"));
+        return -1;
+    }
+
+    return shutdown((int)s, in_how);
+}
+
 
 } // namespace SocketUtils
 

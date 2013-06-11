@@ -102,11 +102,8 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
             }
             break;
         case PROT_SHUTDOWN_ACK:
-            if( proc_DeleteSubTreeAck(cur_packet) == -1 ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr,
-                                       "proc_DeleteSubTreeAck() failed\n" ));
-                retval = -1;
-            }
+            mrn_dbg( 1, mrn_printf(FLF, stderr,
+                        "WARNING: PROT_SHUTDOWN_ACK deprecated\n") );
             break;
         case PROT_NEW_STREAM_ACK:
             if( proc_ControlProtocolAck(cur_packet) == -1 ) {
@@ -322,140 +319,6 @@ int ParentNode::abort_ActiveControlProtocols() {
 
     mrn_dbg_func_end();
     return ret_val;
-}
-
-int ParentNode::proc_DeleteSubTree( PacketPtr ipacket ) const
-{
-    mrn_dbg_func_begin();
-
-    _network->set_ShuttingDown();
-
-    subtreereport_sync.Lock( );
-
-    _num_children_reported_del = 0;
-    _num_children_to_del = _network->get_NumChildren();
-
-    subtreereport_sync.Unlock( );
-
-    // processes will be exiting -- disable failure recovery
-    _network->disable_FailureRecovery();
-
-    // send to all children
-    /* note: don't request flush as send threads will exit 
-       before notifying flush completion */
-    if( _network->send_PacketToChildren(ipacket) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n" ));
-    }
-
-    // wait for acks -- so children don't initiate failure recovery when we exit
-    if( ! waitfor_DeleteSubTreeAcks() ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_DeleteSubTreeAcks() failed\n" ));
-    }
-
-    // send ack to parent, if any
-    if( _network->is_LocalNodeChild() ) {
-        if( ! _network->get_LocalChildNode()->ack_DeleteSubTree() ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_DeleteSubTree() failed\n" ));
-        }
-        else {
-            // wait for send thread to finish
-            PeerNodePtr parent = _network->get_ParentNode();
-            if( parent != NULL ) {
-                mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                                       "waiting for parent send thread to finish\n") );
-                XPlat::Thread::Id send_id = parent->get_SendThrId();
-                if( send_id )
-                    XPlat::Thread::Join( send_id, (void**)NULL );
-            }
-        }
-    }
-
-    // if internal, signal network termination
-    if( _network->is_LocalNodeInternal() ) {
-        _network->signal_ShutDown();
-
-        // exit recv/EDT thread
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "I'm going away now!\n" ));
-        Network::free_ThreadState();
-        XPlat::Thread::Exit(NULL);
-    }
-
-    mrn_dbg_func_end();
-    return 0;
-}
-
-// Makes assumption that it is only called by recv thread
-int ParentNode::proc_DeleteSubTreeAck( PacketPtr ) const
-{
-    mrn_dbg_func_begin();
-
-    subtreereport_sync.Lock();
-
-    _num_children_reported_del++;
-    mrn_dbg(3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
-                          _num_children_reported_del, _num_children_to_del));
-
-    if( _num_children_reported_del == _num_children_to_del ) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling ALL_NODES_REPORTED\n"));
-        subtreereport_sync.SignalCondition( ALL_NODES_REPORTED );
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling done\n"));
-    }
-
-    subtreereport_sync.Unlock();
-
-    // exit recv thread from child
-    mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
-    _network->free_ThreadState();
-    XPlat::Thread::Exit(NULL);
-
-    return 0;
-}
-
-// This is basically proc_DeleteSubTreeAck without the assumption that the
-// recv thread is calling it, so no Thread::Exit at the end. The parameter
-// is simply used for the debug message.
-int ParentNode::proc_DeleteSubTreeAckForFailed( Rank rank )
-{
-    mrn_dbg_func_begin();
-    subtreereport_sync.Lock();
-    mrn_dbg(3, mrn_printf(FLF, stderr, "Rank %d failed without sending a "
-                "shutdown ack. Reporting on its behalf.\n", rank));
-    _num_children_reported_del++;
-    mrn_dbg(3, mrn_printf(FLF, stderr, "%d of %d children ack'd\n",
-                          _num_children_reported_del, _num_children_to_del));
-
-    if( _num_children_reported_del == _num_children_to_del ) {
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling ALL_NODES_REPORTED\n"));
-        subtreereport_sync.SignalCondition( ALL_NODES_REPORTED );
-        mrn_dbg(5, mrn_printf(FLF, stderr, "Signaling done\n"));
-    }
-
-    subtreereport_sync.Unlock();
-    mrn_dbg_func_end();
-
-    return 0;
-}
-
-bool ParentNode::waitfor_DeleteSubTreeAcks( void ) const
-{
-    mrn_dbg_func_begin();
-
-    subtreereport_sync.Lock();
-
-    while( _num_children_to_del > _num_children_reported_del ) {
-        mrn_dbg(3, mrn_printf(FLF, stderr, "Waiting for %u of %u delete subtree acks ...\n",
-                               _num_children_to_del - _num_children_reported_del,
-                               _num_children_to_del));
-        subtreereport_sync.WaitOnCondition( ALL_NODES_REPORTED );
-        mrn_dbg(3, mrn_printf(FLF, stderr,
-                               "%d of %d children have ack'd.\n",
-                               _num_children_to_del, _num_children_reported_del));
-    }
-
-    subtreereport_sync.Unlock();
-
-    mrn_dbg_func_end();
-    return true;
 }
 
 int ParentNode::send_LaunchInfo( PeerNodePtr ) const

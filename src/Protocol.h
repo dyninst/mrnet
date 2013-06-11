@@ -41,7 +41,9 @@ enum ProtocolTags {
 /* 27 */     PROT_DISABLE_RECOVERY,
 /* 28 */     PROT_TOPO_UPDATE,
 /* 29 */     PROT_NET_SETTINGS,
-/* 30 */     PROT_LAST
+/* 30 */     PROT_EDT_SHUTDOWN,
+/* 31 */     PROT_EDT_REMOTE_SHUTDOWN,
+/* 32 */     PROT_LAST
 };
 
 #ifdef __cplusplus

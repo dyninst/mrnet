@@ -101,10 +101,17 @@ void PeerNode::set_EventSocketFd( XPlat_Socket evt_sock_fd )
 
 void PeerNode::close_Sockets(void)
 {
+    mrn_dbg_func_begin();
+    
+    close_DataSocket();
+    close_EventSocket();
+}
+
+void PeerNode::close_DataSocket(void)
+{
     mrn_dbg(5, mrn_printf(FLF, stderr,
-                          "Closing data(%d) and event(%d) sockets to %s:%u\n",
+                          "Closing data(%d) socket to %s:%u\n",
                           _data_sock_fd,
-                          _event_sock_fd,
                           _hostname.c_str(),
                           _rank));
     _sync.Lock();
@@ -115,6 +122,17 @@ void PeerNode::close_Sockets(void)
         }
         _data_sock_fd = XPlat::SocketUtils::InvalidSocket;
     }
+    _sync.Unlock();   
+}
+
+void PeerNode::close_EventSocket(void)
+{
+    mrn_dbg(5, mrn_printf(FLF, stderr,
+                          "Closing event(%d) socket to %s:%u\n",
+                          _event_sock_fd,
+                          _hostname.c_str(),
+                          _rank));
+    _sync.Lock();
     if( _event_sock_fd != XPlat::SocketUtils::InvalidSocket) {
         if( ! XPlat::SocketUtils::Close(_event_sock_fd) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, 
@@ -178,6 +196,57 @@ void PeerNode::waitfor_CommunicationThreads(void) const
         _sync.WaitOnCondition( MRN_RECV_THREAD_STARTED );
     }
     _sync.Unlock();
+}
+
+bool PeerNode::stop_CommunicationThreads(void) {
+    bool ret_val = true;
+    XPlat::Thread::Id my_id = XPlat::XPlat_TLSKey->GetTid();
+    if(my_id == get_SendThrId() || my_id == get_RecvThrId()) {
+        mrn_dbg(1, mrn_printf(FLF, stderr,
+                    "Comm threads cannot be stopped by a comm thread!\n"));
+        return false;
+    }
+
+    _sync.Lock();
+    // mark as failed
+    _available = false;
+
+    // Clear the send buffer on this socket
+    _msg_out->send(_data_sock_fd);
+
+    // wake up recv thread
+    // This relies on the remote end closing the socket once it receives EOF
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Calling shutdown() on data socket\n"));
+    errno = 0;
+    if(XPlat::SocketUtils::Shutdown(_data_sock_fd, XPLAT_SHUT_WR) == -1) {
+        mrn_dbg(1, mrn_printf(FLF, stderr,
+                    "Failed to shutdown() data socket: %s\n",
+                    strerror(errno)));
+        ret_val = false;
+    }
+
+    // wake up send thread to shut it down
+    // shutdown packet send will fail, but that's expected
+    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, NULL) );
+    _msg_out->add_Packet( packet );
+
+    // Wait until the remote end has done an orderly shutdown to close socket
+    size_t bb_size = 8;
+    char *bogus_buffer = (char *)malloc(sizeof(char) * bb_size);
+    for(;;) {
+        ssize_t recv_ret = XPlat::SocketUtils::recv(_data_sock_fd, bogus_buffer, bb_size);
+        if(recv_ret <= 0) {
+            break;
+        }
+    }
+
+    free(bogus_buffer);
+
+    close_DataSocket();
+
+    _sync.Unlock();
+
+    return ret_val;
 }
 
 void PeerNode::send(PacketPtr ipacket ) const
@@ -319,7 +388,7 @@ void * PeerNode::recv_thread_main( void* iargs )
     // handle case where child goes away before sending shutdown ack
     if( peer_node->is_child() ) {
         if( net->is_ShuttingDown() ) {
-            net->get_LocalParentNode()->proc_DeleteSubTreeAck( Packet::NullPacket );
+            //net->get_LocalParentNode()->proc_DeleteSubTreeAck( Packet::NullPacket );
         } else {
             if(peer_node->has_Failed()) {
                 // This assumes that if the thread has broken out of the loop
@@ -446,7 +515,7 @@ void PeerNode::mark_Failed(void)
             _msg_out->add_Packet( packet );
         }
 
-        close_Sockets();
+        close_DataSocket();
     }
 }
 

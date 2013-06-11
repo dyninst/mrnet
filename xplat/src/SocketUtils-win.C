@@ -37,6 +37,27 @@ bool Close( XPlat_Socket sock )
     return false;
 }
 
+int Shutdown(XPlat_Socket s, SDHowType how) {
+    int in_how;
+
+    if(how == XPLAT_SHUT_RD) {
+        in_how = SD_RECEIVE;
+    } else if(how == XPLAT_SHUT_WR) {
+        in_how = SD_SEND;
+    } else if(how == XPLAT_SHUT_RDWR) {
+        in_how = SD_BOTH;
+    } else {
+        xplat_dbg(1, xplat_printf(FLF, stderr, "Invalid 'how' given\n"));
+        return -1;
+    }
+
+    if(shutdown((SOCKET)s, in_how) != 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
 ssize_t Send( XPlat_Socket s, NCBuf* ncbufs, unsigned int nBufs )
 {
     ssize_t ret = 0;

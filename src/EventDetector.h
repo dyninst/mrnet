@@ -28,7 +28,7 @@ class EventDetector {
 
     EventDetector( Network* inetwork )
         : _network(inetwork), _thread_id(0), _pollfds(NULL), 
-        _num_pollfds(0), _max_pollfds(0), _max_fd(-1)
+        _num_pollfds(0), _max_pollfds(0), _max_fd(-1), _disabled(false)
     { }
 
     ~EventDetector(void)
@@ -42,6 +42,9 @@ class EventDetector {
     static void * main( void* iarg );
     static bool start( Network* inetwork );
     bool stop( void );
+    void disable( void );
+    bool is_Disabled( void );
+    bool start_ShutDown( void );
 
     XPlat::Thread::Id get_ThrId(void) const;
 
@@ -62,6 +65,7 @@ class EventDetector {
 
     void set_ThrId( XPlat::Thread::Id );
 
+    bool _disabled;
     mutable XPlat::Mutex _sync;
     Network* _network;
     XPlat::Thread::Id _thread_id;

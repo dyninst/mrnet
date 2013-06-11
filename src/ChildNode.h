@@ -35,7 +35,6 @@ class ChildNode: public virtual Error,
     int proc_RecoveryReport( PacketPtr ipacket ) const;
 
     int send_SubTreeInitDoneReport(void) const;
-    bool ack_DeleteSubTree(void) const;
 
     int proc_PortUpdate(PacketPtr ipacket ) const;
 

@@ -57,18 +57,7 @@ int ChildNode::proc_PacketFromParent( PacketPtr cur_packet )
         switch ( tag ) {
 
         case PROT_SHUTDOWN:
-            if( _network->is_LocalNodeParent() ) {
-                if( _network->get_LocalParentNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n") );
-                    retval = -1;
-                }
-            }
-            else{
-                if( _network->get_LocalBackEndNode()->proc_DeleteSubTree( cur_packet ) == -1 ) {
-                    mrn_dbg( 1, mrn_printf(FLF, stderr, "proc_deleteSubTree() failed\n") );
-                    retval = -1;
-                }
-            }
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "WARNING: PROT_SHUTDOWN deprecated\n") );
             break;
         
         case PROT_NEW_STREAM:
@@ -589,26 +578,6 @@ bool ChildNode::ack_ControlProtocol( int ack_tag, bool success ) const
     }
     else {
         mrn_dbg(1, mrn_printf(FLF, stderr, "new Packet() failed\n"));
-        return false;
-    }
-
-    mrn_dbg_func_end();
-    return true;
-}
-
-bool ChildNode::ack_DeleteSubTree( void ) const
-{
-    mrn_dbg_func_begin();
-
-    PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN_ACK, NULL) );
-
-    if( ! packet->has_Error() ) {
-        /* note: don't request flush as send thread will exit 
-                 before notifying flush completion */
-        _network->send_PacketToParent( packet );
-    }
-    else {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "new Packet() failed\n") );
         return false;
     }
 
