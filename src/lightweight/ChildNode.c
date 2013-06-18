@@ -198,7 +198,10 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
             // BEs don't launch anything, ignore
             break;
 
-        case PROT_SHUTDOWN:
+        //case PROT_EDT_SHUTDOWN:
+        case PROT_EDT_REMOTE_SHUTDOWN:
+        //case PROT_SHUTDOWN:
+            mrn_dbg(1, mrn_printf(FLF, stderr,"Shutting Down\n"));
             if (BackEndNode_proc_DeleteSubTree(be, packet) == -1) {
                 mrn_dbg(1, mrn_printf(FLF, stderr,"BackEndNode_proc_deleteSubTree() failed\n"));
                 retval = -1;

@@ -455,11 +455,13 @@ int Network::broadcast_ShutDown( ) {
 
         // Shutdown the socket transmissions
         if(XPlat::SocketUtils::Shutdown(cur_sock, XPLAT_SHUT_WR) == -1) {
-            mrn_dbg(1, mrn_printf(FLF, stderr,
-                        "Failed to shutdown remote event socket!\n"));
-            rc = -1;
+            // mrn_dbg(1, mrn_printf(FLF, stderr,
+            //              "Failed to shutdown remote event socket!\n"));
+            //rc = -1;
             continue;
         }
+
+
         
         // Only push back the sockets that had a successful shutdown
         child_socks.push_back(cur_sock);
