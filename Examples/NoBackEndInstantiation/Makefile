@@ -1,4 +1,6 @@
-MPICXX = mpiCC
+MPICC = cc -dynamic
+MPICXX = CC -dynamic
+#MPICXX = mpiCC
 
 ### USERS SHOULD NOT NEED TO EDIT BELOW THIS POINT  ###
 
@@ -8,7 +10,7 @@ TARGETS = $(BINDIR)/BackendAttach_FE \
           $(BINDIR)/BackendAttach_BE \
           $(BINDIR)/BackendAttach_BE_lightweight
 
-MPI_TARGETS = $(BINDIR)/BackendAttach_mpi_BE
+MPI_TARGETS = $(BINDIR)/BackendAttach_mpi_BE $(BINDIR)/BackendAttach_mpi_BE_lightweight
 
 default: all
 
@@ -24,6 +26,10 @@ $(BINDIR)/BackendAttach_FE: FE.C
 $(BINDIR)/BackendAttach_mpi_BE: BE_mpi.C
 	$(MPICXX) $(CXXFLAGS) -c -o $(OBJDIR)/BE_mpi.o BE_mpi.C
 	$(MPICXX) $(LDFLAGS) -o $@ $(OBJDIR)/BE_mpi.o $(LIBS)
+
+$(BINDIR)/BackendAttach_mpi_BE_lightweight: BE_mpi_lightweight.c
+	$(MPICC) $(CCFLAGS) -c -o $(OBJDIR)/BE_mpi_lightweight.o BE_mpi_lightweight.c
+	$(MPICC) $(LDFLAGS) -o $@ $(OBJDIR)/BE_mpi_lightweight.o $(LIBS_LOWFAT)
 
 $(BINDIR)/BackendAttach_BE: BE.C
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ BE.C $(LIBS)
