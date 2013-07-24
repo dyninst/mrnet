@@ -245,22 +245,22 @@ void Network::shutdown_Network(void)
         // Join recv threads first
         _children_mutex.Lock();
         set<PeerNodePtr>::iterator ch_iter = _children.begin();
-        for(; ch_iter != _children.end(); ++ch_iter) {
+        for( ; ch_iter != _children.end(); ++ch_iter ) {
             PeerNodePtr cur_child(*ch_iter);
             XPlat::Thread::Id cur_recv_thd = cur_child->get_RecvThrId();
             child_send_thds.push_back(cur_child->get_SendThrId());
 
-            if(cur_recv_thd != 0) {
-                if(!cur_child->stop_CommunicationThreads()) {
+            if( 0 != cur_recv_thd ) {
+                if( ! cur_child->stop_CommunicationThreads() ) {
                     thd_ret = XPlat::Thread::Cancel(cur_recv_thd);
-                    if(thd_ret != 0) {
+                    if( 0 != thd_ret ) {
                         mrn_dbg(1, mrn_printf(FLF, stderr,
                                     "Thread::Cancel failed: %s\n",
                                     strerror(thd_ret)));
                     }
                 }
                 thd_ret = XPlat::Thread::Join(cur_recv_thd, (void **)NULL);
-                if(thd_ret != 0) {
+                if( 0 != thd_ret ) {
                     mrn_dbg(1, mrn_printf(FLF, stderr,
                                 "Thread::Join failed: %s\n",
                                 strerror(thd_ret)));
@@ -269,13 +269,12 @@ void Network::shutdown_Network(void)
         }
         _children_mutex.Unlock();
 
-        // Second loop to get rid of all recv threads before all send threads
-        int cntr = 0;
+        // Second loop to join all send threads
         vector<XPlat::Thread::Id>::iterator s_iter = child_send_thds.begin();
-        for(; s_iter != child_send_thds.end(); ++s_iter, ++cntr) {
-            if(*s_iter != 0) {
+        for( ; s_iter != child_send_thds.end(); ++s_iter ) {
+            if( 0 != *s_iter ) {
                 thd_ret = XPlat::Thread::Join(*s_iter, (void **)NULL);
-                if(thd_ret != 0) {
+                if( 0 != thd_ret ) {
                     mrn_dbg(1, mrn_printf(FLF, stderr,
                                 "Thread::Join failed: %s\n",
                                 strerror(thd_ret)));
@@ -285,34 +284,35 @@ void Network::shutdown_Network(void)
     }
 
     if( is_LocalNodeChild() ) {
-        if( _parent == PeerNode::NullPeerNode ) {
+        if( PeerNode::NullPeerNode == _parent ) {
             mrn_dbg( 1, mrn_printf(FLF, stderr, 
                         "Shutdown called after parent deleted!\n") );
         } else {
             _parent_sync.Lock();
+
             XPlat::Thread::Id par_send_tid = _parent->get_SendThrId();
             XPlat::Thread::Id par_recv_tid = _parent->get_RecvThrId();
 
-            if(par_recv_tid != 0) {
-                if(!_parent->stop_CommunicationThreads()) {
+            if( 0 != par_recv_tid ) {
+                if( ! _parent->stop_CommunicationThreads() ) {
                     thd_ret = XPlat::Thread::Cancel(par_recv_tid);
-                    if(thd_ret != 0) {
+                    if( 0 != thd_ret ) {
                         mrn_dbg(1, mrn_printf(FLF, stderr,
                                     "Thread::Cancel failed: %s\n",
                                     strerror(thd_ret)));
                     }
                 }
                 thd_ret = XPlat::Thread::Join(par_recv_tid, (void **)NULL);
-                if(thd_ret != 0) {
+                if( 0 != thd_ret ) {
                     mrn_dbg(1, mrn_printf(FLF, stderr,
                                 "Thread::Join failed: %s\n",
                                 strerror(thd_ret)));
                 }
             }
 
-            if(par_send_tid != 0) {
+            if( 0 != par_send_tid ) {
                 thd_ret = XPlat::Thread::Join(par_send_tid, (void **)NULL);
-                if(thd_ret != 0) {
+                if( 0 != thd_ret ) {
                     mrn_dbg(1, mrn_printf(FLF, stderr,
                                 "Thread::Join failed: %s\n",
                                 strerror(thd_ret)));
@@ -323,28 +323,20 @@ void Network::shutdown_Network(void)
         }
     }
 
-    // Request the EDT to broadcast the shutdown message to our children, if any
-    if(is_LocalNodeParent()){
-        if(!_edt->start_ShutDown()) {
+    if( is_LocalNodeParent() ) {
+        // Request the EDT to broadcast the shutdown message to our children, if any
+        if( ! _edt->start_ShutDown() ) {
             mrn_dbg(1, mrn_printf(FLF, stderr,
-                        "Failed to start the shutdown process!\n"));
+                                  "Failed to start the shutdown process!\n"));
             goto final_shutdown;
         }
-    } else {
-        thd_ret = XPlat::Thread::Cancel(edt_tid);
-        if(thd_ret != 0) {
-            mrn_dbg(1, mrn_printf(FLF, stderr,
-                        "Thread::Cancel failed: %s\n",
-                        strerror(thd_ret)));
-        }
     }
-
-    if(edt_tid != 0) {
+    if( 0 != edt_tid ) {
         thd_ret = XPlat::Thread::Join(edt_tid, (void **)NULL);
-        if(thd_ret != 0) {
+        if( 0 != thd_ret ) {
             mrn_dbg(1, mrn_printf(FLF, stderr,
-                        "Thread::Join failed: %s\n",
-                        strerror(thd_ret)));
+                                  "Thread::Join failed: %s\n",
+                                  strerror(thd_ret)));
         }
     }
 
@@ -417,14 +409,15 @@ void Network::signal_ShutDown(void)
     mrn_dbg_func_end();
 }
 
-int Network::broadcast_ShutDown( ) {
+int Network::broadcast_ShutDown(void)
+{
     int rc = 0;
     vector<XPlat_Socket> child_socks;
     mrn_dbg_func_begin();
 
     size_t bb_size=8;
-    char *bogus_buffer = (char *)malloc(sizeof(char)*bb_size);
-    if(bogus_buffer == NULL) {
+    char *bogus_buffer = (char *) malloc(sizeof(char)*bb_size);
+    if( NULL == bogus_buffer ) {
         mrn_dbg(1, mrn_printf(FLF, stderr, "Failed to allocate bogus buffer!\n"));
         return -1;
     }
@@ -434,10 +427,10 @@ int Network::broadcast_ShutDown( ) {
     set<PeerNodePtr>::iterator iter = _children.begin();
 
     // Broadcast the shutdown packet
-    for(; iter != _children.end(); ++iter) {
+    for( ; iter != _children.end(); ++iter ) {
         PeerNodePtr cur_child(*iter);
         XPlat_Socket cur_sock = cur_child->get_EventSocketFd();
-        if(cur_sock == XPlat::SocketUtils::InvalidSocket) {
+        if( XPlat::SocketUtils::InvalidSocket == cur_sock ) {
             mrn_dbg(1, mrn_printf(FLF, stderr,
                         "Cannot send shutdown message: Socket for rank %u is invalid\n",
                         cur_child->get_Rank()));
@@ -447,22 +440,20 @@ int Network::broadcast_ShutDown( ) {
         Message msg(this);
         msg.add_Packet(packet);
 
-        if(msg.send(cur_sock) == -1) {
+        if( -1 == msg.send(cur_sock) ) {
             mrn_dbg(1, mrn_printf(FLF, stderr,
                         "Failed to send event packet to child!\n"));
             rc = -1;
         }
 
         // Shutdown the socket transmissions
-        if(XPlat::SocketUtils::Shutdown(cur_sock, XPLAT_SHUT_WR) == -1) {
+        if( XPlat::SocketUtils::Shutdown(cur_sock, XPLAT_SHUT_WR) == -1 ) {
             // mrn_dbg(1, mrn_printf(FLF, stderr,
             //              "Failed to shutdown remote event socket!\n"));
             //rc = -1;
             continue;
         }
 
-
-        
         // Only push back the sockets that had a successful shutdown
         child_socks.push_back(cur_sock);
     }
@@ -472,10 +463,10 @@ int Network::broadcast_ShutDown( ) {
     // (only does this to the sockets that had a successful shutdown call)
     vector<XPlat_Socket>::iterator sock_iter = child_socks.begin();
     ssize_t recv_ret;
-    for(; sock_iter != child_socks.end(); ++sock_iter) {
+    for( ; sock_iter != child_socks.end(); ++sock_iter ) {
         mrn_dbg(3, mrn_printf(FLF, stderr,
                     "Waiting for remote socket %d to close\n", *sock_iter));
-        for(;;) {
+        while(true) {
             recv_ret = XPlat::SocketUtils::recv(*sock_iter, bogus_buffer,
                                                 bb_size);
             mrn_dbg(5, mrn_printf(FLF, stderr,
@@ -485,7 +476,7 @@ int Network::broadcast_ShutDown( ) {
 
             //NOTE: Currently XPlat does not report the difference between a
             //socket error and an orderly shutdown.
-            if(recv_ret <= 0) {
+            if( recv_ret <= 0 ) {
                 // Remote event socket has performed orderly shutdown
                 // and we now have enough proof that it got our shutdown message
                 // and won't try to recover from a failure
@@ -500,7 +491,7 @@ int Network::broadcast_ShutDown( ) {
 
     // Explicitly close all event sockets
     iter = _children.begin();
-    for(; iter != _children.end(); ++iter) {
+    for( ; iter != _children.end(); ++iter ) {
         PeerNodePtr cur_child(*iter);
         cur_child->close_EventSocket();
     }
@@ -2119,7 +2110,7 @@ Rank Network::get_LocalRank(void) const
     return _local_rank;
 }
 
-int Network::get_ListeningSocket(void) const
+XPlat_Socket Network::get_ListeningSocket(void) const
 {
     assert( is_LocalNodeParent() );
     return get_LocalParentNode()->get_ListeningSocket();

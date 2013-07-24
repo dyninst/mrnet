@@ -41,7 +41,7 @@ class EventDetector {
 
     static void * main( void* iarg );
     static bool start( Network* inetwork );
-    bool stop( void );
+    //bool stop( void );
     void disable( void );
     bool is_Disabled( void );
     bool start_ShutDown( void );

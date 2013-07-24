@@ -13,6 +13,7 @@
 #include "xplat/NetUtils.h"
 
 #include <sstream>
+#include <cxxabi.h>
 using namespace std;
 
 namespace MRN
@@ -326,6 +327,7 @@ int PeerNode::flush( bool ignore_threads /*=false*/ ) const
 
 void * PeerNode::recv_thread_main( void* iargs )
 {
+  try {
     std::list< PacketPtr > packet_list;
 
     send_recv_args_t* args = (send_recv_args_t*) iargs;
@@ -407,14 +409,15 @@ void * PeerNode::recv_thread_main( void* iargs )
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "I'm going away now!\n") );
     Network::free_ThreadState();
-    XPlat::Thread::Exit(NULL);
 
-    // this is redundant, but the compiler doesn't know that
+  } catch( abi::__forced_unwind& ) { throw; }
+
     return NULL;
 }
 
 void * PeerNode::send_thread_main( void* iargs )
 {
+  try {
     send_recv_args_t* args = (send_recv_args_t*) iargs;
     Network* net = args->net;
     Rank rank = args->r;
@@ -464,9 +467,9 @@ void * PeerNode::send_thread_main( void* iargs )
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "I'm going away now!\n") );
     Network::free_ThreadState();
-    XPlat::Thread::Exit(NULL);
 
-    // this is redundant, but the compiler doesn't know that
+  } catch( abi::__forced_unwind& ) { throw; }
+
     return NULL;
 }
 

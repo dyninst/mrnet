@@ -3,8 +3,6 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <sstream>
-
 #include "BackEndNode.h"
 #include "ChildNode.h"
 #include "EventDetector.h"
@@ -21,10 +19,13 @@
 #include "xplat/NetUtils.h"
 #include "xplat/SocketUtils.h"
 
+#include <sstream>
+#include <cxxabi.h>
 using namespace std;
 
 namespace MRN {
 
+#if 0
 bool EventDetector::stop( )
 {
     int rc;
@@ -89,6 +90,7 @@ bool EventDetector::stop( )
     mrn_dbg_func_end();
     return true;
 }
+#endif
 
 bool EventDetector::start( Network* inetwork )
 {
@@ -336,6 +338,7 @@ void EventDetector::handle_Timeout( TimeKeeper* tk, int elapsed_ms )
 
 void * EventDetector::main( void* iarg )
 {
+  try {
     list< XPlat_Socket > watch_list; //list of sockets to detect events on
     XPlat_Socket parent_sock = XPlat::SocketUtils::InvalidSocket;
     XPlat_Socket local_sock = XPlat::SocketUtils::InvalidSocket;
@@ -389,7 +392,6 @@ void * EventDetector::main( void* iarg )
                                    "Monitoring local socket:%d.\n", local_sock));
         }
     }
-    else mrn_dbg(5, mrn_printf(FLF, stderr, "not a parent\n"));
 
     //3) do EventDetection Loop, current events are:
     //   - PROT_KILL_SELF 
@@ -417,6 +419,7 @@ void * EventDetector::main( void* iarg )
         int retval = edt->eventWait( eventfds, timeout );
 
         if( retval == -1 ) {
+            if( net->is_LocalNodeBackEnd() && edt->is_Disabled() ) break;
             continue;
         }
         else if( retval == 0 ) {
@@ -426,11 +429,13 @@ void * EventDetector::main( void* iarg )
             waitTimer.stop();
             elapsed_ms = waitTimer.get_latency_msecs();
             elapsed = (int)elapsed_ms;
-            if( elapsed == 0 ) elapsed++;
+            if( 0 == elapsed ) elapsed++;
             //mrn_dbg( 5, mrn_printf(FLF, stderr, "timeout after %d ms\n", elapsed));
 
             // notify streams with registered timeouts
             edt->handle_Timeout( tk, elapsed );
+	
+            if( net->is_LocalNodeBackEnd() && edt->is_Disabled() ) break;
             continue;
         }
         else {
@@ -451,7 +456,7 @@ void * EventDetector::main( void* iarg )
 
                     packets.clear();
                     int recv_ret = msg.recv( connected_sock, packets, UnknownRank );
-                    if(recv_ret == -1) {
+                    if( -1 == recv_ret ) {
                         XPlat::SocketUtils::Close(connected_sock);
                         break;
                     }
@@ -465,51 +470,22 @@ void * EventDetector::main( void* iarg )
                         PacketPtr cur_packet( *packet_list_iter );
                         switch ( cur_packet->get_Tag() ) {
 
-                        case PROT_KILL_SELF:
-                            mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_KILL_SELF\n") );
-
-                            //close event sockets explicitly
-                            mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                                   "Closing %d sockets\n",
-                                                   watch_list.size()) );
-                            for( iter = watch_list.begin(); iter != watch_list.end(); iter++ ) {
-                                mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                                      "Closing event socket: %d\n",
-                                                       *iter) );
-                                mrn_dbg( 5, mrn_printf(FLF, stderr, "... writing \n") );
-                                char c = 1;
-                                if( XPlat::SocketUtils::send(*iter, &c, 1) == (ssize_t)-1 ) {
-                                    mrn_dbg( 1, mrn_printf(FLF, stderr, ("send(event_fd) failed\n")) );
-                                }
-                                mrn_dbg( 5, mrn_printf(FLF, stderr, "... closing\n"));
-                                if( ! XPlat::SocketUtils::Close(*iter) ) {
-                                    mrn_dbg( 1, mrn_printf(FLF, stderr, ("close(event_fd) failed\n")) );
-                                }
-                            }
-                            edt->set_ThrId( 0 );
-                            mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
-                            Network::free_ThreadState();
-                            XPlat::Thread::Exit(NULL);
-                            break;
-
                         case PROT_EDT_SHUTDOWN:
                             mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_EDT_SHUTDOWN\n"));
 
-                            if(net->broadcast_ShutDown() == -1) {
+                            if( -1 == net->broadcast_ShutDown() ) {
                                 mrn_dbg(1, mrn_printf(FLF, stderr,
                                         "Failed to broadcast shutdown to children!\n"));
                             }
 
                             edt->set_ThrId( 0 );
-                            mrn_dbg(5, mrn_printf(FLF, stderr,
-                                    "I'm going away now!\n"));
+                            mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
                             Network::free_ThreadState();
-                            XPlat::Thread::Exit(NULL);
+                            return NULL;
 
-                            break;
                         case PROT_NEW_CHILD_FD_CONNECTION:
                             mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_FD_CONNECTION\n"));
-                            if(!edt->is_Disabled()) {
+                            if( ! edt->is_Disabled() ) {
                                 edt->add_FD(connected_sock);
                                 watch_list.push_back( connected_sock );
                                 mrn_dbg(5, mrn_printf(FLF, stderr,
@@ -518,32 +494,29 @@ void * EventDetector::main( void* iarg )
 
                                 edt->proc_NewChildFDConnection( cur_packet, connected_sock );
                             } else {
-                                mrn_dbg(5, mrn_printf(FLF, stderr,
-                                            "...disabled\n"));
-
+                                mrn_dbg(5, mrn_printf(FLF, stderr, "...disabled\n"));
                             }
                             break;
 
                         case PROT_NEW_CHILD_DATA_CONNECTION:
                             mrn_dbg(5, mrn_printf(FLF, stderr, "PROT_NEW_CHILD_DATA_CONNECTION\n"));
-                            if(!edt->is_Disabled()) {
+                            if( ! edt->is_Disabled() ) {
                                 //get ParentNode obj. Try internal node, then FE
                                 p = net->get_LocalParentNode();
                                 assert(p);
 
                                 p->proc_NewChildDataConnection( cur_packet,
-                                        connected_sock );
+                                                                connected_sock );
                                 mrn_dbg( 5, mrn_printf(FLF, stderr, "New child connected.\n"));
                             } else {
-                                mrn_dbg(5, mrn_printf(FLF, stderr,
-                                            "...disabled\n"));
+                                mrn_dbg(5, mrn_printf(FLF, stderr, "...disabled\n"));
                             }
                             break;
 
                         case PROT_SUBTREE_INITDONE_RPT:
                             // NOTE: may arrive in a group with NEW_CHILD_DATA_CONNECTION
                             mrn_dbg( 5, mrn_printf(FLF, stderr, "PROT_SUBTREE_INITDONE_RPT\n"));
-                            if(!edt->is_Disabled()) {
+                            if( ! edt->is_Disabled() ) {
                                 p = net->get_LocalParentNode();
                                 assert(p);
                                 if( p->proc_SubTreeInitDoneReport( cur_packet ) == -1 ) {
@@ -551,8 +524,7 @@ void * EventDetector::main( void* iarg )
                                                 "proc_SubTreeInitDoneReport() failed\n" ));
                                 }
                             } else {
-                                mrn_dbg(5, mrn_printf(FLF, stderr,
-                                            "...disabled\n"));
+                                mrn_dbg(5, mrn_printf(FLF, stderr, "...disabled\n"));
                             }
                             break;
 
@@ -566,12 +538,11 @@ void * EventDetector::main( void* iarg )
 
                     // We don't want any of the sockets created to accept
                     // to stick around if we're disabled
-                    if(edt->is_Disabled()) {
+                    if( edt->is_Disabled() ) {
                         XPlat::SocketUtils::Close(connected_sock);
                     }
                 }//while
             }//if activity on local sock
-
 
             if( net->is_LocalNodeChild() && 
                 ( eventfds.find(parent_sock) != eventfds.end() ) ) {
@@ -582,7 +553,7 @@ void * EventDetector::main( void* iarg )
 
                 int recv_ret = msg.recv( parent_sock, packets, UnknownRank );
                 mrn_dbg(5, mrn_printf(FLF, stderr, "recv from parent_sock returned %d\n", recv_ret));
-                if(recv_ret != -1) {
+                if( -1 != recv_ret ) {
                     list< PacketPtr >::iterator packet_list_iter;
                     list< XPlat_Socket >::iterator iter;
 
@@ -613,28 +584,26 @@ void * EventDetector::main( void* iarg )
                     edt->remove_FD( parent_sock );
                     watch_list.remove( parent_sock );
 
-                    if(edt->is_Disabled()) {
+                    if( edt->is_Disabled() ) {
                         mrn_dbg(5, mrn_printf(FLF, stderr,
                                     "Closing parent event socket %d\n",
                                     parent_sock));
 
-                        if(XPlat::SocketUtils::Shutdown(parent_sock, XPLAT_SHUT_WR) == -1) {
+                        if( -1 == XPlat::SocketUtils::Shutdown(parent_sock, XPLAT_SHUT_WR) ) {
                             mrn_dbg(1, mrn_printf(FLF, stderr,
                                         "Close of parent sock %d failed!\n",
                                         parent_sock));
                         }
 
-                        if(!XPlat::SocketUtils::Close(parent_sock)) {
+                        if( ! XPlat::SocketUtils::Close(parent_sock) ) {
                             mrn_dbg(1, mrn_printf(FLF, stderr,
                                         "Close of parent sock %d failed!\n",
                                         parent_sock));
                         }
                     } else {
                         parent_sock = -1;
-
-
                         edt->recover_FromParentFailure( parent_sock );
-                        if( parent_sock != -1 ) {
+                        if( -1 != parent_sock ) {
                             edt->add_FD(parent_sock);
                             watch_list.push_back( parent_sock );
                             mrn_dbg(5, mrn_printf(FLF, stderr,
@@ -650,7 +619,7 @@ void * EventDetector::main( void* iarg )
             }
                     
             // Check for child failures
-            if(!edt->is_Disabled()) {
+            if( ! edt->is_Disabled() ) {
                 list< XPlat_Socket >::iterator iter;
                 for( iter = watch_list.begin(); iter != watch_list.end(); ) {
                     XPlat_Socket cur_sock = *iter;
@@ -693,9 +662,12 @@ void * EventDetector::main( void* iarg )
     }//while
 
     edt->set_ThrId( 0 );
-    mrn_dbg(3, mrn_printf(FLF, stderr, "WARNING: EDT reached end of main!\n"));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "EDT reached end of main!\n"));
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
     Network::free_ThreadState();
+
+  } catch( abi::__forced_unwind& ) { throw; }
+
     return NULL;
 }
 
@@ -967,16 +939,18 @@ void EventDetector::set_ThrId( XPlat::Thread::Id tid )
 }
 
 // If this is called, shutdown is starting
-void EventDetector::disable(void) {
+void EventDetector::disable(void)
+{
     _sync.Lock();
     _disabled = true;
-    if(_network != NULL) {
+    if( NULL != _network ) {
         _network->signal_ShutDown();
     }
     _sync.Unlock();
 }
 
-bool EventDetector::is_Disabled(void) {
+bool EventDetector::is_Disabled(void)
+{
     bool ret;
     _sync.Lock();
     ret = _disabled;
@@ -985,23 +959,21 @@ bool EventDetector::is_Disabled(void) {
     return ret;
 }
 
-bool EventDetector::start_ShutDown() {
+bool EventDetector::start_ShutDown()
+{
     mrn_dbg_func_begin();
-    
+
     if( _network->is_LocalNodeParent() ) {
         Message msg(_network);
-        Port edt_port;
         XPlat_Socket sock_fd = XPlat::SocketUtils::InvalidSocket;
-        string edt_host;
         PacketPtr packet( new Packet(CTL_STRM_ID, PROT_EDT_SHUTDOWN, NULL) );
 
-
-        edt_host = _network->get_LocalHostName();
-        edt_port = _network->get_LocalPort();
+        string edt_host = _network->get_LocalHostName();
+        Port edt_port = _network->get_LocalPort();
 
         if( connectHost(&sock_fd, edt_host, edt_port) == -1) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "connectHost(%s:%d) failed\n",
-                        edt_host.c_str(), edt_port ));
+                                  edt_host.c_str(), edt_port ));
             return false;
         }
 
@@ -1019,4 +991,4 @@ bool EventDetector::start_ShutDown() {
     return true;
 }
 
-}
+} /* namespace MRN */

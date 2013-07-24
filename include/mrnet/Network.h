@@ -320,7 +320,7 @@ protected:
     void set_FrontEndNode( FrontEndNode* );
     void set_InternalNode( InternalNode* );
 
-    int get_ListeningSocket(void) const;
+    XPlat_Socket get_ListeningSocket(void) const;
 
     CommunicationNode* get_FailureManager(void) const;
     void set_FailureManager( CommunicationNode* );
