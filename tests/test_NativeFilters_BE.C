@@ -15,21 +15,23 @@ int main(int argc, char **argv)
     Stream * stream;
     PacketPtr buf;
     int tag;
-    bool success=true;
 
     Network * net = Network::CreateNetworkBE( argc, argv );
 
-    do{
-        if ( net->recv(&tag, buf, &stream) != 1){
+    do {
+        if( net->recv(&tag, buf, &stream) != 1 ){
             fprintf(stderr, "stream::recv() failure\n");
+            break;
         }
 
-        DataType type;
-        buf->unpack( "%d", &type );
+        bool success=true;
+
+        DataType typ;
+        buf->unpack( "%d", &typ );
 
         switch(tag){
         case PROT_SUM:
-            switch(type) {
+            switch(typ) {
             case CHAR_T:
                 fprintf( stdout, "Processing CHAR_SUM ...\n");
                 if( stream->send(tag, "%c", CHARVAL) == -1 ){
@@ -103,18 +105,18 @@ int main(int argc, char **argv)
             default:
                 break;
             }
+            if( success ){
+                if( stream->flush( ) == -1 ){
+                    fprintf(stderr, "stream::flush() failure\n");
+                }
+            }
+            break;
         case PROT_EXIT:
             fprintf( stdout, "Processing PROT_EXIT ...\n");
             break;
         default:
             fprintf(stdout, "Unknown Protocol: %d\n", tag);
             break;
-        }
-        if( tag != PROT_EXIT ) {
-            if( stream->flush( ) == -1 ){
-                fprintf(stderr, "stream::flush() failure\n");
-                success=false;
-            }
         }
     } while ( tag != PROT_EXIT );
 

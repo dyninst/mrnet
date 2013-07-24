@@ -18,24 +18,26 @@ int main(int argc, char **argv)
     Stream_t * stream;
     Packet_t* pkt = (Packet_t*)malloc(sizeof(Packet_t));
     Network_t * net;
-    int tag;
-    int success=1;
-    DataType type;
+    int tag, success;
+    DataType typ;
 
     assert(pkt);
 
     net = Network_CreateNetworkBE( argc, argv );
 
     do{
-        if ( Network_recv(net, &tag, pkt, &stream) != 1){
+        if( Network_recv(net, &tag, pkt, &stream) != 1 ){
             fprintf(stderr, "stream_recv() failure\n");
+            break;
         }
 
-        Packet_unpack(pkt, "%d", &type );
+        success = 1;
+
+        Packet_unpack(pkt, "%d", &typ );
 
         switch(tag){
         case PROT_SUM:
-            switch(type) {
+            switch(typ) {
             case CHAR_T:
                 fprintf( stdout, "Processing CHAR_SUM ...\n");
                 if( Stream_send(stream, tag, "%c", CHARVAL) == -1 ){
@@ -109,16 +111,18 @@ int main(int argc, char **argv)
             default:
                 break;
             }
+            if( success ){
+                if( Stream_flush(stream) == -1 ){
+                    fprintf(stderr, "stream_flush() failure\n");
+                }
+            }
+            break;
         case PROT_EXIT:
             fprintf( stdout, "Processing PROT_EXIT ...\n");
             break;
         default:
             fprintf(stdout, "Unknown Protocol: %d\n", tag);
             break;
-        }
-        if( Stream_flush(stream) == -1 ){
-            fprintf(stderr, "stream_flush() failure\n");
-            success=0;
         }
     } while ( tag != PROT_EXIT );
     

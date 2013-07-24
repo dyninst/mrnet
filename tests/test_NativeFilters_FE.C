@@ -13,10 +13,10 @@ using namespace MRN;
 using namespace MRN_test;
 Test * test;
 
-int test_Sum( Network * net, DataType type );
-int test_Max( Network * net, DataType type );
-int test_Min( Network * net, DataType type );
-int test_Avg( Network * net, DataType type );
+int test_Sum( Network * net, DataType typ );
+int test_Max( Network * net, DataType typ );
+int test_Min( Network * net, DataType typ );
+int test_Avg( Network * net, DataType typ );
 
 int main(int argc, char **argv)
 {
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-int test_Sum( Network * net, DataType type )
+int test_Sum( Network * net, DataType typ )
 {
     PacketPtr buf;
     int64_t recv_buf; // we have alignment issues on some 64-bit platforms that require this
@@ -80,7 +80,7 @@ int test_Sum( Network * net, DataType type )
 
     int tag = PROT_SUM;
 
-    testname = "test_Sum(" + Type2String[ type ] + ")";
+    testname = "test_Sum(" + Type2String[ typ ] + ")";
     test->start_SubTest(testname);
 
     Communicator * comm_BC = net->get_BroadcastCommunicator( );
@@ -89,7 +89,7 @@ int test_Sum( Network * net, DataType type )
 
     int num_backends = stream->size();
 
-    if( stream->send(tag, "%d", type) == -1 ){
+    if( stream->send(tag, "%d", typ) == -1 ){
         test->print("stream::send() failure\n", testname);
         test->end_SubTest(testname, MRNTEST_FAILURE);
         return -1;
@@ -113,116 +113,153 @@ int test_Sum( Network * net, DataType type )
         //Got data
         char tmp_buf[1024];
 
-        if( buf->unpack( Type2FormatString[type], recv_val ) == -1 ){
+	recv_buf = 0; // zero-fill buffer
+        if( buf->unpack( Type2FormatString[typ], recv_val ) == -1 ){
             test->print("stream::unpack() failure\n", testname);
             return -1;
         }
 
-        switch(type){
-        case CHAR_T:
-            if( *((char*)recv_val) != num_backends * CHARVAL ){
+        switch(typ){
+        case CHAR_T: {
+            char val = *(char*)recv_val;
+            char comp = 0;
+            for(int i=0; i < num_backends; i++)
+                comp += CHARVAL;
+            if( val != comp ){
                 sprintf(tmp_buf,
-                        "recv_val(%d) != CHARVAL(%d)*num_backends(%d):%d.\n",
-                        *((char*)recv_val), CHARVAL, num_backends,
-                        CHARVAL*num_backends );
+                        "recv_val(%c) != CHARVAL(%c)*num_backends(%d):%c.\n",
+                        val, CHARVAL, num_backends, comp);
                 test->print(tmp_buf, testname);
                 success = false;
             }
             break;
-        case UCHAR_T:
-            if( *((unsigned char*)recv_val) != ((unsigned char)num_backends) * UCHARVAL ){
+        }
+        case UCHAR_T: {
+            char val = *(char*)recv_val;
+            unsigned char comp = 0;
+            for(int i=0; i < num_backends; i++)
+                comp += UCHARVAL;
+            if( val != comp ){
                 sprintf(tmp_buf,
-                        "recv_val(%d) != UCHARVAL(%d)*num_backends(%d):%d.\n",
-                        *((unsigned char*)recv_val), UCHARVAL, num_backends,
-                        UCHARVAL*num_backends );
+                        "recv_val(%d) != UCHARVAL(%c)*num_backends(%d):%c.\n",
+                        val, UCHARVAL, num_backends, comp);
                 test->print(tmp_buf, testname);
                 success = false;
             }
             break;
-        case INT16_T:
-            if( *((int16_t*)recv_val) != num_backends * INT16VAL ){
+        }
+        case INT16_T: {
+            int16_t val = *(int16_t*)recv_val;
+            int16_t comp = 0;
+            for(int i=0; i < num_backends; i++)
+                comp += INT16VAL;
+            if( val != comp ){
                 sprintf(tmp_buf,
-                        "recv_val(%hd) != INT16VAL(%hd)*num_backends(%hd):%hd.\n",
-                        *((int16_t*)recv_val), INT16VAL, num_backends,
-                        INT16VAL*num_backends );
+                        "recv_val(%" PRIi16 ") != INT16VAL(%" PRIi16 ")*num_backends(%d):%" PRIi16 ".\n",
+                        val, INT16VAL, num_backends, comp);
                 test->print(tmp_buf, testname);
                 success = false;
             }
             break;
-        case UINT16_T:
-            if( *((uint16_t*)recv_val) != num_backends * UINT16VAL ){
+        }
+        case UINT16_T: {
+            uint16_t val = *(uint16_t*)recv_val;
+            uint16_t comp = 0;
+            for(int i=0; i < num_backends; i++)
+                comp += UINT16VAL;
+            if( val != num_backends * UINT16VAL ){
                 sprintf(tmp_buf,
-                        "recv_val(%u) != UINT16VAL(%u)*num_backends(%u):%u.\n",
-                        *((uint16_t*)recv_val), UINT16VAL, num_backends,
-                        UINT16VAL*num_backends );
+                        "recv_val(%" PRIu16 ") != UINT16VAL(%" PRIu16 ")*num_backends(%d):%" PRIu16 ".\n",
+                        val, UINT16VAL, num_backends, comp);
                 test->print(tmp_buf, testname);
                 success = false;
             }
             break;
-        case INT32_T:
-            if( *((int32_t*)recv_val) != num_backends * INT32VAL ){
+        }
+        case INT32_T: {
+            int32_t val = *(int32_t*)recv_val;
+            int32_t comp = 0;
+            for(int i=0; i < num_backends; i++)
+                comp += INT32VAL;
+            if( val != comp ){
                 sprintf(tmp_buf,
-                        "recv_val(%d) != INT32VAL(%d)*num_backends(%d):%d.\n",
-                        *((int32_t*)recv_val), INT32VAL, num_backends,
-                        INT32VAL*num_backends );
+                        "recv_val(%" PRIi32 ") != INT32VAL(%" PRIi32 ")*num_backends(%d):%" PRIi32 ".\n",
+                        val, INT32VAL, num_backends, comp);
                 test->print(tmp_buf, testname);
                 success = false;
             }
             break;
-        case UINT32_T:
-            if( *((uint32_t*)recv_val) != num_backends * UINT32VAL ){
+        }
+        case UINT32_T: {
+            uint32_t val = *(uint32_t*)recv_val;
+            uint32_t comp = 0;
+            for(int i=0; i < num_backends; i++)
+                comp += UINT32VAL;
+            if( val != comp ){
                 sprintf(tmp_buf,
-                        "recv_val(%u) != UINT32VAL(%u)*num_backends(%u):%u.\n",
-                        *((uint32_t*)recv_val), UINT32VAL, num_backends,
-                        UINT32VAL*num_backends );
+                        "recv_val(%" PRIu32 ") != UINT32VAL(%" PRIu32 ")*num_backends(%d):%" PRIu32 ".\n",
+                        val, UINT32VAL, num_backends, comp);
                 test->print(tmp_buf, testname);
                 success = false;
             }
             break;
-        case INT64_T:
-            if( *((int64_t*)recv_val) != num_backends * INT64VAL ){
+        }
+        case INT64_T: {
+            int64_t val = *(int64_t*)recv_val;
+            int64_t comp = 0;
+            for(int i=0; i < num_backends; i++)
+                comp += INT64VAL;
+            if( val != comp ){
                 sprintf(tmp_buf,
-                        (sizeof(long int) == sizeof(int64_t) ? 
-                         "recv_val(%ld) != INT64VAL(%ld)*num_backends(%d):%ld.\n" :
-                         "recv_val(%lld) != INT64VAL(%lld)*num_backends(%d):%lld.\n"),
-                        *((int64_t*)recv_val), INT64VAL, num_backends,
-                        INT64VAL*num_backends );
+                        "recv_val(%" PRIi64 " != INT64VAL(%" PRIi64 ")*num_backends(%d):%" PRIi64 ".\n",
+                        val, INT64VAL, num_backends, comp);
                 test->print(tmp_buf, testname);
                 success = false;
             }
             break;
-        case UINT64_T:
-            if( *((uint64_t*)recv_val) != num_backends * UINT64VAL ){
+        }
+        case UINT64_T: {
+            uint64_t val = *(uint64_t*)recv_val;
+            uint64_t comp = 0;
+            for(int i=0; i < num_backends; i++)
+                comp += UINT64VAL;
+            if( val != comp ){
                 sprintf(tmp_buf,
-                        (sizeof(long unsigned int) == sizeof(uint64_t) ? 
-                         "recv_val(%lu) != UINT64VAL(%lu)*num_backends(%d):%lu.\n" :
-                         "recv_val(%llu) != UINT64VAL(%llu)*num_backends(%d):%llu.\n"),
-                        *((uint64_t*)recv_val), UINT64VAL, num_backends,
-                        UINT64VAL*(uint64_t)num_backends );
+                        "recv_val(%" PRIu64 " != UINT64VAL(%" PRIu64 ")*num_backends(%d):%" PRIu64 ".\n",
+                        val, UINT64VAL, num_backends, comp );
                 test->print(tmp_buf, testname);
                 success = false;
             }
             break;
-        case FLOAT_T:
-            if( !compare_Float( *(float*)recv_val, num_backends * FLOATVAL, 3) ){
+        }
+        case FLOAT_T: {
+            float val = *(float*)recv_val;
+            float comp = 0.0;
+            for(int i=0; i < num_backends; i++)
+                comp += FLOATVAL;
+            if( ! compare_Float(val, comp, 2) ){
                 sprintf(tmp_buf,
                         "recv_val(%f) != FLOATVAL(%f)*num_backends(%d):%f.\n",
-                        *((float*)recv_val), FLOATVAL, num_backends,
-                        FLOATVAL*num_backends);
+                        val, FLOATVAL, num_backends, comp);
                 test->print(tmp_buf, testname);
                 success = false;
             }
             break;
-        case DOUBLE_T:
-            if( !compare_Double(*(double*)recv_val, num_backends*DOUBLEVAL, 3) ){
+        }
+        case DOUBLE_T: {
+            double val = *(double*)recv_val;
+            double comp = 0.0;
+            for(int i=0; i < num_backends; i++)
+                comp += DOUBLEVAL;
+            if( ! compare_Double(val, comp, 5) ){
                 sprintf(tmp_buf,
                         "recv_val(%lf) != DOUBLEVAL(%lf)*num_backends(%d):%lf.\n",
-                        *((double*)recv_val), DOUBLEVAL, num_backends,
-                        num_backends*DOUBLEVAL);
+                        val, DOUBLEVAL, num_backends, comp);
                 test->print(tmp_buf, testname);
                 success = false;
             }
             break;
+        }
         case CHAR_ARRAY_T:
         case UCHAR_ARRAY_T:
         case INT16_ARRAY_T:
@@ -251,7 +288,7 @@ int test_Sum( Network * net, DataType type )
 }
 
 #if defined (UNCUT)
-int test_Max( Network * net, DataType type )
+int test_Max( Network * net, DataType typ )
 {
     PacketPtr buf;
     char recv_val[8];
@@ -259,8 +296,8 @@ int test_Max( Network * net, DataType type )
     std::string testname;
     bool success=true;
 
-    tag = Type2MaxTag[ type ];
-    testname = "test_Max(" + Type2String[ type ] + ")";
+    tag = Type2MaxTag[ typ ];
+    testname = "test_Max(" + Type2String[ typ ] + ")";
 
     test->start_SubTest(testname);
 
@@ -290,16 +327,16 @@ int test_Max( Network * net, DataType type )
     else{
         char tmp_buf[1024];
 
-        if( buf->unpack( Type2FormatString[type], recv_val ) == -1 ){
+        if( buf->unpack( Type2FormatString[typ], recv_val ) == -1 ){
             test->print("stream::unpack() failure\n", testname);
             return -1;
         }
 
-        if( !compare_Vals( recv_val, send_val, type ) ) {
+        if( !compare_Vals( recv_val, send_val, typ ) ) {
             char recv_val_string[64];
             char send_val_string[64];
-            val2string(recv_val_string, recv_val, type);
-            val2string(send_val_string, send_val, type);
+            val2string(recv_val_string, recv_val, typ);
+            val2string(send_val_string, send_val, typ);
             sprintf(tmp_buf, "recv_val: %s != send_val: %s\n",
                     recv_val_string, send_val_string );
             test->print(tmp_buf, testname);

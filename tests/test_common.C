@@ -22,19 +22,19 @@ StaticInitializer si; //Used to initialize maps
 
 bool compare_Float(float f1, float f2, int sig)
 {
-    if( fabs(f1 - f2) > pow( (double)10, sig * -1) ) {
+    float diff = f1 - f2;
+    float resolution = powf( float(10.0), float(0-sig) );
+    if( fabsf(diff) > resolution )
         return false;
-    }
-
     return true;
 }
 
 bool compare_Double(double f1, double f2, int sig)
 {
-    if( fabs(f1 - f2) > pow( (double)10, sig * -1) ) {
+    double diff = f1 - f2;
+    double resolution = pow( double(10.0), double(0-sig) );
+    if( fabs(diff) > resolution )
         return false;
-    }
-
     return true;
 }
 

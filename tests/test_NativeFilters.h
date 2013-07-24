@@ -14,11 +14,11 @@ const char CHARVAL=7;
 const unsigned char UCHARVAL=7;
 const int16_t INT16VAL=-17;
 const uint16_t UINT16VAL=17;
-const int32_t INT32VAL=-17;
-const uint32_t UINT32VAL=17;
-const int64_t INT64VAL=-17;
-const uint64_t UINT64VAL=17;
-const float FLOATVAL=(float)123.456;
-const double DOUBLEVAL=123.456;
+const int32_t INT32VAL=-117;
+const uint32_t UINT32VAL=117;
+const int64_t INT64VAL=-177;
+const uint64_t UINT64VAL=177;
+const float FLOATVAL=(float)123.450;
+const double DOUBLEVAL=123.45678;
 
 #endif /* test_nativefilters_h */
