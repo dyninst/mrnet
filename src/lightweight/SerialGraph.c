@@ -116,7 +116,6 @@ void SerialGraph_add_Leaf(SerialGraph_t* sg, char* ihostname,
     len += strlen(sg->byte_array) + 1;
     if( len > sg->arr_len ) {
         len *= 2;
-        /* MJB DEBUG */ mrn_dbg(3, mrn_printf(FLF, stderr, "about to realloc sg->byte_array. old len=%" PRIszt "new len=%" PRIszt "\n", sg->arr_len, len));
         sg->byte_array = (char*)realloc(sg->byte_array, len);
         if( sg->byte_array == NULL ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "realloc(%" PRIszt ") failed\n", len));
@@ -146,7 +145,6 @@ void SerialGraph_add_SubTreeRoot(SerialGraph_t* sg, char* ihostname,
     len += strlen(sg->byte_array) + 1;
     if( len > sg->arr_len ) {
         len *= 2;
-        /* MJB DEBUG */ mrn_dbg(3, mrn_printf(FLF, stderr, "about to realloc sg->byte_array. old len=%" PRIszt " new len=%" PRIszt "\n", sg->arr_len, len));
         sg->byte_array = (char*) realloc(sg->byte_array, len);
         if( sg->byte_array == NULL ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "realloc(%" PRIszt ") failed\n", len));
@@ -171,7 +169,6 @@ void SerialGraph_end_SubTree(SerialGraph_t* sg)
     len = curlen + 2; // appending ']' + '\0'
     if( len > sg->arr_len ) {
         len *= 2;
-        /* MJB DEBUG */ mrn_dbg(3, mrn_printf(FLF, stderr, "about to realloc sg->byte_array. old len=%" PRIszt " new len=%" PRIszt "\n", sg->arr_len, len));
         sg->byte_array = (char*) realloc(sg->byte_array, len);
         if( sg->byte_array == NULL ) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "realloc(%" PRIszt ") failed\n", len));
