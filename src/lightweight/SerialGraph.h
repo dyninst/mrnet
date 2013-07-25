@@ -10,8 +10,8 @@
 
 struct SerialGraph_t {
     char* byte_array;
-    unsigned int arr_len;
-    unsigned int buf_idx;
+    size_t arr_len;
+    size_t buf_idx;
     unsigned int num_nodes;
     unsigned int num_backends;
 };
