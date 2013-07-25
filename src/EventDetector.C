@@ -404,6 +404,8 @@ void * EventDetector::main( void* iarg )
     mrn_dbg( 5, mrn_printf(FLF, stderr, "starting main loop\n"));
     while( true ) {
 
+        if( net->is_LocalNodeBackEnd() && edt->is_Disabled() ) break;
+
         Timer waitTimer;
         int timeout = -1; /* block */
         TimeKeeper* tk = NULL;
@@ -414,12 +416,10 @@ void * EventDetector::main( void* iarg )
             waitTimer.start();
         }
 
-        std::set< XPlat_Socket > eventfds;
         //mrn_dbg( 5, mrn_printf(FLF, stderr, "eventWait(timeout=%dms)\n", timeout));
+        std::set< XPlat_Socket > eventfds;
         int retval = edt->eventWait( eventfds, timeout );
-
         if( retval == -1 ) {
-            if( net->is_LocalNodeBackEnd() && edt->is_Disabled() ) break;
             continue;
         }
         else if( retval == 0 ) {
@@ -434,8 +434,6 @@ void * EventDetector::main( void* iarg )
 
             // notify streams with registered timeouts
             edt->handle_Timeout( tk, elapsed );
-	
-            if( net->is_LocalNodeBackEnd() && edt->is_Disabled() ) break;
             continue;
         }
         else {
