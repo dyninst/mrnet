@@ -617,28 +617,26 @@ void * EventDetector::main( void* iarg )
             }
                     
             // Check for child failures
-            if( ! edt->is_Disabled() ) {
-                list< XPlat_Socket >::iterator iter;
-                for( iter = watch_list.begin(); iter != watch_list.end(); ) {
-                    XPlat_Socket cur_sock = *iter;
+            list< XPlat_Socket >::iterator iter;
+            for( iter = watch_list.begin(); iter != watch_list.end(); ) {
+                XPlat_Socket cur_sock = *iter;
 
-                    // skip local_sock and parent_sock, or if socket isn't set
-                    if( (cur_sock == local_sock) ||
-                            (net->is_LocalNodeChild() &&
-                            (cur_sock == parent_sock)) ||
-                            (eventfds.find(cur_sock) == eventfds.end()) ) {
-                        iter++;
-                        continue;
-                    }
+                // skip local_sock and parent_sock, or if socket isn't set
+                if( (cur_sock == local_sock) ||
+                    (net->is_LocalNodeChild() && (cur_sock == parent_sock)) ||
+                    (eventfds.find(cur_sock) == eventfds.end()) ) {
+                    iter++;
+                    continue;
+                }
 
-                    // remove from watched lists
-                    edt->remove_FD( cur_sock );
-                    list< XPlat_Socket >::iterator tmp_iter = iter++;
-                    watch_list.erase( tmp_iter );
+                /*mrn_dbg( 5, mrn_printf(FLF, stderr, "socket:%d IS set\n", cur_sock) );*/
 
-                    /*mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                      "socket:%d IS set\n", cur_sock) );*/
+                // remove from watched lists
+                edt->remove_FD( cur_sock );
+                list< XPlat_Socket >::iterator tmp_iter = iter++;
+                watch_list.erase( tmp_iter );
 
+                if( ! edt->is_Disabled() ) {
                     map< XPlat_Socket, Rank >:: iterator iter2 =
                         edt->childRankByEventDetectionSocket.find( cur_sock );
 

@@ -232,13 +232,11 @@ int PeerNode_recv(PeerNode_t* node, vector_t* packet_list, bool_t blocking)
     int msg_ret = 0;
     mrn_dbg_func_begin();
 
-    if((PeerNode_recv_lock(node, blocking) != 0)) {
+    if( 0 != PeerNode_recv_lock(node, blocking) ) {
         return msg_ret;
     }
     if( blocking || PeerNode_has_data(node) ) {
-
         msg_ret = Message_recv(node->data_sock_fd, packet_list, node->rank);
-
     }
 
     PeerNode_recv_unlock(node);

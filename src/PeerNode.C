@@ -219,7 +219,7 @@ bool PeerNode::stop_CommunicationThreads(void) {
     // This relies on the remote end closing the socket once it receives EOF
     mrn_dbg(5, mrn_printf(FLF, stderr, "Calling shutdown() on data socket\n"));
     errno = 0;
-    if(XPlat::SocketUtils::Shutdown(_data_sock_fd, XPLAT_SHUT_WR) == -1) {
+    if( -1 == XPlat::SocketUtils::Shutdown(_data_sock_fd, XPLAT_SHUT_WR) ) {
         mrn_dbg(1, mrn_printf(FLF, stderr,
                     "Failed to shutdown() data socket: %s\n",
                     strerror(errno)));
@@ -228,21 +228,20 @@ bool PeerNode::stop_CommunicationThreads(void) {
 
     // wake up send thread to shut it down
     // shutdown packet send will fail, but that's expected
+    mrn_dbg(5, mrn_printf(FLF, stderr, "stopping send thread\n"));
     PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, NULL) );
     _msg_out->add_Packet( packet );
 
     // Wait until the remote end has done an orderly shutdown to close socket
     size_t bb_size = 8;
     char *bogus_buffer = (char *)malloc(sizeof(char) * bb_size);
-    for(;;) {
+    while(1) {
+        //mrn_dbg(5, mrn_printf(FLF, stderr, "receiving on data socket\n"));
         ssize_t recv_ret = XPlat::SocketUtils::recv(_data_sock_fd, bogus_buffer, bb_size);
-        if(recv_ret <= 0) {
-            break;
-        }
+        if( recv_ret <= 0 ) break;
     }
-
     free(bogus_buffer);
-
+    mrn_dbg(5, mrn_printf(FLF, stderr, "closing data socket\n"));
     close_DataSocket();
 
     _sync.Unlock();
@@ -511,7 +510,6 @@ void PeerNode::mark_Failed(void)
 
         // wake up send thread, if that's not this thread
         XPlat::Thread::Id my_id = XPlat::XPlat_TLSKey->GetTid();
-
         if( my_id != get_SendThrId() ) {
             // shutdown packet send will fail, but that's expected
             PacketPtr packet( new Packet(CTL_STRM_ID, PROT_SHUTDOWN, NULL) );
