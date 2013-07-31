@@ -4,6 +4,7 @@
  ****************************************************************************/
 
 #include "mrnet/MRNet.h"
+#include "utils.h"
 
 using namespace MRN;
 using namespace XPlat;
