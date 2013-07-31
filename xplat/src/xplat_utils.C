@@ -22,7 +22,7 @@ static XPlat::Mutex xplat_printf_mutex;
 
 const int MIN_DEBUG_LEVEL = 0;
 const int MAX_DEBUG_LEVEL = 5;
-int CUR_DEBUG_LEVEL = 5;
+int CUR_DEBUG_LEVEL = 1;
 
 void set_DebugLevel(int l) {
     if( l <= MIN_DEBUG_LEVEL ) {
