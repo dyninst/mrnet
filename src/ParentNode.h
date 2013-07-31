@@ -72,6 +72,9 @@ class ParentNode: public virtual Error,
     void init_numChildrenExpected( SerialGraph& sg );
     unsigned int get_numChildrenExpected(void) const  { return _num_children; }
 
+    // Added by Taylor:
+    void set_numChildrenExpected( const int num_children );
+
     virtual int proc_PortUpdates( PacketPtr ipacket ) const;
 
     virtual int send_LaunchInfo( PeerNodePtr ) const;

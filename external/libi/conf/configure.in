@@ -1,0 +1,131 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_PREREQ(2.59)
+AC_INIT(libi,1.0.0,tgroves@cs.unm.edu,libi,)
+AC_CONFIG_AUX_DIR(conf)
+AC_CANONICAL_HOST
+
+MRNET_ROOT="`cd ${srcdir}/../../ && pwd`"
+abs_srcdir=`cd $srcdir && pwd`
+AC_SUBST(MRNET_ROOT)
+
+PLATFORM_BUILD="${MRNET_ROOT}/build/${host}"
+AC_SUBST(PLATFORM_BUILD)
+
+dnl === C++ COMPILERS ===
+AC_PROG_CXX()
+AC_LANG(C++)
+
+dnl === CONFIGURE OPTIONS
+AC_ARG_WITH(libi-startup,
+            [AS_HELP_STRING([--with-libi-startup=METHOD],
+                            [Tree instantiation method - "ssh" (default), "slurm"])],
+            [LIBI_STARTUP_METHOD="${withval}"],
+            [LIBI_STARTUP_METHOD="ssh"])
+
+AC_ARG_WITH(xplat,
+	[AS_HELP_STRING([--with-xplat=PATH],
+		[Absolute path to installation of XPlat])],
+	[XPLAT_IDIR="${withval}"],
+	[XPLAT_IDIR=""])
+AC_SUBST(XPLAT_IDIR)
+
+AC_ARG_WITH(launchmon,
+	[AS_HELP_STRING([--with-launchmon=PATH],
+		[Absolute path to installation of LaunchMON])],
+	[LMON_IDIR="${withval}"],
+	[LMON_IDIR="${abs_srcdir}/lmon"])
+
+AC_ARG_ENABLE(shared,
+    [AS_HELP_STRING([--enable-shared],[Build shared object version of libi library (default off)])],
+    [ BUILDSHARED="yes" ],
+    [ BUILDSHARED="no"] )
+AC_SUBST(BUILDSHARED)
+
+AC_ARG_ENABLE(debug,
+    [AS_HELP_STRING([--enable-debug],[Enable debug mode options (default off)])],
+    [ debug_mode="yes" ],
+    [ debug_mode="no" ])
+
+dnl === Checks for header files.
+AC_CHECK_HEADERS([assert.h errno.h fcntl.h limits.h netdb.h signal.h stddef.h stdlib.h stdio.h string.h unistd.h arpa/inet.h netinet/in.h sys/ioctl.h sys/socket.h sys/sockio.h sys/time.h])
+AC_HEADER_STDBOOL
+
+dnl === Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_PID_T
+
+dnl === Checks for library functions.
+AC_FUNC_FORK
+AC_CHECK_FUNCS([gethostbyname socket strchr strerror])
+
+dnl === Check for required programs
+AC_PROG_MAKE_SET
+dnl === Searches for an install program, for safety it requires install.sh
+AC_PROG_INSTALL
+AC_PROG_RANLIB
+AC_PROG_YACC
+AC_PROG_LN_S
+
+AC_PATH_PROG(AR, ar)
+ARFLAGS="crv"
+AC_SUBST(AR)
+AC_SUBST(ARFLAGS)
+
+AC_PATH_PROG(GREP, grep)
+AC_SUBST(GREP)
+
+AC_PATH_PROG(CP, cp)
+AC_SUBST(CP)
+
+AC_PATH_PROG(RM, rm)
+AC_SUBST(RM)
+
+dnl === Initial settings ===
+LIBS="-lm -lpthread -ldl"
+
+dnl === Get necessary macros
+STDCFLAGS="-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS"
+CXXFLAGS="$CXXFLAGS -fPIC $STDCFLAGS"
+
+dnl === Ignore user-requested debug/optimization levels
+CXXFLAGS=`echo $CXXFLAGS | sed 's/-g //; s/-O //; s/-O1 //; s/-O2 //; s/-O3 //'`
+
+SOFLAGS="$SOFLAGS -fPIC -shared -rdynamic"
+AC_SUBST(SOFLAGS)
+
+AC_SUBST(LIBI_STARTUP_METHOD)
+
+dnl Added by Taylor: substitutes occurrences of the variable when AC_OUTPUT is called
+AC_SUBST(LMON_IDIR)
+AC_SUBST(LIBI_IDIR)
+
+AC_MSG_CHECKING([[whether we can compile/link with "$CXX $CXXFLAGS $LIBS"]])
+AC_LINK_IFELSE( [AC_LANG_PROGRAM([],[])],
+                [AC_MSG_RESULT(yes)],
+                [AC_MSG_ERROR(no)])
+
+AC_SUBST(CXX)
+AC_SUBST(CXXFLAGS)
+AC_SUBST(LDFLAGS)
+AC_SUBST(SOFLAGS)
+AC_SUBST(LIBS)
+
+AC_C_BIGENDIAN
+AC_CHECK_SIZEOF(char)
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(float)
+AC_CHECK_SIZEOF(double)
+
+dnl Added by Taylor: creates directories with necessary parent directories 
+dnl AS_MKDIR_P([${PLATFORM_BUILD}/depends/libi])
+dnl AS_MKDIR_P([${PLATFORM_BUILD}/obj/libi])
+
+dnl I'm going to need to update this
+dnl e.g. Makefile.libi becomes Makefile.in with @variable@ replaced by the values determined by configure.
+
+dnl AC_CONFIG_HEADER([${PLATFORM_BUILD}/mrnet_config.h:conf/config.h.in])
+AC_CONFIG_FILES([Makefile:conf/Makefile.in])
+
+AC_OUTPUT

@@ -25,11 +25,15 @@ int main(int argc, char **argv){
     char * recv_string;
     bool success=true;
 
-    if( argc != 6 ) {
+	fprintf(stderr, "BE args...\n");
+   	for(int i =0; i < argc; i++){
+		fprintf(stderr, "Args were: %s\n", argv[i]);
+	}
+    /*if( argc != 6 ) {
         fprintf(stderr, "Usage: %s parent_hostname parent_port parent_rank my_hostname my_rank\n",
                 argv[0]);
         exit( -1 );
-    }
+    }*/
 
     Network * net = Network::CreateNetworkBE( argc, argv );
 
