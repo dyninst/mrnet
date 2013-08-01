@@ -16,6 +16,7 @@ XTFrontEndNode::XTFrontEndNode( Network* inetwork,
   : CommunicationNode( ihostname, listeningPort, irank ),
     ParentNode( inetwork, ihostname, irank, 
                 listeningSocket, listeningPort ),
+    XTParentNode(),
     FrontEndNode( inetwork, ihostname, irank )
 {
 }

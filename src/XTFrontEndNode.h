@@ -5,19 +5,21 @@
 #ifndef XT_FrontEndNode_h
 #define XT_FrontEndNode_h
 
+#include "XTParentNode.h"
 #include "FrontEndNode.h"
 
 namespace MRN
 {
 
-class XTFrontEndNode : public FrontEndNode
+class XTFrontEndNode : public XTParentNode,
+                       public FrontEndNode
 {
 public:
     XTFrontEndNode(Network* n,
-                        std::string const& ihostname,
-                        Rank irank,
-                        int listeningSocket,
-                        Port listeningPort );
+                   std::string const& ihostname,
+                   Rank irank,
+                   int listeningSocket,
+                   Port listeningPort );
     virtual ~XTFrontEndNode(void);
 };
 
