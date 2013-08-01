@@ -120,7 +120,7 @@ int PeerNode_connect_DataSocket(PeerNode_t* parent, int num_retry)
 {
     mrn_dbg(3, mrn_printf(FLF, stderr, 
                           "Creating data conection to (%s:%d) ...\n", 
-                          parent->net->local_hostname, parent->net->local_port));
+                          parent->hostname, parent->port));
 
     if( connectHost(&(parent->data_sock_fd), parent->hostname, 
                     parent->port, num_retry) == -1 ) { 
@@ -131,15 +131,14 @@ int PeerNode_connect_DataSocket(PeerNode_t* parent, int num_retry)
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "new data socket %d\n", 
                           parent->data_sock_fd));
-
     return 0;
 }
 
 int PeerNode_connect_EventSocket(PeerNode_t* parent, int num_retry) 
 {
     mrn_dbg(3, mrn_printf(FLF, stderr, 
-                          "Creating event conection to (%s:%d) ...\n", 
-                          parent->net->local_hostname, parent->net->local_port));
+                          "Creating event connection to (%s:%d) ...\n", 
+                          parent->hostname, parent->port));
 
     if( connectHost(&(parent->event_sock_fd), parent->hostname, 
                     parent->port, num_retry) == -1 ) { 
@@ -150,7 +149,6 @@ int PeerNode_connect_EventSocket(PeerNode_t* parent, int num_retry)
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "new event socket %d\n", 
                           parent->event_sock_fd));
-
     return 0;
 }
 
