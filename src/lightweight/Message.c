@@ -354,11 +354,7 @@ ssize_t MRN_recv(XPlat_Socket sock_fd, void *buf, size_t count)
     ssize_t rc;
     rc = XPlat_SocketUtils_recv( sock_fd, buf, count );
     if( rc < 0 ) {
-        return -1;
+        XPlat_SocketUtils_Close( sock_fd );
     }
-    else {
-        if( 0 == rc )
-            XPlat_SocketUtils_Close( sock_fd );
-        return rc;
-    }
+    return rc;
 }
