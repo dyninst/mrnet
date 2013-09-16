@@ -84,9 +84,9 @@ Stream::Stream( Network * inetwork, unsigned int iid,
         }
     }
 
-    _sync_filter = new Filter( isync_filter_id, this, FILTER_SYNC );
-    _us_filter = new Filter( ius_filter_id, this, FILTER_UPSTREAM );
-    _ds_filter = new Filter( ids_filter_id, this, FILTER_DOWNSTREAM);
+    _sync_filter = new Filter(_network->GetFilterInfo(), isync_filter_id, this, FILTER_SYNC );
+    _us_filter = new Filter(_network->GetFilterInfo(), ius_filter_id, this, FILTER_UPSTREAM );
+    _ds_filter = new Filter(_network->GetFilterInfo(), ids_filter_id, this, FILTER_DOWNSTREAM);
 
     mrn_dbg_func_end();
 }

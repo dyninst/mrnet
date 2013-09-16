@@ -131,9 +131,10 @@ Network::Network(void)
       _shutting_down(false),
       _startup_timeout(120),
       _topo_update_timeout_msec(250),
-      _perf_data( new PerfDataMgr() )
+      _perf_data( new PerfDataMgr() ),
+      _net_filters(new std::map< unsigned short, FilterInfo >())
 {
-    
+    Filter::initialize_static_stuff(_net_filters);
     if(XPlat_TLSKey == NULL) {
         XPlat_TLSKey = new TLSKey();
     }
@@ -1914,7 +1915,7 @@ int Network::load_FilterFuncs( const char* so_file,
         unsigned short cur_filter_id = next_filter_id;
         const char* func_name = functions[u];
 
-        int rc = Filter::load_FilterFunc( cur_filter_id, so_copy, func_name );
+        int rc = Filter::load_FilterFunc(GetFilterInfo(), cur_filter_id, so_copy, func_name );
         if( rc == -1 ) {
             filter_ids[u] = -1;
             mrn_dbg( 1, mrn_printf(FLF, stderr,
@@ -2783,6 +2784,10 @@ bool Network::collect_NetPerformanceData ( rank_perfdata_map& results,
     }
     mrn_dbg_func_end();
     return true;
+}
+
+FilterInfoPtr Network::GetFilterInfo() {
+    return _net_filters;
 }
 
 }  // namespace MRN
