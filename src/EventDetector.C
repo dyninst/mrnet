@@ -662,7 +662,7 @@ void * EventDetector::main( void* iarg )
     mrn_dbg(5, mrn_printf(FLF, stderr, "I'm going away now!\n"));
     Network::free_ThreadState();
 
-  } catch( abi::__forced_unwind& ) { throw; }
+  } catch( ... ) { throw; }
 
     return NULL;
 }

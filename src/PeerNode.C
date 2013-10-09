@@ -409,7 +409,7 @@ void * PeerNode::recv_thread_main( void* iargs )
     mrn_dbg( 3, mrn_printf(FLF, stderr, "I'm going away now!\n") );
     Network::free_ThreadState();
 
-  } catch( abi::__forced_unwind& ) { throw; }
+  } catch(... ) { throw; }
 
     return NULL;
 }
@@ -467,7 +467,7 @@ void * PeerNode::send_thread_main( void* iargs )
     mrn_dbg( 3, mrn_printf(FLF, stderr, "I'm going away now!\n") );
     Network::free_ThreadState();
 
-  } catch( abi::__forced_unwind& ) { throw; }
+  } catch(... ) { throw; }
 
     return NULL;
 }
