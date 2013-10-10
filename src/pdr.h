@@ -163,7 +163,7 @@ extern void pdrmem_create(PDR *pdrs, char * addr, uint64_t size,
                           enum pdr_op op, pdr_byteorder bo);          /* PDR using memory buffers */
 extern void pdr_free(pdrproc_t proc, char *objp);
 
-extern bool pdr_sizeof(pdrproc_t, void *, uint64_t * size);
+extern bool_t pdr_sizeof(pdrproc_t, void *, uint64_t * size);
 extern pdr_byteorder pdrmem_getbo(void);  // Get local machine byte ordering (use for encode)
 #ifdef __cplusplus
 } /* extern C */
