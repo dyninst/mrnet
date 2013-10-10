@@ -278,6 +278,10 @@ bool PeerNode::has_data() const
     // set up file descriptor set for the poll
     fd_set rfds;
     FD_ZERO( &rfds );
+
+    if (_data_sock_fd < 0)
+        return false;
+
     FD_SET( _data_sock_fd, &rfds );
 
     // check if data is available
