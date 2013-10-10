@@ -225,6 +225,38 @@ int PeerNode_has_data(PeerNode_t* node)
     return false;
 }
 
+int PeerNode_has_event_data(PeerNode_t * node) {
+    struct timeval zeroTimeout;
+    fd_set rfds;
+    int sret;
+
+    mrn_dbg_func_begin();
+
+    zeroTimeout.tv_sec = 0;
+    zeroTimeout.tv_usec = 0;
+  
+    // set up file descriptor set for the poll
+    FD_ZERO(&rfds);
+    FD_SET(node->event_sock_fd, &rfds);
+
+    // check if data is available
+    sret = select(node->event_sock_fd + 1, &rfds, NULL, NULL, &zeroTimeout);
+    if (sret == -1) {
+        mrn_dbg_func_end();
+        return 0;
+    }
+    return 1;
+}
+
+int PeerNode_recv_event(PeerNode_t* node, vector_t* packet_list, bool_t blocking)
+{
+    int msg_ret = 0; 
+    if(  PeerNode_has_event_data(node) ) {
+        msg_ret = Message_recv(node->event_sock_fd, packet_list, node->rank);
+    }
+    return msg_ret;
+}
+
 int PeerNode_recv(PeerNode_t* node, vector_t* packet_list, bool_t blocking)
 {
     int msg_ret = 0;
