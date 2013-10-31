@@ -80,7 +80,7 @@ BUILD_SHARED_LIBS = @BUILDSHARED@
 SOFLAGS = @SOFLAGS@
 
 LDFLAGS = @LDFLAGS@
-COMMNODE_LDFLAGS = @CN_LDFLAGS@
+COMMNODE_LDFLAGS = @CN_LDFLAGS@ -static-libstdc++ -static-libgcc
 
 LIBS = @LIBS@ @EXTRA_LIBS@
 LIBS_SO = @LIBS@ @EXTRA_LIBS_SO@
@@ -450,7 +450,7 @@ $(COMMNODE): $(COMMNODE_OBJS) $(LIBMRNET) $(LIBXPLAT)
 
 $(TOPGEN): $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
 	@echo "Linking `basename $@` ..."
-	$(PURIFY) $(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/config_generator.o \
+	$(PURIFY) $(CXX) $(CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/config_generator.o \
            $(LIBMRNET) $(LIBXPLAT) $(LIBS)
 
 $(STD_TESTS_FE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \

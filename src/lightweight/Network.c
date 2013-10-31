@@ -925,6 +925,7 @@ int Network_has_ParentFailure(Network_t* net)
     struct timeval zeroTimeout;
     fd_set rfds;
     int sret;
+    int ret = 0;
 
     Network_lock(net, PARENT_SYNC);
 
@@ -936,19 +937,18 @@ int Network_has_ParentFailure(Network_t* net)
     FD_SET(net->parent->event_sock_fd, &rfds);
 
     sret = select(net->parent->event_sock_fd + 1, &rfds, NULL, NULL, &zeroTimeout);
-   
-    if (sret != 1) {
+    if (sret == -1) {
         // select error
         perror("select()");
-        return -1;
-    } else {
+        ret = -1;
+    } else if (sret == 1) {
         if (FD_ISSET(net->parent->event_sock_fd, &rfds)) { 
-            return 1;
+            ret = 1;
         }
     }
    
     Network_unlock(net, PARENT_SYNC);
-    return 0;
+    return ret;
 }
 
 int Network_recover_FromParentFailure(Network_t* net) 
