@@ -269,7 +269,7 @@ int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
                               &fids, &nfuncs );
     if( retval == 0 ) {
         for( unsigned u=0; u < nfuncs; u++ ) {
-            int rc = Filter::load_FilterFunc( fids[u], so_file, funcs[u] );
+            int rc = Filter::load_FilterFunc(_network->GetFilterInfo(), fids[u], so_file, funcs[u] );
             if( rc == -1 ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
                                        "Filter::load_FilterFunc(%s,%s) failed.\n",

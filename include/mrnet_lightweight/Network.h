@@ -104,6 +104,9 @@ struct PeerNode_t* Network_get_ParentNode( Network_t* net );
 int Network_has_PacketsFromParent( Network_t* net );
 int Network_recv_internal( Network_t* net, struct Stream_t* stream, bool_t blocking );
 Packet_t* Network_recv_stream_check(Network_t* net);
+
+int Network_recv_EventFromParent(Network_t * net, struct vector_t* opackets, bool_t blocking);
+
 int Network_recv_PacketsFromParent( Network_t* net, struct vector_t* opacket, bool_t blocking );
 int Network_send_PacketToParent( Network_t* net,  Packet_t* ipacket );
 

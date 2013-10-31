@@ -38,8 +38,9 @@ class EventDetector;
 class Stream;
 class PerfDataMgr;
 class PeerNode;
+class FilterInfo;
 typedef boost::shared_ptr< PeerNode > PeerNodePtr; 
-
+typedef boost::shared_ptr<std::map< unsigned short, FilterInfo > > FilterInfoPtr;
 
 
 class Network: public Error {
@@ -242,6 +243,9 @@ protected:
                                      perfdata_context_t context,
                                      int aggr_filter_id = TFILTER_ARRAY_CONCAT );
 
+
+    FilterInfoPtr GetFilterInfo();
+
  private:
     friend class Stream;
     friend class FrontEndNode;
@@ -400,6 +404,7 @@ protected:
     // data includes cannot be included in this header)
     PerfDataMgr * _perf_data;
 
+    FilterInfoPtr _net_filters;
 };
 
 } /* MRN namespace */

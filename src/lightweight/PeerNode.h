@@ -53,6 +53,9 @@ int PeerNode_sendDirectly(PeerNode_t* peer,  Packet_t* ipacket);
 
 int PeerNode_has_data(PeerNode_t* node);
 
+int PeerNode_has_event_data(PeerNode_t * node);
+int PeerNode_recv_event(PeerNode_t* node, vector_t* packet_list, bool_t blocking);
+
 int PeerNode_recv(PeerNode_t* node, vector_t* opacket, bool_t blocking);
 
 int PeerNode_flush(PeerNode_t* peer);

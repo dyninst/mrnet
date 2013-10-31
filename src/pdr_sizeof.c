@@ -117,7 +117,7 @@ static struct pdr_ops _ops = {
 extern "C" {
 #endif
 
-bool pdr_sizeof(pdrproc_t func, void *data,uint64_t * size)
+bool_t pdr_sizeof(pdrproc_t func, void *data,uint64_t * size)
 {
     PDR pdrs;
     bool_t rc;

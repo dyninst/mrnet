@@ -19,14 +19,12 @@ namespace MRN
 /*======================================*
  *    Filter Class Definition        *
  *======================================*/
-map< unsigned short, Filter::FilterInfo > Filter::Filters;
-int FilterCounter::count=0;
-static FilterCounter fc;
 
-Filter::Filter(unsigned short iid, Stream * strm, filter_type_t type)
+
+Filter::Filter(FilterInfoPtr filterInfo, unsigned short iid, Stream * strm, filter_type_t type)
     : _id(iid), _filter_state(NULL), _strm(strm), _params(Packet::NullPacket), _type(type)
 {
-    FilterInfo& finfo = Filters[iid];
+    FilterInfo& finfo = (*(filterInfo.get()))[iid];
     _filter_func =
         (void (*)(const vector<PacketPtr>&, vector<PacketPtr>&, vector<PacketPtr>&, 
                   void **, PacketPtr&, const TopologyLocalInfo& ))
@@ -138,7 +136,7 @@ void Filter::set_FilterParams( PacketPtr iparams )
    _params = iparams;
 }
 
-int Filter::load_FilterFunc( unsigned short iid, const char *iso_file, const char *ifunc_name )
+int Filter::load_FilterFunc( FilterInfoPtr filterInfo, unsigned short iid, const char *iso_file, const char *ifunc_name )
 {
     XPlat::SharedObject* so_handle = NULL;
     void (*filter_func_ptr)()=NULL;
@@ -184,13 +182,14 @@ int Filter::load_FilterFunc( unsigned short iid, const char *iso_file, const cha
         return -1;
     }
 
-    if( ! register_Filter( iid, filter_func_ptr, state_func_ptr, *fmt_str_ptr ) )
+    if( ! register_Filter( filterInfo, iid, filter_func_ptr, state_func_ptr, *fmt_str_ptr ) )
         return -1;
 
     return 0;
 }
 
-bool Filter::register_Filter( unsigned short iid,
+bool Filter::register_Filter(FilterInfoPtr filterInfo,
+                              unsigned short iid,
                               void (*ifilter_func)(),
                               void (*istate_func)(),
                               const char *ifmt )
@@ -198,8 +197,8 @@ bool Filter::register_Filter( unsigned short iid,
     mrn_dbg_func_begin();
 
     FilterInfo finfo( ifilter_func, istate_func, ifmt );
-    if( Filters.find( iid ) == Filters.end() ) {
-        Filters[iid] = finfo;
+    if( filterInfo->find( iid ) == filterInfo->end() ) {
+        (*(filterInfo.get()))[iid] = finfo;
         return true;
     }
     mrn_dbg( 1, mrn_printf(FLF, stderr,

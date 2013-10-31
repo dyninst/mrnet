@@ -397,26 +397,31 @@ int Network_recv_internal(Network_t* net, Stream_t* stream, bool_t blocking)
                 mrn_dbg(3, mrn_printf(FLF, stderr, "recv() failed\n"));
                 /* We've noticed a failure on the socket. Check if another  *
                  * thread hasn't already recovered.                         */
-                if (Network_recover_FromFailures(net)) {
-                    recov_parent = Network_get_ParentNode(net);
-                    /* We are first ones here, recover */
-                    if(recov_parent == orig_parent) {
-                        Network_recover_FromParentFailure(net);
+
+                // Check if the parent has sent an event packet
+                ret_val = Network_recv_EventFromParent(net,packet_list,0);
+                if (ret_val == -1) {
+                   if (Network_recover_FromFailures(net)) {
+                        recov_parent = Network_get_ParentNode(net);
+                        /* We are first ones here, recover */
+                        if(recov_parent == orig_parent) {
+                            Network_recover_FromParentFailure(net);
+                        }
+                        /* Try receiving again */
+                        if (Network_recv_PacketsFromParent(net, packet_list,
+                                    blocking) == -1) {
+                            mrn_dbg(3, mrn_printf(FLF, stderr, 
+                                        "recv() failed twice, return -1\n"));
+                            no_lock = 1;
+                            goto recv_clean_up;
+                        }
                     }
-                    /* Try receiving again */
-                    if (Network_recv_PacketsFromParent(net, packet_list,
-                                blocking) == -1) {
-                        mrn_dbg(3, mrn_printf(FLF, stderr, 
-                                    "recv() failed twice, return -1\n"));
+                    else {
+                        ret_val = -1;
                         no_lock = 1;
                         goto recv_clean_up;
                     }
-                }
-                else {
-                    ret_val = -1;
-                    no_lock = 1;
-                    goto recv_clean_up;
-                }
+               }
             }
             Network_lock(net, RECV_SYNC);
             break;
@@ -625,7 +630,16 @@ int Network_has_PacketsFromParent(Network_t* net)
     }
     return ret_val;
 }
-
+int Network_recv_EventFromParent(Network_t * net, vector_t* opackets, bool_t blocking) {
+    Network_lock(net,PARENT_SYNC);
+    PeerNode_t *tmp_parent = Network_get_ParentNode(net);
+    int ret_val = -1;
+    if(tmp_parent != NULL) {
+        ret_val = PeerNode_recv_event(tmp_parent, opackets, blocking);
+    }
+    Network_unlock(net,PARENT_SYNC);
+    return ret_val;
+}
 int Network_recv_PacketsFromParent(Network_t* net, vector_t* opackets, bool_t blocking)
 {
     PeerNode_t *tmp_parent = Network_get_ParentNode(net);
