@@ -80,7 +80,7 @@ BUILD_SHARED_LIBS = @BUILDSHARED@
 SOFLAGS = @SOFLAGS@
 
 LDFLAGS = @LDFLAGS@
-COMMNODE_LDFLAGS = @CN_LDFLAGS@ -static-libstdc++ -static-libgcc
+COMMNODE_LDFLAGS = @CN_LDFLAGS@
 
 LIBS = @LIBS@ @EXTRA_LIBS@
 LIBS_SO = @LIBS@ @EXTRA_LIBS_SO@
@@ -136,6 +136,7 @@ ifeq ($(COMPILER_TYPE), gnu)
                 -Wlong-long  \
                 -Wno-conversion	
    endif # SILENCE_WARNINGS
+   COMMNODE_LDFLAGS += -static-libstdc++ -static-libgcc
 endif #GNU options
 
 #ifeq ($(COMPILER_TYPE), forte)
