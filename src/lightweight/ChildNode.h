@@ -27,7 +27,7 @@ int ChildNode_ack_ControlProtocol(BackEndNode_t* be, int ack_tag, char success);
 
 int ChildNode_ack_DeleteSubTree(BackEndNode_t* be);
 
-int ChildNode_proc_SetTopoEnv(BackEndNode_t* be, Packet_t* packet); 
+int ChildNode_proc_NetworkSettings(BackEndNode_t* be, Packet_t* packet); 
 
 int ChildNode_proc_RecoveryReport(BackEndNode_t* be, Packet_t* ipacket);
 

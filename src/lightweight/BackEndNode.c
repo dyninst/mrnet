@@ -28,12 +28,7 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
     PeerNode_t* parent;
     NetworkTopology_t* nt;
 
-    Stream_t* s;
-    char** host_arr;
-    int32_t* type;
-    uint32_t* send_iprank;
-    uint32_t* send_myrank;
-    uint16_t* send_port;
+    Stream_t* strm;
 
     be = (BackEndNode_t*) calloc( (size_t)1, sizeof(BackEndNode_t) );
     assert(be != NULL);
@@ -63,59 +58,27 @@ BackEndNode_t* new_BackEndNode_t(Network_t* inetwork,
                                (Port)UnknownPort, imyrank, true);
     inetwork->network_topology = nt;
 
+    // create topology update stream
+    strm = Network_new_Stream(inetwork, TOPOL_STRM_ID, NULL, 0, 0, 0, 0);
+    assert( strm != NULL );
+
     // establish data connection with parent
     if( ChildNode_init_newChildDataConnection(be, inetwork->parent, 
                                               UnknownRank) == -1 ) {
-        mrn_dbg (1, mrn_printf(FLF, stderr,
-                    "init_newChildDataConnection() failed\n"));
+        mrn_dbg( 1, mrn_printf(FLF, stderr,
+                               "init_newChildDataConnection() failed\n") );
         return NULL;
     }
 
-    // get it again, since it may have been updated
-    nt = Network_get_NetworkTopology(inetwork);
-    if( nt != NULL ) {
-
-        if( ! NetworkTopology_isInTopology(nt, imyhostname, UnknownPort, imyrank) ) {
-            // back-end attach case
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend not already in the topology\n") );
-
-            // send a topology update
-            s = Network_new_Stream(inetwork, TOPOL_STRM_ID, NULL, 0, 0, 0, 0);
-
-            /* these must be heap allocated, since Stream_send() frees
-               packets sent on non-user streams */
-            host_arr = (char**) malloc( sizeof(char*) );
-            type = (int32_t*) malloc( sizeof(int32_t) );
-            send_iprank = (uint32_t*) malloc( sizeof(uint32_t) );
-            send_myrank = (uint32_t*) malloc( sizeof(uint32_t) );
-            send_port = (uint16_t*) malloc( sizeof(uint16_t) );
-
-            type[0] = TOPO_NEW_BE;
-            send_iprank[0] = iprank;
-            send_myrank[0] = imyrank;
-            host_arr[0] = strdup(imyhostname);
-            send_port[0] = UnknownPort;
-
-            Stream_send(s, PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
-                        type, 1, 
-                        send_iprank, 1, 
-                        send_myrank, 1, 
-                        host_arr, 1, 
-                        send_port, 1);
-        } else {
-            mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend already in the topology\n") );
-        }
-
-        if( ChildNode_send_SubTreeInitDoneReport(be) == -1 ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "ChildNode_send_SubTreeInitDoneReport() failed\n") );
-        }
-    } 
-
     // establish event connection with parent
     if( ChildNode_init_newChildEventConnection(be, inetwork->parent) == -1 ) {
-        mrn_dbg (1, mrn_printf(FLF, stderr,
-                    "init_newChildEventConnection() failed\n"));
+        mrn_dbg(1, mrn_printf(FLF, stderr,
+                              "init_newChildEventConnection() failed\n"));
         return NULL;
+    }
+
+    if( ChildNode_send_SubTreeInitDoneReport(be) == -1 ) {
+         mrn_dbg(1, mrn_printf(FLF, stderr, "ChildNode_send_SubTreeInitDoneReport() failed\n"));
     }
 
     return be; 
@@ -227,8 +190,10 @@ int BackEndNode_proc_newStream( BackEndNode_t* be, Packet_t* packet )
         }
     }
 
-    Network_new_Stream(be->network, stream_id, backends, num_backends,
-                       us_filter_id, sync_id, ds_filter_id);
+    if( TOPOL_STRM_ID != stream_id ) {
+        Network_new_Stream(be->network, stream_id, backends, num_backends,
+                           us_filter_id, sync_id, ds_filter_id);
+    }
 
     if( backends != NULL )
         free( backends );

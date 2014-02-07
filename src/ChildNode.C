@@ -264,9 +264,57 @@ int ChildNode::proc_NetworkSettings( PacketPtr ipacket ) const
         return -1;
     }
     
-    // init topology 
-    std::string sg_str(sg_byte_array);
-    nt->reset( sg_str, false );
+    // update topology based on parent's topology (note: parent topology from BEFORE adding my subtree)
+    bool gen_topol_attach = false;
+    std::string myhost = _network->get_LocalHostName();
+    Port myport = _network->get_LocalPort();
+    Rank myrank = _network->get_LocalRank();
+    Rank parrank = _network->get_ParentNode()->get_Rank();
+
+    std::string parent_sg_str(sg_byte_array);
+    SerialGraph parent_prev_topol(parent_sg_str);
+    SerialGraph* subtree_in_parent = parent_prev_topol.get_MySubTree( myhost, myport, myrank ); 
+    if( NULL == subtree_in_parent ) {
+        // I wasn't in parent's topology, must be BE/CP attach
+        gen_topol_attach = true;
+    }
+    
+    std::string my_sg_str = nt->get_LocalSubTreeString();
+    SerialGraph my_subtree(my_sg_str);
+
+    Rank parent_topol_root = parent_prev_topol.get_RootRank();
+    Rank my_topol_root = nt->get_Root()->get_Rank();
+    if( my_topol_root != parent_topol_root ) {
+        // add current subtree to parent's previous topology, then replace local topology
+        NetworkTopology* new_topol = new NetworkTopology(_network, parent_prev_topol);
+        bool added = new_topol->add_SubGraph( parrank, my_subtree, false ); 
+        if( added ) {
+            _network->set_NetworkTopology( new_topol );
+            delete nt;
+        }
+	else {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "failed to update parent topology with current subtree\n") );
+        }
+    }
+    else {
+        // roots are the same, so we assume the rest of the topology is as well
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "current and parent's previous topology root match\n") );
+    }
+
+    // BE or CP attach: generate topology update for local rank
+    if( gen_topol_attach ) {
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "not in parent's previous topology, generating topology update\n") );
+        int type = ( _network->is_LocalNodeInternal() ? NetworkTopology::TOPO_NEW_CP : NetworkTopology::TOPO_NEW_BE );
+        char *host_arr = strdup( myhost.c_str() );
+        uint32_t send_iprank = parrank;
+        uint32_t send_myrank = myrank;
+        uint16_t send_port = myport;
+
+        Stream* topol_strm = _network->get_Stream( TOPOL_STRM_ID );
+        topol_strm->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
+                          &type, 1, &send_iprank, 1, &send_myrank, 1,
+                          &host_arr, 1, &send_port, 1 );
+    }
 
     // init other network settings
     std::map< net_settings_key_t, std::string >& settingsMap = _network->get_SettingsMap();
@@ -454,7 +502,7 @@ int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,
 {
     mrn_dbg_func_begin();
 
-    // Establish data detection connection w/ new Parent
+    // Establish data connection w/ new Parent
     int num_retry = 15;
     if( iparent->connect_DataSocket(num_retry) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "connect_DataSocket() failed\n") );

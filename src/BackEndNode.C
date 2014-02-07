@@ -33,47 +33,24 @@ BackEndNode::BackEndNode( Network * inetwork,
     
     NetworkTopology* nt = _network->get_NetworkTopology();
 
-    //establish data connection w/ parent
+    // create topology update stream
+    Stream* s = _network->new_Stream( TOPOL_STRM_ID, NULL, 0, 
+                                      TFILTER_TOPO_UPDATE, 
+                                      SFILTER_TIMEOUT, 
+                                      TFILTER_TOPO_UPDATE_DOWNSTREAM );
+    assert( s != NULL );
+
+    // establish data connection w/ parent
     if( init_newChildDataConnection( _network->get_ParentNode() ) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
-                               "init_newChildDataConnection() failed\n" ));
-        return;
+                               "init_newChildDataConnection() failed\n") );
     }
 
-    //start event detection thread
+    // start event detection thread, which establishes event connection
     if( ! EventDetector::start( _network ) ) {
-        error( ERR_INTERNAL, _rank, "start_EventDetector() failed" );
-        return;
+        mrn_dbg( 1, mrn_printf(FLF, stderr,
+                               "EventDetector::start() failed\n") );
     }
-    
-    if( nt != NULL ) {
-    
-      if( ! nt->in_Topology(imyhostname, _port, imyrank) ) {
-          // backend attach case
-          mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                                 "Backend not already in the topology\n") );
-
-          //new be - send topology update packet
-          Stream* s = _network->new_Stream( TOPOL_STRM_ID, NULL, 0, 
-	                                    TFILTER_TOPO_UPDATE, 
-                                            SFILTER_TIMEOUT, 
-                                            TFILTER_TOPO_UPDATE_DOWNSTREAM );
-          assert( s != NULL );
-          int type = NetworkTopology::TOPO_NEW_BE;
-          char *host_arr = strdup( imyhostname.c_str() );
-          uint32_t send_iprank = iprank;
-          uint32_t send_myrank = imyrank;
-          uint16_t send_port = _port;
-
-          s->send( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                   &type, 1, &send_iprank, 1, &send_myrank, 1, 
-                   &host_arr, 1, &send_port, 1 );
-
-          free(host_arr);
-      }	
-      else
-          mrn_dbg( 5, mrn_printf(FLF, stderr, "Backend already in the topology\n") );
-    }  
 
     if( send_SubTreeInitDoneReport() == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr, "send_SubTreeInitDoneReport() failed\n") );

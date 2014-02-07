@@ -65,7 +65,7 @@ SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* sg, char* ihostname,
     byte_array = sg->byte_array;
     byte_array = strstr(byte_array, hoststr);
     if (byte_array == NULL) {
-        mrn_dbg(1, mrn_printf(FLF, stderr,
+        mrn_dbg(3, mrn_printf(FLF, stderr,
                               "No SubTreeRoot: '%s' found in byte_array: '%s'\n",
                               hoststr, sg->byte_array));
         return NULL;

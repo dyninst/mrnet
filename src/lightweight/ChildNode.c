@@ -310,7 +310,7 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
             }
             break;
         case PROT_NET_SETTINGS:
-            if( ChildNode_proc_SetTopoEnv(be, packet) == -1 ) {
+            if( ChildNode_proc_NetworkSettings(be, packet) == -1 ) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
                                        "proc_SetTopoEnv() failed\n" ));
                 retval = -1;
@@ -342,14 +342,27 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
     return retval;
 }
 
-int ChildNode_proc_SetTopoEnv( BackEndNode_t* be, Packet_t* ipacket ) 
+int ChildNode_proc_NetworkSettings( BackEndNode_t* be, Packet_t* ipacket ) 
 {
     char* sg_byte_array = NULL;
     int* keys = NULL;
     char** vals = NULL ;
     uint32_t i, count;
-    SerialGraph_t* sg = NULL;
+    SerialGraph_t* parent_sg = NULL;
+    SerialGraph_t* my_subtree = NULL;
+    SerialGraph_t* subtree_in_parent = NULL;
     NetworkTopology_t* nt;
+    NetworkTopology_t* new_topol;
+    Node_t* my_root_node;
+    Node_t* parent_node;
+    PeerNode_t* parent;
+    Stream_t* topol_strm;
+    char* myhost;
+    char* my_sg_str;
+    int gen_topol_attach = 0;
+    Rank myrank, parrank, parent_topol_root, my_topol_root;
+    Port myport;
+
     mrn_dbg_func_begin();
    
     nt = Network_get_NetworkTopology( be->network );
@@ -362,14 +375,53 @@ int ChildNode_proc_SetTopoEnv( BackEndNode_t* be, Packet_t* ipacket )
         return -1;
     }
 
-    // init topology
-    sg = new_SerialGraph_t( sg_byte_array );
+    // update topology based on parent's topology (note: parent topology from BEFORE adding my subtree)
+    myhost = Network_get_LocalHostName( be->network );
+    myport = Network_get_LocalPort( be->network );
+    myrank = Network_get_LocalRank( be->network );
+
+    parent = Network_get_ParentNode( be->network );
+    parrank = PeerNode_get_Rank( parent );
+
+    parent_sg = new_SerialGraph_t( sg_byte_array );
     if( sg_byte_array != NULL )
         free( sg_byte_array );
-    NetworkTopology_reset( nt, sg );
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s\n", 
-                           NetworkTopology_get_TopologyStringPtr(nt)) );
+    subtree_in_parent = SerialGraph_get_MySubTree( parent_sg, myhost, myport, myrank );  
+    if( NULL == subtree_in_parent ) { 
+        // I wasn't in parent's topology, must be BE/CP attach
+        gen_topol_attach = 1;
+    }   
     
+    my_sg_str = NetworkTopology_get_LocalSubTreeStringPtr( nt );
+    my_subtree = new_SerialGraph_t( my_sg_str );
+
+    my_root_node = NetworkTopology_get_Root( nt );
+    my_topol_root = NetworkTopology_Node_get_Rank( my_root_node );
+    parent_topol_root = SerialGraph_get_RootRank( parent_sg );
+    if( my_topol_root != parent_topol_root ) { 
+        // reset topology to parent's previous topology, then add my subtree
+        NetworkTopology_reset( nt, parent_sg );
+        parent_node = NetworkTopology_find_Node( nt, parrank );
+        NetworkTopology_add_SubGraph( nt, parent_node, my_subtree, true );  
+    }   
+    else {
+        // roots are the same, so we assume the rest of the topology is as well
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "current and parent's previous topology root match\n") );
+    }   
+
+    // BE attach: generate topology update for local rank
+    if( gen_topol_attach ) { 
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "not in parent's previous topology, generating topology update\n") );
+        int type = TOPO_NEW_BE;
+        uint32_t send_iprank = parrank;
+        uint32_t send_myrank = myrank;
+        uint16_t send_port = myport;
+        topol_strm = Network_get_Stream( be->network, TOPOL_STRM_ID );
+        Stream_send( topol_strm, PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd",
+                     &type, 1, &send_iprank, 1, &send_myrank, 1,
+                     &myhost, 1, &send_port, 1 );
+    }
+
     // init other network settings
     for( i=0; i < count; i++ ) {
 

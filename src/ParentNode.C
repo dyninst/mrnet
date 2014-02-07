@@ -472,44 +472,58 @@ Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
         return NULL;
     }
 
-    // register new stream w/ network
-    stream = _network->new_Stream( stream_id, backends, num_backends, 
-                                   (unsigned short)us_filter_id,
-                                   (unsigned short)sync_id,
-                                   (unsigned short)ds_filter_id );
-
-    if( backends != NULL )
-        free( backends );
-
-    // send packet to children nodes
-    if( _network->send_PacketToChildren(ipacket) == -1 ) {
-        mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
-        return NULL;
+    if( TOPOL_STRM_ID == stream_id ) {
+        if( _network->is_LocalNodeInternal() ) {
+            stream = _network->get_Stream( TOPOL_STRM_ID );
+        }
+	else {
+            // register new stream w/ network
+            stream = _network->new_Stream( stream_id, backends, num_backends, 
+                                           (unsigned short)us_filter_id,
+                                           (unsigned short)sync_id,
+                                           (unsigned short)ds_filter_id );
+        }
     }
+    else {
+        // register new stream w/ network
+        stream = _network->new_Stream( stream_id, backends, num_backends, 
+                                       (unsigned short)us_filter_id,
+                                       (unsigned short)sync_id,
+                                       (unsigned short)ds_filter_id );
 
-    // if internal, wait for stream to be created in entire subtree
-    if( tag == PROT_NEW_INTERNAL_STREAM ) {
-
-        // wait for acks
-        if( ! waitfor_ControlProtocolAcks(PROT_NEW_STREAM_ACK,
-                                          _network->get_NumChildren()) ) {
-            mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_ControlProtocolAcks() failed\n" ));
-            // Stream creation has failed, we should clean up
-            _network->delete_Stream(stream_id);
-            delete stream;
-            stream = NULL;
-            wait_success = false;
-        } else {
-            wait_success = true;
+        // send packet to children nodes
+        if( _network->send_PacketToChildren(ipacket) == -1 ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, "send_PacketToChildren() failed\n") );
+            return NULL;
         }
 
-        // send ack to parent, if any
-        if( _network->is_LocalNodeChild() ) {
-            if( ! _network->get_LocalChildNode()->ack_ControlProtocol(PROT_NEW_STREAM_ACK, wait_success) ) {
-                mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_ControlProtocol(PROT_NEW_STREAM_ACK) failed\n" ));
+        // if internal, wait for stream to be created in entire subtree
+        if( tag == PROT_NEW_INTERNAL_STREAM ) {
+
+            // wait for acks
+            if( ! waitfor_ControlProtocolAcks(PROT_NEW_STREAM_ACK,
+                                              _network->get_NumChildren()) ) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "waitfor_ControlProtocolAcks() failed\n" ));
+                // Stream creation has failed, we should clean up
+                _network->delete_Stream(stream_id);
+                delete stream;
+                stream = NULL;
+                wait_success = false;
+            } else {
+                wait_success = true;
+            }
+
+            // send ack to parent, if any
+            if( _network->is_LocalNodeChild() ) {
+                if( ! _network->get_LocalChildNode()->ack_ControlProtocol(PROT_NEW_STREAM_ACK, wait_success) ) {
+                    mrn_dbg( 1, mrn_printf(FLF, stderr, "ack_ControlProtocol(PROT_NEW_STREAM_ACK) failed\n" ));
+                }
             }
         }
     }
+
+    if( backends != NULL )
+        free( backends );
 
     mrn_dbg_func_end();
     return stream;
@@ -668,10 +682,11 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                                                      child_rank,
                                                      false,
                                                      is_internal );
-
-    child_node->set_DataSocketFd( isock );
     if( child_hostname_ptr != NULL )
         free( child_hostname_ptr );
+
+    child_node->set_DataSocketFd( isock );
+
 
     if( child_incarnation == 1 ) {
         // propagate initial network settings
@@ -693,6 +708,7 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
             vals[ count ] = strdup( "0" );
         count++;
 
+        // send current topology, before adding child's subtree
         std::string topo_str = nt->get_TopologyString();
         char* topo_dup = strdup( topo_str.c_str() );
         PacketPtr pkt( new Packet(CTL_STRM_ID, PROT_NET_SETTINGS, "%s %ad %as", 
@@ -701,18 +717,15 @@ int ParentNode::proc_NewChildDataConnection( PacketPtr ipacket, int isock )
                                   vals, count) );
         pkt->set_DestroyData( true );
         child_node->sendDirectly( pkt );
-
     }
     
-    if( NULL == nt->find_Node(child_rank) ) {
-        std::string child_topo(topo_ptr);
-        mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before adding child subgraph %s\n", 
-                               nt->get_TopologyString().c_str(),
-                               child_topo.c_str()) );
-        SerialGraph sg( child_topo );
-        nt->add_SubGraph( my_rank, sg, true );
-    }
-
+    // add new child's subtree to my topology
+    std::string child_topo(topo_ptr);
+    mrn_dbg( 5, mrn_printf(FLF, stderr, "topology is %s before adding child subgraph %s\n", 
+                           nt->get_TopologyString().c_str(),
+                           child_topo.c_str()) );
+    SerialGraph sg( child_topo );
+    nt->add_SubGraph( my_rank, sg, true );
     if( topo_ptr != NULL )
         free( topo_ptr );
 
