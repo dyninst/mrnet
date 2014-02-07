@@ -135,6 +135,9 @@ class NetworkTopology: public Error {
     void get_OrphanNodes( std::set<NetworkTopology::Node*> & ) const;
     void get_BackEndNodes( std::set<NetworkTopology::Node*> & ) const;
 
+    size_t num_BackEndNodes(void) const;
+    size_t num_InternalNodes(void) const;
+
     // END MRNET API
 
     void get_Descendants( Node *, std::vector< Node * > &odescendants ) const;
