@@ -39,54 +39,25 @@ InternalNode::InternalNode( Network * inetwork,
 								   ParentNode::_port,
 								   ParentNode::_rank) );
    
+    // create topology update stream
+    Stream* s = ParentNode::_network->new_Stream( TOPOL_STRM_ID, NULL, 0, 
+                                                  TFILTER_TOPO_UPDATE, 
+                                                  SFILTER_TIMEOUT, 
+                                                  TFILTER_TOPO_UPDATE_DOWNSTREAM );
+
     //establish data connection w/ parent
     PeerNodePtr parent = ParentNode::_network->get_ParentNode();
     if( init_newChildDataConnection(parent) == -1 ) {
         mrn_dbg( 1, mrn_printf(FLF, stderr,
                                "init_newChildDataConnection() failed\n") );
-        return;
     }
      
     //start event detection thread
     if( EventDetector::start( ParentNode::_network ) == false ){
         mrn_dbg( 1, mrn_printf(FLF, stderr, 
-                               "start_EventDetectionThread() failed\n") );
-        ParentNode::error( ERR_INTERNAL, ParentNode::_rank, 
-                           "start_EventDetectionThread failed\n" );
-        ChildNode::error( ERR_INTERNAL, ParentNode::_rank, 
-                          "start_EventDetectionThread failed\n" );
-        return;
+                               "EventDetector::start() failed\n") );
     }
      
-    NetworkTopology* nt = ParentNode::_network->get_NetworkTopology();  
-    if( nt != NULL ) {
-    
-        if( ! nt->in_Topology(ihostname, listeningPort, irank) ) {
-            // not already in topology => internal node attach case 
-            mrn_dbg( 5, mrn_printf(FLF, stderr, 
-                                   "Internal node not in the topology\n") );
-
-            // send topology update for new CP
-            Stream* s = ParentNode::_network->new_Stream( TOPOL_STRM_ID, NULL, 0, 
-                                                          TFILTER_TOPO_UPDATE, 
-                                                          SFILTER_TIMEOUT, 
-                                              TFILTER_TOPO_UPDATE_DOWNSTREAM );
-            int type = NetworkTopology::TOPO_NEW_CP; 
-            char *host_arr = strdup( ihostname.c_str() );
-	    
-            s->send_internal( PROT_TOPO_UPDATE, "%ad %aud %aud %as %auhd", 
-                              &type, 1, 
-                              &iprank,1, 
-                              &irank, 1, 
-                              &host_arr, 1, 
-                              &listeningPort, 1 );
-            free(host_arr);
-        } 
-        else
-            mrn_dbg( 5, mrn_printf(FLF, stderr,
-                                   "Internal node already in the topology\n") );
-    } 
- 
     mrn_dbg_func_end();
 }
 
