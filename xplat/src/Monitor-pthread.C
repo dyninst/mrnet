@@ -228,40 +228,60 @@ PthreadMonitorData::WaitOnCondition( unsigned int cvid )
 int
 PthreadMonitorData::TimedWaitOnCondition( unsigned int cvid, int milliseconds )
 {
-    int ret = -1, gt_ret;
-    int seconds = milliseconds / 1000;
-    int rem_msecs = milliseconds % 1000;
-    struct timespec tmp_tmspec;
-    struct timeval tv;
+    int gt_ret, ret = -1;
 
-    if(milliseconds < 0) {
+    if( milliseconds < 0 ) {
+        return ret;
+    }
+
+    pthread_cond_t *cv = NULL;
+    ConditionVariableMap::iterator iter = cvmap.find( cvid );
+    if( iter != cvmap.end() ) {
+        cv = cvmap[cvid];
+        if( NULL == cv ) {
+            xplat_dbg(1, xplat_printf(FLF, stderr, 
+                                      "NULL condition variable\n"));
+            return ret;
+        }
+    } 
+    else {
         return ret;
     }
 
     // Get time of day for 'abstime' arg of pthread_cond_timedwait
-    gt_ret = gettimeofday(&tv, NULL);
-    if(gt_ret == -1) {
-        perror("gettimeofday");
-        return gt_ret;
+    struct timeval tv;
+    gt_ret = gettimeofday( &tv, NULL );
+    if( -1 == gt_ret ) {
+        int err = errno;
+        xplat_dbg(1, xplat_printf(FLF, stderr,
+                                  "gettimeofday() failed - %s\n", 
+                                  strerror(err)));
+        return ret;
     }
 
-    tmp_tmspec.tv_sec = (time_t)seconds + tv.tv_sec;
-    tmp_tmspec.tv_nsec = (rem_msecs*1000000l) + (tv.tv_usec * 1000l);
+    time_t sec = milliseconds / 1000;
+    long msec = milliseconds % 1000;
+    long nanosec = msec * 1000000L; // ms -> ns
+    sec += tv.tv_sec;
+    nanosec += (tv.tv_usec * 1000L);
+    if( nanosec >= 1000000000L ) {
+        nanosec -= 1000000000L;
+        sec++;
+    }
 
-    ConditionVariableMap::iterator iter = cvmap.find( cvid );
-    if( iter != cvmap.end() )
-    {
-        pthread_cond_t *cv = cvmap[cvid];
-        if(cv == NULL) {
-            xplat_dbg(1, xplat_printf(FLF, stderr, 
-                "Error: TimedWaitOnCondition on NULL condition variable\n"));
-            return ret;
-        }
+    struct timespec ts;
+    ts.tv_sec = sec;
+    ts.tv_nsec = nanosec;
 
-        ret = pthread_cond_timedwait( cv, &mutex, &tmp_tmspec );
+    ret = pthread_cond_timedwait( cv, &mutex, &ts );
+    if( ETIMEDOUT == ret ) {
         xplat_dbg(3, xplat_printf(FLF, stderr,  "time out!\n"));
-    } else {
-        return -1;
+    }
+    else if( ret ) {
+        xplat_dbg(1, xplat_printf(FLF, stderr,
+                                  "pthread_cond_timedwait() failed - %s\n", 
+                                  strerror(ret)));
+        ret = -1;
     }
 
     return ret;
