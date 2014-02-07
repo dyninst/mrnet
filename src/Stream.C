@@ -1199,7 +1199,7 @@ bool Stream::collect_PerformanceData( rank_perfdata_map& results,
          }
          default:
              mrn_dbg(1, mrn_printf(FLF, stderr, "bad metric type\n"));  
-             return Packet::NullPacket;          
+             return false;          
         }
         
         // add data to result map

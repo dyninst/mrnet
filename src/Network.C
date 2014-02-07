@@ -484,7 +484,7 @@ int Network::broadcast_ShutDown(void)
                 break;
             } else {
                 mrn_dbg(3, mrn_printf(FLF, stderr,
-                            "Discarded "PRIsszt" bytes\n",
+                            "Discarded " PRIsszt " bytes\n",
                             recv_ret));
             }
         }
@@ -679,16 +679,14 @@ void Network::init_NetSettings(void)
 
     eit = _network_settings.find( MRNET_EVENT_WAIT_TIMEOUT_MSEC );
     if( eit != _network_settings.end() ) {
-        // User specifies in seconds, but our interface is milliseconds
-        int timeout = atoi( eit->second.c_str() );
-        _local_time_keeper->set_DefaultTimeout( timeout );
+        int timeout_ms = atoi( eit->second.c_str() );
+        _local_time_keeper->set_DefaultTimeout( timeout_ms );
     }
     
     eit = _network_settings.find( MRNET_TOPOLOGY_UPDATE_TIMEOUT_MSEC );
     if( eit != _network_settings.end() ) {
-        // User specifies in seconds, but our interface is milliseconds
-        int timeout = atoi( eit->second.c_str() );
-        _topo_update_timeout_msec = timeout;
+        int timeout_ms = atoi( eit->second.c_str() );
+        _topo_update_timeout_msec = timeout_ms;
     }
 }
 
@@ -891,6 +889,7 @@ void Network::init_FrontEnd( const char * itopology,
         return;
     }
 
+    // wait for startup confirmations
     mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
     if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() ) {
         error( ERR_INTERNAL, rootRank, "waitfor_SubTreeInitDoneReports() failed");
@@ -915,6 +914,7 @@ void Network::init_FrontEnd( const char * itopology,
         return;
     }
 
+    // set topology propagation stream timeout
     if( s->set_FilterParameters( FILTER_UPSTREAM_SYNC, "%ud", _topo_update_timeout_msec ) == -1) {
         error( ERR_INTERNAL,  rootRank, "failed to set filter parameters");
         shutdown_Network();
@@ -2734,7 +2734,7 @@ bool Network::collect_NetPerformanceData ( rank_perfdata_map& results,
          }
          default:
              mrn_dbg(1, mrn_printf(FLF, stderr, "bad metric type\n"));
-             return Packet::NullPacket;
+             return false; 
         }
         // add data to result map
         unsigned data_ndx = 0;
