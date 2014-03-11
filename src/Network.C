@@ -870,35 +870,6 @@ void Network::init_FrontEnd( const char * itopology,
             backend_argc++;
         }
     }
-   
-    // spawn and connect processes that constitute our network
-    bool success = Instantiate( parsed_graph, 
-                                path.c_str(), 
-                                ibackend_exe, 
-                                ibackend_args, 
-                                backend_argc,
-                                iattrs );
-    delete parsed_graph;
-    parsed_graph = NULL;
-
-    if( ! success ) {
-        error( ERR_NETWORK_FAILURE, rootRank,
-               "Failed to instantiate the network." );
-        // some TBON processes may have been started, so tell them to go away
-        shutdown_Network();
-        return;
-    }
-
-    // wait for startup confirmations
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
-    if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() ) {
-        error( ERR_INTERNAL, rootRank, "waitfor_SubTreeInitDoneReports() failed");
-        shutdown_Network();
-        return;
-    }
-   
-    mrn_dbg(5, mrn_printf(FLF, stderr, "Updating bcast communicator ... \n" ));
-    update_BcastCommunicator();
 
     // create topology propagation stream
     Stream* s = new_InternalStream( _bcast_communicator, TFILTER_TOPO_UPDATE, 
@@ -920,6 +891,47 @@ void Network::init_FrontEnd( const char * itopology,
         shutdown_Network();
         return;
     }
+
+    NetworkTopology * nt = get_NetworkTopology();
+    NetworkTopology::Node * local_node = nt->find_Node(get_LocalRank());
+
+    std::set<NetworkTopology::Node *> tmp = local_node->get_Children();
+    for (std::set<NetworkTopology::Node *>::iterator i = tmp.begin(); i != tmp.end(); i++) {
+        s->add_Stream_Peer((*i)->get_Rank());
+    }
+
+   
+    // spawn and connect processes that constitute our network
+    bool success = Instantiate( parsed_graph, 
+                                path.c_str(), 
+                                ibackend_exe, 
+                                ibackend_args, 
+                                backend_argc,
+                                iattrs );
+
+
+    delete parsed_graph;
+    parsed_graph = NULL;
+
+    if( ! success ) {
+        error( ERR_NETWORK_FAILURE, rootRank,
+               "Failed to instantiate the network." );
+        // some TBON processes may have been started, so tell them to go away
+        shutdown_Network();
+        return;
+    }
+
+    // wait for startup confirmations
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Waiting for subtrees to report ... \n" ));
+    if( ! get_LocalFrontEndNode()->waitfor_SubTreeInitDoneReports() ) {
+        error( ERR_INTERNAL, rootRank, "waitfor_SubTreeInitDoneReports() failed");
+        shutdown_Network();
+        return;
+    }
+   
+    mrn_dbg(5, mrn_printf(FLF, stderr, "Updating bcast communicator ... \n" ));
+    update_BcastCommunicator();
+    
 
     /* collect port updates and broadcast them
      * - this is a no-op on XT
