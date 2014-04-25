@@ -3,14 +3,8 @@
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
-#include <list>
-
-#include "InternalNode.h"
-#include "Message.h"
-#include "utils.h"
 #include "mrnet/MRNet.h"
-#include "xplat/NetUtils.h"
-
+#include "utils.h"
 
 using namespace MRN;
 using namespace XPlat;
@@ -21,9 +15,8 @@ int main(int argc, char **argv)
 {
     int ret = 0;
     Network *net = NULL;
-
-    try
-    {
+	
+    try {
         // parse the command line for platform-independent arguments
         //
         // skip past the executable name
@@ -44,7 +37,6 @@ int main(int argc, char **argv)
         }
 
         // build our object allowing access to the MRNet network
-
         net = Network::CreateNetworkIN( argc, argv );
         if( (net == NULL) || net->has_Error() ) {
             fprintf( stderr, "Network::CreateNetworkIN() failed, check args\n" );

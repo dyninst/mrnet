@@ -30,8 +30,6 @@ public:
     int send_LaunchInfo( PeerNodePtr child_node ) const;
 
 private:
-    int proc_PortUpdates( PacketPtr ipacket ) const ;
-
     PacketPtr _launch_pkt;
 };
 

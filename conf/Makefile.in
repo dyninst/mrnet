@@ -32,6 +32,12 @@ XPLATDIR = $(BASEDIR)/xplat
 EXTDIR   = $(BASEDIR)/external
 BUILDDIR = $(BASEDIR)/build
 
+# Added by Taylor:
+LIBIDIR  = @LIBI_INSTALL_DIR@
+LIBIMETHOD = @LIBI_STARTUP_METHOD@
+LMONIDIR = @LMON_IDIR@ 
+LIBLMON = @LIBLMON@
+
 prefix      = ${DESTDIR}@prefix@
 exec_prefix = @exec_prefix@
 IBINDIR     = @bindir@
@@ -88,9 +94,12 @@ LIBS_LTWT = @LIBS_LIGHTWEIGHT@ @EXTRA_LIBS_LIGHTWEIGHT@
 LIBS_LOWFAT = @LIBS_LOWFAT@ @EXTRA_LIBS_LOWFAT@
 
 # includes
-COMMON_INCLUDES = -I$(INCDIR) -I$(XPLATDIR)/include -I$(TSTDIR) -I$(PLATDIR) -I$(SRCDIR) 
+COMMON_INCLUDES = -I$(INCDIR) -I$(XPLATDIR)/include -I$(TSTDIR) -I$(PLATDIR) -I$(SRCDIR) -I$(install_libincdir) 
 INCLUDES        = $(COMMON_INCLUDES)
 INCLUDES_LTWT   = $(COMMON_INCLUDES) -I$(SRCDIR)/lightweight
+ifeq ($(MRNET_STARTUP_METHOD), libi)
+    COMMON_INCLUDES += -I$(LIBIDIR)/include 
+endif
 
 # Boost
 HAVE_BOOST = @HAVE_BOOST@
@@ -166,6 +175,7 @@ LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a.$(VERSION)
 LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
 LIBMRNET_LIGHTWEIGHT_SONAME = libmrnet_lightweight.so.$(VERSION)
 
+LIBMRNET_SO_DEPLIBS = $(LIBLMON)
 LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat.$(VERSION) $(LIBS_SO)
 
 LIBXPLAT    = $(LIBDIR)/libxplat.a.$(VERSION)
@@ -175,11 +185,28 @@ LIBXPLAT_LIGHTWEIGHT    = $(LIBDIR)/libxplat_lightweight.a.$(VERSION)
 LIBXPLAT_LIGHTWEIGHT_SO = $(LIBDIR)/libxplat_lightweight.so.$(VERSION)
 LIBXPLAT_LIGHTWEIGHT_SONAME = libxplat_lightweight.so.$(VERSION)
 
-TARGET_LIBS = $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT)
-ifeq ($(BUILD_SHARED_LIBS), yes)
-    TARGET_LIBS += $(LIBXPLAT_SO) $(LIBMRNET_SO)
-    TARGET_LIBS += $(LIBXPLAT_LIGHTWEIGHT_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
+
+LIBI_TARGETS = 
+LIBLIBI = $(LIBDIR)/liblibi.a
+LIBLIBI_SO = $(LIBDIR)/liblibi.so
+ifeq ($(MRNET_STARTUP_METHOD),libi)
+    LIBI_TARGETS = $(LIBLIBI)
+    ifeq ($(BUILD_SHARED_LIBS), yes)
+        LIBMRNET_SO_DEPLIBS += -llibi
+        LIBI_TARGETS += $(LIBLIBI_SO)
+    endif
 endif
+
+TARGET_LIBS = $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) 
+ifeq ($(BUILD_SHARED_LIBS), yes)
+    TARGET_LIBS += $(LIBXPLAT_SO) $(LIBXPLAT_LIGHTWEIGHT_SO)
+endif
+TARGET_LIBS += $(LIBI_TARGETS)
+TARGET_LIBS += $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT)
+ifeq ($(BUILD_SHARED_LIBS), yes)
+    TARGET_LIBS += $(LIBMRNET_SO) $(LIBMRNET_LIGHTWEIGHT_SO)
+endif
+
 TARGETS = $(COMMNODE) $(TOPGEN) $(TARGET_LIBS)
 
 STD_TESTS_FE = $(BINDIR)/test_basic_FE \
@@ -263,30 +290,28 @@ else
 endif
 
 ifeq ($(MRNET_STARTUP_METHOD),cray)
-
-# build for a Cray XT (uses aprun or alps_tool_helper for parallel process launch)
-LIBMRNET_SRCS += $(SRCDIR)/XTNetwork.C \
+	# build for a Cray XT (uses aprun or alps_tool_helper for parallel process launch)
+    LIBMRNET_SRCS += $(SRCDIR)/XTNetwork.C \
+                 $(SRCDIR)/XTParentNode.C \
                  $(SRCDIR)/XTFrontEndNode.C \
                  $(SRCDIR)/XTBackEndNode.C \
                  $(SRCDIR)/XTInternalNode.C
-
-else
-    ifeq ($(MRNET_STARTUP_METHOD),ssh)
-
-# fall back to RSH instantiation approach
-LIBMRNET_SRCS += $(SRCDIR)/RSHNetwork.C \
+endif
+ifeq ($(MRNET_STARTUP_METHOD),ssh)
+	# fall back to RSH instantiation approach
+    LIBMRNET_SRCS += $(SRCDIR)/RSHNetwork.C \
                  $(SRCDIR)/RSHParentNode.C \
                  $(SRCDIR)/RSHChildNode.C \
                  $(SRCDIR)/RSHFrontEndNode.C \
                  $(SRCDIR)/RSHBackEndNode.C \
                  $(SRCDIR)/RSHInternalNode.C
-
-    else
-
-$(error Unrecognized MRNet instantiation method "$(MRNET_STARTUP_METHOD)"; see configure --help for supported methods)
-    endif
 endif
-
+ifeq ($(MRNET_STARTUP_METHOD),libi)
+    LIBMRNET_SRCS += $(SRCDIR)/LIBINetwork.C 
+endif
+ifneq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi ssh cray))
+    $(error Unrecognized MRNet instantiation method "$(MRNET_STARTUP_METHOD)"; see configure --help for supported methods)
+endif
 
 LIBMRNET_OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.C,%.o,$(patsubst %.c,%.o,$(notdir $(LIBMRNET_SRCS)))))
 
@@ -323,7 +348,17 @@ lightweight-all:
 lightweight-sharedobj:
 	$(MAKE) -f $(PLATDIR)/Makefile.ltwt sharedobj
 
-install: install-prep install-local lightweight-install xplat-install xplat_lightweight-install
+libi-all: $(LIBXPLAT)
+	$(MAKE) -f $(LIBIDIR)/Makefile all
+
+INSTALL_PREREQ = install-prep 
+INSTALL_PREREQ += xplat-install xplat_lightweight-install
+ifeq ($(MRNET_STARTUP_METHOD),libi)
+    INSTALL_PREREQ += libi-install
+endif
+INSTALL_PREREQ += install-local lightweight-install 
+
+install: $(INSTALL_PREREQ)
 
 install-prep:
 	@echo Creating install directories
@@ -397,7 +432,10 @@ lightweight-install:
 xplat_lightweight-install:
 	$(MAKE) -f $(PLATDIR)/Makefile.xplat_ltwt install
 
-tests: all $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(LIBDIR)/test_DynamicFilters.so
+libi-install:
+	$(MAKE) -f $(LIBIDIR)/Makefile install
+
+tests: all $(STD_TESTS) $(STD_TESTS_FE_LIGHTWEIGHT) $(STD_TESTS_BE_LIGHTWEIGHT) $(LIBDIR)/test_DynamicFilters.so 
 
 tests-opt: $(OPT_TESTS)
 
@@ -438,32 +476,42 @@ $(LIBXPLAT_LIGHTWEIGHT): xplat_lightweight-all
 
 $(LIBXPLAT_LIGHTWEIGHT_SO): xplat_lightweight-sharedobj
 
-$(COMMNODE): $(COMMNODE_OBJS) $(LIBMRNET) $(LIBXPLAT)
+$(LIBI_TARGETS): libi-all
+
+$(LIBLMON):
+
+CNDEP = $(LIBMRNET) 
+ifeq ($(MRNET_STARTUP_METHOD),libi)
+    CNDEP += $(LIBLIBI)
+endif
+ifeq ($(LIBIMETHOD),slurm)
+    CNDEP += $(LIBLMON)
+endif
+CNDEP += $(LIBXPLAT)
+
+$(COMMNODE): $(COMMNODE_OBJS) $(CNDEP)
 	@echo Linking `basename $@` ...
 	$(PURIFY) $(CXX) $(CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(COMMNODE_OBJS) \
-	   $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+           $(CNDEP) $(LIBS)
 
 $(TOPGEN): $(OBJDIR)/config_generator.o $(LIBMRNET) $(LIBXPLAT)
 	@echo "Linking `basename $@` ..."
 	$(PURIFY) $(CXX) $(CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/config_generator.o \
-           $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+           $(LIBMRNET) $(LIBXPLAT) $(CNDEP) $(LIBS)
 
-$(STD_TESTS_FE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
-              $(TSTDIR)/test_common.h \
-              $(BINDIR)/mrnet_tests.sh
+$(STD_TESTS_FE): $(BINDIR)/%: $(CNDEP) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
+                              $(TSTDIR)/test_common.h
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+	   $(OBJDIR)/test_common.o $(CNDEP) $(LIBS)
 
-$(STD_TESTS_BE): $(BINDIR)/%: $(LIBMRNET) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
-              $(TSTDIR)/test_common.h \
-              $(BINDIR)/mrnet_tests.sh
+$(STD_TESTS_BE): $(BINDIR)/%: $(CNDEP) $(OBJDIR)/test_common.o $(OBJDIR)/%.o \
+                              $(TSTDIR)/test_common.h
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
-	   $(OBJDIR)/test_common.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+	   $(OBJDIR)/test_common.o $(CNDEP) $(LIBS)
 
-$(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o \
-				$(BINDIR)/mrnet_tests.sh
+$(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CC) $(TEST_CCFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 		$(LIBMRNET_LIGHTWEIGHT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBS_LTWT)
@@ -471,30 +519,27 @@ $(STD_TESTS_BE_LIGHTWEIGHT): $(BINDIR)/%: $(LIBMRNET_LIGHTWEIGHT) $(OBJDIR)/%.o 
 $(BINDIR)/mrnet_tests.sh: $(BASEDIR)/tests/mrnet_tests.sh
 	$(CP) $(BASEDIR)/tests/mrnet_tests.sh $(BINDIR)/
 
-
 $(LIBDIR)/test_DynamicFilters.so: $(TSTDIR)/test_DynamicFilters.C
 	@echo "Building `basename $@` ..."
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $(TSTDIR)/test_DynamicFilters.C
 
-$(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(LIBMRNET) \
-                            $(OBJDIR)/%.o \
-                            $(OBJDIR)/test_Recovery.o \
-                            $(OBJDIR)/ThroughputExperiment.o \
-                            $(OBJDIR)/test_Recovery_aux.o \
-                            $(LIBDIR)/test_RecoveryFilter.so
+$(BINDIR)/test_Recovery_FE: $(BINDIR)/%: $(CNDEP) $(OBJDIR)/%.o \
+                                         $(OBJDIR)/test_Recovery.o \
+                                         $(OBJDIR)/ThroughputExperiment.o \
+                                         $(OBJDIR)/test_Recovery_aux.o \
+                                         $(LIBDIR)/test_RecoveryFilter.so
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(LDFLAGS) -o $@ $(OBJDIR)/$*.o \
 	   $(OBJDIR)/test_Recovery.o $(OBJDIR)/test_Recovery_aux.o \
-           $(OBJDIR)/ThroughputExperiment.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+           $(OBJDIR)/ThroughputExperiment.o $(CNDEP) $(LIBS)
 
-$(BINDIR)/test_Recovery_BE: $(BINDIR)/%: $(LIBMRNET) \
-                            $(OBJDIR)/%.o \
-                            $(OBJDIR)/ThroughputExperiment.o \
-                            $(OBJDIR)/test_Recovery.o
+$(BINDIR)/test_Recovery_BE: $(BINDIR)/%: $(CNDEP) $(OBJDIR)/%.o \
+                                         $(OBJDIR)/ThroughputExperiment.o \
+                                         $(OBJDIR)/test_Recovery.o
 	@echo "Linking `basename $*` ..."
 	$(PURIFY) $(CXX) $(TEST_CXXFLAGS) $(COMMNODE_LDFLAGS) -o $@ $(OBJDIR)/$*.o \
            $(OBJDIR)/ThroughputExperiment.o \
-           $(OBJDIR)/test_Recovery.o $(LIBMRNET) $(LIBXPLAT) $(LIBS)
+           $(OBJDIR)/test_Recovery.o $(CNDEP) $(LIBS)
 
 $(LIBDIR)/test_RecoveryFilter.so: $(TSTDIR)/test_Recovery/test_RecoveryFilter.C
 	@echo "Building `basename $@` ..."
@@ -503,7 +548,14 @@ $(LIBDIR)/test_RecoveryFilter.so: $(TSTDIR)/test_Recovery/test_RecoveryFilter.C
 #################################
 # Cleaning rules
 #################################
-clean: local-clean xplat-clean
+
+CLEANDEP = local-clean 
+ifeq ($(MRNET_STARTUP_METHOD),libi)
+	CLEANDEP += libi-clean
+endif
+CLEANDEP += xplat-clean
+
+clean: $(CLEANDEP)  
 
 local-clean: examples-clean lightweight-clean
 	@echo Cleaning $(MRNET_PLATFORM) platform ...
@@ -526,6 +578,10 @@ xplat-clean: xplat_lightweight-clean
 xplat_lightweight-clean:
 	@echo Cleaning xplat for lightweight back-end library
 	$(MAKE) -f $(PLATDIR)/Makefile.xplat_ltwt clean
+
+libi-clean:
+	@echo Cleaning libi library
+	$(MAKE) -f $(LIBIDIR)/Makefile clean
 
 examples-clean:
 	$(MAKE) -f $(PLATDIR)/Makefile.examples clean

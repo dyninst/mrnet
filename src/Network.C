@@ -61,6 +61,9 @@ const Rank UnknownRank = (Rank)-1;
 
 const char *empty_str = NULL_STRING;
 
+// Added by Taylor:
+const int MIN_DYNAMIC_PORT = 1024;
+
 void init_local(void)
 {
 #if !defined(os_windows)
@@ -804,6 +807,7 @@ void Network::init_FrontEnd( const char * itopology,
                              bool irank_backends,
                              bool iusing_mem_buf )
 {
+	mrn_dbg_func_begin();
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
 
@@ -2800,6 +2804,92 @@ bool Network::collect_NetPerformanceData ( rank_perfdata_map& results,
 
 FilterInfoPtr Network::GetFilterInfo() {
     return _net_filters;
+}
+void Network::get_Identity( SerialGraph* sg,
+                    int & n,
+                    const char * myhostname,
+                    Rank & myrank,
+                    int & mynumchildren,
+                    char* & phostname,
+                    Rank & prank,
+                    bool includeNonLeaves,
+                    bool includeLeaves,
+                    bool useNetworkHostName,
+                    bool isRoot ){
+
+    Rank r = sg->get_RootRank();
+    string hn = sg->get_RootHostName();
+    if( useNetworkHostName )
+        XPlat::NetUtils::GetNetworkName( hn, hn );
+    sg->set_ToFirstChild();
+    SerialGraph* child = sg->get_NextChild();
+    bool isLeaf = ( child == NULL );
+    if( !isRoot ){
+        if( (isLeaf && includeLeaves) || (!isLeaf && includeNonLeaves) ){
+            if( hn.compare( myhostname ) == 0 ){
+                n--;
+                if( n == 0 ){
+                    myrank = r;
+                    mynumchildren=0;
+                    for( ; child != NULL; child = sg->get_NextChild() )
+                        mynumchildren++;
+                }
+            }
+        }
+    }
+    if( n > 0 ){
+        for( ; (n > 0) && (child != NULL); child = sg->get_NextChild() )
+            get_Identity( child, n, myhostname, myrank, mynumchildren, phostname, prank, includeNonLeaves, includeLeaves, useNetworkHostName, false );
+        if( n == 0 && phostname == NULL){
+            phostname = strdup( hn.c_str() );
+            prank = r;
+        }
+    }
+}
+
+void Network::CreateHostDistributions( NetworkTopology::Node* node,
+                             bool isRoot,
+                             bool MWincludesLeaves,
+                             host_dist_t** & mw,
+                             host_dist_t** & be)
+{
+    const std::set<NetworkTopology::Node*> children = node->get_Children();
+    bool isNotLeaf = ( children.size() > 0 );
+
+    if( !isRoot ){
+        if( isNotLeaf || MWincludesLeaves ){
+            (*mw) = (host_dist_t*)malloc( sizeof( host_dist_t ) );
+            (*mw)->hostname = strdup( node->get_HostName().c_str() );
+            (*mw)->nproc = 1;
+            (*mw)->next = NULL;
+            mw = &( (*mw)->next );
+        } else {
+            (*be) = (host_dist_t*)malloc( sizeof( host_dist_t ) );
+            (*be)->hostname = strdup( node->get_HostName().c_str() );
+            (*be)->nproc = 1;
+            (*be)->next = NULL;
+            be = &( (*be)->next );
+        }
+    }
+    std::set<NetworkTopology::Node*>::iterator iter = children.begin();
+    while(iter != children.end()){
+        CreateHostDistributions( (*iter), false, MWincludesLeaves, mw, be );
+        iter++;
+    }
+}
+
+std::string Network::get_NetSettingName( int s )
+{
+     std::string ret;
+     if( s == MRNET_DEBUG_LEVEL )
+         ret = "MRNET_DEBUG_LEVEL";
+     else if( s == MRNET_DEBUG_LOG_DIRECTORY )
+         ret = "MRNET_DEBUG_LOG_DIRECTORY";
+     else if( s == MRNET_COMMNODE_PATH )
+         ret = "MRNET_COMMNODE_PATH";
+     else if( s == MRNET_FAILURE_RECOVERY )
+         ret = "MRNET_FAILURE_RECOVERY";
+     return ret;
 }
 
 }  // namespace MRN

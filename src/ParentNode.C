@@ -154,8 +154,55 @@ int ParentNode::proc_PacketFromChildren( PacketPtr cur_packet )
     return retval;
 }
 
-int ParentNode::proc_PortUpdates( PacketPtr ) const
+//This function was changed to by default, function similarly to
+//RSHParentNode::proc_PortUpdates
+//This will require a workaround for Cray, either a special CrayParentNode implementation
+//or a case check, if(Cray) -> Do nothing
+
+int ParentNode::proc_PortUpdates( PacketPtr ipacket ) const
 {
+    
+    mrn_dbg_func_begin();
+
+    Stream* port_strm = NULL;
+
+    NetworkTopology* net_topo = _network->get_NetworkTopology();
+    unsigned net_size = net_topo->get_NumNodes();
+
+    if( _network->is_LocalNodeFrontEnd() && (net_size > 1) ) {
+        // create a waitforall topology update stream
+        Communicator* bcast_comm = _network->get_BroadcastCommunicator();
+        port_strm = _network->new_InternalStream( bcast_comm, TFILTER_TOPO_UPDATE, 
+                                                  SFILTER_WAITFORALL );
+        if( NULL == port_strm ) {
+            mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                                   "failed to create port update stream\n") );
+            return -1;
+        }
+        assert( port_strm->get_Id() == PORT_STRM_ID );
+    }
+
+    // request port updates from children
+    if( ( _network->send_PacketToChildren(ipacket) == -1 ) ||
+        ( _network->flush_PacketsToChildren() == -1 ) ) {
+        mrn_dbg( 1, mrn_printf(FLF, stderr, 
+                               "send/flush_PacketToChildren() failed\n") );
+        return -1;
+    }
+
+    if( _network->is_LocalNodeFrontEnd() && (net_size > 1) ) {
+        // block until updates received
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "blocking until port updates received.\n"));
+        int tag;
+        PacketPtr p;
+        port_strm->recv( &tag, p );
+        mrn_dbg( 5, mrn_printf(FLF, stderr, "Received port updates\n"));
+
+        // broadcast the accumulated updates
+        _network->send_TopologyUpdates();
+    }
+
+    mrn_dbg_func_end();
     return 0;
 }
 
@@ -824,6 +871,14 @@ void ParentNode::notify_OfChildFailure()
     failed_sync.Lock();
     _num_failed_children++;
     failed_sync.Unlock();
+}
+
+// Added by Taylor:
+void ParentNode::set_numChildrenExpected( const int num_children )
+{
+    subtreereport_sync.Lock( );
+    _num_children = num_children;
+    subtreereport_sync.Unlock( );
 }
 
 } // namespace MRN

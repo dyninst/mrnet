@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ $# -ne 3 ]; then
   echo "ERROR: Usage - $0 target install-dir link-name"

@@ -21,6 +21,8 @@
 #include "mrnet/Types.h"
 #include "xplat/Monitor.h"
 
+#include "libi/libi_api.h"
+
 #include <boost/shared_ptr.hpp>
 namespace MRN
 {
@@ -227,7 +229,7 @@ protected:
     std::map< net_settings_key_t, std::string > _network_settings;
     std::map< net_settings_key_t, std::string >& get_SettingsMap();
     virtual void init_NetSettings(void);
-    
+
     int get_StartupTimeout(void);
     void set_StartupTimeout( int new_timeout );
 
@@ -260,6 +262,11 @@ protected:
     friend class RSHParentNode;
     friend class RSHChildNode;
     friend class RSHInternalNode;
+    // Added by Taylor: LIBI friend class
+    friend class LIBIParentNode;
+    friend class LIBIChildNode;
+    friend class LIBIInternalNode;
+    friend class LIBINetwork;
     
     // some conditions we waitfor/signal
     enum {
@@ -355,10 +362,25 @@ protected:
 
     static int get_NetSettingKey( const std::string& s );
     void convert_SettingsMap( const std::map< std::string, std::string > * iattrs );
+    //Taylor: I moved this to a virtual function which LIBINetwork implements
     void init_FE_NetSettings( const std::map< std::string, std::string > * iattrs );
 
     bool is_ShuttingDown(void) const;
     void set_ShuttingDown(void);
+
+    void get_Identity( SerialGraph* sg, int & n, const char * myhostname, Rank & myrank, int & mynumchildren,
+                        char* & phostname, Rank & prank,
+                        bool includeNonLeaves, bool includeLeaves, bool useNetworkHostName,
+                        bool isRoot );
+
+    void CreateHostDistributions( NetworkTopology::Node* node,
+                                 bool isRoot,
+                                 bool MWincludesLeaves,
+                                 host_dist_t** & mw,
+                                 host_dist_t** & be);
+
+
+    static std::string get_NetSettingName( int s );
 
     //Data Members
     std::string _local_hostname;

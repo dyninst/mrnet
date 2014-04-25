@@ -15,7 +15,7 @@ AC_LANG(C++)
 dnl === CONFIGURE OPTIONS
 AC_ARG_WITH(startup,
             [AS_HELP_STRING([--with-startup=METHOD],
-                            [Tree instantiation method - "ssh" (default), "cray"])],
+                            [Tree instantiation method - "ssh" (default), "cray", "libi"])],
             [MRNET_STARTUP_METHOD="${withval}"],
             [MRNET_STARTUP_METHOD="ssh"])
 
@@ -36,6 +36,27 @@ AC_ARG_WITH(boost,
                             [Absolute path to installation of Boost C++ libraries (note: specify the path to the directory containing "include" and "lib" sub-directories)])],
             [BOOST_INSTALL_DIR="${withval}"],
             [BOOST_INSTALL_DIR=""])
+
+AC_ARG_WITH(libi-startup,
+            [AS_HELP_STRING([--with-libi-startup=METHOD],
+                            [Tree instantiation method - "ssh" (default), "slurm"])],
+            [LIBI_STARTUP_METHOD="${withval}"],
+            [LIBI_STARTUP_METHOD="ssh"])
+AC_SUBST(LIBI_STARTUP_METHOD)
+
+AC_ARG_WITH(libi,
+			[AS_HELP_STRING([--with-libi=PATH],
+							[Absolute path to the installation of LIBI C++ libraries (note: specify the path to the directory containing "include" and "lib" sub-directories)])],
+			[LIBI_INSTALL_DIR="${withval}"],
+			[LIBI_INSTALL_DIR="${abs_srcdir}/external/libi"])
+AC_SUBST(LIBI_INSTALL_DIR)
+
+AC_ARG_WITH(launchmon,
+			[AS_HELP_STRING([--with-launchmon=PATH],
+				[Absolute path to installation of LaunchMON])],
+			[LMON_IDIR="${withval}"],
+			[LMON_IDIR="${LIBI_INSTALL_DIR}/lmon"])
+AC_SUBST(LMON_IDIR)
 
 AC_ARG_ENABLE(shared,
     [AS_HELP_STRING([--enable-shared],[Build shared object version of mrnet library (default off)])],
@@ -299,7 +320,6 @@ elif test $COMPILER_TYPE = "intel" ; then
     AC_SUBST(AR)
     ARFLAGS="crv"
     AC_SUBST(ARFLAGS)
-
 fi
 
 dnl === Use OUR debug/optimization levels
@@ -433,6 +453,13 @@ if test $MRNET_STARTUP_METHOD = "cray" ; then
     LDFLAGS="$LDFLAGS_HOLD"
 fi
 
+if test $MRNET_STARTUP_METHOD = "libi" ; then
+	if test $LIBI_STARTUP_METHOD = "slurm" ; then
+		LIBLMON="-L$LMON_IDIR/lib -lmonfeapi -lmonmwapi -lmonbeapi"
+	fi
+fi
+AC_SUBST(LIBLMON)
+
 AC_SUBST(MRNET_STARTUP_METHOD)
 
 AC_MSG_CHECKING([[whether we can compile/link with "$CXX $CXXFLAGS $LIBS"]])
@@ -479,5 +506,7 @@ AS_MKDIR_P([${PLATFORM_BUILD}/obj/xplat/ltwt])
 AC_CONFIG_HEADER([${PLATFORM_BUILD}/mrnet_config.h:conf/config.h.in])
 AC_CONFIG_HEADER([${PLATFORM_BUILD}/xplat_config.h:xplat/conf/config.h.in])
 AC_CONFIG_FILES([${PLATFORM_BUILD}/Makefile:conf/Makefile.in ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in])
+
+AC_CONFIG_SUBDIRS([external/libi])
 
 AC_OUTPUT
