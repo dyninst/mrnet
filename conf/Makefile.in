@@ -161,15 +161,19 @@ TOPGEN      = $(BINDIR)/mrnet_topgen
 
 LIBMRNET    = $(LIBDIR)/libmrnet.a.$(VERSION)
 LIBMRNET_SO = $(LIBDIR)/libmrnet.so.$(VERSION)
+LIBMRNET_SONAME = libmrnet.so.$(VERSION)
 LIBMRNET_LIGHTWEIGHT    = $(LIBDIR)/libmrnet_lightweight.a.$(VERSION)
 LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
+LIBMRNET_LIGHTWEIGHT_SONAME = libmrnet_lightweight.so.$(VERSION)
 
 LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat.$(VERSION) $(LIBS_SO)
 
-LIBXPLAT    = $(LIBDIR)/libxplat.a
-LIBXPLAT_SO = $(LIBDIR)/libxplat.so
-LIBXPLAT_LIGHTWEIGHT    = $(LIBDIR)/libxplat_lightweight.a
-LIBXPLAT_LIGHTWEIGHT_SO = $(LIBDIR)/libxplat_lightweight.so
+LIBXPLAT    = $(LIBDIR)/libxplat.a.$(VERSION)
+LIBXPLAT_SO = $(LIBDIR)/libxplat.so.$(VERSION)
+LIBXPLAT_SONAME = libxplat.so.$(VERSION)
+LIBXPLAT_LIGHTWEIGHT    = $(LIBDIR)/libxplat_lightweight.a.$(VERSION)
+LIBXPLAT_LIGHTWEIGHT_SO = $(LIBDIR)/libxplat_lightweight.so.$(VERSION)
+LIBXPLAT_LIGHTWEIGHT_SONAME = libxplat_lightweight.so.$(VERSION)
 
 TARGET_LIBS = $(LIBXPLAT) $(LIBXPLAT_LIGHTWEIGHT) $(LIBMRNET) $(LIBMRNET_LIGHTWEIGHT)
 ifeq ($(BUILD_SHARED_LIBS), yes)
@@ -420,7 +424,7 @@ $(LIBMRNET): $(LIBMRNET_OBJS)
 
 $(LIBMRNET_SO): $(LIBMRNET_OBJS) $(LIBXPLAT_SO)
 	@echo Building `basename $@` ...
-	$(CXX) $(SOFLAGS) -o $@ $(LIBMRNET_OBJS) $(LIBMRNET_SO_DEPLIBS)
+	$(CXX) -Wl,-soname,$(LIBMRNET_SONAME) $(SOFLAGS) -o $@ $(LIBMRNET_OBJS) $(LIBMRNET_SO_DEPLIBS)
 
 $(LIBXPLAT): xplat-all
 

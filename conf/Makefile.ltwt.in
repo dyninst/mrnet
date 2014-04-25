@@ -22,6 +22,8 @@ TARGET           = $(LIBDIR)/libmrnet_lightweight.a.$(VERSION)
 TARGET_LOWFAT    = $(LIBDIR)/libmrnet_lightweight_r.a.$(VERSION)
 TARGET_SO        = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
 TARGET_SO_LOWFAT = $(LIBDIR)/libmrnet_lightweight_r.so.$(VERSION)
+TARGET_SONAME        = libmrnet_lightweight.so.$(VERSION)
+TARGET_SONAME_LOWFAT = libmrnet_lightweight_r.so.$(VERSION)
 
 TARGET_SO_DEPLIBS        = -L$(LIBDIR) -lxplat_lightweight $(LIBS_LIGHTWEIGHT)
 TARGET_SO_LOWFAT_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight_r $(LIBS_LOWFAT)
@@ -94,11 +96,11 @@ $(TARGET_LOWFAT): $(LOWFAT_OBJS)
 
 $(TARGET_SO): $(LTWT_OBJS)
 	@echo Building `basename $@` ...
-	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_DEPLIBS)
+	$(CC) -Wl,-soname,$(TARGET_SONAME) $(SOFLAGS) -o $@ $^ $(TARGET_SO_DEPLIBS)
 
 $(TARGET_SO_LOWFAT): $(LOWFAT_OBJS)
 	@echo Building `basename $@` ...
-	$(CC) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LOWFAT_DEPLIBS)
+	$(CC) -Wl,-soname,$(TARGET_SONAME_LOWFAT) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LOWFAT_DEPLIBS)
 
 install-prep:
 	for dir in $(ILIBDIR) $(install_INCDIR) ; do \

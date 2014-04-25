@@ -39,6 +39,8 @@ xplat_INCDIR = $(INCDIR)/xplat
 install_INCDIR = $(IINCDIR)/xplat
 install_LIBINCDIR = $(ILIBDIR)/xplat-$(VERSION)/include
 
+TARGET_SONAME = libxplat.so.$(VERSION)
+
 INSTALL_LIB_LINKS = $(ROOTDIR)/conf/gen_lib_version_links.sh
 
 VPATH = $(SRCDIR)
@@ -103,7 +105,7 @@ $(TARGET): $(XPLAT_OBJS)
 
 $(TARGET_SO): $(XPLAT_OBJS)
 	@echo Building `basename $@` ...
-	$(CXX) $(SOFLAGS) -o $@ $(XPLAT_OBJS) $(TARGET_SO_DEPLIBS)
+	$(CXX) -Wl,-soname,$(TARGET_SONAME) $(SOFLAGS) -o $@ $(XPLAT_OBJS) $(TARGET_SO_DEPLIBS)
 
 install-prep:
 	for dir in $(ILIBDIR) $(install_INCDIR) $(install_LIBINCDIR) ; do \
