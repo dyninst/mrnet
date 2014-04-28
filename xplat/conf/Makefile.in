@@ -39,7 +39,7 @@ xplat_INCDIR = $(INCDIR)/xplat
 install_INCDIR = $(IINCDIR)/xplat
 install_LIBINCDIR = $(ILIBDIR)/xplat-$(VERSION)/include
 
-TARGET_SONAME = libxplat.so.$(VERSION)
+TARGET_SONAME = libxplat.so.$(VERSION_MAJOR)
 
 INSTALL_LIB_LINKS = $(ROOTDIR)/conf/gen_lib_version_links.sh
 
