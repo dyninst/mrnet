@@ -1275,7 +1275,7 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology, bool have_backends )
     SerialGraph sgtmp(sg);
 
     // statically assign data listening ports for all processes
-    char currPort[8];
+	int currPort;
     char* sgnew = strdup( sg.c_str() );
     std::map< std::string, int > hosts;
     FindHostsInTopology( &sgtmp, hosts );
@@ -1293,19 +1293,26 @@ XTNetwork::ConnectProcesses( ParsedGraph* topology, bool have_backends )
 
             // need to special case FE port, which isn't static 
             if( (i == 0) && (fe_host == host_iter->first) )
-                sprintf( currPort, "%d", fe_port );
+				currPort = fe_port;
             else
-                sprintf( currPort, "%d", base + i );
+				currPort = base + i;
 
             char* found = strstr(start, search);
             if( found != NULL ) {
-                mrn_dbg(5, mrn_printf(FLF, stderr, "changing %s port to %s\n", 
+				// we always use a fixed port length of five digits.
+				// 0-pad when necessary.
+				std::ostringstream paddedPort;
+				paddedPort.width(5);
+				paddedPort.fill('0');
+				paddedPort << currPort;
+                mrn_dbg(5, mrn_printf(FLF, stderr, "changing %s port to %d\n", 
                                       search, currPort ));
                 found += host_iter->first.length() + 1;
-                strncpy( found, currPort, strlen(currPort) );
+                strncpy( found, paddedPort.str().c_str(), paddedPort.str().length() );
             }
 	    else break;
-            start = found + strlen(currPort);
+		    // port length is fixed to five digits
+			start = found + 5;
         }
         free( search );
     }
