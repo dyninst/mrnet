@@ -12,7 +12,8 @@
 #include <vector>
 #include "xplat/NetUtils.h"
 #include <map>
-
+#include <inttypes.h>
+ 
 namespace XPlat
 {
 
@@ -24,7 +25,8 @@ class Process
     static int CreateRemote( const std::string& host,
                              const std::string& cmd,
                              const std::vector<std::string>& args );
-    
+
+    static int SplitArgString(std::string argString, std::vector<std::string> & args);    
     static std::string XPLAT_RSH;
     static std::string XPLAT_RSH_ARGS;
     static std::string XPLAT_REMCMD;
