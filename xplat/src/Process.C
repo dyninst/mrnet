@@ -17,6 +17,7 @@ namespace XPlat
 int
 Process::SplitArgString(std::string argString, std::vector<std::string> & args) {
     const char * argChar = argString.c_str();
+    std::vector<int64_t> escapeList;
     int64_t startpos = -1;
     bool inQuotes = false;
     bool escapedChar = false;
@@ -25,6 +26,7 @@ Process::SplitArgString(std::string argString, std::vector<std::string> & args) 
             break;
         // Check the three token types
         if (argChar[i] == '\\' && escapedChar == false) {
+            escapeList.push_back(i);
             // if we see an escape character, treat the next char as a regular character.
             escapedChar = true;
             continue;
@@ -42,29 +44,18 @@ Process::SplitArgString(std::string argString, std::vector<std::string> & args) 
             escapedChar = false;
         // If we see an unescaped " charcater we know that this is either starting or ending a quoted string.
         } else if (argChar[i] == '\"' ) {
-            // take care of the case where a string appears in the middle of a token
-            // ex: abc="ZDASDA" 
-            // ZDASDA will be split off from the rest
-            if (startpos >= 0 && inQuotes == false) {
-                args.push_back(std::string(&argChar[startpos], i - startpos));
-                startpos = -1;               
-            }
-
             // we are ending the quote if inQuotes is set.
             if (inQuotes == true && argChar[i] == '\"' ) {
-                // If we do not have a start position, add a zero length argument to the return vector args.
+                // If we do not have a start position, add the quotes as is to the current token.
                 // This can happen in cases where a quotation with no charcters inside it appears (ex ""),
                 if (startpos == -1) {
-                    args.push_back(std::string(""));
-                // Otherwise we have a standard quoted string, copy it into the vector ignoring the starting and ending quotation marks.
-                } else {
-                    args.push_back(std::string(&argChar[startpos], i - startpos));
-                }
-                // Reset the starting position and the flag to tell if we are in quotes.
-                startpos = -1;
+                    startpos =  i - 1;
+                } 
                 inQuotes = false;
             // If we are starting a new quoted token
             } else if (inQuotes == false && argChar[i] == '\"') {
+                if (startpos == -1) 
+                    startpos = i;
                 // set inquotes flags,
                 inQuotes = true;
             } 
@@ -76,14 +67,26 @@ Process::SplitArgString(std::string argString, std::vector<std::string> & args) 
             // This case triggers when there are multiple spaces without any characters (no tokens)
             if (startpos == -1) 
                 continue;
-            // Otherwise just end the token
-            args.push_back(std::string(&argChar[startpos], i - startpos));
+            std::string tmpArg = std::string(&argChar[startpos], i - startpos);
+            for (uint64_t p = 0; p < escapeList.size(); p++) {
+                // Remvoe the \ literals for the escape charcters. 
+                tmpArg.erase(escapeList[p] - startpos,1);
+            }
+            escapeList.clear();
             startpos = -1;
+            args.push_back(tmpArg);
         }
     }
     if (startpos != -1 && startpos != argString.size()) {
-        args.push_back(std::string(&argChar[startpos], argString.size() - startpos));
-        startpos = -1;        
+        std::string tmpArg = std::string(&argChar[startpos], argString.size() - startpos);
+        for (uint64_t p = 0; p < escapeList.size(); p++) {
+            // Remvoe the \ literals for the escape charcters. 
+            tmpArg.erase(escapeList[p] - startpos,1);
+        }
+        escapeList.clear();
+        startpos = -1;
+        args.push_back(tmpArg);
+
     }
     return 0;
 }
