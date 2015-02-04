@@ -226,7 +226,6 @@ void Network::shutdown_Network(void)
     mrn_dbg_func_begin();
 
     int thd_ret;
-    XPlat::Thread::Id my_id = XPlat_TLSKey->GetTid();
     XPlat::Thread::Id edt_tid = _edt->get_ThrId();
 
     // Only the FE starts shutdown with the main thread and not the EDT,
@@ -1009,7 +1008,7 @@ int Network::parse_Configuration( const char* itopology, bool iusing_mem_buf )
     if( iusing_mem_buf ) {
         // set up to parse config from a buffer in memory
         mrnBufPtr = itopology;
-        mrnBufRemaining = strlen( itopology );
+        mrnBufRemaining = (unsigned int)strlen( itopology );
     }
     else {
         // set up to parse config from the file named by our

@@ -169,7 +169,7 @@ bool_t XPlat_SocketUtils_CreateListening( XPlat_Socket* sock,
 {
     static int backlog = 128;
     int err, optval;
-    bool_t soret, success;
+    bool_t soret;
     XPlat_Socket _sock;
     XPlat_Port _port = *port;
     const char* err_str = NULL;

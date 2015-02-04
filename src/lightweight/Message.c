@@ -53,7 +53,7 @@ int Message_recv(XPlat_Socket sock_fd, vector_t* packets_in, Rank iinlet_rank)
     //
 
     mrn_dbg(5, mrn_printf(FLF, stderr, "Calling sizeof ...\n"));
-    bool done = pdr_sizeof((pdrproc_t)(pdr_uint32), &num_packets, &buf_len);
+    pdr_sizeof((pdrproc_t)(pdr_uint32), &num_packets, &buf_len);
     assert(buf_len);
     buf = (char*) malloc(buf_len + 1);
     assert(buf);
@@ -260,7 +260,7 @@ int Message_send(Message_t* msg_out, XPlat_Socket sock_fd)
     // packet count
     //
 
-    bool done = pdr_sizeof((pdrproc_t)(pdr_uint32), &num_packets, &buf_len);
+    pdr_sizeof((pdrproc_t)(pdr_uint32), &num_packets, &buf_len);
     assert(buf_len);
     buf = (char*) malloc(buf_len + 1);
     assert(buf);

@@ -352,7 +352,6 @@ int ChildNode_proc_NetworkSettings( BackEndNode_t* be, Packet_t* ipacket )
     SerialGraph_t* my_subtree = NULL;
     SerialGraph_t* subtree_in_parent = NULL;
     NetworkTopology_t* nt;
-    NetworkTopology_t* new_topol;
     Node_t* my_root_node;
     Node_t* parent_node;
     PeerNode_t* parent;

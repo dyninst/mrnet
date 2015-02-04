@@ -107,7 +107,6 @@ Stream::Stream( Network * inetwork, unsigned int iid,
 // (3) and (4) are not satisfied right now.  We need shared_ptr for this!
 Stream::~Stream()
 {
-    int retval;
     mrn_dbg_func_begin();
 
     _send_sync.Lock();

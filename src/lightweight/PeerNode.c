@@ -254,6 +254,7 @@ int PeerNode_recv_event(PeerNode_t* node, vector_t* packet_list, bool_t blocking
     if(  PeerNode_has_event_data(node) ) {
         msg_ret = Message_recv(node->event_sock_fd, packet_list, node->rank);
     }
+    blocking = 1;
     return msg_ret;
 }
 

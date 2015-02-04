@@ -27,7 +27,7 @@ Message::Message(Network * net):
     _net(net)
 {
     uint32_t num_packets = 0;
-    bool ret = pdr_sizeof((pdrproc_t)( pdr_uint32 ), &num_packets, &_packet_count_buf_len); 
+    pdr_sizeof((pdrproc_t)( pdr_uint32 ), &num_packets, &_packet_count_buf_len); 
     _packet_sizes_buf_len = ((size_t)MESSAGE_PREALLOC_LEN * sizeof(uint64_t)) + 1;
     _ncbuf_len = (size_t) MESSAGE_PREALLOC_LEN;
 
@@ -147,7 +147,7 @@ int Message::recv( XPlat_Socket sock_fd, std::list< PacketPtr > &packets_in,
     //
 
     for( i = 0, j = 0; j < num_packets; i += 2, j++ ) {
-        PacketPtr new_packet( new Packet(ncbufs[i].len,
+        PacketPtr new_packet( new Packet((unsigned int)ncbufs[i].len,
                                          ncbufs[i].buf,
                                          ncbufs[i+1].len,
                                          ncbufs[i+1].buf,
@@ -248,7 +248,7 @@ int Message::send( XPlat_Socket sock_fd )
     }
 
     // Allocation (if required)
-    num_packets = send_packets.size();
+    num_packets = uint32_t(send_packets.size());
     num_buffers = num_packets * 2;
     num_ncbufs = num_buffers + 2;
     buf_len = ((size_t)num_buffers * sizeof(uint64_t)) + 1;  //1 extra bytes overhead

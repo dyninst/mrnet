@@ -22,7 +22,7 @@ void Packet::encode_pdr_header(void)
     data_sync.Lock();
     uint64_t hdr_sz = 0;
     _byteorder = (char) pdrmem_getbo();
-    bool done = pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_header), this, &hdr_sz );
+    pdr_sizeof( (pdrproc_t)(Packet::pdr_packet_header), this, &hdr_sz );
     hdr_len = (unsigned) hdr_sz;
     assert( hdr_len );
 
@@ -502,7 +502,7 @@ bool Packet::set_Destinations( const Rank* bes, unsigned int num_bes )
 bool Packet::get_Destinations( unsigned int& num_dest, Rank** dests )
 {
     if( dest_arr_len ) {
-        num_dest = size_t(dest_arr_len);
+        num_dest = (unsigned int) size_t(dest_arr_len);
         *dests = dest_arr;
         return true;
     }
@@ -1372,7 +1372,7 @@ int Packet::DataElementArray2ArgList( va_list arg_list ) const
             *( ( const void ** )tmp_ptr ) = tmp_array;
             tmp_ptr = ( void * )va_arg( arg_list, uint32_t * );
             assert( tmp_ptr != NULL );
-            *( ( uint32_t * )tmp_ptr ) = size_t(cur_elem->array_len);
+            *( ( uint32_t * )tmp_ptr ) = uint32_t(cur_elem->array_len);
             break;
         }
 

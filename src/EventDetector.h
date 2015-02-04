@@ -28,7 +28,7 @@ class EventDetector {
 
     EventDetector( Network* inetwork )
         : _network(inetwork), _thread_id(0), _pollfds(NULL), 
-        _num_pollfds(0), _max_pollfds(0), _max_fd(-1), _disabled(false)
+        _num_pollfds(0), _max_pollfds(0), _disabled(false), _max_fd(-1)
     { }
 
     ~EventDetector(void)
@@ -65,12 +65,12 @@ class EventDetector {
 
     void set_ThrId( XPlat::Thread::Id );
 
-    bool _disabled;
     mutable XPlat::Mutex _sync;
     Network* _network;
     XPlat::Thread::Id _thread_id;
     struct pollfd* _pollfds;
     unsigned int _num_pollfds, _max_pollfds;
+    bool _disabled;
     XPlat_Socket _max_fd;
     std::map< XPlat_Socket, Rank > childRankByEventDetectionSocket;
 };

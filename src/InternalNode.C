@@ -35,15 +35,15 @@ InternalNode::InternalNode( Network * inetwork,
 
     // set initial topology to just this process
     ParentNode::_network->set_NetworkTopology( new NetworkTopology(inetwork, 
-                                                                   ParentNode::_hostname,
-								   ParentNode::_port,
-								   ParentNode::_rank) );
+                                               ParentNode::_hostname,
+								               ParentNode::_port,
+								               ParentNode::_rank) );
    
     // create topology update stream
-    Stream* s = ParentNode::_network->new_Stream( TOPOL_STRM_ID, NULL, 0, 
-                                                  TFILTER_TOPO_UPDATE, 
-                                                  SFILTER_TIMEOUT, 
-                                                  TFILTER_TOPO_UPDATE_DOWNSTREAM );
+    ParentNode::_network->new_Stream( TOPOL_STRM_ID, NULL, 0, 
+                                      TFILTER_TOPO_UPDATE, 
+                                      SFILTER_TIMEOUT, 
+                                      TFILTER_TOPO_UPDATE_DOWNSTREAM );
 
     //establish data connection w/ parent
     PeerNodePtr parent = ParentNode::_network->get_ParentNode();

@@ -82,6 +82,7 @@ class PeerNode: public CommunicationNode, public Error {
     PeerNode( Network *, std::string const& ihostname, Port iport, Rank irank,
               bool iis_parent, bool iis_internal );
 
+
     //Static data members
     Network * _network;
     XPlat_Socket _data_sock_fd;
@@ -94,9 +95,9 @@ class PeerNode: public CommunicationNode, public Error {
     //Dynamic data members
 
     bool _available;
-    bool _failed_without_ack;
     mutable Message * _msg_out;
     mutable Message * _msg_in;
+    bool _failed_without_ack;
     mutable XPlat::Monitor _sync;
     enum{ MRN_FLUSH_COMPLETE, MRN_RECV_THREAD_STARTED, MRN_SEND_THREAD_STARTED };
 };

@@ -30,8 +30,6 @@ BackEndNode::BackEndNode( Network * inetwork,
     _network->set_BackEndNode( this );
     _network->set_NetworkTopology( new NetworkTopology(inetwork, _hostname, 
                                                        _port, _rank, true) );
-    
-    NetworkTopology* nt = _network->get_NetworkTopology();
 
     // create topology update stream
     Stream* s = _network->new_Stream( TOPOL_STRM_ID, NULL, 0, 
