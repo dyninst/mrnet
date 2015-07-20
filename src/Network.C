@@ -143,6 +143,7 @@ Network::Network(void)
     }
 
     init_local();
+
     _shutdown_sync.RegisterCondition( NETWORK_TERMINATION );
     _edt = new EventDetector(this);
 }
@@ -807,6 +808,7 @@ void Network::init_FrontEnd( const char * itopology,
                              bool iusing_mem_buf )
 {
 	mrn_dbg_func_begin();
+    _network_sync.RegisterCondition( EVENT_NOTIFICATION );
     _streams_sync.RegisterCondition( STREAMS_NONEMPTY );
     _parent_sync.RegisterCondition( PARENT_NODE_AVAILABLE );
 
@@ -1956,7 +1958,20 @@ int Network::load_FilterFuncs( const char* so_file,
                                      fids, success_count) );
         send_PacketToChildren( packet );
         flush();
+        waitOn_ProtEvent();
+
+        // We have an error in loading filters elsewhere if this happens.
+        if (_filter_error_hosts.size() > 0) {
+            std::set<unsigned> load_error;
+            for (unsigned u = 0; u < _filter_error_hosts.size(); u++) {
+                mrn_dbg( 1, mrn_printf(FLF, stderr, "Error Loading Filter %s : %s on %s\n",
+                _filter_error_sonames[u], funcs[_filter_error_funcids[u]], _filter_error_hosts[u]));
+                load_error.insert(_filter_error_funcids[u]);
+            }
+            success_count =  success_count - load_error.size();
+        }
     }
+
     
     free( so_copy );
     free( fids );
@@ -1967,6 +1982,25 @@ int Network::load_FilterFuncs( const char* so_file,
     mrn_dbg_func_end();
     return success_count;
 }
+
+void Network::waitOn_ProtEvent(void) {
+    // Wait on the reception of a PROT_EVENT message
+    _network_sync.Lock();
+    _network_sync.WaitOnCondition( EVENT_NOTIFICATION );
+    _network_sync.Unlock();
+}
+
+void Network::signal_ProtEvent(std::vector<char *> hostnames, 
+                               std::vector<char *> so_names, 
+                               std::vector<unsigned> func_ids) {
+    _network_sync.Lock();
+    _filter_error_hosts = hostnames;
+    _filter_error_sonames = so_names;
+    _filter_error_funcids = func_ids;
+    _network_sync.SignalCondition( EVENT_NOTIFICATION );
+    _network_sync.Unlock();
+}
+
 
 int Network::waitfor_NonEmptyStream(void)
 {

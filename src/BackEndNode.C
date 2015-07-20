@@ -242,6 +242,9 @@ int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
                               &so_file,
                               &funcs, &nfuncs,
                               &fids, &nfuncs );
+
+    std::vector<unsigned> error_funcs;
+
     if( retval == 0 ) {
         for( unsigned u=0; u < nfuncs; u++ ) {
             int rc = Filter::load_FilterFunc(_network->GetFilterInfo(), fids[u], so_file, funcs[u] );
@@ -249,8 +252,33 @@ int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
                                        "Filter::load_FilterFunc(%s,%s) failed.\n",
                                        so_file, funcs[u]) );
+
+                error_funcs.push_back(u);
             }
             free( funcs[u] );
+        }
+        // Write out an error packet with the function names
+        // This is so that the FE can print the error to make it
+        // obvious what has failed.
+        if (error_funcs.size() > 0) {
+            char ** hostnames = new char * [error_funcs.size()];
+            unsigned * func_cstr = new unsigned[error_funcs.size()];
+            char ** so_filename = new char * [error_funcs.size()];
+            for (unsigned u = 0; u < error_funcs.size(); u++) {
+                func_cstr[u] = error_funcs[u];
+                hostnames[u] = strdup(_network->get_LocalHostName().c_str());
+                so_filename[u] = strdup(so_file);
+            }
+            unsigned length = error_funcs.size();
+            PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
+                                hostnames, length, so_filename, length, func_cstr, length));
+            _network->send_PacketToParent(packet);
+        } else {
+            char ** emptySend;
+            unsigned ** func_empty;
+            PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
+                                emptySend, 0, emptySend, 0, func_empty, 0));
+            _network->send_PacketToParent(packet);
         }
         free( funcs );
         free( fids );

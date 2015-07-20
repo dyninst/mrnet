@@ -258,10 +258,15 @@ int BackEndNode_proc_deleteStream( BackEndNode_t* be, Packet_t* ipacket )
     return 0;
 }
 
-int BackEndNode_proc_newFilter( BackEndNode_t* UNUSED(be), 
+int BackEndNode_proc_newFilter( BackEndNode_t* be, 
                                 Packet_t* UNUSED(ipacket) )
 {
-    // no filter support in lightweight BE, nothing to do
+    // Respond saying filter status is ok. 
+    // Even though we don't use filters in Lightweight BE
+    // CP/FE's need to know we got the message and didn't fail.
+    Packet_t * resp_Packet =  new_Packet_t_2(CTL_STRM_ID, PROT_EVENT, "%as %as %aud", 
+                              NULL, 0, NULL, 0, NULL, 0);
+    Network_send_PacketToParent(be->network, resp_Packet);
     return 0;
 }
 

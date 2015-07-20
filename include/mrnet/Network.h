@@ -10,7 +10,9 @@
 #include <map>
 #include <string>
 #include <set>
-
+#include <sstream>
+#include <iostream>
+ 
 #include "mrnet/Communicator.h"
 #include "mrnet/Error.h"
 #include "mrnet/Event.h"
@@ -272,7 +274,8 @@ protected:
     enum {
         STREAMS_NONEMPTY,
         PARENT_NODE_AVAILABLE,
-        NETWORK_TERMINATION
+        NETWORK_TERMINATION,
+        EVENT_NOTIFICATION
     };
 
     void update_BcastCommunicator(void);
@@ -379,8 +382,11 @@ protected:
                                  host_dist_t** & mw,
                                  host_dist_t** & be);
 
-
+    void waitOn_ProtEvent(void);
     static std::string get_NetSettingName( int s );
+    void signal_ProtEvent(std::vector<char *> hostnames, 
+                          std::vector<char *> so_names, 
+                          std::vector<unsigned> func_ids);
 
     //Data Members
     std::string _local_hostname;
@@ -410,6 +416,9 @@ protected:
     bool _threaded;
     bool _recover_from_failures;
     bool _was_shutdown, _shutting_down;
+    mutable std::vector<char *> _filter_error_hosts;
+    mutable std::vector<char *> _filter_error_sonames;;
+    mutable std::vector<unsigned> _filter_error_funcids;
 
     int _startup_timeout;
     int _topo_update_timeout_msec;
@@ -421,6 +430,7 @@ protected:
     mutable XPlat::Mutex _children_mutex;
     mutable XPlat::Mutex _endpoints_mutex;
     mutable XPlat::Monitor _shutdown_sync;
+    mutable XPlat::Monitor _network_sync;
 
     // Pointer to performance data class (this is requried since performance
     // data includes cannot be included in this header)

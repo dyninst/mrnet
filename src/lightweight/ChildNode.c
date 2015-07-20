@@ -243,7 +243,11 @@ int ChildNode_proc_PacketFromParent(BackEndNode_t* be, Packet_t* packet)
             break;
 
         case PROT_NEW_FILTER:
-            mrn_dbg(5, mrn_printf(FLF, stderr, "lightweight BE ignoring new filter\n"));
+            if (BackEndNode_proc_newFilter(be, packet) == -1) {
+                mrn_dbg(1, mrn_printf(FLF, stderr, "proc_deleteStream() failed\n"));
+                retval = -1;
+            }
+            //mrn_dbg(5, mrn_printf(FLF, stderr, "lightweight BE ignoring new filter\n"));
             break;
 
         case PROT_RECOVERY_RPT:

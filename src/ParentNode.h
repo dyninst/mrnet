@@ -101,6 +101,11 @@ class ParentNode: public virtual Error,
     mutable unsigned int _num_failed_children;
     mutable std::map< int, struct ControlProtocol > active_ctl_protocols;
     mutable XPlat::Mutex cps_sync;
+    mutable std::vector<char *> _filter_error_host;
+    mutable std::vector<char *> _filter_error_soname;
+    mutable std::vector<unsigned> _filter_error_funcname;
+    mutable XPlat::Mutex event_lock;
+    mutable unsigned _filter_children_reported;
 
     virtual int proc_PacketFromChildren( PacketPtr ipacket );
 

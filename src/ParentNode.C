@@ -434,11 +434,48 @@ bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
     return true;
 }
 
-int ParentNode::proc_Event( PacketPtr ) const
+int ParentNode::proc_Event( PacketPtr ipacket) const
 {
     /* NOTE: we need a sensible method for reporting errors to the FE,
              e.g., an error reporting stream. until we have this,
              there's nothing to do here -- Oct 2010 */
+    char ** hostnames;
+    char ** so_filenames;
+    unsigned * func_ids; 
+    unsigned l1, l2, l3;
+    ipacket->unpack("%as %as %aud",&hostnames, &l1, &so_filenames, 
+        &l2, &func_ids, &l3);
+    
+    event_lock.Lock();
+    _filter_children_reported++;
+
+    // we have an error
+    if (l1 > 0 && l2 > 0 && l3 > 0) {
+        assert((l1 == l2) && (l2 == l3));
+        for (unsigned u = 0; u < l1; u++){
+            _filter_error_host.push_back(hostnames[u]);
+            _filter_error_soname.push_back(so_filenames[u]);
+            _filter_error_funcname.push_back(func_ids[u]);
+        }
+    }
+
+    if (_network->get_NumChildren() + 1 == _filter_children_reported) {
+        char ** comp_hostnames = &(_filter_error_host[0]);
+        char ** so_names = &(_filter_error_soname[0]);
+        unsigned * funcids = &(_filter_error_funcname[0]);
+        unsigned length =  _filter_error_host.size();
+        PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
+                             comp_hostnames, length, so_names, length, funcids, length));
+        _network->send_PacketToParent(packet);
+    } else if (_network->is_LocalNodeFrontEnd() && _network->get_NumChildren() == _filter_children_reported) {
+        _network->signal_ProtEvent(_filter_error_host, _filter_error_soname, _filter_error_funcname);
+        _filter_children_reported = 0;
+        _filter_error_host.clear();
+        _filter_error_soname.clear();
+        _filter_error_funcname.clear();
+    }
+    event_lock.Unlock();
+
     return 0;
 }
 
@@ -644,9 +681,14 @@ int ParentNode::proc_newFilter( PacketPtr ipacket ) const
                               &funcs, &nfuncs,
                               &fids, &nfuncs );
 
-    // propagate before local load
+    _filter_children_reported = 0;
+    _filter_error_host.clear();
+    _filter_error_soname.clear();
+    _filter_error_funcname.clear();
+
     _network->send_PacketToChildren( ipacket );
 
+    std::vector<unsigned> error_funcs;
     if( retval == 0 ) {
         for( unsigned u=0; u < nfuncs; u++ ) {
             int rc = Filter::load_FilterFunc(_network->GetFilterInfo(), fids[u], so_file, funcs[u] );
@@ -654,14 +696,40 @@ int ParentNode::proc_newFilter( PacketPtr ipacket ) const
                 mrn_dbg( 1, mrn_printf(FLF, stderr,
                                        "Filter::load_FilterFunc(%s,%s) failed.\n",
                                        so_file, funcs[u]) );
-                // TODO: notify FE of failure to load
+                error_funcs.push_back(u);
             }
             free( funcs[u] );
         }
+
+        // Record error/success in local node.
+        if (error_funcs.size() > 0) {
+            char ** hostnames = new char * [error_funcs.size()];
+            unsigned * func_cstr = new unsigned[error_funcs.size()];
+            char ** so_filename = new char * [error_funcs.size()];
+            for (unsigned u = 0; u < error_funcs.size(); u++) {
+                func_cstr[u] = error_funcs[u];
+                hostnames[u] = strdup(_network->get_LocalHostName().c_str());
+                so_filename[u] = strdup(so_file);
+            }
+            unsigned length = error_funcs.size();
+            PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
+                                hostnames, length, so_filename, length, func_cstr, length));
+            // Record error locally, we don't add directly to the local buffers 
+            // to ensure that all children response are recieved before continuing. 
+            proc_Event(packet);
+        } else {
+            char ** emptySend;
+            unsigned ** func_empty;
+            PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
+                                emptySend, 0, emptySend, 0, func_empty, 0));
+            proc_Event(packet);
+        }
+        
         free( funcs );
         free( fids );
         free( so_file );
     }
+
 
     mrn_dbg_func_end();
     return retval;
