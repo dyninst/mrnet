@@ -79,7 +79,7 @@
 #line 1 "/g/g20/groves6/mrnet/mrnet/src/parser.y"
 
 /****************************************************************************
- *  Copyright 2003-2014 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2015 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                 Detailed MRNet usage rights in "LICENSE" file.           *
  ****************************************************************************/
 

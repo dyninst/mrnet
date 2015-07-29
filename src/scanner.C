@@ -481,7 +481,7 @@ char *mrntext;
 #line 1 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
 #line 2 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
 /****************************************************************************
- *  Copyright 2003-2014 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
+ *  Copyright 2003-2015 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 #include <assert.h>
