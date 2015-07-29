@@ -53,7 +53,7 @@ class ParentNode: public virtual Error,
     bool waitfor_SubTreeInitDoneReports(void) const;
 
     int proc_RecoveryReport( PacketPtr ipacket ) const;
-
+    int proc_FilterLoadEvent( PacketPtr ipacket ) const;
     int proc_Event( PacketPtr ipacket ) const;
     int send_Event( PacketPtr ipacket ) const;
 

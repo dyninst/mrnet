@@ -434,11 +434,9 @@ bool ParentNode::waitfor_SubTreeInitDoneReports( void ) const
     return true;
 }
 
-int ParentNode::proc_Event( PacketPtr ipacket) const
+int ParentNode::proc_FilterLoadEvent( PacketPtr ipacket ) const 
 {
-    /* NOTE: we need a sensible method for reporting errors to the FE,
-             e.g., an error reporting stream. until we have this,
-             there's nothing to do here -- Oct 2010 */
+    /* Process messages about filter load status from children. */
     char ** hostnames;
     char ** so_filenames;
     unsigned * func_ids; 
@@ -463,7 +461,7 @@ int ParentNode::proc_Event( PacketPtr ipacket) const
         char ** comp_hostnames = &(_filter_error_host[0]);
         char ** so_names = &(_filter_error_soname[0]);
         unsigned * funcids = &(_filter_error_funcname[0]);
-        unsigned length =  _filter_error_host.size();
+        unsigned length =  (unsigned) _filter_error_host.size();
         PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
                              comp_hostnames, length, so_names, length, funcids, length));
         _network->send_PacketToParent(packet);
@@ -476,7 +474,16 @@ int ParentNode::proc_Event( PacketPtr ipacket) const
     }
     event_lock.Unlock();
 
-    return 0;
+    return 0;    
+}
+
+int ParentNode::proc_Event( PacketPtr ipacket) const
+{
+    /* NOTE: At some point in the future, as the need arises, we need 
+             to convert this function to be more generic and process
+             event messages from multiple sources. Not just filter load 
+             events */
+    return proc_FilterLoadEvent(ipacket);
 }
 
 Stream * ParentNode::proc_newStream( PacketPtr ipacket ) const
@@ -711,15 +718,15 @@ int ParentNode::proc_newFilter( PacketPtr ipacket ) const
                 hostnames[u] = strdup(_network->get_LocalHostName().c_str());
                 so_filename[u] = strdup(so_file);
             }
-            unsigned length = error_funcs.size();
+            unsigned length = (unsigned) error_funcs.size();
             PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
                                 hostnames, length, so_filename, length, func_cstr, length));
             // Record error locally, we don't add directly to the local buffers 
             // to ensure that all children response are recieved before continuing. 
             proc_Event(packet);
         } else {
-            char ** emptySend;
-            unsigned ** func_empty;
+            char ** emptySend = NULL;
+            unsigned ** func_empty = NULL;
             PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
                                 emptySend, 0, emptySend, 0, func_empty, 0));
             proc_Event(packet);

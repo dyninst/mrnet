@@ -269,13 +269,13 @@ int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
                 hostnames[u] = strdup(_network->get_LocalHostName().c_str());
                 so_filename[u] = strdup(so_file);
             }
-            unsigned length = error_funcs.size();
+            unsigned length = (unsigned)error_funcs.size();
             PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
                                 hostnames, length, so_filename, length, func_cstr, length));
             _network->send_PacketToParent(packet);
         } else {
-            char ** emptySend;
-            unsigned ** func_empty;
+            char ** emptySend = NULL;
+            unsigned ** func_empty = NULL;
             PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
                                 emptySend, 0, emptySend, 0, func_empty, 0));
             _network->send_PacketToParent(packet);

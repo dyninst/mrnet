@@ -1968,7 +1968,7 @@ int Network::load_FilterFuncs( const char* so_file,
                 _filter_error_sonames[u], funcs[_filter_error_funcids[u]], _filter_error_hosts[u]));
                 load_error.insert(_filter_error_funcids[u]);
             }
-            success_count =  success_count - load_error.size();
+            success_count =  success_count - (unsigned) load_error.size();
         }
     }
 
