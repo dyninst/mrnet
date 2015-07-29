@@ -977,38 +977,38 @@ int Packet::ArgVec2DataElementArray( const void **idata )
         case UNKNOWN_T:
             return -1;
         case CHAR_T:
-            cur_elem->val.c = *( char* )idata[data_ndx];
+            cur_elem->val.c = *(const char* )idata[data_ndx];
             break;
         case UCHAR_T:
-            cur_elem->val.uc = *( char* )idata[data_ndx];
+            cur_elem->val.uc = *(const char* )idata[data_ndx];
             break;
 
         case INT16_T:
-            cur_elem->val.hd = *( short int* )idata[data_ndx];
+            cur_elem->val.hd = *(const short int* )idata[data_ndx];
             break;
         case UINT16_T:
-            cur_elem->val.uhd = *( short int* )idata[data_ndx];
+            cur_elem->val.uhd = *(const short int* )idata[data_ndx];
             break;
 
         case INT32_T:
-            cur_elem->val.d = *( int* )idata[data_ndx];
+            cur_elem->val.d = *(const int* )idata[data_ndx];
             break;
         case UINT32_T:
-            cur_elem->val.ud = *( int* )idata[data_ndx];
+            cur_elem->val.ud = *(const int* )idata[data_ndx];
             break;
 
         case INT64_T:
-            cur_elem->val.ld = *( int64_t* )idata[data_ndx];
+            cur_elem->val.ld = *(const int64_t* )idata[data_ndx];
             break;
         case UINT64_T:
-            cur_elem->val.uld = *( uint64_t* )idata[data_ndx];
+            cur_elem->val.uld = *(const uint64_t* )idata[data_ndx];
             break;
 
         case FLOAT_T:
-            cur_elem->val.f = *( float* )idata[data_ndx];
+            cur_elem->val.f = *(const float* )idata[data_ndx];
             break;
         case DOUBLE_T:
-	    cur_elem->val.lf = *( double* )idata[data_ndx];
+	    cur_elem->val.lf = *(const double* )idata[data_ndx];
             break;
 
         case CHAR_ARRAY_T:
@@ -1023,7 +1023,7 @@ int Packet::ArgVec2DataElementArray( const void **idata )
         case DOUBLE_ARRAY_T:
         case STRING_ARRAY_T:
             cur_elem->val.p = const_cast<void*>( idata[data_ndx++] );
-            cur_elem->array_len = *( uint32_t* )idata[data_ndx];
+            cur_elem->array_len = *(const uint32_t* )idata[data_ndx];
             break;
         
         case CHAR_LRG_ARRAY_T:
@@ -1038,7 +1038,7 @@ int Packet::ArgVec2DataElementArray( const void **idata )
         case DOUBLE_LRG_ARRAY_T:
         case STRING_LRG_ARRAY_T:
             cur_elem->val.p = const_cast<void*>( idata[data_ndx++] );
-            cur_elem->array_len = *( uint64_t* )idata[data_ndx];
+            cur_elem->array_len = *(const uint64_t* )idata[data_ndx];
             break;
         
         case STRING_T:

@@ -339,7 +339,7 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
     }
 
     free(fmt);
-
+    (void) saveptr;
     mrn_dbg_func_end();
 
 }
@@ -652,7 +652,8 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
         i++;
     }
     free(fmt);
-
+    // Surpress unused variable warning from strtok on GCC
+    (void) saveptr;
     mrn_dbg_func_end();
     return true;
 }
@@ -696,7 +697,7 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
     void *tmp_ptr;
     void *tmp_array;
     char* fmt = NULL;
-    char *saveptr;  
+    char *saveptr;
     const char* delim = " \t\n%";
     char* tok;
    
@@ -1065,7 +1066,8 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
         tok = mrn_strtok(NULL, delim, &saveptr);
     }
     free(fmt);
-
+    // Surpress unused variable warning from strtok on GCC
+    (void) saveptr;
     mrn_dbg_func_end();
     return;
 }

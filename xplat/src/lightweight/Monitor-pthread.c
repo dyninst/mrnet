@@ -15,7 +15,6 @@
 Monitor_t* Monitor_construct( void )
 {
     static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
-    int ret;
     int failed = 0;
 
     Monitor_t* mon = NULL;

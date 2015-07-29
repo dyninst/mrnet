@@ -10,7 +10,6 @@
 struct Mutex_t* Mutex_construct( void )
 {
     static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
-    int ret;
     int failed = 0;
 
     struct Mutex_t* mut = NULL;

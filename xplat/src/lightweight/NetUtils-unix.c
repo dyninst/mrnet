@@ -16,7 +16,6 @@ int XPlat_NetUtils_GetLocalHostName(char* this_host)
 #if defined(arch_crayxt)
     // on the XT, the node number is available in /proc/cray_xt/nid
     char host[16];
-    char* nidstr;
     FILE* f;
     const char* filename = "/proc/cray_xt/nid";
     unsigned nid;

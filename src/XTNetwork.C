@@ -139,7 +139,7 @@ Network::CreateNetworkIN( int argc, char** argv )
             }
         }
 
-        Port topoPort = XTNetwork::FindTopoPort(port);
+        Port topoPort = XTNetwork::FindTopoPort((Port) port);
         Network* net = new XTNetwork( true, topoPipeFd, topoPort,
                                       timeout, beArgc, beArgv ); 
         
@@ -194,7 +194,7 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
 #endif
             else if( strcmp(iter->first.c_str(), "MRNET_PORT_BASE") == 0 ) {
                 int base_port = (int)strtol( iter->second.c_str(), NULL, 0 );
-                FindTopoPort(base_port); // despite name, actually sets the base 
+                FindTopoPort((Port)base_port); // despite name, actually sets the base 
                 mrn_dbg(3, mrn_printf(FLF, stderr, "MRNET_PORT_BASE=%d\n", base_port));
             }
         }

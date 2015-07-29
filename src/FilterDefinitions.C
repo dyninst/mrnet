@@ -1030,13 +1030,13 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
                     perfdata_t& ag = aggr_results[u];
                     switch( typ ) {
                     case UINT64_T:
-                        sum( &(ag.u), ((uint64_t*)data_arr)+u, &(ag.u), typ );
+                        sum( &(ag.u), ((const uint64_t*)data_arr)+u, &(ag.u), typ );
                         break;
                     case INT64_T:
-                        sum( &(ag.i), ((int64_t*)data_arr)+u, &(ag.i), typ );
+                        sum( &(ag.i), ((const int64_t*)data_arr)+u, &(ag.i), typ );
                         break;
                     case DOUBLE_T:
-                        sum( &(ag.d), ((double*)data_arr)+u, &(ag.d), typ );
+                        sum( &(ag.d), ((const double*)data_arr)+u, &(ag.d), typ );
                         break;
                     default:
                         break;
@@ -1049,13 +1049,13 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
                     perfdata_t& ag = aggr_results[u];
                     switch( typ ) {
                     case UINT64_T:
-                        mrn_min( &(ag.u), ((uint64_t*)data_arr)+u, &(ag.u), typ );
+                        mrn_min( &(ag.u), ((const uint64_t*)data_arr)+u, &(ag.u), typ );
                         break;
                     case INT64_T:
-                        mrn_min( &(ag.i), ((int64_t*)data_arr)+u, &(ag.i), typ );
+                        mrn_min( &(ag.i), ((const int64_t*)data_arr)+u, &(ag.i), typ );
                         break;
                     case DOUBLE_T:
-                        mrn_min( &(ag.d), ((double*)data_arr)+u, &(ag.d), typ );
+                        mrn_min( &(ag.d), ((const double*)data_arr)+u, &(ag.d), typ );
                         break;
                     default:
                         break;
@@ -1068,13 +1068,13 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
                     perfdata_t& ag = aggr_results[u];
                     switch( typ ) {
                     case UINT64_T:
-                        mrn_max( &(ag.u), ((uint64_t*)data_arr)+u, &(ag.u), typ );
+                        mrn_max( &(ag.u), ((const uint64_t*)data_arr)+u, &(ag.u), typ );
                         break;
                     case INT64_T:
-                        mrn_max( &(ag.i), ((int64_t*)data_arr)+u, &(ag.i), typ );
+                        mrn_max( &(ag.i), ((const int64_t*)data_arr)+u, &(ag.i), typ );
                         break;
                     case DOUBLE_T:
-                        mrn_max( &(ag.d), ((double*)data_arr)+u, &(ag.d), typ );
+                        mrn_max( &(ag.d), ((const double*)data_arr)+u, &(ag.d), typ );
                         break;
                     default:
                         break;
@@ -1087,19 +1087,19 @@ void tfilter_PerfData( const vector< PacketPtr >& ipackets,
                     perfdata_t& ag = aggr_results[u];
                     switch( typ ) {
                     case UINT64_T: {
-                        uint64_t u64 = ((uint64_t*)data_arr)[u];
+                        uint64_t u64 = ((const uint64_t*)data_arr)[u];
                         u64 *= nrank;
                         ag.u += u64;
                         break;
                     }
                     case INT64_T: {
-                        int64_t i64 = ((int64_t*)data_arr)[u];
+                        int64_t i64 = ((const int64_t*)data_arr)[u];
                         i64 *= nrank;
                         ag.i += i64;
                         break;
                     }
                     case DOUBLE_T: {
-                        double dbl = ((double*)data_arr)[u];
+                        double dbl = ((const double*)data_arr)[u];
                         dbl *= nrank;
                         ag.d += dbl;
                         break;

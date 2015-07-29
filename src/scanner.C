@@ -478,8 +478,8 @@ int mrn_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *mrntext;
-#line 1 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
-#line 2 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 1 "/ccs/home/welton/mrnet/src/scanner.l"
+#line 2 "/ccs/home/welton/mrnet/src/scanner.l"
 /****************************************************************************
  *  Copyright 2003-2015 Dorian C. Arnold, Philip C. Roth, Barton P. Miller  *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
@@ -646,7 +646,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO do { if (fwrite( mrntext, mrnleng, 1, mrnout )) {} } while (0)
+#define ECHO fwrite( mrntext, mrnleng, 1, mrnout )
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -657,7 +657,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		unsigned n; \
+		int n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( mrnin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -739,7 +739,7 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 92 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 92 "/ccs/home/welton/mrnet/src/scanner.l"
 
 
 
@@ -825,7 +825,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 96 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 96 "/ccs/home/welton/mrnet/src/scanner.l"
 {
                                 unsigned int val = strtoul( mrntext, NULL, 10 );
                                 MRN::mrnlval.uval = val;
@@ -834,48 +834,48 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 101 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 101 "/ccs/home/welton/mrnet/src/scanner.l"
 { MRN::mrnlval.hostname = strdup(mrntext); return(HOSTNAME); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 102 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 102 "/ccs/home/welton/mrnet/src/scanner.l"
 {return(SEMI); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 103 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 103 "/ccs/home/welton/mrnet/src/scanner.l"
 { return(ARROW); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 104 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 104 "/ccs/home/welton/mrnet/src/scanner.l"
 { return(COLON); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 105 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 105 "/ccs/home/welton/mrnet/src/scanner.l"
 { return STAR; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 106 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 106 "/ccs/home/welton/mrnet/src/scanner.l"
 /* ignore whitespace */;
 	YY_BREAK
 case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
-#line 107 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 107 "/ccs/home/welton/mrnet/src/scanner.l"
 {MRN::lineNum++;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 108 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 108 "/ccs/home/welton/mrnet/src/scanner.l"
 /* # starts a comment line */
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 110 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 110 "/ccs/home/welton/mrnet/src/scanner.l"
 ECHO;
 	YY_BREAK
 #line 882 "<stdout>"
@@ -1836,7 +1836,7 @@ void mrnfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 110 "/g/g20/groves6/mrnet/mrnet/src/scanner.l"
+#line 110 "/ccs/home/welton/mrnet/src/scanner.l"
 
 
 

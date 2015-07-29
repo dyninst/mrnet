@@ -126,9 +126,8 @@ ifeq ($(COMPILER_TYPE), gnu)
       -Wcast-qual \
       -Wcast-align \
       -Wwrite-strings \
-      -Wsign-compare \
-      -Wredundant-decls \
-      -Wlong-long
+      -Wsign-compare 
+
 
     WARNFLAGS = \
        $(BASEWARN) \
