@@ -238,6 +238,7 @@ void Packet_ArgList2DataElementArray(Packet_t* packet, va_list arg_list)
 {
     char* tok;
     char* fmt;
+    char *saveptr;
     const char* delim = " \t\n%";
     DataElement_t* cur_elem = NULL;
     
@@ -414,6 +415,7 @@ bool_t Packet_pdr_packet_data( PDR * pdrs, Packet_t * pkt )
     const char* delim = " \t\n%";
     unsigned int i;
     bool_t retval = 0;
+    char *saveptr;
 
     mrn_dbg( 3, mrn_printf(FLF, stderr, "op: %s\n", op2str(pdrs) ));
 
@@ -694,6 +696,7 @@ void Packet_DataElementArray2ArgList(Packet_t* packet, va_list arg_list)
     void *tmp_ptr;
     void *tmp_array;
     char* fmt = NULL;
+    char *saveptr;  
     const char* delim = " \t\n%";
     char* tok;
    
