@@ -101,7 +101,7 @@ Network::CreateNetworkIN( int argc, char** argv )
 {
     mrn_dbg_func_begin();
 
-    int port = -1;
+    int port = UnknownPort;
     int timeout = -1;
     int topoPipeFd = -1;
     int beArgc = 0;

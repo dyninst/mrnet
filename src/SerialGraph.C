@@ -13,7 +13,7 @@ void SerialGraph::add_Leaf( std::string ihostname, Port iport, Rank irank )
 {
     std::ostringstream hoststr;
 
-    hoststr << "[" << ihostname << ":" << iport << ":" << irank << ":0" << "]";
+    hoststr << "[" << ihostname << ":" << std::setw(5) << std::setfill( '0' ) << iport << ":" << irank << ":0" << "]";
     _byte_array += hoststr.str();
 
     _num_nodes++; _num_backends++;
@@ -23,7 +23,7 @@ void SerialGraph::add_SubTreeRoot( std::string ihostname, Port iport, Rank irank
 {
     std::ostringstream hoststr;
 
-    hoststr << "[" << ihostname << ":" << iport << ":" << irank << ":1";
+    hoststr << "[" << ihostname << ":" << std::setw(5) << std::setfill( '0' ) << iport << ":" << irank << ":1";
     _byte_array += hoststr.str();
 
     _num_nodes++;
@@ -111,7 +111,7 @@ SerialGraph* SerialGraph::get_MySubTree( std::string &ihostname,
     std::ostringstream hoststr;
     size_t begin, cur, end;
 
-    hoststr << "[" << ihostname << ":" << iport << ":" << irank << ":" ; 
+    hoststr << "[" << ihostname << ":" << std::setw(5) << std::setfill( '0' ) << iport << ":" << irank << ":" ; 
     mrn_dbg( 5, mrn_printf(FLF, stderr, "SubTreeRoot:'%s' byte_array:'%s'\n",
                            hoststr.str().c_str(), _byte_array.c_str() ));
 
@@ -155,7 +155,7 @@ bool SerialGraph::set_Port(std::string hostname, Port port, Rank irank)
      
     std::string begin_str;
 
-    hoststr << "[" << hostname << ":" << UnknownPort << ":" << irank << ":" ;
+    hoststr << "[" << hostname << ":" << std::setw(5) << std::setfill( '0' ) << UnknownPort << ":" << irank << ":" ;
     port_str <<  port ;
     
     begin = _byte_array.find( hoststr.str() );

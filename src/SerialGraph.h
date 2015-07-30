@@ -7,7 +7,7 @@
 #define SerialGraph_h 1
 
 #include <string>
-
+#include <iomanip>
 #include "utils.h"
 
 namespace MRN
