@@ -23,7 +23,10 @@
 #include "mrnet/Types.h"
 #include "xplat/Monitor.h"
 
+
+#ifdef LIBI_HEADER_INCLUDE
 #include "libi/libi_api.h"
+#endif
 
 #include <boost/shared_ptr.hpp>
 namespace MRN
@@ -370,7 +373,7 @@ protected:
 
     bool is_ShuttingDown(void) const;
     void set_ShuttingDown(void);
-
+#ifdef LIBI_HEADER_INCLUDE
     void get_Identity( SerialGraph* sg, int & n, const char * myhostname, Rank & myrank, int & mynumchildren,
                         char* & phostname, Rank & prank,
                         bool includeNonLeaves, bool includeLeaves, bool useNetworkHostName,
@@ -381,6 +384,7 @@ protected:
                                  bool MWincludesLeaves,
                                  host_dist_t** & mw,
                                  host_dist_t** & be);
+#endif
 
     void waitOn_ProtEvent(void);
     static std::string get_NetSettingName( int s );

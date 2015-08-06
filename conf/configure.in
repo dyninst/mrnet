@@ -507,6 +507,9 @@ AC_CONFIG_HEADER([${PLATFORM_BUILD}/mrnet_config.h:conf/config.h.in])
 AC_CONFIG_HEADER([${PLATFORM_BUILD}/xplat_config.h:xplat/conf/config.h.in])
 AC_CONFIG_FILES([${PLATFORM_BUILD}/Makefile:conf/Makefile.in ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in])
 
-AC_CONFIG_SUBDIRS([external/libi])
+
+if test $MRNET_STARTUP_METHOD = "libi" ; then
+    AC_CONFIG_SUBDIRS([external/libi])
+fi
 
 AC_OUTPUT

@@ -2838,6 +2838,8 @@ bool Network::collect_NetPerformanceData ( rank_perfdata_map& results,
 FilterInfoPtr Network::GetFilterInfo() {
     return _net_filters;
 }
+
+#ifdef LIBI_HEADER_INCLUDE
 void Network::get_Identity( SerialGraph* sg,
                     int & n,
                     const char * myhostname,
@@ -2910,6 +2912,7 @@ void Network::CreateHostDistributions( NetworkTopology::Node* node,
         iter++;
     }
 }
+#endif
 
 std::string Network::get_NetSettingName( int s )
 {

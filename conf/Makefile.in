@@ -306,6 +306,7 @@ ifeq ($(MRNET_STARTUP_METHOD),ssh)
                  $(SRCDIR)/RSHInternalNode.C
 endif
 ifeq ($(MRNET_STARTUP_METHOD),libi)
+    CXXFLAGS += -DLIBI_HEADER_INCLUDE
     LIBMRNET_SRCS += $(SRCDIR)/LIBINetwork.C 
 endif
 ifneq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi ssh cray))

@@ -10034,9 +10034,12 @@ ac_config_files="$ac_config_files ${PLATFORM_BUILD}/Makefile:conf/Makefile.in ${
 
 
 
+if test $MRNET_STARTUP_METHOD = "libi" ; then
+
 
 subdirs="$subdirs external/libi"
 
+fi
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
