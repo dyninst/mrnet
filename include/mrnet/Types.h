@@ -21,7 +21,7 @@
 
 /* version info - our build will define these, but API users want them too */
 #ifndef MRNET_VERSION_MAJOR
-# define MRNET_VERSION_MAJOR 4
+# define MRNET_VERSION_MAJOR 5
 # define MRNET_VERSION_MINOR 0
 # define MRNET_VERSION_REV   0
 #endif

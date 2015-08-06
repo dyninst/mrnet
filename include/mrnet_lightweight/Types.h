@@ -28,7 +28,7 @@ typedef uint32_t Rank;
 
 /* version info */
 #ifndef MRNET_VERSION_MAJOR
-#define MRNET_VERSION_MAJOR 4
+#define MRNET_VERSION_MAJOR 5
 #define MRNET_VERSION_MINOR 0
 #define MRNET_VERSION_REV   0
 #endif
