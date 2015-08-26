@@ -457,7 +457,7 @@ int ParentNode::proc_FilterLoadEvent( PacketPtr ipacket ) const
         }
     }
 
-    if (_network->get_NumChildren() + 1 == _filter_children_reported) {
+    if (_filter_children_waiting + 1 == _filter_children_reported && !_network->is_LocalNodeFrontEnd() ) {
         char ** comp_hostnames = &(_filter_error_host[0]);
         char ** so_names = &(_filter_error_soname[0]);
         unsigned * funcids = &(_filter_error_funcname[0]);
@@ -692,7 +692,7 @@ int ParentNode::proc_newFilter( PacketPtr ipacket ) const
     _filter_error_host.clear();
     _filter_error_soname.clear();
     _filter_error_funcname.clear();
-
+    _filter_children_waiting = _network->get_NumChildren();
     _network->send_PacketToChildren( ipacket );
 
     std::vector<unsigned> error_funcs;

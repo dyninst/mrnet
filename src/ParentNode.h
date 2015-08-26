@@ -106,7 +106,7 @@ class ParentNode: public virtual Error,
     mutable std::vector<unsigned> _filter_error_funcname;
     mutable XPlat::Mutex event_lock;
     mutable unsigned _filter_children_reported;
-
+    mutable unsigned _filter_children_waiting;
     virtual int proc_PacketFromChildren( PacketPtr ipacket );
 
     ParentNode() {}
