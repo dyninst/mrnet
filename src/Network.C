@@ -1910,7 +1910,7 @@ int Network::load_FilterFuncs( const char* so_file,
 {
     // start user-defined filter ids at 100 to avoid conflicts with built-ins
     static unsigned short next_filter_id=100; 
-
+    bool wait_ForChildren = true;
     mrn_dbg_func_begin();
 
     size_t nfuncs = functions.size();
@@ -1956,9 +1956,13 @@ int Network::load_FilterFuncs( const char* so_file,
                                      so_copy, 
                                      funcs, success_count, 
                                      fids, success_count) );
+        if (get_NumChildren() == 0)
+            wait_ForChildren = false;
         send_PacketToChildren( packet );
         flush();
-        waitOn_ProtEvent();
+        if (wait_ForChildren){
+            waitOn_ProtEvent();
+        }
 
         // We have an error in loading filters elsewhere if this happens.
         if (_filter_error_hosts.size() > 0) {

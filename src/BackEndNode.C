@@ -284,7 +284,7 @@ int BackEndNode::proc_newFilter( PacketPtr ipacket ) const
         free( fids );
         free( so_file );
     }
-
+    _network->flush_PacketsToParent();
     mrn_dbg_func_end();
     return retval;
 }
