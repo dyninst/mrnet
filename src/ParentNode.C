@@ -443,6 +443,8 @@ int ParentNode::proc_FilterLoadEvent( PacketPtr ipacket ) const
     unsigned l1, l2, l3;
     ipacket->unpack("%as %as %aud",&hostnames, &l1, &so_filenames, 
         &l2, &func_ids, &l3);
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "recv packet ipacket with %ud elements\n",
+                l1 )); 
     
     event_lock.Lock();
     _filter_children_reported++;
@@ -455,8 +457,10 @@ int ParentNode::proc_FilterLoadEvent( PacketPtr ipacket ) const
             _filter_error_soname.push_back(so_filenames[u]);
             _filter_error_funcname.push_back(func_ids[u]);
         }
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "error in filter load from child\n" )); 
     }
-
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "Determining if sending packet or storing info (%ud - recv, %ud - expected)\n",
+                _filter_children_reported, _filter_children_waiting + 1)); 
     if (_filter_children_waiting + 1 == _filter_children_reported && !_network->is_LocalNodeFrontEnd() ) {
         char ** comp_hostnames = &(_filter_error_host[0]);
         char ** so_names = &(_filter_error_soname[0]);
@@ -464,9 +468,16 @@ int ParentNode::proc_FilterLoadEvent( PacketPtr ipacket ) const
         unsigned length =  (unsigned) _filter_error_host.size();
         PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
                              comp_hostnames, length, so_names, length, funcids, length));
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Sending packet to parent\n")); 
         _network->send_PacketToParent(packet);
+        _network->flush();
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Finished sending packet to parent\n" )); 
+
     } else if (_network->is_LocalNodeFrontEnd() && _network->get_NumChildren() == _filter_children_reported) {
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Signaling frontend that we are complete\n")); 
+
         _network->signal_ProtEvent(_filter_error_host, _filter_error_soname, _filter_error_funcname);
+        mrn_dbg( 3, mrn_printf(FLF, stderr, "Signaling frontend completed\n"));
         _filter_children_reported = 0;
         _filter_error_host.clear();
         _filter_error_soname.clear();
@@ -688,11 +699,15 @@ int ParentNode::proc_newFilter( PacketPtr ipacket ) const
                               &funcs, &nfuncs,
                               &fids, &nfuncs );
 
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "Starting load filter function\n")); 
+
     _filter_children_reported = 0;
     _filter_error_host.clear();
     _filter_error_soname.clear();
     _filter_error_funcname.clear();
     _filter_children_waiting = _network->get_NumChildren();
+    mrn_dbg( 3, mrn_printf(FLF, stderr, "Sending filter load message to %ud children\n",
+            _filter_children_waiting )); 
     _network->send_PacketToChildren( ipacket );
 
     std::vector<unsigned> error_funcs;
@@ -719,6 +734,7 @@ int ParentNode::proc_newFilter( PacketPtr ipacket ) const
                 so_filename[u] = strdup(so_file);
             }
             unsigned length = (unsigned) error_funcs.size();
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "Sending local error of packet loading falure\n")); 
             PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
                                 hostnames, length, so_filename, length, func_cstr, length));
             // Record error locally, we don't add directly to the local buffers 
@@ -727,6 +743,7 @@ int ParentNode::proc_newFilter( PacketPtr ipacket ) const
         } else {
             char ** emptySend = NULL;
             unsigned ** func_empty = NULL;
+            mrn_dbg( 3, mrn_printf(FLF, stderr, "local packet loaded correctly\n" )); 
             PacketPtr packet(new Packet(CTL_STRM_ID, PROT_EVENT, "%as %as %aud",
                                 emptySend, 0, emptySend, 0, func_empty, 0));
             proc_Event(packet);
