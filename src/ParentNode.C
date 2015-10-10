@@ -41,6 +41,7 @@ ParentNode::ParentNode( Network* inetwork,
       _num_children_reported_init( 0 ),
       _num_children_reported_del( 0 ),
       _num_failed_children( 0 ),
+      _filter_children_reported( 0 ),
       listening_sock_fd( listeningSocket )
 {
     mrn_dbg( 5, mrn_printf(FLF, stderr, "ParentNode(local[%u]:\"%s:%u\")\n",
