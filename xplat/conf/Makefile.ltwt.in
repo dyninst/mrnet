@@ -25,7 +25,7 @@ TARGET_SO        = $(LIBDIR)/libxplat_lightweight.so.$(VERSION)
 TARGET_LOWFAT    = $(LIBDIR)/libxplat_lightweight_r.a.$(VERSION)
 TARGET_SO_LOWFAT = $(LIBDIR)/libxplat_lightweight_r.so.$(VERSION)
 TARGET_SONAME       = libxplat_lightweight.so.$(VERSION_MAJOR)
-TARGET_SONAME_LOWFAT = $(LIBDIR)/libxplat_lightweight_r.so.$(VERSION_MAJOR)
+TARGET_SONAME_LOWFAT = libxplat_lightweight_r.so.$(VERSION_MAJOR)
 
 TARGET_SO_LIBS        = @LIBS_LIGHTWEIGHT@
 TARGET_SO_LOWFAT_LIBS = @LIBS_LOWFAT@
