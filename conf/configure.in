@@ -372,7 +372,12 @@ LIBS_LOWFAT="$LIBS_LIGHTWEIGHT -lpthread"
 
 dnl === CRAY XT OPTIONS ===
 if test $MRNET_STARTUP_METHOD = "ssh" ; then
-    AC_CHECK_FILE([/proc/cray_xt/nid],[MRNET_STARTUP_METHOD="cray"])
+    AS_IF([test -f "/proc/cray_xt/nid"],[MRNET_STARTUP_METHOD="cray"])
+    if test $MRNET_STARTUP_METHOD = "cray" ; then
+        echo "checking for /proc/cray_xt/nid... yes"
+    else
+        echo "checking for /proc/cray_xt/nid... no"
+    fi
 fi
 
 if test $MRNET_STARTUP_METHOD = "cray" ; then
@@ -495,7 +500,6 @@ AC_CHECK_SIZEOF(double)
 
 PLATFORM_BUILD="`pwd`/build/${host}"
 AC_SUBST(PLATFORM_BUILD)
-
 AS_MKDIR_P([${PLATFORM_BUILD}/bin])
 AS_MKDIR_P([${PLATFORM_BUILD}/depends/ltwt])
 AS_MKDIR_P([${PLATFORM_BUILD}/depends/xplat/ltwt])
@@ -506,7 +510,6 @@ AS_MKDIR_P([${PLATFORM_BUILD}/obj/xplat/ltwt])
 AC_CONFIG_HEADER([${PLATFORM_BUILD}/mrnet_config.h:conf/config.h.in])
 AC_CONFIG_HEADER([${PLATFORM_BUILD}/xplat_config.h:xplat/conf/config.h.in])
 AC_CONFIG_FILES([${PLATFORM_BUILD}/Makefile:conf/Makefile.in ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in])
-
 
 if test $MRNET_STARTUP_METHOD = "libi" ; then
     AC_CONFIG_SUBDIRS([external/libi])
