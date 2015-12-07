@@ -1,0 +1,54 @@
+#/****************************************************************************
+# * Copyright © 2003-2015 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+# *                  Detailed MRNet usage rights in "LICENSE" file.          *
+# ****************************************************************************/
+
+## Creation of the top level makefile
+
+MRNET_ROOT     = @MRNET_ROOT@
+MRNET_PLATFORM = @host@
+MRNET_STARTUP_METHOD = @MRNET_STARTUP_METHOD@
+
+VERSION        = @MRNET_VERSION@
+VERSION_MAJOR  = @MRNET_VERSION_MAJOR@
+VERSION_MINOR  = @MRNET_VERSION_MINOR@
+VERSION_REV    = @MRNET_VERSION_REVISION@
+
+@SET_MAKE@
+
+#############################
+#### INSTALL DIRECTORIES ####
+#############################
+
+PLATDIR = @PLATFORM_BUILD@
+
+all: 
+	$(MAKE) -f $(PLATDIR)/Makefile all
+
+examples:
+	$(MAKE) -f $(PLATDIR)/Makefile examples
+
+tests:
+	$(MAKE) -f $(PLATDIR)/Makefile tests
+
+install:
+	$(MAKE) -f $(PLATDIR)/Makefile install
+
+install-tests:
+	$(MAKE) -f $(PLATDIR)/Makefile install-tests
+
+install-examples:
+	$(MAKE) -f $(PLATDIR)/Makefile install-examples
+
+clean:
+	$(MAKE) -f $(PLATDIR)/Makefile clean
+
+distclean:
+	@echo Cleaning all platforms ...
+	for dir in conf/autom4te.cache build/* ; do \
+	    if [ -d $$dir ] ; then $(RM) -r $$dir ; fi \
+	done
+	for file in config.log config.status  ; do \
+	    if [ -e $$file ] ; then $(RM) $$file ; fi \
+	done
+

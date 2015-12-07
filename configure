@@ -6047,6 +6047,7 @@ _ACEOF
 
 PLATFORM_BUILD="`pwd`/build/${host}"
 
+
 as_dir=${PLATFORM_BUILD}/bin; as_fn_mkdir_p
 as_dir=${PLATFORM_BUILD}/depends/ltwt; as_fn_mkdir_p
 as_dir=${PLATFORM_BUILD}/depends/xplat/ltwt; as_fn_mkdir_p
@@ -6058,7 +6059,7 @@ ac_config_headers="$ac_config_headers ${PLATFORM_BUILD}/mrnet_config.h:conf/conf
 
 ac_config_headers="$ac_config_headers ${PLATFORM_BUILD}/xplat_config.h:xplat/conf/config.h.in"
 
-ac_config_files="$ac_config_files ${PLATFORM_BUILD}/Makefile:conf/Makefile.in ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in"
+ac_config_files="$ac_config_files Makefile:conf/Makefile_tld.in ${PLATFORM_BUILD}/Makefile:conf/Makefile.in ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in ${PLATFORM_BUILD}/Makefile.xplat_ltwt:xplat/conf/Makefile.ltwt.in ${PLATFORM_BUILD}/Makefile.examples:conf/Makefile.examples.in"
 
 
 if test $MRNET_STARTUP_METHOD = "libi" ; then
@@ -6762,6 +6763,7 @@ do
   case $ac_config_target in
     "${PLATFORM_BUILD}/mrnet_config.h") CONFIG_HEADERS="$CONFIG_HEADERS ${PLATFORM_BUILD}/mrnet_config.h:conf/config.h.in" ;;
     "${PLATFORM_BUILD}/xplat_config.h") CONFIG_HEADERS="$CONFIG_HEADERS ${PLATFORM_BUILD}/xplat_config.h:xplat/conf/config.h.in" ;;
+    "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile:conf/Makefile_tld.in" ;;
     "${PLATFORM_BUILD}/Makefile") CONFIG_FILES="$CONFIG_FILES ${PLATFORM_BUILD}/Makefile:conf/Makefile.in" ;;
     "${PLATFORM_BUILD}/Makefile.ltwt") CONFIG_FILES="$CONFIG_FILES ${PLATFORM_BUILD}/Makefile.ltwt:conf/Makefile.ltwt.in" ;;
     "${PLATFORM_BUILD}/Makefile.xplat") CONFIG_FILES="$CONFIG_FILES ${PLATFORM_BUILD}/Makefile.xplat:xplat/conf/Makefile.in" ;;
