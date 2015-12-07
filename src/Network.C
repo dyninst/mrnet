@@ -27,7 +27,7 @@
 #include "ParsedGraph.h"
 #include "PeerNode.h"
 #include "TimeKeeper.h"
-
+#include "mrnet/Network.h"
 #include "mrnet/MRNet.h"
 #include "xplat/NetUtils.h"
 #include "xplat/SocketUtils.h"
