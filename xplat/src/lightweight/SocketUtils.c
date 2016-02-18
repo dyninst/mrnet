@@ -15,7 +15,7 @@ const XPlat_Socket InvalidSocket = -1;
 #else
 const XPlat_Socket InvalidSocket = INVALID_SOCKET;
 #endif
-const XPlat_Port InvalidPort = (XPlat_Port)-1;
+const XPlat_Port InvalidPort = (XPlat_Port)0;
 
 static bool_t SetTcpNoDelay( XPlat_Socket sock )
 {
