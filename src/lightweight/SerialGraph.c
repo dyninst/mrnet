@@ -59,7 +59,7 @@ SerialGraph_t* SerialGraph_get_MySubTree(SerialGraph_t* sg, char* ihostname,
 
     mrn_dbg_func_begin();
 
-    sprintf(hoststr, "[%s:%hu:%u:", ihostname, iport, irank);
+    sprintf(hoststr, "[%s:%05hu:%u:", ihostname, iport, irank);
     mrn_dbg(5, mrn_printf(FLF, stderr, "looking for SubTreeRoot: '%s'\n", hoststr));
  
     byte_array = sg->byte_array;
@@ -110,7 +110,7 @@ void SerialGraph_add_Leaf(SerialGraph_t* sg, char* ihostname,
     
     mrn_dbg_func_begin();
 
-    len = (size_t) sprintf(hoststr, "[%s:%hu:%u:0]", ihostname, iport, irank);
+    len = (size_t) sprintf(hoststr, "[%s:%05hu:%u:0]", ihostname, iport, irank);
     mrn_dbg(5, mrn_printf(FLF, stderr, "adding sub tree leaf: %s\n", hoststr));
 
     len += strlen(sg->byte_array) + 1;
@@ -139,7 +139,7 @@ void SerialGraph_add_SubTreeRoot(SerialGraph_t* sg, char* ihostname,
 
     mrn_dbg_func_begin();
 
-    len = (size_t) sprintf(hoststr, "[%s:%hu:%u:1", ihostname, iport, irank);
+    len = (size_t) sprintf(hoststr, "[%s:%05hu:%u:1", ihostname, iport, irank);
     mrn_dbg(5, mrn_printf(FLF, stderr, "adding sub tree root: %s\n", hoststr));
 
     len += strlen(sg->byte_array) + 1;
@@ -360,8 +360,8 @@ int SerialGraph_set_Port(SerialGraph_t* sg, char * hostname, Port port, Rank ira
     char old_hoststr[256];
     char new_hoststr[256];
 
-    sprintf(old_hoststr, "[%s:%hu:%u:", hostname, UnknownPort, irank);
-    sprintf(new_hoststr, "[%s:%hu:%u:", hostname, port, irank);
+    sprintf(old_hoststr, "[%s:%05hu:%u:", hostname, UnknownPort, irank);
+    sprintf(new_hoststr, "[%s:%05hu:%u:", hostname, port, irank);
     
     old_byte_array = sg->byte_array;
     new_byte_array = (char*) malloc( strlen(old_byte_array) + 10 );
