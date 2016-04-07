@@ -15,7 +15,7 @@ AC_LANG(C++)
 dnl === CONFIGURE OPTIONS
 AC_ARG_WITH(startup,
             [AS_HELP_STRING([--with-startup=METHOD],
-                            [Tree instantiation method - "ssh" (default), "cray", "libi"])],
+                            [Tree instantiation method - "ssh" (default), "cray", "cray-cti", "libi"])],
             [MRNET_STARTUP_METHOD="${withval}"],
             [MRNET_STARTUP_METHOD="ssh"])
 
@@ -385,8 +385,8 @@ if test $MRNET_STARTUP_METHOD = "cray" ; then
     CRAYXT_ATH_LIBS=""
     CRAYXE_ATH_LIBS=""
 
-    CXXFLAGS="$CXXFLAGS -Darch_crayxt"
-    CFLAGS="$CFLAGS -Darch_crayxt"
+    CXXFLAGS="$CXXFLAGS -Darch_crayxt -DBUILD_CRAY_ALPS"
+    CFLAGS="$CFLAGS -Darch_crayxt -DBUILD_CRAY_ALPS"
 
     LDFLAGS_HOLD="$LDFLAGS"
 
@@ -457,6 +457,81 @@ if test $MRNET_STARTUP_METHOD = "cray" ; then
     
     LDFLAGS="$LDFLAGS_HOLD"
 fi
+
+
+if test $MRNET_STARTUP_METHOD = "cray-cti" ; then
+
+    CRAYXT_CTI_LIBS=""
+    CRAYXE_CTI_LIBS=""
+
+    CXXFLAGS="$CXXFLAGS -Darch_crayxt -DBUILD_CRAY_CTI"
+    CFLAGS="$CFLAGS -Darch_crayxt -DBUILD_CRAY_CTI"
+
+    LDFLAGS_HOLD="$LDFLAGS"
+
+    if test "x$CRAY_CTI_INCDIR" != "x" ; then
+        CXXFLAGS="$CXXFLAGS -I$CRAY_ATH_INCDIR"
+    fi
+
+    if test "x$CRAY_CTI_LIBDIR" != "x" ; then
+        CRAYXT_CTI_LIBS="-L$CRAY_CTI_LIBDIR $CRAYXT_CTI_LIBS"
+        CRAYXE_CTI_LIBS="-L$CRAY_CTI_LIBDIR $CRAYXE_CTI_LIBS"
+        LDFLAGS="$LDFLAGS -L$CRAY_CTI_LIBDIR"
+    fi
+
+    AC_CHECK_HEADERS([alps/alps.h] [alps/alps_toolAssist.h] [alps/apInfo.h], [], 
+                     [AC_MSG_ERROR([One of the required ALPS include files was not found: alps/alps.h, alps/alps_toolAssist.h, alps/apInfo.h])])
+
+    HAVE_LIBALPS="no"
+#    AC_CHECK_HEADERS([alps/libalps.h] [libalps.h], [HAVE_LIBALPS="yes"; break], [], 
+#[#if HAVE_ALPS_ALPS_TOOLASSIST_H
+## include <alps/alps_toolAssist.h>
+##endif
+##if HAVE_ALPS_APINFO_H 
+## include <alps/apInfo.h> 
+##endif
+#]
+#                    )
+    if test $CXX = "CC" ; then
+        LDFLAGS="-dynamic $LDFLAGS"
+        CN_LDFLAGS="-dynamic $CN_LDFLAGS"
+    fi
+
+    if test $HAVE_LIBALPS = "yes" ; then
+
+        HAVE_ATH_LIBS="no"
+        LIBS_HOLD=$LIBS
+
+        CRAYXT_ATH_LIBS_SO="$CRAYXT_ATH_LIBS -lalps"
+        CRAYXT_ATH_LIBS="$CRAYXT_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
+        CRAYXE_ATH_LIBS_SO="$CRAYXE_ATH_LIBS -lalps"
+        CRAYXE_ATH_LIBS="$CRAYXE_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic"
+
+        AC_CHECK_LIB( [alps], [alps_launch_tool_helper],
+                      [HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXT_ATH_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXT_ATH_LIBS_SO $EXTRA_LIBS_SO"],
+                      [], [-lxmlrpc] )
+
+        if test $HAVE_ATH_LIBS = "no" ; then
+            unset ac_cv_lib_alps_alps_launch_tool_helper
+            LIBS="$LIBS_HOLD"
+            AC_CHECK_LIB( [alps], [alps_launch_tool_helper],
+                          [HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXE_ATH_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXE_ATH_LIBS_SO $EXTRA_LIBS_SO"],
+                          [], [-lxmlrpc-epi -lexpat] )
+        fi
+
+        LIBS="$LIBS_HOLD"
+
+        if test $HAVE_ATH_LIBS = "no" ; then
+            if test "x$CRAY_ATH_INCDIR" != "x" ; then
+                AC_MSG_ERROR(Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib)
+            fi
+        fi
+    fi
+    
+    LDFLAGS="$LDFLAGS_HOLD"
+fi
+
+
 
 if test $MRNET_STARTUP_METHOD = "libi" ; then
 	if test $LIBI_STARTUP_METHOD = "slurm" ; then
