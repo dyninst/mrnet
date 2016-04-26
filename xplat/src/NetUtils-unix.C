@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright © 2003-2012 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
+ * Copyright ï¿½ 2003-2012 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
  *                  Detailed MRNet usage rights in "LICENSE" file.          *
  ****************************************************************************/
 
@@ -37,6 +37,14 @@
 #elif defined (CSIOCGIFCONF)
 #define XPLAT_SIOCGIFCONF CSIOCGIFCONF
 #endif /* SIOCGIFCONF */
+
+extern "C"
+{
+#if defined(BUILD_CRAY_CTI)
+#include "cray_tools_fe.h"
+#include "cray_tools_be.h"
+#endif
+}
 
 namespace XPlat
 {
@@ -187,6 +195,13 @@ int NetUtils::GetLocalHostName( std::string& this_host )
 
 #if defined(arch_crayxt)
 
+#if defined(BUILD_CRAY_CTI)
+    char *hostname = cti_getHostname();
+    if (hostname == NULL)
+        hostname = cti_be_getNodeHostname();
+    this_host = std::string(hostname);
+    free(hostname);
+#else
     static std::string cached_localhost;
 
     if( cached_localhost.empty() ) {
@@ -197,14 +212,15 @@ int NetUtils::GetLocalHostName( std::string& this_host )
 
         std::ostringstream nidStr;
         nidStr << "nid"
-	       << std::setw( 5 )
-	       << std::setfill( '0' )
-	       << nid;
+           << std::setw( 5 )
+           << std::setfill( '0' )
+           << nid;
         cached_localhost = nidStr.str();
     }
 
     this_host = cached_localhost;
-
+#endif
+    
 #else
 
     char host[256];

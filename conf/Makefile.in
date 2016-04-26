@@ -110,7 +110,7 @@ endif
 ################################
 # Compiler Specific Definitions
 ################################
-
+CRAYTYPE = @CRAY_STARTUP_TYPE@
 COMPILER_TYPE = @COMPILER_TYPE@
 
 ifeq ($(COMPILER_TYPE), gnu)
@@ -289,12 +289,22 @@ else
 endif
 
 ifeq ($(MRNET_STARTUP_METHOD),cray)
-	# build for a Cray XT (uses aprun or alps_tool_helper for parallel process launch)
-    LIBMRNET_SRCS += $(SRCDIR)/XTNetwork.C \
-                 $(SRCDIR)/XTParentNode.C \
-                 $(SRCDIR)/XTFrontEndNode.C \
-                 $(SRCDIR)/XTBackEndNode.C \
-                 $(SRCDIR)/XTInternalNode.C
+	ifeq ($(CRAYTYPE), ALPS)
+		# build for a Cray XT (uses aprun or alps_tool_helper for parallel process launch)
+	    LIBMRNET_SRCS += $(SRCDIR)/XTNetwork.C \
+	                 $(SRCDIR)/XTParentNode.C \
+	                 $(SRCDIR)/XTFrontEndNode.C \
+	                 $(SRCDIR)/XTBackEndNode.C \
+	                 $(SRCDIR)/XTInternalNode.C
+	endif
+	ifeq ($(CRAYTYPE), CTI)
+		# build for a Cray CTI
+	    LIBMRNET_SRCS += $(SRCDIR)/CTINetwork.C \
+	                 $(SRCDIR)/XTParentNode.C \
+	                 $(SRCDIR)/XTFrontEndNode.C \
+	                 $(SRCDIR)/XTBackEndNode.C \
+	                 $(SRCDIR)/XTInternalNode.C	
+	endif    
 endif
 ifeq ($(MRNET_STARTUP_METHOD),ssh)
 	# fall back to RSH instantiation approach

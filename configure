@@ -642,6 +642,7 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 subdirs
 PLATFORM_BUILD
+CRAY_STARTUP_TYPE
 LTWT_THREADSAFE
 EXTRA_LIBS_LOWFAT
 EXTRA_LIBS_LIGHTWEIGHT
@@ -747,6 +748,8 @@ enable_option_checking
 with_startup
 with_alpstoolhelp_lib
 with_alpstoolhelp_inc
+with_craycti_lib
+with_craycti_inc
 with_boost
 with_libi_startup
 with_libi
@@ -1415,6 +1418,10 @@ Optional Packages:
   --with-alpstoolhelp-inc=PATH
                           (Cray only) Absolute path to directory containing
                           libalps.h
+  --with-craycti-lib=PATH (Cray only) Absolute path to directory containing
+                          CTI library
+  --with-craycti-inc=PATH (Cray only) Absolute path to directory containing
+                          CTI headers
   --with-boost=PATH       Absolute path to installation of Boost C++ libraries
                           (note: specify the path to the directory containing
                           "include" and "lib" sub-directories)
@@ -3070,6 +3077,24 @@ if test "${with_alpstoolhelp_inc+set}" = set; then
   withval=$with_alpstoolhelp_inc; CRAY_ATH_INCDIR="${withval}"
 else
   CRAY_ATH_INCDIR=""
+fi
+
+
+
+# Check whether --with-craycti-lib was given.
+if test "${with_craycti_lib+set}" = set; then
+  withval=$with_craycti_lib; CRAY_CTI_LIBDIR="${withval}"
+else
+  CRAY_CTI_LIBDIR=""
+fi
+
+
+
+# Check whether --with-craycti-inc was given.
+if test "${with_craycti_inc+set}" = set; then
+  withval=$with_craycti_inc; CRAY_CTI_INCDIR="${withval}"
+else
+  CRAY_CTI_INCDIR=""
 fi
 
 
@@ -6681,6 +6706,8 @@ esac
 LIBS_LOWFAT="$LIBS_LIGHTWEIGHT -lpthread"
 
 
+CRAY_STARTUP_TYPE=""
+
 if test $MRNET_STARTUP_METHOD = "ssh" ; then
     if test -f "/proc/cray_xt/nid"; then
   MRNET_STARTUP_METHOD="cray"
@@ -6694,7 +6721,7 @@ fi
 fi
 
 if test $MRNET_STARTUP_METHOD = "cray" ; then
-
+    CRAY_STARTUP_TYPE="ALPS"
     CRAYXT_ATH_LIBS=""
     CRAYXE_ATH_LIBS=""
 
@@ -7125,8 +7152,7 @@ fi
 
 
 if test $MRNET_STARTUP_METHOD = "cray-cti" ; then
-
-    CRAYXT_CTI_LIBS=""
+    CRAY_STARTUP_TYPE="CTI"
     CRAYXE_CTI_LIBS=""
 
     CXXFLAGS="$CXXFLAGS -Darch_crayxt -DBUILD_CRAY_CTI"
@@ -7145,9 +7171,7 @@ if test $MRNET_STARTUP_METHOD = "cray-cti" ; then
     fi
 
 
-
-
-for ac_header in alps/alps.h alps/alps_toolAssist.h alps/apInfo.h
+for ac_header in cray_tools_fe.h
 do
 as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
@@ -7294,46 +7318,36 @@ as_val=`eval 'as_val=${'$as_ac_Header'}
 _ACEOF
 
 else
-  { { $as_echo "$as_me:$LINENO: error: One of the required ALPS include files was not found: alps/alps.h, alps/alps_toolAssist.h, alps/apInfo.h" >&5
-$as_echo "$as_me: error: One of the required ALPS include files was not found: alps/alps.h, alps/alps_toolAssist.h, alps/apInfo.h" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: Could not find CTI header cray_tools_fe.h" >&5
+$as_echo "$as_me: error: Could not find CTI header cray_tools_fe.h" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 done
 
 
-    HAVE_LIBALPS="no"
-#    AC_CHECK_HEADERS([alps/libalps.h] [libalps.h], [HAVE_LIBALPS="yes"; break], [],
-#[#if HAVE_ALPS_ALPS_TOOLASSIST_H
-## include <alps/alps_toolAssist.h>
-##endif
-##if HAVE_ALPS_APINFO_H
-## include <alps/apInfo.h>
-##endif
-#]
-#                    )
+
+
     if test $CXX = "CC" ; then
         LDFLAGS="-dynamic $LDFLAGS"
         CN_LDFLAGS="-dynamic $CN_LDFLAGS"
     fi
 
-    if test $HAVE_LIBALPS = "yes" ; then
 
-        HAVE_ATH_LIBS="no"
-        LIBS_HOLD=$LIBS
+    HAVE_CTI_LIBS="no"
+    LIBS_HOLD=$LIBS
+    CRAYXT_CTI_LIBS_SO="$CRAYXT_CTI_LIBS -lcraytools_fe -lcraytools_be"
+    CRAYXT_CTI_LIBS="$CRAYXT_CTI_LIBS -Wl,-Bstatic -lcraytools_fe -lcraytools_be -lxmlrpc -Wl,-Bdynamic"
+    CRAYXE_CTI_LIBS_SO="$CRAYXE_CTI_LIBS -lcraytools_fe -lcraytools_be"
+    CRAYXE_CTI_LIBS="$CRAYXE_CTI_LIBS -Wl,-Bstatic -lcraytools_fe -lcraytools_be -lxmlrpc-epi -lexpat -Wl,-Bdynamic"
 
-        CRAYXT_ATH_LIBS_SO="$CRAYXT_ATH_LIBS -lalps"
-        CRAYXT_ATH_LIBS="$CRAYXT_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
-        CRAYXE_ATH_LIBS_SO="$CRAYXE_ATH_LIBS -lalps"
-        CRAYXE_ATH_LIBS="$CRAYXE_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic"
-
-        { $as_echo "$as_me:$LINENO: checking for alps_launch_tool_helper in -lalps" >&5
-$as_echo_n "checking for alps_launch_tool_helper in -lalps... " >&6; }
-if test "${ac_cv_lib_alps_alps_launch_tool_helper+set}" = set; then
+    { $as_echo "$as_me:$LINENO: checking for cti_getHostname in -lcraytools_fe" >&5
+$as_echo_n "checking for cti_getHostname in -lcraytools_fe... " >&6; }
+if test "${ac_cv_lib_craytools_fe_cti_getHostname+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lalps -lxmlrpc  $LIBS"
+LIBS="-lcraytools_fe -lxmlrpc  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -7347,11 +7361,11 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
-char alps_launch_tool_helper ();
+char cti_getHostname ();
 int
 main ()
 {
-return alps_launch_tool_helper ();
+return cti_getHostname ();
   ;
   return 0;
 }
@@ -7377,12 +7391,12 @@ $as_echo "$ac_try_echo") >&5
 	 test "$cross_compiling" = yes ||
 	 $as_test_x conftest$ac_exeext
        }; then
-  ac_cv_lib_alps_alps_launch_tool_helper=yes
+  ac_cv_lib_craytools_fe_cti_getHostname=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_alps_alps_launch_tool_helper=no
+	ac_cv_lib_craytools_fe_cti_getHostname=no
 fi
 
 rm -rf conftest.dSYM
@@ -7390,95 +7404,94 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_alps_alps_launch_tool_helper" >&5
-$as_echo "$ac_cv_lib_alps_alps_launch_tool_helper" >&6; }
-if test "x$ac_cv_lib_alps_alps_launch_tool_helper" = x""yes; then
-  HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXT_ATH_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXT_ATH_LIBS_SO $EXTRA_LIBS_SO"
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_craytools_fe_cti_getHostname" >&5
+$as_echo "$ac_cv_lib_craytools_fe_cti_getHostname" >&6; }
+if test "x$ac_cv_lib_craytools_fe_cti_getHostname" = x""yes; then
+  HAVE_CTI_LIBS="yes"; EXTRA_LIBS="$CRAYXT_CTI_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXT_CTI_LIBS_SO $EXTRA_LIBS_SO"
 fi
 
 
-        if test $HAVE_ATH_LIBS = "no" ; then
-            unset ac_cv_lib_alps_alps_launch_tool_helper
-            LIBS="$LIBS_HOLD"
-            { $as_echo "$as_me:$LINENO: checking for alps_launch_tool_helper in -lalps" >&5
-$as_echo_n "checking for alps_launch_tool_helper in -lalps... " >&6; }
-if test "${ac_cv_lib_alps_alps_launch_tool_helper+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lalps -lxmlrpc-epi -lexpat  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char alps_launch_tool_helper ();
-int
-main ()
-{
-return alps_launch_tool_helper ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_cxx_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  ac_cv_lib_alps_alps_launch_tool_helper=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_alps_alps_launch_tool_helper=no
-fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_alps_alps_launch_tool_helper" >&5
-$as_echo "$ac_cv_lib_alps_alps_launch_tool_helper" >&6; }
-if test "x$ac_cv_lib_alps_alps_launch_tool_helper" = x""yes; then
-  HAVE_ATH_LIBS="yes"; EXTRA_LIBS="$CRAYXE_ATH_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXE_ATH_LIBS_SO $EXTRA_LIBS_SO"
-fi
-
-        fi
-
+    if test $HAVE_CTI_LIBS = "no" ; then
+        unset ac_cv_lib_alps_alps_launch_tool_helper
         LIBS="$LIBS_HOLD"
+        { $as_echo "$as_me:$LINENO: checking for cti_getHostname in -lcraytools_fe" >&5
+$as_echo_n "checking for cti_getHostname in -lcraytools_fe... " >&6; }
+if test "${ac_cv_lib_craytools_fe_cti_getHostname+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcraytools_fe -lxmlrpc-epi -lexpat  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
 
-        if test $HAVE_ATH_LIBS = "no" ; then
-            if test "x$CRAY_ATH_INCDIR" != "x" ; then
-                { { $as_echo "$as_me:$LINENO: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&5
-$as_echo "$as_me: error: Can't find libalps. Specify proper directory with --with-alpstoolhelp-lib" >&2;}
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cti_getHostname ();
+int
+main ()
+{
+return cti_getHostname ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_lib_craytools_fe_cti_getHostname=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_craytools_fe_cti_getHostname=no
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_craytools_fe_cti_getHostname" >&5
+$as_echo "$ac_cv_lib_craytools_fe_cti_getHostname" >&6; }
+if test "x$ac_cv_lib_craytools_fe_cti_getHostname" = x""yes; then
+  HAVE_CTI_LIBS="yes"; EXTRA_LIBS="$CRAYXE_CTI_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXE_CTI_LIBS_SO $EXTRA_LIBS_SO"
+fi
+
+    fi
+
+    LIBS="$LIBS_HOLD"
+
+    if test $HAVE_CTI_LIBS = "no" ; then
+        if test "x$CRAY_CTI_INCDIR" != "x" ; then
+            { { $as_echo "$as_me:$LINENO: error: Can't find craytools_fe. Specify proper directory with --with-alpstoolhelp-lib" >&5
+$as_echo "$as_me: error: Can't find craytools_fe. Specify proper directory with --with-alpstoolhelp-lib" >&2;}
    { (exit 1); exit 1; }; }
-            fi
         fi
     fi
 
@@ -7548,6 +7561,7 @@ fi
 rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
+
 
 
 
