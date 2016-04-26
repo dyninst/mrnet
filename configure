@@ -7161,7 +7161,7 @@ if test $MRNET_STARTUP_METHOD = "cray-cti" ; then
     LDFLAGS_HOLD="$LDFLAGS"
 
     if test "x$CRAY_CTI_INCDIR" != "x" ; then
-        CXXFLAGS="$CXXFLAGS -I$CRAY_ATH_INCDIR"
+        CXXFLAGS="$CXXFLAGS -I$CRAY_CTI_INCDIR"
     fi
 
     if test "x$CRAY_CTI_LIBDIR" != "x" ; then
