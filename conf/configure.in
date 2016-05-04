@@ -8,8 +8,8 @@ abs_srcdir=`cd $srcdir && pwd`
 
 dnl === C++ COMPILERS ===
 dnl TODO: figure out dlopen()/shared object idiosyncracies when using non-GNU compilers
-AC_PROG_CC(xlc_r cc gcc pgcc icc)
-AC_PROG_CXX(xlC_r CC g++ pgCC icpc)
+AC_PROG_CC(clang xlc_r cc gcc pgcc icc)
+AC_PROG_CXX(clang++ xlC_r CC g++ pgCC icpc)
 AC_LANG(C++)
 
 dnl === CONFIGURE OPTIONS
@@ -255,6 +255,23 @@ if test $COMPILER_TYPE = "gnu" ; then
 
     CXXFLAGS="$CXXFLAGS -Dcompiler_gnu -fno-default-inline -fPIC"
     CFLAGS="$CFLAGS -Dcompiler_gnu -fPIC"
+
+    SOFLAGS="$SOFLAGS -fPIC -shared"
+    if test $MRNET_OS = "linux" ; then
+        SOFLAGS="$SOFLAGS -rdynamic"
+    fi
+
+    C_AS_CPLUSPLUS="-x c++"
+
+    AC_PATH_PROG(AR, ar)
+    AC_SUBST(AR)
+    ARFLAGS="crv"
+    AC_SUBST(ARFLAGS)
+
+elif test $COMPILER_TYPE = "clang"; then
+    
+    CXXFLAGS="$CXXFLAGS -Dcompiler_clang -fPIC"
+    CFLAGS="$CFLAGS -Dcompiler_clang -fPIC"
 
     SOFLAGS="$SOFLAGS -fPIC -shared"
     if test $MRNET_OS = "linux" ; then
