@@ -740,6 +740,7 @@ with_boost
 with_libi_startup
 with_libi
 with_launchmon
+with_expat
 enable_shared
 enable_verbosebuild
 enable_debug
@@ -1405,6 +1406,9 @@ Optional Packages:
                           libraries (note: specify the path to the directory
                           containing "include" and "lib" sub-directories)
   --with-launchmon=PATH   Absolute path to installation of LaunchMON
+  --with-expat=PATH       Absolute path to installation of EXPAT libraries
+                          (note: specify the path to the directory containing
+                          "include" and "lib" sub-directories)
   --with-purify           Use purify for memory debugging
 
 Some influential environment variables:
@@ -3461,6 +3465,21 @@ else
 fi
 
 
+
+
+# Check whether --with-expat was given.
+if test "${with_expat+set}" = set; then :
+  withval=$with_expat; EXPAT_DIR="${withval}"
+else
+  EXPAT_DIR=""
+fi
+
+
+if test "x$EXPAT_DIR" = "x" ; then
+   EXPAT_LIB=""
+else
+   EXPAT_LIB="-L$EXPAT_DIR/lib"
+fi
 
 # Check whether --enable-shared was given.
 if test "${enable_shared+set}" = set; then :
@@ -5556,7 +5575,7 @@ done
         CRAYXT_ATH_LIBS_SO="$CRAYXT_ATH_LIBS -lalps"
         CRAYXT_ATH_LIBS="$CRAYXT_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc -Wl,-Bdynamic"
         CRAYXE_ATH_LIBS_SO="$CRAYXE_ATH_LIBS -lalps"
-        CRAYXE_ATH_LIBS="$CRAYXE_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc-epi -lexpat -Wl,-Bdynamic"
+        CRAYXE_ATH_LIBS="$CRAYXE_ATH_LIBS -Wl,-Bstatic -lalps -lxmlrpc-epi $EXPAT_LIB -lexpat -Wl,-Bdynamic"
 
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for alps_launch_tool_helper in -lalps" >&5
 $as_echo_n "checking for alps_launch_tool_helper in -lalps... " >&6; }
@@ -5704,8 +5723,7 @@ done
     CRAYXT_CTI_LIBS_SO="$CRAYXT_CTI_LIBS -lcraytools_fe -lcraytools_be"
     CRAYXT_CTI_LIBS="$CRAYXT_CTI_LIBS -Wl,-Bstatic -lcraytools_fe -lcraytools_be -lxmlrpc -Wl,-Bdynamic"
     CRAYXE_CTI_LIBS_SO="$CRAYXE_CTI_LIBS -lcraytools_fe -lcraytools_be"
-    CRAYXE_CTI_LIBS="$CRAYXE_CTI_LIBS -Wl,-Bstatic -lcraytools_fe -lcraytools_be -lxmlrpc-epi -lexpat -Wl,-Bdynamic"
-
+    CRAYXE_CTI_LIBS="$CRAYXE_CTI_LIBS -Wl,-Bstatic -lcraytools_fe -lcraytools_be -lxmlrpc-epi $EXPAT_LIB -lexpat -Wl,-Bdynamic"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cti_getHostname in -lcraytools_fe" >&5
 $as_echo_n "checking for cti_getHostname in -lcraytools_fe... " >&6; }
 if ${ac_cv_lib_craytools_fe_cti_getHostname+:} false; then :
