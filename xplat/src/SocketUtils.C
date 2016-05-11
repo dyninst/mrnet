@@ -136,10 +136,11 @@ bool Connect( const std::string &hostname,
             if( (num_retry > 0) && (nConnectTries >= num_retry) )
                 break;
 
-            nConnectTries++;
-
             // delay before trying again (more each time)
-            sleep( nConnectTries );
+            if (!XPlat::Error::EInterrupted(err)) {
+                nConnectTries++;
+                sleep( nConnectTries );
+            }
         }
     } while( -1 == cret );
 
