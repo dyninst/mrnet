@@ -14,6 +14,7 @@ BINDIR  = $(PLATDIR)/bin
 LIBDIR  = $(PLATDIR)/lib
 OBJDIR  = $(PLATDIR)/obj/xplat/ltwt
 DEPDIR  = $(PLATDIR)/depends/xplat/ltwt
+INSTALL_DATA = @INSTALL_DATA@
 
 xplat_INCDIR = $(INCDIR)/xplat_lightweight
 install_INCDIR = $(IINCDIR)/xplat_lightweight
@@ -31,6 +32,10 @@ TARGET_SO_LIBS        = @LIBS_LIGHTWEIGHT@
 TARGET_SO_LOWFAT_LIBS = @LIBS_LOWFAT@
 
 TARGETS = $(TARGET)
+
+ILIBDIR = @libdir@
+install_LIBINCDIR = $(ILIBDIR)/xplat-$(VERSION)/include
+
 
 ifeq ($(WANT_THREADSAFE_LTWT), yes)
     TARGETS += $(TARGET_LOWFAT)
@@ -97,7 +102,7 @@ $(TARGET_SO_LOWFAT): $(XPLAT_LOWFAT_OBJS)
 	$(CC) -Wl,-soname,$(TARGET_SONAME_LOWFAT) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LOWFAT_LIBS)
 
 install-prep:
-	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
+	for dir in $(ILIBDIR) $(install_INCDIR) $(install_LIBINCDIR) ; do \
 	    if [ ! -d $$dir ] ; then \
 	        $(MKDIR_P) $$dir ; \
 	        chmod 755 $$dir ; \
@@ -110,6 +115,7 @@ $(INSTALL_HEADERS): $(install_INCDIR)/%: $(xplat_INCDIR)/%
 
 install: $(TARGETS) install-prep $(INSTALL_HEADERS)
 	@echo Installing XPlat lightweight libraries
+	$(INSTALL_DATA) $(PLATDIR)/xplat_config.h $(install_LIBINCDIR)/
 	$(INSTALL) $(TARGETS) $(ILIBDIR)/
 	$(INSTALL_LIB_LINKS) $(ILIBDIR) libxplat_lightweight $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV) 
 	if [ $(WANT_THREADSAFE_LTWT) = "yes" ] ; then \
