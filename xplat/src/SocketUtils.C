@@ -116,10 +116,12 @@ bool Connect( const std::string &hostname,
     int cret = -1;
     do {
         cret = connect( _sock, (sockaddr *) &server_addr, sizeof(server_addr) );
+
         if( cret == -1 ) {
             err = XPlat::NetUtils::GetLastError();
             if( ! (XPlat::Error::ETimedOut(err) || 
-                   XPlat::Error::EConnRefused(err)) ) {
+                   XPlat::Error::EConnRefused(err) ||
+                   XPlat::Error::EInterrupted(err))) {
                 err_str = XPlat::Error::GetErrorString( err );
                 xplat_dbg( 1, xplat_printf(FLF, stderr,
                                       "connect() to %s:%hu failed with '%s'\n",
@@ -128,12 +130,13 @@ bool Connect( const std::string &hostname,
                 return false;
             }
 
-            nConnectTries++;
             xplat_dbg( 3, xplat_printf(FLF, stderr,
                                   "connect() to %s:%hu timed-out %u times\n",
                                   host, port, nConnectTries) );
             if( (num_retry > 0) && (nConnectTries >= num_retry) )
                 break;
+
+            nConnectTries++;
 
             // delay before trying again (more each time)
             sleep( nConnectTries );
