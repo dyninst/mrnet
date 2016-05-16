@@ -175,7 +175,7 @@ LIBMRNET_LIGHTWEIGHT_SO = $(LIBDIR)/libmrnet_lightweight.so.$(VERSION)
 LIBMRNET_LIGHTWEIGHT_SONAME = libmrnet_lightweight.so.$(VERSION_MAJOR)
 
 LIBMRNET_SO_DEPLIBS = $(LIBLMON)
-LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat.$(VERSION) $(LIBS_SO)
+LIBMRNET_SO_DEPLIBS = -L$(LIBDIR) -lxplat.$(VERSION) $(LIBS_SO) $(LDFLAGS)
 
 LIBXPLAT    = $(LIBDIR)/libxplat.a.$(VERSION)
 LIBXPLAT_SO = $(LIBDIR)/libxplat.so.$(VERSION)
@@ -306,6 +306,26 @@ ifeq ($(MRNET_STARTUP_METHOD),cray)
 	                 $(SRCDIR)/XTInternalNode.C	
 	endif    
 endif
+
+
+ifeq ($(MRNET_STARTUP_METHOD),cray-cti)
+	ifeq ($(CRAYTYPE), ALPS)
+		# build for a Cray XT (uses aprun or alps_tool_helper for parallel process launch)
+	    LIBMRNET_SRCS += $(SRCDIR)/XTNetwork.C \
+	                 $(SRCDIR)/XTParentNode.C \
+	                 $(SRCDIR)/XTFrontEndNode.C \
+	                 $(SRCDIR)/XTBackEndNode.C \
+	                 $(SRCDIR)/XTInternalNode.C
+	endif
+	ifeq ($(CRAYTYPE), CTI)
+		# build for a Cray CTI
+	    LIBMRNET_SRCS += $(SRCDIR)/CTINetwork.C \
+	                 $(SRCDIR)/XTParentNode.C \
+	                 $(SRCDIR)/XTFrontEndNode.C \
+	                 $(SRCDIR)/XTBackEndNode.C \
+	                 $(SRCDIR)/XTInternalNode.C	
+	endif    
+endif
 ifeq ($(MRNET_STARTUP_METHOD),ssh)
 	# fall back to RSH instantiation approach
     LIBMRNET_SRCS += $(SRCDIR)/RSHNetwork.C \
@@ -319,7 +339,7 @@ ifeq ($(MRNET_STARTUP_METHOD),libi)
     CXXFLAGS += -DLIBI_HEADER_INCLUDE
     LIBMRNET_SRCS += $(SRCDIR)/LIBINetwork.C 
 endif
-ifneq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi ssh cray))
+ifneq ($(MRNET_STARTUP_METHOD),$(filter $(MRNET_STARTUP_METHOD), libi ssh cray cray-cti))
     $(error Unrecognized MRNet instantiation method "$(MRNET_STARTUP_METHOD)"; see configure --help for supported methods)
 endif
 

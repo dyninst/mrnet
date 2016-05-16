@@ -506,7 +506,7 @@ if test $MRNET_STARTUP_METHOD = "cray-cti" ; then
     if test "x$CRAY_CTI_LIBDIR" != "x" ; then
         CRAYXT_CTI_LIBS="-L$CRAY_CTI_LIBDIR $CRAYXT_CTI_LIBS"
         CRAYXE_CTI_LIBS="-L$CRAY_CTI_LIBDIR $CRAYXE_CTI_LIBS"
-        LDFLAGS="$LDFLAGS -L$CRAY_CTI_LIBDIR"
+        LDFLAGS="$LDFLAGS -L$CRAY_CTI_LIBDIR -ldl -lrt -lpthread"
     fi
 
     AC_CHECK_HEADERS([cray_tools_fe.h], [], 
@@ -522,21 +522,21 @@ if test $MRNET_STARTUP_METHOD = "cray-cti" ; then
 
     HAVE_CTI_LIBS="no"
     LIBS_HOLD=$LIBS
-    CRAYXT_CTI_LIBS_SO="$CRAYXT_CTI_LIBS -lcraytools_fe -lcraytools_be"
-    CRAYXT_CTI_LIBS="$CRAYXT_CTI_LIBS -Wl,-Bstatic -lcraytools_fe -lcraytools_be -lxmlrpc -Wl,-Bdynamic"
-    CRAYXE_CTI_LIBS_SO="$CRAYXE_CTI_LIBS -lcraytools_fe -lcraytools_be"
-    CRAYXE_CTI_LIBS="$CRAYXE_CTI_LIBS -Wl,-Bstatic -lcraytools_fe -lcraytools_be -lxmlrpc-epi -lexpat -Wl,-Bdynamic"
+    CRAYXT_CTI_LIBS_SO="$CRAYXT_CTI_LIBS -lcraytools_fe -lcraytools_be -larchive"
+    CRAYXT_CTI_LIBS="$CRAYXT_CTI_LIBS -Wl,-Bstatic -lcraytools_fe -lcraytools_be -larchive -Wl,-Bdynamic"
+    CRAYXE_CTI_LIBS_SO="$CRAYXE_CTI_LIBS -lcraytools_fe -lcraytools_be -larchive"
+    CRAYXE_CTI_LIBS="$CRAYXE_CTI_LIBS -Wl,-Bstatic -lcraytools_fe -lcraytools_be -lexpat -larchive -Wl,-Bdynamic"
 
-    AC_CHECK_LIB( [craytools_fe], [cti_getHostname],
+    AC_CHECK_LIB( [craytools_fe], [cti_version],
                   [HAVE_CTI_LIBS="yes"; EXTRA_LIBS="$CRAYXT_CTI_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXT_CTI_LIBS_SO $EXTRA_LIBS_SO"],
-                  [], [-lxmlrpc] )
+                  [], [-ldl -lrt -lpthread] )
 
     if test $HAVE_CTI_LIBS = "no" ; then
         unset ac_cv_lib_alps_alps_launch_tool_helper
         LIBS="$LIBS_HOLD"
-        AC_CHECK_LIB( [craytools_fe], [cti_getHostname],
+        AC_CHECK_LIB( [craytools_fe], [cti_version],
                       [HAVE_CTI_LIBS="yes"; EXTRA_LIBS="$CRAYXE_CTI_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXE_CTI_LIBS_SO $EXTRA_LIBS_SO"],
-                      [], [-lxmlrpc-epi -lexpat] )
+                      [], [-ldl -lrt -lpthread] )
     fi
 
     LIBS="$LIBS_HOLD"
