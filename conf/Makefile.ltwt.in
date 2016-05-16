@@ -12,6 +12,9 @@ BINDIR   = $(PLATDIR)/bin
 LIBDIR   = $(PLATDIR)/lib
 OBJDIR   = $(PLATDIR)/obj/ltwt
 DEPDIR   = $(PLATDIR)/depends/ltwt
+ILIBDIR  = @libdir@
+INSTALL_DATA = @INSTALL_DATA@
+
 
 mrnet_INCDIR = $(INCDIR)/mrnet_lightweight
 install_INCDIR = $(IINCDIR)/mrnet_lightweight
@@ -30,6 +33,8 @@ TARGET_SO_LOWFAT_DEPLIBS = -L$(LIBDIR) -lxplat_lightweight_r $(LIBS_LOWFAT)
 
 TARGETS = $(TARGET)
 SO_LIST = $(TARGET_SO)
+
+install_libincdir = $(ILIBDIR)/mrnet-$(VERSION)/include
 
 ifeq ($(WANT_THREADSAFE_LTWT), yes)
     TARGETS += $(TARGET_LOWFAT)
@@ -103,7 +108,7 @@ $(TARGET_SO_LOWFAT): $(LOWFAT_OBJS)
 	$(CC) -Wl,-soname,$(TARGET_SONAME_LOWFAT) $(SOFLAGS) -o $@ $^ $(TARGET_SO_LOWFAT_DEPLIBS)
 
 install-prep:
-	for dir in $(ILIBDIR) $(install_INCDIR) ; do \
+	for dir in $(ILIBDIR) $(install_INCDIR) $(install_libincdir) ; do \
 	    if [ ! -d $$dir ] ; then \
 	        $(MKDIR_P) $$dir ; \
 	        chmod 755 $$dir ; \
@@ -117,6 +122,7 @@ $(INSTALL_HEADERS): $(install_INCDIR)/%: $(mrnet_INCDIR)/%
 install: all install-prep $(INSTALL_HEADERS)
 	@echo Installing MRNet lightweight libraries
 	$(INSTALL) $(TARGETS) $(ILIBDIR)/
+	$(INSTALL_DATA) $(PLATDIR)/mrnet_config.h $(install_libincdir)/
 	$(INSTALL_LIB_LINKS) $(ILIBDIR) libmrnet_lightweight $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV)
 	if [ $(WANT_THREADSAFE_LTWT) = "yes" ] ; then \
 	    $(INSTALL_LIB_LINKS) $(ILIBDIR) libmrnet_lightweight_r $(VERSION_MAJOR) $(VERSION_MINOR) $(VERSION_REV) ; \
