@@ -535,9 +535,9 @@ if test $MRNET_STARTUP_METHOD = "cray-cti" ; then
     HAVE_CTI_LIBS="no"
     LIBS_HOLD=$LIBS
     CRAYXT_CTI_LIBS_SO="$CRAYXT_CTI_LIBS -lcraytools_fe -lcraytools_be -larchive"
-    CRAYXT_CTI_LIBS="$CRAYXT_CTI_LIBS -Wl,-Bstatic -lcraytools_fe -lcraytools_be -larchive -Wl,-Bdynamic"
+    CRAYXT_CTI_LIBS="$CRAYXT_CTI_LIBS_SO"
     CRAYXE_CTI_LIBS_SO="$CRAYXE_CTI_LIBS -lcraytools_fe -lcraytools_be -larchive"
-    CRAYXE_CTI_LIBS="$CRAYXE_CTI_LIBS -Wl,-Bstatic -lcraytools_fe -lcraytools_be -lexpat -larchive -Wl,-Bdynamic"
+    CRAYXE_CTI_LIBS="$CRAYXE_CTI_LIBS_SO"
 
     AC_CHECK_LIB( [craytools_fe], [cti_version],
                   [HAVE_CTI_LIBS="yes"; EXTRA_LIBS="$CRAYXT_CTI_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXT_CTI_LIBS_SO $EXTRA_LIBS_SO"],
