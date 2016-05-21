@@ -332,8 +332,11 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
 // BE constructor
 XTNetwork::XTNetwork(void)
 {
-    char *hostname = cti_be_getNodeHostname();
-    set_LocalHostName(hostname);
+    char *hostname = cti_getHostname();
+    if (hostname == NULL)
+        hostname = cti_be_getNodeHostname();
+    set_LocalHostName( hostname );
+
     free(hostname);
     disable_FailureRecovery();
 }
@@ -1071,33 +1074,59 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
     }
 
     // start processes (if any) that need to be started with aprun
-#if 0 // ????? Need a non barrier launch version from Andrew
     if( ! aprunHosts.empty() ) {
-        std::string cmd = "aprun";
+        std::string cmd;
         std::vector<std::string> args;
-        args.push_back( cmd );
 
-        // specify number of internal processes to create
-        args.push_back( "-n" );
         std::ostringstream sizestr;
-        sizestr << aprunHosts.size();
-        args.push_back( sizestr.str() );
 
-        // specify number of processes per node - we want one
-        args.push_back( "-N" );
-        args.push_back( "1" );
+        std::string nodeSpec;
 
-        // specify depth
-        if(aprun_depth > 0) {
-            args.push_back( "-d" );
-            args.push_back( depth );
+        switch (cti_current_wlm()) {
+
+            case CTI_WLM_ALPS:
+
+                cmd = "aprun";
+                args.push_back( cmd );
+         
+                // specify number of internal processes to create
+                args.push_back( "-n" );
+                sizestr << aprunHosts.size();
+                args.push_back( sizestr.str() );
+
+                args.push_back( "-N" );
+                args.push_back( "1" );
+                if(aprun_depth > 0) {
+                    args.push_back( "-d" );
+                    args.push_back( depth );
+                }
+
+                // specify the nodes on which to run the processes
+                BuildCompactNodeSpec( aprunHosts, nodeSpec );
+                args.push_back( "-L" );
+                args.push_back( nodeSpec );
+
+            case CTI_WLM_CRAY_SLURM:
+                cmd = "srun";
+                args.push_back( cmd );
+                // specify number of internal processes to create
+                args.push_back( "-n" );
+                sizestr << aprunHosts.size();
+                args.push_back( sizestr.str() );
+                // specify number of processes per node - we want one
+                args.push_back( "--ntasks-per-node" );
+                args.push_back( "1" );
+                // specify depth
+                if(aprun_depth > 0) {
+                    args.push_back( "--cpus-per-task" );
+                    args.push_back( depth );
+                }
+                // specify the nodes on which to run the processes
+                BuildCompactNodeSpec( aprunHosts, nodeSpec );
+                args.push_back( "--nodelist" );
+                args.push_back( nodeSpec );
         }
 
-        // specify the nodes on which to run the processes
-        std::string nodeSpec;
-        BuildCompactNodeSpec( aprunHosts, nodeSpec );
-        args.push_back( "-L" );
-        args.push_back( nodeSpec );
 
         // the executable
         assert( mrn_commnode_path != NULL );
@@ -1135,7 +1164,6 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
             return -1;
         }
     }
-#endif 
 
     // start processes (if any) that need to be started with alps tool helper
     if( ! athHosts.empty() ) {
@@ -1547,7 +1575,6 @@ int XTNetwork::GetLocalNid(void)
     
     // alps.h defines ALPS_XT_NID to be the file containing the nid.
     // it's /proc/cray_xt/nid for the machines we've seen so far
-    // ????? std::ifstream ifs( ALPS_XT_NID );
     std::ifstream ifs( "/proc/cray_xt/nid" );
     if( ifs.is_open() ) {
         ifs >> nid;
