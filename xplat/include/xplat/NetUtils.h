@@ -85,7 +85,16 @@ public:
                         (const void*)&ip6addr,
                         sizeof(struct in6_addr) );
         }
+
+    bool IsLocal(void) {
+        if (strncmp(str.c_str(), "172", 3) == 0){
+            return true;
+        }
+        return false;
+    }
+
     };
+
 
 private:
     static int FindNetworkName( const std::string& ihostname, std::string& ohostname );

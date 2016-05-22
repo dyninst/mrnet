@@ -244,7 +244,7 @@ bool NetUtils::IsLocalHost( const std::string& ihostname )
 
     std::vector< NetworkAddress > local_addresses;
     GetLocalNetworkInterfaces( local_addresses );
-
+    
     if( local_addresses.size() == 0 ) {
         fprintf(stderr, "%s[%d]: GetLocalNetworkInterfaces() returned no addresses\n",
                 __FILE__, __LINE__);
@@ -255,6 +255,9 @@ bool NetUtils::IsLocalHost( const std::string& ihostname )
     if( GetNetworkAddress( ihostname, iaddress ) == -1 ){
         return false;
     }
+
+    if (iaddress.IsLocal() == true)
+        return true;
 
     for( unsigned int i=0; i<local_addresses.size(); i++ ) {
         if( local_addresses[i] == iaddress )
