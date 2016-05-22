@@ -87,7 +87,7 @@ public:
         }
 
     bool IsLocal(void) {
-        if (strncmp(str.c_str(), "172", 3) == 0){
+        if (strncmp(str.c_str(), "127", 3) == 0){
             return true;
         }
         return false;
