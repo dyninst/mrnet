@@ -305,7 +305,6 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
         }
     }
 
-    printf("CTI I am here!\n");
     mrn_dbg(3, mrn_printf(FLF, stderr, "CTI ctiApid==%d, ctiMid=%d\n", ctiApid, ctiMid));
 
     // Convert colon/DEL  separated files string to c++ strings
