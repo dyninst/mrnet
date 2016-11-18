@@ -179,12 +179,19 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
     disable_FailureRecovery();
 
     // Get the file staging string, if any
-    int separator = 0;
-    char* stage_files;
-    if ((stage_files = getenv("CRAY_STAGE_FILES")) != NULL)
-      separator = '\177';     // DEL chararacter
-    else if ((stage_files = getenv("CRAY_ALPS_STAGE_FILES")) != NULL)
+
+    // Get the file staging string via env var, if any
+    int separator = '\177';  // default to DEL chararacter
+    bool stage_deps = true;  // default to staging dependencies
+    const char* stage_files = NULL;
+    if ((stage_files = getenv("CRAY_STAGE_FILES")) != NULL) {
+      stage_deps = true;
+    } else if ((stage_files = getenv("CRAY_STAGE_FILES_ONLY")) != NULL){
+      stage_deps = false;
+    } else if ((stage_files = getenv("CRAY_ALPS_STAGE_FILES")) != NULL) {
       separator = ':';
+      stage_deps = false;
+    }
 
     char *procs_per_node = getenv("MRNET_CRAY_PROCS_PER_NODE");
     if(procs_per_node != NULL) {
@@ -272,7 +279,23 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
                 ctiMid = (cti_manifest_id_t) atoi( iter->second.c_str() );
                 mrn_dbg(3, mrn_printf(FLF, stderr, "CTI mid=%d\n", ctiMid));
             }
-            else if( strcmp(iter->first.c_str(), "MRNET_PORT_BASE") == 0 ) {
+            else if (stage_files == NULL) { // Env vars override attributes
+                if (strcmp(iter->first.c_str(), "CRAY_STAGE_FILES") == 0) {
+                  stage_files = iter->second.c_str();
+                  separator = '\177';     // DEL chararacter
+                  stage_deps = true;
+                }
+                else if (strcmp(iter->first.c_str(), "CRAY_STAGE_FILES_ONLY") == 0) {
+                  stage_files = iter->second.c_str();
+                  separator = '\177';     // DEL chararacter
+                  stage_deps = false;
+                }
+                else if (strcmp(iter->first.c_str(), "CRAY_ALPS_STAGE_FILES") == 0) {
+                  stage_files = iter->second.c_str();
+                  separator = ':';      // historical
+                  stage_deps = false;   // historical
+                }
+            } else if( strcmp(iter->first.c_str(), "MRNET_PORT_BASE") == 0 ) {
                 int base_port = (int)strtol( iter->second.c_str(), NULL, 0 );
                 FindTopoPort(base_port); // despite name, actually sets the base 
                 mrn_dbg(3, mrn_printf(FLF, stderr, "MRNET_PORT_BASE=%d\n", base_port));
@@ -308,6 +331,7 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
     mrn_dbg(3, mrn_printf(FLF, stderr, "CTI ctiApid==%d, ctiMid=%d\n", ctiApid, ctiMid));
 
     // Convert colon/DEL  separated files string to c++ strings
+    // This code addresses any necessary strduping 
     if( stage_files != NULL ) {
         char* files = strdup( stage_files );
         char* nextf = files;
@@ -326,6 +350,16 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
         }
         free( files );
     }
+    // Check if this version of CTI supports disabling dependencies. 
+#ifdef CTI_ATTR_STAGE_DEPENDENCIES 
+    // Tell CTI if dependencies of bins and libs are to be staged
+    cti_setAttribute(CTI_ATTR_STAGE_DEPENDENCIES, (stage_deps ? "1" : "0"));
+    mrn_dbg(3, mrn_printf(FLF, stderr, "stage_deps=%d, separator=%c, stage_files='%s'\n", 
+                                        stage_deps, separator, stage_files) );
+#else 
+    mrn_dbg(3, mrn_printf(FLF, stderr, "CTI version does not support disabling dependencies") );
+#endif 
+
 }
 
 // BE constructor
