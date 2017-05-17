@@ -29,6 +29,11 @@
 #endif
 
 #include <boost/shared_ptr.hpp>
+
+const char* topofd_optstr = "--topofd";
+const char* port_optstr = "--listen-port";
+const char* timeout_optstr = "--listen-timeout";
+
 namespace MRN
 {
 
@@ -48,7 +53,6 @@ class PeerNode;
 class FilterInfo;
 typedef boost::shared_ptr< PeerNode > PeerNodePtr; 
 typedef boost::shared_ptr<std::map< unsigned short, FilterInfo > > FilterInfoPtr;
-
 
 class Network: public Error {
 
