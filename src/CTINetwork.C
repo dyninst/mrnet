@@ -85,11 +85,6 @@ Network::CreateNetworkBE( int argc, char** argv )
     }
 }
 
-
-const char* topofd_optstr = "--topofd";
-const char* port_optstr = "--listen-port";
-const char* timeout_optstr = "--listen-timeout";
-
 /*
    CTI is going to launch a single CP on each node. Should the
    topology require more than that, it is up to that first
@@ -119,36 +114,37 @@ Network::CreateNetworkIN( int argc, char** argv )
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Inside Network::CreateNetworkIN\n"));
     if( argc > 0 ) {
+        GetParametersIN(argc, argv, port, timeout, topoPipeFd);
+        mrn_dbg(5, mrn_printf(FLF, stderr, "Internal Network Parameters: Port=%d,Timeout=%d,TopoPipe=%d\n", port, timeout, topoPipeFd));
+        // if( strcmp(argv[0], topofd_optstr) == 0 ) {
+        //     // we are NOT the first process on this node
+        //     /* we were passed the FD of a pipe from which we 
+        //        can read the topology */
+        //     topoPipeFd = (int)strtol( argv[1], NULL, 10 );
+        //     beArgc = argc - 2;
+        //     beArgv = argv + 2;
+        // }
+        // else {
+        //     beArgc = argc;
+        //     beArgv = argv;
 
-        if( strcmp(argv[0], topofd_optstr) == 0 ) {
-            // we are NOT the first process on this node
-            /* we were passed the FD of a pipe from which we 
-               can read the topology */
-            topoPipeFd = (int)strtol( argv[1], NULL, 10 );
-            beArgc = argc - 2;
-            beArgv = argv + 2;
-        }
-        else {
-            beArgc = argc;
-            beArgv = argv;
-
-            // we ARE the first process on this node
-            for( int i=0; i < argc; i++ ) {
-                if( strcmp(argv[i], port_optstr) == 0 ) {
-                    /* passed the port to listen on */
-                    port = atoi( argv[++i] );
-                    beArgc -= 2;
-                    beArgv += 2;
-                }
-                else if ( strcmp(argv[i], timeout_optstr) == 0 ) {
-                    /* passed a timeout that should be used when listening
-                       for the topology */
-                    timeout = atoi( argv[++i] );
-                    beArgc -= 2;
-                    beArgv += 2;
-                }
-            }
-        }
+        //     // we ARE the first process on this node
+        //     for( int i=0; i < argc; i++ ) {
+        //         if( strcmp(argv[i], port_optstr) == 0 ) {
+        //             /* passed the port to listen on */
+        //             port = atoi( argv[++i] );
+        //             beArgc -= 2;
+        //             beArgv += 2;
+        //         }
+        //         else if ( strcmp(argv[i], timeout_optstr) == 0 ) {
+        //             /* passed a timeout that should be used when listening
+        //                for the topology */
+        //             timeout = atoi( argv[++i] );
+        //             beArgc -= 2;
+        //             beArgv += 2;
+        //         }
+        //     }
+        // }
 
         Port topoPort = XTNetwork::FindTopoPort(port);
         Network* net = new XTNetwork( true, topoPipeFd, topoPort,

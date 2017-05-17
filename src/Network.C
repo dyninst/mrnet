@@ -53,7 +53,7 @@ extern unsigned int mrnBufRemaining;
 
 const int MIN_OUTPUT_LEVEL = 0;
 const int MAX_OUTPUT_LEVEL = 5;
-int CUR_OUTPUT_LEVEL = 1;
+int CUR_OUTPUT_LEVEL = 0;
 char* MRN_DEBUG_LOG_DIRECTORY = NULL;
 
 const Port UnknownPort = XPlat::SocketUtils::InvalidPort;
@@ -2931,5 +2931,35 @@ std::string Network::get_NetSettingName( int s )
          ret = "MRNET_FAILURE_RECOVERY";
      return ret;
 }
+
+/**
+ * GetParametersIN - Processes parameters sent to internal nodes on Cray machines (XT/CTI)
+ **/
+const char* topofd_optstr = "--topofd";
+const char* port_optstr = "--listen-port";
+const char* timeout_optstr = "--listen-timeout";
+
+void Network::GetParametersIN( int argc, char * argv[], int & port, int & timeout, int & topoPipeFd) {
+    int start = 1;
+    while (start < argc) {
+        if( strcmp(argv[start], topofd_optstr) == 0){
+            // Topology Pipe Parameter
+            topoPipeFd = (int)strtol(argv[start+1],  NULL, 10);
+            start += 2;
+        } else if (strcmp(argv[start], port_optstr) == 0 ) {
+            // Port Parameter
+            port = atoi( argv[start+1] );
+            start += 2;
+        } else if (strcmp(argv[start], timeout_optstr) == 0 ) {
+            // Timeout Parameter
+            timeout = atoi( argv[start+1] );
+            start += 2;
+        } else {
+            // Unknown Parameter
+            start++;
+        }
+    }
+}
+
 
 }  // namespace MRN
