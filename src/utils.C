@@ -12,9 +12,11 @@
 #include "xplat/Mutex.h"
 #include "xplat/Error.h"
 #include "xplat/Process.h"
+#include <boost/shared_ptr.hpp>
+
 using namespace XPlat;
 
-static XPlat::Mutex mrn_printf_mutex;
+static boost::shared_ptr<XPlat::Mutex> mrn_printf_mutex(new XPlat::Mutex());
 
 namespace MRN
 {
@@ -184,7 +186,7 @@ int mrn_printf( const char *file, int line, const char * func,
     struct timeval tv;
     while( gettimeofday( &tv, NULL ) == -1 ) {}
     
-    mrn_printf_mutex.Lock();
+    mrn_printf_mutex->Lock();
 
     // get thread info
     XPlat::Thread::Id tid = 0;
@@ -237,7 +239,7 @@ int mrn_printf( const char *file, int line, const char * func,
     retval = vfprintf( f, format, arglist );
     va_end( arglist );
     
-    mrn_printf_mutex.Unlock();
+    mrn_printf_mutex->Unlock();
 
     fflush( f );
      
