@@ -116,35 +116,6 @@ Network::CreateNetworkIN( int argc, char** argv )
     if( argc > 0 ) {
         GetParametersIN(argc, argv, port, timeout, topoPipeFd);
         mrn_dbg(5, mrn_printf(FLF, stderr, "Internal Network Parameters: Port=%d,Timeout=%d,TopoPipe=%d\n", port, timeout, topoPipeFd));
-        // if( strcmp(argv[0], topofd_optstr) == 0 ) {
-        //     // we are NOT the first process on this node
-        //     /* we were passed the FD of a pipe from which we 
-        //        can read the topology */
-        //     topoPipeFd = (int)strtol( argv[1], NULL, 10 );
-        //     beArgc = argc - 2;
-        //     beArgv = argv + 2;
-        // }
-        // else {
-        //     beArgc = argc;
-        //     beArgv = argv;
-
-        //     // we ARE the first process on this node
-        //     for( int i=0; i < argc; i++ ) {
-        //         if( strcmp(argv[i], port_optstr) == 0 ) {
-        //             /* passed the port to listen on */
-        //             port = atoi( argv[++i] );
-        //             beArgc -= 2;
-        //             beArgv += 2;
-        //         }
-        //         else if ( strcmp(argv[i], timeout_optstr) == 0 ) {
-        //             /* passed a timeout that should be used when listening
-        //                for the topology */
-        //             timeout = atoi( argv[++i] );
-        //             beArgc -= 2;
-        //             beArgv += 2;
-        //         }
-        //     }
-        // }
 
         Port topoPort = XTNetwork::FindTopoPort(port);
         Network* net = new XTNetwork( true, topoPipeFd, topoPort,

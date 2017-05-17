@@ -19,6 +19,10 @@ extern "C"
 #include "mrnet/Network.h"
 #include "ParsedGraph.h"
 
+const char* topofd_optstr = "--topofd";
+const char* port_optstr = "--listen-port";
+const char* timeout_optstr = "--listen-timeout";
+
 namespace MRN
 {
 
