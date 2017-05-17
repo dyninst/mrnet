@@ -1138,6 +1138,7 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
                 BuildCompactNodeSpec( aprunHosts, nodeSpec );
                 args.push_back( "-L" );
                 args.push_back( nodeSpec );
+                break;
 
             case CTI_WLM_CRAY_SLURM:
                 cmd = "srun";
@@ -1158,6 +1159,7 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
                 BuildCompactNodeSpec( aprunHosts, nodeSpec );
                 args.push_back( "--nodelist" );
                 args.push_back( nodeSpec );
+                break;
         }
 
 
