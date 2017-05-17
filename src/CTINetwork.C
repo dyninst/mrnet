@@ -37,6 +37,9 @@ extern "C"
 
 namespace MRN
 {
+const char* topofd_optstr = "--topofd";
+const char* port_optstr = "--listen-port";
+const char* timeout_optstr = "--listen-timeout";
 
 //----------------------------------------------------------------------------
 // base class factory methods
@@ -114,7 +117,7 @@ Network::CreateNetworkIN( int argc, char** argv )
 
     mrn_dbg(3, mrn_printf(FLF, stderr, "Inside Network::CreateNetworkIN\n"));
     if( argc > 0 ) {
-        GetParametersIN(argc, argv, port, timeout, topoPipeFd);
+        Network::GetParametersIN(argc, argv, port, timeout, topoPipeFd);
         mrn_dbg(5, mrn_printf(FLF, stderr, "Internal Network Parameters: Port=%d,Timeout=%d,TopoPipe=%d\n", port, timeout, topoPipeFd));
 
         Port topoPort = XTNetwork::FindTopoPort(port);

@@ -30,9 +30,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-const char* topofd_optstr = "--topofd";
-const char* port_optstr = "--listen-port";
-const char* timeout_optstr = "--listen-timeout";
 
 namespace MRN
 {
@@ -256,7 +253,7 @@ protected:
 
 
     FilterInfoPtr GetFilterInfo();
-    void GetParametersIN(int argc, char * argv[], int & port, int & timeout, int & topoPipeFd);
+    static void GetParametersIN(int argc, char * argv[], int & port, int & timeout, int & topoPipeFd);
 
  private:
     friend class Stream;
