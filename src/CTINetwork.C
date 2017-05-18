@@ -249,22 +249,20 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
                 ctiMid = (cti_manifest_id_t) atoi( iter->second.c_str() );
                 mrn_dbg(3, mrn_printf(FLF, stderr, "CTI mid=%d\n", ctiMid));
             }
-            else if (stage_files == NULL) { // Env vars override attributes
-                if (strcmp(iter->first.c_str(), "CRAY_STAGE_FILES") == 0) {
-                  stage_files = iter->second.c_str();
-                  separator = '\177';     // DEL chararacter
-                  stage_deps = true;
-                }
-                else if (strcmp(iter->first.c_str(), "CRAY_STAGE_FILES_ONLY") == 0) {
-                  stage_files = iter->second.c_str();
-                  separator = '\177';     // DEL chararacter
-                  stage_deps = false;
-                }
-                else if (strcmp(iter->first.c_str(), "CRAY_ALPS_STAGE_FILES") == 0) {
-                  stage_files = iter->second.c_str();
-                  separator = ':';      // historical
-                  stage_deps = false;   // historical
-                }
+            else if ((stage_files == NULL) && (strcmp(iter->first.c_str(), "CRAY_STAGE_FILES") == 0)) {
+                stage_files = iter->second.c_str();
+                separator = '\177';     // DEL chararacter
+                stage_deps = true;
+            }
+            else if ((stage_files == NULL) && (strcmp(iter->first.c_str(), "CRAY_STAGE_FILES_ONLY") == 0)) {
+                stage_files = iter->second.c_str();
+                separator = '\177';     // DEL chararacter
+                stage_deps = false;
+            }
+            else if ((stage_files == NULL) && (strcmp(iter->first.c_str(), "CRAY_ALPS_STAGE_FILES") == 0)) {
+                stage_files = iter->second.c_str();
+                separator = ':';      // historical
+                stage_deps = false;   // historical
             } else if( strcmp(iter->first.c_str(), "MRNET_PORT_BASE") == 0 ) {
                 int base_port = (int)strtol( iter->second.c_str(), NULL, 0 );
                 FindTopoPort(base_port); // despite name, actually sets the base 
