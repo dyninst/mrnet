@@ -2940,7 +2940,7 @@ void Network::GetParametersIN( int argc, char * argv[], int & port, int & timeou
     const char* port_optstr = "--listen-port";
     const char* timeout_optstr = "--listen-timeout";
 
-    int start = 1;
+    int start = 0;
     while (start < argc) {
         if( strcmp(argv[start], topofd_optstr) == 0){
             // Topology Pipe Parameter
