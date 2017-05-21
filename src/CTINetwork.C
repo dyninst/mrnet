@@ -743,13 +743,20 @@ XTNetwork::SpawnCP( int* topoFd, int listeningSocket )
         // we also need to pass the fd of the topology 
         // pipe on the command line
         int currIdx = 0;
-        int argc = 2;
+        int argc = 4;
+
         char** argv = new char*[argc+1];
         char fdstr[8];
         sprintf(fdstr, "%d", topoFds[0]);
         argv[currIdx++] = strdup( topofd_optstr );
         argv[currIdx++] = strdup( fdstr );
         argv[currIdx] = NULL;
+
+        char topoport[8]; // ???????
+        sprintf(topoport, "%hd", FindTopoPort());
+        argv[currIdx++] = strdup( port_optstr );
+        argv[currIdx++] = strdup( topoport );
+
 
         mrn_dbg(5, mrn_printf(FLF, stderr, "spawning CP with arguments:\n" ));
         for( int i = 0; i < currIdx; i++ ) {
