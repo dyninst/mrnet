@@ -616,6 +616,7 @@ XTNetwork::XTNetwork( bool, /* dummy for distinguising from other constructors *
     if( am_BE ) {
         // I am supposed to be a BE but currently am CP.
         // I need to spawn a BE and deliver the topology as I received it
+        mrn_dbg(3, mrn_printf(FLF, stderr, "%s is a backend, calling SpawnBE\n", myHost.c_str()));
 
         // spawn the BE process
         pid_t bePid = SpawnBE( beArgc, beArgv, my_tpos->parentHostname.c_str(),
@@ -637,6 +638,9 @@ XTNetwork::XTNetwork( bool, /* dummy for distinguising from other constructors *
         int beProcessStatus = 0;
         waitpid( bePid, &beProcessStatus, 0 );
         exit(0);
+    } else {
+        mrn_dbg(3, mrn_printf(FLF, stderr, "%s is not a backend: is_RootBackEnd() = %s, beArgc = %d\n", myHost.c_str(),
+         my_tpos->subtree->is_RootBackEnd() ? "true" : "false", beArgc ));
     }
 
     /**************************************************************
