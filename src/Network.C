@@ -2935,7 +2935,7 @@ std::string Network::get_NetSettingName( int s )
 /**
  * GetParametersIN - Processes parameters sent to internal nodes on Cray machines (XT/CTI)
  **/
-void Network::GetParametersIN( int argc, char * argv[], int & port, int & timeout, int & topoPipeFd) {
+int Network::GetParametersIN( int argc, char * argv[], int & port, int & timeout, int & topoPipeFd) {
     const char* topofd_optstr = "--topofd";
     const char* port_optstr = "--listen-port";
     const char* timeout_optstr = "--listen-timeout";
@@ -2955,10 +2955,12 @@ void Network::GetParametersIN( int argc, char * argv[], int & port, int & timeou
             timeout = atoi( argv[start+1] );
             start += 2;
         } else {
-            // Unknown Parameter
-            start++;
+            // Unknown Parameter, stop parsing.
+            break;
+            // start++;
         }
     }
+    return start;
 }
 
 

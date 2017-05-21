@@ -253,7 +253,7 @@ protected:
 
 
     FilterInfoPtr GetFilterInfo();
-    static void GetParametersIN(int argc, char * argv[], int & port, int & timeout, int & topoPipeFd);
+    static int GetParametersIN(int argc, char * argv[], int & port, int & timeout, int & topoPipeFd);
 
  private:
     friend class Stream;
