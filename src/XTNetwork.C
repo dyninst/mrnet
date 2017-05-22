@@ -111,7 +111,7 @@ Network::CreateNetworkIN( int argc, char** argv )
         int offset = Network::GetParametersIN(argc, argv, port, timeout, topoPipeFd);
         mrn_dbg(3, mrn_printf(FLF, stderr, "Internal Network Parameters: Port=%d,Timeout=%d,TopoPipe=%d,argc=%d,offset=%d\n", port, timeout, topoPipeFd, argc, offset));
         beArgc = argc - offset;
-        beArgv += offset;
+        beArgv = argv + offset;
         Port topoPort = XTNetwork::FindTopoPort((Port) port);
         Network* net = new XTNetwork( true, topoPipeFd, topoPort,
                                       timeout, beArgc, beArgv ); 
