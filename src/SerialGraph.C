@@ -105,18 +105,44 @@ Rank SerialGraph::get_RootRank()
     return retval;
 }
 
+
 SerialGraph* SerialGraph::get_MySubTree( std::string &ihostname, 
                                          Port iport, Rank irank )
 {
     std::ostringstream hoststr;
-    size_t begin, cur, end;
+    std::ostringstream myrank;
+    size_t begin, cur, end, rankEnd;
+    bool found = false;
 
-    hoststr << "[" << ihostname << ":" << std::setw(5) << std::setfill( '0' ) << iport << ":" << irank << ":" ; 
-    mrn_dbg( 5, mrn_printf(FLF, stderr, "SubTreeRoot:'%s' byte_array:'%s'\n",
-                           hoststr.str().c_str(), _byte_array.c_str() ));
+    // Temporary patch to disregard port when searching....
+    hoststr << "[" << ihostname;
+    myrank << irank;
 
     begin = _byte_array.find( hoststr.str() );
-    if( begin == std::string::npos ) {
+    while (begin != std::string::npos && found != true) {
+        cur = begin;
+        // Locate the rank number
+        begin = _byte_array.find(':', begin);
+        assert(begin != std::string::npos );
+        begin++;
+        begin = _byte_array.find(':', begin);
+        assert(begin != std::string::npos );
+        begin++;
+        rankEnd = _byte_array.find(':', begin);
+        std::string rankstring = _byte_array.substr(begin, rankEnd-begin);
+        if(myrank.str() == rankstring)
+            found = true;
+        begin = _byte_array.find( hoststr.str(), begin);
+    }
+
+
+
+    // hoststr << "[" << ihostname << ":" << std::setw(5) << std::setfill( '0' ) << iport << ":" << irank << ":" ; 
+    // mrn_dbg( 5, mrn_printf(FLF, stderr, "SubTreeRoot:'%s' byte_array:'%s'\n",
+    //                        hoststr.str().c_str(), _byte_array.c_str() ));
+
+    // begin = _byte_array.find( hoststr.str() );
+    if( found == false ) {
         mrn_dbg( 5, mrn_printf(FLF, stderr,
                                "SubTreeRoot:'%s' not found\n",
                                hoststr.str().c_str()) );
@@ -124,7 +150,8 @@ SerialGraph* SerialGraph::get_MySubTree( std::string &ihostname,
     }
 
     //now find matching ']'
-    cur=begin;
+    //cur=begin;
+    begin = cur;
     end=1;
     int num_leftbrackets=1, num_rightbrackets=0;
     while( num_leftbrackets != num_rightbrackets ) {
