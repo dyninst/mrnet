@@ -495,6 +495,7 @@ void ChildNode::error( ErrorCode, Rank, const char *, ... ) const
              e.g., an error reporting stream. until we have this,
              there's nothing to do here -- Oct 2010
     */
+    mrn_dbg(5, mrn_printf(FLF, stderr, "ChildNode Error Handler Not Implemented"));
 }
 
 int ChildNode::init_newChildDataConnection( PeerNodePtr iparent,

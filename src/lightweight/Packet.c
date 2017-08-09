@@ -50,7 +50,7 @@ Packet_t* Packet_construct(Packet_t* packet)
 
     // header
     
-    bool done =  pdr_sizeof((pdrproc_t)(Packet_pdr_packet_header), packet, &hdr_sz);
+    bool_t done =  pdr_sizeof((pdrproc_t)(Packet_pdr_packet_header), packet, &hdr_sz);
     assert( hdr_sz );
     packet->hdr_len = (unsigned) hdr_sz;
     packet->hdr = (char*) malloc( (size_t)hdr_sz );
