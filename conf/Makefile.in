@@ -145,7 +145,7 @@ ifeq ($(COMPILER_TYPE), gnu)
 
    endif # SILENCE_WARNINGS
 
-   COMMNODE_LDFLAGS += -static-libstdc++ -static-libgcc
+   COMMNODE_LDFLAGS +=
 
 endif #GNU options
 
