@@ -6,6 +6,8 @@
 #include "mrnet/MRNet.h"
 #include "utils.h"
 
+#include <signal.h>
+
 using namespace MRN;
 using namespace XPlat;
 
@@ -15,7 +17,11 @@ int main(int argc, char **argv)
 {
     int ret = 0;
     Network *net = NULL;
-	
+
+    // ignore, don't die when receiving user signals
+    signal(SIGUSR1, SIG_IGN);
+    signal(SIGUSR2, SIG_IGN);
+
     try {
         // parse the command line for platform-independent arguments
         //
