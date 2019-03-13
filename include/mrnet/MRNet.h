@@ -6,6 +6,10 @@
 #if !defined(mrnet_h)
 #define mrnet_h 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mrnet/Communicator.h"
 #include "mrnet/Error.h"
 #include "mrnet/Event.h"
@@ -16,5 +20,9 @@
 #include "mrnet/Stream.h"
 #include "mrnet/Tree.h"
 #include "mrnet/Types.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* mrnet_h */
