@@ -185,18 +185,8 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
              * We need to get a CTI handle for the app by registering the app
     `        */
 
-            // Could come in as an ALPS apid
-            if( (strcmp(iter->first.c_str(), "apid") == 0) ||
-                (strcmp(iter->first.c_str(), "CRAY_ALPS_APID") == 0) ) {
-                uint64_t apid = (uint64_t) strtoul( iter->second.c_str(), NULL, 0 );
-                if ((ctiApid = cti_alps_registerApid(apid)) == 0) {
-                    mrn_dbg(1, mrn_printf(FLF, stderr, "cti_alps_registerApid failed. CTI error: '%s'\n", cti_error_str()));
-                }
-                mrn_dbg(3, mrn_printf(FLF, stderr, "ALPS apid=%uld, CTI apid=%d\n", apid, ctiApid));
-            }
-
             // Could come in as a SLURM job ID and step ID
-            else if (strcmp(iter->first.c_str(), "CRAY_SLURM_JOBID") == 0) {
+            if (strcmp(iter->first.c_str(), "CRAY_SLURM_JOBID") == 0) {
                 jobID = atoi( iter->second.c_str() );
                 mrn_dbg(3, mrn_printf(FLF, stderr, "CRAY_SLURM_JOBID=%d\n", jobID));
             }
@@ -217,14 +207,6 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
                 uint64_t apid = 0;
                 int launcher_pid = (int)strtol( iter->second.c_str(), NULL, 0 );
                 switch (cti_current_wlm()) {
-                  case CTI_WLM_ALPS:
-                      if ((apid = cti_alps_getApid(launcher_pid) == 0)) {
-                          mrn_dbg(1, mrn_printf(FLF, stderr, "cti_alps_getApid failed. CTI error: '%s'\n", cti_error_str()));
-                      }
-                      if ((ctiApid = cti_alps_registerApid(apid)) == 0) {
-                          mrn_dbg(1, mrn_printf(FLF, stderr, "cti_alps_registerApid failed. CTI error: '%s'\n", cti_error_str()));
-                      }
-                      break;
                   case CTI_WLM_CRAY_SLURM:
                       cti_srunProc_t *jobInfo;
                       if ((jobInfo = cti_cray_slurm_getJobInfo(launcher_pid)) == NULL) {
@@ -1098,29 +1080,6 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
         std::string nodeSpec;
 
         switch (cti_current_wlm()) {
-
-            case CTI_WLM_ALPS:
-
-                cmd = "aprun";
-                args.push_back( cmd );
-         
-                // specify number of internal processes to create
-                args.push_back( "-n" );
-                sizestr << aprunHosts.size();
-                args.push_back( sizestr.str() );
-
-                args.push_back( "-N" );
-                args.push_back( "1" );
-                if(aprun_depth > 0) {
-                    args.push_back( "-d" );
-                    args.push_back( depth );
-                }
-
-                // specify the nodes on which to run the processes
-                BuildCompactNodeSpec( aprunHosts, nodeSpec );
-                args.push_back( "-L" );
-                args.push_back( nodeSpec );
-                break;
 
             case CTI_WLM_CRAY_SLURM:
                 cmd = "srun";
