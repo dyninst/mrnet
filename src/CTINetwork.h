@@ -26,9 +26,6 @@ class XTNetwork : public Network
 {
 private:
 
-    static int GetLocalNid(void);
-    static std::string GetNodename(int nid);
-
     // FE support
     cti_app_id_t ctiApid;
     bool callerMid; // True if the caller provided the ctiMid
