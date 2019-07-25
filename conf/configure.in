@@ -521,8 +521,8 @@ if test $MRNET_STARTUP_METHOD = "cray-cti" ; then
         LDFLAGS="$LDFLAGS -L$CRAY_CTI_LIBDIR -ldl -lrt -lpthread"
     fi
 
-    AC_CHECK_HEADERS([cray_tools_fe.h], [], 
-                     [AC_MSG_ERROR([Could not find CTI header cray_tools_fe.h])])
+    AC_CHECK_HEADERS([common_tools_fe.h], [], 
+                     [AC_MSG_ERROR([Could not find CTI header common_tools_fe.h])])
 
 
 
@@ -534,19 +534,19 @@ if test $MRNET_STARTUP_METHOD = "cray-cti" ; then
 
     HAVE_CTI_LIBS="no"
     LIBS_HOLD=$LIBS
-    CRAYXT_CTI_LIBS_SO="$CRAYXT_CTI_LIBS -lcraytools_fe -lcraytools_be"
+    CRAYXT_CTI_LIBS_SO="$CRAYXT_CTI_LIBS -lcommon_tools_fe -lcommon_tools_be"
     CRAYXT_CTI_LIBS="$CRAYXT_CTI_LIBS_SO"
-    CRAYXE_CTI_LIBS_SO="$CRAYXE_CTI_LIBS -lcraytools_fe -lcraytools_be"
+    CRAYXE_CTI_LIBS_SO="$CRAYXE_CTI_LIBS -lcommon_tools_fe -lcommon_tools_be"
     CRAYXE_CTI_LIBS="$CRAYXE_CTI_LIBS_SO"
 
-    AC_CHECK_LIB( [craytools_fe], [cti_version],
+    AC_CHECK_LIB( [common_tools_fe], [cti_version],
                   [HAVE_CTI_LIBS="yes"; EXTRA_LIBS="$CRAYXT_CTI_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXT_CTI_LIBS_SO $EXTRA_LIBS_SO"],
                   [], [-ldl -lrt -lpthread] )
 
     if test $HAVE_CTI_LIBS = "no" ; then
         unset ac_cv_lib_alps_alps_launch_tool_helper
         LIBS="$LIBS_HOLD"
-        AC_CHECK_LIB( [craytools_fe], [cti_version],
+        AC_CHECK_LIB( [common_tools_fe], [cti_version],
                       [HAVE_CTI_LIBS="yes"; EXTRA_LIBS="$CRAYXE_CTI_LIBS $EXTRA_LIBS"; EXTRA_LIBS_SO="$CRAYXE_CTI_LIBS_SO $EXTRA_LIBS_SO"],
                       [], [-ldl -lrt -lpthread] )
     fi
@@ -555,7 +555,7 @@ if test $MRNET_STARTUP_METHOD = "cray-cti" ; then
 
     if test $HAVE_CTI_LIBS = "no" ; then
         if test "x$CRAY_CTI_INCDIR" != "x" ; then
-            AC_MSG_ERROR(Can't find craytools_fe. Specify proper directory with --with-alpstoolhelp-lib)
+            AC_MSG_ERROR(Can't find common_tools_fe. Specify proper directory with --with-alpstoolhelp-lib)
         fi
     fi
     

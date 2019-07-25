@@ -28,9 +28,9 @@
 
 extern "C"
 {
-#include "cray_tools_be.h"
+#include "common_tools_be.h"
 #ifdef HAVE_CRAY_TOOLS_FE_H
-#include "cray_tools_fe.h"
+#include "common_tools_fe.h"
 #define HAVE_CRAYTOOLS_FE
 #endif
 }
