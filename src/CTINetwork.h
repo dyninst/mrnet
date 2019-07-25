@@ -13,7 +13,7 @@
 
 extern "C"
 {
-#include "cray_tools_fe.h"
+#include "common_tools_fe.h"
 }
 
 #include "mrnet/Network.h"

@@ -5695,16 +5695,16 @@ if test $MRNET_STARTUP_METHOD = "cray-cti" ; then
         LDFLAGS="$LDFLAGS -L$CRAY_CTI_LIBDIR -ldl -lrt -lpthread"
     fi
 
-    for ac_header in cray_tools_fe.h
+    for ac_header in common_tools_fe.h
 do :
-  ac_fn_cxx_check_header_mongrel "$LINENO" "cray_tools_fe.h" "ac_cv_header_cray_tools_fe_h" "$ac_includes_default"
+  ac_fn_cxx_check_header_mongrel "$LINENO" "common_tools_fe.h" "ac_cv_header_cray_tools_fe_h" "$ac_includes_default"
 if test "x$ac_cv_header_cray_tools_fe_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_CRAY_TOOLS_FE_H 1
 _ACEOF
 
 else
-  as_fn_error $? "Could not find CTI header cray_tools_fe.h" "$LINENO" 5
+  as_fn_error $? "Could not find CTI header common_tools_fe.h" "$LINENO" 5
 fi
 
 done
@@ -5720,18 +5720,18 @@ done
 
     HAVE_CTI_LIBS="no"
     LIBS_HOLD=$LIBS
-    CRAYXT_CTI_LIBS_SO="$CRAYXT_CTI_LIBS -lcraytools_fe -lcraytools_be"
+    CRAYXT_CTI_LIBS_SO="$CRAYXT_CTI_LIBS -lcommontools_fe -lcommontools_be"
     CRAYXT_CTI_LIBS="$CRAYXT_CTI_LIBS_SO"
-    CRAYXE_CTI_LIBS_SO="$CRAYXE_CTI_LIBS -lcraytools_fe -lcraytools_be"
+    CRAYXE_CTI_LIBS_SO="$CRAYXE_CTI_LIBS -lcommontools_fe -lcommontools_be"
     CRAYXE_CTI_LIBS="$CRAYXE_CTI_LIBS_SO"
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cti_version in -lcraytools_fe" >&5
-$as_echo_n "checking for cti_version in -lcraytools_fe... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cti_version in -lcommontools_fe" >&5
+$as_echo_n "checking for cti_version in -lcommontools_fe... " >&6; }
 if ${ac_cv_lib_craytools_fe_cti_version+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lcraytools_fe -ldl -lrt -lpthread  $LIBS"
+LIBS="-lcommontools_fe -ldl -lrt -lpthread  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -5769,13 +5769,13 @@ fi
     if test $HAVE_CTI_LIBS = "no" ; then
         unset ac_cv_lib_alps_alps_launch_tool_helper
         LIBS="$LIBS_HOLD"
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cti_version in -lcraytools_fe" >&5
-$as_echo_n "checking for cti_version in -lcraytools_fe... " >&6; }
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cti_version in -lcommontools_fe" >&5
+$as_echo_n "checking for cti_version in -lcommontools_fe... " >&6; }
 if ${ac_cv_lib_craytools_fe_cti_version+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lcraytools_fe -ldl -lrt -lpthread  $LIBS"
+LIBS="-lcommontools_fe -ldl -lrt -lpthread  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -5815,7 +5815,7 @@ fi
 
     if test $HAVE_CTI_LIBS = "no" ; then
         if test "x$CRAY_CTI_INCDIR" != "x" ; then
-            as_fn_error $? "Can't find craytools_fe. Specify proper directory with --with-alpstoolhelp-lib" "$LINENO" 5
+            as_fn_error $? "Can't find commontools_fe. Specify proper directory with --with-alpstoolhelp-lib" "$LINENO" 5
         fi
     fi
 

@@ -41,8 +41,8 @@
 extern "C"
 {
 #if defined(BUILD_CRAY_CTI)
-#include "cray_tools_fe.h"
-#include "cray_tools_be.h"
+#include "common_tools_fe.h"
+#include "common_tools_be.h"
 #endif
 }
 
