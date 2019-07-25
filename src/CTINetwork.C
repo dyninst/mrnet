@@ -206,10 +206,10 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
                    || ( strcmp(iter->first.c_str(), "CRAY_ALPS_APRUN_PID") == 0 ) ) {
                 int launcher_pid = (int)strtol( iter->second.c_str(), NULL, 0 );
                 switch (cti_current_wlm()) {
-                  case CTI_WLM_CRAY_SLURM:
+                  case CTI_WLM_SLURM:
                   {
-                      cti_cray_slurm_ops_t *ops;
-                      if (cti_open_ops((void **)&ops) != CTI_WLM_CRAY_SLURM) {
+                      cti_slurm_ops_t *ops;
+                      if (cti_open_ops((void **)&ops) != CTI_WLM_SLURM) {
                          mrn_dbg(1, mrn_printf(FLF, stderr, "cti_open_ops returned invalid wlm.\n"));
                       }
                       cti_srunProc_t *jobInfo;
@@ -275,8 +275,8 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
     // Register with CTI if we have not done so already and we were
     // given CRAY_SLURM_JOBID and CRAY_SLURM_STEPID
     if ((jobID != -1) && (stepID != -1) && !ctiApid) {
-        cti_cray_slurm_ops_t *ops;
-        if (cti_open_ops((void **)&ops) != CTI_WLM_CRAY_SLURM) {
+        cti_slurm_ops_t *ops;
+        if (cti_open_ops((void **)&ops) != CTI_WLM_SLURM) {
             mrn_dbg(1, mrn_printf(FLF, stderr, "cti_open_ops returned invalid wlm.\n"));
         }
         if ((ctiApid = ops->registerJobStep(jobID, stepID)) == 0) {
@@ -1101,7 +1101,7 @@ XTNetwork::SpawnProcesses( const std::set<std::string>& aprunHosts,
 
         switch (cti_current_wlm()) {
 
-            case CTI_WLM_CRAY_SLURM:
+            case CTI_WLM_SLURM:
                 cmd = "srun";
                 args.push_back( cmd );
                 // specify number of internal processes to create
