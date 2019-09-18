@@ -199,7 +199,6 @@ int NetUtils::GetLocalHostName( std::string& this_host )
     char *hostname = cti_getHostname();
     if (hostname == NULL) {
         hostname = cti_be_getNodeHostname();
-        host[255] = '\0';
     }
     if (hostname == NULL) {
         // fallback
