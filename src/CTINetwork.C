@@ -144,11 +144,10 @@ Network::CreateNetworkIN( int argc, char** argv )
 XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
     : ctiApid(0), callerMid(false), ctiMid(0)
 {
-    char *hostname = cti_getHostname();
-    if (hostname == NULL)
-        hostname = cti_be_getNodeHostname();
-    set_LocalHostName( hostname );
-    free(hostname);
+    std::string myHost;
+    XPlat::NetUtils::GetLocalHostName( myHost );
+    set_LocalHostName( myHost );
+
     disable_FailureRecovery();
 
     // Get the file staging string, if any
@@ -338,12 +337,10 @@ XTNetwork::XTNetwork( const std::map< std::string, std::string > * iattrs )
 // BE constructor
 XTNetwork::XTNetwork(void)
 {
-    char *hostname = cti_getHostname();
-    if (hostname == NULL)
-        hostname = cti_be_getNodeHostname();
-    set_LocalHostName( hostname );
+    std::string myHost;
+    XPlat::NetUtils::GetLocalHostName( myHost );
+    set_LocalHostName( myHost );
 
-    free(hostname);
     disable_FailureRecovery();
 }
 
@@ -494,12 +491,9 @@ XTNetwork::XTNetwork( bool, /* dummy for distinguising from other constructors *
         set_StartupTimeout( timeOut );
 
     // ensure we know our node's hostname
-    char *hostname = cti_getHostname();
-    if (hostname == NULL)
-        hostname = cti_be_getNodeHostname();
-    set_LocalHostName( hostname );
-    free(hostname);
-    std::string myHost = get_LocalHostName();
+    std::string myHost;
+    XPlat::NetUtils::GetLocalHostName( myHost );
+    set_LocalHostName( myHost );
 
     disable_FailureRecovery();
 
