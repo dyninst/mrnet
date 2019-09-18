@@ -175,12 +175,12 @@ NetUtils::FindLocalNetworkInterfaces( std::vector< NetUtils::NetworkAddress >& l
     struct ifreq ifr;
     for( unsigned int i=0; i<num_ifs; i++ ){
         ifr = ifc.ifc_req[i];
-            
+
         struct in_addr in;
         struct sockaddr_in *sinptr = ( struct sockaddr_in * )&ifr.ifr_addr;
         memcpy( &in.s_addr, ( void * )&( sinptr->sin_addr ),
                 sizeof( in.s_addr ) );
-        
+
         local_addrs.push_back( NetworkAddress(in.s_addr) );
     }
 
@@ -197,10 +197,21 @@ int NetUtils::GetLocalHostName( std::string& this_host )
 
 #if defined(BUILD_CRAY_CTI)
     char *hostname = cti_getHostname();
-    if (hostname == NULL)
+    if (hostname == NULL) {
         hostname = cti_be_getNodeHostname();
-    this_host = std::string(hostname);
-    free(hostname);
+        host[255] = '\0';
+    }
+    if (hostname == NULL) {
+        // fallback
+        char host[256];
+        gethostname( host, 256 );
+        host[255] = '\0';
+        this_host = host;
+    }
+    else {
+        this_host = std::string(hostname);
+        free(hostname);
+    }
 #else
     static std::string cached_localhost;
 
@@ -220,7 +231,7 @@ int NetUtils::GetLocalHostName( std::string& this_host )
 
     this_host = cached_localhost;
 #endif
-    
+
 #else
 
     char host[256];
