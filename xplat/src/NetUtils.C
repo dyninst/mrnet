@@ -77,7 +77,7 @@ struct addrinfo* get_host_addrs( const std::string& ihost )
     if( use_canonical )
         hints.ai_flags = AI_CANONNAME;
     hints.ai_socktype = SOCK_STREAM;
-    if( error = getaddrinfo(ihostname, NULL, &hints, &addrs) ) {
+    if( (error = getaddrinfo(ihostname, NULL, &hints, &addrs)) ) {
         gha_lock.Unlock();
         fprintf(stderr, "%s[%d]: getaddrinfo(%s): %s\n", 
                 __FILE__, __LINE__,
@@ -202,22 +202,22 @@ int NetUtils::FindNetworkName( const std::string& ihostname, std::string& ohostn
 
         char* hostname = (char*) calloc( XPLAT_MAX_HOSTNAME_LEN, sizeof(char) );
         if( use_canonical && (addrs->ai_canonname != NULL) ) {
-            strncpy( hostname, addrs->ai_canonname, sizeof(hostname) );
+            strncpy( hostname, addrs->ai_canonname, XPLAT_MAX_HOSTNAME_LEN );
             hostname[XPLAT_MAX_HOSTNAME_LEN-1] = '\0';
         }
         else {
             if( addrs->ai_family == AF_INET6 ) {
 #ifndef os_windows
-                if( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in6), 
-                                        hostname, XPLAT_MAX_HOSTNAME_LEN, NULL, 0, 0) ) {
+                if( (error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in6),
+                                        hostname, XPLAT_MAX_HOSTNAME_LEN, NULL, 0, 0)) ) {
                     fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
                     return -1;
                 }
 #endif
             }
             else if( addrs->ai_family == AF_INET ) {
-                if( error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in), 
-                                        hostname, XPLAT_MAX_HOSTNAME_LEN, NULL, 0, 0) ) {
+                if( (error = getnameinfo(addrs->ai_addr, sizeof(struct sockaddr_in),
+                                        hostname, XPLAT_MAX_HOSTNAME_LEN, NULL, 0, 0)) ) {
                     fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
                     return -1;
                 }
@@ -348,8 +348,8 @@ NetUtils::NetworkAddress::NetworkAddress( struct sockaddr_in6* inaddr )
     // find the hex form of the address
     char hostname[64];
     int error;
-    if( error = getnameinfo((struct sockaddr*)inaddr, sizeof(struct sockaddr_in6), 
-			    hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST) ) {
+    if( (error = getnameinfo((struct sockaddr*)inaddr, sizeof(struct sockaddr_in6),
+			    hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST)) ) {
         fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(error));
     }
     hostname[63] = '\0';
