@@ -160,7 +160,7 @@ bool EventDetector::remove_FD( XPlat_Socket ifd )
     XPlat_Socket new_max = -1;
     unsigned int i, j;
 
-    mrn_dbg_func_begin();
+    mrn_dbg(3, MRN::mrn_printf(FLF, stderr, "EventDetector::removeFD fd %d\n", ifd));
 
     if( ifd < 0 ) return false;
 
