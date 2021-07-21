@@ -1,0 +1,16 @@
+#==============================================================================
+# Copyright 2021 Hewlett Packard Enterprise Development LP
+#==============================================================================
+
+prefix=<PREFIX>
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${prefix}/lib
+prod_ver=<VERSION>
+
+Name: <CRAY_NAME>
+Description: 
+Version: ${prod_ver}
+Requires:
+Libs: -L${libdir} -Wl,--enable-new-dtags -Wl,-rpath,${libdir}
+Cflags: -I${includedir}

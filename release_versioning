@@ -1,0 +1,19 @@
+# RELEASE VERSION
+# ---------------
+# The traditional release version is tracked by the three digit
+# major.minor.revision string.
+#
+# JENKINS INTEGRATION
+# -------------------
+# We now key off the BUILD_NUMBER environment variable from jenkins
+# to get the revision number. We hardcode the revision to "9999" if the
+# environment variable is not set.
+#
+
+# Jenkins will override this 
+revision="1"
+build_number=""
+
+major="5"
+minor="0"
+

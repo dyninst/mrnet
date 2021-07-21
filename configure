@@ -585,7 +585,7 @@ PACKAGE_STRING='MRNet 5.0.1'
 PACKAGE_BUGREPORT='mrnet@cs.wisc.edu'
 PACKAGE_URL='http://www.paradyn.org/mrnet/'
 
-ac_unique_file="src/Network.C"
+ac_unique_file="src/CTINetwork.C"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
