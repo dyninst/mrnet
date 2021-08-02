@@ -1,0 +1,57 @@
+MRNET <VERSION>:
+======================================
+
+Release Date:
+--------------
+  <RELEASE_DATE>
+
+
+Product Description:
+--------------------
+  MRNet is a customizable, high-performance software infrastructure for
+  building scalable tools and applications.  It supports efficient 
+  multicast and data aggregation functionality using a tree of processes 
+  between the tool's front-end and back-ends.  MRNet-based tools may use 
+  these internal processes to distribute many important tool activities, 
+  for example to reduce data analysis time and keep tool front-end loads 
+  manageable.
+
+  MRNet-based tool components communicate across logical channels called
+  streams. At MRNet internal processes, filters are bound to these streams to
+  synchronize and aggregate dataflows. Using filters, MRNet can efficiently
+  compute averages, sums, and other more complex aggregations and analyses
+  on tool data. MRNet also supports facilities that allow tool developers
+  dynamically load new tool-specific filters into the system.  
+
+Purpose:
+---------
+
+Product and OS Dependencies:
+-----------------------------
+  The MRNET <VERSION> is supported on the following Cray systems:
+    - HPE/Cray XC systems with CLE 7.0 or later
+    - HPE/Cray CS systems with CentOS 8.0 or later & RHEL 8.3 or later
+    - HPE/Cray Shasta systems with SLES 15 service pack 1 or later
+    - HPE Apollo systems with Slurm and Centos 8.0 or later
+    - Baymax systems with Centos 8.0 or later
+
+  Product Dependencies:
+    - Cray cray-cti rpm installed
+    - Cray cray-cdst-support rpm installed
+
+Documentation:
+---------------
+
+Installation instructions:
+--------------------------
+
+   Installation instructions for <ARCH>:
+   =============================================
+      rpm -ivh cray-mrnet-<VERSION>-<RELEASE>.<ARCH>.rpm
+
+      To make MRNET <VERSION> the default version of MRNET, execute:
+      <CRAY_PREFIX>/admin-pe/set_default_files/set_default_cray-mrnet_<VERSION>
+
+
+Certain components, files or programs contained within this package or product are
+<COPYRIGHT>
