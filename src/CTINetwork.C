@@ -491,8 +491,7 @@ XTNetwork::XTNetwork( bool, /* dummy for distinguising from other constructors *
         set_StartupTimeout( timeOut );
 
     // ensure we know our node's hostname
-    std::string myHost;
-    XPlat::NetUtils::GetLocalHostName( myHost );
+    std::string myHost = cti_be_getNodeHostname();
     set_LocalHostName( myHost );
 
     disable_FailureRecovery();
