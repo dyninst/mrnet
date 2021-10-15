@@ -490,8 +490,18 @@ XTNetwork::XTNetwork( bool, /* dummy for distinguising from other constructors *
     if( timeOut != -1 )
         set_StartupTimeout( timeOut );
 
-    // ensure we know our node's hostname
-    std::string myHost = cti_be_getNodeHostname();
+    // ensure we know our node's hostname.
+    // we call cti_be_getNodeHostname instead of XPlat::NetUtils::GetLocalHostName
+    // because GetLocalHostName forwards to cti_getHostname, which, on shasta,
+    // will look at the contents of /etc/cray/xname, which won't match what
+    // we were passed in the topology. getNodeHostname will look at /etc/cray/nid,
+    // which will match up with the nid00000x form we were passed.
+    auto myHostCStr = cti_be_getNodeHostname();
+    if (myHostCStr == nullptr) {
+        mrn_dbg(1, mrn_printf(FLF, stderr, "Failed to get local hostname.\n"));
+        exit(1);
+    }
+    std::string myHost{myHostCStr};
     set_LocalHostName( myHost );
 
     disable_FailureRecovery();
