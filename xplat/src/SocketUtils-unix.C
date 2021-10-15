@@ -381,7 +381,7 @@ ssize_t recv( XPlat_Socket s, void *buf, size_t count )
         }
         else if( ret == 0 ) {
             // the remote endpoint has gone away
-            xplat_dbg( 5, xplat_printf(FLF, stderr, "recv() returned 0 (peer likely gone)\n"));
+            xplat_dbg( 5, xplat_printf(FLF, stderr, "recv() fd %d returned 0 (peer likely gone)\n", s));
             return -1;
         }
         else {
