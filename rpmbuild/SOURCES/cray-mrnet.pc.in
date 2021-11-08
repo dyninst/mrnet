@@ -12,5 +12,5 @@ Name: <CRAY_NAME>
 Description: 
 Version: ${prod_ver}
 Requires:
-Libs: -L${libdir} -Wl,--enable-new-dtags -Wl,-rpath,${libdir}
+Libs: -L${libdir} -Wl,--enable-new-dtags -Wl,-rpath,${libdir} -Wl,-rpath,/opt/cray/pe/mrnet/default/lib
 Cflags: -I${includedir}
