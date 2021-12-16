@@ -1,0 +1,3 @@
+[submodule "external/cdst_build_library"]
+	path = external/cdst_build_library
+	url = git@github.hpe.com:hpe/hpc-pe-cdst-cdst_build_library.git
