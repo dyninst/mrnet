@@ -1,6 +1,6 @@
 /****************************************************************************
- * Copyright © 2003-2012 Dorian C. Arnold, Philip C. Roth, Barton P. Miller *
- *                  Detailed MRNet usage rights in "LICENSE" file.          *
+ * Copyright 2003-2012 Dorian C. Arnold, Philip C. Roth, Barton P. Miller   *
+ *               Detailed MRNet usage rights in "LICENSE" file.             *
  ****************************************************************************/
 
 // $Id: NetUtils.C,v 1.11 2008/10/09 19:54:04 mjbrim Exp $
@@ -49,7 +49,7 @@ void get_resolve_env(void)
 
         if( use_resolve ) {
             varval = getenv( "XPLAT_RESOLVE_CANONICAL" );
-            if( varval != NULL ) {               
+            if( varval != NULL ) {
                 if( strcmp("0", varval) )
                     use_canonical = true;
                 else
@@ -79,7 +79,7 @@ struct addrinfo* get_host_addrs( const std::string& ihost )
     hints.ai_socktype = SOCK_STREAM;
     if( (error = getaddrinfo(ihostname, NULL, &hints, &addrs)) ) {
         gha_lock.Unlock();
-        fprintf(stderr, "%s[%d]: getaddrinfo(%s): %s\n", 
+        fprintf(stderr, "%s[%d]: getaddrinfo(%s): %s\n",
                 __FILE__, __LINE__,
                 ihostname, gai_strerror(error));
         return NULL;
@@ -194,7 +194,7 @@ int NetUtils::FindNetworkName( const std::string& ihostname, std::string& ohostn
     if( use_resolve ) {
         struct addrinfo *addrs = NULL;
         int error;
-        
+
         addrs = get_host_addrs( ihostname );
         if( addrs == NULL ) {
             return -1;
@@ -244,7 +244,7 @@ bool NetUtils::IsLocalHost( const std::string& ihostname )
 
     std::vector< NetworkAddress > local_addresses;
     GetLocalNetworkInterfaces( local_addresses );
-    
+
     if( local_addresses.size() == 0 ) {
         fprintf(stderr, "%s[%d]: GetLocalNetworkInterfaces() returned no addresses\n",
                 __FILE__, __LINE__);
@@ -268,8 +268,8 @@ bool NetUtils::IsLocalHost( const std::string& ihostname )
 
     std::string localhost;
     NetUtils::GetLocalHostName( localhost );
-    if( (ihostname == localhost) || 
-	(ihostname == "localhost") )
+    if( (ihostname == localhost) ||
+        (ihostname == "localhost") )
         return true;
 
 #endif
@@ -290,11 +290,22 @@ int NetUtils::GetHostName( std::string ihostname, std::string &ohostname )
     if( -1 == FindNetworkName(ihostname, fqdn) )
         return -1;
 
-    // extract host name from FQDN
-    std::string::size_type firstDotPos = fqdn.find_first_of( '.' );
-    if( firstDotPos != std::string::npos )
-        ohostname = fqdn.substr( 0, firstDotPos );
-    else 
+    bool use_fqdn = false;
+    const char* varval = getenv( "XPLAT_USE_FQDN" );
+    if( varval != NULL ) {
+        if( strcmp("1", varval) )
+            use_fqdn = true;
+        else
+            use_fqdn = false;
+    }
+    if( ! use_fqdn ) {
+        // extract host name from FQDN
+        std::string::size_type firstDotPos = fqdn.find_first_of( '.' );
+        if( firstDotPos != std::string::npos )
+            ohostname = fqdn.substr( 0, firstDotPos );
+        else
+            ohostname = fqdn;
+    } else
         ohostname = fqdn;
 
     return 0;
@@ -326,10 +337,10 @@ NetUtils::NetworkAddress::NetworkAddress( in_addr_t inaddr )
     const unsigned char* cp = (const unsigned char*)&ip4addr;
 
     std::ostringstream astr;
-    astr << (unsigned int)cp[0] 
-        << '.' << (unsigned int)cp[1] 
-        << '.' << (unsigned int)cp[2] 
-        << '.' << (unsigned int)cp[3];
+    astr << (unsigned int)cp[0]
+         << '.' << (unsigned int)cp[1]
+         << '.' << (unsigned int)cp[2]
+         << '.' << (unsigned int)cp[3];
 
     str = astr.str();
 }
@@ -375,7 +386,7 @@ int NetUtils::GetLocalNetworkInterfaces( std::vector<NetUtils::NetworkAddress> &
         int ret = FindLocalNetworkInterfaces( cachedLocalAddresses );
         if( ret == -1 )
             return -1;
-    } 
+    }
 
     iaddresses = cachedLocalAddresses;
     return 0;
