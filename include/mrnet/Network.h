@@ -422,6 +422,7 @@ protected:
     bool _threaded;
     bool _recover_from_failures;
     bool _was_shutdown, _shutting_down;
+    bool _filter_load_complete; // protected by _network_sync
     mutable std::vector<char *> _filter_error_hosts;
     mutable std::vector<char *> _filter_error_sonames;;
     mutable std::vector<unsigned> _filter_error_funcids;
