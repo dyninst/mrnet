@@ -132,6 +132,7 @@ Network::Network(void)
       _recover_from_failures(true),
       _was_shutdown(false), 
       _shutting_down(false),
+      _filter_load_complete(false),
       _startup_timeout(120),
       _topo_update_timeout_msec(250),
       _perf_data( new PerfDataMgr() ),
@@ -1958,6 +1959,10 @@ int Network::load_FilterFuncs( const char* so_file,
                                      fids, success_count) );
         if (get_NumChildren() == 0)
             wait_ForChildren = false;
+        // Completion may arrive before send/flush returns; retain it for the waiter.
+        _network_sync.Lock();
+        _filter_load_complete = false;
+        _network_sync.Unlock();
         send_PacketToChildren( packet );
         flush();
         if (wait_ForChildren){
@@ -1990,7 +1995,8 @@ int Network::load_FilterFuncs( const char* so_file,
 void Network::waitOn_ProtEvent(void) {
     // Wait on the reception of a PROT_EVENT message
     _network_sync.Lock();
-    _network_sync.WaitOnCondition( EVENT_NOTIFICATION );
+    while( !_filter_load_complete )
+        _network_sync.WaitOnCondition( EVENT_NOTIFICATION );
     _network_sync.Unlock();
 }
 
@@ -2001,6 +2007,7 @@ void Network::signal_ProtEvent(std::vector<char *> hostnames,
     _filter_error_hosts = hostnames;
     _filter_error_sonames = so_names;
     _filter_error_funcids = func_ids;
+    _filter_load_complete = true;
     _network_sync.SignalCondition( EVENT_NOTIFICATION );
     _network_sync.Unlock();
 }
