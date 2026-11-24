@@ -1910,6 +1910,7 @@ int Network::load_FilterFuncs( const char* so_file,
                                std::vector< int > & filter_ids )
 {
     // start user-defined filter ids at 100 to avoid conflicts with built-ins
+    // filter loads must not overlap, even across network instances, as next_filter_id is shared
     static unsigned short next_filter_id=100; 
     bool wait_ForChildren = true;
     mrn_dbg_func_begin();
@@ -1969,8 +1970,8 @@ int Network::load_FilterFuncs( const char* so_file,
             waitOn_ProtEvent();
         }
 
-        // We have an error in loading filters elsewhere if this happens.
-        if (_filter_error_hosts.size() > 0) {
+        // only a child report for this load can replace the previous load's errors.
+        if (wait_ForChildren && !_filter_error_hosts.empty()) {
             std::set<unsigned> load_error;
             for (unsigned u = 0; u < _filter_error_hosts.size(); u++) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "Error Loading Filter %s : %s on %s\n",
