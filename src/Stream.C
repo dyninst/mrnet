@@ -393,9 +393,9 @@ int Stream::flush() const
     int retval = 0;
     mrn_dbg_func_begin();
 
-    if( is_Closed() )
-        return -1;
-    
+    // The frontend may close this stream after receiving a reply, before
+    // the backend reaches flush(). Drain already queued packets even when
+    // the stream is closed, and preserve errors from the peer flush.
     if( _network->is_LocalNodeFrontEnd() ) {
 
         _peers_sync.Lock();

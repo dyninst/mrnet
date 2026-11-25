@@ -132,6 +132,7 @@ Network::Network(void)
       _recover_from_failures(true),
       _was_shutdown(false), 
       _shutting_down(false),
+      _filter_load_complete(false),
       _startup_timeout(120),
       _topo_update_timeout_msec(250),
       _perf_data( new PerfDataMgr() ),
@@ -1909,6 +1910,7 @@ int Network::load_FilterFuncs( const char* so_file,
                                std::vector< int > & filter_ids )
 {
     // start user-defined filter ids at 100 to avoid conflicts with built-ins
+    // filter loads must not overlap, even across network instances, as next_filter_id is shared
     static unsigned short next_filter_id=100; 
     bool wait_ForChildren = true;
     mrn_dbg_func_begin();
@@ -1958,14 +1960,18 @@ int Network::load_FilterFuncs( const char* so_file,
                                      fids, success_count) );
         if (get_NumChildren() == 0)
             wait_ForChildren = false;
+        // Completion may arrive before send/flush returns; retain it for the waiter.
+        _network_sync.Lock();
+        _filter_load_complete = false;
+        _network_sync.Unlock();
         send_PacketToChildren( packet );
         flush();
         if (wait_ForChildren){
             waitOn_ProtEvent();
         }
 
-        // We have an error in loading filters elsewhere if this happens.
-        if (_filter_error_hosts.size() > 0) {
+        // only a child report for this load can replace the previous load's errors.
+        if (wait_ForChildren && !_filter_error_hosts.empty()) {
             std::set<unsigned> load_error;
             for (unsigned u = 0; u < _filter_error_hosts.size(); u++) {
                 mrn_dbg( 1, mrn_printf(FLF, stderr, "Error Loading Filter %s : %s on %s\n",
@@ -1990,7 +1996,8 @@ int Network::load_FilterFuncs( const char* so_file,
 void Network::waitOn_ProtEvent(void) {
     // Wait on the reception of a PROT_EVENT message
     _network_sync.Lock();
-    _network_sync.WaitOnCondition( EVENT_NOTIFICATION );
+    while( !_filter_load_complete )
+        _network_sync.WaitOnCondition( EVENT_NOTIFICATION );
     _network_sync.Unlock();
 }
 
@@ -2001,6 +2008,7 @@ void Network::signal_ProtEvent(std::vector<char *> hostnames,
     _filter_error_hosts = hostnames;
     _filter_error_sonames = so_names;
     _filter_error_funcids = func_ids;
+    _filter_load_complete = true;
     _network_sync.SignalCondition( EVENT_NOTIFICATION );
     _network_sync.Unlock();
 }
